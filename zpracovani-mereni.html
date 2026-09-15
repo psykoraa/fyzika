@@ -136,7 +136,7 @@ h1,h2,h3{ text-wrap:balance; margin:0; }
 .panel p:last-child{ margin-bottom:0; }
 .panel b{ color:var(--ink); }
 .panel-title{
-  font-size:0.68rem;
+  font-size:0.74rem;
   text-transform:uppercase;
   letter-spacing:0.1em;
   color:var(--ink-soft);
@@ -146,11 +146,35 @@ h1,h2,h3{ text-wrap:balance; margin:0; }
   align-items:center;
   justify-content:space-between;
 }
+.panel-title.collapsible{ cursor:pointer; user-select:none; }
+.panel-title-inner{ display:inline-flex; align-items:center; gap:5px; }
+.panel-title.collapsible:hover{ color:var(--accent); }
+.panel-title.collapsible:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+.panel-title[aria-expanded="true"] .toggle-arrow{ transform:rotate(90deg); }
+.panel-body[hidden]{ display:none; }
 .formula-line{
   text-align:center;
   font-family:'IBM Plex Mono', monospace;
   font-size:1.05rem;
   color:var(--ink);
+  line-height:1.8;
+}
+.frac{
+  display:inline-flex;
+  flex-direction:column;
+  align-items:center;
+  vertical-align:middle;
+  margin:0 0.25em;
+  line-height:1.35;
+}
+.frac-num{
+  padding:0 0.15em 0.12em;
+  border-bottom:1.5px solid currentColor;
+  white-space:nowrap;
+}
+.frac-den{
+  padding:0.12em 0.15em 0;
+  white-space:nowrap;
 }
 .formula-ref{
   font-family:'IBM Plex Mono', monospace;
@@ -649,29 +673,23 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
   <div id="teorie-section" class="tab-section">
 
   <div class="panel">
-    <div class="panel-title">Přímé a nepřímé měření</div>
-    <p>Při <b>přímém měření</b> můžeme hledanou veličinu naměřit rovnou (např. délku šroubu posuvným měřítkem) — výsledkem je zpracování tabulky naměřených hodnot.</p>
-    <p>Při <b>nepřímém měření</b> hledanou veličinu naměřit přímo nelze a dopočítáme ji ze vzorce z jiných, pomocných veličin (např. hustotu tělesa z jeho hmotnosti a objemu). Tato stránka se věnuje zpracování <b>přímého</b> měření.</p>
-  </div>
-
-  <div class="panel">
     <div class="panel-title">Průměrná hodnota</div>
     <p>Aritmetický průměr <b class="avgsym">x</b> spočítáme jako součet všech naměřených hodnot vydělený jejich počtem <b class="sym">n</b>:</p>
-    <p class="formula-line"><b class="avgsym">x</b> = (<b class="sym">x₁</b> + <b class="sym">x₂</b> + ... + <b class="sym">xₙ</b>) / <b class="sym">n</b></p>
-    <p>Ruční výpočet je praktický jen pro málo hodnot — pro víc naměřených hodnot použijeme tabulkový procesor.</p>
+    <p class="formula-line"><b class="avgsym">x</b> = <span class="frac"><span class="frac-num"><b class="sym">x₁</b> + <b class="sym">x₂</b> + ... + <b class="sym">xₙ</b></span><span class="frac-den"><b class="sym">n</b></span></span></p>
+    <p>Ruční výpočet je praktický jen pro málo hodnot — pro víc naměřených hodnot použijeme tabulkový editor.</p>
   </div>
 
   <div class="panel">
     <div class="panel-title">Absolutní odchylka</div>
     <p><b class="sym">Δx</b> vyjadřuje, o kolik se naměřené hodnoty v průměru liší od <b class="avgsym">x</b>:</p>
-    <p class="formula-line"><b class="sym">Δx</b> = (|<b class="sym">x₁</b> − <b class="avgsym">x</b>| + |<b class="sym">x₂</b> − <b class="avgsym">x</b>| + ... + |<b class="sym">xₙ</b> − <b class="avgsym">x</b>|) / <b class="sym">n</b></p>
+    <p class="formula-line"><b class="sym">Δx</b> = <span class="frac"><span class="frac-num">|<b class="sym">x₁</b> − <b class="avgsym">x</b>| + |<b class="sym">x₂</b> − <b class="avgsym">x</b>| + ... + |<b class="sym">xₙ</b> − <b class="avgsym">x</b>|</span><span class="frac-den"><b class="sym">n</b></span></span></p>
     <p>Absolutní hodnota zajistí, že se kladné a záporné odchylky navzájem nevyruší. S rostoucím počtem opakování měření <b class="sym">n</b> odchylka klesá — proto měříme vícekrát.</p>
   </div>
 
   <div class="panel">
     <div class="panel-title">Relativní odchylka</div>
     <p>Relativní odchylka <b class="sym">δx</b> vyjadřuje přesnost měření v procentech:</p>
-    <p class="formula-line"><b class="sym">δx</b> = (<b class="sym">Δx</b> / <b class="avgsym">x</b>) · 100 %</p>
+    <p class="formula-line"><b class="sym">δx</b> = <span class="frac"><span class="frac-num"><b class="sym">Δx</b></span><span class="frac-den"><b class="avgsym">x</b></span></span> · 100 %</p>
     <p>Umožňuje porovnat přesnost měření <b>různých veličin</b> mezi sebou. Čím nižší <b class="sym">δx</b>, tím přesnější (kvalitnější) je naše měření.</p>
   </div>
 
@@ -681,12 +699,12 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
     <div class="sheet-wrap">
       <table class="sheet-table">
         <thead>
-          <tr><th>Veličina</th><th>Vzorec (čeština)</th><th>Vzorec (angličtina)</th></tr>
+          <tr><th>Veličina</th><th>Vzorec</th></tr>
         </thead>
         <tbody>
-          <tr><td class="sheet-cell-label">Průměr <span class="avgsym">x</span></td><td>=PRŮMĚR(A1:A10)</td><td>=AVERAGE(A1:A10)</td></tr>
-          <tr><td class="sheet-cell-label">Absolutní odchylka <span class="sym">Δx</span></td><td>=PRŮMODCHYLKA(A1:A10)</td><td>=AVEDEV(A1:A10)</td></tr>
-          <tr><td class="sheet-cell-label">Relativní odchylka <span class="sym">δx</span></td><td>=B2/B1*100</td><td>=B2/B1*100</td></tr>
+          <tr><td class="sheet-cell-label">Průměr <span class="avgsym">x</span></td><td>=PRŮMĚR(A1:A10)</td></tr>
+          <tr><td class="sheet-cell-label">Absolutní odchylka <span class="sym">Δx</span></td><td>=PRŮMODCHYLKA(A1:A10)</td></tr>
+          <tr><td class="sheet-cell-label">Relativní odchylka <span class="sym">δx</span></td><td>=B2/B1*100</td></tr>
         </tbody>
       </table>
     </div>
@@ -788,14 +806,6 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
     <div class="actions">
       <button class="btn ghost" id="theory-example-reset">Zopakovat postup od začátku</button>
     </div>
-  </div>
-
-  <div class="panel">
-    <div class="panel-title">Shrnutí</div>
-    <p><b>Přímé měření</b> = hodnotu měříme rovnou; <b>nepřímé</b> = dopočítáme z pomocných veličin.</p>
-    <p>Postup výpočtu: nejprve průměr <span class="avgsym">x</span>, pak absolutní odchylka <span class="sym">Δx</span>, nakonec relativní odchylka <span class="sym">δx</span>.</p>
-    <p>Pro víc hodnot počítáme v tabulkovém procesoru (<span class="formula-ref">PRŮMĚR</span>, <span class="formula-ref">PRŮMODCHYLKA</span>).</p>
-    <p>Zaokrouhlujeme v pořadí: nejprve <span class="sym">Δx</span>, podle jejího řádu pak <span class="avgsym">x</span>, nakonec <span class="sym">δx</span> na 2 platné cifry.</p>
   </div>
 
   </div>
@@ -1726,6 +1736,54 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
     }
 
     refreshLocks();
+  })();
+
+  // ---- schovávací panely: klik na nadpis panelu sbalí/rozbalí jeho obsah ----
+  // Panel "Veličiny" má vlastní přepínač (category-toggle) pro řádek čipů, takže se
+  // tady nezabaluje znovu.
+  (function(){
+    var panels = document.querySelectorAll('.panel');
+    panels.forEach(function(panel){
+      var title = panel.querySelector(':scope > .panel-title');
+      if(!title || title.querySelector('.category-toggle')) return;
+
+      var body = document.createElement('div');
+      body.className = 'panel-body';
+      var child = title.nextSibling;
+      while(child){
+        var next = child.nextSibling;
+        body.appendChild(child);
+        child = next;
+      }
+      panel.appendChild(body);
+
+      var inner = document.createElement('span');
+      inner.className = 'panel-title-inner';
+      var textSpan = document.createElement('span');
+      textSpan.textContent = title.textContent.trim();
+      var arrow = document.createElement('span');
+      arrow.className = 'toggle-arrow';
+      arrow.textContent = '▸';
+      inner.appendChild(textSpan);
+      inner.appendChild(arrow);
+      title.textContent = '';
+      title.appendChild(inner);
+
+      title.classList.add('collapsible');
+      title.setAttribute('role', 'button');
+      title.setAttribute('tabindex', '0');
+      title.setAttribute('aria-expanded', 'true');
+
+      function toggle(){
+        var expanded = title.getAttribute('aria-expanded') === 'true';
+        title.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+        body.hidden = expanded;
+      }
+      title.addEventListener('click', toggle);
+      title.addEventListener('keydown', function(e){
+        if(e.key==='Enter' || e.key===' '){ e.preventDefault(); toggle(); }
+      });
+    });
   })();
 
   // ---- záložka Kontrola: žák zadá vlastní naměřená data a nechá si zkontrolovat zaokrouhlení ----
