@@ -683,7 +683,7 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
     <div class="panel-title">Absolutní odchylka</div>
     <p><b class="sym">Δx</b> vyjadřuje, o kolik se naměřené hodnoty v průměru liší od <b class="avgsym">x</b>:</p>
     <p class="formula-line"><b class="sym">Δx</b> = <span class="frac"><span class="frac-num">|<b class="sym">x₁</b> − <b class="avgsym">x</b>| + ... + |<b class="sym">xₙ</b> − <b class="avgsym">x</b>|</span><span class="frac-den"><b class="sym">n</b></span></span></p>
-    <p>Absolutní hodnota zajistí, že se kladné a záporné odchylky navzájem nevyruší. S rostoucím počtem opakování měření <b class="sym">n</b> odchylka klesá — proto měříme vícekrát.</p>
+    <p>Absolutní hodnota zajistí, že se kladné a záporné odchylky navzájem nevyruší. S rostoucím počtem opakování měření <b class="sym">n</b> zpřesňujeme průměr a snižujeme vliv náhodných chyb — proto měříme vícekrát.</p>
   </div>
 
   <div class="panel">
@@ -1139,6 +1139,7 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
     state.dataCellEls = [];
     state.activeFormulaInput = null;
     state.formulaText = { avg:'', dev:'' };
+    state.locked = false;
     acHide();
 
     var tbody = document.getElementById('sheet-body');
@@ -1310,9 +1311,11 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
       devInput.value = '=PRŮMODCHYLKA(B2:B' + (s.n+1) + ')';
       state.formulaText.avg = avgInput.value;
       state.formulaText.dev = devInput.value;
+      commitFormulaDisplay(avgInput);
+      commitFormulaDisplay(devInput);
       avgInput.disabled = true; devInput.disabled = true;
-      cellAvg.classList.remove('wrong'); cellAvg.classList.add('correct');
-      cellDev.classList.remove('wrong'); cellDev.classList.add('correct');
+      cellAvg.classList.remove('correct'); cellAvg.classList.add('wrong');
+      cellDev.classList.remove('correct'); cellDev.classList.add('wrong');
       clearHighlight();
 
       var fb = document.getElementById('feedback-formulas');
@@ -1676,6 +1679,29 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
     renderExercise();
   }
 
+  // Přepnutí veličiny zahodí rozpracovaný příklad — proběhne stejná kontrola (a
+  // případný dotaz na nevyplněná pole) jako u tlačítka Zkontrolovat, aby se takhle
+  // nedaly beztrestně přeskakovat nepohodlné příklady. Ve fázi vzorců (dokud nejsou
+  // ověřené jako správné) se rovnou počítá jako chyba, protože tam ještě není co
+  // vyhodnotit stejným způsobem jako u tlačítka Zkontrolovat vzorce.
+  function confirmAbandonExercise(){
+    if(state.locked) return true;
+    // formulasOk je true, jen když byly vzorce vyřešené SPRÁVNĚ — do fáze 2 se ale
+    // dá dostat i přes "Nevím / Zobrazit vzorce", proto rozhodujeme podle viditelnosti
+    // sekce se zápisem výsledku, ne podle formulasOk.
+    var inStage2 = !document.getElementById('stage2').hidden;
+    if(inStage2){
+      if(!confirmIncompleteIfNeeded()) return false;
+      gradeCurrentAnswer();
+      return true;
+    }
+    if(!window.confirm('Rozpracovaný příklad zahodíte a bude se počítat jako chyba. Opravdu chcete pokračovat?')) return false;
+    state.streak = 0;
+    state.answered++;
+    updateStats();
+    return true;
+  }
+
   function buildCategoryRow(){
     var row = document.getElementById('category-row');
     row.innerHTML = '';
@@ -1686,6 +1712,7 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
       b.addEventListener('click', function(){
         var activeCount = QUANTITIES.filter(function(qq){ return state.sel[qq.key]; }).length;
         if(state.sel[q.key] && activeCount===1) return;
+        if(!confirmAbandonExercise()) return;
         state.sel[q.key] = !state.sel[q.key];
         b.classList.toggle('on', state.sel[q.key]);
         newExercise();
