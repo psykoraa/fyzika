@@ -1,0 +1,1974 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zpracování měření — tabulka</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#eef5ee;
+  --surface:#fbfef9;
+  --surface-2:#dce8da;
+  --ink:#1f2e22;
+  --ink-soft:#5c705d;
+  --line:rgba(31,46,34,0.12);
+  --accent:#2f7a4f;
+  --accent-ink:#f2fbf5;
+  --success:#28794f;
+  --success-bg:#e3efe0;
+  --danger:#b3392b;
+  --danger-bg:#f5e4de;
+  --focus:#1e6f66;
+  --shadow: 0 1px 0 rgba(31,46,34,0.06);
+}
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  background:
+    linear-gradient(var(--line) 1px, transparent 1px) 0 0/100% 34px,
+    linear-gradient(90deg, var(--line) 1px, transparent 1px) 0 0/34px 100%,
+    var(--paper);
+  background-attachment:local;
+  color:var(--ink);
+  font-family:'Work Sans', system-ui, sans-serif;
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:900px;
+  margin:0 auto;
+  padding:28px 20px 60px;
+}
+h1,h2,h3{ text-wrap:balance; margin:0; }
+.brand{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  flex-wrap:wrap;
+  margin-bottom:22px;
+}
+.brand-lockup{ display:flex; align-items:center; gap:12px; }
+.brand-lockup svg{ flex:none; }
+.brand-text h1{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:800;
+  font-size:2.1rem;
+  letter-spacing:0.02em;
+  line-height:1;
+  color:var(--ink);
+}
+.brand-text p{
+  margin:2px 0 0;
+  font-size:0.82rem;
+  color:var(--ink-soft);
+  letter-spacing:0.02em;
+}
+.readout{ display:flex; gap:8px; }
+.readout .cell{
+  background:var(--ink);
+  color:var(--paper);
+  border-radius:6px;
+  padding:6px 12px;
+  min-width:74px;
+  text-align:center;
+  box-shadow:var(--shadow);
+}
+.readout .cell .label{
+  display:block;
+  font-size:0.6rem;
+  letter-spacing:0.09em;
+  text-transform:uppercase;
+  opacity:0.65;
+  margin-bottom:2px;
+}
+.readout .cell .value{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:600;
+  font-size:1.05rem;
+  font-variant-numeric:tabular-nums;
+}
+
+.top-tabs{
+  display:flex;
+  gap:8px;
+  margin-bottom:22px;
+}
+.toptab{
+  flex:1 1 0;
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.05rem;
+  letter-spacing:0.02em;
+  padding:13px 20px;
+  border-radius:10px;
+  border:1px solid var(--line);
+  background:var(--surface);
+  color:var(--ink-soft);
+  cursor:pointer;
+  text-align:center;
+  transition:background .12s, color .12s, border-color .12s;
+}
+.toptab:hover{ border-color:var(--accent); }
+.toptab.on{
+  background:var(--accent);
+  border-color:var(--accent);
+  color:var(--accent-ink);
+}
+.toptab:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+.tab-section[hidden]{ display:none; }
+
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:16px 18px;
+  margin-bottom:18px;
+}
+.panel p{
+  margin:0 0 8px;
+  font-size:0.9rem;
+  line-height:1.55;
+}
+.panel p:last-child{ margin-bottom:0; }
+.panel b{ color:var(--ink); }
+.panel-title{
+  font-size:0.68rem;
+  text-transform:uppercase;
+  letter-spacing:0.1em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-bottom:10px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+.formula-line{
+  text-align:center;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:1.05rem;
+  color:var(--ink);
+}
+.formula-ref{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:0.86rem;
+  background:var(--surface-2);
+  padding:1px 6px;
+  border-radius:5px;
+}
+.row{ display:flex; flex-wrap:wrap; gap:8px; }
+.row[hidden]{ display:none; }
+.chip{
+  font-family:'Work Sans', sans-serif;
+  font-size:0.86rem;
+  font-weight:500;
+  padding:7px 13px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  background:var(--surface);
+  color:var(--ink-soft);
+  cursor:pointer;
+  transition:background .12s, color .12s, border-color .12s;
+}
+.chip:hover{ border-color:var(--accent); }
+.chip.on{
+  background:var(--ink);
+  color:var(--paper);
+  border-color:var(--ink);
+}
+.settings-foot{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-top:14px;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.hint{ font-size:0.78rem; color:var(--ink-soft); }
+.linklike{
+  background:none;
+  border:none;
+  color:var(--ink-soft);
+  font-size:0.78rem;
+  text-decoration:underline;
+  cursor:pointer;
+  padding:4px 0;
+}
+.linklike:hover{ color:var(--danger); }
+.category-toggle{
+  font-size:0.68rem;
+  text-transform:uppercase;
+  letter-spacing:0.1em;
+  font-weight:600;
+  text-decoration:none;
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+}
+.category-toggle:hover{ color:var(--accent); }
+.toggle-arrow{
+  display:inline-block;
+  font-size:0.9em;
+  transition:transform .12s ease;
+}
+.category-toggle[aria-expanded="true"] .toggle-arrow{ transform:rotate(90deg); }
+
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:30px 30px 30px;
+  text-align:center;
+}
+.sym{ font-style:italic; }
+.avgsym{
+  font-style:italic;
+  display:inline-block;
+  line-height:1;
+  padding-top:0.30em;
+  background-image:linear-gradient(currentColor, currentColor);
+  background-repeat:no-repeat;
+  background-size:100% max(1px, 0.05em);
+  background-position:0 0.24em;
+}
+.cat-tag{
+  display:inline-block;
+  font-size:0.68rem;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  color:var(--ink-soft);
+  background:var(--surface-2);
+  padding:4px 11px;
+  border-radius:999px;
+  margin-bottom:18px;
+}
+.card .desc{
+  font-size:0.86rem;
+  color:var(--ink-soft);
+  line-height:1.5;
+  margin:-8px 0 18px;
+}
+
+.given-data{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:clamp(0.9rem, 2.4vw, 1.05rem);
+  color:var(--ink-soft);
+  margin-bottom:20px;
+  font-variant-numeric:tabular-nums;
+}
+.given-line{ margin:4px 0; }
+.given-line b{ color:var(--ink); font-weight:600; }
+
+.sheet-wrap{
+  display:flex;
+  justify-content:center;
+  margin-bottom:20px;
+}
+.sheet-table{
+  border-collapse:collapse;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:0.92rem;
+  box-shadow:0 1px 0 rgba(31,46,34,0.04);
+  border-radius:8px;
+  overflow:hidden;
+}
+.sheet-table th, .sheet-table td{
+  border:1px solid var(--line);
+  padding:7px 16px;
+  text-align:center;
+  min-width:84px;
+}
+.sheet-table thead th{
+  background:var(--surface-2);
+  color:var(--ink-soft);
+  font-weight:600;
+  font-size:0.78rem;
+  letter-spacing:0.04em;
+}
+.sheet-corner{ background:var(--surface-2); min-width:38px !important; }
+.sheet-row-num{
+  background:var(--surface-2);
+  color:var(--ink-soft);
+  font-weight:600;
+  width:38px;
+  min-width:38px !important;
+}
+.sheet-cell-data{
+  background:var(--surface);
+  color:var(--ink);
+  font-variant-numeric:tabular-nums;
+}
+.sheet-cell-formula{
+  background:var(--surface);
+  padding:0 !important;
+}
+.sheet-cell-formula input{
+  width:100%;
+  border:none;
+  background:transparent;
+  font-family:inherit;
+  font-size:inherit;
+  text-align:center;
+  color:var(--ink);
+  padding:7px 10px;
+}
+.sheet-cell-formula input::placeholder{ color:var(--ink-soft); opacity:0.55; }
+.sheet-cell-formula input:focus{ outline:2px solid var(--focus); outline-offset:-2px; }
+.sheet-cell-formula.correct{ background:var(--success-bg); }
+.sheet-cell-formula.correct input{ color:var(--success); }
+.sheet-cell-formula.wrong{ background:var(--danger-bg); }
+.sheet-cell-formula.wrong input{ color:var(--danger); }
+
+.sheet-cell-data{ cursor:cell; user-select:none; }
+.sheet-cell-data.cell-selecting{ background:var(--success-bg); outline:2px solid var(--accent); outline-offset:-2px; }
+
+.autocomplete-dropdown{
+  position:fixed;
+  z-index:50;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:8px;
+  box-shadow:0 6px 20px rgba(31,46,34,0.18);
+  overflow:hidden;
+  font-family:'IBM Plex Mono', monospace;
+}
+.autocomplete-dropdown[hidden]{ display:none; }
+.ac-item{
+  padding:8px 12px;
+  font-size:0.86rem;
+  cursor:pointer;
+  display:flex;
+  justify-content:space-between;
+  gap:14px;
+  white-space:nowrap;
+}
+.ac-item:hover, .ac-item.active{
+  background:var(--accent);
+  color:var(--accent-ink);
+}
+.ac-item .ac-hint{ color:var(--ink-soft); font-size:0.72rem; font-family:'Work Sans', sans-serif; }
+.ac-item.active .ac-hint, .ac-item:hover .ac-hint{ color:var(--accent-ink); opacity:0.85; }
+.ac-footer{
+  padding:6px 12px;
+  font-size:0.68rem;
+  font-family:'Work Sans', sans-serif;
+  color:var(--ink-soft);
+  background:var(--surface-2);
+  border-top:1px solid var(--line);
+  white-space:nowrap;
+}
+.sheet-cell-label{
+  background:var(--surface-2);
+  color:var(--ink-soft);
+  font-weight:600;
+}
+.sheet-cell-index{
+  background:var(--surface);
+  color:var(--ink-soft);
+  font-variant-numeric:tabular-nums;
+}
+.sheet-cell-symbol{
+  background:var(--surface);
+  color:var(--accent);
+  font-weight:700;
+  font-size:1.05rem;
+}
+
+.divider{
+  height:1px;
+  background:var(--line);
+  margin:24px 0;
+}
+
+.equation-block{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:14px;
+}
+.eq-row{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:600;
+  font-size:clamp(1.15rem, 3.8vw, 1.7rem);
+  display:flex;
+  align-items:baseline;
+  justify-content:center;
+  gap:0.32em;
+  flex-wrap:wrap;
+  font-variant-numeric:tabular-nums;
+}
+.eq-row .unit{ color:var(--ink-soft); font-size:0.62em; margin-left:0.05em; }
+.eq-row .eq{ color:var(--ink-soft); margin:0 0.05em; }
+.answer-input{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:600;
+  font-size:1em;
+  width:4.6em;
+  text-align:center;
+  border:none;
+  border-bottom:3px solid var(--ink-soft);
+  background:transparent;
+  color:var(--ink);
+  padding:0 0.1em 0.05em;
+}
+.answer-input.small{ width:3.4em; }
+.answer-input:focus{ outline:none; border-color:var(--focus); }
+.answer-input.correct{ border-color:var(--success); color:var(--success); }
+.answer-input.wrong{ border-color:var(--danger); color:var(--danger); }
+.answer-input:disabled{ opacity:1; }
+
+.actions{
+  margin-top:22px;
+  display:flex;
+  gap:10px;
+  justify-content:center;
+  flex-wrap:wrap;
+}
+button.btn{
+  font-family:'Work Sans', sans-serif;
+  font-weight:600;
+  font-size:0.92rem;
+  padding:11px 22px;
+  border-radius:8px;
+  border:1px solid var(--line);
+  background:var(--surface);
+  color:var(--ink);
+  cursor:pointer;
+  transition:transform .05s ease, background .12s;
+}
+button.btn:active{ transform:translateY(1px); }
+button.btn.primary{
+  background:var(--accent);
+  border-color:var(--accent);
+  color:var(--accent-ink);
+}
+button.btn.primary:hover{ filter:brightness(1.06); }
+button.btn.ghost:hover{ border-color:var(--ink-soft); }
+button.btn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+button.btn:disabled{ opacity:0.5; cursor:default; }
+
+.feedback{
+  margin-top:20px;
+  border-radius:10px;
+  padding:14px 16px;
+  text-align:left;
+}
+.feedback[hidden]{ display:none; }
+.feedback.ok{ background:var(--success-bg); color:var(--success); }
+.feedback.bad{ background:var(--danger-bg); color:var(--danger); }
+.feedback .headline{ font-weight:700; font-size:0.98rem; margin-bottom:6px; }
+.feedback .steps{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:0.85rem;
+  color:var(--ink);
+  opacity:0.85;
+  font-variant-numeric:tabular-nums;
+  white-space:pre-line;
+  line-height:1.55;
+}
+
+.stage2[hidden]{ display:none; }
+
+.note{
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+  background:var(--surface-2);
+  border-left:4px solid var(--focus);
+  border-radius:8px;
+  padding:12px 14px;
+  margin-top:14px;
+}
+.note .note-icon{ flex:none; margin-top:2px; }
+.note p{ margin:0; font-size:0.86rem; line-height:1.5; color:var(--ink); }
+
+.stepper{
+  margin-top:8px;
+  text-align:left;
+}
+.step{
+  position:relative;
+  padding-left:44px;
+}
+.step-connector{
+  position:absolute;
+  left:15px;
+  top:34px;
+  bottom:-2px;
+  width:2px;
+  background:var(--line);
+  transition:background .15s;
+}
+.step.done .step-connector{ background:var(--accent); }
+.step-head{
+  position:relative;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  width:100%;
+  background:none;
+  border:none;
+  padding:10px 4px;
+  margin:0;
+  text-align:left;
+  font-family:'Work Sans', sans-serif;
+  cursor:pointer;
+}
+.step-head:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+.step-num{
+  position:absolute;
+  left:-44px;
+  top:2px;
+  width:32px;
+  height:32px;
+  border-radius:50%;
+  background:var(--surface);
+  color:var(--ink-soft);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:700;
+  font-size:0.9rem;
+  border:2px solid var(--line);
+  transition:background .15s, border-color .15s, color .15s;
+}
+.step.unlocked .step-num{ border-color:var(--accent); color:var(--accent); }
+.step.done .step-num{ background:var(--accent); border-color:var(--accent); color:var(--accent-ink); }
+.step-title{
+  flex:1;
+  font-weight:600;
+  font-size:0.94rem;
+  color:var(--ink);
+}
+.step.locked .step-title{ color:var(--ink-soft); }
+.step.locked .step-head{ cursor:not-allowed; }
+.step-chevron{
+  flex:none;
+  color:var(--ink-soft);
+  font-size:0.85rem;
+  transition:transform .15s;
+}
+.step.open .step-chevron{ transform:rotate(90deg); }
+.step-body{
+  padding:0 6px 20px 4px;
+  font-size:0.88rem;
+  line-height:1.55;
+}
+.step-body[hidden]{ display:none; }
+.step-body p{ margin:0 0 8px; }
+.step-result{
+  display:inline-flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:8px;
+  background:var(--surface-2);
+  border-radius:8px;
+  padding:8px 12px;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:0.86rem;
+  font-variant-numeric:tabular-nums;
+}
+.step-tag{
+  font-size:0.66rem;
+  text-transform:uppercase;
+  letter-spacing:0.06em;
+  color:var(--ink-soft);
+  background:var(--surface);
+  border:1px solid var(--line);
+  padding:2px 8px;
+  border-radius:999px;
+}
+.result-box{
+  background:var(--success-bg);
+  color:var(--success);
+  border-radius:10px;
+  padding:14px 16px;
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:700;
+  font-size:1.05rem;
+  text-align:center;
+  font-variant-numeric:tabular-nums;
+}
+
+@media (max-width:520px){
+  .card{ padding:26px 16px 24px; }
+  .readout .cell{ min-width:64px; padding:6px 8px; }
+  .sheet-table th, .sheet-table td{ padding:6px 10px; min-width:64px; }
+  .step{ padding-left:38px; }
+  .step-num{ left:-38px; width:28px; height:28px; font-size:0.82rem; }
+  .step-connector{ left:13px; }
+}
+.back-link{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  font-size:0.82rem;
+  font-weight:500;
+  color:var(--ink-soft);
+  text-decoration:none;
+  margin-bottom:14px;
+}
+.back-link:hover{ color:var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <a class="back-link" href="mereni.html">← Zpět na Měření</a>
+
+  <div class="brand">
+    <div class="brand-lockup">
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect x="6" y="6" width="28" height="28" rx="3" fill="none" stroke="var(--accent)" stroke-width="2"/>
+        <line x1="6" y1="16" x2="34" y2="16" stroke="var(--accent)" stroke-width="2"/>
+        <line x1="18" y1="6" x2="18" y2="34" stroke="var(--accent)" stroke-width="2"/>
+      </svg>
+      <div class="brand-text">
+        <h1>Zpracování měření</h1>
+        <p>spočítejte průměr a odchylku pomocí vzorců</p>
+      </div>
+    </div>
+    <div class="readout">
+      <div class="cell"><span class="label">Skóre</span><span class="value" id="stat-score">0</span></div>
+      <div class="cell"><span class="label">Série</span><span class="value" id="stat-streak">0</span></div>
+      <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="stat-accuracy">—</span></div>
+    </div>
+  </div>
+
+  <div class="top-tabs">
+    <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+    <button class="toptab" id="top-tab-trenink" data-tab="trenink">Trénink</button>
+    <button class="toptab" id="top-tab-kontrola" data-tab="kontrola">Kontrola</button>
+  </div>
+
+  <div id="teorie-section" class="tab-section">
+
+  <div class="panel">
+    <div class="panel-title">Přímé a nepřímé měření</div>
+    <p>Při <b>přímém měření</b> můžeme hledanou veličinu naměřit rovnou (např. délku šroubu posuvným měřítkem) — výsledkem je zpracování tabulky naměřených hodnot.</p>
+    <p>Při <b>nepřímém měření</b> hledanou veličinu naměřit přímo nelze a dopočítáme ji ze vzorce z jiných, pomocných veličin (např. hustotu tělesa z jeho hmotnosti a objemu). Tato stránka se věnuje zpracování <b>přímého</b> měření.</p>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">Průměrná hodnota</div>
+    <p>Aritmetický průměr <b class="avgsym">x</b> spočítáme jako součet všech naměřených hodnot vydělený jejich počtem <b class="sym">n</b>:</p>
+    <p class="formula-line"><b class="avgsym">x</b> = (<b class="sym">x₁</b> + <b class="sym">x₂</b> + ... + <b class="sym">xₙ</b>) / <b class="sym">n</b></p>
+    <p>Ruční výpočet je praktický jen pro málo hodnot — pro víc naměřených hodnot použijeme tabulkový procesor.</p>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">Absolutní odchylka</div>
+    <p><b class="sym">Δx</b> vyjadřuje, o kolik se naměřené hodnoty v průměru liší od <b class="avgsym">x</b>:</p>
+    <p class="formula-line"><b class="sym">Δx</b> = (|<b class="sym">x₁</b> − <b class="avgsym">x</b>| + |<b class="sym">x₂</b> − <b class="avgsym">x</b>| + ... + |<b class="sym">xₙ</b> − <b class="avgsym">x</b>|) / <b class="sym">n</b></p>
+    <p>Absolutní hodnota zajistí, že se kladné a záporné odchylky navzájem nevyruší. S rostoucím počtem opakování měření <b class="sym">n</b> odchylka klesá — proto měříme vícekrát.</p>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">Relativní odchylka</div>
+    <p>Relativní odchylka <b class="sym">δx</b> vyjadřuje přesnost měření v procentech:</p>
+    <p class="formula-line"><b class="sym">δx</b> = (<b class="sym">Δx</b> / <b class="avgsym">x</b>) · 100 %</p>
+    <p>Umožňuje porovnat přesnost měření <b>různých veličin</b> mezi sebou. Čím nižší <b class="sym">δx</b>, tím přesnější (kvalitnější) je naše měření.</p>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">Výpočet v Excelu / Google tabulkách</div>
+    <p>Tabulkový procesor spočítá vše automaticky — <span class="formula-ref">A1:A10</span> zastupuje rozsah buněk s naměřenými hodnotami, <span class="formula-ref">B1</span> buňku s průměrem a <span class="formula-ref">B2</span> buňku s absolutní odchylkou.</p>
+    <div class="sheet-wrap">
+      <table class="sheet-table">
+        <thead>
+          <tr><th>Veličina</th><th>Vzorec (čeština)</th><th>Vzorec (angličtina)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="sheet-cell-label">Průměr <span class="avgsym">x</span></td><td>=PRŮMĚR(A1:A10)</td><td>=AVERAGE(A1:A10)</td></tr>
+          <tr><td class="sheet-cell-label">Absolutní odchylka <span class="sym">Δx</span></td><td>=PRŮMODCHYLKA(A1:A10)</td><td>=AVEDEV(A1:A10)</td></tr>
+          <tr><td class="sheet-cell-label">Relativní odchylka <span class="sym">δx</span></td><td>=B2/B1*100</td><td>=B2/B1*100</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">Postup zaokrouhlení výsledku</div>
+    <p><b>1. Zaokrouhlete odchylku <span class="sym">Δx</span></b> — na první nenulovou číslici zleva. Nul před ní i za ní může být libovolné množství.</p>
+    <p><b>2. Určete řád této číslice</b> — zjistěte, v jakém řádu je zaokrouhlená odchylka: desetiny, setiny, jednotky, desítky…</p>
+    <p><b>3. Zaokrouhlete průměr <span class="avgsym">x</span></b> — poslední platná číslice průměru musí být ve stejném řádu jako číslice odchylky.</p>
+    <p><b>4. Dopočítejte a zaokrouhlete <span class="sym">δx</span></b> — zaokrouhlete na 2 platné cifry.</p>
+
+    <div class="note">
+      <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <circle cx="9" cy="9" r="7.5" stroke="var(--focus)" stroke-width="1.6"/>
+        <line x1="9" y1="8" x2="9" y2="13" stroke="var(--focus)" stroke-width="1.6" stroke-linecap="round"/>
+        <circle cx="9" cy="5.2" r="1" fill="var(--focus)"/>
+      </svg>
+      <p>Pozor, pořadí je důležité: <b class="sym">δx</b> se počítá <b>až ze zaokrouhlených hodnot</b> <b class="sym">Δx</b> a <b class="avgsym">x</b> z kroků 1–3 — nikdy z původních, nezaokrouhlených čísel.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="cat-tag">Příklad z praxe</span>
+    <h2>Průměr šroubu</h2>
+    <p class="desc">Rozklikejte si postup krok po kroku — další krok se odemkne, jakmile vyřešíte ten předchozí.</p>
+
+    <div class="given-data">
+      <div class="given-line">Naměřeno: <b class="avgsym">d</b> = <b>5,058</b> mm, <b class="sym">Δd</b> = <b>0,04342</b> mm</div>
+    </div>
+
+    <div class="stepper" id="theory-example-stepper">
+
+      <div class="step" data-step="1">
+        <div class="step-connector"></div>
+        <button class="step-head" type="button" aria-expanded="false">
+          <span class="step-num">1</span>
+          <span class="step-title">Zaokrouhlete odchylku <b class="sym">Δd</b></span>
+          <span class="step-chevron">▸</span>
+        </button>
+        <div class="step-body" hidden>
+          <p>Odchylku zaokrouhlíme na první nenulovou číslici zleva.</p>
+          <div class="step-result"><b class="sym">Δd</b> = 0,04342 mm&nbsp; → &nbsp;<b>0,04</b>&nbsp;mm</div>
+        </div>
+      </div>
+
+      <div class="step" data-step="2">
+        <div class="step-connector"></div>
+        <button class="step-head" type="button" aria-expanded="false">
+          <span class="step-num">2</span>
+          <span class="step-title">Určete řád této číslice</span>
+          <span class="step-chevron">▸</span>
+        </button>
+        <div class="step-body" hidden>
+          <p>Zjistíme, v jakém řádu zaokrouhlená odchylka je.</p>
+          <div class="step-result">0,04 mm je v řádu <b>setin</b> milimetru <span class="step-tag">řád: setiny</span></div>
+        </div>
+      </div>
+
+      <div class="step" data-step="3">
+        <div class="step-connector"></div>
+        <button class="step-head" type="button" aria-expanded="false">
+          <span class="step-num">3</span>
+          <span class="step-title">Zaokrouhlete průměr <b class="avgsym">d</b></span>
+          <span class="step-chevron">▸</span>
+        </button>
+        <div class="step-body" hidden>
+          <p>Poslední platná číslice průměru musí být ve stejném řádu jako číslice odchylky (setiny).</p>
+          <div class="step-result"><b class="avgsym">d</b> = 5,058 mm&nbsp; → &nbsp;<b>5,06</b>&nbsp;mm</div>
+        </div>
+      </div>
+
+      <div class="step" data-step="4">
+        <div class="step-connector"></div>
+        <button class="step-head" type="button" aria-expanded="false">
+          <span class="step-num">4</span>
+          <span class="step-title">Dopočítejte a zaokrouhlete <b class="sym">δd</b></span>
+          <span class="step-chevron">▸</span>
+        </button>
+        <div class="step-body" hidden>
+          <p>Relativní odchylku počítáme <b>až ze zaokrouhlených hodnot</b> <b class="sym">Δd</b> a <b class="avgsym">d</b> z kroků 1 a 3, výsledek zaokrouhlíme na 2 platné cifry.</p>
+          <div class="step-result"><b class="sym">δd</b> = 0,04 / 5,06 × 100 ≈ 0,79051&nbsp;%&nbsp; → &nbsp;<b>0,79</b>&nbsp;%</div>
+        </div>
+      </div>
+
+      <div class="step" data-step="5">
+        <button class="step-head" type="button" aria-expanded="false">
+          <span class="step-num">5</span>
+          <span class="step-title">Zapište výsledek</span>
+          <span class="step-chevron">▸</span>
+        </button>
+        <div class="step-body" hidden>
+          <div class="result-box"><b class="avgsym">d</b> = (5,06 ± 0,04) mm &nbsp;&nbsp; <b class="sym">δd</b> = 0,79 %</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="actions">
+      <button class="btn ghost" id="theory-example-reset">Zopakovat postup od začátku</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">Shrnutí</div>
+    <p><b>Přímé měření</b> = hodnotu měříme rovnou; <b>nepřímé</b> = dopočítáme z pomocných veličin.</p>
+    <p>Postup výpočtu: nejprve průměr <span class="avgsym">x</span>, pak absolutní odchylka <span class="sym">Δx</span>, nakonec relativní odchylka <span class="sym">δx</span>.</p>
+    <p>Pro víc hodnot počítáme v tabulkovém procesoru (<span class="formula-ref">PRŮMĚR</span>, <span class="formula-ref">PRŮMODCHYLKA</span>).</p>
+    <p>Zaokrouhlujeme v pořadí: nejprve <span class="sym">Δx</span>, podle jejího řádu pak <span class="avgsym">x</span>, nakonec <span class="sym">δx</span> na 2 platné cifry.</p>
+  </div>
+
+  </div>
+
+  <div id="trenink-section" class="tab-section" hidden>
+
+  <div class="panel">
+    <div class="panel-title">Funkce, které použijete</div>
+    <p>V tabulce využívejte k výpočtům stejné funkce, které používáte v Excelu nebo v Google tabulkách.</p>
+
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">
+      <button class="linklike category-toggle" id="category-toggle" type="button" aria-expanded="false" aria-controls="category-row">Veličiny <span class="toggle-arrow" id="category-toggle-arrow">▸</span></button>
+    </div>
+    <div class="row" id="category-row" hidden></div>
+    <div class="settings-foot">
+      <button class="linklike" id="reset-stats">vynulovat statistiku</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="cat-tag" id="cat-tag">Délka</span>
+
+    <div class="given-data">
+      <div class="given-line">Naměřeno <b id="meas-n">7</b>&times; veličina <b id="meas-symbol" class="sym">l</b>, jednotka <b id="meas-unit">cm</b>. Do tabulky doplňte vzorce do buněk <b>B<span id="meas-row1">8</span></b> a <b>B<span id="meas-row2">9</span></b>.</div>
+    </div>
+
+    <div class="sheet-wrap">
+      <table class="sheet-table">
+        <thead>
+          <tr><th class="sheet-corner"></th><th>A</th><th>B</th></tr>
+        </thead>
+        <tbody id="sheet-body"></tbody>
+      </table>
+    </div>
+
+    <div class="actions">
+      <button class="btn primary" id="btn-check-formulas">Zkontrolovat vzorce</button>
+      <button class="btn ghost" id="btn-skip-formulas">Nevím / Zobrazit vzorce</button>
+    </div>
+    <div class="feedback" id="feedback-formulas" hidden>
+      <div class="headline" id="feedback-formulas-headline"></div>
+      <div class="steps" id="feedback-formulas-steps"></div>
+    </div>
+
+    <div class="stage2" id="stage2" hidden>
+      <div class="divider"></div>
+
+      <div class="equation-block">
+        <div class="eq-row">
+          <span id="qty-symbol" class="sym">l</span>
+          <span class="eq">=</span>
+          <span class="eq">(</span>
+          <input class="answer-input" id="answer-avg" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="?">
+          <span class="eq">±</span>
+          <input class="answer-input" id="answer-dev" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="?">
+          <span class="eq">)</span>
+          <span class="unit" id="qty-unit">cm</span>
+        </div>
+        <div class="eq-row">
+          <span id="qty-symbol-delta" class="sym">δl</span>
+          <span class="eq">=</span>
+          <input class="answer-input small" id="answer-reldev" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="?">
+          <span class="unit">%</span>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn primary" id="btn-check">Zkontrolovat</button>
+        <button class="btn ghost" id="btn-skip">Nevím / Další</button>
+      </div>
+      <div class="feedback" id="feedback" hidden>
+        <div class="headline" id="feedback-headline"></div>
+        <div class="steps" id="feedback-steps"></div>
+      </div>
+    </div>
+
+  </div>
+
+  </div>
+
+  <div id="kontrola-section" class="tab-section" hidden>
+
+  <div class="panel">
+    <div class="panel-title">Kontrola vlastního měření</div>
+    <p>Zadejte vlastní naměřené hodnoty, jejich vypočtený průměr a průměrnou odchylku (<b>už zaokrouhlené</b>) — ověříme, jestli je výsledek správně zaokrouhlený.</p>
+  </div>
+
+  <div class="card">
+    <span class="cat-tag">Vlastní měření</span>
+
+    <div class="given-data">
+      <div class="given-line">Počet měření: <input type="number" class="answer-input small" id="kontrola-row-count-input" min="2" max="50" step="1" value="5" inputmode="numeric" autocomplete="off"></div>
+    </div>
+
+    <div class="sheet-wrap">
+      <table class="sheet-table">
+        <thead>
+          <tr><th class="sheet-corner"></th><th>A</th><th>B</th></tr>
+        </thead>
+        <tbody id="kontrola-sheet-body"></tbody>
+      </table>
+    </div>
+
+    <div class="actions">
+      <button class="btn primary" id="kontrola-check">Zkontrolovat výsledek</button>
+      <button class="btn ghost" id="kontrola-reset">Vymazat tabulku</button>
+    </div>
+    <div class="feedback" id="kontrola-feedback" hidden>
+      <div class="headline" id="kontrola-feedback-headline"></div>
+      <div class="steps" id="kontrola-feedback-steps"></div>
+    </div>
+  </div>
+
+  </div>
+</div>
+
+<div class="autocomplete-dropdown" id="autocomplete-dropdown" hidden></div>
+
+<script>
+(function(){
+  "use strict";
+
+  var FUNCTIONS = [
+    { name:'PRŮMĚR', norm:'PRUMER', hint:'průměr hodnot v rozsahu' },
+    { name:'PRŮMODCHYLKA', norm:'PRUMODCHYLKA', hint:'průměrná odchylka od průměru' }
+  ];
+
+  var QUANTITIES = [
+    { key:'delka', symbol:'l', name:'Délka', unit:'cm', avgRange:[4,60], decimals:1, relRange:[0.01,0.06] },
+    { key:'hmotnost', symbol:'m', name:'Hmotnost', unit:'g', avgRange:[10,400], decimals:1, relRange:[0.005,0.04] },
+    { key:'cas', symbol:'t', name:'Čas', unit:'s', avgRange:[3,40], decimals:2, relRange:[0.01,0.08] },
+    { key:'teplota', symbol:'T', name:'Teplota', unit:'°C', avgRange:[15,90], decimals:1, relRange:[0.005,0.03] },
+    { key:'napeti', symbol:'U', name:'Elektrické napětí', unit:'V', avgRange:[1,12], decimals:2, relRange:[0.005,0.03] },
+    { key:'proud', symbol:'I', name:'Elektrický proud', unit:'A', avgRange:[0.05,2], decimals:3, relRange:[0.01,0.05] }
+  ];
+
+  var ORDER_NAMES = {
+    4:'na desetitisíce', 3:'na tisíce', 2:'na stovky', 1:'na desítky', 0:'na jednotky',
+    '-1':'na desetiny', '-2':'na setiny', '-3':'na tisíciny', '-4':'na desetitisíciny', '-5':'na statisíciny'
+  };
+  function orderLabel(order){
+    return ORDER_NAMES[order] || ('na řád 10^' + order);
+  }
+
+  var state = {
+    sel:{},
+    score:0, streak:0, bestStreak:0, answered:0, correct:0,
+    current:null, locked:false,
+    formulasOk:false,
+    activeFormulaInput:null,
+    dataCellEls:[],
+    rangeSel:{ active:false, input:null, startRow:0, insStart:0, insEnd:0 },
+    formulaText:{ avg:'', dev:'' }
+  };
+  QUANTITIES.forEach(function(q){ state.sel[q.key] = true; });
+
+  var ac = { open:false, input:null, matches:[], activeIndex:0 };
+
+  function loadStats(){
+    try{
+      var raw = localStorage.getItem('zpracovani-mereni-stats');
+      if(raw){ state.bestStreak = JSON.parse(raw).bestStreak || 0; }
+    }catch(e){}
+  }
+  function saveStats(){
+    try{ localStorage.setItem('zpracovani-mereni-stats', JSON.stringify({bestStreak: state.bestStreak})); }catch(e){}
+  }
+
+  function fmtCZ(n, maxDecimals){
+    var f = Math.pow(10,maxDecimals);
+    var v = Math.round(n*f)/f;
+    if(Object.is(v,-0)) v = 0;
+    return v.toString().replace('.', ',');
+  }
+
+  function roundTo(n, decimals){
+    var f = Math.pow(10, decimals);
+    var cleaned = Number((n*f).toPrecision(15));
+    var v = Math.round(cleaned)/f;
+    if(Object.is(v,-0)) v = 0;
+    return v;
+  }
+
+  function fmtFixed(n, decimals){
+    var v = roundTo(n, decimals);
+    if(Object.is(v,-0)) v = 0;
+    return v.toFixed(decimals).replace('.', ',');
+  }
+
+  function roundSig(val, sig){
+    if(val===0) return 0;
+    var mag = Math.floor(Math.log10(Math.abs(val)));
+    var f = Math.pow(10, sig-1-mag);
+    var cleaned = Number((val*f).toPrecision(15));
+    var v = Math.round(cleaned)/f;
+    if(Object.is(v,-0)) v = 0;
+    return v;
+  }
+
+  function roundToOrder(val, order){
+    var f = Math.pow(10, -order);
+    var cleaned = Number((val*f).toPrecision(15));
+    var v = Math.round(cleaned)/f;
+    if(Object.is(v,-0)) v = 0;
+    return v;
+  }
+
+  function decimalsForSig(value, sig){
+    if(value===0) return Math.max(0, sig-1);
+    var mag = Math.floor(Math.log10(Math.abs(value)));
+    return Math.max(0, sig-1-mag);
+  }
+  function decimalsForOrder(order){ return order<0 ? -order : 0; }
+
+  // Vygeneruje n "naměřených" hodnot rozptýlených kolem náhodného středu tak, aby
+  // jejich (zatím nezaokrouhlený) průměr odpovídal cíli mu — odchylky se před
+  // zaokrouhlením jednotlivých hodnot vycentrují na nulový součet.
+  function generateDataset(q){
+    var n = 5 + Math.floor(Math.random()*4);
+    var mu = q.avgRange[0] + Math.random()*(q.avgRange[1]-q.avgRange[0]);
+    var relPct = q.relRange[0] + Math.random()*(q.relRange[1]-q.relRange[0]);
+    var sigma = mu*relPct;
+    var raw = [], i;
+    for(i=0;i<n;i++){
+      raw.push((Math.random()*2-1) * sigma * (0.5+Math.random()));
+    }
+    var sumD = 0;
+    for(i=0;i<n;i++) sumD += raw[i];
+    var meanD = sumD/n;
+    var f = Math.pow(10,q.decimals);
+    var values = [];
+    for(i=0;i<n;i++){
+      var v = mu + (raw[i]-meanD);
+      values.push(Math.round(v*f)/f);
+    }
+    return { n:n, values:values };
+  }
+
+  function meanAndDev(values, n){
+    var i, sum=0;
+    for(i=0;i<n;i++) sum+=values[i];
+    var mean = sum/n;
+    var devSum=0;
+    for(i=0;i<n;i++) devSum+=Math.abs(values[i]-mean);
+    return { mean:mean, dev:devSum/n };
+  }
+
+  function buildExercise(q){
+    var n, values, mean, dev, roundedDev, devOrder, avgMag, roundedAvg;
+    var attempt, ok = false;
+    for(attempt=0; attempt<40; attempt++){
+      var ds = generateDataset(q);
+      n = ds.n; values = ds.values;
+      var md = meanAndDev(values, n);
+      mean = md.mean; dev = md.dev;
+      if(mean===0) continue;
+      avgMag = Math.floor(Math.log10(Math.abs(mean)));
+      roundedDev = roundSig(dev,1);
+      if(roundedDev===0) continue;
+      devOrder = Math.floor(Math.log10(Math.abs(roundedDev)));
+      if(devOrder>=avgMag) continue;
+      roundedAvg = roundToOrder(mean, devOrder);
+      if(roundedAvg===0) continue;
+      ok = true;
+      break;
+    }
+    if(!ok){
+      // Nouzová pojistka pro vzácný případ, kdy se to netrefí ani na 40 pokusů.
+      devOrder = avgMag - 1;
+      roundedDev = roundToOrder(dev, devOrder);
+      if(roundedDev===0) roundedDev = Math.pow(10, devOrder);
+      roundedAvg = roundToOrder(mean, devOrder);
+    }
+
+    var relDevRaw = roundedDev/roundedAvg*100;
+    var roundedRelDev = roundSig(relDevRaw, 2);
+    var answerDecimals = decimalsForOrder(devOrder);
+    var relAnswerDecimals = decimalsForSig(roundedRelDev, 2);
+
+    var deltaSym = 'Δ' + q.symbol;
+    var smallDeltaSym = 'δ' + q.symbol;
+    var iAvgBar = '<span class="avgsym">' + q.symbol + '</span>';
+    var iSym = '<i>' + q.symbol + '</i>';
+    var iDelta = '<i>' + deltaSym + '</i>';
+    var iSmallDelta = '<i>' + smallDeltaSym + '</i>';
+
+    var stepsText =
+      iDelta + ': ' + fmtCZ(dev,6) + ' ' + q.unit + ' → zaokrouhleno na 1 platnou cifru (' + orderLabel(devOrder) + ') → ' + fmtFixed(roundedDev, answerDecimals) + ' ' + q.unit + '\n' +
+      iAvgBar + ': ' + fmtCZ(mean,6) + ' ' + q.unit + ' → zaokrouhleno na stejný řád jako ' + iDelta + ' (' + orderLabel(devOrder) + ') → ' + fmtFixed(roundedAvg, answerDecimals) + ' ' + q.unit + '\n' +
+      iSmallDelta + ' = ' + fmtFixed(roundedDev, answerDecimals) + '/' + fmtFixed(roundedAvg, answerDecimals) + ' × 100 ≈ ' + fmtCZ(relDevRaw,4) + ' % → zaokrouhleno na 2 platné cifry → ' + fmtFixed(roundedRelDev, relAnswerDecimals) + ' %\n' +
+      'Zápis: ' + iSym + ' = (' + fmtFixed(roundedAvg, answerDecimals) + ' ± ' + fmtFixed(roundedDev, answerDecimals) + ') ' + q.unit + ';  ' + iSmallDelta + ' = ' + fmtFixed(roundedRelDev, relAnswerDecimals) + ' %';
+
+    return {
+      q:q, n:n, values:values,
+      mean:mean, dev:dev,
+      roundedAvg:roundedAvg, roundedDev:roundedDev, roundedRelDev:roundedRelDev,
+      answerDecimals:answerDecimals, relAnswerDecimals:relAnswerDecimals,
+      stepsText:stepsText
+    };
+  }
+
+  function renderExercise(){
+    var s = state.current, q = s.q;
+    document.getElementById('cat-tag').textContent = q.name;
+    document.getElementById('meas-n').textContent = s.n;
+    document.getElementById('meas-symbol').textContent = q.symbol;
+    document.getElementById('meas-unit').textContent = q.unit;
+    var avgRow = s.n+2, devRow = s.n+3;
+    document.getElementById('meas-row1').textContent = avgRow;
+    document.getElementById('meas-row2').textContent = devRow;
+
+    state.rangeSel.active = false;
+    state.dataCellEls = [];
+    state.activeFormulaInput = null;
+    state.formulaText = { avg:'', dev:'' };
+    acHide();
+
+    var tbody = document.getElementById('sheet-body');
+    tbody.innerHTML = '';
+    var i;
+
+    var trHead = document.createElement('tr');
+    var tdRowNumHead = document.createElement('td');
+    tdRowNumHead.className = 'sheet-row-num';
+    tdRowNumHead.textContent = '1';
+    var tdAHead = document.createElement('td');
+    tdAHead.className = 'sheet-cell-label';
+    tdAHead.textContent = 'Č. M.';
+    var tdBHead = document.createElement('td');
+    tdBHead.className = 'sheet-cell-label';
+    tdBHead.textContent = q.symbol + ' (' + q.unit + ')';
+    trHead.appendChild(tdRowNumHead); trHead.appendChild(tdAHead); trHead.appendChild(tdBHead);
+    tbody.appendChild(trHead);
+
+    for(i=0;i<s.n;i++){
+      var sheetRow = i+2;
+      var tr = document.createElement('tr');
+      var tdRowNum = document.createElement('td');
+      tdRowNum.className = 'sheet-row-num';
+      tdRowNum.textContent = sheetRow;
+      var tdA = document.createElement('td');
+      tdA.className = 'sheet-cell-index';
+      tdA.textContent = (i+1);
+      var tdB = document.createElement('td');
+      tdB.className = 'sheet-cell-data';
+      tdB.textContent = fmtFixed(s.values[i], q.decimals);
+      (function(sheetRow){
+        tdB.addEventListener('mousedown', function(e){
+          e.preventDefault();
+          beginRangeSelect(sheetRow);
+        });
+        tdB.addEventListener('mouseenter', function(e){
+          if(state.rangeSel.active && e.buttons===1){ updateRangeSelect(sheetRow); }
+        });
+      })(sheetRow);
+      tr.appendChild(tdRowNum); tr.appendChild(tdA); tr.appendChild(tdB);
+      tbody.appendChild(tr);
+      state.dataCellEls.push(tdB);
+    }
+
+    var trAvg = document.createElement('tr');
+    var tdNumAvg = document.createElement('td');
+    tdNumAvg.className = 'sheet-row-num';
+    tdNumAvg.textContent = avgRow;
+    var tdASymAvg = document.createElement('td');
+    tdASymAvg.className = 'sheet-cell-symbol';
+    tdASymAvg.textContent = 'Ø';
+    var tdCellAvg = document.createElement('td');
+    tdCellAvg.className = 'sheet-cell-formula';
+    tdCellAvg.id = 'cell-formula-avg';
+    tdCellAvg.innerHTML = '<input type="text" id="formula-avg" autocomplete="off" spellcheck="false">';
+    trAvg.appendChild(tdNumAvg); trAvg.appendChild(tdASymAvg); trAvg.appendChild(tdCellAvg);
+    tbody.appendChild(trAvg);
+
+    var trDev = document.createElement('tr');
+    var tdNumDev = document.createElement('td');
+    tdNumDev.className = 'sheet-row-num';
+    tdNumDev.textContent = devRow;
+    var tdASymDev = document.createElement('td');
+    tdASymDev.className = 'sheet-cell-symbol';
+    tdASymDev.textContent = 'Δ';
+    var tdCellDev = document.createElement('td');
+    tdCellDev.className = 'sheet-cell-formula';
+    tdCellDev.id = 'cell-formula-dev';
+    tdCellDev.innerHTML = '<input type="text" id="formula-dev" autocomplete="off" spellcheck="false">';
+    trDev.appendChild(tdNumDev); trDev.appendChild(tdASymDev); trDev.appendChild(tdCellDev);
+    tbody.appendChild(trDev);
+
+    [document.getElementById('formula-avg'), document.getElementById('formula-dev')].forEach(function(inputEl){
+      inputEl.addEventListener('keydown', handleFormulaKeydown);
+      inputEl.addEventListener('input', handleFormulaInput);
+      inputEl.addEventListener('focus', function(){
+        state.activeFormulaInput = inputEl;
+        var key = formulaKeyFor(inputEl);
+        if(state.formulaText[key]){ inputEl.value = state.formulaText[key]; }
+      });
+      inputEl.addEventListener('blur', function(){ setTimeout(acHide, 120); clearHighlight(); });
+    });
+
+    document.getElementById('feedback-formulas').hidden = true;
+    document.getElementById('feedback-formulas').classList.remove('ok','bad');
+    document.getElementById('btn-check-formulas').disabled = false;
+    document.getElementById('btn-skip-formulas').disabled = false;
+    document.getElementById('btn-check-formulas').textContent = 'Zkontrolovat vzorce';
+
+    document.getElementById('stage2').hidden = true;
+    state.formulasOk = false;
+
+    document.getElementById('formula-avg').focus();
+  }
+
+  function normalizeFormula(str){
+    if(!str) return '';
+    var s = str.trim().toUpperCase().replace(/\s+/g,'');
+    if(s.normalize) s = s.normalize('NFD').replace(/[̀-ͯ]/g,'');
+    return s;
+  }
+
+  function checkFormulas(){
+    if(!state.formulasOk){
+      var s = state.current;
+      var avgInput = document.getElementById('formula-avg');
+      var devInput = document.getElementById('formula-dev');
+      var cellAvg = document.getElementById('cell-formula-avg');
+      var cellDev = document.getElementById('cell-formula-dev');
+
+      var avgRe = new RegExp('^=PRUMER\\(B2:B' + (s.n+1) + '\\)$');
+      var devRe = new RegExp('^=PRUMODCHYLKA\\(B2:B' + (s.n+1) + '\\)$');
+
+      var avgOk = avgRe.test(normalizeFormula(state.formulaText.avg));
+      var devOk = devRe.test(normalizeFormula(state.formulaText.dev));
+
+      cellAvg.classList.remove('correct','wrong');
+      cellDev.classList.remove('correct','wrong');
+      cellAvg.classList.add(avgOk ? 'correct' : 'wrong');
+      cellDev.classList.add(devOk ? 'correct' : 'wrong');
+
+      var fb = document.getElementById('feedback-formulas');
+      var head = document.getElementById('feedback-formulas-headline');
+      var steps = document.getElementById('feedback-formulas-steps');
+      fb.hidden = false;
+
+      if(avgOk && devOk){
+        fb.classList.add('ok'); fb.classList.remove('bad');
+        head.textContent = 'Vzorce jsou správně.';
+        steps.textContent = '';
+        avgInput.disabled = true; devInput.disabled = true;
+        document.getElementById('btn-check-formulas').disabled = true;
+        document.getElementById('btn-skip-formulas').disabled = true;
+        state.formulasOk = true;
+        clearHighlight();
+        unlockStage2();
+      } else {
+        fb.classList.add('bad'); fb.classList.remove('ok');
+        head.textContent = 'Aspoň jeden vzorec nesedí.';
+        steps.textContent = 'Zkontrolujte název funkce (PRŮMĚR / PRŮMODCHYLKA) a rozsah — má zahrnovat všechny naměřené hodnoty B2:B' + (s.n+1) + '.';
+      }
+    }
+  }
+
+  function skipFormulas(){
+    if(!state.formulasOk){
+      var s = state.current;
+      var avgInput = document.getElementById('formula-avg');
+      var devInput = document.getElementById('formula-dev');
+      var cellAvg = document.getElementById('cell-formula-avg');
+      var cellDev = document.getElementById('cell-formula-dev');
+
+      avgInput.value = '=PRŮMĚR(B2:B' + (s.n+1) + ')';
+      devInput.value = '=PRŮMODCHYLKA(B2:B' + (s.n+1) + ')';
+      state.formulaText.avg = avgInput.value;
+      state.formulaText.dev = devInput.value;
+      avgInput.disabled = true; devInput.disabled = true;
+      cellAvg.classList.remove('wrong'); cellAvg.classList.add('correct');
+      cellDev.classList.remove('wrong'); cellDev.classList.add('correct');
+      clearHighlight();
+
+      var fb = document.getElementById('feedback-formulas');
+      fb.hidden = false;
+      fb.classList.add('bad'); fb.classList.remove('ok');
+      document.getElementById('feedback-formulas-headline').textContent = 'Správné vzorce:';
+      document.getElementById('feedback-formulas-steps').textContent = '=PRŮMĚR(B2:B' + (s.n+1) + ') a =PRŮMODCHYLKA(B2:B' + (s.n+1) + ')';
+
+      document.getElementById('btn-check-formulas').disabled = true;
+      document.getElementById('btn-skip-formulas').disabled = true;
+      state.formulasOk = false;
+      state.streak = 0;
+      updateStats();
+      unlockStage2();
+    }
+  }
+
+  // ---- autocomplete názvů funkcí (psaní "=" a Tab pro výběr) ----
+  function acHide(){
+    ac.open = false;
+    var dd = document.getElementById('autocomplete-dropdown');
+    if(dd) dd.hidden = true;
+  }
+
+  function acShow(inputEl, matches){
+    ac.open = true; ac.input = inputEl; ac.matches = matches; ac.activeIndex = 0;
+    var dd = document.getElementById('autocomplete-dropdown');
+    dd.innerHTML = '';
+    matches.forEach(function(fn, idx){
+      var item = document.createElement('div');
+      item.className = 'ac-item' + (idx===0 ? ' active' : '');
+      item.innerHTML = '<span>' + fn.name + '(</span><span class="ac-hint">' + fn.hint + '</span>';
+      item.addEventListener('mousedown', function(e){
+        e.preventDefault();
+        acSelect(idx);
+      });
+      dd.appendChild(item);
+    });
+    var footer = document.createElement('div');
+    footer.className = 'ac-footer';
+    footer.textContent = 'Tab / Enter pro výběr, ↑↓ pro pohyb';
+    dd.appendChild(footer);
+
+    var rect = inputEl.getBoundingClientRect();
+    dd.style.left = Math.round(rect.left) + 'px';
+    dd.style.top = Math.round(rect.bottom + 4) + 'px';
+    dd.style.minWidth = Math.max(rect.width, 230) + 'px';
+    dd.hidden = false;
+  }
+
+  function acUpdateActive(){
+    var dd = document.getElementById('autocomplete-dropdown');
+    var items = dd.querySelectorAll('.ac-item');
+    items.forEach(function(it, idx){ it.classList.toggle('active', idx===ac.activeIndex); });
+  }
+
+  function acSelect(idx){
+    var fn = ac.matches[idx];
+    var inputEl = ac.input;
+    inputEl.value = '=' + fn.name + '()';
+    state.formulaText[formulaKeyFor(inputEl)] = inputEl.value;
+    var cursor = 2 + fn.name.length;
+    acHide();
+    inputEl.focus();
+    inputEl.setSelectionRange(cursor, cursor);
+  }
+
+  function formulaKeyFor(inputEl){
+    return inputEl.id==='formula-avg' ? 'avg' : 'dev';
+  }
+
+  // Spočítá výsledek vzorce (=PRŮMĚR/PRŮMODCHYLKA nad rozsahem ve sloupci B) z naměřených
+  // dat aktuálního příkladu — použito pro zobrazení vypočtené hodnoty po potvrzení buňky.
+  function evaluateFormula(raw){
+    if(!raw) return null;
+    var norm = normalizeFormula(raw);
+    var m = norm.match(/^=(PRUMER|PRUMODCHYLKA)\(B(\d+)(?::B(\d+))?\)$/);
+    if(!m) return null;
+    var s = state.current;
+    var r1 = parseInt(m[2],10), r2 = m[3] ? parseInt(m[3],10) : r1;
+    var lo = Math.min(r1,r2), hi = Math.max(r1,r2);
+    var vals = [], r;
+    for(r=lo; r<=hi; r++){
+      var idx = r-2;
+      if(idx<0 || idx>=s.values.length) return null;
+      vals.push(s.values[idx]);
+    }
+    if(vals.length===0) return null;
+    var i, sum=0;
+    for(i=0;i<vals.length;i++) sum+=vals[i];
+    var mean = sum/vals.length;
+    if(m[1]==='PRUMER') return mean;
+    var devSum=0;
+    for(i=0;i<vals.length;i++) devSum+=Math.abs(vals[i]-mean);
+    return devSum/vals.length;
+  }
+
+  // Po potvrzení buňky (Enter) zobrazí místo textu vzorce jeho vypočtenou hodnotu —
+  // stejně jako v tabulkovém procesoru; skutečný vzorec zůstává uložený ve state.formulaText
+  // a obnoví se zpět do buňky, jakmile se do ní uživatel opět vrátí (viz focus listener).
+  function commitFormulaDisplay(inputEl){
+    var raw = state.formulaText[formulaKeyFor(inputEl)];
+    if(!raw || raw.charAt(0)!=='='){ return; }
+    var computed = evaluateFormula(raw);
+    if(computed===null) return;
+    inputEl.value = fmtCZ(computed, 6);
+  }
+
+  function handleFormulaInput(e){
+    var inputEl = e.target;
+    clearHighlight();
+    state.formulaText[formulaKeyFor(inputEl)] = inputEl.value;
+    var m = inputEl.value.match(/^=([^\s(]*)$/);
+    if(!m || m[1].length<1){ acHide(); return; }
+    var partial = normalizeFormula(m[1]);
+    var matches = FUNCTIONS.filter(function(fn){ return fn.norm.indexOf(partial)===0; });
+    if(matches.length===0){ acHide(); return; }
+    acShow(inputEl, matches);
+  }
+
+  // Entrem se v needokončené tabulce přechází na další buňku (jako Tab/šipka v Excelu)
+  // a potvrzená buňka zobrazí vypočtenou hodnotu; teprve když jsou vyplněné obě buňky
+  // se vzorci, entr rovnou spustí kontrolu.
+  function handleFormulaKeydown(e){
+    if(ac.open){
+      if(e.key==='ArrowDown'){ e.preventDefault(); ac.activeIndex = (ac.activeIndex+1)%ac.matches.length; acUpdateActive(); return; }
+      if(e.key==='ArrowUp'){ e.preventDefault(); ac.activeIndex = (ac.activeIndex-1+ac.matches.length)%ac.matches.length; acUpdateActive(); return; }
+      if(e.key==='Tab' || e.key==='Enter'){ e.preventDefault(); acSelect(ac.activeIndex); return; }
+      if(e.key==='Escape'){ e.preventDefault(); acHide(); return; }
+    }
+    if(e.key==='Enter'){
+      e.preventDefault();
+      commitFormulaDisplay(e.target);
+      if(state.formulaText.avg.trim()!=='' && state.formulaText.dev.trim()!==''){
+        checkFormulas();
+      } else {
+        var avgInput = document.getElementById('formula-avg');
+        var devInput = document.getElementById('formula-dev');
+        var order = [avgInput, devInput];
+        var idx = order.indexOf(e.target);
+        var next = order[(idx+1) % order.length];
+        next.focus();
+        next.select();
+      }
+    }
+  }
+
+  // ---- výběr rozsahu buněk myší (vloží referenci do aktivní buňky se vzorcem) ----
+  // Fungovat začne, až buňka obsahuje rozepsaný vzorec (začíná "="); dřív klik na
+  // datovou buňku nic nevkládá.
+  function beginRangeSelect(row){
+    var inputEl = state.activeFormulaInput;
+    if(!inputEl || inputEl.disabled) return;
+    if(inputEl.value.charAt(0) !== '='){ return; }
+    state.rangeSel.active = true;
+    state.rangeSel.input = inputEl;
+    state.rangeSel.startRow = row;
+    state.rangeSel.insStart = inputEl.selectionStart;
+    state.rangeSel.insEnd = inputEl.selectionEnd;
+    acHide();
+    applyRangeToInput(row, row);
+  }
+
+  function updateRangeSelect(row){
+    if(!state.rangeSel.active) return;
+    applyRangeToInput(state.rangeSel.startRow, row);
+  }
+
+  function applyRangeToInput(rowA, rowB){
+    var lo = Math.min(rowA, rowB), hi = Math.max(rowA, rowB);
+    var refText = lo===hi ? ('B'+lo) : ('B'+lo+':B'+hi);
+    var rs = state.rangeSel;
+    var val = rs.input.value;
+    var newVal = val.slice(0, rs.insStart) + refText + val.slice(rs.insEnd);
+    rs.input.value = newVal;
+    state.formulaText[formulaKeyFor(rs.input)] = newVal;
+    var newCursor = rs.insStart + refText.length;
+    rs.insEnd = newCursor;
+    rs.input.setSelectionRange(newCursor, newCursor);
+    highlightRange(lo, hi);
+  }
+
+  function endRangeSelect(){
+    if(!state.rangeSel.active) return;
+    state.rangeSel.active = false;
+    if(state.rangeSel.input) state.rangeSel.input.focus();
+  }
+
+  function highlightRange(lo, hi){
+    state.dataCellEls.forEach(function(td, idx){
+      var row = idx+2;
+      td.classList.toggle('cell-selecting', row>=lo && row<=hi);
+    });
+  }
+  function clearHighlight(){
+    state.dataCellEls.forEach(function(td){ td.classList.remove('cell-selecting'); });
+  }
+  document.addEventListener('mouseup', endRangeSelect);
+
+  function unlockStage2(){
+    var s = state.current, q = s.q;
+
+    document.getElementById('qty-symbol').textContent = q.symbol;
+    document.getElementById('qty-unit').textContent = q.unit;
+    document.getElementById('qty-symbol-delta').textContent = 'δ' + q.symbol;
+
+    ['answer-avg','answer-dev','answer-reldev'].forEach(function(id){
+      var el = document.getElementById(id);
+      el.value = ''; el.disabled = false; el.classList.remove('correct','wrong');
+    });
+
+    document.getElementById('feedback').hidden = true;
+    document.getElementById('feedback').classList.remove('ok','bad');
+    state.locked = false;
+    document.getElementById('btn-check').textContent = 'Zkontrolovat';
+
+    document.getElementById('stage2').hidden = false;
+    document.getElementById('answer-avg').focus();
+  }
+
+  function parseAnswer(str){
+    if(!str) return { value:NaN, decimals:0 };
+    str = str.trim().replace(',', '.').replace(/\s+/g,'').replace('%','');
+    var value = parseFloat(str);
+    if(isNaN(value)) return { value:NaN, decimals:0 };
+    var dotIdx = str.indexOf('.');
+    var decimals = dotIdx===-1 ? 0 : (str.length - dotIdx - 1);
+    return { value:value, decimals:decimals };
+  }
+
+  function isCorrectAnswer(parsed, correctValue, expectedDecimals){
+    if(isNaN(parsed.value)) return false;
+    if(parsed.decimals !== expectedDecimals) return false;
+    return Math.abs(parsed.value - correctValue) <= Math.max(Math.abs(correctValue)*1e-6, 1e-9);
+  }
+
+  function disableInputs(){
+    ['answer-avg','answer-dev','answer-reldev'].forEach(function(id){
+      document.getElementById(id).disabled = true;
+    });
+  }
+
+  function isAllFilled(){
+    return document.getElementById('answer-avg').value.trim()!=='' &&
+           document.getElementById('answer-dev').value.trim()!=='' &&
+           document.getElementById('answer-reldev').value.trim()!=='';
+  }
+
+  function confirmIncompleteIfNeeded(){
+    if(isAllFilled()) return true;
+    return window.confirm('Nejsou vyplněná všechna pole. Opravdu chcete odpověď zkontrolovat?');
+  }
+
+  function gradeCurrentAnswer(){
+    var s = state.current;
+    var avgInput = document.getElementById('answer-avg');
+    var devInput = document.getElementById('answer-dev');
+    var relInput = document.getElementById('answer-reldev');
+
+    var avgParsed = parseAnswer(avgInput.value);
+    var devParsed = parseAnswer(devInput.value);
+    var relParsed = parseAnswer(relInput.value);
+
+    var avgOk = isCorrectAnswer(avgParsed, s.roundedAvg, s.answerDecimals);
+    var devOk = isCorrectAnswer(devParsed, s.roundedDev, s.answerDecimals);
+    var relOk = isCorrectAnswer(relParsed, s.roundedRelDev, s.relAnswerDecimals);
+    var allOk = avgOk && devOk && relOk;
+
+    avgInput.classList.add(avgOk ? 'correct' : 'wrong');
+    devInput.classList.add(devOk ? 'correct' : 'wrong');
+    relInput.classList.add(relOk ? 'correct' : 'wrong');
+
+    state.answered++;
+    var fb = document.getElementById('feedback');
+    var head = document.getElementById('feedback-headline');
+    var steps = document.getElementById('feedback-steps');
+    fb.hidden = false;
+
+    if(allOk && state.formulasOk){
+      state.score += 10; state.streak++; state.correct++;
+      if(state.streak>state.bestStreak){ state.bestStreak = state.streak; saveStats(); }
+      fb.classList.add('ok'); fb.classList.remove('bad');
+      head.textContent = 'Správně!';
+    } else {
+      state.streak = 0;
+      fb.classList.add('bad'); fb.classList.remove('ok');
+      head.textContent = allOk ? 'Zápis sedí, ale vzorce v tabulce nebyly správně.' : 'Bohužel, aspoň jedna hodnota nesedí.';
+    }
+    steps.innerHTML = s.stepsText;
+    disableInputs();
+    state.locked = true;
+    var btnCheck = document.getElementById('btn-check');
+    btnCheck.textContent = 'Další příklad →';
+    btnCheck.focus();
+    updateStats();
+  }
+
+  function checkAnswer(){
+    if(state.locked){ newExercise(); return; }
+    if(!confirmIncompleteIfNeeded()) return;
+    gradeCurrentAnswer();
+  }
+
+  function skipAnswer(){
+    if(state.locked){ newExercise(); return; }
+    state.streak = 0;
+    state.answered++;
+    var s = state.current;
+    var fb = document.getElementById('feedback');
+    fb.hidden = false;
+    document.getElementById('feedback-headline').textContent = 'Správné řešení:';
+    document.getElementById('feedback-steps').innerHTML = s.stepsText;
+    fb.classList.add('bad'); fb.classList.remove('ok');
+    disableInputs();
+    state.locked = true;
+    var btnCheck = document.getElementById('btn-check');
+    btnCheck.textContent = 'Další příklad →';
+    btnCheck.focus();
+    updateStats();
+  }
+
+  function updateStats(){
+    document.getElementById('stat-score').textContent = state.score;
+    document.getElementById('stat-streak').textContent = state.streak + (state.bestStreak>0 ? ' / ' + state.bestStreak : '');
+    document.getElementById('stat-accuracy').textContent = state.answered===0 ? '—' : Math.round(100*state.correct/state.answered) + ' %';
+  }
+
+  function newExercise(){
+    var pool = QUANTITIES.filter(function(q){ return state.sel[q.key]; });
+    if(pool.length===0) pool = QUANTITIES;
+    var q = pool[Math.floor(Math.random()*pool.length)];
+    state.current = buildExercise(q);
+    renderExercise();
+  }
+
+  function buildCategoryRow(){
+    var row = document.getElementById('category-row');
+    row.innerHTML = '';
+    QUANTITIES.forEach(function(q){
+      var b = document.createElement('button');
+      b.className = 'chip' + (state.sel[q.key] ? ' on' : '');
+      b.textContent = q.name;
+      b.addEventListener('click', function(){
+        var activeCount = QUANTITIES.filter(function(qq){ return state.sel[qq.key]; }).length;
+        if(state.sel[q.key] && activeCount===1) return;
+        state.sel[q.key] = !state.sel[q.key];
+        b.classList.toggle('on', state.sel[q.key]);
+        newExercise();
+      });
+      row.appendChild(b);
+    });
+  }
+
+  document.getElementById('category-toggle').addEventListener('click', function(){
+    var row = document.getElementById('category-row');
+    var expanded = row.hidden;
+    row.hidden = !expanded;
+    this.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+  });
+
+  document.getElementById('btn-check-formulas').addEventListener('click', checkFormulas);
+  document.getElementById('btn-skip-formulas').addEventListener('click', skipFormulas);
+  document.getElementById('btn-check').addEventListener('click', checkAnswer);
+  document.getElementById('btn-skip').addEventListener('click', skipAnswer);
+  ['answer-avg','answer-dev','answer-reldev'].forEach(function(id){
+    document.getElementById(id).addEventListener('keydown', function(e){
+      if(e.key==='Enter'){ e.preventDefault(); checkAnswer(); }
+    });
+  });
+  document.getElementById('reset-stats').addEventListener('click', function(){
+    state.score=0; state.streak=0; state.answered=0; state.correct=0; state.bestStreak=0;
+    try{ localStorage.removeItem('zpracovani-mereni-stats'); }catch(e){}
+    updateStats();
+  });
+
+  loadStats();
+  buildCategoryRow();
+  updateStats();
+  newExercise();
+
+  // ---- horní přepínač Teorie / Trénink / Kontrola ----
+  (function(){
+    var tabs = {
+      teorie: { btn: document.getElementById('top-tab-teorie'), section: document.getElementById('teorie-section') },
+      trenink: { btn: document.getElementById('top-tab-trenink'), section: document.getElementById('trenink-section') },
+      kontrola: { btn: document.getElementById('top-tab-kontrola'), section: document.getElementById('kontrola-section') }
+    };
+
+    function show(tab){
+      Object.keys(tabs).forEach(function(key){
+        var isActive = key === tab;
+        tabs[key].btn.classList.toggle('on', isActive);
+        tabs[key].section.hidden = !isActive;
+      });
+    }
+
+    Object.keys(tabs).forEach(function(key){
+      tabs[key].btn.addEventListener('click', function(){ show(key); });
+    });
+  })();
+
+  // ---- teoretický příklad: postupně odemykaný stepper ----
+  (function(){
+    var wrap = document.getElementById('theory-example-stepper');
+    if(!wrap) return;
+    var steps = Array.prototype.slice.call(wrap.querySelectorAll('.step'));
+    var unlockedUpTo = 1;
+
+    function refreshLocks(){
+      steps.forEach(function(st){
+        var idx = parseInt(st.getAttribute('data-step'), 10);
+        var locked = idx > unlockedUpTo;
+        st.classList.toggle('locked', locked);
+        st.classList.toggle('unlocked', !locked && !st.classList.contains('done'));
+        st.querySelector('.step-head').setAttribute('aria-disabled', locked ? 'true' : 'false');
+      });
+    }
+
+    steps.forEach(function(st){
+      var idx = parseInt(st.getAttribute('data-step'), 10);
+      var head = st.querySelector('.step-head');
+      var body = st.querySelector('.step-body');
+      head.addEventListener('click', function(){
+        if(idx > unlockedUpTo) return;
+        var wasOpen = st.classList.contains('open');
+        st.classList.toggle('open', !wasOpen);
+        body.hidden = wasOpen;
+        head.setAttribute('aria-expanded', (!wasOpen).toString());
+        if(!wasOpen){
+          st.classList.add('done');
+          if(idx === unlockedUpTo && unlockedUpTo < steps.length){
+            unlockedUpTo++;
+          }
+          refreshLocks();
+        }
+      });
+    });
+
+    var resetBtn = document.getElementById('theory-example-reset');
+    if(resetBtn){
+      resetBtn.addEventListener('click', function(){
+        unlockedUpTo = 1;
+        steps.forEach(function(st){
+          st.classList.remove('open', 'done');
+          st.querySelector('.step-body').hidden = true;
+          st.querySelector('.step-head').setAttribute('aria-expanded', 'false');
+        });
+        refreshLocks();
+      });
+    }
+
+    refreshLocks();
+  })();
+
+  // ---- záložka Kontrola: žák zadá vlastní naměřená data a nechá si zkontrolovat zaokrouhlení ----
+  (function(){
+    var kontrolaRowCount = 5;
+
+    function kontrolaDataInputs(){
+      return Array.prototype.slice.call(document.querySelectorAll('.kontrola-data-input'));
+    }
+
+    // Vložení víc buněk najednou z Excelu/Sheets (sloupec hodnot oddělený konci řádků,
+    // případně řádky s tabulátory) — rozloží se od buňky, do které se vkládá, dál dolů.
+    // Tabulka se podle potřeby sama rozšíří o další řádky měření.
+    function handleDataPaste(e){
+      var clipboard = e.clipboardData || window.clipboardData;
+      if(!clipboard) return;
+      var text = clipboard.getData('text');
+      if(!text || (text.indexOf('\n')===-1 && text.indexOf('\t')===-1)) return;
+      e.preventDefault();
+
+      var lines = text.replace(/\r/g,'').split('\n');
+      while(lines.length && lines[lines.length-1].trim()===''){ lines.pop(); }
+      var pastedValues = lines.map(function(line){ return line.split('\t')[0].trim(); });
+      if(pastedValues.length===0) return;
+
+      var dataInputs = kontrolaDataInputs();
+      var startIdx = dataInputs.indexOf(e.target);
+      if(startIdx===-1) startIdx = 0;
+
+      var neededCount = startIdx + pastedValues.length;
+      if(neededCount > kontrolaRowCount){
+        kontrolaRowCount = Math.min(neededCount, 50);
+        renderKontrolaTable();
+        dataInputs = kontrolaDataInputs();
+      }
+
+      pastedValues.forEach(function(val, i){
+        var idx = startIdx + i;
+        if(idx < dataInputs.length){ dataInputs[idx].value = val; }
+      });
+
+      var lastIdx = Math.min(startIdx + pastedValues.length, dataInputs.length) - 1;
+      if(dataInputs[lastIdx]) dataInputs[lastIdx].focus();
+    }
+
+    function renderKontrolaTable(){
+      var tbody = document.getElementById('kontrola-sheet-body');
+      var unitField = document.getElementById('kontrola-unit-label');
+      var unitVal = unitField ? unitField.value : '';
+      var prevValues = kontrolaDataInputs().map(function(inp){ return inp.value; });
+      tbody.innerHTML = '';
+
+      var trHead = document.createElement('tr');
+      var tdRowNumHead = document.createElement('td');
+      tdRowNumHead.className = 'sheet-row-num';
+      tdRowNumHead.textContent = '1';
+      var tdAHead = document.createElement('td');
+      tdAHead.className = 'sheet-cell-label';
+      tdAHead.textContent = 'Č. M.';
+      var tdBHead = document.createElement('td');
+      tdBHead.className = 'sheet-cell-formula';
+      tdBHead.innerHTML = '<input type="text" id="kontrola-unit-label" autocomplete="off" spellcheck="false" placeholder="např. l (cm)">';
+      trHead.appendChild(tdRowNumHead); trHead.appendChild(tdAHead); trHead.appendChild(tdBHead);
+      tbody.appendChild(trHead);
+
+      var i;
+      for(i=0;i<kontrolaRowCount;i++){
+        var sheetRow = i+2;
+        var tr = document.createElement('tr');
+        var tdRowNum = document.createElement('td');
+        tdRowNum.className = 'sheet-row-num';
+        tdRowNum.textContent = sheetRow;
+        var tdA = document.createElement('td');
+        tdA.className = 'sheet-cell-index';
+        tdA.textContent = (i+1);
+        var tdB = document.createElement('td');
+        tdB.className = 'sheet-cell-formula';
+        tdB.innerHTML = '<input type="text" class="kontrola-data-input" inputmode="decimal" autocomplete="off" spellcheck="false">';
+        tdB.querySelector('input').addEventListener('paste', handleDataPaste);
+        tr.appendChild(tdRowNum); tr.appendChild(tdA); tr.appendChild(tdB);
+        tbody.appendChild(tr);
+      }
+
+      var avgRow = kontrolaRowCount+2, devRow = kontrolaRowCount+3;
+      var trAvg = document.createElement('tr');
+      var tdNumAvg = document.createElement('td');
+      tdNumAvg.className = 'sheet-row-num';
+      tdNumAvg.textContent = avgRow;
+      var tdASymAvg = document.createElement('td');
+      tdASymAvg.className = 'sheet-cell-symbol';
+      tdASymAvg.textContent = 'Ø';
+      var tdCellAvg = document.createElement('td');
+      tdCellAvg.className = 'sheet-cell-formula';
+      tdCellAvg.id = 'kontrola-cell-avg';
+      tdCellAvg.innerHTML = '<input type="text" id="kontrola-answer-avg" inputmode="decimal" autocomplete="off" spellcheck="false">';
+      trAvg.appendChild(tdNumAvg); trAvg.appendChild(tdASymAvg); trAvg.appendChild(tdCellAvg);
+      tbody.appendChild(trAvg);
+
+      var trDev = document.createElement('tr');
+      var tdNumDev = document.createElement('td');
+      tdNumDev.className = 'sheet-row-num';
+      tdNumDev.textContent = devRow;
+      var tdASymDev = document.createElement('td');
+      tdASymDev.className = 'sheet-cell-symbol';
+      tdASymDev.textContent = 'Δ';
+      var tdCellDev = document.createElement('td');
+      tdCellDev.className = 'sheet-cell-formula';
+      tdCellDev.id = 'kontrola-cell-dev';
+      tdCellDev.innerHTML = '<input type="text" id="kontrola-answer-dev" inputmode="decimal" autocomplete="off" spellcheck="false">';
+      trDev.appendChild(tdNumDev); trDev.appendChild(tdASymDev); trDev.appendChild(tdCellDev);
+      tbody.appendChild(trDev);
+
+      document.getElementById('kontrola-unit-label').value = unitVal;
+      var newDataInputs = kontrolaDataInputs();
+      newDataInputs.forEach(function(inp, idx){ if(prevValues[idx]!==undefined) inp.value = prevValues[idx]; });
+
+      document.getElementById('kontrola-row-count-input').value = kontrolaRowCount;
+
+      // Entrem se přechází na další buňku, na poslední (Δ) spustí kontrolu.
+      var order = [document.getElementById('kontrola-unit-label')]
+        .concat(newDataInputs)
+        .concat([document.getElementById('kontrola-answer-avg'), document.getElementById('kontrola-answer-dev')]);
+      order.forEach(function(inp, idx){
+        inp.addEventListener('keydown', function(e){
+          if(e.key==='Enter'){
+            e.preventDefault();
+            if(idx===order.length-1){ checkKontrola(); }
+            else { order[idx+1].focus(); order[idx+1].select(); }
+          }
+        });
+      });
+    }
+
+    function checkKontrola(){
+      var dataInputs = kontrolaDataInputs();
+      var avgInput = document.getElementById('kontrola-answer-avg');
+      var devInput = document.getElementById('kontrola-answer-dev');
+      var cellAvg = document.getElementById('kontrola-cell-avg');
+      var cellDev = document.getElementById('kontrola-cell-dev');
+      var fb = document.getElementById('kontrola-feedback');
+      var head = document.getElementById('kontrola-feedback-headline');
+      var steps = document.getElementById('kontrola-feedback-steps');
+
+      cellAvg.classList.remove('correct','wrong');
+      cellDev.classList.remove('correct','wrong');
+
+      var values = [], allFilled = true;
+      dataInputs.forEach(function(inp){
+        var p = parseAnswer(inp.value);
+        if(isNaN(p.value)){ allFilled = false; } else { values.push(p.value); }
+      });
+      var avgParsed = parseAnswer(avgInput.value);
+      var devParsed = parseAnswer(devInput.value);
+
+      if(!allFilled || values.length<2 || isNaN(avgParsed.value) || isNaN(devParsed.value)){
+        fb.hidden = false;
+        fb.classList.add('bad'); fb.classList.remove('ok');
+        head.textContent = 'Nejsou vyplněná všechna pole.';
+        steps.textContent = 'Vyplňte všechny naměřené hodnoty (aspoň 2) a obě výsledné hodnoty Ø a Δ.';
+        return;
+      }
+
+      var n = values.length, i, sum=0;
+      for(i=0;i<n;i++) sum+=values[i];
+      var mean = sum/n;
+      var devSum=0;
+      for(i=0;i<n;i++) devSum+=Math.abs(values[i]-mean);
+      var dev = devSum/n;
+
+      var avgMag = mean===0 ? 0 : Math.floor(Math.log10(Math.abs(mean)));
+      var roundedDev = roundSig(dev,1);
+      var devOrder;
+      if(roundedDev===0){
+        devOrder = avgMag-3;
+      } else {
+        devOrder = Math.floor(Math.log10(Math.abs(roundedDev)));
+        if(devOrder>=avgMag){
+          devOrder = avgMag-1;
+          roundedDev = roundToOrder(dev, devOrder);
+          if(roundedDev===0) roundedDev = Math.pow(10, devOrder);
+        }
+      }
+      var roundedAvg = roundToOrder(mean, devOrder);
+      var answerDecimals = decimalsForOrder(devOrder);
+
+      var avgOk = isCorrectAnswer(avgParsed, roundedAvg, answerDecimals);
+      var devOk = isCorrectAnswer(devParsed, roundedDev, answerDecimals);
+      cellAvg.classList.add(avgOk ? 'correct' : 'wrong');
+      cellDev.classList.add(devOk ? 'correct' : 'wrong');
+
+      var unit = document.getElementById('kontrola-unit-label').value.trim();
+      var unitSuffix = unit ? (' ' + unit) : '';
+
+      fb.hidden = false;
+      if(avgOk && devOk){
+        fb.classList.add('ok'); fb.classList.remove('bad');
+        head.textContent = 'Správně zaokrouhleno!';
+      } else {
+        fb.classList.add('bad'); fb.classList.remove('ok');
+        head.textContent = 'Zaokrouhlení nesedí.';
+      }
+      steps.textContent =
+        'Ze zadaných hodnot vychází: průměr ≈ ' + fmtCZ(mean,6) + unitSuffix + ', průměrná odchylka ≈ ' + fmtCZ(dev,6) + unitSuffix + '\n' +
+        'Správně zaokrouhleno: Ø = ' + fmtFixed(roundedAvg, answerDecimals) + unitSuffix + ',  Δ = ' + fmtFixed(roundedDev, answerDecimals) + unitSuffix;
+    }
+
+    var rowCountInput = document.getElementById('kontrola-row-count-input');
+    function applyRowCountInput(){
+      var n = parseInt(rowCountInput.value, 10);
+      if(isNaN(n)) n = kontrolaRowCount;
+      n = Math.max(2, Math.min(50, n));
+      if(n !== kontrolaRowCount){
+        kontrolaRowCount = n;
+        renderKontrolaTable();
+      } else {
+        rowCountInput.value = kontrolaRowCount;
+      }
+    }
+    rowCountInput.addEventListener('change', applyRowCountInput);
+    rowCountInput.addEventListener('keydown', function(e){
+      if(e.key==='Enter'){
+        e.preventDefault();
+        applyRowCountInput();
+        var firstData = kontrolaDataInputs()[0];
+        if(firstData) firstData.focus();
+      }
+    });
+    document.getElementById('kontrola-check').addEventListener('click', checkKontrola);
+    document.getElementById('kontrola-reset').addEventListener('click', function(){
+      kontrolaDataInputs().forEach(function(inp){ inp.value=''; });
+      document.getElementById('kontrola-unit-label').value='';
+      document.getElementById('kontrola-answer-avg').value='';
+      document.getElementById('kontrola-answer-dev').value='';
+      document.getElementById('kontrola-cell-avg').classList.remove('correct','wrong');
+      document.getElementById('kontrola-cell-dev').classList.remove('correct','wrong');
+      document.getElementById('kontrola-feedback').hidden = true;
+      document.getElementById('kontrola-feedback').classList.remove('ok','bad');
+    });
+
+    renderKontrolaTable();
+  })();
+})();
+</script>
+
+</body>
+</html>
