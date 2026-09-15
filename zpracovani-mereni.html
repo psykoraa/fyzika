@@ -653,7 +653,7 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
         <line x1="18" y1="6" x2="18" y2="34" stroke="var(--accent)" stroke-width="2"/>
       </svg>
       <div class="brand-text">
-        <h1>Zpracování měření</h1>
+        <h1>Přímé měření</h1>
         <p>spočítejte průměr a odchylku pomocí vzorců</p>
       </div>
     </div>
@@ -977,9 +977,17 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
     try{ localStorage.setItem('zpracovani-mereni-stats', JSON.stringify({bestStreak: state.bestStreak})); }catch(e){}
   }
 
+  // Školní pravidlo zaokrouhluje "od nuly" podle absolutní hodnoty (|-22,5| → 23,
+  // tedy -22,5 → -23). Math.round ale u záporných čísel zaokrouhluje směrem k nule
+  // (Math.round(-22.5) === -22), takže by u záporných výsledků (např. teplota pod
+  // bodem mrazu) dával špatnou odpověď — proto se všude místo něj používá tohle.
+  function roundHalfAwayFromZero(x){
+    return x < 0 ? -Math.round(-x) : Math.round(x);
+  }
+
   function fmtCZ(n, maxDecimals){
     var f = Math.pow(10,maxDecimals);
-    var v = Math.round(n*f)/f;
+    var v = roundHalfAwayFromZero(n*f)/f;
     if(Object.is(v,-0)) v = 0;
     return v.toString().replace('.', ',');
   }
@@ -987,7 +995,7 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
   function roundTo(n, decimals){
     var f = Math.pow(10, decimals);
     var cleaned = Number((n*f).toPrecision(15));
-    var v = Math.round(cleaned)/f;
+    var v = roundHalfAwayFromZero(cleaned)/f;
     if(Object.is(v,-0)) v = 0;
     return v;
   }
@@ -1003,7 +1011,7 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
     var mag = Math.floor(Math.log10(Math.abs(val)));
     var f = Math.pow(10, sig-1-mag);
     var cleaned = Number((val*f).toPrecision(15));
-    var v = Math.round(cleaned)/f;
+    var v = roundHalfAwayFromZero(cleaned)/f;
     if(Object.is(v,-0)) v = 0;
     return v;
   }
@@ -1011,7 +1019,7 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
   function roundToOrder(val, order){
     var f = Math.pow(10, -order);
     var cleaned = Number((val*f).toPrecision(15));
-    var v = Math.round(cleaned)/f;
+    var v = roundHalfAwayFromZero(cleaned)/f;
     if(Object.is(v,-0)) v = 0;
     return v;
   }
@@ -1062,14 +1070,21 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
     for(attempt=0; attempt<40; attempt++){
       var ds = generateDataset(q);
       n = ds.n; values = ds.values;
+      if(values.every(function(v){ return v===values[0]; })) continue;
       var md = meanAndDev(values, n);
-      mean = md.mean; dev = md.dev;
+      // Vyčistíme šum plovoucí čárky nasčítaný při součtu odchylek (např. 0,055 by se
+      // jinak uložilo jako 0,054999999999999937... a zaokrouhlilo špatným směrem).
+      mean = Number(md.mean.toPrecision(12));
+      dev = Number(md.dev.toPrecision(12));
       if(mean===0) continue;
       avgMag = Math.floor(Math.log10(Math.abs(mean)));
       roundedDev = roundSig(dev,1);
       if(roundedDev===0) continue;
       devOrder = Math.floor(Math.log10(Math.abs(roundedDev)));
-      if(devOrder>=avgMag) continue;
+      // Odchylka smí být klidně ve stejném řádu jako průměr (pak má průměr po
+      // zaokrouhlení jen 1 platnou cifru) — problém nastává, až když je odchylka
+      // řádově VĚTŠÍ než průměr, protože by mu zaokrouhlení smazalo všechny cifry.
+      if(devOrder>avgMag) continue;
       roundedAvg = roundToOrder(mean, devOrder);
       if(roundedAvg===0) continue;
       ok = true;
@@ -1084,7 +1099,7 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
     }
 
     var relDevRaw = roundedDev/roundedAvg*100;
-    var roundedRelDev = roundSig(relDevRaw, 2);
+    var roundedRelDev = roundSig(Number(relDevRaw.toPrecision(12)), 2);
     var answerDecimals = decimalsForOrder(devOrder);
     var relAnswerDecimals = decimalsForSig(roundedRelDev, 2);
 
@@ -1213,7 +1228,13 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
         var key = formulaKeyFor(inputEl);
         if(state.formulaText[key]){ inputEl.value = state.formulaText[key]; }
       });
-      inputEl.addEventListener('blur', function(){ setTimeout(acHide, 120); clearHighlight(); });
+      inputEl.addEventListener('blur', function(){
+        setTimeout(acHide, 120);
+        clearHighlight();
+        // Na mobilu klávesnice často nepošle skutečný Enter keydown, takže se o
+        // zobrazení vypočtené hodnoty musí postarat i opuštění pole (blur).
+        commitFormulaDisplay(inputEl);
+      });
     });
 
     document.getElementById('feedback-formulas').hidden = true;
@@ -1529,11 +1550,13 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
     document.getElementById('answer-avg').focus();
   }
 
+  // Vstup musí být čistě číslo (nepovinné mínus, číslice, nepovinná desetinná část) —
+  // jinak by např. "12abc" prošlo přes parseFloat jako tiše přijaté 12.
   function parseAnswer(str){
     if(!str) return { value:NaN, decimals:0 };
     str = str.trim().replace(',', '.').replace(/\s+/g,'').replace('%','');
+    if(!/^-?\d+(\.\d+)?$/.test(str)) return { value:NaN, decimals:0 };
     var value = parseFloat(str);
-    if(isNaN(value)) return { value:NaN, decimals:0 };
     var dotIdx = str.indexOf('.');
     var decimals = dotIdx===-1 ? 0 : (str.length - dotIdx - 1);
     return { value:value, decimals:decimals };
@@ -1543,6 +1566,15 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
     if(isNaN(parsed.value)) return false;
     if(parsed.decimals !== expectedDecimals) return false;
     return Math.abs(parsed.value - correctValue) <= Math.max(Math.abs(correctValue)*1e-6, 1e-9);
+  }
+
+  // Rozliší "číslo je v podstatě správné, jen jinak zaokrouhlené/zapsané" od
+  // "číslo neodpovídá zadaným datům vůbec" (chyba už v samotném výpočtu) — použito
+  // v Kontrole pro výběr vhodnější chybové hlášky.
+  function isCloseButMisrounded(parsed, correctValue, expectedDecimals){
+    if(isNaN(parsed.value)) return false;
+    var tolerance = Math.pow(10, -expectedDecimals) * 2;
+    return Math.abs(parsed.value - correctValue) <= tolerance;
   }
 
   function disableInputs(){
@@ -1955,19 +1987,27 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
       cellAvg.classList.remove('correct','wrong');
       cellDev.classList.remove('correct','wrong');
 
-      var values = [], allFilled = true;
+      var values = [], hasEmpty = false, hasInvalid = false;
       dataInputs.forEach(function(inp){
         var p = parseAnswer(inp.value);
-        if(isNaN(p.value)){ allFilled = false; } else { values.push(p.value); }
+        if(isNaN(p.value)){ if(inp.value.trim()===''){ hasEmpty = true; } else { hasInvalid = true; } }
+        else { values.push(p.value); }
       });
       var avgParsed = parseAnswer(avgInput.value);
       var devParsed = parseAnswer(devInput.value);
+      if(isNaN(avgParsed.value)){ if(avgInput.value.trim()===''){ hasEmpty = true; } else { hasInvalid = true; } }
+      if(isNaN(devParsed.value)){ if(devInput.value.trim()===''){ hasEmpty = true; } else { hasInvalid = true; } }
 
-      if(!allFilled || values.length<2 || isNaN(avgParsed.value) || isNaN(devParsed.value)){
+      if(hasEmpty || hasInvalid || values.length<2 || isNaN(avgParsed.value) || isNaN(devParsed.value)){
         fb.hidden = false;
         fb.classList.add('bad'); fb.classList.remove('ok');
-        head.textContent = 'Nejsou vyplněná všechna pole.';
-        steps.textContent = 'Vyplňte všechny naměřené hodnoty (aspoň 2) a obě výsledné hodnoty Ø a Δ.';
+        if(hasInvalid){
+          head.textContent = 'Některá pole obsahují neplatný text.';
+          steps.textContent = 'Do všech buněk (naměřené hodnoty i výsledky Ø a Δ) zadávejte jen čísla.';
+        } else {
+          head.textContent = 'Nejsou vyplněná všechna pole.';
+          steps.textContent = 'Vyplňte všechny naměřené hodnoty (aspoň 2) a obě výsledné hodnoty Ø a Δ.';
+        }
         return;
       }
 
@@ -1977,6 +2017,10 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
       var devSum=0;
       for(i=0;i<n;i++) devSum+=Math.abs(values[i]-mean);
       var dev = devSum/n;
+      // Vyčistíme šum plovoucí čárky nasčítaný při součtu odchylek (např. 0,055 by se
+      // jinak uložilo jako 0,054999999999999937... a zaokrouhlilo špatným směrem).
+      mean = Number(mean.toPrecision(12));
+      dev = Number(dev.toPrecision(12));
 
       var avgMag = mean===0 ? 0 : Math.floor(Math.log10(Math.abs(mean)));
       var roundedDev = roundSig(dev,1);
@@ -1985,7 +2029,10 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
         devOrder = avgMag-3;
       } else {
         devOrder = Math.floor(Math.log10(Math.abs(roundedDev)));
-        if(devOrder>=avgMag){
+        // Odchylka smí být klidně ve stejném řádu jako průměr (pak má průměr po
+        // zaokrouhlení jen 1 platnou cifru) — problém nastává, až když je odchylka
+        // řádově VĚTŠÍ než průměr, protože by mu zaokrouhlení smazalo všechny cifry.
+        if(devOrder>avgMag){
           devOrder = avgMag-1;
           roundedDev = roundToOrder(dev, devOrder);
           if(roundedDev===0) roundedDev = Math.pow(10, devOrder);
@@ -2008,7 +2055,19 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
         head.textContent = 'Správně zaokrouhleno!';
       } else {
         fb.classList.add('bad'); fb.classList.remove('ok');
-        head.textContent = 'Zaokrouhlení nesedí.';
+        // Rozlišujeme "jen jinak zaokrouhleno" (hodnota sedí, sedí i po zaokrouhlení,
+        // problém je jen ve tvaru zápisu) od "hodnota vůbec neodpovídá zadaným datům"
+        // (chyba je už v samotném výpočtu průměru/odchylky) — ať žák ví, kde hledat.
+        var avgFarOff = !avgOk && !isCloseButMisrounded(avgParsed, roundedAvg, answerDecimals);
+        var devFarOff = !devOk && !isCloseButMisrounded(devParsed, roundedDev, answerDecimals);
+        if(avgFarOff || devFarOff){
+          var wrongParts = [];
+          if(avgFarOff) wrongParts.push('průměr');
+          if(devFarOff) wrongParts.push('průměrná odchylka');
+          head.textContent = 'Chyba ve výpočtu — ' + wrongParts.join(' a ') + ' neodpovídá zadaným hodnotám.';
+        } else {
+          head.textContent = 'Zaokrouhlení nesedí.';
+        }
       }
       steps.textContent =
         'Ze zadaných hodnot vychází: průměr ≈ ' + fmtCZ(mean,6) + unitSuffix + ', průměrná odchylka ≈ ' + fmtCZ(dev,6) + unitSuffix + '\n' +
