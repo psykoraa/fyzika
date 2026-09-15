@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skládání vektorů</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#f5f0e3;
+  --surface:#fffcf5;
+  --surface-2:#ece4d1;
+  --ink:#212b34;
+  --ink-soft:#5d6b76;
+  --line:rgba(33,43,52,0.12);
+  --accent:#c9581f;
+  --accent-ink:#fff8f0;
+  --success:#28794f;
+  --success-bg:#e3efe0;
+  --danger:#b3392b;
+  --danger-bg:#f5e4de;
+  --focus:#1e6f66;
+  --shadow: 0 1px 0 rgba(33,43,52,0.06);
+  --v1:#1e6f66;
+  --v2:#c9581f;
+  --v3:#6b4fa0;
+  --vres:#b3392b;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  background:
+    linear-gradient(var(--line) 1px, transparent 1px) 0 0/100% 34px,
+    linear-gradient(90deg, var(--line) 1px, transparent 1px) 0 0/34px 100%,
+    var(--paper);
+  background-attachment:local;
+  color:var(--ink);
+  font-family:'Work Sans', system-ui, sans-serif;
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:900px;
+  margin:0 auto;
+  padding:28px 20px 60px;
+}
+h1,h2,h3{ text-wrap:balance; margin:0; }
+.brand{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  flex-wrap:wrap;
+  margin-bottom:22px;
+}
+.brand-lockup{ display:flex; align-items:center; gap:12px; }
+.brand-lockup svg{ flex:none; }
+.brand-text h1{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:800;
+  font-size:2.5rem;
+  letter-spacing:0.02em;
+  line-height:1;
+  color:var(--ink);
+}
+.brand-text p{
+  margin:2px 0 0;
+  font-size:0.82rem;
+  color:var(--ink-soft);
+  letter-spacing:0.02em;
+}
+.readout{ display:flex; gap:8px; }
+.readout .cell{
+  background:var(--ink);
+  color:var(--paper);
+  border-radius:6px;
+  padding:6px 12px;
+  min-width:74px;
+  text-align:center;
+  box-shadow:var(--shadow);
+}
+.readout .cell .label{
+  display:block;
+  font-size:0.6rem;
+  letter-spacing:0.09em;
+  text-transform:uppercase;
+  opacity:0.65;
+  margin-bottom:2px;
+}
+.readout .cell .value{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:600;
+  font-size:1.05rem;
+  font-variant-numeric:tabular-nums;
+}
+.linklike{
+  background:none;
+  border:none;
+  color:var(--ink-soft);
+  font-size:0.78rem;
+  text-decoration:underline;
+  cursor:pointer;
+  padding:4px 0;
+}
+.linklike:hover{ color:var(--danger); }
+.back-link{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  font-size:0.82rem;
+  font-weight:500;
+  color:var(--ink-soft);
+  text-decoration:none;
+  margin-bottom:14px;
+}
+.back-link:hover{ color:var(--accent); }
+
+.top-tabs{
+  display:flex;
+  gap:8px;
+  margin-bottom:22px;
+}
+.toptab{
+  flex:1 1 0;
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.05rem;
+  letter-spacing:0.02em;
+  padding:13px 20px;
+  border-radius:10px;
+  border:1px solid var(--line);
+  background:var(--surface);
+  color:var(--ink-soft);
+  cursor:pointer;
+  text-align:center;
+  transition:background .12s, color .12s, border-color .12s;
+}
+.toptab:hover{ border-color:var(--accent); }
+.toptab.on{
+  background:var(--accent);
+  border-color:var(--accent);
+  color:var(--accent-ink);
+}
+.toptab:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+.tab-section[hidden]{ display:none; }
+
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:16px 18px;
+  margin-bottom:22px;
+}
+.panel-title{
+  font-size:0.68rem;
+  text-transform:uppercase;
+  letter-spacing:0.1em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-bottom:8px;
+}
+.panel p{
+  margin:0 0 8px;
+  font-size:0.9rem;
+  line-height:1.55;
+}
+.panel p:last-child{ margin-bottom:0; }
+.panel b{ color:var(--ink); }
+
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:26px 26px 28px;
+  margin-bottom:24px;
+}
+.cat-tag{
+  display:inline-block;
+  font-size:0.68rem;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  color:var(--ink-soft);
+  background:var(--surface-2);
+  padding:4px 11px;
+  border-radius:999px;
+  margin-bottom:10px;
+}
+.card h2{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.6rem;
+  letter-spacing:0.02em;
+  color:var(--ink);
+}
+.card .desc{
+  font-size:0.86rem;
+  color:var(--ink-soft);
+  line-height:1.5;
+  max-width:60ch;
+  margin-top:2px;
+}
+
+.mode-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:16px;
+  padding-top:14px;
+  border-top:1px solid var(--line);
+}
+.mode-row-label{
+  font-size:0.68rem;
+  text-transform:uppercase;
+  letter-spacing:0.1em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-right:2px;
+}
+.mode-row .linklike{ margin-left:auto; }
+.seg{ display:flex; gap:6px; flex-wrap:wrap; }
+
+.chip{
+  font-family:'Work Sans', sans-serif;
+  font-size:0.82rem;
+  font-weight:500;
+  padding:7px 13px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  background:var(--surface);
+  color:var(--ink-soft);
+  cursor:pointer;
+  transition:background .12s, color .12s, border-color .12s;
+}
+.chip:hover{ border-color:var(--accent); }
+.chip.on{
+  background:var(--ink);
+  color:var(--paper);
+  border-color:var(--ink);
+}
+.chip[hidden]{ display:none; }
+
+.canvas-wrap{
+  margin-top:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:10px;
+  overflow:hidden;
+}
+svg.vec-canvas{
+  width:100%;
+  height:auto;
+  display:block;
+  background:var(--surface);
+  touch-action:none;
+}
+.grid-line{ stroke:var(--line); stroke-width:1; }
+.axis-line{ stroke:var(--ink-soft); stroke-width:1.4; opacity:0.55; }
+.origin-dot{ fill:var(--ink-soft); }
+
+.v1{ --c:var(--v1); }
+.v2{ --c:var(--v2); }
+.v3{ --c:var(--v3); }
+.vres{ --c:var(--vres); }
+
+.vec{ stroke:var(--c); stroke-width:3; fill:none; stroke-linecap:round; }
+.vec.v1{ marker-end:url(#arrow-v1); }
+.vec.v2{ marker-end:url(#arrow-v2); }
+.vec.v3{ marker-end:url(#arrow-v3); }
+.vec.vres{ marker-end:url(#arrow-vres); }
+.vec.result{ stroke-width:4; }
+.vec.faint{ stroke-width:1.6; opacity:0.45; stroke-dasharray:5 5; }
+.vec.faint.v1{ marker-end:url(#arrow-v1-ghost); }
+.vec.faint.v2{ marker-end:url(#arrow-v2-ghost); }
+.vec.faint.v3{ marker-end:url(#arrow-v3-ghost); }
+.vec.construct{ stroke-width:1.6; opacity:0.45; stroke-dasharray:5 5; }
+.vec.construct.v1{ marker-end:url(#arrow-v1-ghost); }
+.vec[hidden]{ display:none; }
+
+.trainer-canvas .vec{ pointer-events:none; }
+.veclabel{ pointer-events:none; }
+.grid-dot{ fill:var(--ink-soft); opacity:0.32; }
+.trainer-hit{ fill:transparent; cursor:crosshair; touch-action:none; pointer-events:all; }
+.guess-line{ stroke:var(--ink-soft); stroke-width:1.5; stroke-dasharray:3 3; opacity:0.6; fill:none; }
+.guess-line[hidden]{ display:none; }
+.guess-marker{ fill:none; stroke-width:3; }
+.guess-marker.correct{ stroke:var(--success); }
+.guess-marker.wrong{ stroke:var(--danger); }
+.guess-marker[hidden]{ display:none; }
+.correct-marker{ fill:var(--success); stroke:var(--surface); stroke-width:2; }
+.correct-marker[hidden]{ display:none; }
+
+.handle{
+  fill:none;
+  stroke:none;
+  cursor:grab;
+  touch-action:none;
+  pointer-events:all;
+}
+.handle.dragging{ cursor:grabbing; }
+
+/* Na dotykových zařízeních jsou úchyty konců vektorů i mřížkové body v tréninku větší, ať se snáz trefí prstem. */
+@media (pointer:coarse){
+  .handle{ r:22px; }
+  .grid-dot{ r:3.6px; }
+}
+
+.veclabel{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:700;
+  font-style:italic;
+  font-size:14px;
+  fill:var(--c);
+}
+.veclabel.result{ font-size:15px; }
+.veclabel[hidden]{ display:none; }
+
+.hint{
+  margin-top:10px;
+  font-size:0.78rem;
+  color:var(--ink-soft);
+}
+
+.vecstats{
+  margin-top:14px;
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.vstat{
+  flex:1 1 190px;
+  background:var(--surface-2);
+  border-radius:8px;
+  padding:9px 12px;
+  border-left:4px solid var(--c);
+}
+.vstat.vres{ background:var(--danger-bg); }
+.vstat[hidden]{ display:none; }
+.vstat .vs-label{
+  display:block;
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:700;
+  font-style:italic;
+  font-size:0.82rem;
+  color:var(--c);
+  margin-bottom:2px;
+}
+.vstat .vs-val{
+  display:block;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:0.78rem;
+  color:var(--ink);
+  font-variant-numeric:tabular-nums;
+  line-height:1.4;
+}
+
+.feedback{
+  margin-top:16px;
+  border-radius:10px;
+  padding:14px 16px;
+}
+.feedback[hidden]{ display:none; }
+.feedback.ok{ background:var(--success-bg); color:var(--success); }
+.feedback.bad{ background:var(--danger-bg); color:var(--danger); }
+.feedback.neutral{ background:var(--surface-2); color:var(--ink); }
+.feedback .headline{ font-weight:700; font-size:0.98rem; margin-bottom:4px; }
+.feedback .steps{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:0.85rem;
+  color:inherit;
+  opacity:0.9;
+  font-variant-numeric:tabular-nums;
+}
+
+.actions{
+  margin-top:16px;
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+button.btn{
+  font-family:'Work Sans', sans-serif;
+  font-weight:600;
+  font-size:0.84rem;
+  padding:9px 16px;
+  border-radius:8px;
+  border:1px solid var(--line);
+  background:var(--surface);
+  color:var(--ink);
+  cursor:pointer;
+  transition:transform .05s ease, background .12s;
+}
+button.btn:active{ transform:translateY(1px); }
+button.btn.ghost:hover{ border-color:var(--ink-soft); }
+button.btn.primary{
+  background:var(--accent);
+  border-color:var(--accent);
+  color:var(--accent-ink);
+}
+button.btn.primary:hover{ filter:brightness(1.06); }
+button.btn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+
+footer{
+  margin-top:26px;
+  text-align:center;
+  font-size:0.76rem;
+  color:var(--ink-soft);
+}
+
+@media (max-width:520px){
+  .card{ padding:20px 16px 22px; }
+  .chip.para{ margin-left:0; }
+  .readout .cell{ min-width:64px; padding:6px 8px; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <a class="back-link" href="kvinta.html">← Zpět na Kvinta/1. ročník</a>
+
+  <div class="brand">
+    <div class="brand-lockup">
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <marker id="brand-arrow-a" markerWidth="8" markerHeight="8" refX="6.5" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+            <path d="M0,0 L8,4 L0,8 z" fill="var(--accent)"/>
+          </marker>
+          <marker id="brand-arrow-b" markerWidth="8" markerHeight="8" refX="6.5" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+            <path d="M0,0 L8,4 L0,8 z" fill="var(--focus)"/>
+          </marker>
+        </defs>
+        <line x1="7" y1="33" x2="27" y2="8" stroke="var(--accent)" stroke-width="2.2" marker-end="url(#brand-arrow-a)"/>
+        <line x1="7" y1="33" x2="31" y2="27" stroke="var(--focus)" stroke-width="2.2" marker-end="url(#brand-arrow-b)"/>
+        <line x1="27" y1="8" x2="34" y2="24" stroke="var(--ink-soft)" stroke-width="1.4" stroke-dasharray="2.5 2.5"/>
+      </svg>
+      <div class="brand-text">
+        <h1>Skládání vektorů</h1>
+        <p>skládání dvou a tří vektorů</p>
+      </div>
+    </div>
+    <div class="readout">
+      <div class="cell"><span class="label">Skóre</span><span class="value" id="stat-score">0</span></div>
+      <div class="cell"><span class="label">Série</span><span class="value" id="stat-streak">0</span></div>
+      <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="stat-accuracy">—</span></div>
+    </div>
+  </div>
+
+  <div class="top-tabs">
+    <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+    <button class="toptab" id="top-tab-trenink" data-tab="trenink">Trénink</button>
+  </div>
+
+  <div id="theory-section" class="tab-section">
+
+  <div class="panel">
+    <div class="panel-title">Jak na to</div>
+    <p>Druhý vektor přesunete, aniž byste změnili jeho velikost nebo směr, tak, aby jeho počátek splynul s koncem prvního vektoru. <b>Výslednice</b> pak vede z počátku prvního vektoru do konce posledního přesunutého vektoru.</p>
+    <p>U dvou vektorů dá stejný výsledek i <b>rovnoběžníkové pravidlo</b> — výslednice je úhlopříčka rovnoběžníku sestrojeného nad oběma vektory.</p>
+    <p>U každého diagramu si přepínačem <b>Zobrazení</b> můžete postupně prohlédnout zadané vektory, situaci po jejich přesunutí i výslednou výslednici.</p>
+  </div>
+
+  <!-- PÁR VEKTORŮ -->
+  <div class="card">
+    <span class="cat-tag">Dva vektory</span>
+    <h2>Skládání dvou vektorů</h2>
+    <p class="desc">Přetáhněte konce vektorů <i>a</i> a <i>b</i> a upravte tak jejich velikost i směr.</p>
+
+    <div class="mode-row">
+      <span class="mode-row-label">Zobrazení</span>
+      <div class="seg" id="pair-mode-seg">
+        <button class="chip on" data-mode="original">Původní vektory</button>
+        <button class="chip" data-mode="translated">Po přesunutí</button>
+        <button class="chip" data-mode="result">Výslednice</button>
+      </div>
+    </div>
+
+    <div class="canvas-wrap">
+      <svg class="vec-canvas" id="pair-svg" viewBox="0 0 560 340">
+        <g id="pair-grid"></g>
+        <line class="axis-line" id="pair-axis-x" x1="0" y1="0" x2="0" y2="0"/>
+        <line class="axis-line" id="pair-axis-y" x1="0" y1="0" x2="0" y2="0"/>
+        <circle class="origin-dot" id="pair-origin" r="3"/>
+
+        <circle class="handle v1" id="pair-a-handle" r="13"/>
+        <circle class="handle v2" id="pair-b-handle" r="13"/>
+
+        <line class="vec construct v1" id="pair-a-para"/>
+        <line class="vec origline v2" id="pair-b-orig"/>
+        <line class="vec v1" id="pair-a-chain"/>
+        <line class="vec v2" id="pair-b-chain"/>
+        <line class="vec result vres" id="pair-result"/>
+
+        <text class="veclabel v1" id="pair-a-label">a</text>
+        <text class="veclabel v2" id="pair-b-label">b</text>
+        <text class="veclabel result vres" id="pair-r-label">a+b</text>
+      </svg>
+    </div>
+    <p class="hint">Konce vektorů přetáhněte myší nebo prstem.</p>
+
+    <div class="vecstats">
+      <div class="vstat v1"><span class="vs-label">a</span><span class="vs-val" id="pair-a-val">–</span></div>
+      <div class="vstat v2"><span class="vs-label">b</span><span class="vs-val" id="pair-b-val">–</span></div>
+      <div class="vstat vres" id="pair-r-stat"><span class="vs-label">výslednice a + b</span><span class="vs-val" id="pair-r-val">–</span></div>
+    </div>
+
+    <div class="actions">
+      <button class="btn ghost" id="pair-random">Náhodné vektory</button>
+      <button class="btn ghost" id="pair-reset">Výchozí nastavení</button>
+    </div>
+  </div>
+
+  <!-- TROJICE VEKTORŮ -->
+  <div class="card">
+    <span class="cat-tag">Tři vektory</span>
+    <h2>Skládání tří vektorů</h2>
+    <p class="desc">Stejný postup se u tří vektorů jen zopakuje vícekrát: vektory <i>a</i>, <i>b</i>, <i>c</i> se přiloží za sebe do řetězu, počátek dalšího vždy ke konci předchozího. Přetáhněte konce vektorů a upravte tak jejich velikost i směr.</p>
+
+    <div class="mode-row">
+      <span class="mode-row-label">Zobrazení</span>
+      <div class="seg" id="triple-mode-seg">
+        <button class="chip on" data-mode="original">Původní vektory</button>
+        <button class="chip" data-mode="translated">Po přesunutí</button>
+        <button class="chip" data-mode="result">Výslednice</button>
+      </div>
+    </div>
+
+    <div class="canvas-wrap">
+      <svg class="vec-canvas" id="triple-svg" viewBox="0 0 560 340">
+        <g id="triple-grid"></g>
+        <line class="axis-line" id="triple-axis-x" x1="0" y1="0" x2="0" y2="0"/>
+        <line class="axis-line" id="triple-axis-y" x1="0" y1="0" x2="0" y2="0"/>
+        <circle class="origin-dot" id="triple-origin" r="3"/>
+
+        <circle class="handle v1" id="triple-a-handle" r="13"/>
+        <circle class="handle v2" id="triple-b-handle" r="13"/>
+        <circle class="handle v3" id="triple-c-handle" r="13"/>
+
+        <line class="vec origline v2" id="triple-b-orig"/>
+        <line class="vec origline v3" id="triple-c-orig"/>
+
+        <line class="vec v1" id="triple-a-chain"/>
+        <line class="vec v2" id="triple-b-chain"/>
+        <line class="vec v3" id="triple-c-chain"/>
+        <line class="vec result vres" id="triple-result"/>
+
+        <text class="veclabel v1" id="triple-a-label">a</text>
+        <text class="veclabel v2" id="triple-b-label">b</text>
+        <text class="veclabel v3" id="triple-c-label">c</text>
+        <text class="veclabel result vres" id="triple-r-label">a+b+c</text>
+      </svg>
+    </div>
+    <p class="hint">Konce vektorů přetáhněte myší nebo prstem.</p>
+
+    <div class="vecstats">
+      <div class="vstat v1"><span class="vs-label">a</span><span class="vs-val" id="triple-a-val">–</span></div>
+      <div class="vstat v2"><span class="vs-label">b</span><span class="vs-val" id="triple-b-val">–</span></div>
+      <div class="vstat v3"><span class="vs-label">c</span><span class="vs-val" id="triple-c-val">–</span></div>
+      <div class="vstat vres" id="triple-r-stat"><span class="vs-label">výslednice a + b + c</span><span class="vs-val" id="triple-r-val">–</span></div>
+    </div>
+
+    <div class="actions">
+      <button class="btn ghost" id="triple-random">Náhodné vektory</button>
+      <button class="btn ghost" id="triple-reset">Výchozí nastavení</button>
+    </div>
+  </div>
+
+  </div>
+
+  <!-- TRÉNINK -->
+  <div id="trenink-section" class="tab-section" hidden>
+  <div class="card">
+    <span class="cat-tag">Trénink</span>
+    <h2>Najděte výslednici</h2>
+    <p class="desc">Na obrázku vidíte zadané vektory. Klikněte do mřížky na bod, ve kterém podle Vás končí jejich výslednice. Poté se ukáže, zda jste trefili, i správné řešení.</p>
+
+    <div class="mode-row">
+      <span class="mode-row-label">Počet vektorů</span>
+      <div class="seg" id="trainer-count-seg">
+        <button class="chip on" data-count="2">Dva vektory</button>
+        <button class="chip" data-count="3">Tři vektory</button>
+      </div>
+      <button class="linklike" id="reset-stats">vynulovat statistiku</button>
+    </div>
+
+    <div class="canvas-wrap">
+      <svg class="vec-canvas trainer-canvas" id="trainer-svg" viewBox="0 0 560 340">
+        <g id="trainer-grid"></g>
+        <g id="trainer-dots"></g>
+        <line class="axis-line" id="trainer-axis-x" x1="0" y1="0" x2="0" y2="0"/>
+        <line class="axis-line" id="trainer-axis-y" x1="0" y1="0" x2="0" y2="0"/>
+        <circle class="origin-dot" id="trainer-origin" r="3"/>
+
+        <line class="vec origline v2" id="trainer-b-orig"/>
+        <line class="vec origline v3" id="trainer-c-orig"/>
+
+        <line class="vec v1" id="trainer-a-chain"/>
+        <line class="vec v2" id="trainer-b-chain"/>
+        <line class="vec v3" id="trainer-c-chain"/>
+        <line class="vec result vres" id="trainer-result" hidden/>
+
+        <text class="veclabel v1" id="trainer-a-label">a</text>
+        <text class="veclabel v2" id="trainer-b-label">b</text>
+        <text class="veclabel v3" id="trainer-c-label">c</text>
+        <text class="veclabel result vres" id="trainer-r-label" hidden>a+b</text>
+
+        <line class="guess-line" id="trainer-guess-line" hidden/>
+        <circle class="correct-marker" id="trainer-correct-marker" r="5" hidden/>
+        <circle class="guess-marker" id="trainer-guess-marker" r="9" hidden/>
+
+        <rect class="trainer-hit" id="trainer-hit" x="0" y="0" width="560" height="340"/>
+      </svg>
+    </div>
+    <p class="hint">Klikněte na mřížový bod, kde podle Vás výslednice končí.</p>
+
+    <div class="feedback" id="trainer-feedback" hidden>
+      <div class="headline" id="trainer-feedback-headline"></div>
+      <div class="steps" id="trainer-feedback-steps"></div>
+    </div>
+
+    <div class="actions">
+      <button class="btn ghost" id="trainer-skip">Nevím / Zobrazit řešení</button>
+      <button class="btn primary" id="trainer-next">Další příklad</button>
+    </div>
+  </div>
+  </div>
+
+  <footer>Souřadnice ukazuje panel pod diagramem — |v| je velikost vektoru, φ úhel od vodorovné osy.</footer>
+</div>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <marker id="arrow-v1" markerWidth="10" markerHeight="10" refX="8.5" refY="5" viewBox="0 0 10 10" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--v1)"/>
+    </marker>
+    <marker id="arrow-v2" markerWidth="10" markerHeight="10" refX="8.5" refY="5" viewBox="0 0 10 10" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--v2)"/>
+    </marker>
+    <marker id="arrow-v3" markerWidth="10" markerHeight="10" refX="8.5" refY="5" viewBox="0 0 10 10" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--v3)"/>
+    </marker>
+    <marker id="arrow-vres" markerWidth="11" markerHeight="11" refX="9" refY="5.5" viewBox="0 0 11 11" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L11,5.5 L0,11 z" fill="var(--vres)"/>
+    </marker>
+    <marker id="arrow-v1-ghost" markerWidth="10" markerHeight="10" refX="8.5" refY="5" viewBox="0 0 10 10" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--v1)" opacity="0.55"/>
+    </marker>
+    <marker id="arrow-v2-ghost" markerWidth="10" markerHeight="10" refX="8.5" refY="5" viewBox="0 0 10 10" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--v2)" opacity="0.55"/>
+    </marker>
+    <marker id="arrow-v3-ghost" markerWidth="10" markerHeight="10" refX="8.5" refY="5" viewBox="0 0 10 10" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--v3)" opacity="0.55"/>
+    </marker>
+  </defs>
+</svg>
+
+<script>
+(function(){
+  "use strict";
+
+  function fmt1(n){
+    var v = Math.round(n*10)/10;
+    if(Object.is(v,-0)) v = 0;
+    return v.toFixed(1).replace('.', ',');
+  }
+
+  function magAngle(p){
+    var mag = Math.hypot(p.x, p.y);
+    var ang = Math.atan2(p.y, p.x) * 180 / Math.PI;
+    if(ang < 0) ang += 360;
+    return { mag: mag, ang: ang };
+  }
+
+  function setLine(el, x1, y1, x2, y2){
+    el.setAttribute('x1', x1); el.setAttribute('y1', y1);
+    el.setAttribute('x2', x2); el.setAttribute('y2', y2);
+  }
+
+  function setHidden(el, hide){
+    if(hide){ el.setAttribute('hidden',''); }
+    else { el.removeAttribute('hidden'); }
+  }
+
+  function placeLabel(el, p0, p1, text){
+    var dx = p1.x - p0.x, dy = p1.y - p0.y;
+    var len = Math.hypot(dx, dy);
+    var mx = (p0.x + p1.x) / 2, my = (p0.y + p1.y) / 2;
+    var offx = 0, offy = -12;
+    if(len > 1){
+      offx = -(dy/len) * 13;
+      offy = (dx/len) * 13;
+    }
+    el.setAttribute('x', mx + offx);
+    el.setAttribute('y', my + offy);
+    el.textContent = text;
+  }
+
+  var narrowMQ = window.matchMedia('(max-width:520px)');
+  function isNarrowScreen(){ return narrowMQ.matches; }
+
+  function buildGrid(gEl, origin, unit, viewW, viewH){
+    var nx = Math.ceil((viewW/2) / unit) + 1;
+    var ny = Math.ceil((viewH/2) / unit) + 1;
+    var parts = [];
+    for(var i=-nx; i<=nx; i++){
+      var x = origin.x + i*unit;
+      if(x < -2 || x > viewW+2) continue;
+      parts.push('<line class="grid-line" x1="'+x+'" y1="0" x2="'+x+'" y2="'+viewH+'"></line>');
+    }
+    for(var j=-ny; j<=ny; j++){
+      var y = origin.y - j*unit;
+      if(y < -2 || y > viewH+2) continue;
+      parts.push('<line class="grid-line" x1="0" y1="'+y+'" x2="'+viewW+'" y2="'+y+'"></line>');
+    }
+    gEl.innerHTML = parts.join('');
+  }
+
+  // ---- generic vector-chain diagram engine ----
+  // mode: 'original' (jen zadané vektory), 'translated' (přesun, bez výslednice), 'result' (přesun + výslednice)
+  function makeDiagram(opts){
+    var svg = document.getElementById(opts.svgId);
+    var grid = document.getElementById(opts.gridId);
+    var axisX = document.getElementById(opts.axisXId);
+    var axisY = document.getElementById(opts.axisYId);
+    var originDot = document.getElementById(opts.originId);
+    var origin = { x: opts.viewW/2, y: opts.viewH/2 };
+    var unit = 30;
+    var mode = opts.mode || 'result';
+
+    function currentDims(){
+      if(isNarrowScreen() && opts.mobileViewW){
+        return { viewW: opts.mobileViewW, viewH: opts.mobileViewH, margin: opts.mobileMargin };
+      }
+      return { viewW: opts.viewW, viewH: opts.viewH, margin: opts.margin };
+    }
+
+    var vectors = opts.vectors.map(function(v){
+      return {
+        key: v.key,
+        chainEl: document.getElementById(v.chainId),
+        origEl: v.origId ? document.getElementById(v.origId) : null,
+        labelEl: document.getElementById(v.labelId),
+        handleEl: document.getElementById(v.handleId),
+        statEl: document.getElementById(v.statId),
+        text: v.text
+      };
+    });
+    var resultLine = document.getElementById(opts.resultLineId);
+    var resultLabel = document.getElementById(opts.resultLabelId);
+    var resultStatWrap = opts.resultStatWrapId ? document.getElementById(opts.resultStatWrapId) : null;
+    var resultStat = document.getElementById(opts.resultStatId);
+
+    function toSvg(mp){
+      return { x: origin.x + mp.x*unit, y: origin.y - mp.y*unit };
+    }
+
+    function render(){
+      var dims = currentDims();
+      var viewW = dims.viewW, viewH = dims.viewH, margin = dims.margin;
+      svg.setAttribute('viewBox', '0 0 ' + viewW + ' ' + viewH);
+      origin = { x: viewW/2, y: viewH/2 };
+
+      var chainPts = [{x:0,y:0}];
+      var acc = {x:0,y:0};
+      vectors.forEach(function(v){
+        var val = opts.values[v.key];
+        acc = { x: acc.x + val.x, y: acc.y + val.y };
+        chainPts.push({ x: acc.x, y: acc.y });
+      });
+
+      var allPts = chainPts.slice();
+      vectors.forEach(function(v){ allPts.push(opts.values[v.key]); });
+      var maxAbs = opts.minExtent;
+      allPts.forEach(function(p){ maxAbs = Math.max(maxAbs, Math.abs(p.x), Math.abs(p.y)); });
+      unit = Math.min(viewW/2 - margin, viewH/2 - margin) / maxAbs;
+
+      buildGrid(grid, origin, unit, viewW, viewH);
+      setLine(axisX, 0, origin.y, viewW, origin.y);
+      setLine(axisY, origin.x, 0, origin.x, viewH);
+      originDot.setAttribute('cx', origin.x); originDot.setAttribute('cy', origin.y);
+
+      var showChain = (mode === 'translated' || mode === 'result');
+      var showResult = (mode === 'result');
+
+      var prev = {x:0,y:0};
+      vectors.forEach(function(v, idx){
+        var val = opts.values[v.key];
+        var next = { x: prev.x+val.x, y: prev.y+val.y };
+        var p0 = toSvg(prev), p1 = toSvg(next);
+        var origP1 = toSvg(val);
+
+        setLine(v.chainEl, p0.x, p0.y, p1.x, p1.y);
+        var hp = origP1;
+        v.handleEl.setAttribute('cx', hp.x); v.handleEl.setAttribute('cy', hp.y);
+
+        if(v.origEl){
+          // původní vektor se zobrazuje vždy; v „Původní vektory" naplno, jinak jemně přerušovaně
+          setLine(v.origEl, origin.x, origin.y, origP1.x, origP1.y);
+          setHidden(v.origEl, false);
+          v.origEl.classList.toggle('faint', mode !== 'original');
+          setHidden(v.chainEl, !showChain);
+          if(mode === 'original'){
+            placeLabel(v.labelEl, origin, origP1, v.text);
+          } else {
+            placeLabel(v.labelEl, p0, p1, v.text);
+          }
+        } else {
+          // první vektor v řetězu — původní i přesunutá poloha splývají
+          setHidden(v.chainEl, false);
+          placeLabel(v.labelEl, p0, p1, v.text);
+        }
+
+        var ma = magAngle(val);
+        v.statEl.textContent = '('+fmt1(val.x)+'; '+fmt1(val.y)+')   |'+v.key+'| = '+fmt1(ma.mag)+'   φ = '+fmt1(ma.ang)+'°';
+
+        prev = next;
+      });
+
+      var rp = toSvg(prev);
+      setLine(resultLine, origin.x, origin.y, rp.x, rp.y);
+      setHidden(resultLine, !showResult);
+      setHidden(resultLabel, !showResult);
+      if(showResult){ placeLabel(resultLabel, origin, rp, opts.resultText); }
+      if(resultStatWrap){ setHidden(resultStatWrap, !showResult); }
+      var mr = magAngle(prev);
+      resultStat.textContent = '('+fmt1(prev.x)+'; '+fmt1(prev.y)+')   |s| = '+fmt1(mr.mag)+'   φ = '+fmt1(mr.ang)+'°';
+
+      diagram.origin = origin;
+      diagram.unit = unit;
+      diagram.toSvg = toSvg;
+      diagram.mode = mode;
+      if(opts.onRender) opts.onRender(diagram);
+    }
+
+    function attachDrag(handleEl, key){
+      var dragging = false;
+      function toMath(evt){
+        var pt = svg.createSVGPoint();
+        pt.x = evt.clientX; pt.y = evt.clientY;
+        var loc = pt.matrixTransform(svg.getScreenCTM().inverse());
+        return {
+          x: (loc.x - origin.x) / unit,
+          y: -(loc.y - origin.y) / unit
+        };
+      }
+      handleEl.addEventListener('pointerdown', function(e){
+        dragging = true;
+        handleEl.setPointerCapture(e.pointerId);
+        handleEl.classList.add('dragging');
+        e.preventDefault();
+      });
+      handleEl.addEventListener('pointermove', function(e){
+        if(!dragging) return;
+        e.preventDefault();
+        var m = toMath(e);
+        var clamp = opts.clamp || 7;
+        var sx = Math.max(-clamp, Math.min(clamp, Math.round(m.x*2)/2));
+        var sy = Math.max(-clamp, Math.min(clamp, Math.round(m.y*2)/2));
+        opts.values[key].x = sx;
+        opts.values[key].y = sy;
+        render();
+      });
+      ['pointerup','pointercancel'].forEach(function(evt){
+        handleEl.addEventListener(evt, function(){
+          dragging = false;
+          handleEl.classList.remove('dragging');
+        });
+      });
+    }
+
+    var diagram = {
+      render: render,
+      setMode: function(m){ mode = m; render(); }
+    };
+    vectors.forEach(function(v){ attachDrag(v.handleEl, v.key); });
+    return diagram;
+  }
+
+  function setupModeSeg(segId, diagram, onModeChange){
+    var seg = document.getElementById(segId);
+    var buttons = Array.prototype.slice.call(seg.querySelectorAll('button'));
+    buttons.forEach(function(b){
+      b.addEventListener('click', function(){
+        buttons.forEach(function(bb){ bb.classList.remove('on'); });
+        b.classList.add('on');
+        var m = b.getAttribute('data-mode');
+        diagram.setMode(m);
+        if(onModeChange) onModeChange(m);
+      });
+    });
+  }
+
+  // ---- pair diagram ----
+  var pairValues = { a:{x:4,y:1}, b:{x:1,y:3} };
+
+  var pairDiagram = makeDiagram({
+    svgId:'pair-svg', gridId:'pair-grid', axisXId:'pair-axis-x', axisYId:'pair-axis-y', originId:'pair-origin',
+    viewW:560, viewH:340, margin:38, mobileViewW:340, mobileViewH:340, mobileMargin:26, minExtent:5, clamp:7, mode:'original',
+    values: pairValues,
+    vectors:[
+      { key:'a', chainId:'pair-a-chain', origId:null, labelId:'pair-a-label', handleId:'pair-a-handle', statId:'pair-a-val', text:'a' },
+      { key:'b', chainId:'pair-b-chain', origId:'pair-b-orig', labelId:'pair-b-label', handleId:'pair-b-handle', statId:'pair-b-val', text:'b' }
+    ],
+    resultLineId:'pair-result', resultLabelId:'pair-r-label', resultStatWrapId:'pair-r-stat', resultStatId:'pair-r-val', resultText:'a+b',
+    onRender: function(d){
+      // rovnoběžník (kopie a posunutá na konec b) se kreslí automaticky mimo režim „Původní vektory"
+      var paraEl = document.getElementById('pair-a-para');
+      var show = d.mode !== 'original';
+      setHidden(paraEl, !show);
+      if(!show) return;
+      var pB = d.toSvg(pairValues.b);
+      var pSum = d.toSvg({ x: pairValues.a.x + pairValues.b.x, y: pairValues.a.y + pairValues.b.y });
+      setLine(paraEl, pB.x, pB.y, pSum.x, pSum.y);
+    }
+  });
+
+  setupModeSeg('pair-mode-seg', pairDiagram);
+
+  document.getElementById('pair-random').addEventListener('click', function(){
+    function rnd(){ return Math.round((Math.random()*8-4)*2)/2; }
+    pairValues.a = { x: rnd()||1, y: rnd() };
+    pairValues.b = { x: rnd(), y: rnd()||1 };
+    pairDiagram.render();
+  });
+  document.getElementById('pair-reset').addEventListener('click', function(){
+    pairValues.a = { x:4, y:1 };
+    pairValues.b = { x:1, y:3 };
+    pairDiagram.render();
+  });
+
+  // ---- triple diagram ----
+  var tripleValues = { a:{x:3,y:1}, b:{x:0.5,y:-2.5}, c:{x:-2.5,y:1.5} };
+
+  var tripleDiagram = makeDiagram({
+    svgId:'triple-svg', gridId:'triple-grid', axisXId:'triple-axis-x', axisYId:'triple-axis-y', originId:'triple-origin',
+    viewW:560, viewH:340, margin:38, mobileViewW:340, mobileViewH:340, mobileMargin:26, minExtent:5, clamp:6, mode:'original',
+    values: tripleValues,
+    vectors:[
+      { key:'a', chainId:'triple-a-chain', origId:null, labelId:'triple-a-label', handleId:'triple-a-handle', statId:'triple-a-val', text:'a' },
+      { key:'b', chainId:'triple-b-chain', origId:'triple-b-orig', labelId:'triple-b-label', handleId:'triple-b-handle', statId:'triple-b-val', text:'b' },
+      { key:'c', chainId:'triple-c-chain', origId:'triple-c-orig', labelId:'triple-c-label', handleId:'triple-c-handle', statId:'triple-c-val', text:'c' }
+    ],
+    resultLineId:'triple-result', resultLabelId:'triple-r-label', resultStatWrapId:'triple-r-stat', resultStatId:'triple-r-val', resultText:'a+b+c'
+  });
+
+  setupModeSeg('triple-mode-seg', tripleDiagram);
+
+  document.getElementById('triple-random').addEventListener('click', function(){
+    function rnd(){ return Math.round((Math.random()*7-3.5)*2)/2; }
+    tripleValues.a = { x: rnd()||1, y: rnd() };
+    tripleValues.b = { x: rnd(), y: rnd() };
+    tripleValues.c = { x: rnd(), y: rnd()||1 };
+    tripleDiagram.render();
+  });
+  document.getElementById('triple-reset').addEventListener('click', function(){
+    tripleValues.a = { x:3, y:1 };
+    tripleValues.b = { x:0.5, y:-2.5 };
+    tripleValues.c = { x:-2.5, y:1.5 };
+    tripleDiagram.render();
+  });
+
+  // ---- trénink: najdi výslednici ----
+  var trainerRender = (function(){
+    var svg = document.getElementById('trainer-svg');
+    var grid = document.getElementById('trainer-grid');
+    var dots = document.getElementById('trainer-dots');
+    var axisX = document.getElementById('trainer-axis-x');
+    var axisY = document.getElementById('trainer-axis-y');
+    var originDot = document.getElementById('trainer-origin');
+    var hitRect = document.getElementById('trainer-hit');
+
+    var DESKTOP_DIMS = { viewW:560, viewH:340, margin:40 };
+    var MOBILE_DIMS = { viewW:340, viewH:340, margin:28 };
+    var MIN_EXTENT = 5;
+    var VIEW_W = DESKTOP_DIMS.viewW, VIEW_H = DESKTOP_DIMS.viewH;
+    var origin = { x: VIEW_W/2, y: VIEW_H/2 };
+    var unit = 30;
+
+    function currentDims(){ return isNarrowScreen() ? MOBILE_DIMS : DESKTOP_DIMS; }
+
+    var ALL_KEYS = ['a','b','c'];
+    var COLOR_CLASS = { a:'v1', b:'v2', c:'v3' };
+
+    var els = {};
+    ALL_KEYS.forEach(function(k){
+      els[k] = {
+        chain: document.getElementById('trainer-'+k+'-chain'),
+        orig: k==='a' ? null : document.getElementById('trainer-'+k+'-orig'),
+        label: document.getElementById('trainer-'+k+'-label')
+      };
+    });
+    var resultLine = document.getElementById('trainer-result');
+    var resultLabel = document.getElementById('trainer-r-label');
+    var guessMarker = document.getElementById('trainer-guess-marker');
+    var correctMarker = document.getElementById('trainer-correct-marker');
+    var guessLine = document.getElementById('trainer-guess-line');
+
+    var fb = document.getElementById('trainer-feedback');
+    var fbHead = document.getElementById('trainer-feedback-headline');
+    var fbSteps = document.getElementById('trainer-feedback-steps');
+
+    var scoreEl = document.getElementById('stat-score');
+    var streakEl = document.getElementById('stat-streak');
+    var accEl = document.getElementById('stat-accuracy');
+
+    function loadStats(){
+      try{
+        var raw = localStorage.getItem('vektory-stats');
+        if(raw){ state.bestStreak = JSON.parse(raw).bestStreak || 0; }
+      }catch(e){}
+    }
+    function saveStats(){
+      try{ localStorage.setItem('vektory-stats', JSON.stringify({bestStreak: state.bestStreak})); }catch(e){}
+    }
+
+    var state = {
+      count: 2,
+      values: { a:{x:4,y:1}, b:{x:1,y:3}, c:{x:-2,y:2} },
+      revealed: false,
+      guess: null,
+      score:0, streak:0, bestStreak:0, answered:0, correct:0
+    };
+
+    function activeKeys(){ return state.count===3 ? ['a','b','c'] : ['a','b']; }
+
+    function randInt(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+    function randVec(range){
+      var v;
+      do{ v = { x: randInt(-range,range), y: randInt(-range,range) }; }
+      while(v.x===0 && v.y===0);
+      return v;
+    }
+
+    function sumVec(){
+      var s = {x:0,y:0};
+      activeKeys().forEach(function(k){ s.x += state.values[k].x; s.y += state.values[k].y; });
+      return s;
+    }
+
+    function toSvg(mp){ return { x: origin.x + mp.x*unit, y: origin.y - mp.y*unit }; }
+
+    function buildDots(nx, ny){
+      var parts = [];
+      for(var i=-nx; i<=nx; i++){
+        for(var j=-ny; j<=ny; j++){
+          var x = origin.x + i*unit, y = origin.y - j*unit;
+          if(x < -2 || x > VIEW_W+2 || y < -2 || y > VIEW_H+2) continue;
+          parts.push('<circle class="grid-dot" cx="'+x+'" cy="'+y+'" r="2.2"></circle>');
+        }
+      }
+      dots.innerHTML = parts.join('');
+    }
+
+    function render(){
+      var dims = currentDims();
+      VIEW_W = dims.viewW; VIEW_H = dims.viewH;
+      svg.setAttribute('viewBox', '0 0 ' + VIEW_W + ' ' + VIEW_H);
+      hitRect.setAttribute('width', VIEW_W); hitRect.setAttribute('height', VIEW_H);
+      origin = { x: VIEW_W/2, y: VIEW_H/2 };
+
+      var keys = activeKeys();
+      var chainPts = [{x:0,y:0}];
+      var acc = {x:0,y:0};
+      keys.forEach(function(k){
+        acc = { x: acc.x + state.values[k].x, y: acc.y + state.values[k].y };
+        chainPts.push({ x: acc.x, y: acc.y });
+      });
+      var allPts = chainPts.slice();
+      keys.forEach(function(k){ allPts.push(state.values[k]); });
+      if(state.guess){ allPts.push(state.guess); }
+      var maxAbs = MIN_EXTENT;
+      allPts.forEach(function(p){ maxAbs = Math.max(maxAbs, Math.abs(p.x), Math.abs(p.y)); });
+      unit = Math.min(VIEW_W/2 - dims.margin, VIEW_H/2 - dims.margin) / maxAbs;
+
+      var nx = Math.ceil((VIEW_W/2)/unit) + 1;
+      var ny = Math.ceil((VIEW_H/2)/unit) + 1;
+      buildGrid(grid, origin, unit, VIEW_W, VIEW_H);
+      buildDots(nx, ny);
+      setLine(axisX, 0, origin.y, VIEW_W, origin.y);
+      setLine(axisY, origin.x, 0, origin.x, VIEW_H);
+      originDot.setAttribute('cx', origin.x); originDot.setAttribute('cy', origin.y);
+
+      var prev = {x:0,y:0};
+      ALL_KEYS.forEach(function(k){
+        var active = keys.indexOf(k) !== -1;
+        setHidden(els[k].chain, !active);
+        setHidden(els[k].label, !active);
+        if(els[k].orig) setHidden(els[k].orig, !active);
+        if(!active) return;
+
+        var val = state.values[k];
+        var next = { x: prev.x+val.x, y: prev.y+val.y };
+        var p0 = toSvg(prev), p1 = toSvg(next);
+        var origP1 = toSvg(val);
+
+        if(els[k].orig){
+          setLine(els[k].orig, origin.x, origin.y, origP1.x, origP1.y);
+          els[k].orig.classList.toggle('faint', state.revealed);
+          setHidden(els[k].chain, !state.revealed);
+          if(state.revealed){ placeLabel(els[k].label, p0, p1, k); }
+          else { placeLabel(els[k].label, origin, origP1, k); }
+        } else {
+          setLine(els[k].chain, p0.x, p0.y, p1.x, p1.y);
+          placeLabel(els[k].label, p0, p1, k);
+        }
+        prev = next;
+      });
+
+      var rp = toSvg(prev);
+      setLine(resultLine, origin.x, origin.y, rp.x, rp.y);
+      setHidden(resultLine, !state.revealed);
+      setHidden(resultLabel, !state.revealed);
+      if(state.revealed){ placeLabel(resultLabel, origin, rp, keys.join('+')); }
+
+      if(state.revealed && state.guess){
+        var correct = sumVec();
+        var ok = state.guess.x === correct.x && state.guess.y === correct.y;
+        var gp = toSvg(state.guess);
+        guessMarker.setAttribute('cx', gp.x); guessMarker.setAttribute('cy', gp.y);
+        guessMarker.classList.toggle('correct', ok);
+        guessMarker.classList.toggle('wrong', !ok);
+        setHidden(guessMarker, false);
+        if(!ok){
+          var cp = toSvg(correct);
+          correctMarker.setAttribute('cx', cp.x); correctMarker.setAttribute('cy', cp.y);
+          setHidden(correctMarker, false);
+          setLine(guessLine, gp.x, gp.y, cp.x, cp.y);
+          setHidden(guessLine, false);
+        } else {
+          setHidden(correctMarker, true);
+          setHidden(guessLine, true);
+        }
+      } else {
+        setHidden(guessMarker, true);
+        setHidden(correctMarker, true);
+        setHidden(guessLine, true);
+      }
+    }
+
+    function updateStats(){
+      scoreEl.textContent = state.score;
+      streakEl.textContent = state.streak + (state.bestStreak>0 ? ' / ' + state.bestStreak : '');
+      accEl.textContent = state.answered===0 ? '—' : Math.round(100*state.correct/state.answered) + ' %';
+    }
+
+    function newExample(){
+      var range = state.count===3 ? 4 : 5;
+      state.values.a = randVec(range);
+      state.values.b = randVec(range);
+      if(state.count===3) state.values.c = randVec(range);
+      state.revealed = false;
+      state.guess = null;
+      fb.hidden = true;
+      render();
+    }
+
+    function evaluate(bySkip){
+      if(state.revealed) return;
+      var correct = sumVec();
+      var ok = !bySkip && state.guess && state.guess.x===correct.x && state.guess.y===correct.y;
+      state.revealed = true;
+      state.answered++;
+      if(bySkip){
+        state.streak = 0;
+      } else if(ok){
+        state.score += 10; state.streak++; state.correct++;
+        if(state.streak > state.bestStreak){ state.bestStreak = state.streak; saveStats(); }
+      } else {
+        state.streak = 0;
+      }
+      render();
+
+      fb.hidden = false;
+      var label = activeKeys().join(' + ');
+      if(bySkip){
+        fb.className = 'feedback neutral';
+        fbHead.textContent = 'Řešení';
+        fbSteps.textContent = 'Výslednice ' + label + ' končí v bodě (' + correct.x + '; ' + correct.y + ').';
+      } else if(ok){
+        fb.className = 'feedback ok';
+        fbHead.textContent = 'Správně!';
+        fbSteps.textContent = 'Výslednice ' + label + ' skutečně končí v bodě (' + correct.x + '; ' + correct.y + ').';
+      } else {
+        fb.className = 'feedback bad';
+        fbHead.textContent = 'Bohužel, špatně.';
+        fbSteps.textContent = 'Vaše odpověď: (' + state.guess.x + '; ' + state.guess.y + '). Výslednice ' + label + ' končí v bodě (' + correct.x + '; ' + correct.y + ').';
+      }
+      updateStats();
+    }
+
+    hitRect.addEventListener('click', function(e){
+      if(state.revealed) return;
+      var pt = svg.createSVGPoint();
+      pt.x = e.clientX; pt.y = e.clientY;
+      var loc = pt.matrixTransform(svg.getScreenCTM().inverse());
+      var mx = (loc.x - origin.x) / unit;
+      var my = -(loc.y - origin.y) / unit;
+      state.guess = { x: Math.round(mx), y: Math.round(my) };
+      evaluate(false);
+    });
+
+    document.getElementById('trainer-skip').addEventListener('click', function(){ evaluate(true); });
+
+    // Když příklad ještě není vyhodnocený (žádný tip ani zobrazené řešení), zeptá se,
+    // jestli žák opravdu chce příklad opustit bez odpovědi — a pokud ano, započítá ho
+    // jako chybný. Používá se jak pro tlačítko „Další příklad", tak pro přepnutí počtu
+    // vektorů, aby se nedalo nepohodlným příkladům jen tak uniknout.
+    function confirmDiscardIfUnanswered(){
+      if(state.revealed) return true;
+      var proceed = window.confirm('Nezvolili jste žádnou výslednici. Pokud budete pokračovat, započítá se aktuální příklad jako chybná odpověď. Opravdu chcete pokračovat?');
+      if(!proceed) return false;
+      evaluate(true);
+      return true;
+    }
+
+    document.getElementById('trainer-next').addEventListener('click', function(){
+      if(!confirmDiscardIfUnanswered()) return;
+      newExample();
+    });
+
+    var countSeg = document.getElementById('trainer-count-seg');
+    Array.prototype.slice.call(countSeg.querySelectorAll('button')).forEach(function(b){
+      b.addEventListener('click', function(){
+        if(!confirmDiscardIfUnanswered()) return;
+        Array.prototype.forEach.call(countSeg.children, function(bb){ bb.classList.remove('on'); });
+        b.classList.add('on');
+        state.count = parseInt(b.getAttribute('data-count'), 10);
+        newExample();
+      });
+    });
+
+    document.getElementById('reset-stats').addEventListener('click', function(){
+      state.score=0; state.streak=0; state.answered=0; state.correct=0; state.bestStreak=0;
+      try{ localStorage.removeItem('vektory-stats'); }catch(e){}
+      updateStats();
+    });
+
+    loadStats();
+    updateStats();
+    newExample();
+    return render;
+  })();
+
+  pairDiagram.render();
+  tripleDiagram.render();
+
+  // ---- při změně šířky okna (např. otočení mobilu) přepočítat viewBox diagramů ----
+  var resizeTimer = null;
+  window.addEventListener('resize', function(){
+    if(resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function(){
+      pairDiagram.render();
+      tripleDiagram.render();
+      trainerRender();
+    }, 150);
+  });
+
+  // ---- horní přepínač Teorie / Trénink ----
+  (function(){
+    var tabTeorie = document.getElementById('top-tab-teorie');
+    var tabTrenink = document.getElementById('top-tab-trenink');
+    var theorySection = document.getElementById('theory-section');
+    var treninkSection = document.getElementById('trenink-section');
+
+    function show(tab){
+      var isTeorie = tab === 'teorie';
+      tabTeorie.classList.toggle('on', isTeorie);
+      tabTrenink.classList.toggle('on', !isTeorie);
+      setHidden(theorySection, !isTeorie);
+      setHidden(treninkSection, isTeorie);
+    }
+
+    tabTeorie.addEventListener('click', function(){ show('teorie'); });
+    tabTrenink.addEventListener('click', function(){ show('trenink'); });
+  })();
+})();
+</script>
+
+</body>
+</html>

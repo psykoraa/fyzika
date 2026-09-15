@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Převody jednotek</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#f5f0e3;
+  --surface:#fffcf5;
+  --surface-2:#ece4d1;
+  --ink:#212b34;
+  --ink-soft:#5d6b76;
+  --line:rgba(33,43,52,0.12);
+  --accent:#c9581f;
+  --accent-ink:#fff8f0;
+  --success:#28794f;
+  --success-bg:#e3efe0;
+  --danger:#b3392b;
+  --danger-bg:#f5e4de;
+  --focus:#1e6f66;
+  --shadow: 0 1px 0 rgba(33,43,52,0.06);
+}
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  background:
+    linear-gradient(var(--line) 1px, transparent 1px) 0 0/100% 34px,
+    linear-gradient(90deg, var(--line) 1px, transparent 1px) 0 0/34px 100%,
+    var(--paper);
+  background-attachment:local;
+  color:var(--ink);
+  font-family:'Work Sans', system-ui, sans-serif;
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:900px;
+  margin:0 auto;
+  padding:28px 20px 60px;
+}
+h1,h2,h3{ text-wrap:balance; margin:0; }
+.brand{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  flex-wrap:wrap;
+  margin-bottom:22px;
+}
+.brand-lockup{ display:flex; align-items:center; gap:12px; }
+.brand-lockup svg{ flex:none; }
+.brand-text h1{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:800;
+  font-size:2.5rem;
+  letter-spacing:0.02em;
+  line-height:1;
+  color:var(--ink);
+}
+.brand-text p{
+  margin:2px 0 0;
+  font-size:0.82rem;
+  color:var(--ink-soft);
+  letter-spacing:0.02em;
+}
+.readout{ display:flex; gap:8px; }
+.readout .cell{
+  background:var(--ink);
+  color:var(--paper);
+  border-radius:6px;
+  padding:6px 12px;
+  min-width:74px;
+  text-align:center;
+  box-shadow:var(--shadow);
+}
+.readout .cell .label{
+  display:block;
+  font-size:0.6rem;
+  letter-spacing:0.09em;
+  text-transform:uppercase;
+  opacity:0.65;
+  margin-bottom:2px;
+}
+.readout .cell .value{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:600;
+  font-size:1.05rem;
+  font-variant-numeric:tabular-nums;
+}
+
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:16px 18px;
+  margin-bottom:18px;
+}
+.panel-title{
+  font-size:0.68rem;
+  text-transform:uppercase;
+  letter-spacing:0.1em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-bottom:10px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+.row{ display:flex; flex-wrap:wrap; gap:8px; }
+.row[hidden]{ display:none; }
+.row + .panel-title{ margin-top:16px; }
+.chip{
+  font-family:'Work Sans', sans-serif;
+  font-size:0.86rem;
+  font-weight:500;
+  padding:7px 13px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  background:var(--surface);
+  color:var(--ink-soft);
+  cursor:pointer;
+  transition:background .12s, color .12s, border-color .12s;
+}
+.chip:hover{ border-color:var(--accent); }
+.chip.on{
+  background:var(--ink);
+  color:var(--paper);
+  border-color:var(--ink);
+}
+.chip.accented.on{
+  background:var(--accent);
+  color:var(--accent-ink);
+  border-color:var(--accent);
+}
+.section-block{ margin-bottom:16px; }
+.section-block:last-child{ margin-bottom:0; }
+.settings-foot{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-top:14px;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.hint{ font-size:0.78rem; color:var(--ink-soft); }
+.linklike{
+  background:none;
+  border:none;
+  color:var(--ink-soft);
+  font-size:0.78rem;
+  text-decoration:underline;
+  cursor:pointer;
+  padding:4px 0;
+}
+.linklike:hover{ color:var(--danger); }
+.category-toggle{
+  font-size:0.68rem;
+  text-transform:uppercase;
+  letter-spacing:0.1em;
+  font-weight:600;
+  text-decoration:none;
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+}
+.category-toggle:hover{ color:var(--accent); }
+.toggle-arrow{
+  display:inline-block;
+  font-size:0.9em;
+  transition:transform .12s ease;
+}
+.category-toggle[aria-expanded="true"] .toggle-arrow{ transform:rotate(90deg); }
+
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:30px 30px 30px;
+  text-align:center;
+}
+.cat-tag{
+  display:inline-block;
+  font-size:0.68rem;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  color:var(--ink-soft);
+  background:var(--surface-2);
+  padding:4px 11px;
+  border-radius:999px;
+  margin-bottom:20px;
+}
+.equation{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:600;
+  font-size:clamp(1.3rem, 4.4vw, 2.1rem);
+  display:flex;
+  align-items:baseline;
+  justify-content:center;
+  gap:0.4em;
+  flex-wrap:wrap;
+  font-variant-numeric:tabular-nums;
+}
+.equation .unit{ color:var(--ink-soft); font-size:0.6em; margin-left:0.1em; }
+.equation .unit.long{ font-size:0.42em; }
+.equation .eq{ color:var(--ink-soft); margin:0 0.1em; }
+.answer-input{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:600;
+  font-size:1em;
+  width:5.2em;
+  text-align:center;
+  border:none;
+  border-bottom:3px solid var(--ink-soft);
+  background:transparent;
+  color:var(--ink);
+  padding:0 0.1em 0.05em;
+}
+.answer-input.sci-mantissa{ width:3.6em; }
+.answer-input:focus{ outline:none; border-color:var(--focus); }
+.answer-input.correct{ border-color:var(--success); color:var(--success); }
+.answer-input.wrong{ border-color:var(--danger); color:var(--danger); }
+.answer-input:disabled{ opacity:1; }
+.sci-group{ display:inline-flex; align-items:baseline; gap:0.12em; }
+.answer-slot[hidden]{ display:none; }
+.sci-times{ font-size:0.65em; color:var(--ink-soft); margin:0 0.02em; }
+.sci-exp{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:600;
+  width:2.4em;
+  text-align:center;
+  border:none;
+  border-bottom:2px solid var(--ink-soft);
+  background:transparent;
+  color:var(--ink);
+  font-size:0.55em;
+  vertical-align:top;
+  padding:0 0.05em;
+}
+.sci-exp:focus{ outline:none; border-color:var(--focus); }
+.sci-exp.correct{ border-color:var(--success); color:var(--success); }
+.sci-exp.wrong{ border-color:var(--danger); color:var(--danger); }
+
+.actions{
+  margin-top:26px;
+  display:flex;
+  gap:10px;
+  justify-content:center;
+  flex-wrap:wrap;
+}
+button.btn{
+  font-family:'Work Sans', sans-serif;
+  font-weight:600;
+  font-size:0.92rem;
+  padding:11px 22px;
+  border-radius:8px;
+  border:1px solid var(--line);
+  background:var(--surface);
+  color:var(--ink);
+  cursor:pointer;
+  transition:transform .05s ease, background .12s;
+}
+button.btn:active{ transform:translateY(1px); }
+button.btn.primary{
+  background:var(--accent);
+  border-color:var(--accent);
+  color:var(--accent-ink);
+}
+button.btn.primary:hover{ filter:brightness(1.06); }
+button.btn.ghost:hover{ border-color:var(--ink-soft); }
+button.btn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+
+.feedback{
+  margin-top:22px;
+  border-radius:10px;
+  padding:14px 16px;
+  text-align:left;
+}
+.feedback[hidden]{ display:none; }
+.feedback.ok{ background:var(--success-bg); color:var(--success); }
+.feedback.bad{ background:var(--danger-bg); color:var(--danger); }
+.feedback .headline{ font-weight:700; font-size:0.98rem; margin-bottom:4px; }
+.feedback .steps{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:0.85rem;
+  color:var(--ink);
+  opacity:0.85;
+  font-variant-numeric:tabular-nums;
+}
+.feedback .tip{
+  font-size:0.78rem;
+  color:var(--ink);
+  opacity:0.75;
+  margin-top:6px;
+  font-style:italic;
+}
+
+footer{
+  margin-top:26px;
+  text-align:center;
+  font-size:0.76rem;
+  color:var(--ink-soft);
+}
+
+@media (max-width:520px){
+  .card{ padding:26px 16px 24px; }
+  .readout .cell{ min-width:64px; padding:6px 8px; }
+}
+.back-link{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  font-size:0.82rem;
+  font-weight:500;
+  color:var(--ink-soft);
+  text-decoration:none;
+  margin-bottom:14px;
+}
+.back-link:hover{ color:var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <a class="back-link" href="kvinta.html">← Zpět na Kvinta/1. ročník</a>
+
+  <div class="brand">
+    <div class="brand-lockup">
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect x="3" y="14" width="34" height="12" rx="2" transform="rotate(-8 20 20)" fill="none" stroke="var(--accent)" stroke-width="2"/>
+        <g stroke="var(--accent)" stroke-width="1.6" transform="rotate(-8 20 20)">
+          <line x1="8" y1="14" x2="8" y2="20"/>
+          <line x1="14" y1="14" x2="14" y2="18.5"/>
+          <line x1="20" y1="14" x2="20" y2="20"/>
+          <line x1="26" y1="14" x2="26" y2="18.5"/>
+          <line x1="32" y1="14" x2="32" y2="20"/>
+        </g>
+      </svg>
+      <div class="brand-text">
+        <h1>Převody jednotek</h1>
+        <p>trenažér převodů jednotek</p>
+      </div>
+    </div>
+    <div class="readout">
+      <div class="cell"><span class="label">Skóre</span><span class="value" id="stat-score">0</span></div>
+      <div class="cell"><span class="label">Série</span><span class="value" id="stat-streak">0</span></div>
+      <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="stat-accuracy">—</span></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="section-block">
+      <div class="panel-title">Obtížnost</div>
+      <div class="row" id="difficulty-row"></div>
+    </div>
+    <div class="section-block">
+      <div class="panel-title">
+        <button class="linklike category-toggle" id="category-toggle" type="button" aria-expanded="false" aria-controls="category-row">Veličiny <span class="toggle-arrow" id="category-toggle-arrow">▸</span></button>
+      </div>
+      <div class="row" id="category-row" hidden></div>
+    </div>
+    <div class="section-block">
+      <div class="panel-title">Formát odpovědi<span class="hint" id="format-note" hidden>&nbsp;— v Expertu jen desítkový zápis</span></div>
+      <div class="row" id="format-row"></div>
+    </div>
+    <div class="settings-foot">
+      <span class="hint">Desetinná čísla pište s čárkou i tečkou.</span>
+      <button class="linklike" id="reset-stats">vynulovat statistiku</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="cat-tag" id="cat-tag">Délka</span>
+    <div class="equation" id="equation">
+      <span id="eq-value">3,5</span><span class="unit" id="eq-from-unit">km</span>
+      <span class="eq">=</span>
+      <span class="answer-slot" id="answer-decimal-wrap">
+        <input class="answer-input" id="answer" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="?">
+      </span>
+      <span class="answer-slot sci-group" id="answer-sci-wrap" hidden>
+        <input class="answer-input sci-mantissa" id="answer-mantissa" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="a">
+        <span class="sci-times">× 10</span>
+        <input class="sci-exp" id="answer-exp" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="n">
+      </span>
+      <span class="unit" id="eq-to-unit">m</span>
+    </div>
+    <div class="actions">
+      <button class="btn primary" id="btn-check">Zkontrolovat</button>
+      <button class="btn ghost" id="btn-skip">Nevím / Další</button>
+    </div>
+    <div class="feedback" id="feedback" hidden>
+      <div class="headline" id="feedback-headline"></div>
+      <div class="steps" id="feedback-steps"></div>
+      <div class="tip" id="feedback-tip" hidden></div>
+    </div>
+  </div>
+
+  <footer>Klávesa Enter potvrzuje odpověď a posouvá na další příklad.</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var PREFIX_EXP = {'':0,'T':12,'G':9,'M':6,'k':3,'d':-1,'c':-2,'m':-3,'µ':-6,'n':-9,'p':-12};
+  var RANGE_BY_PREFIX = {
+    '': [1,800], 'T':[0.002,20], 'G':[0.01,80], 'M':[0.05,300], 'k':[0.2,900],
+    'd':[1,90], 'c':[2,300], 'm':[2,900], 'µ':[2,900], 'n':[2,900], 'p':[2,900]
+  };
+
+  // `overrides` (nepovinné) přepíše rozsah pro konkrétní předponu (klíč '' = základní jednotka bez předpony)
+  // tam, kde by sdílená tabulka RANGE_BY_PREFIX dala fyzikálně nesmyslné číslo (např. 800 tesla).
+  function buildPrefixUnits(base, prefixes, overrides){
+    overrides = overrides || {};
+    var units = [{sym:base, factor:1, range: overrides[''] || RANGE_BY_PREFIX['']}];
+    prefixes.forEach(function(p){
+      units.push({sym:p+base, factor:Math.pow(10,PREFIX_EXP[p]), range: overrides[p] || RANGE_BY_PREFIX[p]});
+    });
+    return units;
+  }
+
+  var GROUP_A = [
+    { key:'delka', name:'Délka', units: buildPrefixUnits('m', ['k','d','c','m','µ','n']) },
+    { key:'obsah', name:'Obsah', units:[
+      {sym:'mm²',factor:1e-6,range:[500,99000]},
+      {sym:'cm²',factor:1e-4,range:[5,9800]},
+      {sym:'dm²',factor:1e-2,range:[2,98]},
+      {sym:'m²',factor:1,range:[1,480]},
+      {sym:'km²',factor:1e6,range:[0.05,20]}
+    ]},
+    { key:'objem', name:'Objem', units:[
+      {sym:'mm³',factor:1e-9,range:[500,99000]},
+      {sym:'cm³',factor:1e-6,range:[5,980]},
+      {sym:'ml',factor:1e-6,range:[5,980]},
+      {sym:'dm³',factor:1e-3,range:[1,480]},
+      {sym:'l',factor:1e-3,range:[1,480]},
+      {sym:'m³',factor:1,range:[0.2,60]}
+    ]},
+    { key:'hmotnost', name:'Hmotnost', units: buildPrefixUnits('g', ['k','m','µ']) },
+    { key:'cas', name:'Čas', units: buildPrefixUnits('s', ['m','µ','n']) },
+    // kiloampér je mimo běžnou výuku (stovky tisíc A) — proud jde jen do stovek A
+    { key:'proud', name:'Elektrický proud', units: buildPrefixUnits('A', ['m','µ'], {'':[1,150]}) },
+    // megavolt (stovky milionů V) není reálný — napětí končí u kV (vysoké vedení)
+    { key:'napeti', name:'Elektrické napětí', units: buildPrefixUnits('V', ['k','m']) },
+    { key:'odpor', name:'Elektrický odpor', units: buildPrefixUnits('Ω', ['M','k']) },
+    // 800 F by byl obří superkondenzátor — běžné kondenzátory jsou v µF/nF/pF, základní jednotka max jednotky F
+    { key:'kapacita', name:'Elektrická kapacita', units: buildPrefixUnits('F', ['m','µ','n','p'], {'':[0.5,5]}) },
+    { key:'frekvence', name:'Frekvence', units: buildPrefixUnits('Hz', ['G','M','k']) },
+    { key:'sila', name:'Síla', units: buildPrefixUnits('N', ['k','m']) },
+    { key:'tlak', name:'Tlak', units: buildPrefixUnits('Pa', ['G','M','k']) },
+    { key:'energie', name:'Energie', units: buildPrefixUnits('J', ['M','k','m']) },
+    // GW jde jen do desítek (největší elektrárny na světě ~20 GW), ne 80 GW
+    { key:'vykon', name:'Výkon', units: buildPrefixUnits('W', ['G','M','k','m'], {G:[0.01,20]}) },
+    // 800 T přesahuje i nejsilnější laboratorní magnety — reálná pole jsou do jednotek T (MRI ~3 T)
+    { key:'indukce', name:'Magnetická indukce', units: buildPrefixUnits('T', ['m','µ'], {'':[0.001,3]}) },
+    // stovky henry jsou nereálné — velké tlumivky/transformátory jsou řádu jednotek H
+    { key:'indukcnost', name:'Indukčnost', units: buildPrefixUnits('H', ['m','µ'], {'':[0.1,5]}) },
+    // stovky coulombů jsou extrémní náboj — elektrostatika běžně pracuje v µC až jednotkách C
+    { key:'naboj', name:'Elektrický náboj', units: buildPrefixUnits('C', ['m','µ','n'], {'':[0.001,2]}) }
+  ];
+
+  var EXPERT_TOPICS = [
+    { key:'hustota', name:'Hustota', units:[
+      {sym:'kg/m³',factor:1,range:[500,9000]},
+      {sym:'g/cm³',factor:1000,range:[0.5,9]}
+    ]},
+    { key:'rychlost', name:'Rychlost', units:[
+      {sym:'m/s',factor:1,range:[1,55]},
+      {sym:'km/h',factor:1/3.6,range:[3,200]}
+    ]},
+    { key:'cas_j', name:'Čas (s, min, h)', units:[
+      {sym:'s',factor:1,range:[2,590]},
+      {sym:'min',factor:60,range:[1,180]},
+      {sym:'h',factor:3600,range:[0.2,48]}
+    ]},
+    { key:'teplota', name:'Teplota', isTemp:true, units:[
+      {sym:'°C', range:[-30,120]},
+      {sym:'K', range:[240,400]}
+    ]},
+    { key:'tep_kapacita', name:'Měrná tep. kapacita', units:[
+      {sym:'J/(kg·K)',factor:1,range:[300,4500]},
+      {sym:'kJ/(kg·K)',factor:1000,range:[0.3,4.5]},
+      {sym:'J/(g·K)',factor:1000,range:[0.3,4.5]}
+    ]},
+    { key:'skup_teplo', name:'Měrné skupenské teplo', units:[
+      {sym:'J/kg',factor:1,range:[100000,3000000]},
+      {sym:'kJ/kg',factor:1000,range:[100,3000]},
+      {sym:'MJ/kg',factor:1000000,range:[0.1,3]}
+    ]},
+    { key:'rezistivita', name:'Měrný odpor', units:[
+      {sym:'Ω·mm²/m',factor:0.000001,range:[0.01,3]},
+      {sym:'Ω·m',factor:1,range:[0.00000001,0.000003]}
+    ]},
+    { key:'uhlova', name:'Úhlová rychlost', units:[
+      {sym:'ot/min',factor:2*Math.PI/60,range:[10,3000]},
+      {sym:'rad/s',factor:1,range:[1,300]}
+    ]}
+  ];
+
+  var DIFFICULTIES = [
+    { key:'zakladni', name:'Základní' },
+    { key:'pokrocila', name:'Pokročilá' },
+    { key:'expert', name:'Expert' }
+  ];
+  var FORMATS = [
+    { key:'decimal', name:'Desítkový zápis' },
+    { key:'scientific', name:'Mocniny deseti (a·10ⁿ)' }
+  ];
+
+  var state = {
+    difficulty: 'zakladni',
+    answerFormat: 'decimal',
+    selGroupA: {},
+    selExpert: {},
+    score: 0, streak: 0, bestStreak: 0, answered: 0, correct: 0,
+    current: null, locked: false
+  };
+  GROUP_A.forEach(function(c){ state.selGroupA[c.key] = true; });
+  EXPERT_TOPICS.forEach(function(c){ state.selExpert[c.key] = true; });
+
+  function loadStats(){
+    try{
+      var raw = localStorage.getItem('meritko-stats');
+      if(raw){ state.bestStreak = JSON.parse(raw).bestStreak || 0; }
+    }catch(e){}
+  }
+  function saveStats(){
+    try{ localStorage.setItem('meritko-stats', JSON.stringify({bestStreak: state.bestStreak})); }catch(e){}
+  }
+
+  function fmtCZ(n, maxDecimals){
+    var f = Math.pow(10,maxDecimals);
+    var v = Math.round(n*f)/f;
+    if(Object.is(v,-0)) v = 0;
+    return v.toString().replace('.', ',');
+  }
+
+  // Zaokrouhlí na pevný počet desetinných míst a vypíše v desítkovém zápisu
+  // (na rozdíl od n.toString() nikdy nesklouzne do formátu 2.35e-8).
+  function fmtFixed(n, decimals){
+    var v = roundTo(n, decimals);
+    if(Object.is(v,-0)) v = 0;
+    return v.toFixed(decimals).replace('.', ',');
+  }
+
+  function roundTo(n, decimals){
+    var f = Math.pow(10, decimals);
+    // n*f občas dopadne těsně pod „,5" (61,5/60*60 = 1,0249999999999999 místo 1,025) —
+    // toPrecision(15) setře plovoucí šum dřív, než se zaokrouhlí, takže se ,5 zaokrouhlí správně nahoru.
+    var cleaned = Number((n*f).toPrecision(15));
+    var v = Math.round(cleaned)/f;
+    if(Object.is(v,-0)) v = 0;
+    return v;
+  }
+
+  // Zaokrouhlení na daný počet platných cifer — funguje stejně dobře
+  // pro velmi malá (10⁻⁸) i velmi velká (10⁸) čísla.
+  function roundSig(val, sig){
+    if(val===0) return 0;
+    var mag = Math.floor(Math.log10(Math.abs(val)));
+    var f = Math.pow(10, sig-1-mag);
+    var v = Math.round(val*f)/f;
+    if(Object.is(v,-0)) v = 0;
+    return v;
+  }
+
+  // Kolik desetinných míst potřebuje zápis hodnoty `value`, aby ukázal `sig` platných cifer.
+  function decimalsForSig(value, sig){
+    if(value===0) return Math.max(0, sig-1);
+    var mag = Math.floor(Math.log10(Math.abs(value)));
+    return Math.max(0, sig-1-mag);
+  }
+
+  // Opačný převod: kolik platných cifer má `value`, když byla zaokrouhlena na `decimals` desetinných míst.
+  // Používá se k tomu, aby mantisa ve vědeckém zápisu měla vždy přesně tolik cifer, kolik odpovídá
+  // zaokrouhlení použitému pro desítkový zápis a pro toleranci — jinak by se zobrazené "řešení"
+  // ve vědeckém zápisu mohlo lišit od hodnoty, kterou checker skutečně uznává jako správnou.
+  function sigFromDecimals(value, decimals){
+    if(value===0) return decimals+1;
+    var mag = Math.floor(Math.log10(Math.abs(value)));
+    return Math.max(1, mag+decimals+1);
+  }
+
+  var SUP = {'0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹','-':'⁻'};
+  function toSuperscript(n){ return String(n).split('').map(function(ch){ return SUP[ch] || ch; }).join(''); }
+
+  function toScientificParts(n, sig){
+    if(n===0) return {mantissa:0, exponent:0, mdec:Math.max(0,(sig||4)-1)};
+    var sign = n<0 ? -1 : 1;
+    var abs = Math.abs(n);
+    var exp = Math.floor(Math.log10(abs));
+    var mantissa = abs/Math.pow(10,exp);
+    var mdec = Math.max(0, (sig||4)-1);
+    var f = Math.pow(10,mdec);
+    mantissa = Math.round(mantissa*f)/f;
+    if(mantissa>=10){ mantissa/=10; exp+=1; }
+    if(mantissa<1){ mantissa*=10; exp-=1; }
+    return {mantissa: sign*mantissa, exponent: exp, mdec: mdec};
+  }
+
+  function formatResult(n, decimals, sig){
+    if(state.answerFormat==='scientific'){
+      var p = toScientificParts(n, sig);
+      return fmtCZ(p.mantissa,p.mdec) + ' × 10' + toSuperscript(p.exponent);
+    }
+    return fmtFixed(n, decimals);
+  }
+
+  function randomValue(unit, difficulty){
+    var lo = unit.range[0], hi = unit.range[1];
+    var val = lo + Math.random()*(hi-lo);
+    var sig;
+    if(difficulty==='zakladni'){
+      sig = Math.random()<0.5 ? 2 : 3;
+    } else if(difficulty==='expert'){
+      sig = Math.random()<0.4 ? 4 : 3;
+    } else {
+      sig = Math.random()<0.5 ? 3 : 4;
+    }
+    val = roundSig(val, sig);
+    if(val===0) val = roundSig(lo, sig);
+    return { value: val, sig: sig };
+  }
+
+  function pickPair(units, mode){
+    var n = units.length;
+    var idxs = units.map(function(u,i){ return i; });
+    if(mode==='zakladni'){
+      var baseIdx = idxs.filter(function(i){ return units[i].factor===1; })[0];
+      var others = idxs.filter(function(i){ return i!==baseIdx; });
+      if(baseIdx===undefined || others.length===0){
+        var a0=0,b0 = n>1?1:0; return [a0,b0];
+      }
+      var otherIdx = others[Math.floor(Math.random()*others.length)];
+      return Math.random()<0.5 ? [baseIdx, otherIdx] : [otherIdx, baseIdx];
+    }
+    if(mode==='pokrocila'){
+      var nonBase = idxs.filter(function(i){ return units[i].factor!==1; });
+      if(nonBase.length<2){
+        var i1=Math.floor(Math.random()*n), i2; do{ i2=Math.floor(Math.random()*n); }while(i2===i1 && n>1);
+        return [i1,i2];
+      }
+      var a = nonBase[Math.floor(Math.random()*nonBase.length)];
+      var b; do{ b = nonBase[Math.floor(Math.random()*nonBase.length)]; }while(b===a);
+      return [a,b];
+    }
+    var x1=Math.floor(Math.random()*n), x2;
+    do{ x2=Math.floor(Math.random()*n); }while(x2===x1 && n>1);
+    return [x1,x2];
+  }
+
+  function tempConvert(v, fromSym, toSym){
+    if(fromSym===toSym) return v;
+    if(fromSym==='°C' && toSym==='K') return v+273.15;
+    if(fromSym==='K' && toSym==='°C') return v-273.15;
+    return v;
+  }
+
+  function generateQuestion(){
+    var difficulty = state.difficulty;
+    var catName, fromUnit, toUnit, value, valueDecimals, exact, resultDecimals, stepText;
+    var isTemp = false, tempTargets = null;
+
+    if(difficulty==='expert'){
+      var pool = EXPERT_TOPICS.filter(function(t){ return state.selExpert[t.key]; });
+      if(pool.length===0) pool = EXPERT_TOPICS;
+      var topic = pool[Math.floor(Math.random()*pool.length)];
+      catName = topic.name;
+      var pair = pickPair(topic.units, 'any');
+      fromUnit = topic.units[pair[0]]; toUnit = topic.units[pair[1]];
+      var rv = randomValue(fromUnit, 'expert');
+      value = rv.value;
+      valueDecimals = decimalsForSig(value, rv.sig);
+
+      if(topic.isTemp){
+        isTemp = true;
+        // Teplota se nehodnotí tolerancí odvozenou z platných cifer jako zbytek aplikace:
+        // učitelé i žáci běžně počítají s 273,15 i se zaokrouhleným 273, obě varianty jsou správně,
+        // cokoli jiného ne. Zobrazíme přesnější (273,15) variantu, ale uznáme obě.
+        resultDecimals = Math.max(valueDecimals, 2);
+        if(fromUnit.sym===toUnit.sym){
+          exact = roundTo(value, resultDecimals);
+          tempTargets = [exact];
+          stepText = fmtFixed(value,valueDecimals) + ' ' + fromUnit.sym + ' = ' + formatResult(exact,resultDecimals,sigFromDecimals(exact,resultDecimals)) + ' ' + toUnit.sym;
+        } else if(fromUnit.sym==='°C'){
+          exact = roundTo(value+273.15, resultDecimals);
+          tempTargets = [exact, roundTo(value+273, resultDecimals)];
+          stepText = fmtFixed(value,valueDecimals) + ' °C + 273,15 = ' + formatResult(exact,resultDecimals,sigFromDecimals(exact,resultDecimals)) + ' K';
+        } else {
+          exact = roundTo(value-273.15, resultDecimals);
+          tempTargets = [exact, roundTo(value-273, resultDecimals)];
+          stepText = fmtFixed(value,valueDecimals) + ' K − 273,15 = ' + formatResult(exact,resultDecimals,sigFromDecimals(exact,resultDecimals)) + ' °C';
+        }
+      } else {
+        var rawExactE = value * fromUnit.factor / toUnit.factor;
+        resultDecimals = decimalsForSig(rawExactE, rv.sig);
+        exact = roundTo(rawExactE, resultDecimals);
+        var ratioE = fromUnit.factor / toUnit.factor;
+        var ratioTextE = ratioE>=1 ? '× ' + fmtCZ(ratioE,8) : '÷ ' + fmtCZ(1/ratioE,8);
+        stepText = fmtFixed(value,valueDecimals) + ' ' + fromUnit.sym + ' ' + ratioTextE + ' = ' + formatResult(exact,resultDecimals,sigFromDecimals(exact,resultDecimals)) + ' ' + toUnit.sym;
+      }
+    } else {
+      var poolA = GROUP_A.filter(function(c){ return state.selGroupA[c.key]; });
+      if(poolA.length===0) poolA = GROUP_A;
+      var quantity = poolA[Math.floor(Math.random()*poolA.length)];
+      catName = quantity.name;
+      var pairA = pickPair(quantity.units, difficulty);
+      fromUnit = quantity.units[pairA[0]]; toUnit = quantity.units[pairA[1]];
+      var rvA = randomValue(fromUnit, difficulty);
+      value = rvA.value;
+      valueDecimals = decimalsForSig(value, rvA.sig);
+      var rawExact = value * fromUnit.factor / toUnit.factor;
+      resultDecimals = decimalsForSig(rawExact, rvA.sig);
+      exact = roundTo(rawExact, resultDecimals);
+      var ratio = fromUnit.factor / toUnit.factor;
+      var ratioText = ratio>=1 ? '× ' + fmtCZ(ratio,8) : '÷ ' + fmtCZ(1/ratio,8);
+      stepText = fmtFixed(value,valueDecimals) + ' ' + fromUnit.sym + ' ' + ratioText + ' = ' + formatResult(exact,resultDecimals,sigFromDecimals(exact,resultDecimals)) + ' ' + toUnit.sym;
+    }
+
+    // tolerance = polovina zaokrouhlovacího zrna správného výsledku —
+    // uzná odpověď zaokrouhlenou na stejný počet platných cifer jako zadání (nebo přesnější), ne méně
+    // (u teploty slouží stejné zrno jen jako epsilon okolo obou uznávaných hodnot, viz tempTargets)
+    var tolerance = 0.51 * Math.pow(10, -resultDecimals);
+
+    state.current = { catName:catName, fromUnit:fromUnit, toUnit:toUnit, value:value, valueDecimals:valueDecimals, exact:exact, resultDecimals:resultDecimals, tolerance:tolerance, stepText:stepText, isTemp:isTemp, tempTargets:tempTargets };
+    renderQuestion();
+  }
+
+  function setUnitEl(el, sym){
+    el.textContent = sym;
+    el.classList.toggle('long', sym.length>5);
+  }
+
+  function renderQuestion(){
+    var q = state.current;
+    document.getElementById('cat-tag').textContent = q.catName;
+    document.getElementById('eq-value').textContent = fmtFixed(q.value, q.valueDecimals);
+    setUnitEl(document.getElementById('eq-from-unit'), q.fromUnit.sym);
+    setUnitEl(document.getElementById('eq-to-unit'), q.toUnit.sym);
+
+    var input = document.getElementById('answer');
+    input.value = ''; input.disabled = false; input.classList.remove('correct','wrong');
+    var m = document.getElementById('answer-mantissa'), ex = document.getElementById('answer-exp');
+    m.value=''; ex.value=''; m.disabled=false; ex.disabled=false;
+    m.classList.remove('correct','wrong'); ex.classList.remove('correct','wrong');
+
+    document.getElementById('feedback').hidden = true;
+    document.getElementById('feedback').classList.remove('ok','bad');
+    document.getElementById('feedback-tip').hidden = true;
+    state.locked = false;
+    document.getElementById('btn-check').textContent = 'Zkontrolovat';
+
+    if(state.answerFormat==='scientific'){ m.focus(); } else { input.focus(); }
+  }
+
+  function parseAnswer(str){
+    if(!str) return NaN;
+    str = str.trim().replace(',', '.').replace(/\s+/g,'');
+    return parseFloat(str);
+  }
+
+  function getUserValue(){
+    if(state.answerFormat==='scientific'){
+      var mv = parseAnswer(document.getElementById('answer-mantissa').value);
+      var ev = parseInt(document.getElementById('answer-exp').value, 10);
+      if(isNaN(mv) || isNaN(ev)) return { value: NaN, normalized:true };
+      return { value: mv*Math.pow(10,ev), normalized: Math.abs(mv)>=1 && Math.abs(mv)<10 };
+    }
+    var v = parseAnswer(document.getElementById('answer').value);
+    return { value:v, normalized:true };
+  }
+
+  function markInputs(cls){
+    if(state.answerFormat==='scientific'){
+      document.getElementById('answer-mantissa').classList.add(cls);
+      document.getElementById('answer-exp').classList.add(cls);
+    } else {
+      document.getElementById('answer').classList.add(cls);
+    }
+  }
+  function disableInputs(){
+    document.getElementById('answer').disabled = true;
+    document.getElementById('answer-mantissa').disabled = true;
+    document.getElementById('answer-exp').disabled = true;
+  }
+
+  // Vrátí true, pokud je aktuální odpověď prázdná/nevyplněná.
+  function isAnswerEmpty(){
+    return isNaN(getUserValue().value);
+  }
+
+  // Společná brána pro "Zkontrolovat" i pro přepínání veličin: pokud je příklad
+  // ještě nezamčený (nezkontrolovaný), nejdřív se u prázdné odpovědi zeptá, jestli
+  // to uživatel opravdu chce, a pak vždy provede kontrolu (aby se nedalo příklad
+  // jen tak přeskočit beze zkontrolování). Vrací true, pokud má volající pokračovat
+  // dál (např. přepnout veličinu), false pokud má akci zrušit (uživatel zrušil dialog).
+  function checkBeforeProceeding(){
+    if(state.locked) return true;
+    if(isAnswerEmpty()){
+      if(!confirm('Odpověď není vyplněná. Opravdu chcete zkontrolovat?')) return false;
+    }
+    checkAnswer();
+    return true;
+  }
+
+  function checkAnswer(){
+    if(state.locked){ generateQuestion(); return; }
+    var q = state.current;
+    var res = getUserValue();
+    var tol = q.tolerance;
+    var ok;
+    if(q.isTemp){
+      // uznáme přesný převod (273,15) i zaokrouhlený (273) — nic mezi tím ani okolo
+      ok = !isNaN(res.value) && q.tempTargets.some(function(t){ return Math.abs(res.value - t) <= tol; });
+    } else {
+      ok = !isNaN(res.value) && Math.abs(res.value - q.exact) <= tol;
+    }
+
+    state.answered++;
+    var fb = document.getElementById('feedback');
+    var head = document.getElementById('feedback-headline');
+    var steps = document.getElementById('feedback-steps');
+    var tip = document.getElementById('feedback-tip');
+    fb.hidden = false;
+    tip.hidden = true;
+
+    if(ok){
+      state.score += 10; state.streak++; state.correct++;
+      if(state.streak>state.bestStreak){ state.bestStreak = state.streak; saveStats(); }
+      markInputs('correct');
+      fb.classList.add('ok'); fb.classList.remove('bad');
+      head.textContent = 'Správně!';
+      if(state.answerFormat==='scientific' && !res.normalized){
+        tip.hidden = false;
+        tip.textContent = 'Číselně správně — v normalizovaném zápisu má ale platit 1 ≤ a < 10.';
+      }
+    } else {
+      state.streak = 0;
+      markInputs('wrong');
+      fb.classList.add('bad'); fb.classList.remove('ok');
+      head.textContent = isNaN(res.value) ? 'Doplň odpověď.' : 'Bohužel špatně.';
+    }
+    steps.textContent = q.stepText;
+    disableInputs();
+    state.locked = true;
+    var btnCheck = document.getElementById('btn-check');
+    btnCheck.textContent = 'Další příklad →';
+    btnCheck.focus();
+    updateStats();
+  }
+
+  function skip(){
+    if(state.locked){ generateQuestion(); return; }
+    state.streak = 0;
+    state.answered++;
+    var q = state.current;
+    var fb = document.getElementById('feedback');
+    fb.hidden = false;
+    document.getElementById('feedback-tip').hidden = true;
+    document.getElementById('feedback-headline').textContent = 'Správná odpověď:';
+    document.getElementById('feedback-steps').textContent = q.stepText;
+    fb.classList.add('bad'); fb.classList.remove('ok');
+    disableInputs();
+    state.locked = true;
+    var btnCheck = document.getElementById('btn-check');
+    btnCheck.textContent = 'Další příklad →';
+    btnCheck.focus();
+    updateStats();
+  }
+
+  function updateStats(){
+    document.getElementById('stat-score').textContent = state.score;
+    document.getElementById('stat-streak').textContent = state.streak + (state.bestStreak>0 ? ' / ' + state.bestStreak : '');
+    document.getElementById('stat-accuracy').textContent = state.answered===0 ? '—' : Math.round(100*state.correct/state.answered) + ' %';
+  }
+
+  function buildDifficultyRow(){
+    var row = document.getElementById('difficulty-row');
+    row.innerHTML = '';
+    DIFFICULTIES.forEach(function(d){
+      var b = document.createElement('button');
+      b.className = 'chip accented' + (d.key===state.difficulty ? ' on' : '');
+      b.textContent = d.name;
+      b.addEventListener('click', function(){
+        state.difficulty = d.key;
+        Array.prototype.forEach.call(row.children, function(el,i){
+          el.classList.toggle('on', DIFFICULTIES[i].key===state.difficulty);
+        });
+        if(d.key==='expert' && state.answerFormat==='scientific'){ setAnswerFormat('decimal'); }
+        buildCategoryRow();
+        buildFormatRow();
+        generateQuestion();
+      });
+      row.appendChild(b);
+    });
+  }
+
+  function buildCategoryRow(){
+    var row = document.getElementById('category-row');
+    row.innerHTML = '';
+    var isExpert = state.difficulty==='expert';
+    var list = isExpert ? EXPERT_TOPICS : GROUP_A;
+    var sel = isExpert ? state.selExpert : state.selGroupA;
+    list.forEach(function(c){
+      var b = document.createElement('button');
+      b.className = 'chip' + (sel[c.key] ? ' on' : '');
+      b.textContent = c.name;
+      b.addEventListener('click', function(){
+        var activeCount = list.filter(function(cc){ return sel[cc.key]; }).length;
+        if(sel[c.key] && activeCount===1) return;
+        if(!checkBeforeProceeding()) return;
+        sel[c.key] = !sel[c.key];
+        b.classList.toggle('on', sel[c.key]);
+        generateQuestion();
+      });
+      row.appendChild(b);
+    });
+  }
+
+  function applyAnswerFormatUI(){
+    var decWrap = document.getElementById('answer-decimal-wrap');
+    var sciWrap = document.getElementById('answer-sci-wrap');
+    decWrap.hidden = state.answerFormat==='scientific';
+    sciWrap.hidden = state.answerFormat!=='scientific';
+  }
+
+  function setAnswerFormat(fmt){
+    state.answerFormat = fmt;
+    applyAnswerFormatUI();
+    if(!state.locked){
+      document.getElementById('answer').value='';
+      document.getElementById('answer-mantissa').value='';
+      document.getElementById('answer-exp').value='';
+      if(fmt==='scientific'){ document.getElementById('answer-mantissa').focus(); }
+      else { document.getElementById('answer').focus(); }
+    }
+  }
+
+  function buildFormatRow(){
+    var row = document.getElementById('format-row');
+    row.innerHTML = '';
+    var isExpert = state.difficulty==='expert';
+    var list = isExpert ? FORMATS.filter(function(f){ return f.key==='decimal'; }) : FORMATS;
+    list.forEach(function(fmt){
+      var b = document.createElement('button');
+      b.className = 'chip accented' + (fmt.key===state.answerFormat ? ' on' : '');
+      b.textContent = fmt.name;
+      b.addEventListener('click', function(){
+        setAnswerFormat(fmt.key);
+        Array.prototype.forEach.call(row.children, function(el,i){
+          el.classList.toggle('on', list[i].key===state.answerFormat);
+        });
+      });
+      row.appendChild(b);
+    });
+    document.getElementById('format-note').hidden = !isExpert;
+  }
+
+  document.getElementById('category-toggle').addEventListener('click', function(){
+    var row = document.getElementById('category-row');
+    var expanded = row.hidden;
+    row.hidden = !expanded;
+    this.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+  });
+
+  document.getElementById('btn-check').addEventListener('click', function(){
+    if(state.locked){ generateQuestion(); return; }
+    if(isAnswerEmpty()){
+      if(!confirm('Odpověď není vyplněná. Opravdu chcete zkontrolovat?')) return;
+    }
+    checkAnswer();
+  });
+  document.getElementById('btn-skip').addEventListener('click', skip);
+  document.getElementById('answer').addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); checkAnswer(); } });
+  document.getElementById('answer-mantissa').addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); checkAnswer(); } });
+  document.getElementById('answer-exp').addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); checkAnswer(); } });
+  document.getElementById('reset-stats').addEventListener('click', function(){
+    state.score=0; state.streak=0; state.answered=0; state.correct=0; state.bestStreak=0;
+    try{ localStorage.removeItem('meritko-stats'); }catch(e){}
+    updateStats();
+  });
+
+  loadStats();
+  buildDifficultyRow();
+  buildCategoryRow();
+  buildFormatRow();
+  updateStats();
+  generateQuestion();
+})();
+</script>
+
+</body>
+</html>
