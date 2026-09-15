@@ -682,7 +682,7 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
   <div class="panel">
     <div class="panel-title">Absolutní odchylka</div>
     <p><b class="sym">Δx</b> vyjadřuje, o kolik se naměřené hodnoty v průměru liší od <b class="avgsym">x</b>:</p>
-    <p class="formula-line"><b class="sym">Δx</b> = <span class="frac"><span class="frac-num">|<b class="sym">x₁</b> − <b class="avgsym">x</b>| + |<b class="sym">x₂</b> − <b class="avgsym">x</b>| + ... + |<b class="sym">xₙ</b> − <b class="avgsym">x</b>|</span><span class="frac-den"><b class="sym">n</b></span></span></p>
+    <p class="formula-line"><b class="sym">Δx</b> = <span class="frac"><span class="frac-num">|<b class="sym">x₁</b> − <b class="avgsym">x</b>| + ... + |<b class="sym">xₙ</b> − <b class="avgsym">x</b>|</span><span class="frac-den"><b class="sym">n</b></span></span></p>
     <p>Absolutní hodnota zajistí, že se kladné a záporné odchylky navzájem nevyruší. S rostoucím počtem opakování měření <b class="sym">n</b> odchylka klesá — proto měříme vícekrát.</p>
   </div>
 
@@ -1163,6 +1163,14 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
         tdB.addEventListener('mouseenter', function(e){
           if(state.rangeSel.active && e.buttons===1){ updateRangeSelect(sheetRow); }
         });
+        // Na mobilu nahrazuje mousedown/mouseenter dotykové ovládání — dokud
+        // vzorec ještě nezačíná "=", necháme prst normálně scrollovat stránku.
+        tdB.addEventListener('touchstart', function(e){
+          var inputEl = state.activeFormulaInput;
+          if(!inputEl || inputEl.disabled || inputEl.value.charAt(0) !== '=' || e.touches.length!==1) return;
+          e.preventDefault();
+          beginRangeSelect(sheetRow);
+        }, {passive:false});
       })(sheetRow);
       tr.appendChild(tdRowNum); tr.appendChild(tdA); tr.appendChild(tdB);
       tbody.appendChild(tr);
@@ -1482,6 +1490,23 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
     state.dataCellEls.forEach(function(td){ td.classList.remove('cell-selecting'); });
   }
   document.addEventListener('mouseup', endRangeSelect);
+
+  // Dotykové tažení přes buňky s daty: dokud probíhá výběr rozsahu, potlačíme
+  // scrollování stránky a místo toho pod prstem posouváme vybraný rozsah.
+  document.addEventListener('touchmove', function(e){
+    if(!state.rangeSel.active) return;
+    var touch = e.touches[0];
+    if(!touch) return;
+    e.preventDefault();
+    var el = document.elementFromPoint(touch.clientX, touch.clientY);
+    var cell = el && el.closest ? el.closest('.sheet-cell-data') : null;
+    if(cell){
+      var idx = state.dataCellEls.indexOf(cell);
+      if(idx!==-1) updateRangeSelect(idx+2);
+    }
+  }, {passive:false});
+  document.addEventListener('touchend', endRangeSelect);
+  document.addEventListener('touchcancel', endRangeSelect);
 
   function unlockStage2(){
     var s = state.current, q = s.q;
