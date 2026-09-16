@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kalkulačka FX-82CE X</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<style>
+:root{
+  --paper:#f5f0e3;
+  --surface:#fffcf5;
+  --surface-2:#ece4d1;
+  --ink:#212b34;
+  --ink-soft:#5d6b76;
+  --line:rgba(33,43,52,0.12);
+  --accent:#c9581f;
+  --accent-ink:#fff8f0;
+  --success:#28794f;
+  --success-bg:#e3efe0;
+  --danger:#b3392b;
+  --danger-bg:#f5e4de;
+  --focus:#1e6f66;
+  --shadow: 0 1px 0 rgba(33,43,52,0.06);
+}
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  background:
+    linear-gradient(var(--line) 1px, transparent 1px) 0 0/100% 34px,
+    linear-gradient(90deg, var(--line) 1px, transparent 1px) 0 0/34px 100%,
+    var(--paper);
+  background-attachment:local;
+  color:var(--ink);
+  font-family:'Work Sans', system-ui, sans-serif;
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:900px;
+  margin:0 auto;
+  padding:28px 20px 60px;
+}
+h1,h2,h3{ text-wrap:balance; margin:0; }
+.brand{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  flex-wrap:wrap;
+  margin-bottom:22px;
+}
+.brand-lockup{ display:flex; align-items:center; gap:12px; }
+.brand-lockup svg{ flex:none; }
+.brand-text h1{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:800;
+  font-size:2.5rem;
+  letter-spacing:0.02em;
+  line-height:1;
+  color:var(--ink);
+}
+.brand-text p{
+  margin:2px 0 0;
+  font-size:0.82rem;
+  color:var(--ink-soft);
+  letter-spacing:0.02em;
+}
+.readout{ display:flex; gap:8px; }
+.readout .cell{
+  background:var(--ink);
+  color:var(--paper);
+  border-radius:6px;
+  padding:6px 12px;
+  min-width:74px;
+  text-align:center;
+  box-shadow:var(--shadow);
+}
+.readout .cell .label{
+  display:block;
+  font-size:0.6rem;
+  letter-spacing:0.09em;
+  text-transform:uppercase;
+  opacity:0.65;
+  margin-bottom:2px;
+}
+.readout .cell .value{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:600;
+  font-size:1.05rem;
+  font-variant-numeric:tabular-nums;
+}
+
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:16px 18px;
+  margin-bottom:18px;
+}
+.panel-title{
+  font-size:0.74rem;
+  text-transform:uppercase;
+  letter-spacing:0.1em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-bottom:10px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+.row{ display:flex; flex-wrap:wrap; gap:8px; }
+.section-block{ margin-bottom:0; }
+.settings-foot{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-top:14px;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.hint{ font-size:0.78rem; color:var(--ink-soft); }
+.linklike{
+  background:none;
+  border:none;
+  color:var(--ink-soft);
+  font-size:0.78rem;
+  text-decoration:underline;
+  cursor:pointer;
+  padding:4px 0;
+}
+.linklike:hover{ color:var(--danger); }
+.chip{
+  font-family:'Work Sans', sans-serif;
+  font-size:0.86rem;
+  font-weight:500;
+  padding:7px 13px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  background:var(--surface);
+  color:var(--ink-soft);
+  cursor:pointer;
+  transition:background .12s, color .12s, border-color .12s;
+}
+.chip:hover{ border-color:var(--accent); }
+.chip.on{
+  background:var(--ink);
+  color:var(--paper);
+  border-color:var(--ink);
+}
+
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:30px 30px 30px;
+  text-align:center;
+}
+.cat-tag{
+  display:inline-block;
+  font-size:0.68rem;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  color:var(--ink-soft);
+  background:var(--surface-2);
+  padding:4px 11px;
+  border-radius:999px;
+  margin-bottom:20px;
+}
+.equation{
+  font-size:clamp(1.15rem, 4vw, 1.65rem);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:0.4em;
+  flex-wrap:wrap;
+  row-gap:0.5em;
+}
+.equation .katex{ font-size:1.05em; }
+.question-note{
+  margin-top:10px;
+  font-size:0.78rem;
+  color:var(--ink-soft);
+}
+
+.answer-input{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:600;
+  font-size:1em;
+  width:5.6em;
+  text-align:center;
+  border:none;
+  border-bottom:3px solid var(--ink-soft);
+  background:transparent;
+  color:var(--ink);
+  padding:0 0.1em 0.05em;
+}
+.answer-input:focus{ outline:none; border-color:var(--focus); }
+.answer-input.correct{ border-color:var(--success); color:var(--success); }
+.answer-input.wrong{ border-color:var(--danger); color:var(--danger); }
+.answer-input:disabled{ opacity:1; }
+.answer-slot[hidden]{ display:none; }
+
+.unit-suffix{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:600;
+}
+.unit-suffix:empty{ display:none; }
+
+.tip{
+  margin-top:14px;
+  padding:10px 12px;
+  border-radius:8px;
+  background:var(--surface-2);
+  font-size:0.82rem;
+  color:var(--ink);
+  text-align:left;
+}
+.tip[hidden]{ display:none; }
+
+.actions{
+  margin-top:26px;
+  display:flex;
+  gap:10px;
+  justify-content:center;
+  flex-wrap:wrap;
+}
+button.btn{
+  font-family:'Work Sans', sans-serif;
+  font-weight:600;
+  font-size:0.92rem;
+  padding:11px 22px;
+  border-radius:8px;
+  border:1px solid var(--line);
+  background:var(--surface);
+  color:var(--ink);
+  cursor:pointer;
+  transition:transform .05s ease, background .12s;
+}
+button.btn:active{ transform:translateY(1px); }
+button.btn.primary{
+  background:var(--accent);
+  border-color:var(--accent);
+  color:var(--accent-ink);
+}
+button.btn.primary:hover{ filter:brightness(1.06); }
+button.btn.ghost:hover{ border-color:var(--ink-soft); }
+button.btn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+
+.feedback{
+  margin-top:22px;
+  border-radius:10px;
+  padding:14px 16px;
+  text-align:left;
+}
+.feedback[hidden]{ display:none; }
+.feedback.ok{ background:var(--success-bg); color:var(--success); }
+.feedback.bad{ background:var(--danger-bg); color:var(--danger); }
+.feedback .headline{ font-weight:700; font-size:0.98rem; margin-bottom:4px; }
+.feedback .steps{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:0.9rem;
+  color:var(--ink);
+  opacity:0.9;
+  font-variant-numeric:tabular-nums;
+  display:flex;
+  align-items:center;
+  gap:0.3em;
+  flex-wrap:wrap;
+}
+.keys-row[hidden]{ display:none; }
+.keys-label{
+  margin-top:12px;
+  font-size:0.72rem;
+  text-transform:uppercase;
+  letter-spacing:0.08em;
+  color:var(--ink);
+  opacity:0.75;
+  font-weight:600;
+}
+.keys{ margin-top:6px; line-height:2.1; }
+.key{
+  display:inline-block;
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:600;
+  font-size:0.8rem;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:6px;
+  padding:3px 9px;
+  margin:2px 4px 2px 0;
+  color:var(--ink);
+}
+
+footer{
+  margin-top:26px;
+  text-align:center;
+  font-size:0.76rem;
+  color:var(--ink-soft);
+}
+
+@media (max-width:520px){
+  .card{ padding:26px 16px 24px; }
+  .readout .cell{ min-width:64px; padding:6px 8px; }
+}
+.back-link{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  font-size:0.82rem;
+  font-weight:500;
+  color:var(--ink-soft);
+  text-decoration:none;
+  margin-bottom:14px;
+}
+.back-link:hover{ color:var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <a class="back-link" href="kvinta.html">← Zpět na Kvinta/1. ročník</a>
+
+  <div class="brand">
+    <div class="brand-lockup">
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect x="9" y="3" width="22" height="34" rx="3" fill="none" stroke="var(--accent)" stroke-width="2"/>
+        <rect x="12.5" y="7" width="15" height="7" rx="1" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
+        <g fill="var(--accent)">
+          <circle cx="14.5" cy="20" r="1.3"/><circle cx="20" cy="20" r="1.3"/><circle cx="25.5" cy="20" r="1.3"/>
+          <circle cx="14.5" cy="25" r="1.3"/><circle cx="20" cy="25" r="1.3"/><circle cx="25.5" cy="25" r="1.3"/>
+          <circle cx="14.5" cy="30" r="1.3"/><circle cx="20" cy="30" r="1.3"/><circle cx="25.5" cy="30" r="1.3"/>
+        </g>
+      </svg>
+      <div class="brand-text">
+        <h1>Kalkulačka FX-82CE X</h1>
+        <p>trenažér práce s kalkulačkou Casio ClassWiz</p>
+      </div>
+    </div>
+    <div class="readout">
+      <div class="cell"><span class="label">Skóre</span><span class="value" id="stat-score">0</span></div>
+      <div class="cell"><span class="label">Série</span><span class="value" id="stat-streak">0</span></div>
+      <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="stat-accuracy">—</span></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="section-block">
+      <div class="panel-title">Témata</div>
+      <div class="row" id="topic-row"></div>
+    </div>
+    <div class="settings-foot">
+      <span class="hint">Desetinná čísla pište s čárkou i tečkou.</span>
+      <button class="linklike" id="reset-stats">vynulovat statistiku</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="cat-tag" id="cat-tag">Základy</span>
+    <div class="equation" id="equation">
+      <span id="eq-expr"></span>
+      <span class="answer-slot" id="answer-decimal-wrap">
+        <input class="answer-input" id="answer" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="?">
+      </span>
+      <span class="unit-suffix" id="unit-suffix"></span>
+    </div>
+    <div class="question-note" id="question-note"></div>
+    <div class="actions">
+      <button class="btn primary" id="btn-check">Zkontrolovat</button>
+      <button class="btn ghost" id="btn-skip">Nevím / Další</button>
+    </div>
+    <div class="feedback" id="feedback" hidden>
+      <div class="headline" id="feedback-headline"></div>
+      <div class="steps" id="feedback-steps"></div>
+      <div class="keys-row" id="keys-row" hidden>
+        <div class="keys-label">Postup na kalkulačce</div>
+        <div class="keys" id="feedback-keys"></div>
+      </div>
+      <div class="tip" id="feedback-tip" hidden></div>
+    </div>
+  </div>
+
+  <footer>Klávesa Enter potvrzuje odpověď a posouvá na další příklad.</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- pomocné funkce ----------
+
+  function randInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+  function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+  function roundTo(n, decimals){
+    var f = Math.pow(10, decimals);
+    var cleaned = Number((n*f).toPrecision(15));
+    var v = Math.round(cleaned)/f;
+    if(Object.is(v,-0)) v = 0;
+    return v;
+  }
+
+  function numberToKeys(value, decimals){
+    var v = roundTo(value, decimals);
+    var neg = v<0;
+    var s = Math.abs(v).toFixed(decimals);
+    var keys = [];
+    if(neg) keys.push('(-)');
+    for(var i=0;i<s.length;i++){
+      var ch = s[i];
+      keys.push(ch==='.' ? ',' : ch);
+    }
+    return keys;
+  }
+
+  function parseAnswer(str){
+    if(!str) return NaN;
+    str = str.trim().replace(',', '.').replace(/\s+/g,'');
+    return parseFloat(str);
+  }
+
+  function keysHtml(keys){
+    return keys.map(function(k){
+      var esc = String(k).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      return '<span class="key">'+esc+'</span>';
+    }).join('');
+  }
+
+  function decimalsNeeded(value){
+    for(var k=0;k<=6;k++){
+      var scaled = value*Math.pow(10,k);
+      if(Math.abs(scaled-Math.round(scaled))<1e-9) return k;
+    }
+    return 6;
+  }
+
+  function decWord(n){
+    if(n===1) return 'desetinné místo';
+    if(n>=2 && n<=4) return 'desetinná místa';
+    return 'desetinných míst';
+  }
+  function roundNote(n){ return 'Výsledek zaokrouhlete na '+n+' '+decWord(n)+'.'; }
+
+  function applyOp(a, op, b){
+    if(op==='+') return a+b;
+    if(op==='−') return a-b;
+    if(op==='×') return a*b;
+    return a/b;
+  }
+
+  // Převod interního symbolu operace (používaného i pro klávesy) na TeX zápis.
+  function texOp(op){
+    if(op==='+') return '+';
+    if(op==='−') return '-';
+    if(op==='×') return '\\times';
+    return '\\div';
+  }
+
+  // TeX zápis desetinného čísla s českou čárkou a korektním minus.
+  function texNum(value, decimals){
+    var v = roundTo(value, decimals);
+    if(Object.is(v,-0)) v = 0;
+    var s = Math.abs(v).toFixed(decimals).replace('.', '{,}');
+    return (v<0 ? '-' : '') + s;
+  }
+
+  function fracTex(numTex, denTex){ return '\\frac{'+numTex+'}{'+denTex+'}'; }
+
+  function fracKeys(n,d){ return ['a b/c'].concat(numberToKeys(n,0)).concat(['▶']).concat(numberToKeys(d,0)); }
+
+  function compoundFracKeys(numKeys, denKeys){
+    return ['a b/c'].concat(numKeys).concat(['▶']).concat(denKeys);
+  }
+
+  // Vrací zlomek pro použití ve výrazu – někdy jednoduchý (n/d), někdy složený
+  // (zlomek, jehož čitatel/jmenovatel je opět zlomek nebo součet zlomků).
+  function genFracTerm(){
+    var kind = randInt(1,3);
+    if(kind===1){
+      var n=randInt(1,9), d=randInt(2,12);
+      return { tex: fracTex(n,d), keys: fracKeys(n,d), value: n/d };
+    }
+    if(kind===2){
+      var a=randInt(1,9), b=randInt(2,9), c=randInt(1,9), d2=randInt(2,9);
+      var value = (a/b)/(c/d2);
+      return {
+        tex: fracTex(fracTex(a,b), fracTex(c,d2)),
+        keys: compoundFracKeys(fracKeys(a,b), fracKeys(c,d2)),
+        value: value
+      };
+    }
+    var a2=randInt(1,9), b2=randInt(2,9), c2=randInt(1,9), d3=randInt(2,9), e2=randInt(1,9), f2=randInt(2,9);
+    var op2 = pick(['+','−']);
+    var numVal = applyOp(a2/b2, op2, c2/d3);
+    var value2 = numVal / (e2/f2);
+    var numTex = fracTex(a2,b2)+' '+texOp(op2)+' '+fracTex(c2,d3);
+    var numKeys = fracKeys(a2,b2).concat(['▶',op2]).concat(fracKeys(c2,d3));
+    return {
+      tex: fracTex(numTex, fracTex(e2,f2)),
+      keys: compoundFracKeys(numKeys, fracKeys(e2,f2)),
+      value: value2
+    };
+  }
+
+  // ---------- generátory úloh ----------
+  // "Mocniny a odmocniny"
+
+  function maybeDecimal(intVal){
+    if(Math.random()<0.25){
+      var v = Math.round((intVal + (Math.random()*0.8-0.4))*10)/10;
+      if(v<=0) v = 0.5;
+      return v;
+    }
+    return intVal;
+  }
+
+  function genPower(){
+    var kind = randInt(1,8);
+    var base, bd, n, radicand, exact, displayTex, keys, a, b;
+    switch(kind){
+      case 1:
+        base = maybeDecimal(randInt(2,30));
+        bd = Number.isInteger(base) ? 0 : 1;
+        exact = Math.pow(base,2);
+        displayTex = texNum(base,bd)+'^2';
+        keys = numberToKeys(base,bd).concat(['x²','=']);
+        break;
+      case 2:
+        base = maybeDecimal(randInt(2,12));
+        bd = Number.isInteger(base) ? 0 : 1;
+        exact = Math.pow(base,3);
+        displayTex = texNum(base,bd)+'^3';
+        keys = numberToKeys(base,bd).concat(['SHIFT','x³','=']);
+        break;
+      case 3:
+        base = randInt(2,6); n = randInt(4,6);
+        exact = Math.pow(base,n);
+        displayTex = base+'^{'+n+'}';
+        keys = numberToKeys(base,0).concat(['^']).concat(numberToKeys(n,0)).concat(['=']);
+        break;
+      case 4:
+        radicand = randInt(2,400);
+        exact = Math.sqrt(radicand);
+        displayTex = '\\sqrt{'+radicand+'}';
+        keys = ['√'].concat(numberToKeys(radicand,0)).concat(['=']);
+        break;
+      case 5:
+        radicand = randInt(2,800);
+        exact = Math.cbrt(radicand);
+        displayTex = '\\sqrt[3]{'+radicand+'}';
+        keys = ['SHIFT','∛'].concat(numberToKeys(radicand,0)).concat(['=']);
+        break;
+      case 6:
+        n = pick([4,5]);
+        radicand = randInt(2,1000);
+        exact = Math.pow(radicand, 1/n);
+        displayTex = '\\sqrt['+n+']{'+radicand+'}';
+        keys = numberToKeys(n,0).concat(['SHIFT','ˣ√']).concat(numberToKeys(radicand,0)).concat(['=']);
+        break;
+      case 7:
+        a=randInt(2,15); b=randInt(2,15);
+        exact = Math.pow(a+b,2);
+        displayTex = '\\left('+a+' + '+b+'\\right)^2';
+        keys = ['('].concat(numberToKeys(a,0)).concat(['+']).concat(numberToKeys(b,0)).concat([')','x²','=']);
+        break;
+      default:
+        a=randInt(3,12); b=randInt(3,12);
+        exact = Math.sqrt(a+b);
+        displayTex = '\\sqrt{'+a+' + '+b+'}';
+        keys = ['√','('].concat(numberToKeys(a,0)).concat(['+']).concat(numberToKeys(b,0)).concat([')','=']);
+        break;
+    }
+    var resultDecimals = (kind<=3 || kind===7) ? 2 : 4;
+    var note = resultDecimals===2 ? 'Výsledek zaokrouhlete na 2 desetinná místa.' : 'Výsledek zaokrouhlete na 4 desetinná místa.';
+    return {
+      displayTex: displayTex + ' =',
+      exact: exact,
+      keys: keys,
+      resultDecimals: resultDecimals,
+      mode: 'decimal',
+      note: note
+    };
+  }
+
+  function genPowerFracExpr(){
+    var kind = randInt(1,5);
+    var a, op, exact, displayTex, keys, frac, power;
+    switch(kind){
+      case 1:
+        a=randInt(2,12); frac=genFracTerm(); op=pick(['+','−','×','÷']);
+        var powTex1 = a+'^2';
+        exact = applyOp(a*a, op, frac.value);
+        keys = numberToKeys(a,0).concat(['x²']).concat([op]).concat(frac.keys).concat(['=','S⇔D']);
+        displayTex = op==='÷' ? fracTex(powTex1, frac.tex)+' =' : powTex1+' '+texOp(op)+' '+frac.tex+' =';
+        break;
+      case 2:
+        a=randInt(2,50); frac=genFracTerm(); op=pick(['+','−','×','÷']);
+        var rootTex1 = '\\sqrt{'+a+'}';
+        exact = applyOp(Math.sqrt(a), op, frac.value);
+        keys = ['√'].concat(numberToKeys(a,0)).concat([op]).concat(frac.keys).concat(['=','S⇔D']);
+        displayTex = op==='÷' ? fracTex(rootTex1, frac.tex)+' =' : rootTex1+' '+texOp(op)+' '+frac.tex+' =';
+        break;
+      case 3:
+        frac=genFracTerm(); power=pick([2,3]);
+        exact = Math.pow(frac.value, power);
+        displayTex = '\\left(' + frac.tex + '\\right)^{'+power+'} =';
+        keys = frac.keys.concat(power===2?['x²']:['SHIFT','x³']).concat(['=','S⇔D']);
+        break;
+      case 4:
+        frac=genFracTerm();
+        exact = Math.sqrt(frac.value);
+        displayTex = '\\sqrt{' + frac.tex + '} =';
+        keys = ['√','('].concat(frac.keys).concat([')','=','S⇔D']);
+        break;
+      default:
+        frac=genFracTerm(); a=randInt(2,10); op=pick(['+','−','×']);
+        var powTex2 = a+'^2';
+        exact = applyOp(frac.value, op, a*a);
+        displayTex = frac.tex+' '+texOp(op)+' '+powTex2+' =';
+        keys = frac.keys.concat([op]).concat(numberToKeys(a,0)).concat(['x²','=','S⇔D']);
+        break;
+    }
+    var dec = Math.min(decimalsNeeded(exact),4);
+    return {
+      displayTex: displayTex,
+      exact: exact,
+      keys: keys,
+      resultDecimals: dec,
+      mode: 'decimal',
+      note: roundNote(dec)
+    };
+  }
+
+  // "Mocniny deseti"
+
+  function powerTenTerm(){
+    var m = randInt(10,99)/10;
+    var e = pick([-4,-3,-2,-1,1,2,3,4,5]);
+    var expTex = e<0 ? ('-'+Math.abs(e)) : String(e);
+    return {
+      tex: '\\left(' + texNum(m,1) + ' \\times 10^{'+expTex+'}\\right)',
+      keys: numberToKeys(m,1).concat(['×10ˣ']).concat(e<0?['(-)']:[]).concat(numberToKeys(Math.abs(e),0)),
+      value: m*Math.pow(10,e)
+    };
+  }
+
+  function genPowerTenExpr(){
+    var t1 = powerTenTerm(), t2 = powerTenTerm();
+    var op = pick(['×','÷']);
+    var exact = op==='×' ? t1.value*t2.value : t1.value/t2.value;
+    var displayTex = op==='÷' ? fracTex(t1.tex, t2.tex)+' =' : t1.tex+' \\times '+t2.tex+' =';
+    var keys = t1.keys.concat([op]).concat(t2.keys).concat(['=']);
+
+    var dec = Math.min(decimalsNeeded(exact),6);
+    return {
+      displayTex: displayTex,
+      exact: exact,
+      keys: keys,
+      resultDecimals: dec,
+      mode: 'decimal',
+      note: roundNote(dec)
+    };
+  }
+
+  function genPowerTenFracExpr(){
+    var powerTerm = powerTenTerm();
+    var frac = genFracTerm();
+    var op = pick(['×','÷','+','−']);
+    var fracFirst = Math.random()<0.5;
+    var exact = fracFirst ? applyOp(frac.value, op, powerTerm.value) : applyOp(powerTerm.value, op, frac.value);
+
+    var displayTex, keys;
+    if(fracFirst){
+      keys = frac.keys.concat([op]).concat(powerTerm.keys).concat(['=','S⇔D']);
+      displayTex = op==='÷' ? fracTex(frac.tex, powerTerm.tex)+' =' : frac.tex+' '+texOp(op)+' '+powerTerm.tex+' =';
+    } else {
+      keys = powerTerm.keys.concat([op]).concat(frac.keys).concat(['=','S⇔D']);
+      displayTex = op==='÷' ? fracTex(powerTerm.tex, frac.tex)+' =' : powerTerm.tex+' '+texOp(op)+' '+frac.tex+' =';
+    }
+
+    var dec = Math.min(decimalsNeeded(exact),6);
+    return {
+      displayTex: displayTex,
+      exact: exact,
+      keys: keys,
+      resultDecimals: dec,
+      mode: 'decimal',
+      note: roundNote(dec)
+    };
+  }
+
+  // "Číslo π"
+
+  function genPi(){
+    var kind = randInt(1,4);
+    var r, N, exact, displayTex, keys, resultDecimals;
+    switch(kind){
+      case 1:
+        r = randInt(20,300)/10;
+        exact = 2*Math.PI*r;
+        displayTex = '2 \\times \\pi \\times '+texNum(r,1)+' =';
+        keys = ['2','×','SHIFT','π','×'].concat(numberToKeys(r,1)).concat(['=']);
+        resultDecimals = 3;
+        break;
+      case 2:
+        r = randInt(2,20);
+        exact = Math.PI*r*r;
+        displayTex = '\\pi \\times '+r+'^2 =';
+        keys = ['SHIFT','π','×'].concat(numberToKeys(r,0)).concat(['x²','=']);
+        resultDecimals = 3;
+        break;
+      case 3:
+        N = randInt(2,9);
+        exact = Math.PI/N;
+        displayTex = fracTex('\\pi', String(N)) + ' =';
+        keys = ['SHIFT','π','÷'].concat(numberToKeys(N,0)).concat(['=']);
+        resultDecimals = 4;
+        break;
+      default:
+        N = randInt(15,45)/10;
+        exact = N*Math.PI;
+        displayTex = texNum(N,1)+' \\times \\pi =';
+        keys = numberToKeys(N,1).concat(['×','SHIFT','π','=']);
+        resultDecimals = 4;
+        break;
+    }
+    return {
+      displayTex: displayTex,
+      exact: exact,
+      keys: keys,
+      resultDecimals: resultDecimals,
+      mode: 'decimal',
+      note: roundNote(resultDecimals)
+    };
+  }
+
+  // "Logaritmy"
+
+  function genLog(){
+    var kind = randInt(1,5);
+    var x,a,b,L,exact,displayTex,keys,resultDecimals,note;
+    switch(kind){
+      case 1:
+        x = randInt(2,999);
+        exact = Math.log10(x);
+        displayTex = '\\log('+x+') =';
+        keys = ['log'].concat(numberToKeys(x,0)).concat([')','=']);
+        resultDecimals = 4;
+        note = roundNote(resultDecimals);
+        break;
+      case 2:
+        x = randInt(2,500);
+        exact = Math.log(x);
+        displayTex = '\\ln('+x+') =';
+        keys = ['ln'].concat(numberToKeys(x,0)).concat([')','=']);
+        resultDecimals = 4;
+        note = roundNote(resultDecimals);
+        break;
+      case 3:
+        a = randInt(2,9);
+        b = randInt(2,300);
+        exact = Math.log(b)/Math.log(a);
+        displayTex = '\\log_{'+a+'}('+b+') =';
+        keys = ['log',String(a),'▶'].concat(numberToKeys(b,0)).concat(['=']);
+        resultDecimals = 4;
+        note = roundNote(resultDecimals);
+        break;
+      case 4:
+        L = randInt(-200,400)/100;
+        exact = Math.pow(10,L);
+        displayTex = '\\log(x) = '+texNum(L,2)+' \\;\\Rightarrow\\; x =';
+        keys = ['SHIFT','log'].concat(numberToKeys(L,2)).concat([')','=']);
+        resultDecimals = exact<1 ? 4 : 2;
+        note = roundNote(resultDecimals);
+        break;
+      default:
+        L = randInt(-150,300)/100;
+        exact = Math.exp(L);
+        displayTex = '\\ln(x) = '+texNum(L,2)+' \\;\\Rightarrow\\; x =';
+        keys = ['SHIFT','ln'].concat(numberToKeys(L,2)).concat([')','=']);
+        resultDecimals = exact<1 ? 4 : 2;
+        note = roundNote(resultDecimals);
+        break;
+    }
+    return {
+      displayTex: displayTex,
+      exact: exact,
+      keys: keys,
+      resultDecimals: resultDecimals,
+      mode: 'decimal',
+      note: note
+    };
+  }
+
+  // "Goniometrie (Deg/Rad)"
+
+  var MODE_FIX = {
+    deg: 'Kalkulačka je pravděpodobně v režimu Rad. Přepněte ji do režimu Deg: SHIFT MENU (SETUP) → Angle Unit → Deg.',
+    rad: 'Kalkulačka je pravděpodobně v režimu Deg. Přepněte ji do režimu Rad: SHIFT MENU (SETUP) → Angle Unit → Rad.'
+  };
+
+  function trigTex(fn){ return fn==='tg' ? '\\operatorname{tg}' : '\\'+fn; }
+
+  function genTrigValue(){
+    var fn = pick(['sin','cos','tg']);
+    var angle;
+    if(fn==='tg'){ angle = Math.random()<0.5 ? randInt(1,80) : randInt(100,170); }
+    else { angle = randInt(0,180); }
+    var rad = angle*Math.PI/180;
+    var exact = fn==='sin' ? Math.sin(rad) : (fn==='cos' ? Math.cos(rad) : Math.tan(rad));
+    var altExact = fn==='sin' ? Math.sin(angle) : (fn==='cos' ? Math.cos(angle) : Math.tan(angle));
+    var displayTex = trigTex(fn)+'('+angle+'^\\circ) =';
+    var keys = [fn].concat(numberToKeys(angle,0)).concat([')','=']);
+    return {
+      displayTex: displayTex,
+      exact: exact,
+      keys: keys,
+      resultDecimals: 4,
+      mode: 'decimal',
+      note: roundNote(4),
+      altExact: altExact,
+      altFixMsg: MODE_FIX.deg
+    };
+  }
+
+  function genTrigInverse(){
+    var fn = pick(['sin','cos','tg']);
+    var angleExact, value;
+    if(fn==='tg'){ angleExact = randInt(5,80); value = Math.tan(angleExact*Math.PI/180); }
+    else if(fn==='cos'){ angleExact = randInt(5,175); value = Math.cos(angleExact*Math.PI/180); }
+    else { angleExact = randInt(5,175); value = Math.sin(angleExact*Math.PI/180); }
+    var roundedValue = roundTo(value,3);
+    var displayTex = trigTex(fn)+'\\,\\alpha = '+texNum(roundedValue,3)+' \\;\\Rightarrow\\; \\alpha =';
+    var exactAngle, altAngle;
+    if(fn==='sin'){ exactAngle = Math.asin(roundedValue)*180/Math.PI; altAngle = Math.asin(roundedValue); }
+    else if(fn==='cos'){ exactAngle = Math.acos(roundedValue)*180/Math.PI; altAngle = Math.acos(roundedValue); }
+    else { exactAngle = Math.atan(roundedValue)*180/Math.PI; altAngle = Math.atan(roundedValue); }
+    var invLabel = fn+'⁻¹';
+    var keys = ['SHIFT', invLabel].concat(numberToKeys(roundedValue,3)).concat([')','=']);
+    return {
+      displayTex: displayTex,
+      exact: exactAngle,
+      keys: keys,
+      resultDecimals: 1,
+      mode: 'decimal',
+      answerSuffix: '°',
+      note: roundNote(1),
+      altExact: altAngle,
+      altFixMsg: MODE_FIX.deg
+    };
+  }
+
+  function genTrigRadValue(){
+    var fn = pick(['sin','cos','tg']);
+    var angle;
+    do{ angle = randInt(-300,300)/100; } while(fn==='tg' && Math.abs(Math.abs(angle) - Math.PI/2) < 0.2);
+    var exact = fn==='sin' ? Math.sin(angle) : (fn==='cos' ? Math.cos(angle) : Math.tan(angle));
+    var degAngle = angle*Math.PI/180;
+    var altExact = fn==='sin' ? Math.sin(degAngle) : (fn==='cos' ? Math.cos(degAngle) : Math.tan(degAngle));
+    var displayTex = trigTex(fn)+'('+texNum(angle,2)+') =';
+    var keys = [fn].concat(numberToKeys(angle,2)).concat([')','=']);
+    return {
+      displayTex: displayTex,
+      exact: exact,
+      keys: keys,
+      resultDecimals: 4,
+      mode: 'decimal',
+      note: roundNote(4),
+      altExact: altExact,
+      altFixMsg: MODE_FIX.rad
+    };
+  }
+
+  function genTrigRadInverse(){
+    var fn = pick(['sin','cos','tg']);
+    var angleExact, value;
+    if(fn==='tg'){ angleExact = randInt(5,140)/100; value = Math.tan(angleExact); }
+    else if(fn==='cos'){ angleExact = randInt(5,300)/100; value = Math.cos(angleExact); }
+    else { angleExact = randInt(5,300)/100; value = Math.sin(angleExact); }
+    var roundedValue = roundTo(value,3);
+    var displayTex = trigTex(fn)+'\\,\\alpha = '+texNum(roundedValue,3)+' \\;\\Rightarrow\\; \\alpha =';
+    var exactAngle, altAngle;
+    if(fn==='sin'){ exactAngle = Math.asin(roundedValue); altAngle = Math.asin(roundedValue)*180/Math.PI; }
+    else if(fn==='cos'){ exactAngle = Math.acos(roundedValue); altAngle = Math.acos(roundedValue)*180/Math.PI; }
+    else { exactAngle = Math.atan(roundedValue); altAngle = Math.atan(roundedValue)*180/Math.PI; }
+    var invLabel = fn+'⁻¹';
+    var keys = ['SHIFT', invLabel].concat(numberToKeys(roundedValue,3)).concat([')','=']);
+    return {
+      displayTex: displayTex,
+      exact: exactAngle,
+      keys: keys,
+      resultDecimals: 3,
+      mode: 'decimal',
+      note: roundNote(3),
+      altExact: altAngle,
+      altFixMsg: MODE_FIX.rad
+    };
+  }
+
+  // ---------- kategorie a stav ----------
+
+  var CATEGORIES = [
+    { key:'mocniny', name:'Mocniny a odmocniny', gens:[genPower, genPowerFracExpr] },
+    { key:'mocniny10', name:'Mocniny deseti', gens:[genPowerTenExpr, genPowerTenFracExpr] },
+    { key:'pi', name:'Číslo π', gens:[genPi] },
+    { key:'gonio', name:'Goniometrie (Deg/Rad)', gens:[genTrigValue, genTrigInverse, genTrigRadValue, genTrigRadInverse] },
+    { key:'log', name:'Logaritmy', gens:[genLog] }
+  ];
+
+  var state = {
+    sel: {},
+    score: 0, streak: 0, bestStreak: 0, answered: 0, correct: 0,
+    current: null, locked: false
+  };
+  CATEGORIES.forEach(function(c){ state.sel[c.key] = true; });
+
+  function loadStats(){
+    try{
+      var raw = localStorage.getItem('kalkulacka-fx82cex-stats');
+      if(raw){ state.bestStreak = JSON.parse(raw).bestStreak || 0; }
+    }catch(e){}
+  }
+  function saveStats(){
+    try{ localStorage.setItem('kalkulacka-fx82cex-stats', JSON.stringify({bestStreak: state.bestStreak})); }catch(e){}
+  }
+
+  function generateQuestion(){
+    var pool = CATEGORIES.filter(function(c){ return state.sel[c.key]; });
+    if(pool.length===0) pool = CATEGORIES;
+    var cat = pick(pool);
+    var gen = pick(cat.gens);
+    var q = gen();
+    q.topicName = cat.name;
+    state.current = q;
+    renderQuestion();
+  }
+
+  function renderTex(el, tex){
+    try{ katex.render('\\displaystyle '+tex, el, {throwOnError:false}); }
+    catch(e){ el.textContent = tex; }
+  }
+
+  function renderQuestion(){
+    var q = state.current;
+    document.getElementById('cat-tag').textContent = q.topicName;
+    renderTex(document.getElementById('eq-expr'), q.displayTex);
+    document.getElementById('question-note').textContent = q.note || '';
+
+    document.getElementById('unit-suffix').textContent = q.answerSuffix || '';
+
+    var input = document.getElementById('answer');
+    input.value=''; input.disabled=false; input.classList.remove('correct','wrong');
+
+    document.getElementById('feedback').hidden = true;
+    document.getElementById('feedback').classList.remove('ok','bad');
+    document.getElementById('keys-row').hidden = true;
+    document.getElementById('feedback-tip').hidden = true;
+    state.locked = false;
+    document.getElementById('btn-check').textContent = 'Zkontrolovat';
+
+    input.focus();
+  }
+
+  function isAnswerEmpty(){
+    return isNaN(parseAnswer(document.getElementById('answer').value));
+  }
+
+  function markInputs(cls){
+    document.getElementById('answer').classList.add(cls);
+  }
+  function disableInputs(){
+    document.getElementById('answer').disabled = true;
+  }
+
+  function correctAnswerTex(q){
+    return texNum(q.exact, q.resultDecimals);
+  }
+
+  function evaluate(q){
+    var v = parseAnswer(document.getElementById('answer').value);
+    var tol = 0.51 * Math.pow(10, -q.resultDecimals);
+    return !isNaN(v) && Math.abs(v - q.exact) <= tol;
+  }
+
+  function checkBeforeProceeding(){
+    if(state.locked) return true;
+    if(isAnswerEmpty()){
+      if(!confirm('Odpověď není vyplněná. Opravdu chcete zkontrolovat?')) return false;
+    }
+    checkAnswer();
+    return true;
+  }
+
+  function checkAnswer(){
+    if(state.locked){ generateQuestion(); return; }
+    var q = state.current;
+    var ok = evaluate(q);
+
+    state.answered++;
+    var fb = document.getElementById('feedback');
+    var head = document.getElementById('feedback-headline');
+    var steps = document.getElementById('feedback-steps');
+    var keysRow = document.getElementById('keys-row');
+    var keysEl = document.getElementById('feedback-keys');
+    fb.hidden = false;
+    document.getElementById('feedback-tip').hidden = true;
+
+    if(ok){
+      state.score += 10; state.streak++; state.correct++;
+      if(state.streak>state.bestStreak){ state.bestStreak = state.streak; saveStats(); }
+      markInputs('correct');
+      fb.classList.add('ok'); fb.classList.remove('bad');
+      head.textContent = 'Správně!';
+      steps.innerHTML = '';
+      steps.appendChild(document.createTextNode('Výsledek: '));
+      var okSpan = document.createElement('span');
+      steps.appendChild(okSpan);
+      renderTex(okSpan, correctAnswerTex(q));
+      if(q.answerSuffix) steps.appendChild(document.createTextNode(q.answerSuffix));
+      keysRow.hidden = true;
+    } else {
+      state.streak = 0;
+      markInputs('wrong');
+      fb.classList.add('bad'); fb.classList.remove('ok');
+      head.textContent = isAnswerEmpty() ? 'Doplň odpověď.' : 'Bohužel špatně.';
+      steps.innerHTML = '';
+      steps.appendChild(document.createTextNode('Správně: '));
+      var badSpan = document.createElement('span');
+      steps.appendChild(badSpan);
+      renderTex(badSpan, correctAnswerTex(q));
+      if(q.answerSuffix) steps.appendChild(document.createTextNode(q.answerSuffix));
+      keysEl.innerHTML = keysHtml(q.keys);
+      keysRow.hidden = false;
+
+      if(q.altExact!==undefined && q.mode==='decimal'){
+        var vAlt = parseAnswer(document.getElementById('answer').value);
+        var tolAlt = Math.max(0.02, Math.abs(q.altExact)*0.01);
+        if(!isNaN(vAlt) && Math.abs(vAlt - q.altExact) <= tolAlt){
+          document.getElementById('feedback-tip').hidden = false;
+          document.getElementById('feedback-tip').textContent = q.altFixMsg;
+        }
+      }
+    }
+    disableInputs();
+    state.locked = true;
+    var btnCheck = document.getElementById('btn-check');
+    btnCheck.textContent = 'Další příklad →';
+    btnCheck.focus();
+    updateStats();
+  }
+
+  function skip(){
+    if(state.locked){ generateQuestion(); return; }
+    state.streak = 0;
+    state.answered++;
+    var q = state.current;
+    var fb = document.getElementById('feedback');
+    fb.hidden = false;
+    document.getElementById('feedback-tip').hidden = true;
+    document.getElementById('feedback-headline').textContent = 'Správná odpověď:';
+    var stepsEl = document.getElementById('feedback-steps');
+    stepsEl.innerHTML = '';
+    var skipSpan = document.createElement('span');
+    stepsEl.appendChild(skipSpan);
+    renderTex(skipSpan, correctAnswerTex(q));
+    if(q.answerSuffix) stepsEl.appendChild(document.createTextNode(q.answerSuffix));
+    var keysRow = document.getElementById('keys-row');
+    document.getElementById('feedback-keys').innerHTML = keysHtml(q.keys);
+    keysRow.hidden = false;
+    fb.classList.add('bad'); fb.classList.remove('ok');
+    disableInputs();
+    state.locked = true;
+    var btnCheck = document.getElementById('btn-check');
+    btnCheck.textContent = 'Další příklad →';
+    btnCheck.focus();
+    updateStats();
+  }
+
+  function updateStats(){
+    document.getElementById('stat-score').textContent = state.score;
+    document.getElementById('stat-streak').textContent = state.streak + (state.bestStreak>0 ? ' / ' + state.bestStreak : '');
+    document.getElementById('stat-accuracy').textContent = state.answered===0 ? '—' : Math.round(100*state.correct/state.answered) + ' %';
+  }
+
+  function buildTopicRow(){
+    var row = document.getElementById('topic-row');
+    row.innerHTML = '';
+    CATEGORIES.forEach(function(c){
+      var b = document.createElement('button');
+      b.className = 'chip' + (state.sel[c.key] ? ' on' : '');
+      b.textContent = c.name;
+      b.addEventListener('click', function(){
+        var activeCount = CATEGORIES.filter(function(cc){ return state.sel[cc.key]; }).length;
+        if(state.sel[c.key] && activeCount===1) return;
+        if(!checkBeforeProceeding()) return;
+        state.sel[c.key] = !state.sel[c.key];
+        b.classList.toggle('on', state.sel[c.key]);
+        generateQuestion();
+      });
+      row.appendChild(b);
+    });
+  }
+
+  document.getElementById('btn-check').addEventListener('click', function(){
+    if(state.locked){ generateQuestion(); return; }
+    if(isAnswerEmpty()){
+      if(!confirm('Odpověď není vyplněná. Opravdu chcete zkontrolovat?')) return;
+    }
+    checkAnswer();
+  });
+  document.getElementById('btn-skip').addEventListener('click', skip);
+  document.getElementById('answer').addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); checkAnswer(); } });
+  document.getElementById('reset-stats').addEventListener('click', function(){
+    state.score=0; state.streak=0; state.answered=0; state.correct=0; state.bestStreak=0;
+    try{ localStorage.removeItem('kalkulacka-fx82cex-stats'); }catch(e){}
+    updateStats();
+  });
+
+  loadStats();
+  buildTopicRow();
+  updateStats();
+  generateQuestion();
+})();
+</script>
+
+</body>
+</html>
