@@ -317,6 +317,76 @@ footer{
   margin-bottom:14px;
 }
 .back-link:hover{ color:var(--accent); }
+
+.top-tabs{
+  display:flex;
+  gap:8px;
+  margin-bottom:22px;
+}
+.toptab{
+  flex:1 1 0;
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.05rem;
+  letter-spacing:0.02em;
+  padding:13px 20px;
+  border-radius:10px;
+  border:1px solid var(--line);
+  background:var(--surface);
+  color:var(--ink-soft);
+  cursor:pointer;
+  text-align:center;
+  transition:background .12s, color .12s, border-color .12s;
+}
+.toptab:hover{ border-color:var(--accent); }
+.toptab.on{
+  background:var(--accent);
+  border-color:var(--accent);
+  color:var(--accent-ink);
+}
+.toptab:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+
+.game-rules{ font-size:0.86rem; color:var(--ink-soft); line-height:1.5; margin:0; }
+.game-rules strong{ color:var(--ink); }
+.game-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  flex-wrap:wrap;
+  margin-bottom:18px;
+}
+.game-timer{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:700;
+  font-size:2rem;
+  font-variant-numeric:tabular-nums;
+  background:var(--ink);
+  color:var(--paper);
+  border-radius:8px;
+  padding:6px 18px;
+}
+.game-timer.low-time{ background:var(--danger); color:var(--accent-ink); animation:pulse 1s ease-in-out infinite; }
+@keyframes pulse{ 0%,100%{ opacity:1; } 50%{ opacity:0.6; } }
+.points-badge{
+  display:inline-block;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:0.72rem;
+  font-weight:700;
+  color:var(--accent-ink);
+  background:var(--accent);
+  padding:4px 10px;
+  border-radius:999px;
+  margin:0 0 20px 8px;
+  vertical-align:middle;
+}
+.game-final-score{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:800;
+  font-size:3rem;
+  margin:14px 0 6px;
+}
+#game-final-detail{ margin-bottom:6px; }
 </style>
 </head>
 <body>
@@ -347,6 +417,13 @@ footer{
       <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="stat-accuracy">—</span></div>
     </div>
   </div>
+
+  <div class="top-tabs">
+    <button class="toptab on" id="top-tab-trenink" data-tab="trenink">Trénink</button>
+    <button class="toptab" id="top-tab-hra" data-tab="hra">Hra na čas</button>
+  </div>
+
+  <div id="view-training">
 
   <div class="panel">
     <div class="section-block">
@@ -382,6 +459,82 @@ footer{
       </div>
       <div class="tip" id="feedback-tip" hidden></div>
     </div>
+  </div>
+
+  </div>
+
+  <div id="view-game" hidden>
+
+    <div id="game-intro">
+      <div class="panel">
+        <div class="panel-title">Pravidla hry</div>
+        <p class="game-rules">
+          Po vypršení zvoleného času se hra ukončí. Za správně vyřešený příklad získáte tolik bodů,
+          <strong>kolikrát je potřeba zmáčknout tlačítko na kalkulačce</strong>, abyste k výsledku došli
+          (např. postup na 5 stisků kalkulačky = <strong>5 bodů</strong>). Za špatnou odpověď (i za
+          odpověď „Nevím“) se strhává <strong>5 bodů</strong>.
+        </p>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Délka hry</div>
+        <div class="row" id="game-duration-row"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Logaritmy</div>
+        <div class="row" id="game-log-row"></div>
+      </div>
+      <div class="panel">
+        <div class="settings-foot">
+          <span class="hint" id="game-best-hint">Nejlepší skóre: —</span>
+          <button class="btn primary" id="btn-game-start">Spustit hru</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="game-play" hidden>
+      <div class="game-header">
+        <div class="game-timer" id="game-timer">2:00</div>
+        <div class="readout">
+          <div class="cell"><span class="label">Body</span><span class="value" id="game-score">0</span></div>
+          <div class="cell"><span class="label">Nejlepší</span><span class="value" id="game-best-live">0</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <span class="cat-tag" id="game-cat-tag">Základy</span>
+        <span class="points-badge" id="game-points-badge">+5 b</span>
+        <div class="equation" id="game-equation">
+          <span id="game-eq-expr"></span>
+          <span class="answer-slot" id="game-answer-decimal-wrap">
+            <input class="answer-input" id="game-answer" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="?">
+          </span>
+          <span class="unit-suffix" id="game-unit-suffix"></span>
+        </div>
+        <div class="question-note" id="game-question-note"></div>
+        <div class="actions">
+          <button class="btn primary" id="btn-game-check">Zkontrolovat</button>
+          <button class="btn ghost" id="btn-game-skip">Nevím / Další</button>
+        </div>
+        <div class="feedback" id="game-feedback" hidden>
+          <div class="headline" id="game-feedback-headline"></div>
+          <div class="steps" id="game-feedback-steps"></div>
+          <div class="keys-row" id="game-keys-row" hidden>
+            <div class="keys-label">Postup na kalkulačce</div>
+            <div class="keys" id="game-feedback-keys"></div>
+          </div>
+          <div class="tip" id="game-feedback-tip" hidden></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="game-over" hidden>
+      <span class="cat-tag">Konec hry</span>
+      <div class="game-final-score" id="game-final-score">0 bodů</div>
+      <div class="hint" id="game-final-detail"></div>
+      <div class="actions">
+        <button class="btn primary" id="btn-game-restart">Hrát znovu</button>
+      </div>
+    </div>
+
   </div>
 
   <footer>Klávesa Enter potvrzuje odpověď a posouvá na další příklad.</footer>
@@ -438,6 +591,17 @@ footer{
     return 6;
   }
 
+  // Kalkulačka má desetimístný displej — kolik cifer (bez desetinné čárky a znaménka)
+  // by na něm zabral výsledek zaokrouhlený na `decimals` míst.
+  var CALC_DISPLAY_DIGITS = 10;
+  function digitsOnDisplay(value, decimals){
+    var v = roundTo(Math.abs(value), decimals);
+    return v.toFixed(decimals).replace('.', '').length;
+  }
+  function fitsCalcDisplay(value, decimals){
+    return digitsOnDisplay(value, decimals) <= CALC_DISPLAY_DIGITS;
+  }
+
   function decWord(n){
     if(n===1) return 'desetinné místo';
     if(n>=2 && n<=4) return 'desetinná místa';
@@ -456,7 +620,7 @@ footer{
   function texOp(op){
     if(op==='+') return '+';
     if(op==='−') return '-';
-    if(op==='×') return '\\times';
+    if(op==='×') return '\\cdot';
     return '\\div';
   }
 
@@ -470,10 +634,10 @@ footer{
 
   function fracTex(numTex, denTex){ return '\\frac{'+numTex+'}{'+denTex+'}'; }
 
-  function fracKeys(n,d){ return ['a b/c'].concat(numberToKeys(n,0)).concat(['▶']).concat(numberToKeys(d,0)); }
+  function fracKeys(n,d){ return ['▪/▫'].concat(numberToKeys(n,0)).concat(['▶']).concat(numberToKeys(d,0)); }
 
   function compoundFracKeys(numKeys, denKeys){
-    return ['a b/c'].concat(numKeys).concat(['▶']).concat(denKeys);
+    return ['▪/▫'].concat(numKeys).concat(['▶']).concat(denKeys);
   }
 
   // Vrací zlomek pro použití ve výrazu – někdy jednoduchý (n/d), někdy složený
@@ -642,20 +806,27 @@ footer{
     var e = pick([-4,-3,-2,-1,1,2,3,4,5]);
     var expTex = e<0 ? ('-'+Math.abs(e)) : String(e);
     return {
-      tex: '\\left(' + texNum(m,1) + ' \\times 10^{'+expTex+'}\\right)',
+      tex: '\\left(' + texNum(m,1) + ' \\cdot 10^{'+expTex+'}\\right)',
       keys: numberToKeys(m,1).concat(['×10ˣ']).concat(e<0?['(-)']:[]).concat(numberToKeys(Math.abs(e),0)),
       value: m*Math.pow(10,e)
     };
   }
 
+  // Zkouší náhodné dvojice, dokud výsledek nevyjde na desetimístný displej kalkulačky
+  // (součin/podíl dvou velkých mocnin deseti se tam jinak nevejde).
   function genPowerTenExpr(){
-    var t1 = powerTenTerm(), t2 = powerTenTerm();
-    var op = pick(['×','÷']);
-    var exact = op==='×' ? t1.value*t2.value : t1.value/t2.value;
-    var displayTex = op==='÷' ? fracTex(t1.tex, t2.tex)+' =' : t1.tex+' \\times '+t2.tex+' =';
+    var t1, t2, op, exact, dec, tries=0;
+    do{
+      t1 = powerTenTerm(); t2 = powerTenTerm();
+      op = pick(['×','÷']);
+      exact = op==='×' ? t1.value*t2.value : t1.value/t2.value;
+      dec = Math.min(decimalsNeeded(exact),6);
+      tries++;
+    } while(!fitsCalcDisplay(exact,dec) && tries<50);
+
+    var displayTex = op==='÷' ? fracTex(t1.tex, t2.tex)+' =' : t1.tex+' \\cdot '+t2.tex+' =';
     var keys = t1.keys.concat([op]).concat(t2.keys).concat(['=']);
 
-    var dec = Math.min(decimalsNeeded(exact),6);
     return {
       displayTex: displayTex,
       exact: exact,
@@ -667,11 +838,16 @@ footer{
   }
 
   function genPowerTenFracExpr(){
-    var powerTerm = powerTenTerm();
-    var frac = genFracTerm();
-    var op = pick(['×','÷','+','−']);
-    var fracFirst = Math.random()<0.5;
-    var exact = fracFirst ? applyOp(frac.value, op, powerTerm.value) : applyOp(powerTerm.value, op, frac.value);
+    var powerTerm, frac, op, fracFirst, exact, dec, tries=0;
+    do{
+      powerTerm = powerTenTerm();
+      frac = genFracTerm();
+      op = pick(['×','÷','+','−']);
+      fracFirst = Math.random()<0.5;
+      exact = fracFirst ? applyOp(frac.value, op, powerTerm.value) : applyOp(powerTerm.value, op, frac.value);
+      dec = Math.min(decimalsNeeded(exact),6);
+      tries++;
+    } while(!fitsCalcDisplay(exact,dec) && tries<50);
 
     var displayTex, keys;
     if(fracFirst){
@@ -682,7 +858,6 @@ footer{
       displayTex = op==='÷' ? fracTex(powerTerm.tex, frac.tex)+' =' : powerTerm.tex+' '+texOp(op)+' '+frac.tex+' =';
     }
 
-    var dec = Math.min(decimalsNeeded(exact),6);
     return {
       displayTex: displayTex,
       exact: exact,
@@ -702,14 +877,14 @@ footer{
       case 1:
         r = randInt(20,300)/10;
         exact = 2*Math.PI*r;
-        displayTex = '2 \\times \\pi \\times '+texNum(r,1)+' =';
+        displayTex = '2 \\cdot \\pi \\cdot '+texNum(r,1)+' =';
         keys = ['2','×','SHIFT','π','×'].concat(numberToKeys(r,1)).concat(['=']);
         resultDecimals = 3;
         break;
       case 2:
         r = randInt(2,20);
         exact = Math.PI*r*r;
-        displayTex = '\\pi \\times '+r+'^2 =';
+        displayTex = '\\pi \\cdot '+r+'^2 =';
         keys = ['SHIFT','π','×'].concat(numberToKeys(r,0)).concat(['x²','=']);
         resultDecimals = 3;
         break;
@@ -723,7 +898,7 @@ footer{
       default:
         N = randInt(15,45)/10;
         exact = N*Math.PI;
-        displayTex = texNum(N,1)+' \\times \\pi =';
+        displayTex = texNum(N,1)+' \\cdot \\pi =';
         keys = numberToKeys(N,1).concat(['×','SHIFT','π','=']);
         resultDecimals = 4;
         break;
@@ -861,7 +1036,7 @@ footer{
     var exact = fn==='sin' ? Math.sin(angle) : (fn==='cos' ? Math.cos(angle) : Math.tan(angle));
     var degAngle = angle*Math.PI/180;
     var altExact = fn==='sin' ? Math.sin(degAngle) : (fn==='cos' ? Math.cos(degAngle) : Math.tan(degAngle));
-    var displayTex = trigTex(fn)+'('+texNum(angle,2)+') =';
+    var displayTex = trigTex(fn)+'('+texNum(angle,2)+'\\;\\mathrm{rad}) =';
     var keys = [fn].concat(numberToKeys(angle,2)).concat([')','=']);
     return {
       displayTex: displayTex,
@@ -895,6 +1070,7 @@ footer{
       keys: keys,
       resultDecimals: 3,
       mode: 'decimal',
+      answerSuffix: ' rad',
       note: roundNote(3),
       altExact: altAngle,
       altFixMsg: MODE_FIX.rad
@@ -1124,6 +1300,297 @@ footer{
   buildTopicRow();
   updateStats();
   generateQuestion();
+
+  // ---- Hra na čas ----
+
+  var GAME_DURATIONS = [
+    { key:60, name:'1 min' },
+    { key:120, name:'2 min' },
+    { key:180, name:'3 min' },
+    { key:300, name:'5 min' }
+  ];
+
+  var gameState = {
+    duration:120, includeLog:true, running:false, timeLeft:120, timerId:null,
+    score:0, correct:0, wrong:0, answered:0,
+    current:null, locked:false, bests:{}
+  };
+
+  function loadGameBests(){
+    try{
+      var raw = localStorage.getItem('kalkulacka-fx82cex-game-bests');
+      if(raw) gameState.bests = JSON.parse(raw) || {};
+    }catch(e){}
+  }
+  function saveGameBests(){
+    try{ localStorage.setItem('kalkulacka-fx82cex-game-bests', JSON.stringify(gameState.bests)); }catch(e){}
+  }
+  function currentBest(){ return gameState.bests[gameState.duration] || 0; }
+  function updateGameBestHint(){
+    document.getElementById('game-best-hint').textContent = 'Nejlepší skóre: ' + (currentBest() || '—');
+  }
+
+  function generateGameQuestion(){
+    var pool = CATEGORIES.filter(function(c){ return c.key!=='log' || gameState.includeLog; });
+    if(pool.length===0) pool = CATEGORIES;
+    var cat = pick(pool);
+    var gen = pick(cat.gens);
+    var q = gen();
+    q.topicName = cat.name;
+    q.points = q.keys.length;
+    gameState.current = q;
+    renderGameQuestion();
+  }
+
+  function renderGameQuestion(){
+    var q = gameState.current;
+    document.getElementById('game-cat-tag').textContent = q.topicName;
+    document.getElementById('game-points-badge').textContent = '+' + q.points + ' b';
+    renderTex(document.getElementById('game-eq-expr'), q.displayTex);
+    document.getElementById('game-question-note').textContent = q.note || '';
+    document.getElementById('game-unit-suffix').textContent = q.answerSuffix || '';
+
+    var input = document.getElementById('game-answer');
+    input.value=''; input.disabled=false; input.classList.remove('correct','wrong');
+
+    document.getElementById('game-feedback').hidden = true;
+    document.getElementById('game-feedback').classList.remove('ok','bad');
+    document.getElementById('game-keys-row').hidden = true;
+    document.getElementById('game-feedback-tip').hidden = true;
+    gameState.locked = false;
+    document.getElementById('btn-game-check').textContent = 'Zkontrolovat';
+
+    input.focus();
+  }
+
+  function gameAnswerEmpty(){
+    return isNaN(parseAnswer(document.getElementById('game-answer').value));
+  }
+  function markGameInputs(cls){
+    document.getElementById('game-answer').classList.add(cls);
+  }
+  function disableGameInputs(){
+    document.getElementById('game-answer').disabled = true;
+  }
+  function evaluateGame(q){
+    var v = parseAnswer(document.getElementById('game-answer').value);
+    var tol = 0.51 * Math.pow(10, -q.resultDecimals);
+    return !isNaN(v) && Math.abs(v - q.exact) <= tol;
+  }
+
+  function checkGameAnswer(){
+    if(!gameState.running) return;
+    if(gameState.locked){ generateGameQuestion(); return; }
+    var q = gameState.current;
+    var ok = evaluateGame(q);
+
+    gameState.answered++;
+    var fb = document.getElementById('game-feedback');
+    var head = document.getElementById('game-feedback-headline');
+    var steps = document.getElementById('game-feedback-steps');
+    var keysRow = document.getElementById('game-keys-row');
+    var keysEl = document.getElementById('game-feedback-keys');
+    fb.hidden = false;
+    document.getElementById('game-feedback-tip').hidden = true;
+
+    if(ok){
+      gameState.score += q.points; gameState.correct++;
+      markGameInputs('correct');
+      fb.classList.add('ok'); fb.classList.remove('bad');
+      head.textContent = 'Správně! +' + q.points + ' b';
+      steps.innerHTML = '';
+      steps.appendChild(document.createTextNode('Výsledek: '));
+      var okSpan = document.createElement('span');
+      steps.appendChild(okSpan);
+      renderTex(okSpan, correctAnswerTex(q));
+      if(q.answerSuffix) steps.appendChild(document.createTextNode(q.answerSuffix));
+      keysRow.hidden = true;
+    } else {
+      gameState.score -= 5; gameState.wrong++;
+      markGameInputs('wrong');
+      fb.classList.add('bad'); fb.classList.remove('ok');
+      head.textContent = (isNaN(parseAnswer(document.getElementById('game-answer').value)) ? 'Doplň odpověď.' : 'Bohužel špatně.') + ' −5 b';
+      steps.innerHTML = '';
+      steps.appendChild(document.createTextNode('Správně: '));
+      var badSpan = document.createElement('span');
+      steps.appendChild(badSpan);
+      renderTex(badSpan, correctAnswerTex(q));
+      if(q.answerSuffix) steps.appendChild(document.createTextNode(q.answerSuffix));
+      keysEl.innerHTML = keysHtml(q.keys);
+      keysRow.hidden = false;
+
+      if(q.altExact!==undefined && q.mode==='decimal'){
+        var vAlt = parseAnswer(document.getElementById('game-answer').value);
+        var tolAlt = Math.max(0.02, Math.abs(q.altExact)*0.01);
+        if(!isNaN(vAlt) && Math.abs(vAlt - q.altExact) <= tolAlt){
+          document.getElementById('game-feedback-tip').hidden = false;
+          document.getElementById('game-feedback-tip').textContent = q.altFixMsg;
+        }
+      }
+    }
+    disableGameInputs();
+    gameState.locked = true;
+    document.getElementById('btn-game-check').textContent = 'Další příklad →';
+    document.getElementById('btn-game-check').focus();
+    updateGameScore();
+  }
+
+  function skipGame(){
+    if(!gameState.running) return;
+    if(gameState.locked){ generateGameQuestion(); return; }
+    gameState.answered++;
+    gameState.score -= 5; gameState.wrong++;
+    var q = gameState.current;
+    var fb = document.getElementById('game-feedback');
+    fb.hidden = false;
+    document.getElementById('game-feedback-tip').hidden = true;
+    document.getElementById('game-feedback-headline').textContent = 'Správná odpověď: −5 b';
+    var stepsEl = document.getElementById('game-feedback-steps');
+    stepsEl.innerHTML = '';
+    var skipSpan = document.createElement('span');
+    stepsEl.appendChild(skipSpan);
+    renderTex(skipSpan, correctAnswerTex(q));
+    if(q.answerSuffix) stepsEl.appendChild(document.createTextNode(q.answerSuffix));
+    var keysRow = document.getElementById('game-keys-row');
+    document.getElementById('game-feedback-keys').innerHTML = keysHtml(q.keys);
+    keysRow.hidden = false;
+    fb.classList.add('bad'); fb.classList.remove('ok');
+    markGameInputs('wrong');
+    disableGameInputs();
+    gameState.locked = true;
+    document.getElementById('btn-game-check').textContent = 'Další příklad →';
+    document.getElementById('btn-game-check').focus();
+    updateGameScore();
+  }
+
+  function updateGameScore(){
+    document.getElementById('game-score').textContent = gameState.score;
+  }
+
+  function formatGameTime(sec){
+    var m = Math.floor(sec/60), s = sec%60;
+    return m + ':' + (s<10 ? '0'+s : s);
+  }
+
+  function tickGameTimer(){
+    gameState.timeLeft--;
+    var timerEl = document.getElementById('game-timer');
+    timerEl.textContent = formatGameTime(Math.max(0,gameState.timeLeft));
+    timerEl.classList.toggle('low-time', gameState.timeLeft<=20 && gameState.timeLeft>0);
+    if(gameState.timeLeft<=0){ endGame(); }
+  }
+
+  function startGame(){
+    gameState.running = true;
+    gameState.timeLeft = gameState.duration;
+    gameState.score = 0; gameState.correct = 0; gameState.wrong = 0; gameState.answered = 0;
+    updateGameScore();
+    document.getElementById('game-timer').textContent = formatGameTime(gameState.duration);
+    document.getElementById('game-timer').classList.remove('low-time');
+    document.getElementById('game-best-live').textContent = currentBest();
+    document.getElementById('game-intro').hidden = true;
+    document.getElementById('game-over').hidden = true;
+    document.getElementById('game-play').hidden = false;
+    generateGameQuestion();
+    if(gameState.timerId) clearInterval(gameState.timerId);
+    gameState.timerId = setInterval(tickGameTimer, 1000);
+  }
+
+  function endGame(){
+    gameState.running = false;
+    clearInterval(gameState.timerId);
+    gameState.timerId = null;
+    disableGameInputs();
+    if(gameState.score>currentBest()){ gameState.bests[gameState.duration] = gameState.score; saveGameBests(); }
+    document.getElementById('game-play').hidden = true;
+    document.getElementById('game-over').hidden = false;
+    document.getElementById('game-intro').hidden = false;
+    document.getElementById('game-final-score').textContent = gameState.score + ' bodů';
+    document.getElementById('game-final-detail').textContent =
+      'Správně: ' + gameState.correct + ' · Špatně: ' + gameState.wrong + ' · Nejlepší skóre: ' + currentBest();
+    updateGameBestHint();
+  }
+
+  function buildGameDurationRow(){
+    var row = document.getElementById('game-duration-row');
+    row.innerHTML = '';
+    GAME_DURATIONS.forEach(function(d){
+      var b = document.createElement('button');
+      b.className = 'chip' + (d.key===gameState.duration ? ' on' : '');
+      b.textContent = d.name;
+      b.addEventListener('click', function(){
+        if(gameState.running) return;
+        gameState.duration = d.key;
+        Array.prototype.forEach.call(row.children, function(el,i){
+          el.classList.toggle('on', GAME_DURATIONS[i].key===gameState.duration);
+        });
+        updateGameBestHint();
+      });
+      row.appendChild(b);
+    });
+  }
+
+  var GAME_LOG_OPTIONS = [
+    { key:true, name:'S logaritmy' },
+    { key:false, name:'Bez logaritmů' }
+  ];
+
+  function buildGameLogRow(){
+    var row = document.getElementById('game-log-row');
+    row.innerHTML = '';
+    GAME_LOG_OPTIONS.forEach(function(opt){
+      var b = document.createElement('button');
+      b.className = 'chip' + (gameState.includeLog===opt.key ? ' on' : '');
+      b.textContent = opt.name;
+      b.addEventListener('click', function(){
+        if(gameState.running) return;
+        gameState.includeLog = opt.key;
+        Array.prototype.forEach.call(row.children, function(el,i){
+          el.classList.toggle('on', GAME_LOG_OPTIONS[i].key===gameState.includeLog);
+        });
+      });
+      row.appendChild(b);
+    });
+  }
+
+  function tryCheckGame(){
+    if(!gameState.running) return;
+    if(gameState.locked){ generateGameQuestion(); return; }
+    if(gameAnswerEmpty()){
+      if(!confirm('Odpověď není vyplněná. Opravdu chcete zkontrolovat?')) return;
+    }
+    checkGameAnswer();
+  }
+  function trySkipGame(){
+    if(!gameState.running) return;
+    if(gameState.locked){ generateGameQuestion(); return; }
+    if(gameAnswerEmpty()){
+      if(!confirm('Odpověď není vyplněná. Opravdu chcete přeskočit? Bude to počítáno jako špatná odpověď (−5 b).')) return;
+    }
+    skipGame();
+  }
+
+  document.getElementById('btn-game-start').addEventListener('click', startGame);
+  document.getElementById('btn-game-restart').addEventListener('click', startGame);
+  document.getElementById('btn-game-check').addEventListener('click', tryCheckGame);
+  document.getElementById('btn-game-skip').addEventListener('click', trySkipGame);
+  document.getElementById('game-answer').addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); tryCheckGame(); } });
+
+  var topTabTrenink = document.getElementById('top-tab-trenink');
+  var topTabHra = document.getElementById('top-tab-hra');
+  function showTopTab(tab){
+    topTabTrenink.classList.toggle('on', tab==='trenink');
+    topTabHra.classList.toggle('on', tab==='hra');
+    document.getElementById('view-training').hidden = tab!=='trenink';
+    document.getElementById('view-game').hidden = tab!=='hra';
+  }
+  topTabTrenink.addEventListener('click', function(){ showTopTab('trenink'); });
+  topTabHra.addEventListener('click', function(){ showTopTab('hra'); });
+
+  loadGameBests();
+  buildGameDurationRow();
+  buildGameLogRow();
+  updateGameBestHint();
 })();
 </script>
 
