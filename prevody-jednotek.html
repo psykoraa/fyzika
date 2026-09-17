@@ -520,7 +520,7 @@ footer{
       <p>Pro označování fyzikálních veličin používáme smluvené značky (symboly), např. \(m\) pro hmotnost, \(l\) pro délku, \(v\) pro rychlost, \(t\) nebo \(T\) pro teplotu.</p>
       <p><b>Měřit fyzikální veličinu</b> znamená určit její hodnotu — porovnat ji s předem smluvenou hodnotou téhož druhu, kterou zvolíme za <b>měřicí jednotku</b>. Hodnota fyzikální veličiny se pak skládá ze dvou částí:</p>
       <div class="formula-box">\[X = \{X\} \cdot [X]\]</div>
-      <p>kde \(\{X\}\) je <b>číselná hodnota</b> (kolikrát je měřená veličina větší, menší nebo stejná jako zvolená jednotka) a \([X]\) je <b>měřicí jednotka</b> (druh veličiny). Např. pro objem \(V = 25\ \mathrm{cm^3}\) platí \(\{V\} = 25\) a \([V] = \mathrm{cm^3}\).</p>
+      <p>kde \(\{X\}\) je <b>číselná hodnota</b> (kolikrát je měřená veličina větší, menší nebo stejná jako zvolená jednotka) a \([X]\) je <b>měřicí jednotka</b>. Např. pro objem \(V = 25\ \mathrm{cm^3}\) platí \(\{V\} = 25\) a \([V] = \mathrm{cm^3}\).</p>
       <div class="note">
         <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <circle cx="9" cy="9" r="7.5" stroke="var(--focus)" stroke-width="1.6"/>
@@ -669,7 +669,7 @@ footer{
         <div class="panel-title">Pravidla hry</div>
         <p class="game-rules">
           Na čas (2 minuty) budete řešit náhodné převody jednotek napříč všemi veličinami.
-          Za správný převod mezi jednotkou s předponou a základní jednotkou dostanete <strong>5 bodů</strong>,
+          Za správný převod mezi jednotkou s předponou a jednotkou bez předpony dostanete <strong>5 bodů</strong>,
           za převod mezi dvěma jednotkami s předponou <strong>7 bodů</strong> a za převod u kombinovaných
           jednotek (rychlost, hustota apod.) <strong>10 bodů</strong>. Za špatnou odpověď (i za odpověď „Nevím“)
           se strhává <strong>5 bodů</strong>.
@@ -787,7 +787,8 @@ footer{
     { key:'kapacita', name:'Elektrická kapacita', units: buildPrefixUnits('F', ['m','µ','n','p'], {'':[0.5,5]}) },
     { key:'frekvence', name:'Frekvence', units: buildPrefixUnits('Hz', ['G','M','k']) },
     { key:'sila', name:'Síla', units: buildPrefixUnits('N', ['k','m']) },
-    { key:'tlak', name:'Tlak', units: buildPrefixUnits('Pa', ['G','M','k','h']) },
+    // hPa rozsah zvednutý až na 1090, aby se v příkladech objevil i běžný atmosférický tlak (~1013 hPa)
+    { key:'tlak', name:'Tlak', units: buildPrefixUnits('Pa', ['G','M','k','h'], {h:[1,1090]}) },
     { key:'energie', name:'Energie', units: buildPrefixUnits('J', ['T','M','k','m']) },
     // GW jde jen do desítek (největší elektrárny na světě ~20 GW), ne 80 GW
     { key:'vykon', name:'Výkon', units: buildPrefixUnits('W', ['T','G','M','k','m'], {G:[0.01,20]}) },
@@ -868,11 +869,24 @@ footer{
     try{ localStorage.setItem('meritko-stats', JSON.stringify({bestStreak: state.bestStreak})); }catch(e){}
   }
 
+  // Vloží nezalomitelnou mezeru jako oddělovač tisíců do celé části čísla
+  // a anglickou desetinnou tečku nahradí českou čárkou.
+  function czDecimal(str){
+    var neg = str.charAt(0)==='-';
+    if(neg) str = str.slice(1);
+    var parts = str.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    return (neg?'-':'') + parts.join(',');
+  }
+
   function fmtCZ(n, maxDecimals){
-    var f = Math.pow(10,maxDecimals);
-    var v = Math.round(n*f)/f;
+    // n.toFixed() nepřetéká ani pro velmi velká n (na rozdíl od Math.round(n*f)/f,
+    // kde f=10^maxDecimals u velkých poměrů, např. 10^15 u TJ→mJ, snadno vytlačí
+    // součin n*f za bezpečný celočíselný rozsah a vnese plovoucí šum). Zbytečné
+    // nuly na konci ořízne parseFloat + toString, stejně jako to dělal původní zápis.
+    var v = parseFloat(n.toFixed(Math.min(maxDecimals, 20)));
     if(Object.is(v,-0)) v = 0;
-    return v.toString().replace('.', ',');
+    return czDecimal(v.toString());
   }
 
   // Zaokrouhlí na pevný počet desetinných míst a vypíše v desítkovém zápisu
@@ -880,7 +894,7 @@ footer{
   function fmtFixed(n, decimals){
     var v = roundTo(n, decimals);
     if(Object.is(v,-0)) v = 0;
-    return v.toFixed(decimals).replace('.', ',');
+    return czDecimal(v.toFixed(decimals));
   }
 
   function roundTo(n, decimals){
@@ -919,6 +933,50 @@ footer{
     if(value===0) return decimals+1;
     var mag = Math.floor(Math.log10(Math.abs(value)));
     return Math.max(1, mag+decimals+1);
+  }
+
+  // Tolerance odvozená přímo z počtu platných cifer výsledku (ne ze zaokrouhlení
+  // na desetinná místa, které se u čísel s víc celočíselnými ciframi, než kolik
+  // je sig, zasekne na 0 desetinných míst a žádá tak o cifru navíc, než kolik
+  // zadání vůbec dává — např. 135 rad/s → 1289 ot/min na 3 platné cifry musí
+  // uznat i odpověď 1290).
+  function sigTolerance(exact, sig){
+    if(exact===0) return 0.51 * Math.pow(10, -(sig-1));
+    var mag = Math.floor(Math.log10(Math.abs(exact)));
+    return 0.51 * Math.pow(10, mag - sig + 1);
+  }
+
+  // Tolerance pro výsledky, které jsou z podstaty přesné (žádné zaokrouhlování
+  // navíc) — jen malý epsilon na plovoucí řádovou chybu (relativní složka kryje
+  // i astronomicky velká čísla, např. 1,37 × 10¹⁶, kde absolutní epsilon 10⁻⁶
+  // nestačí pohltit chybu v posledních bitech mantisy).
+  function tightTolerance(exact){
+    return Math.max(1e-6, Math.abs(exact) * 1e-9);
+  }
+
+  // Poměr dvou mocnin deseti (převod jen posunem desetinné čárky, typicky mezi
+  // jednotkou s předponou a jinou jednotkou stejné soustavy) je matematicky
+  // přesný — nemá smysl mu nechávat toleranci odvozenou z počtu platných cifer
+  // zadání, tou by se uznávaly odpovědi klidně o desítky procent vedle.
+  function isPowerOfTenRatio(ratio){
+    if(!(ratio>0)) return false;
+    var lg = Math.log10(ratio);
+    return Math.abs(lg - Math.round(lg)) < 1e-9;
+  }
+
+  function conversionTolerance(exact, sig, ratio){
+    if(isPowerOfTenRatio(ratio)) return tightTolerance(exact);
+    return sigTolerance(exact, sig);
+  }
+
+  // 1/ratio spočítané v plovoucí řádové čárce dá u čistých mocnin deseti často
+  // šum místo kulatého čísla (např. 999999999,9999999 místo 1000000000) —
+  // toPrecision(12) ho setře dřív, než se poměr vypíše v postupu řešení.
+  function cleanRatio(n){
+    return Number(n.toPrecision(12));
+  }
+  function formatRatioText(ratio){
+    return ratio>=1 ? '× ' + fmtCZ(cleanRatio(ratio),8) : '÷ ' + fmtCZ(cleanRatio(1/ratio),8);
   }
 
   var SUP = {'0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹','-':'⁻'};
@@ -999,7 +1057,7 @@ footer{
   function generateQuestion(){
     var difficulty = state.difficulty;
     var catName, fromUnit, toUnit, value, valueDecimals, exact, resultDecimals, stepText;
-    var isTemp = false, tempTargets = null;
+    var isTemp = false, tempTargets = null, resultSig, resultRatio;
 
     if(difficulty==='expert'){
       var pool = EXPERT_TOPICS.filter(function(t){ return state.selExpert[t.key]; });
@@ -1011,6 +1069,7 @@ footer{
       var rv = randomValue(fromUnit, 'expert');
       value = rv.value;
       valueDecimals = decimalsForSig(value, rv.sig);
+      resultSig = rv.sig;
 
       if(topic.isTemp){
         isTemp = true;
@@ -1035,9 +1094,8 @@ footer{
         var rawExactE = value * fromUnit.factor / toUnit.factor;
         resultDecimals = decimalsForSig(rawExactE, rv.sig);
         exact = roundTo(rawExactE, resultDecimals);
-        var ratioE = fromUnit.factor / toUnit.factor;
-        var ratioTextE = ratioE>=1 ? '× ' + fmtCZ(ratioE,8) : '÷ ' + fmtCZ(1/ratioE,8);
-        stepText = fmtFixed(value,valueDecimals) + ' ' + fromUnit.sym + ' ' + ratioTextE + ' = ' + formatResult(exact,resultDecimals,sigFromDecimals(exact,resultDecimals)) + ' ' + toUnit.sym;
+        resultRatio = fromUnit.factor / toUnit.factor;
+        stepText = fmtFixed(value,valueDecimals) + ' ' + fromUnit.sym + ' ' + formatRatioText(resultRatio) + ' = ' + formatResult(exact,resultDecimals,sigFromDecimals(exact,resultDecimals)) + ' ' + toUnit.sym;
       }
     } else {
       var poolA = GROUP_A.filter(function(c){ return state.selGroupA[c.key]; });
@@ -1049,18 +1107,19 @@ footer{
       var rvA = randomValue(fromUnit, difficulty);
       value = rvA.value;
       valueDecimals = decimalsForSig(value, rvA.sig);
+      resultSig = rvA.sig;
       var rawExact = value * fromUnit.factor / toUnit.factor;
       resultDecimals = decimalsForSig(rawExact, rvA.sig);
       exact = roundTo(rawExact, resultDecimals);
-      var ratio = fromUnit.factor / toUnit.factor;
-      var ratioText = ratio>=1 ? '× ' + fmtCZ(ratio,8) : '÷ ' + fmtCZ(1/ratio,8);
-      stepText = fmtFixed(value,valueDecimals) + ' ' + fromUnit.sym + ' ' + ratioText + ' = ' + formatResult(exact,resultDecimals,sigFromDecimals(exact,resultDecimals)) + ' ' + toUnit.sym;
+      resultRatio = fromUnit.factor / toUnit.factor;
+      stepText = fmtFixed(value,valueDecimals) + ' ' + fromUnit.sym + ' ' + formatRatioText(resultRatio) + ' = ' + formatResult(exact,resultDecimals,sigFromDecimals(exact,resultDecimals)) + ' ' + toUnit.sym;
     }
 
-    // tolerance = polovina zaokrouhlovacího zrna správného výsledku —
-    // uzná odpověď zaokrouhlenou na stejný počet platných cifer jako zadání (nebo přesnější), ne méně
-    // (u teploty slouží stejné zrno jen jako epsilon okolo obou uznávaných hodnot, viz tempTargets)
-    var tolerance = 0.51 * Math.pow(10, -resultDecimals);
+    // Tolerance: u teploty jde o epsilon okolo obou uznávaných hodnot (viz tempTargets),
+    // jinak o toleranci odvozenou od platných cifer / přesnosti převodu (viz conversionTolerance).
+    var tolerance = isTemp
+      ? 0.51 * Math.pow(10, -resultDecimals)
+      : conversionTolerance(exact, resultSig, resultRatio);
 
     state.current = { catName:catName, fromUnit:fromUnit, toUnit:toUnit, value:value, valueDecimals:valueDecimals, exact:exact, resultDecimals:resultDecimals, tolerance:tolerance, stepText:stepText, isTemp:isTemp, tempTargets:tempTargets };
     renderQuestion();
@@ -1095,7 +1154,10 @@ footer{
 
   function parseAnswer(str){
     if(!str) return NaN;
-    str = str.trim().replace(',', '.').replace(/\s+/g,'');
+    // U+2212 (typografické mínus) a U+2013 (pomlčka) se běžně objeví při
+    // kopírování z dokumentů nebo na některých klávesnicích — parseFloat
+    // rozumí jen obyčejnému ASCII "-".
+    str = str.trim().replace(/[−–]/g, '-').replace(',', '.').replace(/\s+/g,'');
     return parseFloat(str);
   }
 
@@ -1129,18 +1191,24 @@ footer{
     return isNaN(getUserValue().value);
   }
 
-  // Společná brána pro "Zkontrolovat" i pro přepínání veličin: pokud je příklad
-  // ještě nezamčený (nezkontrolovaný), nejdřív se u prázdné odpovědi zeptá, jestli
-  // to uživatel opravdu chce, a pak vždy provede kontrolu (aby se nedalo příklad
-  // jen tak přeskočit beze zkontrolování). Vrací true, pokud má volající pokračovat
-  // dál (např. přepnout veličinu), false pokud má akci zrušit (uživatel zrušil dialog).
-  function checkBeforeProceeding(){
-    if(state.locked) return true;
+  // Společná brána pro přepínání obtížnosti, veličiny i formátu za běhu příkladu.
+  // Rozepsaný příklad se vždy napřed vyhodnotí stejně, jako by uživatel klikl na
+  // "Zkontrolovat" (případně "Nevím" u prázdné odpovědi po potvrzení) — zpětná
+  // vazba zůstane viditelná a teprve její potvrzení ("Další příklad →") vygeneruje
+  // nový příklad s novým nastavením. Nejde tak nastavením obejít vyhodnocení, ani
+  // naopak "vylepšovat" úspěšnost tím, že se příklad při přepnutí tiše smaže.
+  // Vrací 'cancelled' (uživatel zrušil dialog u prázdné odpovědi — volající nemá
+  // nastavení měnit), 'locked' (příklad byl už vyhodnocený — lze rovnou vygenerovat
+  // další) nebo 'settled' (příklad byl právě vyhodnocen — počkat na potvrzení).
+  function settleCurrentQuestion(){
+    if(state.locked) return 'locked';
     if(isAnswerEmpty()){
-      if(!confirm('Odpověď není vyplněná. Opravdu chcete zkontrolovat?')) return false;
+      if(!confirm('Odpověď není vyplněná. Opravdu chcete pokračovat? Bude to počítáno jako špatná odpověď.')) return 'cancelled';
+      skip();
+    } else {
+      checkAnswer();
     }
-    checkAnswer();
-    return true;
+    return 'settled';
   }
 
   function checkAnswer(){
@@ -1222,12 +1290,15 @@ footer{
       b.className = 'chip accented' + (d.key===state.difficulty ? ' on' : '');
       b.textContent = d.name;
       b.addEventListener('click', function(){
+        if(d.key===state.difficulty) return;
+        var res = settleCurrentQuestion();
+        if(res==='cancelled') return;
         state.difficulty = d.key;
         Array.prototype.forEach.call(row.children, function(el,i){
           el.classList.toggle('on', DIFFICULTIES[i].key===state.difficulty);
         });
         buildCategoryRow();
-        generateQuestion();
+        if(res==='locked'){ generateQuestion(); }
       });
       row.appendChild(b);
     });
@@ -1246,10 +1317,11 @@ footer{
       b.addEventListener('click', function(){
         var activeCount = list.filter(function(cc){ return sel[cc.key]; }).length;
         if(sel[c.key] && activeCount===1) return;
-        if(!checkBeforeProceeding()) return;
+        var res = settleCurrentQuestion();
+        if(res==='cancelled') return;
         sel[c.key] = !sel[c.key];
         b.classList.toggle('on', sel[c.key]);
-        generateQuestion();
+        if(res==='locked'){ generateQuestion(); }
       });
       row.appendChild(b);
     });
@@ -1263,11 +1335,15 @@ footer{
   }
 
   function setAnswerFormat(fmt){
+    var res = settleCurrentQuestion();
+    if(res==='cancelled') return false;
     state.answerFormat = fmt;
     applyAnswerFormatUI();
-    // Přegenerovat nezodpovězenou otázku, aby vysvětlení výsledku odpovídalo nově
-    // zvolenému formátu (jinak by zůstalo spočítané ve formátu z doby zadání otázky).
-    if(!state.locked){ generateQuestion(); }
+    // Nezodpovězenou otázku už settleCurrentQuestion() vyhodnotil (nebo byla
+    // už zamčená) — nová otázka v novém formátu se vygeneruje, jen když nezůstala
+    // rozepsaná zpětná vazba, na kterou čeká potvrzení.
+    if(res==='locked'){ generateQuestion(); }
+    return true;
   }
 
   function buildFormatRow(){
@@ -1278,7 +1354,8 @@ footer{
       b.className = 'chip accented' + (fmt.key===state.answerFormat ? ' on' : '');
       b.textContent = fmt.name;
       b.addEventListener('click', function(){
-        setAnswerFormat(fmt.key);
+        if(fmt.key===state.answerFormat) return;
+        if(!setAnswerFormat(fmt.key)) return;
         Array.prototype.forEach.call(row.children, function(el,i){
           el.classList.toggle('on', FORMATS[i].key===state.answerFormat);
         });
@@ -1355,9 +1432,8 @@ footer{
     var resultDecimals = decimalsForSig(rawExact, rv.sig);
     var exact = roundTo(rawExact, resultDecimals);
     var ratio = fromUnit.factor / toUnit.factor;
-    var ratioText = ratio>=1 ? '× ' + fmtCZ(ratio,8) : '÷ ' + fmtCZ(1/ratio,8);
-    var stepText = fmtFixed(value,valueDecimals) + ' ' + fromUnit.sym + ' ' + ratioText + ' = ' + gameFormatResult(exact,resultDecimals,sigFromDecimals(exact,resultDecimals)) + ' ' + toUnit.sym;
-    var tolerance = 0.51 * Math.pow(10, -resultDecimals);
+    var stepText = fmtFixed(value,valueDecimals) + ' ' + fromUnit.sym + ' ' + formatRatioText(ratio) + ' = ' + gameFormatResult(exact,resultDecimals,sigFromDecimals(exact,resultDecimals)) + ' ' + toUnit.sym;
+    var tolerance = conversionTolerance(exact, rv.sig, ratio);
     return { catName:quantity.name, fromUnit:fromUnit, toUnit:toUnit, value:value, valueDecimals:valueDecimals,
       exact:exact, resultDecimals:resultDecimals, tolerance:tolerance, stepText:stepText, isTemp:false, tempTargets:null,
       points:points, tierLabel:tierLabel };
@@ -1381,9 +1457,8 @@ footer{
     var valueDecimals = (fromUnit===big && frac) ? 1 : 0;
     var resultDecimals = (toUnit===big && frac) ? 1 : 0;
     var ratioFactor = fromUnit.factor / toUnit.factor;
-    var ratioText = ratioFactor>=1 ? '× ' + fmtCZ(ratioFactor,8) : '÷ ' + fmtCZ(1/ratioFactor,8);
-    var stepText = fmtFixed(value,valueDecimals) + ' ' + fromUnit.sym + ' ' + ratioText + ' = ' + gameFormatResult(exact,resultDecimals,sigFromDecimals(exact,resultDecimals)) + ' ' + toUnit.sym;
-    var tolerance = 0.51 * Math.pow(10, -resultDecimals);
+    var stepText = fmtFixed(value,valueDecimals) + ' ' + fromUnit.sym + ' ' + formatRatioText(ratioFactor) + ' = ' + gameFormatResult(exact,resultDecimals,sigFromDecimals(exact,resultDecimals)) + ' ' + toUnit.sym;
+    var tolerance = tightTolerance(exact);
     return { catName:topic.name, fromUnit:fromUnit, toUnit:toUnit, value:value, valueDecimals:valueDecimals,
       exact:exact, resultDecimals:resultDecimals, tolerance:tolerance, stepText:stepText, isTemp:false, tempTargets:null,
       points:points, tierLabel:tierLabel };
@@ -1402,9 +1477,8 @@ footer{
       exact = roundTo(value/3.6, 0);
     }
     var ratioFactor = fromUnit.factor / toUnit.factor;
-    var ratioText = ratioFactor>=1 ? '× ' + fmtCZ(ratioFactor,8) : '÷ ' + fmtCZ(1/ratioFactor,8);
-    var stepText = fmtFixed(value,0) + ' ' + fromUnit.sym + ' ' + ratioText + ' = ' + gameFormatResult(exact,0,sigFromDecimals(exact,0)) + ' ' + toUnit.sym;
-    var tolerance = 0.51;
+    var stepText = fmtFixed(value,0) + ' ' + fromUnit.sym + ' ' + formatRatioText(ratioFactor) + ' = ' + gameFormatResult(exact,0,sigFromDecimals(exact,0)) + ' ' + toUnit.sym;
+    var tolerance = tightTolerance(exact);
     return { catName:topic.name, fromUnit:fromUnit, toUnit:toUnit, value:value, valueDecimals:0,
       exact:exact, resultDecimals:0, tolerance:tolerance, stepText:stepText, isTemp:false, tempTargets:null,
       points:points, tierLabel:tierLabel };
@@ -1415,7 +1489,7 @@ footer{
     var rv = randomValue(fromUnit, 'expert');
     var value = rv.value;
     var valueDecimals = decimalsForSig(value, rv.sig);
-    var exact, resultDecimals, stepText, isTemp=false, tempTargets=null;
+    var exact, resultDecimals, stepText, isTemp=false, tempTargets=null, ratio;
 
     if(topic.isTemp){
       isTemp = true;
@@ -1437,11 +1511,12 @@ footer{
       var rawExact = value * fromUnit.factor / toUnit.factor;
       resultDecimals = decimalsForSig(rawExact, rv.sig);
       exact = roundTo(rawExact, resultDecimals);
-      var ratio = fromUnit.factor / toUnit.factor;
-      var ratioText = ratio>=1 ? '× ' + fmtCZ(ratio,8) : '÷ ' + fmtCZ(1/ratio,8);
-      stepText = fmtFixed(value,valueDecimals) + ' ' + fromUnit.sym + ' ' + ratioText + ' = ' + gameFormatResult(exact,resultDecimals,sigFromDecimals(exact,resultDecimals)) + ' ' + toUnit.sym;
+      ratio = fromUnit.factor / toUnit.factor;
+      stepText = fmtFixed(value,valueDecimals) + ' ' + fromUnit.sym + ' ' + formatRatioText(ratio) + ' = ' + gameFormatResult(exact,resultDecimals,sigFromDecimals(exact,resultDecimals)) + ' ' + toUnit.sym;
     }
-    var tolerance = 0.51 * Math.pow(10, -resultDecimals);
+    var tolerance = isTemp
+      ? 0.51 * Math.pow(10, -resultDecimals)
+      : conversionTolerance(exact, rv.sig, ratio);
     return { catName:topic.name, fromUnit:fromUnit, toUnit:toUnit, value:value, valueDecimals:valueDecimals,
       exact:exact, resultDecimals:resultDecimals, tolerance:tolerance, stepText:stepText, isTemp:isTemp, tempTargets:tempTargets,
       points:points, tierLabel:tierLabel };
@@ -1633,6 +1708,17 @@ footer{
     gameState.timerId = setInterval(tickGameTimer, 1000);
   }
 
+  // Odpočet hry se zastaví při odchodu na jinou záložku (Teorie/Trénink) a
+  // pokračuje po návratu na Hru — jinak by hra běžela dál "za zády" žáka.
+  function pauseGameTimer(){
+    if(gameState.timerId){ clearInterval(gameState.timerId); gameState.timerId = null; }
+  }
+  function resumeGameTimerIfNeeded(){
+    if(gameState.running && !gameState.timerId){
+      gameState.timerId = setInterval(tickGameTimer, 1000);
+    }
+  }
+
   function endGame(){
     gameState.running = false;
     clearInterval(gameState.timerId);
@@ -1706,10 +1792,36 @@ footer{
     document.getElementById('view-theory').hidden = tab!=='teorie';
     document.getElementById('view-training').hidden = tab!=='trenink';
     document.getElementById('view-game').hidden = tab!=='hra';
+    if(tab==='hra'){ resumeGameTimerIfNeeded(); } else { pauseGameTimer(); }
   }
   topTabTeorie.addEventListener('click', function(){ showTopTab('teorie'); });
   topTabTrenink.addEventListener('click', function(){ showTopTab('trenink'); });
   topTabHra.addEventListener('click', function(){ showTopTab('hra'); });
+
+  // Průběžně (při psaní i vkládání) odstraní z pole vše kromě číslic, jednoho
+  // desetinného oddělovače (čárka/tečka), znaménka mínus na začátku a mezer
+  // (ty parseAnswer stejně ignoruje — umožní to vložit i číslo s mezerami jako
+  // oddělovači tisíců). U exponentu (allowDecimal=false) desetinný oddělovač nejde zadat vůbec.
+  function sanitizeNumericInput(el, allowDecimal){
+    el.addEventListener('input', function(){
+      var v = el.value.replace(/[−–]/g, '-');
+      v = v.replace(allowDecimal ? /[^0-9,.\-\s ]/g : /[^0-9\-\s ]/g, '');
+      var neg = v.charAt(0)==='-';
+      v = v.replace(/-/g, '');
+      if(allowDecimal){
+        var sepIdx = v.search(/[,.]/);
+        if(sepIdx!==-1){ v = v.slice(0,sepIdx+1) + v.slice(sepIdx+1).replace(/[,.]/g,''); }
+      }
+      v = (neg?'-':'') + v;
+      if(v!==el.value) el.value = v;
+    });
+  }
+  sanitizeNumericInput(document.getElementById('answer'), true);
+  sanitizeNumericInput(document.getElementById('answer-mantissa'), true);
+  sanitizeNumericInput(document.getElementById('answer-exp'), false);
+  sanitizeNumericInput(document.getElementById('game-answer'), true);
+  sanitizeNumericInput(document.getElementById('game-answer-mantissa'), true);
+  sanitizeNumericInput(document.getElementById('game-answer-exp'), false);
 
   loadGameBest();
   document.getElementById('game-best-hint').textContent = 'Nejlepší skóre: ' + (gameState.best || '—');
