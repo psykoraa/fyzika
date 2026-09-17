@@ -854,7 +854,7 @@ footer{
     selGroupA: {},
     selExpert: {},
     score: 0, streak: 0, bestStreak: 0, answered: 0, correct: 0,
-    current: null, locked: false
+    current: null, locked: false, touched: false
   };
   GROUP_A.forEach(function(c){ state.selGroupA[c.key] = true; });
   EXPERT_TOPICS.forEach(function(c){ state.selExpert[c.key] = true; });
@@ -947,11 +947,12 @@ footer{
   }
 
   // Tolerance pro výsledky, které jsou z podstaty přesné (žádné zaokrouhlování
-  // navíc) — jen malý epsilon na plovoucí řádovou chybu (relativní složka kryje
-  // i astronomicky velká čísla, např. 1,37 × 10¹⁶, kde absolutní epsilon 10⁻⁶
-  // nestačí pohltit chybu v posledních bitech mantisy).
+  // navíc) — jen malý epsilon na plovoucí řádovou chybu. Musí být čistě
+  // relativní: absolutní minimum (dřív 1e-6) by u malých výsledků (řádově
+  // 10⁻⁹ a menších, časté třeba u J → TJ nebo pF → F) převýšilo samotný
+  // výsledek a uznalo by i odpověď posunutou o celé řády, včetně nuly.
   function tightTolerance(exact){
-    return Math.max(1e-6, Math.abs(exact) * 1e-9);
+    return Math.abs(exact) * 1e-9;
   }
 
   // Poměr dvou mocnin deseti (převod jen posunem desetinné čárky, typicky mezi
@@ -1147,6 +1148,7 @@ footer{
     document.getElementById('feedback').classList.remove('ok','bad');
     document.getElementById('feedback-tip').hidden = true;
     state.locked = false;
+    state.touched = false;
     document.getElementById('btn-check').textContent = 'Zkontrolovat';
 
     if(state.answerFormat==='scientific'){ m.focus(); } else { input.focus(); }
@@ -1199,10 +1201,13 @@ footer{
   // naopak "vylepšovat" úspěšnost tím, že se příklad při přepnutí tiše smaže.
   // Vrací 'cancelled' (uživatel zrušil dialog u prázdné odpovědi — volající nemá
   // nastavení měnit), 'locked' (příklad byl už vyhodnocený — lze rovnou vygenerovat
-  // další) nebo 'settled' (příklad byl právě vyhodnocen — počkat na potvrzení).
+  // další), 'untouched' (pole bylo prázdné, ale žák do příkladu vůbec nezasáhl —
+  // nic se nepenalizuje, lze rovnou vygenerovat další) nebo 'settled' (příklad
+  // byl právě vyhodnocen — počkat na potvrzení).
   function settleCurrentQuestion(){
     if(state.locked) return 'locked';
     if(isAnswerEmpty()){
+      if(!state.touched) return 'untouched';
       if(!confirm('Odpověď není vyplněná. Opravdu chcete pokračovat? Bude to počítáno jako špatná odpověď.')) return 'cancelled';
       skip();
     } else {
@@ -1298,7 +1303,7 @@ footer{
           el.classList.toggle('on', DIFFICULTIES[i].key===state.difficulty);
         });
         buildCategoryRow();
-        if(res==='locked'){ generateQuestion(); }
+        if(res==='locked' || res==='untouched'){ generateQuestion(); }
       });
       row.appendChild(b);
     });
@@ -1321,7 +1326,7 @@ footer{
         if(res==='cancelled') return;
         sel[c.key] = !sel[c.key];
         b.classList.toggle('on', sel[c.key]);
-        if(res==='locked'){ generateQuestion(); }
+        if(res==='locked' || res==='untouched'){ generateQuestion(); }
       });
       row.appendChild(b);
     });
@@ -1340,9 +1345,10 @@ footer{
     state.answerFormat = fmt;
     applyAnswerFormatUI();
     // Nezodpovězenou otázku už settleCurrentQuestion() vyhodnotil (nebo byla
-    // už zamčená) — nová otázka v novém formátu se vygeneruje, jen když nezůstala
-    // rozepsaná zpětná vazba, na kterou čeká potvrzení.
-    if(res==='locked'){ generateQuestion(); }
+    // už zamčená, nebo do ní žák vůbec nezasáhl) — nová otázka v novém formátu
+    // se vygeneruje, jen když nezůstala rozepsaná zpětná vazba, na kterou čeká
+    // potvrzení.
+    if(res==='locked' || res==='untouched'){ generateQuestion(); }
     return true;
   }
 
@@ -1387,6 +1393,9 @@ footer{
   }
   document.getElementById('btn-check').addEventListener('click', tryCheck);
   document.getElementById('btn-skip').addEventListener('click', trySkip);
+  ['answer','answer-mantissa','answer-exp'].forEach(function(id){
+    document.getElementById(id).addEventListener('input', function(){ state.touched = true; });
+  });
   document.getElementById('answer').addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); tryCheck(); } });
   document.getElementById('answer-mantissa').addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); tryCheck(); } });
   document.getElementById('answer-exp').addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); tryCheck(); } });
@@ -1727,7 +1736,6 @@ footer{
     if(gameState.score>gameState.best){ gameState.best = gameState.score; saveGameBest(); }
     document.getElementById('game-play').hidden = true;
     document.getElementById('game-over').hidden = false;
-    document.getElementById('game-intro').hidden = false;
     document.getElementById('game-final-score').textContent = gameState.score + ' bodů';
     document.getElementById('game-final-detail').textContent =
       'Správně: ' + gameState.correct + ' · Špatně: ' + gameState.wrong + ' · Nejlepší skóre: ' + gameState.best;
