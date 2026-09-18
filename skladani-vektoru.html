@@ -202,6 +202,93 @@ h1,h2,h3{ text-wrap:balance; margin:0; }
   margin-top:2px;
 }
 
+.task-banner{
+  display:flex;
+  align-items:baseline;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:14px;
+  background:var(--surface-2);
+  border:1px solid var(--line);
+  border-left:4px solid var(--accent);
+  border-radius:8px;
+  padding:11px 16px;
+}
+.task-banner-label{
+  font-size:0.78rem;
+  text-transform:uppercase;
+  letter-spacing:0.08em;
+  color:var(--ink-soft);
+  font-weight:600;
+}
+.task-banner-op{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:700;
+  font-style:italic;
+  font-size:1.35rem;
+  color:var(--accent);
+}
+
+.game-rules{ font-size:0.86rem; color:var(--ink-soft); line-height:1.5; margin:0; }
+.game-rules strong{ color:var(--ink); }
+.game-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  flex-wrap:wrap;
+  margin-bottom:18px;
+}
+.game-timer{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:700;
+  font-size:2rem;
+  font-variant-numeric:tabular-nums;
+  background:var(--ink);
+  color:var(--paper);
+  border-radius:8px;
+  padding:6px 18px;
+}
+.game-timer.low-time{ background:var(--danger); color:var(--accent-ink); animation:pulse 1s ease-in-out infinite; }
+@keyframes pulse{ 0%,100%{ opacity:1; } 50%{ opacity:0.6; } }
+.game-final-score{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:800;
+  font-size:3rem;
+  margin:14px 0 6px;
+}
+#game-final-detail{ margin-bottom:6px; }
+
+.choice-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:16px;
+}
+.choice-btn{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:700;
+  font-style:italic;
+  font-size:1.05rem;
+  padding:14px 16px;
+  border-radius:10px;
+  border:1px solid var(--line);
+  background:var(--surface);
+  color:var(--ink);
+  cursor:pointer;
+  text-align:center;
+  transition:transform .05s ease, background .12s, border-color .12s;
+}
+.choice-btn:hover:not(:disabled){ border-color:var(--accent); }
+.choice-btn:active:not(:disabled){ transform:translateY(1px); }
+.choice-btn:disabled{ cursor:not-allowed; }
+.choice-btn.selected{ background:var(--ink); border-color:var(--ink); color:var(--paper); }
+.choice-btn.correct{ background:var(--success-bg); border-color:var(--success); color:var(--success); }
+.choice-btn.wrong{ background:var(--danger-bg); border-color:var(--danger); color:var(--danger); }
+@media (max-width:520px){
+  .choice-grid{ grid-template-columns:1fr; }
+}
+
 .mode-row{
   display:flex;
   align-items:center;
@@ -241,6 +328,8 @@ h1,h2,h3{ text-wrap:balance; margin:0; }
   border-color:var(--ink);
 }
 .chip[hidden]{ display:none; }
+.chip:disabled{ opacity:0.45; cursor:not-allowed; }
+.chip:disabled:hover{ border-color:var(--line); }
 
 .canvas-wrap{
   margin-top:16px;
@@ -286,6 +375,7 @@ svg.vec-canvas{
 .guess-line{ stroke:var(--ink-soft); stroke-width:1.5; stroke-dasharray:3 3; opacity:0.6; fill:none; }
 .guess-line[hidden]{ display:none; }
 .guess-marker{ fill:none; stroke-width:3; }
+.guess-marker.pending{ stroke:var(--focus); }
 .guess-marker.correct{ stroke:var(--success); }
 .guess-marker.wrong{ stroke:var(--danger); }
 .guess-marker[hidden]{ display:none; }
@@ -313,6 +403,12 @@ svg.vec-canvas{
   font-style:italic;
   font-size:14px;
   fill:var(--c);
+  text-anchor:middle;
+  dominant-baseline:middle;
+  paint-order:stroke;
+  stroke:var(--surface);
+  stroke-width:4px;
+  stroke-linejoin:round;
 }
 .veclabel.result{ font-size:15px; }
 .veclabel[hidden]{ display:none; }
@@ -452,6 +548,7 @@ footer{
   <div class="top-tabs">
     <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
     <button class="toptab" id="top-tab-trenink" data-tab="trenink">Trénink</button>
+    <button class="toptab" id="top-tab-hra" data-tab="hra">Hra na čas</button>
   </div>
 
   <div id="theory-section" class="tab-section">
@@ -461,13 +558,22 @@ footer{
     <p>Druhý vektor přesunete, aniž byste změnili jeho velikost nebo směr, tak, aby jeho počátek splynul s koncem prvního vektoru. <b>Výslednice</b> pak vede z počátku prvního vektoru do konce posledního přesunutého vektoru.</p>
     <p>U dvou vektorů dá stejný výsledek i <b>rovnoběžníkové pravidlo</b> — výslednice je úhlopříčka rovnoběžníku sestrojeného nad oběma vektory.</p>
     <p>U každého diagramu si přepínačem <b>Zobrazení</b> můžete postupně prohlédnout zadané vektory, situaci po jejich přesunutí i výslednou výslednici.</p>
+    <p>Odečíst vektor <b><i>b</i></b> od vektoru <b><i>a</i></b> znamená přičíst k <b><i>a</i></b> vektor opačný <b><i>−b</i></b> — tedy stejně dlouhý vektor opačného směru. Postup je pak úplně stejný jako u sčítání.</p>
   </div>
 
   <!-- PÁR VEKTORŮ -->
   <div class="card">
     <span class="cat-tag">Dva vektory</span>
-    <h2>Skládání dvou vektorů</h2>
-    <p class="desc">Přetáhněte konce vektorů <b><i>a</i></b> a <b><i>b</i></b> a upravte tak jejich velikost i směr.</p>
+    <h2>Skládání a odčítání dvou vektorů</h2>
+    <p class="desc">Přetáhněte konce vektorů <b><i>a</i></b> a <b><i>b</i></b> a upravte tak jejich velikost i směr. Přepínačem <b>Operace</b> zvolte, zda se mají vektory sečíst, nebo zda se má <b><i>b</i></b> od <b><i>a</i></b> odečíst.</p>
+
+    <div class="mode-row">
+      <span class="mode-row-label">Operace</span>
+      <div class="seg" id="pair-op-seg">
+        <button class="chip on" data-op="add">a + b</button>
+        <button class="chip" data-op="sub">a − b</button>
+      </div>
+    </div>
 
     <div class="mode-row">
       <span class="mode-row-label">Zobrazení</span>
@@ -504,7 +610,7 @@ footer{
     <div class="vecstats">
       <div class="vstat v1"><span class="vs-label">a</span><span class="vs-val" id="pair-a-val">–</span></div>
       <div class="vstat v2"><span class="vs-label">b</span><span class="vs-val" id="pair-b-val">–</span></div>
-      <div class="vstat vres" id="pair-r-stat"><span class="vs-label">výslednice a + b</span><span class="vs-val" id="pair-r-val">–</span></div>
+      <div class="vstat vres" id="pair-r-stat"><span class="vs-label" id="pair-r-stat-label">výslednice a + b</span><span class="vs-val" id="pair-r-val">–</span></div>
     </div>
 
     <div class="actions">
@@ -575,7 +681,12 @@ footer{
   <div class="card">
     <span class="cat-tag">Trénink</span>
     <h2>Najděte výslednici</h2>
-    <p class="desc">Na obrázku vidíte zadané vektory. Klikněte do mřížky na bod, ve kterém podle Vás končí jejich výslednice. Poté se ukáže, zda jste trefili, i správné řešení.</p>
+    <p class="desc">Na obrázku vidíte zadané vektory. Klikněte do mřížky na bod, kde má podle Vás výsledek skončit, a potvrďte tlačítkem Zkontrolovat. Poté se ukáže, zda jste trefili, i správné řešení.</p>
+
+    <div class="task-banner">
+      <span class="task-banner-label">Vaším úkolem je určit</span>
+      <span class="task-banner-op" id="trainer-task-op">a + b</span>
+    </div>
 
     <div class="mode-row">
       <span class="mode-row-label">Počet vektorů</span>
@@ -584,6 +695,13 @@ footer{
         <button class="chip" data-count="3">Tři vektory</button>
       </div>
       <button class="linklike" id="reset-stats">vynulovat statistiku</button>
+    </div>
+
+    <div class="mode-row" id="trainer-sub-row">
+      <span class="mode-row-label">Odčítání</span>
+      <div class="seg">
+        <button class="chip on" id="trainer-sub-toggle">Zahrnuto</button>
+      </div>
     </div>
 
     <div class="canvas-wrap">
@@ -614,7 +732,7 @@ footer{
         <rect class="trainer-hit" id="trainer-hit" x="0" y="0" width="560" height="340"/>
       </svg>
     </div>
-    <p class="hint">Klikněte na mřížový bod, kde podle Vás výslednice končí.</p>
+    <p class="hint">Klikněte na mřížový bod, kde podle Vás výslednice končí, a potvrďte tlačítkem Zkontrolovat.</p>
 
     <div class="feedback" id="trainer-feedback" hidden>
       <div class="headline" id="trainer-feedback-headline"></div>
@@ -622,10 +740,98 @@ footer{
     </div>
 
     <div class="actions">
+      <button class="btn primary" id="trainer-check">Zkontrolovat</button>
       <button class="btn ghost" id="trainer-skip">Nevím / Zobrazit řešení</button>
-      <button class="btn primary" id="trainer-next">Další příklad</button>
     </div>
   </div>
+  </div>
+
+  <!-- HRA NA ČAS -->
+  <div id="hra-section" class="tab-section" hidden>
+
+    <div id="game-info">
+      <div class="panel">
+        <div class="panel-title">Pravidla hry</div>
+        <p class="game-rules">
+          Na obrázku uvidíte dva zadané vektory <b><i>a</i></b>, <b><i>b</i></b> a vektor <b><i>v</i></b>, který
+          vznikl jejich lineární kombinací. Ze čtyř nabídnutých
+          možností vyberte tu, která vektoru <b><i>v</i></b> odpovídá. Za správnou odpověď získáte
+          <strong>10 bodů</strong>, za špatnou odpověď (i za „Nevím") se strhává <strong>5 bodů</strong>. Po
+          vypršení zvoleného času se hra ukončí.
+        </p>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Délka hry</div>
+        <div class="row" id="game-duration-row"></div>
+      </div>
+    </div>
+
+    <div id="game-start-panel">
+      <div class="panel">
+        <div class="settings-foot">
+          <span class="hint" id="game-best-hint">Nejlepší skóre: —</span>
+          <button class="btn primary" id="btn-game-start">Spustit hru</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="game-play" hidden>
+      <div class="game-header">
+        <div class="game-timer" id="game-timer">2:00</div>
+        <div class="readout">
+          <div class="cell"><span class="label">Body</span><span class="value" id="game-score">0</span></div>
+          <div class="cell"><span class="label">Nejlepší</span><span class="value" id="game-best-live">0</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <span class="cat-tag">Lineární kombinace vektorů</span>
+        <p class="desc">Který výraz odpovídá vyznačenému vektoru <b><i>v</i></b>?</p>
+
+        <div class="canvas-wrap">
+          <svg class="vec-canvas" id="game-svg" viewBox="0 0 560 340">
+            <g id="game-grid"></g>
+            <line class="axis-line" id="game-axis-x" x1="0" y1="0" x2="0" y2="0"/>
+            <line class="axis-line" id="game-axis-y" x1="0" y1="0" x2="0" y2="0"/>
+            <circle class="origin-dot" id="game-origin" r="3"/>
+
+            <line class="vec v1" id="game-a-line"/>
+            <line class="vec v2" id="game-b-line"/>
+            <line class="vec v1" id="game-ka-line" hidden/>
+            <line class="vec v2" id="game-qb-line" hidden/>
+            <line class="vec result vres" id="game-v-line"/>
+
+            <text class="veclabel v1" id="game-a-label">a</text>
+            <text class="veclabel v2" id="game-b-label">b</text>
+            <text class="veclabel v1" id="game-ka-label" hidden></text>
+            <text class="veclabel v2" id="game-qb-label" hidden></text>
+            <text class="veclabel result vres" id="game-v-label">v</text>
+          </svg>
+        </div>
+
+        <div class="choice-grid" id="game-choice-grid"></div>
+
+        <div class="feedback" id="game-feedback" hidden>
+          <div class="headline" id="game-feedback-headline"></div>
+          <div class="steps" id="game-feedback-steps"></div>
+        </div>
+
+        <div class="actions">
+          <button class="btn primary" id="btn-game-check">Zkontrolovat</button>
+          <button class="btn ghost" id="btn-game-skip">Nevím / Další</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="game-over" hidden>
+      <span class="cat-tag">Konec hry</span>
+      <div class="game-final-score" id="game-final-score">0 bodů</div>
+      <div class="hint" id="game-final-detail"></div>
+      <div class="actions">
+        <button class="btn primary" id="btn-game-restart">Hrát znovu</button>
+      </div>
+    </div>
+
   </div>
 
   <footer>Souřadnice ukazuje panel pod diagramem — |v| je velikost vektoru, φ úhel od vodorovné osy.</footer>
@@ -661,8 +867,15 @@ footer{
 (function(){
   "use strict";
 
+  // Školní pravidlo zaokrouhluje "od nuly" podle absolutní hodnoty (|-2,25| → 2,3,
+  // tedy -2,25 → -2,3). Math.round ale u záporných čísel zaokrouhluje směrem k nule
+  // (Math.round(-22.5) === -22), proto se místo něj používá tohle.
+  function roundHalfAwayFromZero(x){
+    return x < 0 ? -Math.round(-x) : Math.round(x);
+  }
+
   function fmt1(n){
-    var v = Math.round(n*10)/10;
+    var v = roundHalfAwayFromZero(n*10)/10;
     if(Object.is(v,-0)) v = 0;
     return v.toFixed(1).replace('.', ',');
   }
@@ -688,10 +901,10 @@ footer{
     var dx = p1.x - p0.x, dy = p1.y - p0.y;
     var len = Math.hypot(dx, dy);
     var mx = (p0.x + p1.x) / 2, my = (p0.y + p1.y) / 2;
-    var offx = 0, offy = -12;
+    var offx = 0, offy = -16;
     if(len > 1){
-      offx = -(dy/len) * 13;
-      offy = (dx/len) * 13;
+      offx = -(dy/len) * 16;
+      offy = (dx/len) * 16;
     }
     el.setAttribute('x', mx + offx);
     el.setAttribute('y', my + offy);
@@ -767,7 +980,8 @@ footer{
       var acc = {x:0,y:0};
       vectors.forEach(function(v){
         var val = opts.values[v.key];
-        acc = { x: acc.x + val.x, y: acc.y + val.y };
+        var cval = opts.chainValue ? opts.chainValue(v.key, val) : val;
+        acc = { x: acc.x + cval.x, y: acc.y + cval.y };
         chainPts.push({ x: acc.x, y: acc.y });
       });
 
@@ -788,29 +1002,33 @@ footer{
       var prev = {x:0,y:0};
       vectors.forEach(function(v, idx){
         var val = opts.values[v.key];
-        var next = { x: prev.x+val.x, y: prev.y+val.y };
+        var cval = opts.chainValue ? opts.chainValue(v.key, val) : val;
+        var next = { x: prev.x+cval.x, y: prev.y+cval.y };
         var p0 = toSvg(prev), p1 = toSvg(next);
         var origP1 = toSvg(val);
+        var labelText = typeof v.text === 'function' ? v.text(mode) : v.text;
 
         setLine(v.chainEl, p0.x, p0.y, p1.x, p1.y);
         var hp = origP1;
         v.handleEl.setAttribute('cx', hp.x); v.handleEl.setAttribute('cy', hp.y);
 
         if(v.origEl){
-          // původní vektor se zobrazuje vždy; v „Původní vektory" naplno, jinak jemně přerušovaně
-          setLine(v.origEl, origin.x, origin.y, origP1.x, origP1.y);
+          // v režimu „Původní vektory" ukazuje zadaný vektor od počátku; jinak ukazuje
+          // stranu rovnoběžníku od počátku (u odčítání tedy −b), aby byl vidět celý rovnoběžník
+          var origLineEnd = (mode === 'original') ? origP1 : toSvg(cval);
+          setLine(v.origEl, origin.x, origin.y, origLineEnd.x, origLineEnd.y);
           setHidden(v.origEl, false);
           v.origEl.classList.toggle('faint', mode !== 'original');
           setHidden(v.chainEl, !showChain);
           if(mode === 'original'){
-            placeLabel(v.labelEl, origin, origP1, v.text);
+            placeLabel(v.labelEl, origin, origP1, labelText);
           } else {
-            placeLabel(v.labelEl, p0, p1, v.text);
+            placeLabel(v.labelEl, p0, p1, labelText);
           }
         } else {
           // první vektor v řetězu — původní i přesunutá poloha splývají
           setHidden(v.chainEl, false);
-          placeLabel(v.labelEl, p0, p1, v.text);
+          placeLabel(v.labelEl, p0, p1, labelText);
         }
 
         var ma = magAngle(val);
@@ -895,29 +1113,55 @@ footer{
 
   // ---- pair diagram ----
   var pairValues = { a:{x:4,y:1}, b:{x:1,y:3} };
+  var pairOp = 'add';
 
-  var pairDiagram = makeDiagram({
+  function pairEffB(){
+    return pairOp === 'sub' ? { x: -pairValues.b.x, y: -pairValues.b.y } : pairValues.b;
+  }
+
+  var pairOpts = {
     svgId:'pair-svg', gridId:'pair-grid', axisXId:'pair-axis-x', axisYId:'pair-axis-y', originId:'pair-origin',
     viewW:560, viewH:340, margin:38, mobileViewW:340, mobileViewH:340, mobileMargin:26, minExtent:5, clamp:7, mode:'original',
     values: pairValues,
+    chainValue: function(key, val){ return key === 'b' ? pairEffB() : val; },
     vectors:[
       { key:'a', chainId:'pair-a-chain', origId:null, labelId:'pair-a-label', handleId:'pair-a-handle', statId:'pair-a-val', text:'a' },
-      { key:'b', chainId:'pair-b-chain', origId:'pair-b-orig', labelId:'pair-b-label', handleId:'pair-b-handle', statId:'pair-b-val', text:'b' }
+      { key:'b', chainId:'pair-b-chain', origId:'pair-b-orig', labelId:'pair-b-label', handleId:'pair-b-handle', statId:'pair-b-val',
+        text:function(mode){ return (mode !== 'original' && pairOp === 'sub') ? '−b' : 'b'; } }
     ],
     resultLineId:'pair-result', resultLabelId:'pair-r-label', resultStatWrapId:'pair-r-stat', resultStatId:'pair-r-val', resultText:'a+b',
     onRender: function(d){
-      // rovnoběžník (kopie a posunutá na konec b) se kreslí automaticky mimo režim „Původní vektory"
+      // rovnoběžník (kopie a posunutá na konec efektivního vektoru — b, nebo −b při odčítání) se kreslí mimo režim „Původní vektory"
       var paraEl = document.getElementById('pair-a-para');
       var show = d.mode !== 'original';
       setHidden(paraEl, !show);
       if(!show) return;
-      var pB = d.toSvg(pairValues.b);
-      var pSum = d.toSvg({ x: pairValues.a.x + pairValues.b.x, y: pairValues.a.y + pairValues.b.y });
+      var effB = pairEffB();
+      var pB = d.toSvg(effB);
+      var pSum = d.toSvg({ x: pairValues.a.x + effB.x, y: pairValues.a.y + effB.y });
       setLine(paraEl, pB.x, pB.y, pSum.x, pSum.y);
     }
-  });
+  };
+  var pairDiagram = makeDiagram(pairOpts);
 
   setupModeSeg('pair-mode-seg', pairDiagram);
+
+  var pairOpSeg = document.getElementById('pair-op-seg');
+  var pairResultStatLabel = document.getElementById('pair-r-stat-label');
+  function setPairOp(op){
+    pairOp = op;
+    Array.prototype.forEach.call(pairOpSeg.querySelectorAll('button'), function(bb){
+      bb.classList.toggle('on', bb.getAttribute('data-op') === op);
+    });
+    pairOpts.resultText = op === 'sub' ? 'a−b' : 'a+b';
+    pairResultStatLabel.textContent = op === 'sub' ? 'výslednice a − b' : 'výslednice a + b';
+  }
+  Array.prototype.slice.call(pairOpSeg.querySelectorAll('button')).forEach(function(b){
+    b.addEventListener('click', function(){
+      setPairOp(b.getAttribute('data-op'));
+      pairDiagram.render();
+    });
+  });
 
   document.getElementById('pair-random').addEventListener('click', function(){
     function rnd(){ return Math.round((Math.random()*8-4)*2)/2; }
@@ -928,6 +1172,7 @@ footer{
   document.getElementById('pair-reset').addEventListener('click', function(){
     pairValues.a = { x:4, y:1 };
     pairValues.b = { x:1, y:3 };
+    setPairOp('add');
     pairDiagram.render();
   });
 
@@ -1001,6 +1246,8 @@ footer{
     var fb = document.getElementById('trainer-feedback');
     var fbHead = document.getElementById('trainer-feedback-headline');
     var fbSteps = document.getElementById('trainer-feedback-steps');
+    var taskOpEl = document.getElementById('trainer-task-op');
+    var subToggle = document.getElementById('trainer-sub-toggle');
 
     var scoreEl = document.getElementById('stat-score');
     var streakEl = document.getElementById('stat-streak');
@@ -1019,12 +1266,29 @@ footer{
     var state = {
       count: 2,
       values: { a:{x:4,y:1}, b:{x:1,y:3}, c:{x:-2,y:2} },
+      op: 'add',
+      subEnabled: true,
       revealed: false,
       guess: null,
       score:0, streak:0, bestStreak:0, answered:0, correct:0
     };
 
     function activeKeys(){ return state.count===3 ? ['a','b','c'] : ['a','b']; }
+
+    // Odčítání se nabízí jen u dvojice vektorů — u trojice se vždy sčítá.
+    function isSub(){ return state.count===2 && state.op==='sub'; }
+
+    // Hodnota vektoru b použitá pro řetězení (přiložení konce k počátku) —
+    // při odčítání se místo b přičítá opačný vektor −b.
+    function chainVal(k, val){
+      return (k==='b' && isSub()) ? { x:-val.x, y:-val.y } : val;
+    }
+
+    function opLabel(spaced){
+      var keys = activeKeys();
+      var sep = isSub() ? (spaced ? ' − ' : '−') : (spaced ? ' + ' : '+');
+      return keys.join(sep);
+    }
 
     function randInt(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
     function randVec(range){
@@ -1036,7 +1300,10 @@ footer{
 
     function sumVec(){
       var s = {x:0,y:0};
-      activeKeys().forEach(function(k){ s.x += state.values[k].x; s.y += state.values[k].y; });
+      activeKeys().forEach(function(k){
+        var v = chainVal(k, state.values[k]);
+        s.x += v.x; s.y += v.y;
+      });
       return s;
     }
 
@@ -1065,7 +1332,8 @@ footer{
       var chainPts = [{x:0,y:0}];
       var acc = {x:0,y:0};
       keys.forEach(function(k){
-        acc = { x: acc.x + state.values[k].x, y: acc.y + state.values[k].y };
+        var cv = chainVal(k, state.values[k]);
+        acc = { x: acc.x + cv.x, y: acc.y + cv.y };
         chainPts.push({ x: acc.x, y: acc.y });
       });
       var allPts = chainPts.slice();
@@ -1092,16 +1360,22 @@ footer{
         if(!active) return;
 
         var val = state.values[k];
-        var next = { x: prev.x+val.x, y: prev.y+val.y };
+        var cval = chainVal(k, val);
+        var next = { x: prev.x+cval.x, y: prev.y+cval.y };
         var p0 = toSvg(prev), p1 = toSvg(next);
         var origP1 = toSvg(val);
+        var chainLabel = (k==='b' && isSub()) ? '−b' : k;
 
         if(els[k].orig){
           setLine(els[k].orig, origin.x, origin.y, origP1.x, origP1.y);
           els[k].orig.classList.toggle('faint', state.revealed);
           setHidden(els[k].chain, !state.revealed);
-          if(state.revealed){ placeLabel(els[k].label, p0, p1, k); }
-          else { placeLabel(els[k].label, origin, origP1, k); }
+          if(state.revealed){
+            setLine(els[k].chain, p0.x, p0.y, p1.x, p1.y);
+            placeLabel(els[k].label, p0, p1, chainLabel);
+          } else {
+            placeLabel(els[k].label, origin, origP1, k);
+          }
         } else {
           setLine(els[k].chain, p0.x, p0.y, p1.x, p1.y);
           placeLabel(els[k].label, p0, p1, k);
@@ -1113,26 +1387,47 @@ footer{
       setLine(resultLine, origin.x, origin.y, rp.x, rp.y);
       setHidden(resultLine, !state.revealed);
       setHidden(resultLabel, !state.revealed);
-      if(state.revealed){ placeLabel(resultLabel, origin, rp, keys.join('+')); }
+      if(state.revealed){ placeLabel(resultLabel, origin, rp, opLabel()); }
 
-      if(state.revealed && state.guess){
+      if(state.revealed){
         var correct = sumVec();
-        var ok = state.guess.x === correct.x && state.guess.y === correct.y;
-        var gp = toSvg(state.guess);
-        guessMarker.setAttribute('cx', gp.x); guessMarker.setAttribute('cy', gp.y);
-        guessMarker.classList.toggle('correct', ok);
-        guessMarker.classList.toggle('wrong', !ok);
-        setHidden(guessMarker, false);
-        if(!ok){
-          var cp = toSvg(correct);
-          correctMarker.setAttribute('cx', cp.x); correctMarker.setAttribute('cy', cp.y);
-          setHidden(correctMarker, false);
-          setLine(guessLine, gp.x, gp.y, cp.x, cp.y);
-          setHidden(guessLine, false);
+        if(state.guess){
+          var ok = state.guess.x === correct.x && state.guess.y === correct.y;
+          var gp = toSvg(state.guess);
+          guessMarker.setAttribute('cx', gp.x); guessMarker.setAttribute('cy', gp.y);
+          guessMarker.classList.remove('pending');
+          guessMarker.classList.toggle('correct', ok);
+          guessMarker.classList.toggle('wrong', !ok);
+          setHidden(guessMarker, false);
+          if(!ok){
+            var cp = toSvg(correct);
+            correctMarker.setAttribute('cx', cp.x); correctMarker.setAttribute('cy', cp.y);
+            setHidden(correctMarker, false);
+            setLine(guessLine, gp.x, gp.y, cp.x, cp.y);
+            setHidden(guessLine, false);
+          } else {
+            setHidden(correctMarker, true);
+            setHidden(guessLine, true);
+          }
         } else {
-          setHidden(correctMarker, true);
+          // Zkontrolováno bez vybraného bodu (potvrzené prázdné odpovědi) — aspoň
+          // ukážeme, kde měla výslednice správně skončit.
+          setHidden(guessMarker, true);
           setHidden(guessLine, true);
+          var cp2 = toSvg(correct);
+          correctMarker.setAttribute('cx', cp2.x); correctMarker.setAttribute('cy', cp2.y);
+          setHidden(correctMarker, false);
         }
+      } else if(state.guess){
+        // Bod je vybraný, ale žák ještě nepotvrdil tlačítkem Zkontrolovat —
+        // neutrální značka bez prozrazení správnosti.
+        var pp = toSvg(state.guess);
+        guessMarker.setAttribute('cx', pp.x); guessMarker.setAttribute('cy', pp.y);
+        guessMarker.classList.remove('correct','wrong');
+        guessMarker.classList.add('pending');
+        setHidden(guessMarker, false);
+        setHidden(correctMarker, true);
+        setHidden(guessLine, true);
       } else {
         setHidden(guessMarker, true);
         setHidden(correctMarker, true);
@@ -1151,9 +1446,13 @@ footer{
       state.values.a = randVec(range);
       state.values.b = randVec(range);
       if(state.count===3) state.values.c = randVec(range);
+      // Odčítání jen u dvojice vektorů — u trojice se vždy sčítá.
+      state.op = (state.count===2 && state.subEnabled && Math.random() < 0.5) ? 'sub' : 'add';
       state.revealed = false;
       state.guess = null;
       fb.hidden = true;
+      taskOpEl.textContent = opLabel(true);
+      document.getElementById('trainer-check').textContent = 'Zkontrolovat';
       render();
     }
 
@@ -1174,23 +1473,30 @@ footer{
       render();
 
       fb.hidden = false;
-      var label = activeKeys().join(' + ');
+      var label = opLabel(true);
+      var opWord = isSub() ? 'Rozdíl' : 'Výslednice';
       if(bySkip){
         fb.className = 'feedback neutral';
         fbHead.textContent = 'Řešení';
-        fbSteps.textContent = 'Výslednice ' + label + ' končí v bodě (' + correct.x + '; ' + correct.y + ').';
+        fbSteps.textContent = opWord + ' ' + label + ' končí v bodě (' + correct.x + '; ' + correct.y + ').';
       } else if(ok){
         fb.className = 'feedback ok';
         fbHead.textContent = 'Správně!';
-        fbSteps.textContent = 'Výslednice ' + label + ' skutečně končí v bodě (' + correct.x + '; ' + correct.y + ').';
+        fbSteps.textContent = opWord + ' ' + label + ' skutečně končí v bodě (' + correct.x + '; ' + correct.y + ').';
       } else {
         fb.className = 'feedback bad';
-        fbHead.textContent = 'Bohužel, špatně.';
-        fbSteps.textContent = 'Vaše odpověď: (' + state.guess.x + '; ' + state.guess.y + '). Výslednice ' + label + ' končí v bodě (' + correct.x + '; ' + correct.y + ').';
+        fbHead.textContent = state.guess ? 'Bohužel, špatně.' : 'Nevybrali jste žádný bod.';
+        fbSteps.textContent = (state.guess ? 'Vaše odpověď: (' + state.guess.x + '; ' + state.guess.y + '). ' : '') +
+          opWord + ' ' + label + ' končí v bodě (' + correct.x + '; ' + correct.y + ').';
       }
+      var btnCheck = document.getElementById('trainer-check');
+      btnCheck.textContent = 'Další příklad →';
+      btnCheck.focus();
       updateStats();
     }
 
+    // Klik do mřížky jen VYBERE bod — nevyhodnocuje. Dokud příklad není
+    // zkontrolovaný, lze si to rozmyslet a vybrat jiný bod.
     hitRect.addEventListener('click', function(e){
       if(state.revealed) return;
       var pt = svg.createSVGPoint();
@@ -1199,37 +1505,68 @@ footer{
       var mx = (loc.x - origin.x) / unit;
       var my = -(loc.y - origin.y) / unit;
       state.guess = { x: Math.round(mx), y: Math.round(my) };
-      evaluate(false);
+      render();
     });
 
-    document.getElementById('trainer-skip').addEventListener('click', function(){ evaluate(true); });
-
-    // Když příklad ještě není vyhodnocený (žádný tip ani zobrazené řešení), zeptá se,
-    // jestli žák opravdu chce příklad opustit bez odpovědi — a pokud ano, započítá ho
-    // jako chybný. Používá se jak pro tlačítko „Další příklad", tak pro přepnutí počtu
-    // vektorů, aby se nedalo nepohodlným příkladům jen tak uniknout.
-    function confirmDiscardIfUnanswered(){
-      if(state.revealed) return true;
-      var proceed = window.confirm('Nezvolili jste žádnou výslednici. Pokud budete pokračovat, započítá se aktuální příklad jako chybná odpověď. Opravdu chcete pokračovat?');
-      if(!proceed) return false;
+    function tryCheck(){
+      if(state.revealed){ newExample(); return; }
+      if(!state.guess){
+        if(!confirm('Nevybrali jste žádný bod. Opravdu chcete zkontrolovat?')) return;
+      }
+      evaluate(false);
+    }
+    function trySkip(){
+      if(state.revealed){ newExample(); return; }
+      if(!state.guess){
+        if(!confirm('Nevybrali jste žádný bod. Opravdu chcete přeskočit na další příklad?')) return;
+      }
       evaluate(true);
-      return true;
     }
 
-    document.getElementById('trainer-next').addEventListener('click', function(){
-      if(!confirmDiscardIfUnanswered()) return;
-      newExample();
-    });
+    // Společná brána pro přepínání počtu vektorů za běhu příkladu — viz stejná
+    // funkce v prevody-jednotek.html pro plné zdůvodnění jednotlivých návratových
+    // stavů. Výběr bodu je tu atomický (na rozdíl od psaní do textového pole
+    // nemůže být „rozepsaný, ale prázdný"), takže stav 'cancelled' tu reálně
+    // nenastává — ponechává se ale kvůli stejnému tvaru jako u ostatních stránek.
+    function settleCurrentQuestion(){
+      if(state.revealed) return 'locked';
+      if(!state.guess) return 'untouched';
+      evaluate(false);
+      return 'settled';
+    }
+
+    document.getElementById('trainer-check').addEventListener('click', tryCheck);
+    document.getElementById('trainer-skip').addEventListener('click', trySkip);
+
+    // Odčítání je jen u dvojice vektorů — u trojice se přepínač odškrtne
+    // a znepřístupní, ale zapamatovaná volba se obnoví po návratu na dva vektory.
+    function updateSubToggleAvailability(){
+      var available = state.count === 2;
+      subToggle.disabled = !available;
+      subToggle.classList.toggle('on', available && state.subEnabled);
+      subToggle.textContent = (available && state.subEnabled) ? 'Zahrnuto' : 'Vypnuto';
+    }
 
     var countSeg = document.getElementById('trainer-count-seg');
     Array.prototype.slice.call(countSeg.querySelectorAll('button')).forEach(function(b){
       b.addEventListener('click', function(){
-        if(!confirmDiscardIfUnanswered()) return;
+        var res = settleCurrentQuestion();
+        if(res==='cancelled') return;
         Array.prototype.forEach.call(countSeg.children, function(bb){ bb.classList.remove('on'); });
         b.classList.add('on');
         state.count = parseInt(b.getAttribute('data-count'), 10);
-        newExample();
+        updateSubToggleAvailability();
+        if(res==='locked' || res==='untouched'){ newExample(); }
       });
+    });
+    updateSubToggleAvailability();
+
+    subToggle.addEventListener('click', function(){
+      var res = settleCurrentQuestion();
+      if(res==='cancelled') return;
+      state.subEnabled = !state.subEnabled;
+      updateSubToggleAvailability();
+      if(res==='locked' || res==='untouched'){ newExample(); }
     });
 
     document.getElementById('reset-stats').addEventListener('click', function(){
@@ -1247,6 +1584,360 @@ footer{
   pairDiagram.render();
   tripleDiagram.render();
 
+  // ---- Hra na čas: lineární kombinace k·a + q·b ----
+  var gameModule = (function(){
+    var svg = document.getElementById('game-svg');
+    var grid = document.getElementById('game-grid');
+    var axisX = document.getElementById('game-axis-x');
+    var axisY = document.getElementById('game-axis-y');
+    var originDot = document.getElementById('game-origin');
+
+    var DESKTOP_DIMS = { viewW:560, viewH:340, margin:40 };
+    var MOBILE_DIMS = { viewW:340, viewH:340, margin:28 };
+    var MIN_EXTENT = 4;
+    var VIEW_W = DESKTOP_DIMS.viewW, VIEW_H = DESKTOP_DIMS.viewH;
+    var origin = { x: VIEW_W/2, y: VIEW_H/2 };
+    var unit = 30;
+
+    function currentDims(){ return isNarrowScreen() ? MOBILE_DIMS : DESKTOP_DIMS; }
+    function toSvg(mp){ return { x: origin.x + mp.x*unit, y: origin.y - mp.y*unit }; }
+
+    var aLine = document.getElementById('game-a-line');
+    var bLine = document.getElementById('game-b-line');
+    var kaLine = document.getElementById('game-ka-line');
+    var qbLine = document.getElementById('game-qb-line');
+    var vLine = document.getElementById('game-v-line');
+    var aLabel = document.getElementById('game-a-label');
+    var bLabel = document.getElementById('game-b-label');
+    var kaLabel = document.getElementById('game-ka-label');
+    var qbLabel = document.getElementById('game-qb-label');
+    var vLabel = document.getElementById('game-v-label');
+
+    var choiceGrid = document.getElementById('game-choice-grid');
+    var fb = document.getElementById('game-feedback');
+    var fbHead = document.getElementById('game-feedback-headline');
+    var fbSteps = document.getElementById('game-feedback-steps');
+    var checkBtn = document.getElementById('btn-game-check');
+    var skipBtn = document.getElementById('btn-game-skip');
+
+    var scoreEl = document.getElementById('game-score');
+    var bestLiveEl = document.getElementById('game-best-live');
+    var bestHintEl = document.getElementById('game-best-hint');
+    var timerEl = document.getElementById('game-timer');
+
+    var GAME_DURATIONS = [
+      { key:60, name:'1 min' },
+      { key:120, name:'2 min' },
+      { key:180, name:'3 min' },
+      { key:300, name:'5 min' }
+    ];
+    var COEFFS = [-3,-2,-1,1,2,3];
+
+    var state = {
+      duration:120, running:false, timeLeft:120, timerId:null,
+      score:0, correct:0, wrong:0, answered:0,
+      a:{x:2,y:1}, b:{x:1,y:-2}, v:{x:0,y:0}, options:[], correctIndex:0, selected:-1,
+      locked:false, bests:{}
+    };
+
+    function randInt(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+    function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+    function randVec(range){
+      var v;
+      do{ v = { x: randInt(-range,range), y: randInt(-range,range) }; }
+      while(v.x===0 && v.y===0);
+      return v;
+    }
+
+    // a, b nesmí být rovnoběžné — jinak by dvojice (k, q) nebyla k danému
+    // vektoru v jednoznačná (nekonečně mnoho lineárních kombinací by dalo stejný v).
+    function genPair(){
+      var a, b, tries=0;
+      do{
+        a = randVec(4);
+        b = randVec(4);
+        tries++;
+      } while((a.x*b.y - a.y*b.x === 0) && tries<50);
+      return { a:a, b:b };
+    }
+
+    function genCoeffPairs(){
+      var used = {};
+      var pairs = [];
+      while(pairs.length < 4){
+        var k = pick(COEFFS), q = pick(COEFFS);
+        var key = k+'_'+q;
+        if(used[key]) continue;
+        used[key] = true;
+        pairs.push({ k:k, q:q });
+      }
+      return pairs;
+    }
+
+    function coefTerm(coef, letter, isFirst){
+      var abs = Math.abs(coef);
+      var num = abs===1 ? '' : String(abs);
+      var term = num + letter;
+      if(isFirst) return (coef<0 ? '−' : '') + term;
+      return (coef<0 ? ' − ' : ' + ') + term;
+    }
+    function formatCombo(k,q){ return coefTerm(k,'a',true) + coefTerm(q,'b',false); }
+
+    // Popisek jednoho členu řetězu při vysvětlení (např. "2a", "−a", "−3b") —
+    // na rozdíl od coefTerm nikdy nezačíná mezerou/znaménkem "+" (je to samostatný štítek, ne pokračování výrazu).
+    function formatTerm(coef, letter){
+      var abs = Math.abs(coef);
+      var num = abs===1 ? '' : String(abs);
+      return (coef<0 ? '−' : '') + num + letter;
+    }
+
+    function pointWord(n){
+      var abs = Math.abs(n);
+      if(abs===1) return 'bod';
+      if(abs>=2 && abs<=4) return 'body';
+      return 'bodů';
+    }
+
+    function loadBests(){
+      try{
+        var raw = localStorage.getItem('vektory-game-bests');
+        if(raw) state.bests = JSON.parse(raw) || {};
+      }catch(e){}
+    }
+    function saveBests(){
+      try{ localStorage.setItem('vektory-game-bests', JSON.stringify(state.bests)); }catch(e){}
+    }
+    function currentBest(){ return state.bests[state.duration] || 0; }
+    function updateBestHint(){ bestHintEl.textContent = 'Nejlepší skóre: ' + (currentBest() || '—'); }
+    function updateScore(){ scoreEl.textContent = state.score; }
+
+    // Grid/měřítko se počítá tak, aby se vešel i mezivýsledek k·a (počátek řetězu
+    // k·a → q·b) — jinak by se po odhalení řešení mohla konstrukce vykreslit mimo plochu.
+    function renderDiagram(){
+      var dims = currentDims();
+      VIEW_W = dims.viewW; VIEW_H = dims.viewH;
+      svg.setAttribute('viewBox', '0 0 ' + VIEW_W + ' ' + VIEW_H);
+      origin = { x: VIEW_W/2, y: VIEW_H/2 };
+
+      var cp = state.options[state.correctIndex];
+      var kaPoint = { x: cp.k*state.a.x, y: cp.k*state.a.y };
+
+      var maxAbs = MIN_EXTENT;
+      [state.a, state.b, state.v, kaPoint].forEach(function(p){
+        maxAbs = Math.max(maxAbs, Math.abs(p.x), Math.abs(p.y));
+      });
+      unit = Math.min(VIEW_W/2 - dims.margin, VIEW_H/2 - dims.margin) / maxAbs;
+
+      buildGrid(grid, origin, unit, VIEW_W, VIEW_H);
+      setLine(axisX, 0, origin.y, VIEW_W, origin.y);
+      setLine(axisY, origin.x, 0, origin.x, VIEW_H);
+      originDot.setAttribute('cx', origin.x); originDot.setAttribute('cy', origin.y);
+
+      var pA = toSvg(state.a), pB = toSvg(state.b), pV = toSvg(state.v);
+      setLine(aLine, origin.x, origin.y, pA.x, pA.y);
+      setLine(bLine, origin.x, origin.y, pB.x, pB.y);
+      setLine(vLine, origin.x, origin.y, pV.x, pV.y);
+      // Po odeslání odpovědi se a, b zjemní na pouhou referenci a hlavní pozornost
+      // patří řetězu k·a → q·b, který ukazuje, jak z nich v skutečně vznikl.
+      aLine.classList.toggle('faint', state.locked);
+      bLine.classList.toggle('faint', state.locked);
+      placeLabel(aLabel, origin, pA, 'a');
+      placeLabel(bLabel, origin, pB, 'b');
+      placeLabel(vLabel, origin, pV, 'v');
+
+      var pKA = toSvg(kaPoint);
+      setHidden(kaLine, !state.locked);
+      setHidden(qbLine, !state.locked);
+      setHidden(kaLabel, !state.locked);
+      setHidden(qbLabel, !state.locked);
+      if(state.locked){
+        setLine(kaLine, origin.x, origin.y, pKA.x, pKA.y);
+        setLine(qbLine, pKA.x, pKA.y, pV.x, pV.y);
+        placeLabel(kaLabel, origin, pKA, formatTerm(cp.k,'a'));
+        placeLabel(qbLabel, pKA, pV, formatTerm(cp.q,'b'));
+      }
+    }
+
+    function renderChoices(){
+      choiceGrid.innerHTML = '';
+      state.options.forEach(function(opt, idx){
+        var btn = document.createElement('button');
+        btn.className = 'choice-btn';
+        btn.textContent = opt.text;
+        btn.addEventListener('click', function(){ selectOption(idx); });
+        choiceGrid.appendChild(btn);
+      });
+    }
+
+    // Kliknutí na možnost jen VYBERE odpověď — nevyhodnocuje (stejný princip
+    // jako výběr bodu v Tréninku). Vyhodnotí až tlačítko Zkontrolovat / Nevím.
+    function selectOption(idx){
+      if(!state.running || state.locked) return;
+      state.selected = idx;
+      var buttons = choiceGrid.querySelectorAll('.choice-btn');
+      Array.prototype.forEach.call(buttons, function(btn, i){
+        btn.classList.toggle('selected', i===idx);
+      });
+    }
+
+    function genQuestion(){
+      var pairAB, coeffPairs, correctIdx, v, maxAbs, tries=0;
+      do{
+        pairAB = genPair();
+        coeffPairs = genCoeffPairs();
+        correctIdx = randInt(0,3);
+        var cp = coeffPairs[correctIdx];
+        v = { x: cp.k*pairAB.a.x + cp.q*pairAB.b.x, y: cp.k*pairAB.a.y + cp.q*pairAB.b.y };
+        maxAbs = Math.max(Math.abs(pairAB.a.x),Math.abs(pairAB.a.y),Math.abs(pairAB.b.x),Math.abs(pairAB.b.y),Math.abs(v.x),Math.abs(v.y));
+        tries++;
+      } while(maxAbs > 11 && tries < 40);
+
+      state.a = pairAB.a; state.b = pairAB.b; state.v = v;
+      state.options = coeffPairs.map(function(p){ return { k:p.k, q:p.q, text: formatCombo(p.k,p.q) }; });
+      state.correctIndex = correctIdx;
+      state.selected = -1;
+      state.locked = false;
+
+      renderChoices();
+      renderDiagram();
+      fb.hidden = true;
+      fb.classList.remove('ok','bad');
+      checkBtn.textContent = 'Zkontrolovat';
+    }
+
+    function evaluate(idx, bySkip){
+      if(state.locked) return;
+      state.locked = true;
+      state.answered++;
+      var ok = !bySkip && idx === state.correctIndex;
+
+      var buttons = choiceGrid.querySelectorAll('.choice-btn');
+      Array.prototype.forEach.call(buttons, function(btn, i){
+        btn.disabled = true;
+        btn.classList.remove('selected');
+        if(i === state.correctIndex) btn.classList.add('correct');
+        else if(i === idx) btn.classList.add('wrong');
+      });
+
+      // Po vyhodnocení vždy ukázat, jak se k·a a q·b poskládají za sebe do v.
+      renderDiagram();
+
+      fb.hidden = false;
+      var correctText = state.options[state.correctIndex].text;
+      var coordText = '(' + state.v.x + '; ' + state.v.y + ')';
+      if(ok){
+        state.score += 10; state.correct++;
+        fb.className = 'feedback ok';
+        fbHead.textContent = 'Správně! +10 b';
+        fbSteps.textContent = 'v = ' + correctText + ' = ' + coordText;
+      } else {
+        state.score -= 5; state.wrong++;
+        fb.className = 'feedback bad';
+        fbHead.textContent = (bySkip ? 'Přeskočeno.' : 'Bohužel, špatně.') + ' −5 b';
+        fbSteps.textContent = 'Správně: v = ' + correctText + ' = ' + coordText;
+      }
+      checkBtn.textContent = 'Další příklad →';
+      checkBtn.focus();
+      updateScore();
+    }
+
+    function tryCheckGame(){
+      if(!state.running) return;
+      if(state.locked){ genQuestion(); return; }
+      if(state.selected===-1){
+        if(!confirm('Nevybrali jste žádnou možnost. Opravdu chcete zkontrolovat?')) return;
+      }
+      evaluate(state.selected, false);
+    }
+    function trySkipGame(){
+      if(!state.running) return;
+      if(state.locked){ genQuestion(); return; }
+      if(state.selected===-1){
+        if(!confirm('Nevybrali jste žádnou možnost. Opravdu chcete přeskočit? Bude to počítáno jako špatná odpověď (−5 b).')) return;
+      }
+      evaluate(-1, true);
+    }
+
+    function formatTime(sec){
+      var m = Math.floor(sec/60), s = sec%60;
+      return m + ':' + (s<10 ? '0'+s : s);
+    }
+    function tickTimer(){
+      state.timeLeft--;
+      timerEl.textContent = formatTime(Math.max(0,state.timeLeft));
+      timerEl.classList.toggle('low-time', state.timeLeft<=20 && state.timeLeft>0);
+      if(state.timeLeft<=0){ endGame(); }
+    }
+
+    function startGame(){
+      state.running = true;
+      state.timeLeft = state.duration;
+      state.score=0; state.correct=0; state.wrong=0; state.answered=0;
+      updateScore();
+      timerEl.textContent = formatTime(state.duration);
+      timerEl.classList.remove('low-time');
+      bestLiveEl.textContent = currentBest();
+      document.getElementById('game-info').hidden = true;
+      document.getElementById('game-start-panel').hidden = true;
+      document.getElementById('game-over').hidden = true;
+      document.getElementById('game-play').hidden = false;
+      genQuestion();
+      if(state.timerId) clearInterval(state.timerId);
+      state.timerId = setInterval(tickTimer, 1000);
+    }
+
+    function endGame(){
+      if(!state.running) return;
+      state.running = false;
+      clearInterval(state.timerId);
+      state.timerId = null;
+      if(state.score > currentBest()){ state.bests[state.duration] = state.score; saveBests(); }
+      document.getElementById('game-play').hidden = true;
+      document.getElementById('game-over').hidden = false;
+      document.getElementById('game-info').hidden = false;
+      document.getElementById('game-final-score').textContent = state.score + ' ' + pointWord(state.score);
+      document.getElementById('game-final-detail').textContent =
+        'Správně: ' + state.correct + ' · Špatně: ' + state.wrong + ' · Nejlepší skóre: ' + currentBest();
+      updateBestHint();
+    }
+
+    function buildDurationRow(){
+      var row = document.getElementById('game-duration-row');
+      row.innerHTML = '';
+      GAME_DURATIONS.forEach(function(d){
+        var b = document.createElement('button');
+        b.className = 'chip' + (d.key===state.duration ? ' on' : '');
+        b.textContent = d.name;
+        b.addEventListener('click', function(){
+          if(state.running) return;
+          state.duration = d.key;
+          Array.prototype.forEach.call(row.children, function(el,i){
+            el.classList.toggle('on', GAME_DURATIONS[i].key===state.duration);
+          });
+          updateBestHint();
+        });
+        row.appendChild(b);
+      });
+    }
+
+    document.getElementById('btn-game-start').addEventListener('click', startGame);
+    document.getElementById('btn-game-restart').addEventListener('click', startGame);
+    checkBtn.addEventListener('click', tryCheckGame);
+    skipBtn.addEventListener('click', trySkipGame);
+
+    loadBests();
+    buildDurationRow();
+    updateBestHint();
+    genQuestion();
+
+    return {
+      isRunning: function(){ return state.running; },
+      endGame: endGame,
+      renderDiagram: renderDiagram
+    };
+  })();
+
   // ---- při změně šířky okna (např. otočení mobilu) přepočítat viewBox diagramů ----
   var resizeTimer = null;
   window.addEventListener('resize', function(){
@@ -1255,26 +1946,41 @@ footer{
       pairDiagram.render();
       tripleDiagram.render();
       trainerRender();
+      gameModule.renderDiagram();
     }, 150);
   });
 
-  // ---- horní přepínač Teorie / Trénink ----
+  // ---- horní přepínač Teorie / Trénink / Hra na čas ----
   (function(){
     var tabTeorie = document.getElementById('top-tab-teorie');
     var tabTrenink = document.getElementById('top-tab-trenink');
+    var tabHra = document.getElementById('top-tab-hra');
     var theorySection = document.getElementById('theory-section');
     var treninkSection = document.getElementById('trenink-section');
+    var hraSection = document.getElementById('hra-section');
 
     function show(tab){
-      var isTeorie = tab === 'teorie';
-      tabTeorie.classList.toggle('on', isTeorie);
-      tabTrenink.classList.toggle('on', !isTeorie);
-      setHidden(theorySection, !isTeorie);
-      setHidden(treninkSection, isTeorie);
+      tabTeorie.classList.toggle('on', tab==='teorie');
+      tabTrenink.classList.toggle('on', tab==='trenink');
+      tabHra.classList.toggle('on', tab==='hra');
+      setHidden(theorySection, tab!=='teorie');
+      setHidden(treninkSection, tab!=='trenink');
+      setHidden(hraSection, tab!=='hra');
     }
 
-    tabTeorie.addEventListener('click', function(){ show('teorie'); });
-    tabTrenink.addEventListener('click', function(){ show('trenink'); });
+    // Přepnutí na jinou záložku uprostřed běžící hry na čas ji rovnou ukončí — čas
+    // by jinak běžel dál „za zády" žáka. Proto se nejdřív zeptá na potvrzení.
+    function tryShow(tab){
+      if(tab!=='hra' && gameModule.isRunning()){
+        if(!confirm('Přepnutím opustíte probíhající hru na čas — hra se ukončí a započítá se aktuální skóre. Opravdu chcete pokračovat?')) return;
+        gameModule.endGame();
+      }
+      show(tab);
+    }
+
+    tabTeorie.addEventListener('click', function(){ tryShow('teorie'); });
+    tabTrenink.addEventListener('click', function(){ tryShow('trenink'); });
+    tabHra.addEventListener('click', function(){ tryShow('hra'); });
   })();
 })();
 </script>
