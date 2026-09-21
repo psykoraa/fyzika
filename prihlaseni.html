@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="referrer" content="no-referrer">
+<title>Fyzika — Přihlášení</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="config.js"></script>
+<script src="auth.js"></script>
+<style>
+:root{
+  --paper:#eef2f6;
+  --surface:#ffffff;
+  --surface-2:#dbe4ee;
+  --ink:#1c2b3a;
+  --ink-soft:#5b7080;
+  --line:rgba(28,43,58,0.12);
+  --accent:#1e5fa8;
+  --accent-ink:#f4f9ff;
+  --success:#1f7a5c;
+  --success-bg:#e0efe8;
+  --danger:#b3392b;
+  --danger-bg:#f5e4de;
+  --focus:#c9581f;
+  --shadow: 0 1px 0 rgba(28,43,58,0.06);
+}
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  background:
+    linear-gradient(var(--line) 1px, transparent 1px) 0 0/100% 34px,
+    linear-gradient(90deg, var(--line) 1px, transparent 1px) 0 0/34px 100%,
+    var(--paper);
+  background-attachment:local;
+  color:var(--ink);
+  font-family:'Work Sans', system-ui, sans-serif;
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3{ text-wrap:balance; margin:0; }
+[hidden]{ display:none !important; }
+.wrap{
+  max-width:560px;
+  margin:0 auto;
+  padding:28px 20px 60px;
+}
+.back-link{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  font-size:0.82rem;
+  font-weight:500;
+  color:var(--ink-soft);
+  text-decoration:none;
+  margin-bottom:14px;
+}
+.back-link:hover{ color:var(--accent); }
+
+.hero{
+  text-align:center;
+  padding:36px 20px 30px;
+}
+.hero-tag{
+  display:inline-block;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:0.72rem;
+  letter-spacing:0.14em;
+  text-transform:uppercase;
+  color:var(--ink-soft);
+  background:var(--surface-2);
+  padding:5px 13px;
+  border-radius:999px;
+  margin-bottom:18px;
+}
+.hero h1{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:800;
+  font-size:clamp(2.2rem, 8vw, 3.4rem);
+  letter-spacing:0.01em;
+  line-height:0.95;
+  color:var(--ink);
+}
+
+.top-tabs{
+  display:flex;
+  gap:8px;
+  margin-bottom:18px;
+}
+.toptab{
+  flex:1 1 0;
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.05rem;
+  letter-spacing:0.02em;
+  padding:13px 20px;
+  border-radius:10px;
+  border:1px solid var(--line);
+  background:var(--surface);
+  color:var(--ink-soft);
+  cursor:pointer;
+  text-align:center;
+  transition:background .12s, color .12s, border-color .12s;
+}
+.toptab:hover{ border-color:var(--accent); }
+.toptab.on{
+  background:var(--accent);
+  border-color:var(--accent);
+  color:var(--accent-ink);
+}
+.toptab:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:30px 28px;
+}
+.card + .card{ margin-top:20px; }
+.card h2{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.4rem;
+  letter-spacing:0.03em;
+  color:var(--ink-soft);
+  text-transform:uppercase;
+  margin-bottom:6px;
+  text-align:center;
+}
+.card .lead{
+  text-align:center;
+  font-size:0.9rem;
+  line-height:1.5;
+  color:var(--ink-soft);
+  margin:0 0 22px;
+}
+
+.field{ margin-bottom:16px; }
+.field label{
+  display:block;
+  font-size:0.74rem;
+  text-transform:uppercase;
+  letter-spacing:0.1em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-bottom:6px;
+}
+.field input{
+  width:100%;
+  font-family:'Work Sans', sans-serif;
+  font-size:1rem;
+  padding:11px 13px;
+  border-radius:8px;
+  border:1px solid var(--line);
+  background:var(--paper);
+  color:var(--ink);
+}
+.field input:focus{ outline:2px solid var(--focus); outline-offset:1px; border-color:transparent; background:var(--surface); }
+.check{
+  display:flex;
+  align-items:flex-start;
+  gap:9px;
+  font-size:0.9rem;
+  line-height:1.4;
+  cursor:pointer;
+  margin:4px 0 0;
+}
+.check input{ width:17px; height:17px; margin:1px 0 0; accent-color:var(--accent); flex:none; }
+.check-hint{ color:var(--ink-soft); font-size:0.8rem; }
+.btn.danger{ background:var(--danger); border-color:var(--danger); color:#fff; }
+.btn.danger:hover{ filter:brightness(1.08); }
+.danger-card{ border-color:var(--danger); }
+.danger-card h2{ color:var(--danger); }
+.linklike.danger-link:hover{ color:var(--danger); }
+fieldset{ border:0; margin:0; padding:0; min-width:0; }
+fieldset:disabled input{ opacity:.6; }
+.field input.code-input{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:1.6rem;
+  font-weight:600;
+  letter-spacing:0.35em;
+  text-align:center;
+}
+.field .hint{ font-size:0.76rem; color:var(--ink-soft); margin-top:5px; line-height:1.4; }
+
+.actions{
+  margin-top:24px;
+  display:flex;
+  gap:10px;
+  justify-content:center;
+  flex-wrap:wrap;
+}
+.btn{
+  font-family:'Work Sans', sans-serif;
+  font-weight:600;
+  font-size:0.95rem;
+  padding:12px 24px;
+  border-radius:8px;
+  border:1px solid var(--line);
+  background:var(--surface);
+  color:var(--ink);
+  cursor:pointer;
+  text-decoration:none;
+  display:inline-block;
+  transition:transform .05s ease, background .12s, filter .12s;
+}
+.btn:active{ transform:translateY(1px); }
+.btn.primary{
+  background:var(--accent);
+  border-color:var(--accent);
+  color:var(--accent-ink);
+}
+.btn.primary:hover{ filter:brightness(1.1); }
+.btn.ghost:hover{ border-color:var(--ink-soft); }
+.btn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+.btn:disabled{ opacity:.6; cursor:wait; }
+
+.feedback{
+  margin-top:18px;
+  border-radius:10px;
+  padding:12px 16px;
+  font-size:0.9rem;
+  line-height:1.45;
+}
+.feedback.ok{ background:var(--success-bg); color:var(--success); }
+.feedback.bad{ background:var(--danger-bg); color:var(--danger); }
+
+.note{
+  background:var(--surface-2);
+  border-left:4px solid var(--focus);
+  border-radius:8px;
+  padding:12px 14px;
+  font-size:0.86rem;
+  line-height:1.5;
+  margin-bottom:18px;
+}
+
+.acct-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.acct-name{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.6rem;
+  letter-spacing:0.02em;
+}
+.acct-sub{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:0.8rem;
+  color:var(--ink-soft);
+  margin-top:2px;
+}
+.section-tag{
+  font-size:0.68rem;
+  text-transform:uppercase;
+  letter-spacing:0.1em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin:24px 0 8px;
+}
+table.res{
+  width:100%;
+  border-collapse:collapse;
+  font-size:0.88rem;
+}
+table.res th{
+  text-align:left;
+  font-size:0.68rem;
+  text-transform:uppercase;
+  letter-spacing:0.08em;
+  color:var(--ink-soft);
+  font-weight:600;
+  padding:6px 8px;
+  border-bottom:1px solid var(--line);
+}
+table.res td{
+  padding:8px;
+  border-bottom:1px solid var(--line);
+  vertical-align:top;
+}
+table.res td.num{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:600;
+  text-align:right;
+  font-variant-numeric:tabular-nums;
+}
+table.res th.num{ text-align:right; }
+table.res tr.group td{
+  font-weight:600;
+  background:var(--paper);
+  border-bottom:none;
+  padding-top:10px;
+}
+.results-note{ font-size:0.78rem; color:var(--ink-soft); font-style:italic; margin:0 0 8px; }
+.empty{ color:var(--ink-soft); font-size:0.88rem; text-align:center; padding:12px 0; }
+.linklike{
+  background:none;
+  border:none;
+  color:var(--ink-soft);
+  font:inherit;
+  font-size:0.84rem;
+  text-decoration:underline;
+  cursor:pointer;
+  padding:4px 0;
+}
+.linklike:hover{ color:var(--accent); }
+
+footer{
+  margin-top:40px;
+  text-align:center;
+  font-size:0.76rem;
+  color:var(--ink-soft);
+}
+@media (max-width:520px){
+  .card{ padding:24px 18px; }
+  table.res td, table.res th{ padding:6px 4px; }
+}
+</style>
+</head>
+<body data-fz-nobar data-fz-manual>
+
+<div class="wrap">
+
+  <a class="back-link" href="index.html" id="back-link">← Zpět na rozcestník</a>
+
+  <div class="hero">
+    <span class="hero-tag">Fyzika</span>
+    <h1 id="page-title">Přihlášení</h1>
+  </div>
+
+  <!-- Backend není nastaven -->
+  <div class="card" id="view-disabled" hidden>
+    <h2>Přihlašování není zapnuté</h2>
+    <p class="lead">Výsledky se zatím ukládají jen v tomto prohlížeči. Aplety fungují normálně.</p>
+  </div>
+
+  <!-- Nepřihlášený -->
+  <div id="view-guest" hidden>
+    <div class="top-tabs" role="tablist">
+      <button class="toptab on" type="button" data-tab="login" role="tab" aria-selected="true">Přihlášení</button>
+      <button class="toptab" type="button" data-tab="register" role="tab" aria-selected="false">Registrace</button>
+    </div>
+
+    <form class="card" id="form-login" novalidate>
+      <h2>Přihlásit se</h2>
+      <p class="lead">Po přihlášení se vaše nejlepší výsledky ukládají i do cloudu a uvidíte je na každém zařízení.</p>
+      <div class="field">
+        <label for="login-username">Školní e-mail</label>
+        <input id="login-username" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="170" required placeholder="@gym-kt.cz">
+      </div>
+      <div class="field">
+        <label for="login-password">Heslo</label>
+        <input id="login-password" name="password" type="password" autocomplete="current-password" maxlength="128" required>
+      </div>
+      <label class="check">
+        <input type="checkbox" id="login-remember">
+        <span>Zůstat přihlášen <span class="check-hint">— nezaškrtávejte na sdíleném počítači</span></span>
+      </label>
+      <div class="actions"><button class="btn primary" type="submit">Přihlásit se</button></div>
+      <div class="feedback" role="alert" hidden></div>
+    </form>
+
+    <form class="card" id="form-register" novalidate hidden>
+      <h2>Registrace</h2>
+      <p class="lead">Na školní e-mail vám pošleme ověřovací kód.</p>
+      <fieldset id="reg-details">
+        <div class="field">
+          <label for="reg-email">Školní e-mail</label>
+          <input id="reg-email" name="email" type="email" autocomplete="email" autocapitalize="none" spellcheck="false" maxlength="170" required placeholder="@gym-kt.cz">
+          <div class="hint">Jen adresa končící @gym-kt.cz. Bude sloužit i k přihlášení.</div>
+        </div>
+        <div class="field">
+          <label for="reg-name">Jméno a příjmení</label>
+          <input id="reg-name" name="jmeno" autocomplete="name" maxlength="60" required placeholder="např. Jana Nováková">
+        </div>
+        <div class="field">
+          <label for="reg-class">Třída</label>
+          <input id="reg-class" name="trida" autocomplete="off" maxlength="20" required placeholder="např. 4.A">
+        </div>
+        <div class="field">
+          <label for="reg-password">Heslo</label>
+          <input id="reg-password" name="password" type="password" autocomplete="new-password" minlength="8" maxlength="128" required>
+          <div class="hint">Alespoň 8 znaků. Nepoužívejte stejné heslo jako jinde.</div>
+        </div>
+        <div class="field">
+          <label for="reg-password2">Heslo znovu</label>
+          <input id="reg-password2" type="password" autocomplete="new-password" maxlength="128" required>
+        </div>
+        <label class="check">
+          <input type="checkbox" id="reg-remember">
+          <span>Zůstat přihlášen <span class="check-hint">— nezaškrtávejte na sdíleném počítači</span></span>
+        </label>
+      </fieldset>
+      <div id="reg-step2" hidden>
+        <div class="note" id="reg-sent"></div>
+        <div class="field">
+          <label for="reg-code">Ověřovací kód z e-mailu</label>
+          <input id="reg-code" class="code-input" name="kod" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="000000">
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn ghost" type="button" id="btn-reg-back" hidden>Upravit údaje</button>
+        <button class="btn primary" type="submit" id="btn-reg-submit">Poslat ověřovací kód</button>
+      </div>
+      <div class="actions" id="reg-resend-row" style="margin-top:10px" hidden>
+        <button class="linklike" type="button" id="btn-reg-resend">Kód nepřišel? Poslat znovu</button>
+      </div>
+      <div class="feedback" role="alert" hidden></div>
+    </form>
+  </div>
+
+  <!-- Přihlášený -->
+  <div id="view-user" hidden>
+    <form class="card" id="form-change" novalidate hidden>
+      <h2>Změna hesla</h2>
+      <p class="lead" id="change-lead">Zvolte si nové heslo.</p>
+      <div class="field">
+        <label for="chg-old">Současné (dočasné) heslo</label>
+        <input id="chg-old" type="password" autocomplete="current-password" maxlength="128" required>
+      </div>
+      <div class="field">
+        <label for="chg-new">Nové heslo</label>
+        <input id="chg-new" type="password" autocomplete="new-password" minlength="8" maxlength="128" required>
+        <div class="hint">Alespoň 8 znaků. Ostatní zařízení budou odhlášena.</div>
+      </div>
+      <div class="field">
+        <label for="chg-new2">Nové heslo znovu</label>
+        <input id="chg-new2" type="password" autocomplete="new-password" maxlength="128" required>
+      </div>
+      <div class="actions">
+        <button class="btn ghost" type="button" id="btn-change-cancel">Zrušit</button>
+        <button class="btn primary" type="submit">Změnit heslo</button>
+      </div>
+      <div class="feedback" role="alert" hidden></div>
+    </form>
+
+    <div class="card" id="card-account">
+      <div class="acct-head">
+        <div>
+          <div class="acct-name" id="acct-name"></div>
+          <div class="acct-sub" id="acct-sub"></div>
+        </div>
+        <div class="actions" style="margin-top:0">
+          <a class="btn primary" id="btn-continue" href="index.html" hidden>Pokračovat →</a>
+          <a class="btn" id="btn-admin" href="admin.html" hidden>Administrace</a>
+          <button class="btn ghost" type="button" id="btn-logout">Odhlásit</button>
+        </div>
+      </div>
+
+      <div class="section-tag">Moje nejlepší výsledky</div>
+      <div id="results"><div class="empty">Načítám…</div></div>
+
+      <div class="actions" style="justify-content:flex-start; margin-top:18px">
+        <button class="linklike" type="button" id="btn-show-change">Změnit heslo</button>
+        <button class="linklike danger-link" type="button" id="btn-show-delete">Smazat účet</button>
+      </div>
+      <div class="feedback" id="acct-feedback" role="status" hidden></div>
+    </div>
+
+    <form class="card danger-card" id="form-delete" novalidate hidden>
+      <h2>Smazat účet</h2>
+      <p class="lead">Smazání je <b>nevratné</b>. Odstraní se váš účet i všechny uložené výsledky.
+        Pro potvrzení zadejte své heslo.</p>
+      <div class="field">
+        <label for="del-password">Heslo</label>
+        <input id="del-password" type="password" autocomplete="current-password" maxlength="128" required>
+      </div>
+      <label class="check">
+        <input type="checkbox" id="del-confirm">
+        <span>Rozumím, že účet a výsledky nepůjde obnovit.</span>
+      </label>
+      <div class="actions">
+        <button class="btn ghost" type="button" id="btn-delete-cancel">Zrušit</button>
+        <button class="btn danger" type="submit">Smazat účet</button>
+      </div>
+      <div class="feedback" role="alert" hidden></div>
+    </form>
+  </div>
+
+  <footer>Fyzika — Účet</footer>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var Auth = window.FyzikaAuth;
+  var params = new URLSearchParams(location.search);
+  var next = params.get('dalsi');
+  if(!next || !Auth || !Auth.isLocalPage(next) || next==='prihlaseni.html') next = null;
+  var wantChange = params.get('zmena')==='1';
+
+  function $(id){ return document.getElementById(id); }
+  function show(el, on){ el.hidden = !on; }
+  function feedback(form, kind, text){
+    var fb = form.querySelector('.feedback');
+    if(!text){ fb.hidden = true; return; }
+    fb.className = 'feedback ' + (kind==='ok' ? 'ok' : 'bad');
+    fb.textContent = text;
+    fb.hidden = false;
+  }
+  function busy(form, on){
+    var b = form.querySelector('button[type=submit]');
+    b.disabled = on;
+  }
+
+  if(!Auth || !Auth.enabled){
+    show($('view-disabled'), true);
+    return;
+  }
+  if(next){ $('back-link').href = next; $('back-link').textContent = '← Zpět'; }
+
+  // ---- záložky ----
+  var tabs = document.querySelectorAll('.toptab');
+  Array.prototype.forEach.call(tabs, function(t){
+    t.addEventListener('click', function(){
+      Array.prototype.forEach.call(tabs, function(x){
+        var on = x===t;
+        x.classList.toggle('on', on);
+        x.setAttribute('aria-selected', on ? 'true' : 'false');
+      });
+      show($('form-login'), t.dataset.tab==='login');
+      show($('form-register'), t.dataset.tab==='register');
+      $('page-title').textContent = t.dataset.tab==='login' ? 'Přihlášení' : 'Registrace';
+    });
+  });
+
+  // ---- přihlášení ----
+  $('form-login').addEventListener('submit', function(e){
+    e.preventDefault();
+    var f = this;
+    var u = $('login-username').value.trim();
+    var p = $('login-password').value;
+    if(!u || !p){ feedback(f, 'bad', 'Vyplňte jméno i heslo.'); return; }
+    feedback(f); busy(f, true);
+    Auth.login(u, p, $('login-remember').checked).then(function(user){
+      $('login-password').value = '';
+      afterAuth(user);
+    }, function(err){
+      feedback(f, 'bad', err.message);
+    }).then(function(){ busy(f, false); });
+  });
+
+  // ---- registrace ----
+  // Registrace ve dvou krocích: 1) údaje → kód na e-mail, 2) zadání kódu → účet.
+  var regStep = 1;
+  function regData(){
+    return {
+      email: $('reg-email').value.trim().toLowerCase(),
+      jmeno: $('reg-name').value.trim().replace(/\s+/g,' '),
+      trida: $('reg-class').value.trim().replace(/\s+/g,' '),
+      password: $('reg-password').value
+    };
+  }
+  function setRegStep(step){
+    regStep = step;
+    $('reg-details').disabled = step===2;
+    show($('reg-step2'), step===2);
+    show($('btn-reg-back'), step===2);
+    show($('reg-resend-row'), step===2);
+    $('btn-reg-submit').textContent = step===2 ? 'Dokončit registraci' : 'Poslat ověřovací kód';
+    if(step===2){ $('reg-code').value = ''; $('reg-code').focus(); }
+  }
+  function sendCode(f){
+    var d = regData();
+    feedback(f); busy(f, true);
+    return Auth.registerStart(d.email, d.jmeno, d.trida).then(function(res){
+      $('reg-sent').textContent = 'Na adresu ' + res.email + ' jsme poslali 6místný ověřovací kód. Platí ' +
+        res.validMinutes + ' minut. Pokud nepřišel, podívejte se i do spamu.';
+      setRegStep(2);
+    }, function(err){
+      feedback(f, 'bad', err.message);
+    }).then(function(){ busy(f, false); });
+  }
+  $('reg-code').addEventListener('input', function(){
+    var v = this.value.replace(/\D/g,'').slice(0,6);
+    if(v!==this.value) this.value = v;
+  });
+  $('btn-reg-back').addEventListener('click', function(){ feedback($('form-register')); setRegStep(1); });
+  $('btn-reg-resend').addEventListener('click', function(){ sendCode($('form-register')); });
+  $('form-register').addEventListener('submit', function(e){
+    e.preventDefault();
+    var f = this;
+    var d = regData();
+    if(regStep===1){
+      if(!d.email || !d.jmeno || !d.trida || !d.password){ feedback(f, 'bad', 'Vyplňte všechna pole.'); return; }
+      if(!/^[^@\s]+@gym-kt\.cz$/.test(d.email)){ feedback(f, 'bad', 'Použijte prosím školní e-mail končící @gym-kt.cz.'); return; }
+      if(d.jmeno.split(' ').length<2){ feedback(f, 'bad', 'Zadejte prosím jméno i příjmení (např. Jana Nováková).'); return; }
+      if(/[^A-Za-zÀ-ž '’-]/.test(d.jmeno)){ feedback(f, 'bad', 'Jméno a příjmení smí obsahovat jen písmena.'); return; }
+      if(d.trida.length>20){ feedback(f, 'bad', 'Třída může mít nejvýš 20 znaků.'); return; }
+      if(d.password.length<8){ feedback(f, 'bad', 'Heslo musí mít alespoň 8 znaků.'); return; }
+      if(d.password!==$('reg-password2').value){ feedback(f, 'bad', 'Hesla se neshodují.'); return; }
+      sendCode(f);
+      return;
+    }
+    var kod = $('reg-code').value;
+    if(!/^\d{6}$/.test(kod)){ feedback(f, 'bad', 'Zadejte 6místný kód z e-mailu.'); return; }
+    feedback(f); busy(f, true);
+    Auth.registerFinish(d.email, kod, d.jmeno, d.trida, d.password, $('reg-remember').checked).then(function(user){
+      $('reg-password').value = ''; $('reg-password2').value = '';
+      afterAuth(user);
+    }, function(err){
+      feedback(f, 'bad', err.message);
+    }).then(function(){ busy(f, false); });
+  });
+
+  // ---- změna hesla ----
+  $('btn-show-change').addEventListener('click', function(){
+    $('change-lead').textContent = 'Zvolte si nové heslo.';
+    show($('form-change'), true);
+    $('chg-old').focus();
+  });
+  $('btn-change-cancel').addEventListener('click', function(){ show($('form-change'), false); });
+  $('form-change').addEventListener('submit', function(e){
+    e.preventDefault();
+    var f = this;
+    var o = $('chg-old').value, n = $('chg-new').value, n2 = $('chg-new2').value;
+    if(!o || !n){ feedback(f, 'bad', 'Vyplňte všechna pole.'); return; }
+    if(n.length<8){ feedback(f, 'bad', 'Nové heslo musí mít alespoň 8 znaků.'); return; }
+    if(n!==n2){ feedback(f, 'bad', 'Nová hesla se neshodují.'); return; }
+    feedback(f); busy(f, true);
+    Auth.changePassword(o, n).then(function(user){
+      $('chg-old').value = ''; $('chg-new').value = ''; $('chg-new2').value = '';
+      show(f, false);
+      var fb = $('acct-feedback');
+      fb.className = 'feedback ok'; fb.textContent = 'Heslo bylo změněno.'; fb.hidden = false;
+      afterAuth(user);
+    }, function(err){
+      feedback(f, 'bad', err.message);
+    }).then(function(){ busy(f, false); });
+  });
+
+  // ---- odhlášení ----
+  $('btn-logout').addEventListener('click', function(){
+    this.disabled = true;
+    Auth.logout().then(function(){ location.replace('prihlaseni.html'); });
+  });
+
+  // ---- smazání účtu ----
+  $('btn-show-delete').addEventListener('click', function(){
+    show($('form-change'), false);
+    show($('form-delete'), true);
+    $('del-password').focus();
+  });
+  $('btn-delete-cancel').addEventListener('click', function(){
+    $('del-password').value = ''; $('del-confirm').checked = false;
+    feedback($('form-delete'));
+    show($('form-delete'), false);
+  });
+  $('form-delete').addEventListener('submit', function(e){
+    e.preventDefault();
+    var f = this;
+    var p = $('del-password').value;
+    if(!p){ feedback(f, 'bad', 'Zadejte své heslo.'); return; }
+    if(!$('del-confirm').checked){ feedback(f, 'bad', 'Potvrďte prosím, že chcete účet nevratně smazat.'); return; }
+    feedback(f); busy(f, true);
+    Auth.deleteMyAccount(p).then(function(){
+      $('del-password').value = '';
+      show(f, false);
+      render();
+      var fb = $('form-login').querySelector('.feedback');
+      fb.className = 'feedback ok'; fb.textContent = 'Váš účet byl smazán.'; fb.hidden = false;
+    }, function(err){
+      feedback(f, 'bad', err.message);
+    }).then(function(){ busy(f, false); });
+  });
+
+  function afterAuth(user){
+    if(user && !user.mustChangePassword && next){ location.href = next; return; }
+    render();
+  }
+
+  // ---- vykreslení ----
+  function render(skipResults){
+    var user = Auth.getUser();
+    show($('view-guest'), !user);
+    show($('view-user'), !!user);
+    if(!user){
+      $('page-title').textContent = document.querySelector('.toptab.on').dataset.tab==='login' ? 'Přihlášení' : 'Registrace';
+      return;
+    }
+    $('page-title').textContent = 'Můj účet';
+    $('acct-name').textContent = user.name || user.username;
+    $('acct-sub').textContent = [user.className, user.email || user.username, user.role==='admin' ? 'administrátor' : '']
+      .filter(Boolean).join(' · ');
+    show($('btn-admin'), user.role==='admin');
+    show($('btn-show-delete'), user.role!=='admin');
+    if(next){ $('btn-continue').href = next; show($('btn-continue'), !user.mustChangePassword); }
+
+    var mustChange = !!user.mustChangePassword;
+    show($('card-account'), !mustChange);
+    show($('btn-change-cancel'), !mustChange);
+    if(mustChange){
+      $('change-lead').textContent = 'Před pokračováním si prosím nastavte vlastní heslo.';
+      show($('form-change'), true);
+      return;
+    }
+    if(wantChange){ wantChange = false; show($('form-change'), true); }
+    if(!skipResults) loadResults();
+  }
+
+  // Výsledky: hned ukázat poslední známé (uložené v prohlížeči), pak jedním dotazem aktualizovat.
+  var loadingResults = false;
+  function loadResults(){
+    if(loadingResults) return;
+    var box = $('results');
+    var cached = Auth.cachedMyResults();
+    var cfg0 = Auth.cachedPageConfig() || {pages:[],disciplines:[]};
+    if(cached){
+      renderResults(cached.results, cfg0, 'Aktualizuji…');
+      if(Date.now() - cached.t < 30000){ renderResults(cached.results, cfg0); return; } // právě načteno (po přihlášení)
+    } else {
+      box.innerHTML = '<div class="empty">Načítám…</div>';
+    }
+    loadingResults = true;
+    Auth.loadMyAccount().then(function(d){
+      loadingResults = false;
+      render(true); // údaje o uživateli mohly změnit (jméno, role…)
+      renderResults(d.results, d.cfg);
+    }, function(err){
+      loadingResults = false;
+      if(!Auth.getUser()){ render(); return; } // přihlášení vypršelo
+      var msg = err.code==='network' ? 'Výsledky teď nejde aktualizovat (server Googlu neodpovídá).' : err.message;
+      if(cached){ renderResults(cached.results, cfg0, msg + ' Zobrazen poslední známý stav.'); return; }
+      box.innerHTML = '';
+      var d = document.createElement('div'); d.className = 'empty';
+      d.textContent = msg;
+      box.appendChild(d);
+    });
+  }
+
+  function renderResults(results, cfg, note){
+    var box = $('results');
+    box.innerHTML = '';
+    if(note){
+      var n0 = document.createElement('div'); n0.className = 'results-note'; n0.textContent = note;
+      box.appendChild(n0);
+    }
+    var pageTitle = {}, discTitle = {}, order = [];
+    (cfg.pages||[]).forEach(function(p){ pageTitle[p.file] = p.title; order.push(p.file); });
+    (cfg.disciplines||[]).forEach(function(d){ discTitle[d.page+'|'+d.discipline] = d.title; });
+    results = results.filter(function(r){ return r.best!==null; });
+    if(!results.length){
+      var d = document.createElement('div'); d.className = 'empty';
+      d.textContent = 'Zatím žádné uložené výsledky. Zkuste některý z procvičovacích apletů.';
+      box.appendChild(d);
+      return;
+    }
+    results.sort(function(a,b){
+      var ia = order.indexOf(a.page), ib = order.indexOf(b.page);
+      if(ia!==ib) return ia-ib;
+      return a.discipline < b.discipline ? -1 : 1;
+    });
+    var t = document.createElement('table'); t.className = 'res';
+    var head = t.createTHead().insertRow();
+    [['Disciplína',''],['Nejlepší','num'],['Kdy','']].forEach(function(h){
+      var th = document.createElement('th'); th.textContent = h[0]; if(h[1]) th.className = h[1]; head.appendChild(th);
+    });
+    var tb = t.createTBody(), lastPage = null;
+    results.forEach(function(r){
+      if(r.page!==lastPage){
+        lastPage = r.page;
+        var g = tb.insertRow(); g.className = 'group';
+        var c = g.insertCell(); c.colSpan = 3; c.textContent = pageTitle[r.page] || r.page;
+      }
+      var row = tb.insertRow();
+      row.insertCell().textContent = discTitle[r.page+'|'+r.discipline] || r.discipline;
+      var n = row.insertCell(); n.className = 'num'; n.textContent = r.best;
+      row.insertCell().textContent = r.bestAt ? new Date(r.bestAt).toLocaleDateString('cs-CZ') : '—';
+    });
+    box.appendChild(t);
+  }
+
+  Auth.onChange(function(){ /* odhlášení z jiné karty / vypršení tokenu */ if(!Auth.getUser()) render(); });
+
+  // Hned vykreslit podle uložených údajů. Jediný dotaz (getMyResults) zároveň ověří, že přihlášení
+  // ještě platí, a přinese výsledky i názvy apletů. Kdo si musí změnit heslo, výsledky zatím nevidí.
+  var me0 = Auth.getUser();
+  if(me0 && !me0.mustChangePassword){
+    render();
+  } else {
+    render(true);
+    if(me0) Auth.refreshMe().then(function(){ render(); }, function(){ render(); });
+  }
+})();
+</script>
+</body>
+</html>
