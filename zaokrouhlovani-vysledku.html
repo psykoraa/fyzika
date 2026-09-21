@@ -712,7 +712,7 @@ button.btn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
   var state = {
     sel:{},
     score:0, streak:0, bestStreak:0, answered:0, correct:0,
-    current:null, locked:false
+    current:null, locked:false, touched:false
   };
   QUANTITIES.forEach(function(q){ state.sel[q.key] = true; });
 
@@ -726,9 +726,17 @@ button.btn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
     try{ localStorage.setItem('zaokrouhlovani-stats', JSON.stringify({bestStreak: state.bestStreak})); }catch(e){}
   }
 
+  // Školní pravidlo zaokrouhluje "od nuly" podle absolutní hodnoty (|-22,5| → 23,
+  // tedy -22,5 → -23). Math.round ale u záporných čísel zaokrouhluje směrem k nule
+  // (Math.round(-22.5) === -22), takže by u záporných výsledků dával špatnou odpověď —
+  // proto se všude místo něj používá tohle.
+  function roundHalfAwayFromZero(x){
+    return x < 0 ? -Math.round(-x) : Math.round(x);
+  }
+
   function fmtCZ(n, maxDecimals){
     var f = Math.pow(10,maxDecimals);
-    var v = Math.round(n*f)/f;
+    var v = roundHalfAwayFromZero(n*f)/f;
     if(Object.is(v,-0)) v = 0;
     return v.toString().replace('.', ',');
   }
@@ -736,7 +744,7 @@ button.btn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
   function roundTo(n, decimals){
     var f = Math.pow(10, decimals);
     var cleaned = Number((n*f).toPrecision(15));
-    var v = Math.round(cleaned)/f;
+    var v = roundHalfAwayFromZero(cleaned)/f;
     if(Object.is(v,-0)) v = 0;
     return v;
   }
@@ -753,7 +761,7 @@ button.btn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
     var mag = Math.floor(Math.log10(Math.abs(val)));
     var f = Math.pow(10, sig-1-mag);
     var cleaned = Number((val*f).toPrecision(15));
-    var v = Math.round(cleaned)/f;
+    var v = roundHalfAwayFromZero(cleaned)/f;
     if(Object.is(v,-0)) v = 0;
     return v;
   }
@@ -764,7 +772,7 @@ button.btn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
   function roundToOrder(val, order){
     var f = Math.pow(10, -order);
     var cleaned = Number((val*f).toPrecision(15));
-    var v = Math.round(cleaned)/f;
+    var v = roundHalfAwayFromZero(cleaned)/f;
     if(Object.is(v,-0)) v = 0;
     return v;
   }
@@ -781,7 +789,7 @@ button.btn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
     var raw = lo + Math.random()*(hi-lo);
     var decimals = minDecimals + Math.floor(Math.random()*(maxDecimals-minDecimals+1));
     var f = Math.pow(10,decimals);
-    var v = Math.round(raw*f)/f;
+    var v = roundHalfAwayFromZero(raw*f)/f;
     if(v===0) v = 1/f;
     return { value:v, decimals:decimals };
   }
@@ -799,7 +807,7 @@ button.btn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
       var devRawTarget = avgObj.value * relPct;
       devDecimals = 2 + Math.floor(Math.random()*3);
       var devF = Math.pow(10,devDecimals);
-      devVal = Math.round(devRawTarget*devF)/devF;
+      devVal = roundHalfAwayFromZero(devRawTarget*devF)/devF;
       if(devVal===0) devVal = 1/devF;
 
       roundedDev = roundSig(devVal, 1);
@@ -873,6 +881,7 @@ button.btn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
     document.getElementById('feedback').hidden = true;
     document.getElementById('feedback').classList.remove('ok','bad');
     state.locked = false;
+    state.touched = false;
     document.getElementById('btn-check').textContent = 'Zkontrolovat';
 
     document.getElementById('answer-avg').focus();
@@ -883,7 +892,10 @@ button.btn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
   // i číslo zaokrouhlené na jiný počet platných míst, než se po žákovi chce.
   function parseAnswer(str){
     if(!str) return { value:NaN, decimals:0 };
-    str = str.trim().replace(',', '.').replace(/\s+/g,'').replace('%','');
+    // U+2212 (typografické mínus) a U+2013 (pomlčka) se běžně objeví při
+    // kopírování z dokumentů nebo na některých klávesnicích — parseFloat
+    // rozumí jen obyčejnému ASCII "-".
+    str = str.trim().replace(/[−–]/g, '-').replace(',', '.').replace(/\s+/g,'').replace('%','');
     var value = parseFloat(str);
     if(isNaN(value)) return { value:NaN, decimals:0 };
     var dotIdx = str.indexOf('.');
@@ -964,7 +976,7 @@ button.btn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
     updateStats();
   }
 
-  function checkAnswer(){
+  function tryCheck(){
     if(state.locked){ generateQuestion(); return; }
     if(!confirmIncompleteIfNeeded()) return;
     gradeCurrentAnswer();
@@ -988,6 +1000,28 @@ button.btn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
     updateStats();
   }
 
+  function trySkip(){
+    if(state.locked){ generateQuestion(); return; }
+    if(!isAllFilled()){
+      if(!confirm('Nejsou vyplněná všechna pole. Opravdu chcete přeskočit na další příklad?')) return;
+    }
+    skip();
+  }
+
+  // Společná brána pro přepínání veličiny za běhu příkladu — viz stejná funkce
+  // v prevody-jednotek.html pro plné zdůvodnění jednotlivých návratových stavů.
+  function settleCurrentQuestion(){
+    if(state.locked) return 'locked';
+    if(!isAllFilled()){
+      if(!state.touched) return 'untouched';
+      if(!confirm('Nejsou vyplněná všechna pole. Opravdu chcete pokračovat? Bude to počítáno jako špatná odpověď.')) return 'cancelled';
+      skip();
+    } else {
+      gradeCurrentAnswer();
+    }
+    return 'settled';
+  }
+
   function updateStats(){
     document.getElementById('stat-score').textContent = state.score;
     document.getElementById('stat-streak').textContent = state.streak + (state.bestStreak>0 ? ' / ' + state.bestStreak : '');
@@ -1004,16 +1038,11 @@ button.btn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
       b.addEventListener('click', function(){
         var activeCount = QUANTITIES.filter(function(qq){ return state.sel[qq.key]; }).length;
         if(state.sel[q.key] && activeCount===1) return;
-        // Přepnutí veličiny zahodí rozpracovanou otázku — proběhne stejná kontrola
-        // (a případný dotaz na nevyplněná pole) jako u tlačítka Zkontrolovat, aby se
-        // takhle nedaly beztrestně přeskakovat nepohodlné příklady.
-        if(!state.locked){
-          if(!confirmIncompleteIfNeeded()) return;
-          gradeCurrentAnswer();
-        }
+        var res = settleCurrentQuestion();
+        if(res==='cancelled') return;
         state.sel[q.key] = !state.sel[q.key];
         b.classList.toggle('on', state.sel[q.key]);
-        generateQuestion();
+        if(res==='locked' || res==='untouched'){ generateQuestion(); }
       });
       row.appendChild(b);
     });
@@ -1026,13 +1055,33 @@ button.btn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
     this.setAttribute('aria-expanded', expanded ? 'true' : 'false');
   });
 
-  document.getElementById('btn-check').addEventListener('click', checkAnswer);
-  document.getElementById('btn-skip').addEventListener('click', skip);
+  document.getElementById('btn-check').addEventListener('click', tryCheck);
+  document.getElementById('btn-skip').addEventListener('click', trySkip);
   ['answer-avg','answer-dev','answer-reldev'].forEach(function(id){
     document.getElementById(id).addEventListener('keydown', function(e){
-      if(e.key==='Enter'){ e.preventDefault(); checkAnswer(); }
+      if(e.key==='Enter'){ e.preventDefault(); tryCheck(); }
     });
+    document.getElementById(id).addEventListener('input', function(){ state.touched = true; });
   });
+
+  function sanitizeNumericInput(el, allowDecimal){
+    el.addEventListener('input', function(){
+      var v = el.value.replace(/[−–]/g, '-');
+      v = v.replace(allowDecimal ? /[^0-9,.\-\s ]/g : /[^0-9\-\s ]/g, '');
+      var neg = v.charAt(0)==='-';
+      v = v.replace(/-/g, '');
+      if(allowDecimal){
+        var sepIdx = v.search(/[,.]/);
+        if(sepIdx!==-1){ v = v.slice(0,sepIdx+1) + v.slice(sepIdx+1).replace(/[,.]/g,''); }
+      }
+      v = (neg?'-':'') + v;
+      if(v!==el.value) el.value = v;
+    });
+  }
+  ['answer-avg','answer-dev','answer-reldev'].forEach(function(id){
+    sanitizeNumericInput(document.getElementById(id), true);
+  });
+
   document.getElementById('reset-stats').addEventListener('click', function(){
     state.score=0; state.streak=0; state.answered=0; state.correct=0; state.bestStreak=0;
     try{ localStorage.removeItem('zaokrouhlovani-stats'); }catch(e){}
