@@ -939,7 +939,7 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
   var state = {
     sel:{},
     score:0, streak:0, bestStreak:0, answered:0, correct:0,
-    current:null, locked:false,
+    current:null, locked:false, touched:false,
     formulasOk:false,
     activeFormulaInput:null,
     dataCellEls:[],
@@ -1121,6 +1121,7 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
     state.activeFormulaInput = null;
     state.formulaText = { avg:'', dev:'' };
     state.locked = false;
+    state.touched = false;
     acHide();
 
     var tbody = document.getElementById('sheet-body');
@@ -1529,6 +1530,7 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
     document.getElementById('feedback').hidden = true;
     document.getElementById('feedback').classList.remove('ok','bad');
     state.locked = false;
+    state.touched = false;
     document.getElementById('btn-check').textContent = 'Zkontrolovat';
 
     document.getElementById('stage2').hidden = false;
@@ -1539,12 +1541,30 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
   // jinak by např. "12abc" prošlo přes parseFloat jako tiše přijaté 12.
   function parseAnswer(str){
     if(!str) return { value:NaN, decimals:0 };
-    str = str.trim().replace(',', '.').replace(/\s+/g,'').replace('%','');
+    // U+2212 (typografické mínus) a U+2013 (pomlčka) se běžně objeví při
+    // kopírování z dokumentů nebo na některých klávesnicích — parseFloat
+    // rozumí jen obyčejnému ASCII "-".
+    str = str.trim().replace(/[−–]/g, '-').replace(',', '.').replace(/\s+/g,'').replace('%','');
     if(!/^-?\d+(\.\d+)?$/.test(str)) return { value:NaN, decimals:0 };
     var value = parseFloat(str);
     var dotIdx = str.indexOf('.');
     var decimals = dotIdx===-1 ? 0 : (str.length - dotIdx - 1);
     return { value:value, decimals:decimals };
+  }
+
+  function sanitizeNumericInput(el, allowDecimal){
+    el.addEventListener('input', function(){
+      var v = el.value.replace(/[−–]/g, '-');
+      v = v.replace(allowDecimal ? /[^0-9,.\-\s ]/g : /[^0-9\-\s ]/g, '');
+      var neg = v.charAt(0)==='-';
+      v = v.replace(/-/g, '');
+      if(allowDecimal){
+        var sepIdx = v.search(/[,.]/);
+        if(sepIdx!==-1){ v = v.slice(0,sepIdx+1) + v.slice(sepIdx+1).replace(/[,.]/g,''); }
+      }
+      v = (neg?'-':'') + v;
+      if(v!==el.value) el.value = v;
+    });
   }
 
   function isCorrectAnswer(parsed, correctValue, expectedDecimals){
@@ -1623,10 +1643,18 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
     updateStats();
   }
 
-  function checkAnswer(){
+  function tryCheck(){
     if(state.locked){ newExercise(); return; }
     if(!confirmIncompleteIfNeeded()) return;
     gradeCurrentAnswer();
+  }
+
+  function trySkipAnswer(){
+    if(state.locked){ newExercise(); return; }
+    if(!isAllFilled()){
+      if(!confirm('Nejsou vyplněná všechna pole. Opravdu chcete přeskočit na další příklad?')) return;
+    }
+    skipAnswer();
   }
 
   function skipAnswer(){
@@ -1661,27 +1689,33 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
     renderExercise();
   }
 
-  // Přepnutí veličiny zahodí rozpracovaný příklad — proběhne stejná kontrola (a
-  // případný dotaz na nevyplněná pole) jako u tlačítka Zkontrolovat, aby se takhle
-  // nedaly beztrestně přeskakovat nepohodlné příklady. Ve fázi vzorců (dokud nejsou
-  // ověřené jako správné) se rovnou počítá jako chyba, protože tam ještě není co
-  // vyhodnotit stejným způsobem jako u tlačítka Zkontrolovat vzorce.
-  function confirmAbandonExercise(){
-    if(state.locked) return true;
+  // Společná brána pro přepínání veličiny za běhu příkladu — viz stejná funkce
+  // v prevody-jednotek.html pro plné zdůvodnění jednotlivých návratových stavů.
+  // Ve fázi vzorců (dokud nejsou ověřené jako správné) se rovnou počítá jako
+  // chyba, protože tam ještě není co vyhodnotit stejným způsobem jako u tlačítka
+  // Zkontrolovat vzorce — pokud tam ale žák vůbec nic nenapsal, nic se nepenalizuje.
+  function settleCurrentExercise(){
+    if(state.locked) return 'locked';
     // formulasOk je true, jen když byly vzorce vyřešené SPRÁVNĚ — do fáze 2 se ale
     // dá dostat i přes "Nevím / Zobrazit vzorce", proto rozhodujeme podle viditelnosti
     // sekce se zápisem výsledku, ne podle formulasOk.
     var inStage2 = !document.getElementById('stage2').hidden;
     if(inStage2){
-      if(!confirmIncompleteIfNeeded()) return false;
+      if(!isAllFilled()){
+        if(!state.touched) return 'untouched';
+        if(!confirm('Nejsou vyplněná všechna pole. Opravdu chcete pokračovat? Bude to počítáno jako špatná odpověď.')) return 'cancelled';
+      }
       gradeCurrentAnswer();
-      return true;
+      return 'settled';
     }
-    if(!window.confirm('Rozpracovaný příklad zahodíte a bude se počítat jako chyba. Opravdu chcete pokračovat?')) return false;
+    if(state.formulaText.avg.trim()==='' && state.formulaText.dev.trim()===''){
+      return 'untouched';
+    }
+    if(!window.confirm('Rozpracovaný příklad zahodíte a bude se počítat jako chyba. Opravdu chcete pokračovat?')) return 'cancelled';
     state.streak = 0;
     state.answered++;
     updateStats();
-    return true;
+    return 'settled';
   }
 
   function buildCategoryRow(){
@@ -1694,10 +1728,11 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
       b.addEventListener('click', function(){
         var activeCount = QUANTITIES.filter(function(qq){ return state.sel[qq.key]; }).length;
         if(state.sel[q.key] && activeCount===1) return;
-        if(!confirmAbandonExercise()) return;
+        var res = settleCurrentExercise();
+        if(res==='cancelled') return;
         state.sel[q.key] = !state.sel[q.key];
         b.classList.toggle('on', state.sel[q.key]);
-        newExercise();
+        if(res==='locked' || res==='untouched'){ newExercise(); }
       });
       row.appendChild(b);
     });
@@ -1712,12 +1747,16 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
 
   document.getElementById('btn-check-formulas').addEventListener('click', checkFormulas);
   document.getElementById('btn-skip-formulas').addEventListener('click', skipFormulas);
-  document.getElementById('btn-check').addEventListener('click', checkAnswer);
-  document.getElementById('btn-skip').addEventListener('click', skipAnswer);
+  document.getElementById('btn-check').addEventListener('click', tryCheck);
+  document.getElementById('btn-skip').addEventListener('click', trySkipAnswer);
   ['answer-avg','answer-dev','answer-reldev'].forEach(function(id){
     document.getElementById(id).addEventListener('keydown', function(e){
-      if(e.key==='Enter'){ e.preventDefault(); checkAnswer(); }
+      if(e.key==='Enter'){ e.preventDefault(); tryCheck(); }
     });
+    document.getElementById(id).addEventListener('input', function(){ state.touched = true; });
+  });
+  ['answer-avg','answer-dev','answer-reldev'].forEach(function(id){
+    sanitizeNumericInput(document.getElementById(id), true);
   });
   document.getElementById('reset-stats').addEventListener('click', function(){
     state.score=0; state.streak=0; state.answered=0; state.correct=0; state.bestStreak=0;
@@ -1942,6 +1981,7 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
         tdB.className = 'sheet-cell-formula';
         tdB.innerHTML = '<input type="text" class="kontrola-data-input" inputmode="decimal" autocomplete="off" spellcheck="false">';
         tdB.querySelector('input').addEventListener('paste', handleDataPaste);
+        sanitizeNumericInput(tdB.querySelector('input'), true);
         tr.appendChild(tdRowNum); tr.appendChild(tdA); tr.appendChild(tdB);
         tbody.appendChild(tr);
       }
@@ -1958,6 +1998,7 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
       tdCellAvg.className = 'sheet-cell-formula';
       tdCellAvg.id = 'kontrola-cell-avg';
       tdCellAvg.innerHTML = '<input type="text" id="kontrola-answer-avg" inputmode="decimal" autocomplete="off" spellcheck="false">';
+      sanitizeNumericInput(tdCellAvg.querySelector('input'), true);
       trAvg.appendChild(tdNumAvg); trAvg.appendChild(tdASymAvg); trAvg.appendChild(tdCellAvg);
       tbody.appendChild(trAvg);
 
@@ -1972,6 +2013,7 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
       tdCellDev.className = 'sheet-cell-formula';
       tdCellDev.id = 'kontrola-cell-dev';
       tdCellDev.innerHTML = '<input type="text" id="kontrola-answer-dev" inputmode="decimal" autocomplete="off" spellcheck="false">';
+      sanitizeNumericInput(tdCellDev.querySelector('input'), true);
       trDev.appendChild(tdNumDev); trDev.appendChild(tdASymDev); trDev.appendChild(tdCellDev);
       tbody.appendChild(trDev);
 
