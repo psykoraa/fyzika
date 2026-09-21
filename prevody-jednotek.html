@@ -897,12 +897,20 @@ footer{
     return czDecimal(v.toFixed(decimals));
   }
 
+  // Školní pravidlo zaokrouhluje "od nuly" podle absolutní hodnoty (|-22,5| → 23,
+  // tedy -22,5 → -23). Math.round ale u záporných čísel zaokrouhluje směrem k nule
+  // (Math.round(-22.5) === -22), takže by u záporných výsledků (např. teplota pod
+  // bodem mrazu) dával špatnou odpověď — proto se všude místo něj používá tohle.
+  function roundHalfAwayFromZero(x){
+    return x < 0 ? -Math.round(-x) : Math.round(x);
+  }
+
   function roundTo(n, decimals){
     var f = Math.pow(10, decimals);
     // n*f občas dopadne těsně pod „,5" (61,5/60*60 = 1,0249999999999999 místo 1,025) —
     // toPrecision(15) setře plovoucí šum dřív, než se zaokrouhlí, takže se ,5 zaokrouhlí správně nahoru.
     var cleaned = Number((n*f).toPrecision(15));
-    var v = Math.round(cleaned)/f;
+    var v = roundHalfAwayFromZero(cleaned)/f;
     if(Object.is(v,-0)) v = 0;
     return v;
   }
@@ -913,7 +921,7 @@ footer{
     if(val===0) return 0;
     var mag = Math.floor(Math.log10(Math.abs(val)));
     var f = Math.pow(10, sig-1-mag);
-    var v = Math.round(val*f)/f;
+    var v = roundHalfAwayFromZero(val*f)/f;
     if(Object.is(v,-0)) v = 0;
     return v;
   }
@@ -1717,17 +1725,6 @@ footer{
     gameState.timerId = setInterval(tickGameTimer, 1000);
   }
 
-  // Odpočet hry se zastaví při odchodu na jinou záložku (Teorie/Trénink) a
-  // pokračuje po návratu na Hru — jinak by hra běžela dál "za zády" žáka.
-  function pauseGameTimer(){
-    if(gameState.timerId){ clearInterval(gameState.timerId); gameState.timerId = null; }
-  }
-  function resumeGameTimerIfNeeded(){
-    if(gameState.running && !gameState.timerId){
-      gameState.timerId = setInterval(tickGameTimer, 1000);
-    }
-  }
-
   function endGame(){
     gameState.running = false;
     clearInterval(gameState.timerId);
@@ -1800,11 +1797,21 @@ footer{
     document.getElementById('view-theory').hidden = tab!=='teorie';
     document.getElementById('view-training').hidden = tab!=='trenink';
     document.getElementById('view-game').hidden = tab!=='hra';
-    if(tab==='hra'){ resumeGameTimerIfNeeded(); } else { pauseGameTimer(); }
   }
-  topTabTeorie.addEventListener('click', function(){ showTopTab('teorie'); });
-  topTabTrenink.addEventListener('click', function(){ showTopTab('trenink'); });
-  topTabHra.addEventListener('click', function(){ showTopTab('hra'); });
+
+  // Přepnutí na jinou záložku uprostřed běžící hry na čas hru rovnou ukončí — čas
+  // by jinak běžel dál "za zády" žáka. Proto se nejdřív zeptá na potvrzení, aby se
+  // rozehraná hra nezahodila jedním omylem kliknutým přepnutím.
+  function tryShowTopTab(tab){
+    if(tab!=='hra' && gameState.running){
+      if(!confirm('Přepnutím opustíte probíhající hru na čas — hra se ukončí a započítá se aktuální skóre. Opravdu chcete pokračovat?')) return;
+      endGame();
+    }
+    showTopTab(tab);
+  }
+  topTabTeorie.addEventListener('click', function(){ tryShowTopTab('teorie'); });
+  topTabTrenink.addEventListener('click', function(){ tryShowTopTab('trenink'); });
+  topTabHra.addEventListener('click', function(){ tryShowTopTab('hra'); });
 
   // Průběžně (při psaní i vkládání) odstraní z pole vše kromě číslic, jednoho
   // desetinného oddělovače (čárka/tečka), znaménka mínus na začátku a mezer
