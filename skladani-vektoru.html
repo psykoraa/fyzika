@@ -7,6 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="config.js"></script>
+<script src="auth.js"></script>
 <style>
 :root{
   --paper:#f5f0e3;
@@ -1466,7 +1468,10 @@ footer{
         state.streak = 0;
       } else if(ok){
         state.score += 10; state.streak++; state.correct++;
-        if(state.streak > state.bestStreak){ state.bestStreak = state.streak; saveStats(); }
+        if(state.streak > state.bestStreak){
+          state.bestStreak = state.streak; saveStats();
+          if(window.FyzikaScores) FyzikaScores.report('serie', state.bestStreak, false);
+        }
       } else {
         state.streak = 0;
       }
@@ -1578,6 +1583,11 @@ footer{
     loadStats();
     updateStats();
     newExample();
+
+    // Po synchronizaci s cloudem (auth.js) znovu načíst nejlepší sérii z localStorage.
+    document.addEventListener('fyzika:scores-updated', function(){
+      state.bestStreak = 0; loadStats(); updateStats();
+    });
     return render;
   })();
 
@@ -1893,6 +1903,7 @@ footer{
       clearInterval(state.timerId);
       state.timerId = null;
       if(state.score > currentBest()){ state.bests[state.duration] = state.score; saveBests(); }
+      if(window.FyzikaScores) FyzikaScores.report('hra-' + state.duration + 's', state.score, true);
       document.getElementById('game-play').hidden = true;
       document.getElementById('game-over').hidden = false;
       document.getElementById('game-info').hidden = false;
@@ -1930,6 +1941,10 @@ footer{
     buildDurationRow();
     updateBestHint();
     genQuestion();
+
+    document.addEventListener('fyzika:scores-updated', function(){
+      state.bests = {}; loadBests(); updateBestHint();
+    });
 
     return {
       isRunning: function(){ return state.running; },
