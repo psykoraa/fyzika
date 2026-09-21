@@ -7,8 +7,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
-<script src="config.js"></script>
-<script src="auth.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
@@ -1249,10 +1247,7 @@ footer{
 
     if(ok){
       state.score += 10; state.streak++; state.correct++;
-      if(state.streak>state.bestStreak){
-        state.bestStreak = state.streak; saveStats();
-        if(window.FyzikaScores) FyzikaScores.report('serie', state.bestStreak, false);
-      }
+      if(state.streak>state.bestStreak){ state.bestStreak = state.streak; saveStats(); }
       markInputs('correct');
       fb.classList.add('ok'); fb.classList.remove('bad');
       head.textContent = 'Správně!';
@@ -1736,7 +1731,6 @@ footer{
     gameState.timerId = null;
     disableGameInputs();
     if(gameState.score>gameState.best){ gameState.best = gameState.score; saveGameBest(); }
-    if(window.FyzikaScores) FyzikaScores.report('hra-' + GAME_DURATION + 's', gameState.score, true);
     document.getElementById('game-play').hidden = true;
     document.getElementById('game-over').hidden = false;
     document.getElementById('game-final-score').textContent = gameState.score + ' bodů';
@@ -1855,13 +1849,6 @@ footer{
   buildFormatRow();
   updateStats();
   generateQuestion();
-
-  // Po synchronizaci s cloudem (auth.js) znovu načíst nejlepší výsledky z localStorage.
-  document.addEventListener('fyzika:scores-updated', function(){
-    state.bestStreak = 0; loadStats(); updateStats();
-    gameState.best = 0; loadGameBest();
-    document.getElementById('game-best-hint').textContent = 'Nejlepší skóre: ' + (gameState.best || '—');
-  });
 
   if(window.renderMathInElement){
     renderMathInElement(document.getElementById('view-theory'), {
