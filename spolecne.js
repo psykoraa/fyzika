@@ -70,6 +70,56 @@ function formatGameTime(sec){
   return m + ':' + (s<10 ? '0'+s : s);
 }
 
+// Udělá z panelů (.panel s přímým potomkem .panel-title) uvnitř `container`
+// sbalovací: klik (nebo Enter/mezera) na nadpis skryje/zobrazí zbytek obsahu
+// panelu. Panel, jehož nadpis už má vlastní přepínač (např. .category-toggle
+// u řádku čipů "Veličiny"), se přeskočí, ať se nesbaluje dvakrát.
+function makePanelsCollapsible(container){
+  if(!container) return;
+  var panels = container.querySelectorAll('.panel');
+  panels.forEach(function(panel){
+    var title = panel.querySelector(':scope > .panel-title');
+    if(!title || title.querySelector('.category-toggle')) return;
+
+    var body = document.createElement('div');
+    body.className = 'panel-body';
+    var child = title.nextSibling;
+    while(child){
+      var next = child.nextSibling;
+      body.appendChild(child);
+      child = next;
+    }
+    panel.appendChild(body);
+
+    var inner = document.createElement('span');
+    inner.className = 'panel-title-inner';
+    var textSpan = document.createElement('span');
+    textSpan.textContent = title.textContent.trim();
+    var arrow = document.createElement('span');
+    arrow.className = 'toggle-arrow';
+    arrow.textContent = '▸';
+    inner.appendChild(textSpan);
+    inner.appendChild(arrow);
+    title.textContent = '';
+    title.appendChild(inner);
+
+    title.classList.add('collapsible');
+    title.setAttribute('role', 'button');
+    title.setAttribute('tabindex', '0');
+    title.setAttribute('aria-expanded', 'true');
+
+    function toggle(){
+      var expanded = title.getAttribute('aria-expanded') === 'true';
+      title.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+      body.hidden = expanded;
+    }
+    title.addEventListener('click', toggle);
+    title.addEventListener('keydown', function(e){
+      if(e.key==='Enter' || e.key===' '){ e.preventDefault(); toggle(); }
+    });
+  });
+}
+
 // Společná brána pro přepínání obtížnosti, veličiny i formátu za běhu příkladu.
 // Rozepsaný příklad se vždy napřed vyhodnotí stejně, jako by uživatel klikl na
 // "Zkontrolovat" (případně "Nevím" u prázdné odpovědi po potvrzení) — zpětná

@@ -40,12 +40,6 @@
 .panel p:last-child{ margin-bottom:0; }
 .panel b{ color:var(--ink); }
 
-.panel-title.collapsible{ cursor:pointer; user-select:none; }
-.panel-title-inner{ display:inline-flex; align-items:center; gap:5px; }
-.panel-title.collapsible:hover{ color:var(--accent); }
-.panel-title.collapsible:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
-.panel-title[aria-expanded="true"] .toggle-arrow{ transform:rotate(90deg); }
-.panel-body[hidden]{ display:none; }
 .formula-line{
   text-align:center;
   font-size:1.1rem;
@@ -1456,53 +1450,10 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
     refreshLocks();
   })();
 
-  // ---- schovávací panely: klik na nadpis panelu sbalí/rozbalí jeho obsah ----
-  // Panel "Veličiny" má vlastní přepínač (category-toggle) pro řádek čipů, takže se
-  // tady nezabaluje znovu.
-  (function(){
-    var panels = document.querySelectorAll('.panel');
-    panels.forEach(function(panel){
-      var title = panel.querySelector(':scope > .panel-title');
-      if(!title || title.querySelector('.category-toggle')) return;
-
-      var body = document.createElement('div');
-      body.className = 'panel-body';
-      var child = title.nextSibling;
-      while(child){
-        var next = child.nextSibling;
-        body.appendChild(child);
-        child = next;
-      }
-      panel.appendChild(body);
-
-      var inner = document.createElement('span');
-      inner.className = 'panel-title-inner';
-      var textSpan = document.createElement('span');
-      textSpan.textContent = title.textContent.trim();
-      var arrow = document.createElement('span');
-      arrow.className = 'toggle-arrow';
-      arrow.textContent = '▸';
-      inner.appendChild(textSpan);
-      inner.appendChild(arrow);
-      title.textContent = '';
-      title.appendChild(inner);
-
-      title.classList.add('collapsible');
-      title.setAttribute('role', 'button');
-      title.setAttribute('tabindex', '0');
-      title.setAttribute('aria-expanded', 'true');
-
-      function toggle(){
-        var expanded = title.getAttribute('aria-expanded') === 'true';
-        title.setAttribute('aria-expanded', expanded ? 'false' : 'true');
-        body.hidden = expanded;
-      }
-      title.addEventListener('click', toggle);
-      title.addEventListener('keydown', function(e){
-        if(e.key==='Enter' || e.key===' '){ e.preventDefault(); toggle(); }
-      });
-    });
-  })();
+  // Sbalovací panely na celé stránce (Trénink i Teorie i Kontrola) — panel "Veličiny"
+  // má vlastní přepínač (category-toggle) pro řádek čipů, takže se přeskočí (viz
+  // makePanelsCollapsible ve spolecne.js).
+  makePanelsCollapsible(document);
 
   // ---- záložka Kontrola: žák zadá vlastní naměřená data a nechá si zkontrolovat zaokrouhlení ----
   (function(){
