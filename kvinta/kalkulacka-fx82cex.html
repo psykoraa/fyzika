@@ -263,6 +263,10 @@
         <div class="row" id="game-duration-row"></div>
       </div>
       <div class="panel">
+        <div class="panel-title">Logaritmy</div>
+        <div class="row" id="game-log-row"></div>
+      </div>
+      <div class="panel">
         <div class="settings-foot">
           <span class="hint" id="game-best-hint">Nejlepší skóre: —</span>
           <button class="btn primary" id="btn-game-start">Spustit hru</button>
@@ -1319,11 +1323,21 @@
     { key:300, name:'5 min' }
   ];
 
+  var GAME_LOG_OPTIONS = [
+    { key:true, name:'S logaritmy' },
+    { key:false, name:'Bez logaritmů' }
+  ];
+
   var gameState = {
-    duration:120, running:false, timeLeft:120, timerId:null,
+    duration:120, withLog:true, running:false, timeLeft:120, timerId:null,
     score:0, correct:0, wrong:0, answered:0,
     current:null, locked:false, bests:{}
   };
+
+  function gameCategoryPool(){
+    var pool = gameState.withLog ? CATEGORIES : CATEGORIES.filter(function(c){ return c.key!=='log'; });
+    return pool.length ? pool : CATEGORIES;
+  }
 
   function loadGameBests(){
     try{
@@ -1340,7 +1354,7 @@
   }
 
   function generateGameQuestion(){
-    var cat = pick(CATEGORIES);
+    var cat = pick(gameCategoryPool());
     var gen = pick(cat.gens);
     var q = gen();
     q.topicName = cat.name;
@@ -1534,6 +1548,24 @@
     });
   }
 
+  function buildGameLogRow(){
+    var row = document.getElementById('game-log-row');
+    row.innerHTML = '';
+    GAME_LOG_OPTIONS.forEach(function(o){
+      var b = document.createElement('button');
+      b.className = 'chip' + (o.key===gameState.withLog ? ' on' : '');
+      b.textContent = o.name;
+      b.addEventListener('click', function(){
+        if(gameState.running) return;
+        gameState.withLog = o.key;
+        Array.prototype.forEach.call(row.children, function(el,i){
+          el.classList.toggle('on', GAME_LOG_OPTIONS[i].key===gameState.withLog);
+        });
+      });
+      row.appendChild(b);
+    });
+  }
+
   function tryCheckGame(){
     if(!gameState.running) return;
     if(gameState.locked){ generateGameQuestion(); return; }
@@ -1589,6 +1621,7 @@
 
   loadGameBests();
   buildGameDurationRow();
+  buildGameLogRow();
   updateGameBestHint();
 
   // Po synchronizaci s cloudem (auth.js) znovu načíst nejlepší výsledky z localStorage.
