@@ -32,31 +32,31 @@
   // d = disciplína na serveru, key = klíč v localStorage, field = položka v uloženém JSON objektu.
   var SCORE_MAP = {
     'prevody-jednotek.html': [
-      { d: 'serie', key: 'meritko-stats', field: 'bestStreak' },
-      { d: 'hra-60s', key: 'meritko-game-bests', field: '60' },
-      { d: 'hra-120s', key: 'meritko-game-bests', field: '120' },
-      { d: 'hra-180s', key: 'meritko-game-bests', field: '180' },
-      { d: 'hra-300s', key: 'meritko-game-bests', field: '300' }
+      { d: 'serie', key: 'fyzika:prevody-jednotek:stats', field: 'bestStreak' },
+      { d: 'hra-60s', key: 'fyzika:prevody-jednotek:game-bests', field: '60' },
+      { d: 'hra-120s', key: 'fyzika:prevody-jednotek:game-bests', field: '120' },
+      { d: 'hra-180s', key: 'fyzika:prevody-jednotek:game-bests', field: '180' },
+      { d: 'hra-300s', key: 'fyzika:prevody-jednotek:game-bests', field: '300' }
     ],
     'skladani-vektoru.html': [
-      { d: 'serie', key: 'vektory-stats', field: 'bestStreak' },
-      { d: 'hra-60s', key: 'vektory-game-bests', field: '60' },
-      { d: 'hra-120s', key: 'vektory-game-bests', field: '120' },
-      { d: 'hra-180s', key: 'vektory-game-bests', field: '180' },
-      { d: 'hra-300s', key: 'vektory-game-bests', field: '300' }
+      { d: 'serie', key: 'fyzika:skladani-vektoru:stats', field: 'bestStreak' },
+      { d: 'hra-60s', key: 'fyzika:skladani-vektoru:game-bests', field: '60' },
+      { d: 'hra-120s', key: 'fyzika:skladani-vektoru:game-bests', field: '120' },
+      { d: 'hra-180s', key: 'fyzika:skladani-vektoru:game-bests', field: '180' },
+      { d: 'hra-300s', key: 'fyzika:skladani-vektoru:game-bests', field: '300' }
     ],
     'kalkulacka-fx82cex.html': [
-      { d: 'serie', key: 'kalkulacka-fx82cex-stats', field: 'bestStreak' },
-      { d: 'hra-60s', key: 'kalkulacka-fx82cex-game-bests', field: '60' },
-      { d: 'hra-120s', key: 'kalkulacka-fx82cex-game-bests', field: '120' },
-      { d: 'hra-180s', key: 'kalkulacka-fx82cex-game-bests', field: '180' },
-      { d: 'hra-300s', key: 'kalkulacka-fx82cex-game-bests', field: '300' }
+      { d: 'serie', key: 'fyzika:kalkulacka-fx82cex:stats', field: 'bestStreak' },
+      { d: 'hra-60s', key: 'fyzika:kalkulacka-fx82cex:game-bests', field: '60' },
+      { d: 'hra-120s', key: 'fyzika:kalkulacka-fx82cex:game-bests', field: '120' },
+      { d: 'hra-180s', key: 'fyzika:kalkulacka-fx82cex:game-bests', field: '180' },
+      { d: 'hra-300s', key: 'fyzika:kalkulacka-fx82cex:game-bests', field: '300' }
     ],
     'zaokrouhlovani-vysledku.html': [
-      { d: 'serie', key: 'zaokrouhlovani-stats', field: 'bestStreak' }
+      { d: 'serie', key: 'fyzika:zaokrouhlovani-vysledku:stats', field: 'bestStreak' }
     ],
     'zpracovani-mereni.html': [
-      { d: 'serie', key: 'zpracovani-mereni-stats', field: 'bestStreak' }
+      { d: 'serie', key: 'fyzika:zpracovani-mereni:stats', field: 'bestStreak' }
     ]
   };
 
@@ -68,6 +68,32 @@
   function lsJson(k) {
     try { var raw = lsGet(k); return raw ? JSON.parse(raw) : null; } catch (e) { return null; }
   }
+
+  // Jednorázová migrace starých názvů klíčů (před sjednocením na "fyzika:stránka:druh" —
+  // "meritko" byl název prevody-jednotek.html předtím, než dostala dnešní jméno; ostatní
+  // klíče neměly společnou předponu vůbec). Běží synchronně hned při načtení auth.js
+  // (v <head>, dřív než skript stránky vůbec začne číst svoje výsledky), takže žádný
+  // pozdější kód už starý název nikdy neuvidí. Bezpečné volat opakovaně: když nový klíč
+  // už existuje nebo starý neexistuje, nic nedělá.
+  var OLD_SCORE_KEYS = [
+    ['meritko-stats', 'fyzika:prevody-jednotek:stats'],
+    ['meritko-game-bests', 'fyzika:prevody-jednotek:game-bests'],
+    ['vektory-stats', 'fyzika:skladani-vektoru:stats'],
+    ['vektory-game-bests', 'fyzika:skladani-vektoru:game-bests'],
+    ['kalkulacka-fx82cex-stats', 'fyzika:kalkulacka-fx82cex:stats'],
+    ['kalkulacka-fx82cex-game-bests', 'fyzika:kalkulacka-fx82cex:game-bests'],
+    ['zaokrouhlovani-stats', 'fyzika:zaokrouhlovani-vysledku:stats'],
+    ['zpracovani-mereni-stats', 'fyzika:zpracovani-mereni:stats']
+  ];
+  (function migrateScoreKeys() {
+    OLD_SCORE_KEYS.forEach(function (pair) {
+      if (lsGet(pair[1]) !== null) return;
+      var old = lsGet(pair[0]);
+      if (old === null) return;
+      lsSet(pair[1], old);
+      lsDel(pair[0]);
+    });
+  })();
 
   function currentPage() {
     var p = location.pathname.split('/').pop() || '';
