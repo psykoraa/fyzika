@@ -1445,6 +1445,15 @@ footer{
     try{ localStorage.setItem('meritko-game-best', JSON.stringify({best: gameState.best})); }catch(e){}
   }
 
+  // Skloňování slova "bod" v koncovém skóre hry (2 body, 5 bodů…). Záporné
+  // skóre se skloňuje podle absolutní hodnoty ("-2 body", ne "-2 bodů").
+  function pointWord(n){
+    var abs = Math.abs(n);
+    if(abs===1) return 'bod';
+    if(abs>=2 && abs<=4) return 'body';
+    return 'bodů';
+  }
+
   function buildGroupAQuestion(quantity, pair, difficultyLike, points, tierLabel){
     var fromUnit = quantity.units[pair[0]], toUnit = quantity.units[pair[1]];
     var rv = randomValue(fromUnit, difficultyLike);
@@ -1739,7 +1748,7 @@ footer{
     if(window.FyzikaScores) FyzikaScores.report('hra-' + GAME_DURATION + 's', gameState.score, true);
     document.getElementById('game-play').hidden = true;
     document.getElementById('game-over').hidden = false;
-    document.getElementById('game-final-score').textContent = gameState.score + ' bodů';
+    document.getElementById('game-final-score').textContent = gameState.score + ' ' + pointWord(gameState.score);
     document.getElementById('game-final-detail').textContent =
       'Správně: ' + gameState.correct + ' · Špatně: ' + gameState.wrong + ' · Nejlepší skóre: ' + gameState.best;
     document.getElementById('game-best-hint').textContent = 'Nejlepší skóre: ' + gameState.best;
