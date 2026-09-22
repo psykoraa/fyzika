@@ -1,0 +1,1543 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Převody jednotek</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="../spolecne/config.js"></script>
+<script src="../spolecne/auth.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../spolecne/styl.css">
+<style>
+:root{
+  --paper:#f5f0e3;
+  --surface:#fffcf5;
+  --surface-2:#ece4d1;
+  --ink:#212b34;
+  --ink-soft:#5d6b76;
+  --line:rgba(33,43,52,0.12);
+  --accent:#c9581f;
+  --accent-ink:#fff8f0;
+  --success:#28794f;
+  --success-bg:#e3efe0;
+  --danger:#b3392b;
+  --danger-bg:#f5e4de;
+  --focus:#1e6f66;
+  --shadow: 0 1px 0 rgba(33,43,52,0.06);
+}
+
+
+.row + .panel-title{ margin-top:16px; }
+
+
+.chip.accented.on{
+  background:var(--accent);
+  color:var(--accent-ink);
+  border-color:var(--accent);
+}
+.section-block{ margin-bottom:16px; }
+.section-block:last-child{ margin-bottom:0; }
+
+
+.panel p{ margin:0 0 8px; font-size:0.9rem; line-height:1.55; }
+.panel p:last-child{ margin-bottom:0; }
+.panel b{ color:var(--ink); }
+.panel h3{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.05rem;
+  letter-spacing:0.01em;
+  margin:16px 0 6px;
+}
+.panel h3:first-child{ margin-top:0; }
+
+.katex{ font-size:1.05em; }
+.formula-box{
+  background:var(--surface-2);
+  border-radius:8px;
+  padding:12px 16px;
+  margin:10px 0;
+  font-size:1.1rem;
+  text-align:center;
+}
+
+
+.theory-table-wrap{ overflow-x:auto; margin:6px 0 4px; }
+.theory-table{
+  border-collapse:collapse;
+  font-size:0.88rem;
+  width:100%;
+  min-width:320px;
+}
+.theory-table th, .theory-table td{
+  border:1px solid var(--line);
+  padding:8px 12px;
+  text-align:left;
+}
+.theory-table thead th{
+  background:var(--surface-2);
+  color:var(--ink-soft);
+  font-weight:600;
+  font-size:0.72rem;
+  text-transform:uppercase;
+  letter-spacing:0.05em;
+}
+.theory-table td.mono, .theory-table th.mono{
+  font-family:'IBM Plex Mono', monospace;
+  font-variant-numeric:tabular-nums;
+}
+.theory-table tbody tr:nth-child(even) td{ background:rgba(33,43,52,0.02); }
+
+.example-grid{ display:flex; flex-direction:column; gap:12px; margin-top:6px; }
+.example-item{
+  background:var(--surface-2);
+  border-radius:10px;
+  padding:12px 14px;
+}
+.example-tag{
+  font-size:0.66rem;
+  text-transform:uppercase;
+  letter-spacing:0.06em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-bottom:6px;
+  display:block;
+}
+.example-eq{
+  font-size:1.05rem;
+  margin-bottom:4px;
+}
+.example-note{ font-size:0.82rem; color:var(--ink-soft); line-height:1.45; }
+
+
+.cat-tag{ margin-bottom:20px; }
+.equation{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:600;
+  font-size:clamp(1.3rem, 4.4vw, 2.1rem);
+  display:flex;
+  align-items:baseline;
+  justify-content:center;
+  gap:0.4em;
+  flex-wrap:wrap;
+  font-variant-numeric:tabular-nums;
+}
+.equation .unit{ color:var(--ink-soft); font-size:0.6em; margin-left:0.1em; }
+.equation .unit.long{ font-size:0.42em; }
+.equation .eq{ color:var(--ink-soft); margin:0 0.1em; }
+.answer-input{ width:5.2em; }
+.answer-input.sci-mantissa{ width:3.6em; }
+
+
+.sci-group{ display:inline-flex; align-items:baseline; gap:0.12em; }
+
+.sci-times{ font-size:0.65em; color:var(--ink-soft); margin:0 0.02em; }
+.sci-exp{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:600;
+  width:2.4em;
+  text-align:center;
+  border:none;
+  border-bottom:2px solid var(--ink-soft);
+  background:transparent;
+  color:var(--ink);
+  font-size:0.55em;
+  vertical-align:top;
+  padding:0 0.05em;
+}
+.sci-exp:focus{ outline:none; border-color:var(--focus); }
+.sci-exp.correct{ border-color:var(--success); color:var(--success); }
+.sci-exp.wrong{ border-color:var(--danger); color:var(--danger); }
+
+
+.feedback .steps{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:0.85rem;
+  color:var(--ink);
+  opacity:0.85;
+  font-variant-numeric:tabular-nums;
+}
+.feedback .tip{
+  font-size:0.78rem;
+  color:var(--ink);
+  opacity:0.75;
+  margin-top:6px;
+  font-style:italic;
+}
+
+
+@media (max-width:520px){
+  .card{ padding:26px 16px 24px; }
+  .readout .cell{ min-width:64px; padding:6px 8px; }
+}
+
+
+@keyframes pulse{ 0%,100%{ opacity:1; } 50%{ opacity:0.6; } }
+
+
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <a class="back-link" href="../rozcestniky/kvinta.html">← Zpět na Kvinta/1. ročník</a>
+
+  <div class="brand">
+    <div class="brand-lockup">
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect x="3" y="14" width="34" height="12" rx="2" transform="rotate(-8 20 20)" fill="none" stroke="var(--accent)" stroke-width="2"/>
+        <g stroke="var(--accent)" stroke-width="1.6" transform="rotate(-8 20 20)">
+          <line x1="8" y1="14" x2="8" y2="20"/>
+          <line x1="14" y1="14" x2="14" y2="18.5"/>
+          <line x1="20" y1="14" x2="20" y2="20"/>
+          <line x1="26" y1="14" x2="26" y2="18.5"/>
+          <line x1="32" y1="14" x2="32" y2="20"/>
+        </g>
+      </svg>
+      <div class="brand-text">
+        <h1>Převody jednotek</h1>
+        <p>teorie a trenažér převodů jednotek</p>
+      </div>
+    </div>
+    <div class="readout">
+      <div class="cell"><span class="label">Skóre</span><span class="value" id="stat-score">0</span></div>
+      <div class="cell"><span class="label">Série</span><span class="value" id="stat-streak">0</span></div>
+      <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="stat-accuracy">—</span></div>
+    </div>
+  </div>
+
+  <div class="top-tabs">
+    <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+    <button class="toptab" id="top-tab-trenink" data-tab="trenink">Trénink</button>
+    <button class="toptab" id="top-tab-hra" data-tab="hra">Hra na čas</button>
+  </div>
+
+  <div id="view-theory">
+
+    <div class="panel">
+      <div class="panel-title">Fyzikální veličina</div>
+      <p><b>Fyzikální veličina</b> je fyzikální vlastnost, stav nebo změna tělesa či pole, kterou lze měřit. Příkladem fyzikálních veličin jsou např. <b>hmotnost, délka, čas, teplota, rychlost, síla</b> nebo <b>elektrický náboj</b>.</p>
+      <p>Pro označování fyzikálních veličin používáme smluvené značky (symboly), např. \(m\) pro hmotnost, \(l\) pro délku, \(v\) pro rychlost, \(t\) nebo \(T\) pro teplotu.</p>
+      <p><b>Měřit fyzikální veličinu</b> znamená určit její hodnotu — porovnat ji s předem smluvenou hodnotou téhož druhu, kterou zvolíme za <b>měřicí jednotku</b>. Hodnota fyzikální veličiny se pak skládá ze dvou částí:</p>
+      <div class="formula-box">\[X = \{X\} \cdot [X]\]</div>
+      <p>kde \(\{X\}\) je <b>číselná hodnota</b> (kolikrát je měřená veličina větší, menší nebo stejná jako zvolená jednotka) a \([X]\) je <b>měřicí jednotka</b>. Např. pro objem \(V = 25\ \mathrm{cm^3}\) platí \(\{V\} = 25\) a \([V] = \mathrm{cm^3}\).</p>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="9" cy="9" r="7.5" stroke="var(--focus)" stroke-width="1.6"/>
+          <line x1="9" y1="8" x2="9" y2="13" stroke="var(--focus)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="5.2" r="1" fill="var(--focus)"/>
+        </svg>
+        <p>Tutéž hodnotu veličiny lze vyjádřit v různých jednotkách — mění se přitom jen číselná hodnota, nikoli velikost veličiny samotné. Např. délka tyče \(l = 0{,}50\ \mathrm{m} = 50\ \mathrm{cm} = 500\ \mathrm{mm}\) je pořád stejně dlouhá tyč. Proto číselnou hodnotu vždy uvádíme spolu s jednotkou.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Typy jednotek</div>
+      <h3>Základní jednotky</h3>
+      <p>V roce 1960 byla na základě mezinárodních dohod přijata <b>Mezinárodní soustava jednotek</b>, značená <b>SI</b>, kterou tvoří sedm základních jednotek (viz tabulka níže).</p>
+      <h3>Odvozené jednotky</h3>
+      <p>Všechny ostatní fyzikální veličiny jsou <b>veličiny odvozené</b> a jejich jednotky jsou <b>odvozené jednotky</b> — určují se z veličin a jednotek základních pomocí definičních vztahů. Některé odvozené jednotky mají vlastní název podle významných fyziků, např. jednotka síly \(\mathrm{kg\cdot m\cdot s^{-2}}\) se nazývá <b>newton</b> (N).</p>
+      <h3>Násobky a díly jednotek</h3>
+      <p>Pro velmi malé nebo velmi velké hodnoty veličin se základní a odvozené jednotky doplňují o <b>násobky a díly</b>, které vznikají pomocí mocnin deseti. Vytváří se tak, že se před název jednotky přidá normalizovaná <b>předpona</b>, např. 1&nbsp;km = 10³&nbsp;m (předpona kilo-) nebo 1&nbsp;mm = 10⁻³&nbsp;m (předpona mili-). Přehled nejčastěji používaných předpon je v tabulce níže.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Základní jednotky soustavy SI</div>
+      <div class="theory-table-wrap">
+        <table class="theory-table">
+          <thead>
+            <tr><th>Základní veličina</th><th>Značka</th><th>Základní jednotka</th><th class="mono">Značka</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>délka</td><td>\(l\)</td><td>metr</td><td class="mono">m</td></tr>
+            <tr><td>hmotnost</td><td>\(m\)</td><td>kilogram</td><td class="mono">kg</td></tr>
+            <tr><td>čas</td><td>\(t\)</td><td>sekunda</td><td class="mono">s</td></tr>
+            <tr><td>elektrický proud</td><td>\(I\)</td><td>ampér</td><td class="mono">A</td></tr>
+            <tr><td>termodynamická teplota</td><td>\(T\)</td><td>kelvin</td><td class="mono">K</td></tr>
+            <tr><td>látkové množství</td><td>\(n\)</td><td>mol</td><td class="mono">mol</td></tr>
+            <tr><td>svítivost</td><td>\(I_v\)</td><td>kandela</td><td class="mono">cd</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Předpony pro tvoření násobků a dílů jednotek</div>
+      <div class="theory-table-wrap">
+        <table class="theory-table">
+          <thead>
+            <tr><th>Předpona</th><th class="mono">Značka</th><th>Mocnina</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>tera-</td><td class="mono">T</td><td>\(10^{12}\)</td></tr>
+            <tr><td>giga-</td><td class="mono">G</td><td>\(10^{9}\)</td></tr>
+            <tr><td>mega-</td><td class="mono">M</td><td>\(10^{6}\)</td></tr>
+            <tr><td>kilo-</td><td class="mono">k</td><td>\(10^{3}\)</td></tr>
+            <tr><td>mili-</td><td class="mono">m</td><td>\(10^{-3}\)</td></tr>
+            <tr><td>mikro-</td><td class="mono">µ</td><td>\(10^{-6}\)</td></tr>
+            <tr><td>nano-</td><td class="mono">n</td><td>\(10^{-9}\)</td></tr>
+            <tr><td>piko-</td><td class="mono">p</td><td>\(10^{-12}\)</td></tr>
+            <tr><td>femto-</td><td class="mono">f</td><td>\(10^{-15}\)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="margin-top:10px;">Kromě nich se běžně používají i další předpony: <b>centi-</b> (c, 10⁻², např. cm), <b>deci-</b> (d, 10⁻¹, např. dl), <b>deka-</b> (da, 10¹, např. dag) a <b>hekto-</b> (h, 10², např. hPa). Norma dále z praktických důvodů povoluje i jednotky mimo SI, např. pro čas minutu (min), hodinu (h) a den (d), pro objem litr (l) nebo pro hmotnost tunu (t).</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Příklad z praxe — princip převodu</div>
+      <p>Při převodu mezi jednotkou s předponou a základní (nebo jinou) jednotkou násobíme nebo dělíme mocninou deseti odpovídající dané předponě.</p>
+      <div class="example-grid">
+        <div class="example-item">
+          <span class="example-tag">Velká jednotka → malá jednotka (násobíme)</span>
+          <div class="example-eq">\[2{,}4\ \mathrm{km} = 2{,}4 \cdot 1000\ \mathrm{m} = \mathbf{2\,400\ \mathrm{m}}\]</div>
+          <div class="example-note">kilo- = 10³, proto při převodu z km na m násobíme počet kilometrů tisícem.</div>
+        </div>
+        <div class="example-item">
+          <span class="example-tag">Malá jednotka → velká jednotka (dělíme)</span>
+          <div class="example-eq">\[350\ \mathrm{mg} = 350 : 1000\ \mathrm{g} = \mathbf{0{,}35\ \mathrm{g}}\]</div>
+          <div class="example-note">mili- = 10⁻³, proto při převodu z mg na g dělíme počet miligramů tisícem (= násobíme 10⁻³).</div>
+        </div>
+        <div class="example-item">
+          <span class="example-tag">Jednotka mimo SI</span>
+          <div class="example-eq">\[5\ \mathrm{min} = 5 \cdot 60\ \mathrm{s} = \mathbf{300\ \mathrm{s}}\]</div>
+          <div class="example-note">Minuta není násobkem sekundy pomocí mocniny deseti, ale jednotkou dovolenou mimo SI — 1&nbsp;min = 60&nbsp;s.</div>
+        </div>
+        <div class="example-item">
+          <span class="example-tag">Odvozená jednotka s exponentem (objem)</span>
+          <div class="example-eq">\[500\ \mathrm{cm^3} = 500 \cdot 10^{-6}\ \mathrm{m^3} = \mathbf{5 \cdot 10^{-4}\ \mathrm{m^3}}\]</div>
+          <div class="example-note">U obsahu a objemu se převodní poměr umocňuje — protože 1&nbsp;cm = 10⁻²&nbsp;m, platí 1&nbsp;cm³ = (10⁻²)³&nbsp;m³ = 10⁻⁶&nbsp;m³, ne jen 10⁻².</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="view-training" hidden>
+  <div class="panel">
+    <div class="section-block">
+      <div class="panel-title">Obtížnost</div>
+      <div class="row" id="difficulty-row"></div>
+    </div>
+    <div class="section-block">
+      <div class="panel-title">
+        <button class="linklike category-toggle" id="category-toggle" type="button" aria-expanded="false" aria-controls="category-row">Veličiny <span class="toggle-arrow" id="category-toggle-arrow">▸</span></button>
+      </div>
+      <div class="row" id="category-row" hidden></div>
+    </div>
+    <div class="settings-foot" style="justify-content:flex-end;">
+      <button class="linklike" id="reset-stats">vynulovat statistiku</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">Formát odpovědi</div>
+    <div class="row" id="format-row"></div>
+  </div>
+
+  <div class="card">
+    <span class="cat-tag" id="cat-tag">Délka</span>
+    <div class="equation" id="equation">
+      <span id="eq-value">3,5</span><span class="unit" id="eq-from-unit">km</span>
+      <span class="eq">=</span>
+      <span class="answer-slot" id="answer-decimal-wrap">
+        <input class="answer-input" id="answer" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="?">
+      </span>
+      <span class="answer-slot sci-group" id="answer-sci-wrap" hidden>
+        <input class="answer-input sci-mantissa" id="answer-mantissa" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="a">
+        <span class="sci-times">× 10</span>
+        <input class="sci-exp" id="answer-exp" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="n">
+      </span>
+      <span class="unit" id="eq-to-unit">m</span>
+    </div>
+    <div class="actions">
+      <button class="btn primary" id="btn-check">Zkontrolovat</button>
+      <button class="btn ghost" id="btn-skip">Nevím / Další</button>
+    </div>
+    <div class="feedback" id="feedback" hidden>
+      <div class="headline" id="feedback-headline"></div>
+      <div class="steps" id="feedback-steps"></div>
+      <div class="tip" id="feedback-tip" hidden></div>
+    </div>
+  </div>
+  </div>
+
+  <div id="view-game" hidden>
+
+    <div id="game-intro">
+      <div class="panel">
+        <div class="panel-title">Pravidla hry</div>
+        <p class="game-rules">
+          Na čas budete řešit náhodné převody jednotek napříč všemi veličinami.
+          Za správný převod mezi jednotkou s předponou a jednotkou bez předpony dostanete <strong>5 bodů</strong>,
+          za převod mezi dvěma jednotkami s předponou <strong>7 bodů</strong> a za převod u kombinovaných
+          jednotek (rychlost, hustota apod.) <strong>10 bodů</strong>. Za špatnou odpověď (i za odpověď „Nevím“)
+          se strhává <strong>5 bodů</strong>. Po vypršení zvoleného času se hra ukončí.
+        </p>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Délka hry</div>
+        <div class="row" id="game-duration-row"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Formát odpovědi</div>
+        <div class="row" id="game-format-row"></div>
+      </div>
+      <div class="panel">
+        <div class="settings-foot">
+          <span class="hint" id="game-best-hint">Nejlepší skóre: —</span>
+          <button class="btn primary" id="btn-game-start">Spustit hru</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="game-play" hidden>
+      <div class="game-header">
+        <div class="game-timer" id="game-timer">2:00</div>
+        <div class="readout">
+          <div class="cell"><span class="label">Body</span><span class="value" id="game-score">0</span></div>
+          <div class="cell"><span class="label">Nejlepší</span><span class="value" id="game-best-live">0</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <span class="cat-tag" id="game-cat-tag">Délka</span>
+        <span class="points-badge" id="game-points-badge">+5 b</span>
+        <div class="equation" id="game-equation">
+          <span id="game-eq-value">3,5</span><span class="unit" id="game-eq-from-unit">km</span>
+          <span class="eq">=</span>
+          <span class="answer-slot" id="game-answer-decimal-wrap">
+            <input class="answer-input" id="game-answer" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="?">
+          </span>
+          <span class="answer-slot sci-group" id="game-answer-sci-wrap" hidden>
+            <input class="answer-input sci-mantissa" id="game-answer-mantissa" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="a">
+            <span class="sci-times">× 10</span>
+            <input class="sci-exp" id="game-answer-exp" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="n">
+          </span>
+          <span class="unit" id="game-eq-to-unit">m</span>
+        </div>
+        <div class="actions">
+          <button class="btn primary" id="btn-game-check">Zkontrolovat</button>
+          <button class="btn ghost" id="btn-game-skip">Nevím / Další</button>
+        </div>
+        <div class="feedback" id="game-feedback" hidden>
+          <div class="headline" id="game-feedback-headline"></div>
+          <div class="steps" id="game-feedback-steps"></div>
+          <div class="tip" id="game-feedback-tip" hidden></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="game-over" hidden>
+      <span class="cat-tag">Konec hry</span>
+      <div class="game-final-score" id="game-final-score">0 bodů</div>
+      <div class="hint" id="game-final-detail"></div>
+      <div class="actions">
+        <button class="btn primary" id="btn-game-restart">Hrát znovu</button>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>Klávesa Enter potvrzuje odpověď a posouvá na další příklad.</footer>
+</div>
+
+<script src="../spolecne/spolecne.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  var PREFIX_EXP = {'':0,'T':12,'G':9,'M':6,'k':3,'h':2,'da':1,'d':-1,'c':-2,'m':-3,'µ':-6,'n':-9,'p':-12};
+  var RANGE_BY_PREFIX = {
+    '': [1,800], 'T':[0.002,20], 'G':[0.01,80], 'M':[0.05,300], 'k':[0.2,900],
+    'h':[1,90], 'da':[1,90], 'd':[1,90], 'c':[2,300], 'm':[2,900], 'µ':[2,900], 'n':[2,900], 'p':[2,900]
+  };
+
+  // `overrides` (nepovinné) přepíše rozsah pro konkrétní předponu (klíč '' = základní jednotka bez předpony)
+  // tam, kde by sdílená tabulka RANGE_BY_PREFIX dala fyzikálně nesmyslné číslo (např. 800 tesla).
+  function buildPrefixUnits(base, prefixes, overrides){
+    overrides = overrides || {};
+    var units = [{sym:base, factor:1, range: overrides[''] || RANGE_BY_PREFIX['']}];
+    prefixes.forEach(function(p){
+      units.push({sym:p+base, factor:Math.pow(10,PREFIX_EXP[p]), range: overrides[p] || RANGE_BY_PREFIX[p]});
+    });
+    return units;
+  }
+
+  var GROUP_A = [
+    { key:'delka', name:'Délka', units: buildPrefixUnits('m', ['k','d','c','m','µ','n']) },
+    { key:'obsah', name:'Obsah', units:[
+      {sym:'mm²',factor:1e-6,range:[500,99000]},
+      {sym:'cm²',factor:1e-4,range:[5,9800]},
+      {sym:'dm²',factor:1e-2,range:[2,98]},
+      {sym:'m²',factor:1,range:[1,480]},
+      {sym:'km²',factor:1e6,range:[0.05,20]}
+    ]},
+    { key:'objem', name:'Objem', units:[
+      {sym:'mm³',factor:1e-9,range:[500,99000]},
+      {sym:'cm³',factor:1e-6,range:[5,980]},
+      {sym:'ml',factor:1e-6,range:[5,980]},
+      {sym:'dm³',factor:1e-3,range:[1,480]},
+      {sym:'l',factor:1e-3,range:[1,480]},
+      {sym:'hl',factor:1e-1,range:[0.1,50]},
+      {sym:'m³',factor:1,range:[0.2,60]}
+    ]},
+    { key:'hmotnost', name:'Hmotnost', units: buildPrefixUnits('g', ['k','m','µ','da']) },
+    { key:'cas', name:'Čas', units: buildPrefixUnits('s', ['m','µ','n']) },
+    // kiloampér je mimo běžnou výuku (stovky tisíc A) — proud jde jen do stovek A
+    { key:'proud', name:'Elektrický proud', units: buildPrefixUnits('A', ['m','µ'], {'':[1,150]}) },
+    // megavolt (stovky milionů V) není reálný — napětí končí u kV (vysoké vedení)
+    { key:'napeti', name:'Elektrické napětí', units: buildPrefixUnits('V', ['k','m']) },
+    { key:'odpor', name:'Elektrický odpor', units: buildPrefixUnits('Ω', ['M','k']) },
+    // 800 F by byl obří superkondenzátor — běžné kondenzátory jsou v µF/nF/pF, základní jednotka max jednotky F
+    { key:'kapacita', name:'Elektrická kapacita', units: buildPrefixUnits('F', ['m','µ','n','p'], {'':[0.5,5]}) },
+    { key:'frekvence', name:'Frekvence', units: buildPrefixUnits('Hz', ['G','M','k']) },
+    { key:'sila', name:'Síla', units: buildPrefixUnits('N', ['k','m']) },
+    // hPa rozsah zvednutý až na 1090, aby se v příkladech objevil i běžný atmosférický tlak (~1013 hPa)
+    { key:'tlak', name:'Tlak', units: buildPrefixUnits('Pa', ['G','M','k','h'], {h:[1,1090]}) },
+    { key:'energie', name:'Energie', units: buildPrefixUnits('J', ['T','M','k','m']) },
+    // GW jde jen do desítek (největší elektrárny na světě ~20 GW), ne 80 GW
+    { key:'vykon', name:'Výkon', units: buildPrefixUnits('W', ['T','G','M','k','m'], {G:[0.01,20]}) },
+    // 800 T přesahuje i nejsilnější laboratorní magnety — reálná pole jsou do jednotek T (MRI ~3 T)
+    { key:'indukce', name:'Magnetická indukce', units: buildPrefixUnits('T', ['m','µ'], {'':[0.001,3]}) },
+    // stovky henry jsou nereálné — velké tlumivky/transformátory jsou řádu jednotek H
+    { key:'indukcnost', name:'Indukčnost', units: buildPrefixUnits('H', ['m','µ'], {'':[0.1,5]}) },
+    // stovky coulombů jsou extrémní náboj — elektrostatika běžně pracuje v µC až jednotkách C
+    { key:'naboj', name:'Elektrický náboj', units: buildPrefixUnits('C', ['m','µ','n'], {'':[0.001,2]}) }
+  ];
+
+  var EXPERT_TOPICS = [
+    { key:'hustota', name:'Hustota', units:[
+      {sym:'kg/m³',factor:1,range:[500,9000]},
+      {sym:'g/cm³',factor:1000,range:[0.5,9]}
+    ]},
+    { key:'rychlost', name:'Rychlost', units:[
+      {sym:'m/s',factor:1,range:[1,55]},
+      {sym:'km/h',factor:1/3.6,range:[3,200]}
+    ]},
+    { key:'cas_j', name:'Čas (s, min, h)', units:[
+      {sym:'s',factor:1,range:[2,590]},
+      {sym:'min',factor:60,range:[1,180]},
+      {sym:'h',factor:3600,range:[0.2,48]}
+    ]},
+    { key:'teplota', name:'Teplota', isTemp:true, units:[
+      {sym:'°C', range:[-30,120]},
+      {sym:'K', range:[240,400]}
+    ]},
+    { key:'tep_kapacita', name:'Měrná tep. kapacita', units:[
+      {sym:'J/(kg·K)',factor:1,range:[300,4500]},
+      {sym:'kJ/(kg·K)',factor:1000,range:[0.3,4.5]},
+      {sym:'J/(g·K)',factor:1000,range:[0.3,4.5]}
+    ]},
+    { key:'skup_teplo', name:'Měrné skupenské teplo', units:[
+      {sym:'J/kg',factor:1,range:[100000,3000000]},
+      {sym:'kJ/kg',factor:1000,range:[100,3000]},
+      {sym:'MJ/kg',factor:1000000,range:[0.1,3]}
+    ]},
+    { key:'rezistivita', name:'Měrný odpor', units:[
+      {sym:'Ω·mm²/m',factor:0.000001,range:[0.01,3]},
+      {sym:'Ω·m',factor:1,range:[0.00000001,0.000003]}
+    ]},
+    { key:'uhlova', name:'Úhlová rychlost', units:[
+      {sym:'ot/min',factor:2*Math.PI/60,range:[10,3000]},
+      {sym:'rad/s',factor:1,range:[1,300]}
+    ]}
+  ];
+
+  var DIFFICULTIES = [
+    { key:'zakladni', name:'Základní' },
+    { key:'pokrocila', name:'Pokročilá' },
+    { key:'expert', name:'Expert' }
+  ];
+  var FORMATS = [
+    { key:'decimal', name:'Desítkový zápis' },
+    { key:'scientific', name:'Mocniny deseti (a·10ⁿ)' }
+  ];
+
+  var state = {
+    difficulty: 'zakladni',
+    answerFormat: 'decimal',
+    selGroupA: {},
+    selExpert: {},
+    score: 0, streak: 0, bestStreak: 0, answered: 0, correct: 0,
+    current: null, locked: false, touched: false
+  };
+  GROUP_A.forEach(function(c){ state.selGroupA[c.key] = true; });
+  EXPERT_TOPICS.forEach(function(c){ state.selExpert[c.key] = true; });
+
+  function loadStats(){
+    try{
+      var raw = localStorage.getItem('fyzika:prevody-jednotek:stats');
+      if(raw){ state.bestStreak = JSON.parse(raw).bestStreak || 0; }
+    }catch(e){}
+  }
+  function saveStats(){
+    try{ localStorage.setItem('fyzika:prevody-jednotek:stats', JSON.stringify({bestStreak: state.bestStreak})); }catch(e){}
+  }
+
+  // Vloží nezalomitelnou mezeru jako oddělovač tisíců do celé části čísla
+  // a anglickou desetinnou tečku nahradí českou čárkou.
+  function czDecimal(str){
+    var neg = str.charAt(0)==='-';
+    if(neg) str = str.slice(1);
+    var parts = str.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    return (neg?'-':'') + parts.join(',');
+  }
+
+  function fmtCZ(n, maxDecimals){
+    // n.toFixed() nepřetéká ani pro velmi velká n (na rozdíl od Math.round(n*f)/f,
+    // kde f=10^maxDecimals u velkých poměrů, např. 10^15 u TJ→mJ, snadno vytlačí
+    // součin n*f za bezpečný celočíselný rozsah a vnese plovoucí šum). Zbytečné
+    // nuly na konci ořízne parseFloat + toString, stejně jako to dělal původní zápis.
+    var v = parseFloat(n.toFixed(Math.min(maxDecimals, 20)));
+    if(Object.is(v,-0)) v = 0;
+    return czDecimal(v.toString());
+  }
+
+  // Zaokrouhlí na pevný počet desetinných míst a vypíše v desítkovém zápisu
+  // (na rozdíl od n.toString() nikdy nesklouzne do formátu 2.35e-8).
+  function fmtFixed(n, decimals){
+    var v = roundTo(n, decimals);
+    if(Object.is(v,-0)) v = 0;
+    return czDecimal(v.toFixed(decimals));
+  }
+
+
+  // Opačný převod: kolik platných cifer má `value`, když byla zaokrouhlena na `decimals` desetinných míst.
+  // Používá se k tomu, aby mantisa ve vědeckém zápisu měla vždy přesně tolik cifer, kolik odpovídá
+  // zaokrouhlení použitému pro desítkový zápis a pro toleranci — jinak by se zobrazené "řešení"
+  // ve vědeckém zápisu mohlo lišit od hodnoty, kterou checker skutečně uznává jako správnou.
+  function sigFromDecimals(value, decimals){
+    if(value===0) return decimals+1;
+    var mag = Math.floor(Math.log10(Math.abs(value)));
+    return Math.max(1, mag+decimals+1);
+  }
+
+  // Tolerance odvozená přímo z počtu platných cifer výsledku (ne ze zaokrouhlení
+  // na desetinná místa, které se u čísel s víc celočíselnými ciframi, než kolik
+  // je sig, zasekne na 0 desetinných míst a žádá tak o cifru navíc, než kolik
+  // zadání vůbec dává — např. 135 rad/s → 1289 ot/min na 3 platné cifry musí
+  // uznat i odpověď 1290).
+  function sigTolerance(exact, sig){
+    if(exact===0) return 0.51 * Math.pow(10, -(sig-1));
+    var mag = Math.floor(Math.log10(Math.abs(exact)));
+    return 0.51 * Math.pow(10, mag - sig + 1);
+  }
+
+  // Tolerance pro výsledky, které jsou z podstaty přesné (žádné zaokrouhlování
+  // navíc) — jen malý epsilon na plovoucí řádovou chybu. Musí být čistě
+  // relativní: absolutní minimum (dřív 1e-6) by u malých výsledků (řádově
+  // 10⁻⁹ a menších, časté třeba u J → TJ nebo pF → F) převýšilo samotný
+  // výsledek a uznalo by i odpověď posunutou o celé řády, včetně nuly.
+  function tightTolerance(exact){
+    return Math.abs(exact) * 1e-9;
+  }
+
+  // Poměr dvou mocnin deseti (převod jen posunem desetinné čárky, typicky mezi
+  // jednotkou s předponou a jinou jednotkou stejné soustavy) je matematicky
+  // přesný — nemá smysl mu nechávat toleranci odvozenou z počtu platných cifer
+  // zadání, tou by se uznávaly odpovědi klidně o desítky procent vedle.
+  function isPowerOfTenRatio(ratio){
+    if(!(ratio>0)) return false;
+    var lg = Math.log10(ratio);
+    return Math.abs(lg - Math.round(lg)) < 1e-9;
+  }
+
+  function conversionTolerance(exact, sig, ratio){
+    if(isPowerOfTenRatio(ratio)) return tightTolerance(exact);
+    return sigTolerance(exact, sig);
+  }
+
+  // 1/ratio spočítané v plovoucí řádové čárce dá u čistých mocnin deseti často
+  // šum místo kulatého čísla (např. 999999999,9999999 místo 1000000000) —
+  // toPrecision(12) ho setře dřív, než se poměr vypíše v postupu řešení.
+  function cleanRatio(n){
+    return Number(n.toPrecision(12));
+  }
+  function formatRatioText(ratio){
+    return ratio>=1 ? '× ' + fmtCZ(cleanRatio(ratio),8) : '÷ ' + fmtCZ(cleanRatio(1/ratio),8);
+  }
+
+  var SUP = {'0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹','-':'⁻'};
+  function toSuperscript(n){ return String(n).split('').map(function(ch){ return SUP[ch] || ch; }).join(''); }
+
+  function toScientificParts(n, sig){
+    if(n===0) return {mantissa:0, exponent:0, mdec:Math.max(0,(sig||4)-1)};
+    var sign = n<0 ? -1 : 1;
+    var abs = Math.abs(n);
+    var exp = Math.floor(Math.log10(abs));
+    var mantissa = abs/Math.pow(10,exp);
+    var mdec = Math.max(0, (sig||4)-1);
+    var f = Math.pow(10,mdec);
+    mantissa = Math.round(mantissa*f)/f;
+    if(mantissa>=10){ mantissa/=10; exp+=1; }
+    if(mantissa<1){ mantissa*=10; exp-=1; }
+    return {mantissa: sign*mantissa, exponent: exp, mdec: mdec};
+  }
+
+  function formatResult(n, decimals, sig){
+    if(state.answerFormat==='scientific'){
+      var p = toScientificParts(n, sig);
+      return fmtCZ(p.mantissa,p.mdec) + ' × 10' + toSuperscript(p.exponent);
+    }
+    return fmtFixed(n, decimals);
+  }
+
+  function randomValue(unit, difficulty){
+    var lo = unit.range[0], hi = unit.range[1];
+    var val = lo + Math.random()*(hi-lo);
+    var sig;
+    if(difficulty==='zakladni'){
+      sig = Math.random()<0.5 ? 2 : 3;
+    } else if(difficulty==='expert'){
+      sig = Math.random()<0.4 ? 4 : 3;
+    } else {
+      sig = Math.random()<0.5 ? 3 : 4;
+    }
+    val = roundSig(val, sig);
+    if(val===0) val = roundSig(lo, sig);
+    return { value: val, sig: sig };
+  }
+
+  function pickPair(units, mode){
+    var n = units.length;
+    var idxs = units.map(function(u,i){ return i; });
+    if(mode==='zakladni'){
+      var baseIdx = idxs.filter(function(i){ return units[i].factor===1; })[0];
+      var others = idxs.filter(function(i){ return i!==baseIdx; });
+      if(baseIdx===undefined || others.length===0){
+        var a0=0,b0 = n>1?1:0; return [a0,b0];
+      }
+      var otherIdx = others[Math.floor(Math.random()*others.length)];
+      return Math.random()<0.5 ? [baseIdx, otherIdx] : [otherIdx, baseIdx];
+    }
+    if(mode==='pokrocila'){
+      var nonBase = idxs.filter(function(i){ return units[i].factor!==1; });
+      if(nonBase.length<2){
+        var i1=Math.floor(Math.random()*n), i2; do{ i2=Math.floor(Math.random()*n); }while(i2===i1 && n>1);
+        return [i1,i2];
+      }
+      var a = nonBase[Math.floor(Math.random()*nonBase.length)];
+      var b; do{ b = nonBase[Math.floor(Math.random()*nonBase.length)]; }while(b===a);
+      return [a,b];
+    }
+    var x1=Math.floor(Math.random()*n), x2;
+    do{ x2=Math.floor(Math.random()*n); }while(x2===x1 && n>1);
+    return [x1,x2];
+  }
+
+  function tempConvert(v, fromSym, toSym){
+    if(fromSym===toSym) return v;
+    if(fromSym==='°C' && toSym==='K') return v+273.15;
+    if(fromSym==='K' && toSym==='°C') return v-273.15;
+    return v;
+  }
+
+  function generateQuestion(){
+    var difficulty = state.difficulty;
+    var catName, fromUnit, toUnit, value, valueDecimals, exact, resultDecimals, stepText;
+    var isTemp = false, tempTargets = null, resultSig, resultRatio;
+
+    if(difficulty==='expert'){
+      var pool = EXPERT_TOPICS.filter(function(t){ return state.selExpert[t.key]; });
+      if(pool.length===0) pool = EXPERT_TOPICS;
+      var topic = pool[Math.floor(Math.random()*pool.length)];
+      catName = topic.name;
+      var pair = pickPair(topic.units, 'any');
+      fromUnit = topic.units[pair[0]]; toUnit = topic.units[pair[1]];
+      var rv = randomValue(fromUnit, 'expert');
+      value = rv.value;
+      valueDecimals = decimalsForSig(value, rv.sig);
+      resultSig = rv.sig;
+
+      if(topic.isTemp){
+        isTemp = true;
+        // Teplota se nehodnotí tolerancí odvozenou z platných cifer jako zbytek aplikace:
+        // učitelé i žáci běžně počítají s 273,15 i se zaokrouhleným 273, obě varianty jsou správně,
+        // cokoli jiného ne. Zobrazíme přesnější (273,15) variantu, ale uznáme obě.
+        resultDecimals = Math.max(valueDecimals, 2);
+        if(fromUnit.sym===toUnit.sym){
+          exact = roundTo(value, resultDecimals);
+          tempTargets = [exact];
+          stepText = fmtFixed(value,valueDecimals) + ' ' + fromUnit.sym + ' = ' + formatResult(exact,resultDecimals,sigFromDecimals(exact,resultDecimals)) + ' ' + toUnit.sym;
+        } else if(fromUnit.sym==='°C'){
+          exact = roundTo(value+273.15, resultDecimals);
+          tempTargets = [exact, roundTo(value+273, resultDecimals)];
+          stepText = fmtFixed(value,valueDecimals) + ' °C + 273,15 = ' + formatResult(exact,resultDecimals,sigFromDecimals(exact,resultDecimals)) + ' K';
+        } else {
+          exact = roundTo(value-273.15, resultDecimals);
+          tempTargets = [exact, roundTo(value-273, resultDecimals)];
+          stepText = fmtFixed(value,valueDecimals) + ' K − 273,15 = ' + formatResult(exact,resultDecimals,sigFromDecimals(exact,resultDecimals)) + ' °C';
+        }
+      } else {
+        var rawExactE = value * fromUnit.factor / toUnit.factor;
+        resultDecimals = decimalsForSig(rawExactE, rv.sig);
+        exact = roundTo(rawExactE, resultDecimals);
+        resultRatio = fromUnit.factor / toUnit.factor;
+        stepText = fmtFixed(value,valueDecimals) + ' ' + fromUnit.sym + ' ' + formatRatioText(resultRatio) + ' = ' + formatResult(exact,resultDecimals,sigFromDecimals(exact,resultDecimals)) + ' ' + toUnit.sym;
+      }
+    } else {
+      var poolA = GROUP_A.filter(function(c){ return state.selGroupA[c.key]; });
+      if(poolA.length===0) poolA = GROUP_A;
+      var quantity = poolA[Math.floor(Math.random()*poolA.length)];
+      catName = quantity.name;
+      var pairA = pickPair(quantity.units, difficulty);
+      fromUnit = quantity.units[pairA[0]]; toUnit = quantity.units[pairA[1]];
+      var rvA = randomValue(fromUnit, difficulty);
+      value = rvA.value;
+      valueDecimals = decimalsForSig(value, rvA.sig);
+      resultSig = rvA.sig;
+      var rawExact = value * fromUnit.factor / toUnit.factor;
+      resultDecimals = decimalsForSig(rawExact, rvA.sig);
+      exact = roundTo(rawExact, resultDecimals);
+      resultRatio = fromUnit.factor / toUnit.factor;
+      stepText = fmtFixed(value,valueDecimals) + ' ' + fromUnit.sym + ' ' + formatRatioText(resultRatio) + ' = ' + formatResult(exact,resultDecimals,sigFromDecimals(exact,resultDecimals)) + ' ' + toUnit.sym;
+    }
+
+    // Tolerance: u teploty jde o epsilon okolo obou uznávaných hodnot (viz tempTargets),
+    // jinak o toleranci odvozenou od platných cifer / přesnosti převodu (viz conversionTolerance).
+    var tolerance = isTemp
+      ? 0.51 * Math.pow(10, -resultDecimals)
+      : conversionTolerance(exact, resultSig, resultRatio);
+
+    state.current = { catName:catName, fromUnit:fromUnit, toUnit:toUnit, value:value, valueDecimals:valueDecimals, exact:exact, resultDecimals:resultDecimals, tolerance:tolerance, stepText:stepText, isTemp:isTemp, tempTargets:tempTargets };
+    renderQuestion();
+  }
+
+  function setUnitEl(el, sym){
+    el.textContent = sym;
+    el.classList.toggle('long', sym.length>5);
+  }
+
+  function renderQuestion(){
+    var q = state.current;
+    document.getElementById('cat-tag').textContent = q.catName;
+    document.getElementById('eq-value').textContent = fmtFixed(q.value, q.valueDecimals);
+    setUnitEl(document.getElementById('eq-from-unit'), q.fromUnit.sym);
+    setUnitEl(document.getElementById('eq-to-unit'), q.toUnit.sym);
+
+    var input = document.getElementById('answer');
+    input.value = ''; input.disabled = false; input.classList.remove('correct','wrong');
+    var m = document.getElementById('answer-mantissa'), ex = document.getElementById('answer-exp');
+    m.value=''; ex.value=''; m.disabled=false; ex.disabled=false;
+    m.classList.remove('correct','wrong'); ex.classList.remove('correct','wrong');
+
+    document.getElementById('feedback').hidden = true;
+    document.getElementById('feedback').classList.remove('ok','bad');
+    document.getElementById('feedback-tip').hidden = true;
+    state.locked = false;
+    state.touched = false;
+    document.getElementById('btn-check').textContent = 'Zkontrolovat';
+
+    if(state.answerFormat==='scientific'){ m.focus(); } else { input.focus(); }
+  }
+
+  function parseAnswer(str){
+    if(!str) return NaN;
+    // U+2212 (typografické mínus) a U+2013 (pomlčka) se běžně objeví při
+    // kopírování z dokumentů nebo na některých klávesnicích — parseFloat
+    // rozumí jen obyčejnému ASCII "-".
+    str = str.trim().replace(/[−–]/g, '-').replace(',', '.').replace(/\s+/g,'');
+    return parseFloat(str);
+  }
+
+  function getUserValue(){
+    if(state.answerFormat==='scientific'){
+      var mv = parseAnswer(document.getElementById('answer-mantissa').value);
+      var ev = parseInt(document.getElementById('answer-exp').value, 10);
+      if(isNaN(mv) || isNaN(ev)) return { value: NaN, normalized:true };
+      return { value: mv*Math.pow(10,ev), normalized: Math.abs(mv)>=1 && Math.abs(mv)<10 };
+    }
+    var v = parseAnswer(document.getElementById('answer').value);
+    return { value:v, normalized:true };
+  }
+
+  function markInputs(cls){
+    if(state.answerFormat==='scientific'){
+      document.getElementById('answer-mantissa').classList.add(cls);
+      document.getElementById('answer-exp').classList.add(cls);
+    } else {
+      document.getElementById('answer').classList.add(cls);
+    }
+  }
+  function disableInputs(){
+    document.getElementById('answer').disabled = true;
+    document.getElementById('answer-mantissa').disabled = true;
+    document.getElementById('answer-exp').disabled = true;
+  }
+
+  // Vrátí true, pokud je aktuální odpověď prázdná/nevyplněná.
+  function isAnswerEmpty(){
+    return isNaN(getUserValue().value);
+  }
+
+
+  function checkAnswer(){
+    if(state.locked){ generateQuestion(); return; }
+    var q = state.current;
+    var res = getUserValue();
+    var tol = q.tolerance;
+    var ok;
+    if(q.isTemp){
+      // uznáme přesný převod (273,15) i zaokrouhlený (273) — nic mezi tím ani okolo
+      ok = !isNaN(res.value) && q.tempTargets.some(function(t){ return Math.abs(res.value - t) <= tol; });
+    } else {
+      ok = !isNaN(res.value) && Math.abs(res.value - q.exact) <= tol;
+    }
+
+    state.answered++;
+    var fb = document.getElementById('feedback');
+    var head = document.getElementById('feedback-headline');
+    var steps = document.getElementById('feedback-steps');
+    var tip = document.getElementById('feedback-tip');
+    fb.hidden = false;
+    tip.hidden = true;
+
+    if(ok){
+      state.score += 10; state.streak++; state.correct++;
+      if(state.streak>state.bestStreak){
+        state.bestStreak = state.streak; saveStats();
+        if(window.FyzikaScores) FyzikaScores.report('serie', state.bestStreak, false);
+      }
+      markInputs('correct');
+      fb.classList.add('ok'); fb.classList.remove('bad');
+      head.textContent = 'Správně!';
+      if(state.answerFormat==='scientific' && !res.normalized){
+        tip.hidden = false;
+        tip.textContent = 'Číselně správně — v normalizovaném zápisu má ale platit 1 ≤ a < 10.';
+      }
+    } else {
+      state.streak = 0;
+      markInputs('wrong');
+      fb.classList.add('bad'); fb.classList.remove('ok');
+      head.textContent = isNaN(res.value) ? 'Doplňte odpověď.' : 'Bohužel špatně.';
+    }
+    steps.textContent = q.stepText;
+    disableInputs();
+    state.locked = true;
+    var btnCheck = document.getElementById('btn-check');
+    btnCheck.textContent = 'Další příklad →';
+    btnCheck.focus();
+    updateStats();
+  }
+
+  function skip(){
+    if(state.locked){ generateQuestion(); return; }
+    state.streak = 0;
+    state.answered++;
+    var q = state.current;
+    var fb = document.getElementById('feedback');
+    fb.hidden = false;
+    document.getElementById('feedback-tip').hidden = true;
+    document.getElementById('feedback-headline').textContent = 'Správná odpověď:';
+    document.getElementById('feedback-steps').textContent = q.stepText;
+    fb.classList.add('bad'); fb.classList.remove('ok');
+    disableInputs();
+    state.locked = true;
+    var btnCheck = document.getElementById('btn-check');
+    btnCheck.textContent = 'Další příklad →';
+    btnCheck.focus();
+    updateStats();
+  }
+
+  function updateStats(){
+    document.getElementById('stat-score').textContent = state.score;
+    document.getElementById('stat-streak').textContent = state.streak + (state.bestStreak>0 ? ' / ' + state.bestStreak : '');
+    document.getElementById('stat-accuracy').textContent = state.answered===0 ? '—' : Math.round(100*state.correct/state.answered) + ' %';
+  }
+
+  function buildDifficultyRow(){
+    var row = document.getElementById('difficulty-row');
+    row.innerHTML = '';
+    DIFFICULTIES.forEach(function(d){
+      var b = document.createElement('button');
+      b.className = 'chip accented' + (d.key===state.difficulty ? ' on' : '');
+      b.textContent = d.name;
+      b.addEventListener('click', function(){
+        if(d.key===state.difficulty) return;
+        var res = settleCurrentQuestion();
+        if(res==='cancelled') return;
+        state.difficulty = d.key;
+        Array.prototype.forEach.call(row.children, function(el,i){
+          el.classList.toggle('on', DIFFICULTIES[i].key===state.difficulty);
+        });
+        buildCategoryRow();
+        if(res==='locked' || res==='untouched'){ generateQuestion(); }
+      });
+      row.appendChild(b);
+    });
+  }
+
+  function buildCategoryRow(){
+    var row = document.getElementById('category-row');
+    row.innerHTML = '';
+    var isExpert = state.difficulty==='expert';
+    var list = isExpert ? EXPERT_TOPICS : GROUP_A;
+    var sel = isExpert ? state.selExpert : state.selGroupA;
+    list.forEach(function(c){
+      var b = document.createElement('button');
+      b.className = 'chip' + (sel[c.key] ? ' on' : '');
+      b.textContent = c.name;
+      b.addEventListener('click', function(){
+        var activeCount = list.filter(function(cc){ return sel[cc.key]; }).length;
+        if(sel[c.key] && activeCount===1) return;
+        var res = settleCurrentQuestion();
+        if(res==='cancelled') return;
+        sel[c.key] = !sel[c.key];
+        b.classList.toggle('on', sel[c.key]);
+        if(res==='locked' || res==='untouched'){ generateQuestion(); }
+      });
+      row.appendChild(b);
+    });
+  }
+
+  function applyAnswerFormatUI(){
+    var decWrap = document.getElementById('answer-decimal-wrap');
+    var sciWrap = document.getElementById('answer-sci-wrap');
+    decWrap.hidden = state.answerFormat==='scientific';
+    sciWrap.hidden = state.answerFormat!=='scientific';
+  }
+
+  function setAnswerFormat(fmt){
+    var res = settleCurrentQuestion();
+    if(res==='cancelled') return false;
+    state.answerFormat = fmt;
+    applyAnswerFormatUI();
+    // Nezodpovězenou otázku už settleCurrentQuestion() vyhodnotil (nebo byla
+    // už zamčená, nebo do ní žák vůbec nezasáhl) — nová otázka v novém formátu
+    // se vygeneruje, jen když nezůstala rozepsaná zpětná vazba, na kterou čeká
+    // potvrzení.
+    if(res==='locked' || res==='untouched'){ generateQuestion(); }
+    return true;
+  }
+
+  function buildFormatRow(){
+    var row = document.getElementById('format-row');
+    row.innerHTML = '';
+    FORMATS.forEach(function(fmt){
+      var b = document.createElement('button');
+      b.className = 'chip accented' + (fmt.key===state.answerFormat ? ' on' : '');
+      b.textContent = fmt.name;
+      b.addEventListener('click', function(){
+        if(fmt.key===state.answerFormat) return;
+        if(!setAnswerFormat(fmt.key)) return;
+        Array.prototype.forEach.call(row.children, function(el,i){
+          el.classList.toggle('on', FORMATS[i].key===state.answerFormat);
+        });
+      });
+      row.appendChild(b);
+    });
+  }
+
+  document.getElementById('category-toggle').addEventListener('click', function(){
+    var row = document.getElementById('category-row');
+    var expanded = row.hidden;
+    row.hidden = !expanded;
+    this.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+  });
+
+  function tryCheck(){
+    if(state.locked){ generateQuestion(); return; }
+    if(isAnswerEmpty()){
+      if(!confirm('Odpověď není vyplněná. Opravdu chcete zkontrolovat?')) return;
+    }
+    checkAnswer();
+  }
+  function trySkip(){
+    if(state.locked){ generateQuestion(); return; }
+    if(isAnswerEmpty()){
+      if(!confirm('Odpověď není vyplněná. Opravdu chcete přeskočit na další příklad?')) return;
+    }
+    skip();
+  }
+  document.getElementById('btn-check').addEventListener('click', tryCheck);
+  document.getElementById('btn-skip').addEventListener('click', trySkip);
+  ['answer','answer-mantissa','answer-exp'].forEach(function(id){
+    document.getElementById(id).addEventListener('input', function(){ state.touched = true; });
+  });
+  document.getElementById('answer').addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); tryCheck(); } });
+  document.getElementById('answer-mantissa').addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); tryCheck(); } });
+  document.getElementById('answer-exp').addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); tryCheck(); } });
+  document.getElementById('reset-stats').addEventListener('click', function(){
+    state.score=0; state.streak=0; state.answered=0; state.correct=0; state.bestStreak=0;
+    try{ localStorage.removeItem('fyzika:prevody-jednotek:stats'); }catch(e){}
+    updateStats();
+  });
+
+  // ---- Hra na čas ----
+
+  var GAME_DURATIONS = [
+    { key:60, name:'1 min' },
+    { key:120, name:'2 min' },
+    { key:180, name:'3 min' },
+    { key:300, name:'5 min' }
+  ];
+  var gameState = {
+    duration:120, running:false, timeLeft:120, timerId:null,
+    score:0, correct:0, wrong:0, answered:0,
+    current:null, locked:false, bests:{}, answerFormat:'decimal'
+  };
+
+  function gameFormatResult(n, decimals, sig){
+    if(gameState.answerFormat==='scientific'){
+      var p = toScientificParts(n, sig);
+      return fmtCZ(p.mantissa,p.mdec) + ' × 10' + toSuperscript(p.exponent);
+    }
+    return fmtFixed(n, decimals);
+  }
+
+  function loadGameBests(){
+    try{
+      var raw = localStorage.getItem('fyzika:prevody-jednotek:game-bests');
+      if(raw) gameState.bests = JSON.parse(raw) || {};
+    }catch(e){}
+  }
+  function saveGameBests(){
+    try{ localStorage.setItem('fyzika:prevody-jednotek:game-bests', JSON.stringify(gameState.bests)); }catch(e){}
+  }
+  function currentBest(){ return gameState.bests[gameState.duration] || 0; }
+  function updateGameBestHint(){
+    document.getElementById('game-best-hint').textContent = 'Nejlepší skóre: ' + (currentBest() || '—');
+  }
+
+  // Skloňování slova "bod" v koncovém skóre hry (2 body, 5 bodů…). Záporné
+  // skóre se skloňuje podle absolutní hodnoty ("-2 body", ne "-2 bodů").
+  function pointWord(n){
+    var abs = Math.abs(n);
+    if(abs===1) return 'bod';
+    if(abs>=2 && abs<=4) return 'body';
+    return 'bodů';
+  }
+
+  function buildGroupAQuestion(quantity, pair, difficultyLike, points, tierLabel){
+    var fromUnit = quantity.units[pair[0]], toUnit = quantity.units[pair[1]];
+    var rv = randomValue(fromUnit, difficultyLike);
+    var value = rv.value;
+    var valueDecimals = decimalsForSig(value, rv.sig);
+    var rawExact = value * fromUnit.factor / toUnit.factor;
+    var resultDecimals = decimalsForSig(rawExact, rv.sig);
+    var exact = roundTo(rawExact, resultDecimals);
+    var ratio = fromUnit.factor / toUnit.factor;
+    var stepText = fmtFixed(value,valueDecimals) + ' ' + fromUnit.sym + ' ' + formatRatioText(ratio) + ' = ' + gameFormatResult(exact,resultDecimals,sigFromDecimals(exact,resultDecimals)) + ' ' + toUnit.sym;
+    var tolerance = conversionTolerance(exact, rv.sig, ratio);
+    return { catName:quantity.name, fromUnit:fromUnit, toUnit:toUnit, value:value, valueDecimals:valueDecimals,
+      exact:exact, resultDecimals:resultDecimals, tolerance:tolerance, stepText:stepText, isTemp:false, tempTargets:null,
+      points:points, tierLabel:tierLabel };
+  }
+
+  // Volí zadání pro s/min/h tak, aby výsledek vyšel vždy celé číslo (případně x,5) —
+  // poměry mezi s/min/h (60, 3600) jsou sudé, takže "velká" jednotka zvolená jako
+  // celé číslo nebo x,5 dá při přepočtu na "malou" jednotku vždy přesné celé číslo.
+  function niceTimeQuestion(topic, pair, points, tierLabel){
+    var fromUnit = topic.units[pair[0]], toUnit = topic.units[pair[1]];
+    var big = fromUnit.factor >= toUnit.factor ? fromUnit : toUnit;
+    var small = big===fromUnit ? toUnit : fromUnit;
+    var ratio = big.factor / small.factor;
+    var maxBig = big.sym==='h' ? 24 : 180;
+    var wholePart = 1 + Math.floor(Math.random()*maxBig);
+    var frac = Math.random()<0.3 ? 0.5 : 0;
+    var bigVal = wholePart + frac;
+    var smallVal = bigVal * ratio;
+    var value = fromUnit===big ? bigVal : smallVal;
+    var exact = toUnit===big ? bigVal : smallVal;
+    var valueDecimals = (fromUnit===big && frac) ? 1 : 0;
+    var resultDecimals = (toUnit===big && frac) ? 1 : 0;
+    var ratioFactor = fromUnit.factor / toUnit.factor;
+    var stepText = fmtFixed(value,valueDecimals) + ' ' + fromUnit.sym + ' ' + formatRatioText(ratioFactor) + ' = ' + gameFormatResult(exact,resultDecimals,sigFromDecimals(exact,resultDecimals)) + ' ' + toUnit.sym;
+    var tolerance = tightTolerance(exact);
+    return { catName:topic.name, fromUnit:fromUnit, toUnit:toUnit, value:value, valueDecimals:valueDecimals,
+      exact:exact, resultDecimals:resultDecimals, tolerance:tolerance, stepText:stepText, isTemp:false, tempTargets:null,
+      points:points, tierLabel:tierLabel };
+  }
+
+  // m/s (celé číslo, násobek 5) ↔ km/h (celé číslo, násobek 18) — poměr 3,6 = 18/5,
+  // takže tyto násobky vždy dají na druhé straně přesné celé číslo.
+  function niceSpeedQuestion(topic, pair, points, tierLabel){
+    var fromUnit = topic.units[pair[0]], toUnit = topic.units[pair[1]];
+    var value, exact;
+    if(fromUnit.sym==='m/s'){
+      value = 5 * (1 + Math.floor(Math.random()*10));
+      exact = roundTo(value*3.6, 0);
+    } else {
+      value = 18 * (1 + Math.floor(Math.random()*10));
+      exact = roundTo(value/3.6, 0);
+    }
+    var ratioFactor = fromUnit.factor / toUnit.factor;
+    var stepText = fmtFixed(value,0) + ' ' + fromUnit.sym + ' ' + formatRatioText(ratioFactor) + ' = ' + gameFormatResult(exact,0,sigFromDecimals(exact,0)) + ' ' + toUnit.sym;
+    var tolerance = tightTolerance(exact);
+    return { catName:topic.name, fromUnit:fromUnit, toUnit:toUnit, value:value, valueDecimals:0,
+      exact:exact, resultDecimals:0, tolerance:tolerance, stepText:stepText, isTemp:false, tempTargets:null,
+      points:points, tierLabel:tierLabel };
+  }
+
+  function buildTopicQuestion(topic, pair, points, tierLabel){
+    var fromUnit = topic.units[pair[0]], toUnit = topic.units[pair[1]];
+    var rv = randomValue(fromUnit, 'expert');
+    var value = rv.value;
+    var valueDecimals = decimalsForSig(value, rv.sig);
+    var exact, resultDecimals, stepText, isTemp=false, tempTargets=null, ratio;
+
+    if(topic.isTemp){
+      isTemp = true;
+      resultDecimals = Math.max(valueDecimals, 2);
+      if(fromUnit.sym===toUnit.sym){
+        exact = roundTo(value, resultDecimals);
+        tempTargets = [exact];
+        stepText = fmtFixed(value,valueDecimals) + ' ' + fromUnit.sym + ' = ' + gameFormatResult(exact,resultDecimals,sigFromDecimals(exact,resultDecimals)) + ' ' + toUnit.sym;
+      } else if(fromUnit.sym==='°C'){
+        exact = roundTo(value+273.15, resultDecimals);
+        tempTargets = [exact, roundTo(value+273, resultDecimals)];
+        stepText = fmtFixed(value,valueDecimals) + ' °C + 273,15 = ' + gameFormatResult(exact,resultDecimals,sigFromDecimals(exact,resultDecimals)) + ' K';
+      } else {
+        exact = roundTo(value-273.15, resultDecimals);
+        tempTargets = [exact, roundTo(value-273, resultDecimals)];
+        stepText = fmtFixed(value,valueDecimals) + ' K − 273,15 = ' + gameFormatResult(exact,resultDecimals,sigFromDecimals(exact,resultDecimals)) + ' °C';
+      }
+    } else {
+      var rawExact = value * fromUnit.factor / toUnit.factor;
+      resultDecimals = decimalsForSig(rawExact, rv.sig);
+      exact = roundTo(rawExact, resultDecimals);
+      ratio = fromUnit.factor / toUnit.factor;
+      stepText = fmtFixed(value,valueDecimals) + ' ' + fromUnit.sym + ' ' + formatRatioText(ratio) + ' = ' + gameFormatResult(exact,resultDecimals,sigFromDecimals(exact,resultDecimals)) + ' ' + toUnit.sym;
+    }
+    var tolerance = isTemp
+      ? 0.51 * Math.pow(10, -resultDecimals)
+      : conversionTolerance(exact, rv.sig, ratio);
+    return { catName:topic.name, fromUnit:fromUnit, toUnit:toUnit, value:value, valueDecimals:valueDecimals,
+      exact:exact, resultDecimals:resultDecimals, tolerance:tolerance, stepText:stepText, isTemp:isTemp, tempTargets:tempTargets,
+      points:points, tierLabel:tierLabel };
+  }
+
+  // Obsah a objem se nepřevádí jednoduchým posunem o mocninu deseti jako ostatní veličiny
+  // s předponami (např. cm² → m² je ×10000, ne ×100) — jsou proto vždy za 7 bodů,
+  // i když je jednou ze stran základní jednotka (m², m³).
+  var GAME_TIER1_POOL = GROUP_A.filter(function(q){ return q.key!=='obsah' && q.key!=='objem'; });
+  var GAME_TIER2_DESCRIPTORS = GAME_TIER1_POOL.map(function(q){ return {quantity:q, mode:'pokrocila'}; })
+    .concat(GROUP_A.filter(function(q){ return q.key==='obsah' || q.key==='objem'; })
+      .map(function(q){ return {quantity:q, mode:'any'}; }));
+
+  function generateGameQuestion(){
+    var tier = Math.random()<1/3 ? 1 : (Math.random()<0.5 ? 2 : 3);
+    var q;
+    if(tier===1){
+      var quantity = GAME_TIER1_POOL[Math.floor(Math.random()*GAME_TIER1_POOL.length)];
+      var pair = pickPair(quantity.units, 'zakladni');
+      q = buildGroupAQuestion(quantity, pair, 'zakladni', 5, 'Předpona ↔ základní jednotka');
+    } else if(tier===2){
+      var desc = GAME_TIER2_DESCRIPTORS[Math.floor(Math.random()*GAME_TIER2_DESCRIPTORS.length)];
+      var pair2 = pickPair(desc.quantity.units, desc.mode);
+      q = buildGroupAQuestion(desc.quantity, pair2, desc.mode, 7, 'Předpona ↔ předpona');
+    } else {
+      var topic = EXPERT_TOPICS[Math.floor(Math.random()*EXPERT_TOPICS.length)];
+      var pair3 = pickPair(topic.units, 'any');
+      if(topic.key==='cas_j'){ q = niceTimeQuestion(topic, pair3, 10, 'Kombinovaná jednotka'); }
+      else if(topic.key==='rychlost'){ q = niceSpeedQuestion(topic, pair3, 10, 'Kombinovaná jednotka'); }
+      else { q = buildTopicQuestion(topic, pair3, 10, 'Kombinovaná jednotka'); }
+    }
+    gameState.current = q;
+    renderGameQuestion();
+  }
+
+  function applyGameFormatUI(){
+    var decWrap = document.getElementById('game-answer-decimal-wrap');
+    var sciWrap = document.getElementById('game-answer-sci-wrap');
+    decWrap.hidden = gameState.answerFormat==='scientific';
+    sciWrap.hidden = gameState.answerFormat!=='scientific';
+  }
+
+  function getGameUserValue(){
+    if(gameState.answerFormat==='scientific'){
+      var mv = parseAnswer(document.getElementById('game-answer-mantissa').value);
+      var ev = parseInt(document.getElementById('game-answer-exp').value, 10);
+      if(isNaN(mv) || isNaN(ev)) return { value: NaN, normalized:true };
+      return { value: mv*Math.pow(10,ev), normalized: Math.abs(mv)>=1 && Math.abs(mv)<10 };
+    }
+    var v = parseAnswer(document.getElementById('game-answer').value);
+    return { value:v, normalized:true };
+  }
+
+  function markGameInputs(cls){
+    if(gameState.answerFormat==='scientific'){
+      document.getElementById('game-answer-mantissa').classList.add(cls);
+      document.getElementById('game-answer-exp').classList.add(cls);
+    } else {
+      document.getElementById('game-answer').classList.add(cls);
+    }
+  }
+
+  function disableGameInputs(){
+    document.getElementById('game-answer').disabled = true;
+    document.getElementById('game-answer-mantissa').disabled = true;
+    document.getElementById('game-answer-exp').disabled = true;
+  }
+
+  function renderGameQuestion(){
+    var q = gameState.current;
+    document.getElementById('game-cat-tag').textContent = q.catName;
+    document.getElementById('game-points-badge').textContent = '+' + q.points + ' b';
+    document.getElementById('game-eq-value').textContent = fmtFixed(q.value, q.valueDecimals);
+    setUnitEl(document.getElementById('game-eq-from-unit'), q.fromUnit.sym);
+    setUnitEl(document.getElementById('game-eq-to-unit'), q.toUnit.sym);
+
+    var input = document.getElementById('game-answer');
+    input.value = ''; input.disabled = false; input.classList.remove('correct','wrong');
+    var m = document.getElementById('game-answer-mantissa'), ex = document.getElementById('game-answer-exp');
+    m.value=''; ex.value=''; m.disabled=false; ex.disabled=false;
+    m.classList.remove('correct','wrong'); ex.classList.remove('correct','wrong');
+
+    document.getElementById('game-feedback').hidden = true;
+    document.getElementById('game-feedback').classList.remove('ok','bad');
+    document.getElementById('game-feedback-tip').hidden = true;
+    gameState.locked = false;
+    document.getElementById('btn-game-check').textContent = 'Zkontrolovat';
+    if(gameState.answerFormat==='scientific'){ m.focus(); } else { input.focus(); }
+  }
+
+  function gameAnswerEmpty(){
+    return isNaN(getGameUserValue().value);
+  }
+
+  function checkGameAnswer(){
+    if(!gameState.running) return;
+    if(gameState.locked){ generateGameQuestion(); return; }
+    var q = gameState.current;
+    var res = getGameUserValue();
+    var val = res.value;
+    var ok;
+    if(q.isTemp){
+      ok = !isNaN(val) && q.tempTargets.some(function(t){ return Math.abs(val - t) <= q.tolerance; });
+    } else {
+      ok = !isNaN(val) && Math.abs(val - q.exact) <= q.tolerance;
+    }
+
+    gameState.answered++;
+    var fb = document.getElementById('game-feedback');
+    var head = document.getElementById('game-feedback-headline');
+    var steps = document.getElementById('game-feedback-steps');
+    var tip = document.getElementById('game-feedback-tip');
+    fb.hidden = false;
+    tip.hidden = true;
+
+    if(ok){
+      gameState.score += q.points; gameState.correct++;
+      markGameInputs('correct');
+      fb.classList.add('ok'); fb.classList.remove('bad');
+      head.textContent = 'Správně! +' + q.points + ' b';
+      if(gameState.answerFormat==='scientific' && !res.normalized){
+        tip.hidden = false;
+        tip.textContent = 'Číselně správně — v normalizovaném zápisu má ale platit 1 ≤ a < 10.';
+      }
+    } else {
+      gameState.score -= 5; gameState.wrong++;
+      markGameInputs('wrong');
+      fb.classList.add('bad'); fb.classList.remove('ok');
+      head.textContent = isNaN(val) ? 'Doplňte odpověď. −5 b' : 'Bohužel špatně. −5 b';
+    }
+    steps.textContent = q.stepText;
+    disableGameInputs();
+    gameState.locked = true;
+    document.getElementById('btn-game-check').textContent = 'Další příklad →';
+    document.getElementById('btn-game-check').focus();
+    updateGameScore();
+  }
+
+  function skipGame(){
+    if(!gameState.running) return;
+    if(gameState.locked){ generateGameQuestion(); return; }
+    gameState.answered++;
+    gameState.score -= 5; gameState.wrong++;
+    var q = gameState.current;
+    var fb = document.getElementById('game-feedback');
+    fb.hidden = false;
+    document.getElementById('game-feedback-tip').hidden = true;
+    document.getElementById('game-feedback-headline').textContent = 'Správná odpověď: −5 b';
+    document.getElementById('game-feedback-steps').textContent = q.stepText;
+    fb.classList.add('bad'); fb.classList.remove('ok');
+    markGameInputs('wrong');
+    disableGameInputs();
+    gameState.locked = true;
+    document.getElementById('btn-game-check').textContent = 'Další příklad →';
+    document.getElementById('btn-game-check').focus();
+    updateGameScore();
+  }
+
+  function updateGameScore(){
+    document.getElementById('game-score').textContent = gameState.score;
+  }
+
+
+  function tickGameTimer(){
+    gameState.timeLeft--;
+    var timerEl = document.getElementById('game-timer');
+    timerEl.textContent = formatGameTime(Math.max(0,gameState.timeLeft));
+    timerEl.classList.toggle('low-time', gameState.timeLeft<=20 && gameState.timeLeft>0);
+    if(gameState.timeLeft<=0){ endGame(); }
+  }
+
+  function startGame(){
+    gameState.running = true;
+    gameState.timeLeft = gameState.duration;
+    gameState.score = 0; gameState.correct = 0; gameState.wrong = 0; gameState.answered = 0;
+    updateGameScore();
+    document.getElementById('game-timer').textContent = formatGameTime(gameState.duration);
+    document.getElementById('game-timer').classList.remove('low-time');
+    document.getElementById('game-best-live').textContent = currentBest();
+    document.getElementById('game-intro').hidden = true;
+    document.getElementById('game-over').hidden = true;
+    document.getElementById('game-play').hidden = false;
+    generateGameQuestion();
+    if(gameState.timerId) clearInterval(gameState.timerId);
+    gameState.timerId = setInterval(tickGameTimer, 1000);
+  }
+
+  function endGame(){
+    gameState.running = false;
+    clearInterval(gameState.timerId);
+    gameState.timerId = null;
+    disableGameInputs();
+    if(gameState.score>currentBest()){ gameState.bests[gameState.duration] = gameState.score; saveGameBests(); }
+    if(window.FyzikaScores) FyzikaScores.report('hra-' + gameState.duration + 's', gameState.score, true);
+    document.getElementById('game-play').hidden = true;
+    document.getElementById('game-over').hidden = false;
+    document.getElementById('game-final-score').textContent = gameState.score + ' ' + pointWord(gameState.score);
+    document.getElementById('game-final-detail').textContent =
+      'Správně: ' + gameState.correct + ' · Špatně: ' + gameState.wrong + ' · Nejlepší skóre: ' + currentBest();
+    updateGameBestHint();
+  }
+
+  function setGameAnswerFormat(fmt){
+    gameState.answerFormat = fmt;
+    applyGameFormatUI();
+  }
+
+  function buildGameDurationRow(){
+    var row = document.getElementById('game-duration-row');
+    row.innerHTML = '';
+    GAME_DURATIONS.forEach(function(d){
+      var b = document.createElement('button');
+      b.className = 'chip' + (d.key===gameState.duration ? ' on' : '');
+      b.textContent = d.name;
+      b.addEventListener('click', function(){
+        if(gameState.running) return;
+        gameState.duration = d.key;
+        Array.prototype.forEach.call(row.children, function(el,i){
+          el.classList.toggle('on', GAME_DURATIONS[i].key===gameState.duration);
+        });
+        updateGameBestHint();
+      });
+      row.appendChild(b);
+    });
+  }
+
+  function buildGameFormatRow(){
+    var row = document.getElementById('game-format-row');
+    row.innerHTML = '';
+    FORMATS.forEach(function(fmt){
+      var b = document.createElement('button');
+      b.className = 'chip accented' + (fmt.key===gameState.answerFormat ? ' on' : '');
+      b.textContent = fmt.name;
+      b.addEventListener('click', function(){
+        setGameAnswerFormat(fmt.key);
+        Array.prototype.forEach.call(row.children, function(el,i){
+          el.classList.toggle('on', FORMATS[i].key===gameState.answerFormat);
+        });
+      });
+      row.appendChild(b);
+    });
+  }
+
+  function tryCheckGame(){
+    if(!gameState.running) return;
+    if(gameState.locked){ generateGameQuestion(); return; }
+    if(gameAnswerEmpty()){
+      if(!confirm('Odpověď není vyplněná. Opravdu chcete zkontrolovat?')) return;
+    }
+    checkGameAnswer();
+  }
+  function trySkipGame(){
+    if(!gameState.running) return;
+    if(gameState.locked){ generateGameQuestion(); return; }
+    if(gameAnswerEmpty()){
+      if(!confirm('Odpověď není vyplněná. Opravdu chcete přeskočit? Bude to počítáno jako špatná odpověď (−5 b).')) return;
+    }
+    skipGame();
+  }
+
+  document.getElementById('btn-game-start').addEventListener('click', startGame);
+  document.getElementById('btn-game-restart').addEventListener('click', startGame);
+  document.getElementById('btn-game-check').addEventListener('click', tryCheckGame);
+  document.getElementById('btn-game-skip').addEventListener('click', trySkipGame);
+  document.getElementById('game-answer').addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); tryCheckGame(); } });
+  document.getElementById('game-answer-mantissa').addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); tryCheckGame(); } });
+  document.getElementById('game-answer-exp').addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); tryCheckGame(); } });
+
+  var topTabTeorie = document.getElementById('top-tab-teorie');
+  var topTabTrenink = document.getElementById('top-tab-trenink');
+  var topTabHra = document.getElementById('top-tab-hra');
+
+  function showTopTab(tab){
+    topTabTeorie.classList.toggle('on', tab==='teorie');
+    topTabTrenink.classList.toggle('on', tab==='trenink');
+    topTabHra.classList.toggle('on', tab==='hra');
+    document.getElementById('view-theory').hidden = tab!=='teorie';
+    document.getElementById('view-training').hidden = tab!=='trenink';
+    document.getElementById('view-game').hidden = tab!=='hra';
+  }
+
+  // Přepnutí na jinou záložku uprostřed běžící hry na čas hru rovnou ukončí — čas
+  // by jinak běžel dál "za zády" žáka. Proto se nejdřív zeptá na potvrzení, aby se
+  // rozehraná hra nezahodila jedním omylem kliknutým přepnutím.
+  function tryShowTopTab(tab){
+    if(tab!=='hra' && gameState.running){
+      if(!confirm('Přepnutím opustíte probíhající hru na čas — hra se ukončí a započítá se aktuální skóre. Opravdu chcete pokračovat?')) return;
+      endGame();
+    }
+    showTopTab(tab);
+  }
+  topTabTeorie.addEventListener('click', function(){ tryShowTopTab('teorie'); });
+  topTabTrenink.addEventListener('click', function(){ tryShowTopTab('trenink'); });
+  topTabHra.addEventListener('click', function(){ tryShowTopTab('hra'); });
+
+  sanitizeNumericInput(document.getElementById('answer'), true);
+  sanitizeNumericInput(document.getElementById('answer-mantissa'), true);
+  sanitizeNumericInput(document.getElementById('answer-exp'), false);
+  sanitizeNumericInput(document.getElementById('game-answer'), true);
+  sanitizeNumericInput(document.getElementById('game-answer-mantissa'), true);
+  sanitizeNumericInput(document.getElementById('game-answer-exp'), false);
+
+  loadGameBests();
+  buildGameDurationRow();
+  updateGameBestHint();
+  buildGameFormatRow();
+  applyGameFormatUI();
+
+  loadStats();
+  buildDifficultyRow();
+  buildCategoryRow();
+  buildFormatRow();
+  updateStats();
+  generateQuestion();
+
+  // Po synchronizaci s cloudem (auth.js) znovu načíst nejlepší výsledky z localStorage.
+  document.addEventListener('fyzika:scores-updated', function(){
+    state.bestStreak = 0; loadStats(); updateStats();
+    gameState.bests = {}; loadGameBests(); updateGameBestHint();
+  });
+
+  if(window.renderMathInElement){
+    renderMathInElement(document.getElementById('view-theory'), {
+      delimiters: [{left:'\\(', right:'\\)', display:false}, {left:'\\[', right:'\\]', display:true}]
+    });
+  }
+  try{ makePanelsCollapsible(document.getElementById('view-theory')); }catch(e){}
+})();
+</script>
+
+</body>
+</html>

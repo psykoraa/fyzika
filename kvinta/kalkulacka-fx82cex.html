@@ -1,0 +1,1586 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kalkulačka FX-82CE X</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="../spolecne/config.js"></script>
+<script src="../spolecne/auth.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<link rel="stylesheet" href="../spolecne/styl.css">
+<style>
+:root{
+  --paper:#f5f0e3;
+  --surface:#fffcf5;
+  --surface-2:#ece4d1;
+  --ink:#212b34;
+  --ink-soft:#5d6b76;
+  --line:rgba(33,43,52,0.12);
+  --accent:#c9581f;
+  --accent-ink:#fff8f0;
+  --success:#28794f;
+  --success-bg:#e3efe0;
+  --danger:#b3392b;
+  --danger-bg:#f5e4de;
+  --focus:#1e6f66;
+  --shadow: 0 1px 0 rgba(33,43,52,0.06);
+}
+
+
+.section-block{ margin-bottom:0; }
+
+
+.cat-tag{ margin-bottom:20px; }
+.equation{
+  font-size:clamp(1.15rem, 4vw, 1.65rem);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:0.4em;
+  flex-wrap:wrap;
+  row-gap:0.5em;
+}
+.equation .katex{ font-size:1.05em; }
+.question-note{
+  margin-top:10px;
+  font-size:0.78rem;
+  color:var(--ink-soft);
+}
+
+.answer-input{ width:5.6em; }
+
+
+.unit-suffix{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:600;
+}
+.unit-suffix:empty{ display:none; }
+
+.tip{
+  margin-top:14px;
+  padding:10px 12px;
+  border-radius:8px;
+  background:var(--surface-2);
+  font-size:0.82rem;
+  color:var(--ink);
+  text-align:left;
+}
+.tip[hidden]{ display:none; }
+
+
+.feedback .steps{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:0.9rem;
+  color:var(--ink);
+  opacity:0.9;
+  font-variant-numeric:tabular-nums;
+  display:flex;
+  align-items:center;
+  gap:0.3em;
+  flex-wrap:wrap;
+}
+.keys-row[hidden]{ display:none; }
+.keys-label{
+  margin-top:12px;
+  font-size:0.72rem;
+  text-transform:uppercase;
+  letter-spacing:0.08em;
+  color:var(--ink);
+  opacity:0.75;
+  font-weight:600;
+}
+.keys{ margin-top:6px; line-height:2.1; }
+.key{
+  display:inline-block;
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:600;
+  font-size:0.8rem;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:6px;
+  padding:3px 9px;
+  margin:2px 4px 2px 0;
+  color:var(--ink);
+}
+.key-frac{ padding-top:4px; padding-bottom:4px; line-height:1; vertical-align:middle; }
+.frac-icon{ display:inline-flex; flex-direction:column; align-items:center; gap:2px; vertical-align:middle; }
+.frac-icon .frac-box{ width:13px; height:5px; box-sizing:border-box; border-radius:1px; }
+.frac-icon .frac-box-filled{ background:currentColor; }
+.frac-icon .frac-box-outline{ border:1.4px solid currentColor; }
+.frac-icon .frac-bar{ width:15px; height:1.4px; background:currentColor; }
+.exp-box{
+  display:inline-block;
+  width:6px;
+  height:6px;
+  background:currentColor;
+  border-radius:1px;
+  transform:translateY(-5px);
+}
+.key-pow .exp-box{ margin-left:1px; }
+.key-root .exp-box{ margin-right:1px; }
+.sub-box{
+  display:inline-block;
+  width:6px;
+  height:6px;
+  background:currentColor;
+  border-radius:1px;
+  transform:translateY(3px);
+  margin:0 2px 0 1px;
+}
+.arg-box{
+  display:inline-block;
+  width:5px;
+  height:10px;
+  border:1.4px solid currentColor;
+  border-radius:1px;
+  vertical-align:middle;
+}
+
+.theory-block{ margin-bottom:20px; }
+.theory-block:last-child{ margin-bottom:0; }
+.theory-block h3{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.15rem;
+  margin-bottom:8px;
+  color:var(--ink);
+}
+.theory-block p{ margin:0 0 10px; font-size:0.88rem; line-height:1.55; color:var(--ink); }
+.theory-block p:last-child{ margin-bottom:0; }
+.theory-block p.tip{ margin-top:0; }
+.theory-steps{ margin:0 0 10px; padding-left:1.25em; font-size:0.88rem; line-height:1.6; }
+.theory-steps li{ margin-bottom:4px; }
+.theory-steps li:last-child{ margin-bottom:0; }
+.theory-block .keys-label{ margin-top:14px; }
+.theory-block .keys-label:first-child{ margin-top:0; }
+.theory-block .keys{ margin-bottom:6px; }
+
+
+@media (max-width:520px){
+  .card{ padding:26px 16px 24px; }
+  .readout .cell{ min-width:64px; padding:6px 8px; }
+}
+
+
+@keyframes pulse{ 0%,100%{ opacity:1; } 50%{ opacity:0.6; } }
+
+
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <a class="back-link" href="../rozcestniky/kvinta.html">← Zpět na Kvinta/1. ročník</a>
+
+  <div class="brand">
+    <div class="brand-lockup">
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect x="9" y="3" width="22" height="34" rx="3" fill="none" stroke="var(--accent)" stroke-width="2"/>
+        <rect x="12.5" y="7" width="15" height="7" rx="1" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
+        <g fill="var(--accent)">
+          <circle cx="14.5" cy="20" r="1.3"/><circle cx="20" cy="20" r="1.3"/><circle cx="25.5" cy="20" r="1.3"/>
+          <circle cx="14.5" cy="25" r="1.3"/><circle cx="20" cy="25" r="1.3"/><circle cx="25.5" cy="25" r="1.3"/>
+          <circle cx="14.5" cy="30" r="1.3"/><circle cx="20" cy="30" r="1.3"/><circle cx="25.5" cy="30" r="1.3"/>
+        </g>
+      </svg>
+      <div class="brand-text">
+        <h1>Kalkulačka FX-82CE X</h1>
+        <p>trenažér práce s kalkulačkou Casio ClassWiz</p>
+      </div>
+    </div>
+    <div class="readout">
+      <div class="cell"><span class="label">Skóre</span><span class="value" id="stat-score">0</span></div>
+      <div class="cell"><span class="label">Série</span><span class="value" id="stat-streak">0</span></div>
+      <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="stat-accuracy">—</span></div>
+    </div>
+  </div>
+
+  <div class="top-tabs">
+    <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+    <button class="toptab" id="top-tab-trenink" data-tab="trenink">Trénink</button>
+    <button class="toptab" id="top-tab-hra" data-tab="hra">Hra na čas</button>
+  </div>
+
+  <div id="view-training" hidden>
+
+  <div class="panel">
+    <div class="section-block">
+      <div class="panel-title">Témata</div>
+      <div class="row" id="topic-row"></div>
+    </div>
+    <div class="settings-foot">
+      <span class="hint">Desetinná čísla pište s čárkou i tečkou.</span>
+      <button class="linklike" id="reset-stats">vynulovat statistiku</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="cat-tag" id="cat-tag">Základy</span>
+    <div class="equation" id="equation">
+      <span id="eq-expr"></span>
+      <span class="answer-slot" id="answer-decimal-wrap">
+        <input class="answer-input" id="answer" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="?">
+      </span>
+      <span class="unit-suffix" id="unit-suffix"></span>
+    </div>
+    <div class="question-note" id="question-note"></div>
+    <div class="actions">
+      <button class="btn primary" id="btn-check">Zkontrolovat</button>
+      <button class="btn ghost" id="btn-skip">Nevím / Další</button>
+    </div>
+    <div class="feedback" id="feedback" hidden>
+      <div class="headline" id="feedback-headline"></div>
+      <div class="steps" id="feedback-steps"></div>
+      <div class="keys-row" id="keys-row" hidden>
+        <div class="keys-label">Postup na kalkulačce</div>
+        <div class="keys" id="feedback-keys"></div>
+      </div>
+      <div class="tip" id="feedback-tip" hidden></div>
+    </div>
+  </div>
+
+  </div>
+
+  <div id="view-game" hidden>
+
+    <div id="game-intro">
+      <div class="panel">
+        <div class="panel-title">Pravidla hry</div>
+        <p class="game-rules">
+          Po vypršení zvoleného času se hra ukončí. Za správně vyřešený příklad získáte tolik bodů,
+          <strong>kolikrát je potřeba zmáčknout tlačítko na kalkulačce</strong>, abyste k výsledku došli
+          (např. postup na 5 stisků kalkulačky = <strong>5 bodů</strong>). Za špatnou odpověď (i za
+          odpověď „Nevím“) se strhává <strong>5 bodů</strong>.
+        </p>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Délka hry</div>
+        <div class="row" id="game-duration-row"></div>
+      </div>
+      <div class="panel">
+        <div class="settings-foot">
+          <span class="hint" id="game-best-hint">Nejlepší skóre: —</span>
+          <button class="btn primary" id="btn-game-start">Spustit hru</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="game-play" hidden>
+      <div class="game-header">
+        <div class="game-timer" id="game-timer">2:00</div>
+        <div class="readout">
+          <div class="cell"><span class="label">Body</span><span class="value" id="game-score">0</span></div>
+          <div class="cell"><span class="label">Nejlepší</span><span class="value" id="game-best-live">0</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <span class="cat-tag" id="game-cat-tag">Základy</span>
+        <span class="points-badge" id="game-points-badge">+5 b</span>
+        <div class="equation" id="game-equation">
+          <span id="game-eq-expr"></span>
+          <span class="answer-slot" id="game-answer-decimal-wrap">
+            <input class="answer-input" id="game-answer" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="?">
+          </span>
+          <span class="unit-suffix" id="game-unit-suffix"></span>
+        </div>
+        <div class="question-note" id="game-question-note"></div>
+        <div class="actions">
+          <button class="btn primary" id="btn-game-check">Zkontrolovat</button>
+          <button class="btn ghost" id="btn-game-skip">Nevím / Další</button>
+        </div>
+        <div class="feedback" id="game-feedback" hidden>
+          <div class="headline" id="game-feedback-headline"></div>
+          <div class="steps" id="game-feedback-steps"></div>
+          <div class="keys-row" id="game-keys-row" hidden>
+            <div class="keys-label">Postup na kalkulačce</div>
+            <div class="keys" id="game-feedback-keys"></div>
+          </div>
+          <div class="tip" id="game-feedback-tip" hidden></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="game-over" hidden>
+      <span class="cat-tag">Konec hry</span>
+      <div class="game-final-score" id="game-final-score">0 bodů</div>
+      <div class="hint" id="game-final-detail"></div>
+      <div class="actions">
+        <button class="btn primary" id="btn-game-restart">Hrát znovu</button>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="view-teorie">
+
+    <div class="panel">
+      <div class="panel-title">Než začnete počítat</div>
+      <div class="theory-block">
+        <p>FX-82CE X umí zadávat výrazy stejně, jak je píšete na papír — zlomky pod sebe, odmocniny se „stříškou“ atd. Tomu se říká <strong>přirozený zápis</strong>. Ve výchozím nastavení (Mat vst/Mat výs) se i výsledek snaží zobrazit přesně — jako zlomek, odmocninu nebo násobek π, pokud to jde.</p>
+        <ul class="theory-steps">
+          <li>Desetinná čísla pište čárkou i tečkou — kalkulačka i tento trenažér obojí pochopí.</li>
+          <li>Je-li výsledek zobrazený jako zlomek nebo odmocnina, přepnete ho na desetinné číslo klávesou <span class="key">S⇔D</span>.</li>
+          <li>Klávesou <span class="key">▶</span> se v šabloně (zlomek, odmocnina, logaritmus…) přesouváte do dalšího políčka.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Klávesa Ans (poslední výsledek)</div>
+      <div class="theory-block">
+        <p>Klávesa <span class="key">Ans</span> je samostatná klávesa ve spodní řadě klávesnice (mezi <span class="key">×10ˣ</span> a <span class="key">=</span>) a vloží do výpočtu hodnotu posledního spočítaného výsledku — nemusíte si ho pamatovat ani znovu přepisovat. Po každém stisknutí <span class="key">=</span> se hodnota v Ans přepíše na nový výsledek, takže s ním můžete hned pokračovat v dalším kroku výpočtu.</p>
+        <div class="keys-label">Např. nejprve 5² = 25</div>
+        <div class="keys"><span class="key">5</span><span class="key">x²</span><span class="key">=</span></div>
+        <div class="keys-label">a pak tento výsledek vydělíte dvěma: Ans ÷ 2</div>
+        <div class="keys"><span class="key">Ans</span><span class="key">÷</span><span class="key">2</span><span class="key">=</span></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Mocniny a odmocniny</div>
+
+      <div class="theory-block">
+        <h3>Druhá a třetí mocnina</h3>
+        <p>Číslo napíšete a mocninu doplníte vyhrazenou klávesou — exponent se sám objeví jako horní index.</p>
+        <div class="keys-label">Druhá mocnina, např. 7²</div>
+        <div class="keys"><span class="key">7</span><span class="key">x²</span><span class="key">=</span></div>
+        <div class="keys-label">Třetí mocnina, např. 4³</div>
+        <div class="keys"><span class="key">4</span><span class="key">x³</span><span class="key">=</span></div>
+      </div>
+
+      <div class="theory-block">
+        <h3>Obecná mocnina (jiný exponent)</h3>
+        <p>Pro exponent jiný než 2 nebo 3 (třeba pátou mocninu) použijte klávesu <span class="key key-pow">x<span class="exp-box"></span></span> (x s plným čtverečkem v exponentu) — do čtverečku pak zapíšete exponent.</p>
+        <div class="keys-label">Např. 3⁵</div>
+        <div class="keys"><span class="key">3</span><span class="key key-pow">x<span class="exp-box"></span></span><span class="key">5</span><span class="key">=</span></div>
+      </div>
+
+      <div class="theory-block">
+        <h3>Druhá a třetí odmocnina</h3>
+        <div class="keys-label">Druhá odmocnina, např. √50</div>
+        <div class="keys"><span class="key">√</span><span class="key">5</span><span class="key">0</span><span class="key">=</span></div>
+        <p>Klávesa √ otevře šablonu s políčkem pro výraz pod odmocninou (na klávese je vytištěno √▪). Je-li pod odmocninou celý výraz (součet, rozdíl…), napíšete ho přímo do políčka a z něj pak vystoupíte klávesou <span class="key">▶</span>, ne závorkou.</p>
+        <div class="keys-label">Např. √(6 + 8)</div>
+        <div class="keys"><span class="key">√</span><span class="key">6</span><span class="key">+</span><span class="key">8</span><span class="key">=</span></div>
+        <div class="keys-label">Třetí odmocnina, např. ∛27</div>
+        <div class="keys"><span class="key">SHIFT</span><span class="key">∛</span><span class="key">2</span><span class="key">7</span><span class="key">=</span></div>
+      </div>
+
+      <div class="theory-block">
+        <h3>Obecná n-tá odmocnina</h3>
+        <p>Klávesa <span class="key key-root"><span class="exp-box"></span>√</span> (plný čtvereček nad odmocninou) je pro odmocninu s libovolným indexem. Nejdřív zadáte <strong>index odmocniny</strong> (kolikátá odmocnina to je), teprve pak číslo pod odmocninou.</p>
+        <div class="keys-label">Např. pátá odmocnina z 200</div>
+        <div class="keys"><span class="key">SHIFT</span><span class="key key-root"><span class="exp-box"></span>√</span><span class="key">5</span><span class="key">▶</span><span class="key">2</span><span class="key">0</span><span class="key">0</span><span class="key">=</span></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Zlomky</div>
+      <div class="theory-block">
+        <p>Klávesa <span class="key key-frac"><span class="frac-icon"><span class="frac-box frac-box-filled"></span><span class="frac-bar"></span><span class="frac-box frac-box-outline"></span></span></span> (plný obdélníček nad zlomkovou čárou nad obrysem obdélníčku) vytvoří šablonu zlomku. Čitatel napíšete rovnou, klávesou ▶ přeskočíte do jmenovatele.</p>
+        <div class="keys-label">Např. 3/8</div>
+        <div class="keys"><span class="key key-frac"><span class="frac-icon"><span class="frac-box frac-box-filled"></span><span class="frac-bar"></span><span class="frac-box frac-box-outline"></span></span></span><span class="key">3</span><span class="key">▶</span><span class="key">8</span></div>
+        <p>Složený zlomek (zlomek dělený zlomkem, nebo součet dvou zlomků v čitateli) zadáte tak, že do políčka čitatele nebo jmenovatele vložíte další zlomek stejnou klávesou — šipkami nebo klávesou ▶ se mezi patry přesouváte.</p>
+        <p>Výsledek v podobě zlomku převedete na desetinné číslo klávesou <span class="key">S⇔D</span>.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Mocniny deseti (vědecký zápis)</div>
+      <div class="theory-block">
+        <p>Číslo ve tvaru a·10ⁿ se zadává jednou klávesou ×10ˣ — nepíše se ani krát, ani deset, ani stříška.</p>
+        <div class="keys-label">Např. 3,2 · 10⁻⁴</div>
+        <div class="keys"><span class="key">3</span><span class="key">,</span><span class="key">2</span><span class="key">×10ˣ</span><span class="key">(-)</span><span class="key">4</span></div>
+        <p>Dvě takováto čísla mezi sebou násobíte nebo dělíte úplně normálně, klávesou × nebo ÷ mezi nimi, a na konci stisknete <span class="key">=</span>.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Číslo π</div>
+      <div class="theory-block">
+        <p>Klávesová zkratka SHIFT + π vloží symbol π přesně — kalkulačka s ním počítá jako s přesnou hodnotou, ne se zaokrouhlenou. Desetinné číslo dostanete klávesou <span class="key">S⇔D</span>.</p>
+        <div class="keys-label">Např. 2·π·5 (obvod kružnice)</div>
+        <div class="keys"><span class="key">2</span><span class="key">×</span><span class="key">SHIFT</span><span class="key">π</span><span class="key">×</span><span class="key">5</span><span class="key">=</span></div>
+      </div>
+    </div>
+    
+    <div class="panel">
+      <div class="panel-title">Goniometrie (Deg/Rad)</div>
+      <div class="theory-block">
+        <h3>Přepnutí mezi stupni a radiány</h3>
+        <p>Než začnete počítat, zkontrolujte, v jakém režimu kalkulačka je (nahoře na displeji ikonka D nebo R). Přepnete takto:</p>
+        <ol class="theory-steps">
+          <li>Stiskněte <span class="key">SHIFT</span> <span class="key">MENU</span> (otevře se SETUP).</li>
+          <li>Vyberte <strong>Jednotka úhlu</strong> <span class="key">2</span>.</li>
+          <li>Zvolte <strong>Stupeň (D)</strong> <span class="key">1</span> nebo <strong>Radián</strong> <span class="key">2</span>.</li>
+        </ol>
+        <p class="tip">Pokud vám vyjde jiné číslo, než čekáte, skoro vždy je na vině právě špatně nastavený režim Deg/Rad — je to i nejčastější chyba v příkladech níže.</p>
+      </div>
+      <div class="theory-block">
+        <h3>Hodnota funkce ze zadaného úhlu</h3>
+        <div class="keys-label">Např. sin(35°) v režimu Deg</div>
+        <div class="keys"><span class="key">sin</span><span class="key">3</span><span class="key">5</span><span class="key">)</span><span class="key">=</span></div>
+        <p>Stejně fungují cos a tg. V režimu Rad zadáváte úhel v radiánech (může být i desetinný nebo záporný) a klávesy sin/cos/tg mají stejné pořadí kroků.</p>
+      </div>
+      <div class="theory-block">
+        <h3>Hledání úhlu ze známé hodnoty (inverzní funkce)</h3>
+        <p>Použijte SHIFT + danou funkci (na displeji se zobrazí sin⁻¹, cos⁻¹, tg⁻¹).</p>
+        <div class="keys-label">Např. sin α = 0,574 ⇒ α</div>
+        <div class="keys"><span class="key">SHIFT</span><span class="key">sin⁻¹</span><span class="key">0</span><span class="key">,</span><span class="key">5</span><span class="key">7</span><span class="key">4</span><span class="key">)</span><span class="key">=</span></div>
+        <p>Výsledek se zobrazí ve stupních nebo radiánech podle toho, v jakém režimu kalkulačka právě je.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Logaritmy</div>
+      <div class="theory-block">
+        <h3>Dekadický a přirozený logaritmus</h3>
+        <div class="keys-label">log(x) — logaritmus o základu 10</div>
+        <div class="keys"><span class="key">log</span><span class="key">x</span><span class="key">)</span><span class="key">=</span></div>
+        <div class="keys-label">ln(x) — přirozený logaritmus (základ e)</div>
+        <div class="keys"><span class="key">ln</span><span class="key">x</span><span class="key">)</span><span class="key">=</span></div>
+        <p>Klávesy log i ln samy otevřou závorku — po zadání čísla ji zavřete klávesou <span class="key">)</span>.</p>
+      </div>
+      <div class="theory-block">
+        <h3>Logaritmus o obecném základu</h3>
+        <p>Klávesa <span class="key key-logb">log<span class="sub-box"></span><span class="arg-box"></span></span> (log s plným čtverečkem v dolním indexu pro základ a obrysem obdélníku pro argument) otevře šablonu s malým políčkem pro základ. Základ zadáte hned, klávesou ▶ přeskočíte k argumentu.</p>
+        <div class="keys-label">Např. log₃(50)</div>
+        <div class="keys"><span class="key key-logb">log<span class="sub-box"></span><span class="arg-box"></span></span><span class="key">3</span><span class="key">▶</span><span class="key">5</span><span class="key">0</span><span class="key">=</span></div>
+      </div>
+      <div class="theory-block">
+        <h3>Inverzní úloha — hledání x</h3>
+        <p>Znáte-li hodnotu logaritmu a hledáte číslo x, použijte inverzní funkci: SHIFT + log počítá 10ˣ, SHIFT + ln počítá eˣ.</p>
+        <div class="keys-label">Např. log(x) = 1,4 ⇒ x</div>
+        <div class="keys"><span class="key">SHIFT</span><span class="key">log</span><span class="key">1</span><span class="key">,</span><span class="key">4</span><span class="key">▶</span><span class="key">=</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>Klávesa Enter potvrzuje odpověď a posouvá na další příklad.</footer>
+</div>
+
+<script src="../spolecne/spolecne.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  // ---------- pomocné funkce ----------
+
+  function randInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+  function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+
+  function numberToKeys(value, decimals){
+    var v = roundTo(value, decimals);
+    var neg = v<0;
+    var s = Math.abs(v).toFixed(decimals);
+    var keys = [];
+    if(neg) keys.push('(-)');
+    for(var i=0;i<s.length;i++){
+      var ch = s[i];
+      keys.push(ch==='.' ? ',' : ch);
+    }
+    return keys;
+  }
+
+  function parseAnswer(str){
+    if(!str) return NaN;
+    // U+2212 (typografické mínus) a U+2013 (pomlčka) se běžně objeví při
+    // kopírování z dokumentů nebo na některých klávesnicích — parseFloat
+    // rozumí jen obyčejnému ASCII "-".
+    str = str.trim().replace(/[−–]/g, '-').replace(',', '.').replace(/\s+/g,'');
+    return parseFloat(str);
+  }
+
+  var FRAC_KEY_HTML = '<span class="key key-frac"><span class="frac-icon"><span class="frac-box frac-box-filled"></span><span class="frac-bar"></span><span class="frac-box frac-box-outline"></span></span></span>';
+  var POW_KEY_HTML = '<span class="key key-pow">x<span class="exp-box"></span></span>';
+  var ROOT_KEY_HTML = '<span class="key key-root"><span class="exp-box"></span>√</span>';
+  // Klávesa pro logaritmus o obecném základu — na klávesnici je odlišená od
+  // prostého "log" plným čtverečkem v dolním indexu (místo pro základ) a
+  // obrysem svislého obdélníku hned za ním (místo pro argument).
+  var LOGB_KEY_HTML = '<span class="key key-logb">log<span class="sub-box"></span><span class="arg-box"></span></span>';
+
+  function keysHtml(keys){
+    return keys.map(function(k){
+      if(k==='FRAC') return FRAC_KEY_HTML;
+      if(k==='POW') return POW_KEY_HTML;
+      if(k==='ROOT') return ROOT_KEY_HTML;
+      if(k==='LOGB') return LOGB_KEY_HTML;
+      var esc = String(k).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      return '<span class="key">'+esc+'</span>';
+    }).join('');
+  }
+
+  function decimalsNeeded(value){
+    for(var k=0;k<=6;k++){
+      var scaled = value*Math.pow(10,k);
+      if(Math.abs(scaled-Math.round(scaled))<1e-9) return k;
+    }
+    return 6;
+  }
+
+  // Kalkulačka má desetimístný displej — kolik cifer (bez desetinné čárky a znaménka)
+  // by na něm zabral výsledek zaokrouhlený na `decimals` míst.
+  var CALC_DISPLAY_DIGITS = 10;
+  function digitsOnDisplay(value, decimals){
+    var v = roundTo(Math.abs(value), decimals);
+    return v.toFixed(decimals).replace('.', '').length;
+  }
+  function fitsCalcDisplay(value, decimals){
+    return digitsOnDisplay(value, decimals) <= CALC_DISPLAY_DIGITS;
+  }
+
+  function decWord(n){
+    if(n===1) return 'desetinné místo';
+    if(n>=2 && n<=4) return 'desetinná místa';
+    return 'desetinných míst';
+  }
+  // n===0 znamená, že výsledek je celé číslo — „zaokrouhlete na 0 desetinných
+  // míst“ by bylo matoucí, proto se pro tento případ používá jiná formulace.
+  function roundNote(n){
+    if(n===0) return 'Výsledek zaokrouhlete na celé číslo.';
+    return 'Výsledek zaokrouhlete na '+n+' '+decWord(n)+'.';
+  }
+
+  // Skloňování slova "bod" v koncovém skóre hry (2 body, 5 bodů…). Záporné
+  // skóre se skloňuje podle absolutní hodnoty ("-2 body", ne "-2 bodů").
+  function pointWord(n){
+    var abs = Math.abs(n);
+    if(abs===1) return 'bod';
+    if(abs>=2 && abs<=4) return 'body';
+    return 'bodů';
+  }
+
+  function applyOp(a, op, b){
+    if(op==='+') return a+b;
+    if(op==='−') return a-b;
+    if(op==='×') return a*b;
+    return a/b;
+  }
+
+  // Převod interního symbolu operace (používaného i pro klávesy) na TeX zápis.
+  function texOp(op){
+    if(op==='+') return '+';
+    if(op==='−') return '-';
+    if(op==='×') return '\\cdot';
+    return '\\div';
+  }
+
+  // TeX zápis desetinného čísla s českou čárkou a korektním minus.
+  function texNum(value, decimals){
+    var v = roundTo(value, decimals);
+    if(Object.is(v,-0)) v = 0;
+    var s = Math.abs(v).toFixed(decimals).replace('.', '{,}');
+    return (v<0 ? '-' : '') + s;
+  }
+
+  function fracTex(numTex, denTex){ return '\\frac{'+numTex+'}{'+denTex+'}'; }
+
+  function fracKeys(n,d){ return ['FRAC'].concat(numberToKeys(n,0)).concat(['▶']).concat(numberToKeys(d,0)); }
+
+  function compoundFracKeys(numKeys, denKeys){
+    // numKeys vždy končí uvnitř jmenovatele vnořeného zlomku, takže je potřeba
+    // ▶ dvakrát: jednou pro výstup z vnořeného zlomku, podruhé pro přesun do
+    // jmenovatele vnějšího zlomku. Jedno ▶ by skončilo Syntax ERROR.
+    return ['FRAC'].concat(numKeys).concat(['▶','▶']).concat(denKeys);
+  }
+
+  // Vrací zlomek pro použití ve výrazu – někdy jednoduchý (n/d), někdy složený
+  // (zlomek, jehož čitatel/jmenovatel je opět zlomek nebo součet zlomků).
+  function genFracTerm(){
+    var kind = randInt(1,3);
+    if(kind===1){
+      var n=randInt(1,9), d=randInt(2,12);
+      return { tex: fracTex(n,d), keys: fracKeys(n,d), value: n/d };
+    }
+    if(kind===2){
+      var a=randInt(1,9), b=randInt(2,9), c=randInt(1,9), d2=randInt(2,9);
+      var value = (a/b)/(c/d2);
+      return {
+        tex: fracTex(fracTex(a,b), fracTex(c,d2)),
+        keys: compoundFracKeys(fracKeys(a,b), fracKeys(c,d2)),
+        value: value
+      };
+    }
+    var a2,b2,c2,d3,op2,numVal;
+    // Odečítání dvou zlomků může jinak vyjít ≤ 0 — a to buď jako záporný
+    // čitatel složeného zlomku (u √(zlomek) pak odmocnina ze záporného čísla,
+    // tj. NaN), nebo jako nulový čitatel (dělení nulou, tj. Infinity), proto
+    // se generuje, dokud numVal nevyjde ostře kladné.
+    do{
+      a2=randInt(1,9); b2=randInt(2,9); c2=randInt(1,9); d3=randInt(2,9);
+      op2 = pick(['+','−']);
+      numVal = applyOp(a2/b2, op2, c2/d3);
+    } while(numVal<=0);
+    var e2=randInt(1,9), f2=randInt(2,9);
+    var value2 = numVal / (e2/f2);
+    var numTex = fracTex(a2,b2)+' '+texOp(op2)+' '+fracTex(c2,d3);
+    var numKeys = fracKeys(a2,b2).concat(['▶',op2]).concat(fracKeys(c2,d3));
+    return {
+      tex: fracTex(numTex, fracTex(e2,f2)),
+      keys: compoundFracKeys(numKeys, fracKeys(e2,f2)),
+      value: value2
+    };
+  }
+
+  // ---------- generátory úloh ----------
+  // "Mocniny a odmocniny"
+
+  function maybeDecimal(intVal){
+    if(Math.random()<0.25){
+      var v = Math.round((intVal + (Math.random()*0.8-0.4))*10)/10;
+      if(v<=0) v = 0.5;
+      return v;
+    }
+    return intVal;
+  }
+
+  function genPower(){
+    var kind = randInt(1,8);
+    var base, bd, n, radicand, exact, displayTex, keys, a, b;
+    switch(kind){
+      case 1:
+        base = maybeDecimal(randInt(2,30));
+        bd = Number.isInteger(base) ? 0 : 1;
+        exact = Math.pow(base,2);
+        displayTex = texNum(base,bd)+'^2';
+        // Desetinný vstup se zadává jako přesné číslo, takže výsledek se může
+        // zobrazit jako zlomek — proto navíc S⇔D pro převod na desetinné číslo.
+        keys = numberToKeys(base,bd).concat(['x²','=']).concat(bd===1 ? ['S⇔D'] : []);
+        break;
+      case 2:
+        base = maybeDecimal(randInt(2,12));
+        bd = Number.isInteger(base) ? 0 : 1;
+        exact = Math.pow(base,3);
+        displayTex = texNum(base,bd)+'^3';
+        keys = numberToKeys(base,bd).concat(['x³','=']).concat(bd===1 ? ['S⇔D'] : []);
+        break;
+      case 3:
+        base = randInt(2,6); n = randInt(4,6);
+        exact = Math.pow(base,n);
+        displayTex = base+'^{'+n+'}';
+        keys = numberToKeys(base,0).concat(['POW']).concat(numberToKeys(n,0)).concat(['=']);
+        break;
+      case 4:
+        radicand = randInt(2,400);
+        exact = Math.sqrt(radicand);
+        displayTex = '\\sqrt{'+radicand+'}';
+        // Výsledek se může zobrazit ve tvaru odmocniny (např. 5√2) — S⇔D převede na desetinné číslo.
+        keys = ['√'].concat(numberToKeys(radicand,0)).concat(['=','S⇔D']);
+        break;
+      case 5:
+        radicand = randInt(2,800);
+        exact = Math.cbrt(radicand);
+        displayTex = '\\sqrt[3]{'+radicand+'}';
+        keys = ['SHIFT','∛'].concat(numberToKeys(radicand,0)).concat(['=','S⇔D']);
+        break;
+      case 6:
+        n = pick([4,5]);
+        radicand = randInt(2,1000);
+        exact = Math.pow(radicand, 1/n);
+        displayTex = '\\sqrt['+n+']{'+radicand+'}';
+        // V přirozeném zápisu (MathI) se šablona ⁿ√ otvírá SHIFT+klávesou dřív
+        // než se zadá index — pak ▶ přeskočí do políčka čísla pod odmocninou.
+        keys = ['SHIFT','ROOT'].concat(numberToKeys(n,0)).concat(['▶']).concat(numberToKeys(radicand,0)).concat(['=','S⇔D']);
+        break;
+      case 7:
+        a=randInt(2,15); b=randInt(2,15);
+        exact = Math.pow(a+b,2);
+        displayTex = '\\left('+a+' + '+b+'\\right)^2';
+        keys = ['('].concat(numberToKeys(a,0)).concat(['+']).concat(numberToKeys(b,0)).concat([')','x²','=']);
+        break;
+      default:
+        a=randInt(3,12); b=randInt(3,12);
+        exact = Math.sqrt(a+b);
+        displayTex = '\\sqrt{'+a+' + '+b+'}';
+        keys = ['√'].concat(numberToKeys(a,0)).concat(['+']).concat(numberToKeys(b,0)).concat(['=','S⇔D']);
+        break;
+    }
+    var resultDecimals = (kind<=3 || kind===7) ? 2 : 4;
+    var note = resultDecimals===2 ? 'Výsledek zaokrouhlete na 2 desetinná místa.' : 'Výsledek zaokrouhlete na 4 desetinná místa.';
+    return {
+      displayTex: displayTex + ' =',
+      exact: exact,
+      keys: keys,
+      resultDecimals: resultDecimals,
+      mode: 'decimal',
+      note: note
+    };
+  }
+
+  function genPowerFracExpr(){
+    var kind, a, op, exact, displayTex, keys, frac, power, dec, tries=0;
+    // (zlomek)³ z malého zlomku vyjde velmi malé číslo — na 4 desetinná místa
+    // by se to zaokrouhlilo na 0, proto se v takovém případě zkusí jiná úloha.
+    do{
+    kind = randInt(1,5);
+    switch(kind){
+      case 1:
+        a=randInt(2,12); frac=genFracTerm(); op=pick(['+','−','×','÷']);
+        var powTex1 = a+'^2';
+        exact = applyOp(a*a, op, frac.value);
+        keys = numberToKeys(a,0).concat(['x²']).concat([op]).concat(frac.keys).concat(['=','S⇔D']);
+        displayTex = op==='÷' ? fracTex(powTex1, frac.tex)+' =' : powTex1+' '+texOp(op)+' '+frac.tex+' =';
+        break;
+      case 2:
+        a=randInt(2,50); frac=genFracTerm(); op=pick(['+','−','×','÷']);
+        var rootTex1 = '\\sqrt{'+a+'}';
+        exact = applyOp(Math.sqrt(a), op, frac.value);
+        // Bez ▶ po čísle pod odmocninou by se operátor zapsal ještě do odmocniny.
+        keys = ['√'].concat(numberToKeys(a,0)).concat(['▶']).concat([op]).concat(frac.keys).concat(['=','S⇔D']);
+        displayTex = op==='÷' ? fracTex(rootTex1, frac.tex)+' =' : rootTex1+' '+texOp(op)+' '+frac.tex+' =';
+        break;
+      case 3:
+        frac=genFracTerm(); power=pick([2,3]);
+        exact = Math.pow(frac.value, power);
+        displayTex = '\\left(' + frac.tex + '\\right)^{'+power+'} =';
+        // Bez ▶ za zlomkem by se x²/x³ umocnil jen jmenovatel, ne celý zlomek.
+        keys = frac.keys.concat(['▶']).concat(power===2?['x²']:['x³']).concat(['=','S⇔D']);
+        break;
+      case 4:
+        frac=genFracTerm();
+        exact = Math.sqrt(frac.value);
+        displayTex = '\\sqrt{' + frac.tex + '} =';
+        // √ otevře šablonu se zlomkem uvnitř; z ní se vystupuje klávesou ▶,
+        // ne závorkou (ta by jen posunula zlomek dovnitř jmenovatele).
+        keys = ['√'].concat(frac.keys).concat(['▶','=','S⇔D']);
+        break;
+      default:
+        frac=genFracTerm(); a=randInt(2,10); op=pick(['+','−','×']);
+        var powTex2 = a+'^2';
+        exact = applyOp(frac.value, op, a*a);
+        displayTex = frac.tex+' '+texOp(op)+' '+powTex2+' =';
+        // Bez ▶ za zlomkem by se operátor zapsal ještě do jmenovatele.
+        keys = frac.keys.concat(['▶',op]).concat(numberToKeys(a,0)).concat(['x²','=','S⇔D']);
+        break;
+    }
+    dec = Math.min(decimalsNeeded(exact),4);
+    tries++;
+    } while(exact!==0 && roundTo(exact,dec)===0 && tries<30);
+    return {
+      displayTex: displayTex,
+      exact: exact,
+      keys: keys,
+      resultDecimals: dec,
+      mode: 'decimal',
+      note: roundNote(dec)
+    };
+  }
+
+  // "Mocniny deseti"
+
+  function powerTenTerm(){
+    var m = randInt(10,99)/10;
+    var e = pick([-4,-3,-2,-1,1,2,3,4,5]);
+    var expTex = e<0 ? ('-'+Math.abs(e)) : String(e);
+    return {
+      tex: '\\left(' + texNum(m,1) + ' \\cdot 10^{'+expTex+'}\\right)',
+      keys: numberToKeys(m,1).concat(['×10ˣ']).concat(e<0?['(-)']:[]).concat(numberToKeys(Math.abs(e),0)),
+      value: m*Math.pow(10,e)
+    };
+  }
+
+  // Zkouší náhodné dvojice, dokud výsledek nevyjde na desetimístný displej kalkulačky
+  // (součin/podíl dvou velkých mocnin deseti se tam jinak nevejde).
+  function genPowerTenExpr(){
+    var t1, t2, op, exact, dec, tries=0;
+    do{
+      t1 = powerTenTerm(); t2 = powerTenTerm();
+      op = pick(['×','÷']);
+      exact = op==='×' ? t1.value*t2.value : t1.value/t2.value;
+      dec = Math.min(decimalsNeeded(exact),6);
+      tries++;
+      // exact je vždy nenulové (mantisy jsou z <1,9.9>), takže zaokrouhlený
+      // výsledek 0 znamená jen to, že na 6 míst se do zobrazení nevejde —
+      // takovou (nesmyslnou) úlohu zahodíme a zkusíme jinou dvojici.
+    } while((!fitsCalcDisplay(exact,dec) || roundTo(exact,dec)===0) && tries<50);
+
+    var displayTex = op==='÷' ? fracTex(t1.tex, t2.tex)+' =' : t1.tex+' \\cdot '+t2.tex+' =';
+    var keys = t1.keys.concat([op]).concat(t2.keys).concat(['=']);
+
+    return {
+      displayTex: displayTex,
+      exact: exact,
+      keys: keys,
+      resultDecimals: dec,
+      mode: 'decimal',
+      note: roundNote(dec)
+    };
+  }
+
+  function genPowerTenFracExpr(){
+    var powerTerm, frac, op, fracFirst, exact, dec, tries=0;
+    do{
+      powerTerm = powerTenTerm();
+      frac = genFracTerm();
+      op = pick(['×','÷','+','−']);
+      fracFirst = Math.random()<0.5;
+      exact = fracFirst ? applyOp(frac.value, op, powerTerm.value) : applyOp(powerTerm.value, op, frac.value);
+      dec = Math.min(decimalsNeeded(exact),6);
+      tries++;
+    } while((!fitsCalcDisplay(exact,dec) || roundTo(exact,dec)===0) && tries<50);
+
+    var displayTex, keys;
+    if(fracFirst){
+      // Bez ▶ za zlomkem by se operátor zapsal ještě do jmenovatele.
+      keys = frac.keys.concat(['▶',op]).concat(powerTerm.keys).concat(['=','S⇔D']);
+      displayTex = op==='÷' ? fracTex(frac.tex, powerTerm.tex)+' =' : frac.tex+' '+texOp(op)+' '+powerTerm.tex+' =';
+    } else {
+      keys = powerTerm.keys.concat([op]).concat(frac.keys).concat(['=','S⇔D']);
+      displayTex = op==='÷' ? fracTex(powerTerm.tex, frac.tex)+' =' : powerTerm.tex+' '+texOp(op)+' '+frac.tex+' =';
+    }
+
+    return {
+      displayTex: displayTex,
+      exact: exact,
+      keys: keys,
+      resultDecimals: dec,
+      mode: 'decimal',
+      note: roundNote(dec)
+    };
+  }
+
+  // "Číslo π"
+
+  function genPi(){
+    var kind = randInt(1,4);
+    var r, N, exact, displayTex, keys, resultDecimals;
+    switch(kind){
+      case 1:
+        r = randInt(20,300)/10;
+        exact = 2*Math.PI*r;
+        displayTex = '2 \\cdot \\pi \\cdot '+texNum(r,1)+' =';
+        // S π se počítá přesně, výsledek se zobrazí jako násobek π — S⇔D dá desetinné číslo.
+        keys = ['2','×','SHIFT','π','×'].concat(numberToKeys(r,1)).concat(['=','S⇔D']);
+        resultDecimals = 3;
+        break;
+      case 2:
+        r = randInt(2,20);
+        exact = Math.PI*r*r;
+        displayTex = '\\pi \\cdot '+r+'^2 =';
+        keys = ['SHIFT','π','×'].concat(numberToKeys(r,0)).concat(['x²','=','S⇔D']);
+        resultDecimals = 3;
+        break;
+      case 3:
+        N = randInt(2,9);
+        exact = Math.PI/N;
+        displayTex = fracTex('\\pi', String(N)) + ' =';
+        keys = ['SHIFT','π','÷'].concat(numberToKeys(N,0)).concat(['=','S⇔D']);
+        resultDecimals = 4;
+        break;
+      default:
+        N = randInt(15,45)/10;
+        exact = N*Math.PI;
+        displayTex = texNum(N,1)+' \\cdot \\pi =';
+        keys = numberToKeys(N,1).concat(['×','SHIFT','π','=','S⇔D']);
+        resultDecimals = 4;
+        break;
+    }
+    return {
+      displayTex: displayTex,
+      exact: exact,
+      keys: keys,
+      resultDecimals: resultDecimals,
+      mode: 'decimal',
+      note: roundNote(resultDecimals)
+    };
+  }
+
+  // "Logaritmy"
+
+  function genLog(){
+    var kind = randInt(1,5);
+    var x,a,b,L,exact,displayTex,keys,resultDecimals,note;
+    switch(kind){
+      case 1:
+        x = randInt(2,999);
+        exact = Math.log10(x);
+        displayTex = '\\log('+x+') =';
+        keys = ['log'].concat(numberToKeys(x,0)).concat([')','=']);
+        resultDecimals = 4;
+        note = roundNote(resultDecimals);
+        break;
+      case 2:
+        x = randInt(2,500);
+        exact = Math.log(x);
+        displayTex = '\\ln('+x+') =';
+        keys = ['ln'].concat(numberToKeys(x,0)).concat([')','=']);
+        resultDecimals = 4;
+        note = roundNote(resultDecimals);
+        break;
+      case 3:
+        a = randInt(2,9);
+        b = randInt(2,300);
+        exact = Math.log(b)/Math.log(a);
+        displayTex = '\\log_{'+a+'}('+b+') =';
+        keys = ['LOGB',String(a),'▶'].concat(numberToKeys(b,0)).concat(['=']);
+        resultDecimals = 4;
+        note = roundNote(resultDecimals);
+        break;
+      case 4:
+        L = randInt(-200,400)/100;
+        exact = Math.pow(10,L);
+        displayTex = '\\log(x) = '+texNum(L,2)+' \\;\\Rightarrow\\; x =';
+        // SHIFT+log otevře šablonu 10^⬚ (exponent), ne závorkovou funkci —
+        // z exponentu se vystupuje klávesou ▶, ne „)“.
+        keys = ['SHIFT','log'].concat(numberToKeys(L,2)).concat(['▶','=']);
+        resultDecimals = exact<1 ? 4 : 2;
+        note = roundNote(resultDecimals);
+        break;
+      default:
+        L = randInt(-150,300)/100;
+        exact = Math.exp(L);
+        displayTex = '\\ln(x) = '+texNum(L,2)+' \\;\\Rightarrow\\; x =';
+        // SHIFT+ln otevře šablonu e^⬚ (exponent) — stejně jako u 10^⬚ se z ní vystupuje ▶.
+        keys = ['SHIFT','ln'].concat(numberToKeys(L,2)).concat(['▶','=']);
+        resultDecimals = exact<1 ? 4 : 2;
+        note = roundNote(resultDecimals);
+        break;
+    }
+    return {
+      displayTex: displayTex,
+      exact: exact,
+      keys: keys,
+      resultDecimals: resultDecimals,
+      mode: 'decimal',
+      note: note
+    };
+  }
+
+  // "Goniometrie (Deg/Rad)"
+
+  var MODE_FIX = {
+    deg: 'Kalkulačka je pravděpodobně v režimu Rad. Přepněte ji do režimu Deg: SHIFT MENU (SETUP) → Jednotka úhlu → Stupeň (D).',
+    rad: 'Kalkulačka je pravděpodobně v režimu Deg. Přepněte ji do režimu Rad: SHIFT MENU (SETUP) → Jednotka úhlu → Radián.'
+  };
+
+  function trigTex(fn){ return fn==='tg' ? '\\operatorname{tg}' : '\\'+fn; }
+
+  function genTrigValue(){
+    var fn = pick(['sin','cos','tg']);
+    var angle;
+    if(fn==='tg'){ angle = Math.random()<0.5 ? randInt(1,80) : randInt(100,170); }
+    else { angle = randInt(0,180); }
+    var rad = angle*Math.PI/180;
+    var exact = fn==='sin' ? Math.sin(rad) : (fn==='cos' ? Math.cos(rad) : Math.tan(rad));
+    var altExact = fn==='sin' ? Math.sin(angle) : (fn==='cos' ? Math.cos(angle) : Math.tan(angle));
+    var displayTex = trigTex(fn)+'('+angle+'^\\circ) =';
+    var keys = [fn].concat(numberToKeys(angle,0)).concat([')','=']);
+    return {
+      displayTex: displayTex,
+      exact: exact,
+      keys: keys,
+      resultDecimals: 4,
+      mode: 'decimal',
+      note: roundNote(4),
+      altExact: altExact,
+      altFixMsg: MODE_FIX.deg
+    };
+  }
+
+  function genTrigInverse(){
+    var fn = pick(['sin','cos','tg']);
+    var angleExact, value;
+    if(fn==='tg'){ angleExact = randInt(5,80); value = Math.tan(angleExact*Math.PI/180); }
+    else if(fn==='cos'){ angleExact = randInt(5,175); value = Math.cos(angleExact*Math.PI/180); }
+    else { angleExact = randInt(5,175); value = Math.sin(angleExact*Math.PI/180); }
+    var roundedValue = roundTo(value,3);
+    var displayTex = trigTex(fn)+'\\,\\alpha = '+texNum(roundedValue,3)+' \\;\\Rightarrow\\; \\alpha =';
+    var exactAngle, altAngle;
+    if(fn==='sin'){ exactAngle = Math.asin(roundedValue)*180/Math.PI; altAngle = Math.asin(roundedValue); }
+    else if(fn==='cos'){ exactAngle = Math.acos(roundedValue)*180/Math.PI; altAngle = Math.acos(roundedValue); }
+    else { exactAngle = Math.atan(roundedValue)*180/Math.PI; altAngle = Math.atan(roundedValue); }
+    var invLabel = fn+'⁻¹';
+    var keys = ['SHIFT', invLabel].concat(numberToKeys(roundedValue,3)).concat([')','=']);
+    return {
+      displayTex: displayTex,
+      exact: exactAngle,
+      keys: keys,
+      resultDecimals: 1,
+      mode: 'decimal',
+      answerSuffix: '°',
+      note: roundNote(1),
+      altExact: altAngle,
+      altFixMsg: MODE_FIX.deg
+    };
+  }
+
+  function genTrigRadValue(){
+    var fn = pick(['sin','cos','tg']);
+    var angle;
+    do{ angle = randInt(-300,300)/100; } while(fn==='tg' && Math.abs(Math.abs(angle) - Math.PI/2) < 0.2);
+    var exact = fn==='sin' ? Math.sin(angle) : (fn==='cos' ? Math.cos(angle) : Math.tan(angle));
+    var degAngle = angle*Math.PI/180;
+    var altExact = fn==='sin' ? Math.sin(degAngle) : (fn==='cos' ? Math.cos(degAngle) : Math.tan(degAngle));
+    var displayTex = trigTex(fn)+'('+texNum(angle,2)+'\\;\\mathrm{rad}) =';
+    var keys = [fn].concat(numberToKeys(angle,2)).concat([')','=']);
+    return {
+      displayTex: displayTex,
+      exact: exact,
+      keys: keys,
+      resultDecimals: 4,
+      mode: 'decimal',
+      note: roundNote(4),
+      altExact: altExact,
+      altFixMsg: MODE_FIX.rad
+    };
+  }
+
+  function genTrigRadInverse(){
+    var fn = pick(['sin','cos','tg']);
+    var angleExact, value;
+    if(fn==='tg'){ angleExact = randInt(5,140)/100; value = Math.tan(angleExact); }
+    else if(fn==='cos'){ angleExact = randInt(5,300)/100; value = Math.cos(angleExact); }
+    else { angleExact = randInt(5,300)/100; value = Math.sin(angleExact); }
+    var roundedValue = roundTo(value,3);
+    var displayTex = trigTex(fn)+'\\,\\alpha = '+texNum(roundedValue,3)+' \\;\\Rightarrow\\; \\alpha =';
+    var exactAngle, altAngle;
+    if(fn==='sin'){ exactAngle = Math.asin(roundedValue); altAngle = Math.asin(roundedValue)*180/Math.PI; }
+    else if(fn==='cos'){ exactAngle = Math.acos(roundedValue); altAngle = Math.acos(roundedValue)*180/Math.PI; }
+    else { exactAngle = Math.atan(roundedValue); altAngle = Math.atan(roundedValue)*180/Math.PI; }
+    var invLabel = fn+'⁻¹';
+    var keys = ['SHIFT', invLabel].concat(numberToKeys(roundedValue,3)).concat([')','=']);
+    return {
+      displayTex: displayTex,
+      exact: exactAngle,
+      keys: keys,
+      resultDecimals: 3,
+      mode: 'decimal',
+      answerSuffix: ' rad',
+      note: roundNote(3),
+      altExact: altAngle,
+      altFixMsg: MODE_FIX.rad
+    };
+  }
+
+  // ---------- kategorie a stav ----------
+
+  var CATEGORIES = [
+    { key:'mocniny', name:'Mocniny a odmocniny', gens:[genPower, genPowerFracExpr] },
+    { key:'mocniny10', name:'Mocniny deseti', gens:[genPowerTenExpr, genPowerTenFracExpr] },
+    { key:'pi', name:'Číslo π', gens:[genPi] },
+    { key:'gonio', name:'Goniometrie (Deg/Rad)', gens:[genTrigValue, genTrigInverse, genTrigRadValue, genTrigRadInverse] },
+    { key:'log', name:'Logaritmy', gens:[genLog] }
+  ];
+
+  var state = {
+    sel: {},
+    score: 0, streak: 0, bestStreak: 0, answered: 0, correct: 0,
+    current: null, locked: false, touched: false
+  };
+  CATEGORIES.forEach(function(c){ state.sel[c.key] = true; });
+
+  function loadStats(){
+    try{
+      var raw = localStorage.getItem('fyzika:kalkulacka-fx82cex:stats');
+      if(raw){ state.bestStreak = JSON.parse(raw).bestStreak || 0; }
+    }catch(e){}
+  }
+  function saveStats(){
+    try{ localStorage.setItem('fyzika:kalkulacka-fx82cex:stats', JSON.stringify({bestStreak: state.bestStreak})); }catch(e){}
+  }
+
+  function generateQuestion(){
+    var pool = CATEGORIES.filter(function(c){ return state.sel[c.key]; });
+    if(pool.length===0) pool = CATEGORIES;
+    var cat = pick(pool);
+    var gen = pick(cat.gens);
+    var q = gen();
+    q.topicName = cat.name;
+    state.current = q;
+    renderQuestion();
+  }
+
+  function renderTex(el, tex){
+    try{ katex.render('\\displaystyle '+tex, el, {throwOnError:false}); }
+    catch(e){ el.textContent = tex; }
+  }
+
+  function renderQuestion(){
+    var q = state.current;
+    document.getElementById('cat-tag').textContent = q.topicName;
+    renderTex(document.getElementById('eq-expr'), q.displayTex);
+    document.getElementById('question-note').textContent = q.note || '';
+
+    document.getElementById('unit-suffix').textContent = q.answerSuffix || '';
+
+    var input = document.getElementById('answer');
+    input.value=''; input.disabled=false; input.classList.remove('correct','wrong');
+
+    document.getElementById('feedback').hidden = true;
+    document.getElementById('feedback').classList.remove('ok','bad');
+    document.getElementById('keys-row').hidden = true;
+    document.getElementById('feedback-tip').hidden = true;
+    state.locked = false;
+    state.touched = false;
+    document.getElementById('btn-check').textContent = 'Zkontrolovat';
+
+    input.focus();
+  }
+
+  function isAnswerEmpty(){
+    return isNaN(parseAnswer(document.getElementById('answer').value));
+  }
+
+  function markInputs(cls){
+    document.getElementById('answer').classList.add(cls);
+  }
+  function disableInputs(){
+    document.getElementById('answer').disabled = true;
+  }
+
+  function correctAnswerTex(q){
+    return texNum(q.exact, q.resultDecimals);
+  }
+
+  function evaluate(q){
+    var v = parseAnswer(document.getElementById('answer').value);
+    var tol = 0.51 * Math.pow(10, -q.resultDecimals);
+    return !isNaN(v) && Math.abs(v - q.exact) <= tol;
+  }
+
+
+  function checkAnswer(){
+    if(state.locked){ generateQuestion(); return; }
+    var q = state.current;
+    var ok = evaluate(q);
+
+    state.answered++;
+    var fb = document.getElementById('feedback');
+    var head = document.getElementById('feedback-headline');
+    var steps = document.getElementById('feedback-steps');
+    var keysRow = document.getElementById('keys-row');
+    var keysEl = document.getElementById('feedback-keys');
+    fb.hidden = false;
+    document.getElementById('feedback-tip').hidden = true;
+
+    if(ok){
+      state.score += 10; state.streak++; state.correct++;
+      if(state.streak>state.bestStreak){
+        state.bestStreak = state.streak; saveStats();
+        if(window.FyzikaScores) FyzikaScores.report('serie', state.bestStreak, false);
+      }
+      markInputs('correct');
+      fb.classList.add('ok'); fb.classList.remove('bad');
+      head.textContent = 'Správně!';
+      steps.innerHTML = '';
+      steps.appendChild(document.createTextNode('Výsledek: '));
+      var okSpan = document.createElement('span');
+      steps.appendChild(okSpan);
+      renderTex(okSpan, correctAnswerTex(q));
+      if(q.answerSuffix) steps.appendChild(document.createTextNode(q.answerSuffix));
+      keysRow.hidden = true;
+    } else {
+      state.streak = 0;
+      markInputs('wrong');
+      fb.classList.add('bad'); fb.classList.remove('ok');
+      head.textContent = isAnswerEmpty() ? 'Doplňte odpověď.' : 'Bohužel špatně.';
+      steps.innerHTML = '';
+      steps.appendChild(document.createTextNode('Správně: '));
+      var badSpan = document.createElement('span');
+      steps.appendChild(badSpan);
+      renderTex(badSpan, correctAnswerTex(q));
+      if(q.answerSuffix) steps.appendChild(document.createTextNode(q.answerSuffix));
+      keysEl.innerHTML = keysHtml(q.keys);
+      keysRow.hidden = false;
+
+      if(q.altExact!==undefined && q.mode==='decimal'){
+        var vAlt = parseAnswer(document.getElementById('answer').value);
+        var tolAlt = Math.max(0.02, Math.abs(q.altExact)*0.01);
+        if(!isNaN(vAlt) && Math.abs(vAlt - q.altExact) <= tolAlt){
+          document.getElementById('feedback-tip').hidden = false;
+          document.getElementById('feedback-tip').textContent = q.altFixMsg;
+        }
+      }
+    }
+    disableInputs();
+    state.locked = true;
+    var btnCheck = document.getElementById('btn-check');
+    btnCheck.textContent = 'Další příklad →';
+    btnCheck.focus();
+    updateStats();
+  }
+
+  function skip(){
+    if(state.locked){ generateQuestion(); return; }
+    state.streak = 0;
+    state.answered++;
+    var q = state.current;
+    var fb = document.getElementById('feedback');
+    fb.hidden = false;
+    document.getElementById('feedback-tip').hidden = true;
+    document.getElementById('feedback-headline').textContent = 'Správná odpověď:';
+    var stepsEl = document.getElementById('feedback-steps');
+    stepsEl.innerHTML = '';
+    var skipSpan = document.createElement('span');
+    stepsEl.appendChild(skipSpan);
+    renderTex(skipSpan, correctAnswerTex(q));
+    if(q.answerSuffix) stepsEl.appendChild(document.createTextNode(q.answerSuffix));
+    var keysRow = document.getElementById('keys-row');
+    document.getElementById('feedback-keys').innerHTML = keysHtml(q.keys);
+    keysRow.hidden = false;
+    fb.classList.add('bad'); fb.classList.remove('ok');
+    disableInputs();
+    state.locked = true;
+    var btnCheck = document.getElementById('btn-check');
+    btnCheck.textContent = 'Další příklad →';
+    btnCheck.focus();
+    updateStats();
+  }
+
+  function updateStats(){
+    document.getElementById('stat-score').textContent = state.score;
+    document.getElementById('stat-streak').textContent = state.streak + (state.bestStreak>0 ? ' / ' + state.bestStreak : '');
+    document.getElementById('stat-accuracy').textContent = state.answered===0 ? '—' : Math.round(100*state.correct/state.answered) + ' %';
+  }
+
+  function buildTopicRow(){
+    var row = document.getElementById('topic-row');
+    row.innerHTML = '';
+    CATEGORIES.forEach(function(c){
+      var b = document.createElement('button');
+      b.className = 'chip' + (state.sel[c.key] ? ' on' : '');
+      b.textContent = c.name;
+      b.addEventListener('click', function(){
+        var activeCount = CATEGORIES.filter(function(cc){ return state.sel[cc.key]; }).length;
+        if(state.sel[c.key] && activeCount===1) return;
+        var res = settleCurrentQuestion();
+        if(res==='cancelled') return;
+        state.sel[c.key] = !state.sel[c.key];
+        b.classList.toggle('on', state.sel[c.key]);
+        if(res==='locked' || res==='untouched'){ generateQuestion(); }
+      });
+      row.appendChild(b);
+    });
+  }
+
+  function tryCheck(){
+    if(state.locked){ generateQuestion(); return; }
+    if(isAnswerEmpty()){
+      if(!confirm('Odpověď není vyplněná. Opravdu chcete zkontrolovat?')) return;
+    }
+    checkAnswer();
+  }
+  function trySkip(){
+    if(state.locked){ generateQuestion(); return; }
+    if(isAnswerEmpty()){
+      if(!confirm('Odpověď není vyplněná. Opravdu chcete přeskočit na další příklad?')) return;
+    }
+    skip();
+  }
+  document.getElementById('btn-check').addEventListener('click', tryCheck);
+  document.getElementById('btn-skip').addEventListener('click', trySkip);
+  document.getElementById('answer').addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); tryCheck(); } });
+  document.getElementById('answer').addEventListener('input', function(){ state.touched = true; });
+
+  sanitizeNumericInput(document.getElementById('answer'), true);
+  sanitizeNumericInput(document.getElementById('game-answer'), true);
+
+  document.getElementById('reset-stats').addEventListener('click', function(){
+    state.score=0; state.streak=0; state.answered=0; state.correct=0; state.bestStreak=0;
+    try{ localStorage.removeItem('fyzika:kalkulacka-fx82cex:stats'); }catch(e){}
+    updateStats();
+  });
+
+  loadStats();
+  buildTopicRow();
+  updateStats();
+  generateQuestion();
+
+  // ---- Hra na čas ----
+
+  var GAME_DURATIONS = [
+    { key:60, name:'1 min' },
+    { key:120, name:'2 min' },
+    { key:180, name:'3 min' },
+    { key:300, name:'5 min' }
+  ];
+
+  var gameState = {
+    duration:120, running:false, timeLeft:120, timerId:null,
+    score:0, correct:0, wrong:0, answered:0,
+    current:null, locked:false, bests:{}
+  };
+
+  function loadGameBests(){
+    try{
+      var raw = localStorage.getItem('fyzika:kalkulacka-fx82cex:game-bests');
+      if(raw) gameState.bests = JSON.parse(raw) || {};
+    }catch(e){}
+  }
+  function saveGameBests(){
+    try{ localStorage.setItem('fyzika:kalkulacka-fx82cex:game-bests', JSON.stringify(gameState.bests)); }catch(e){}
+  }
+  function currentBest(){ return gameState.bests[gameState.duration] || 0; }
+  function updateGameBestHint(){
+    document.getElementById('game-best-hint').textContent = 'Nejlepší skóre: ' + (currentBest() || '—');
+  }
+
+  function generateGameQuestion(){
+    var cat = pick(CATEGORIES);
+    var gen = pick(cat.gens);
+    var q = gen();
+    q.topicName = cat.name;
+    q.points = q.keys.length;
+    gameState.current = q;
+    renderGameQuestion();
+  }
+
+  function renderGameQuestion(){
+    var q = gameState.current;
+    document.getElementById('game-cat-tag').textContent = q.topicName;
+    document.getElementById('game-points-badge').textContent = '+' + q.points + ' b';
+    renderTex(document.getElementById('game-eq-expr'), q.displayTex);
+    document.getElementById('game-question-note').textContent = q.note || '';
+    document.getElementById('game-unit-suffix').textContent = q.answerSuffix || '';
+
+    var input = document.getElementById('game-answer');
+    input.value=''; input.disabled=false; input.classList.remove('correct','wrong');
+
+    document.getElementById('game-feedback').hidden = true;
+    document.getElementById('game-feedback').classList.remove('ok','bad');
+    document.getElementById('game-keys-row').hidden = true;
+    document.getElementById('game-feedback-tip').hidden = true;
+    gameState.locked = false;
+    document.getElementById('btn-game-check').textContent = 'Zkontrolovat';
+
+    input.focus();
+  }
+
+  function gameAnswerEmpty(){
+    return isNaN(parseAnswer(document.getElementById('game-answer').value));
+  }
+  function markGameInputs(cls){
+    document.getElementById('game-answer').classList.add(cls);
+  }
+  function disableGameInputs(){
+    document.getElementById('game-answer').disabled = true;
+  }
+  function evaluateGame(q){
+    var v = parseAnswer(document.getElementById('game-answer').value);
+    var tol = 0.51 * Math.pow(10, -q.resultDecimals);
+    return !isNaN(v) && Math.abs(v - q.exact) <= tol;
+  }
+
+  function checkGameAnswer(){
+    if(!gameState.running) return;
+    if(gameState.locked){ generateGameQuestion(); return; }
+    var q = gameState.current;
+    var ok = evaluateGame(q);
+
+    gameState.answered++;
+    var fb = document.getElementById('game-feedback');
+    var head = document.getElementById('game-feedback-headline');
+    var steps = document.getElementById('game-feedback-steps');
+    var keysRow = document.getElementById('game-keys-row');
+    var keysEl = document.getElementById('game-feedback-keys');
+    fb.hidden = false;
+    document.getElementById('game-feedback-tip').hidden = true;
+
+    if(ok){
+      gameState.score += q.points; gameState.correct++;
+      markGameInputs('correct');
+      fb.classList.add('ok'); fb.classList.remove('bad');
+      head.textContent = 'Správně! +' + q.points + ' b';
+      steps.innerHTML = '';
+      steps.appendChild(document.createTextNode('Výsledek: '));
+      var okSpan = document.createElement('span');
+      steps.appendChild(okSpan);
+      renderTex(okSpan, correctAnswerTex(q));
+      if(q.answerSuffix) steps.appendChild(document.createTextNode(q.answerSuffix));
+      keysRow.hidden = true;
+    } else {
+      gameState.score -= 5; gameState.wrong++;
+      markGameInputs('wrong');
+      fb.classList.add('bad'); fb.classList.remove('ok');
+      head.textContent = (isNaN(parseAnswer(document.getElementById('game-answer').value)) ? 'Doplňte odpověď.' : 'Bohužel špatně.') + ' −5 b';
+      steps.innerHTML = '';
+      steps.appendChild(document.createTextNode('Správně: '));
+      var badSpan = document.createElement('span');
+      steps.appendChild(badSpan);
+      renderTex(badSpan, correctAnswerTex(q));
+      if(q.answerSuffix) steps.appendChild(document.createTextNode(q.answerSuffix));
+      keysEl.innerHTML = keysHtml(q.keys);
+      keysRow.hidden = false;
+
+      if(q.altExact!==undefined && q.mode==='decimal'){
+        var vAlt = parseAnswer(document.getElementById('game-answer').value);
+        var tolAlt = Math.max(0.02, Math.abs(q.altExact)*0.01);
+        if(!isNaN(vAlt) && Math.abs(vAlt - q.altExact) <= tolAlt){
+          document.getElementById('game-feedback-tip').hidden = false;
+          document.getElementById('game-feedback-tip').textContent = q.altFixMsg;
+        }
+      }
+    }
+    disableGameInputs();
+    gameState.locked = true;
+    document.getElementById('btn-game-check').textContent = 'Další příklad →';
+    document.getElementById('btn-game-check').focus();
+    updateGameScore();
+  }
+
+  function skipGame(){
+    if(!gameState.running) return;
+    if(gameState.locked){ generateGameQuestion(); return; }
+    gameState.answered++;
+    gameState.score -= 5; gameState.wrong++;
+    var q = gameState.current;
+    var fb = document.getElementById('game-feedback');
+    fb.hidden = false;
+    document.getElementById('game-feedback-tip').hidden = true;
+    document.getElementById('game-feedback-headline').textContent = 'Správná odpověď: −5 b';
+    var stepsEl = document.getElementById('game-feedback-steps');
+    stepsEl.innerHTML = '';
+    var skipSpan = document.createElement('span');
+    stepsEl.appendChild(skipSpan);
+    renderTex(skipSpan, correctAnswerTex(q));
+    if(q.answerSuffix) stepsEl.appendChild(document.createTextNode(q.answerSuffix));
+    var keysRow = document.getElementById('game-keys-row');
+    document.getElementById('game-feedback-keys').innerHTML = keysHtml(q.keys);
+    keysRow.hidden = false;
+    fb.classList.add('bad'); fb.classList.remove('ok');
+    markGameInputs('wrong');
+    disableGameInputs();
+    gameState.locked = true;
+    document.getElementById('btn-game-check').textContent = 'Další příklad →';
+    document.getElementById('btn-game-check').focus();
+    updateGameScore();
+  }
+
+  function updateGameScore(){
+    document.getElementById('game-score').textContent = gameState.score;
+  }
+
+
+  function tickGameTimer(){
+    gameState.timeLeft--;
+    var timerEl = document.getElementById('game-timer');
+    timerEl.textContent = formatGameTime(Math.max(0,gameState.timeLeft));
+    timerEl.classList.toggle('low-time', gameState.timeLeft<=20 && gameState.timeLeft>0);
+    if(gameState.timeLeft<=0){ endGame(); }
+  }
+
+  function startGame(){
+    gameState.running = true;
+    gameState.timeLeft = gameState.duration;
+    gameState.score = 0; gameState.correct = 0; gameState.wrong = 0; gameState.answered = 0;
+    updateGameScore();
+    document.getElementById('game-timer').textContent = formatGameTime(gameState.duration);
+    document.getElementById('game-timer').classList.remove('low-time');
+    document.getElementById('game-best-live').textContent = currentBest();
+    document.getElementById('game-intro').hidden = true;
+    document.getElementById('game-over').hidden = true;
+    document.getElementById('game-play').hidden = false;
+    generateGameQuestion();
+    if(gameState.timerId) clearInterval(gameState.timerId);
+    gameState.timerId = setInterval(tickGameTimer, 1000);
+  }
+
+  function endGame(){
+    gameState.running = false;
+    clearInterval(gameState.timerId);
+    gameState.timerId = null;
+    disableGameInputs();
+    if(gameState.score>currentBest()){ gameState.bests[gameState.duration] = gameState.score; saveGameBests(); }
+    if(window.FyzikaScores) FyzikaScores.report('hra-' + gameState.duration + 's', gameState.score, true);
+    document.getElementById('game-play').hidden = true;
+    document.getElementById('game-over').hidden = false;
+    document.getElementById('game-intro').hidden = false;
+    document.getElementById('game-final-score').textContent = gameState.score + ' ' + pointWord(gameState.score);
+    document.getElementById('game-final-detail').textContent =
+      'Správně: ' + gameState.correct + ' · Špatně: ' + gameState.wrong + ' · Nejlepší skóre: ' + currentBest();
+    updateGameBestHint();
+  }
+
+  function buildGameDurationRow(){
+    var row = document.getElementById('game-duration-row');
+    row.innerHTML = '';
+    GAME_DURATIONS.forEach(function(d){
+      var b = document.createElement('button');
+      b.className = 'chip' + (d.key===gameState.duration ? ' on' : '');
+      b.textContent = d.name;
+      b.addEventListener('click', function(){
+        if(gameState.running) return;
+        gameState.duration = d.key;
+        Array.prototype.forEach.call(row.children, function(el,i){
+          el.classList.toggle('on', GAME_DURATIONS[i].key===gameState.duration);
+        });
+        updateGameBestHint();
+      });
+      row.appendChild(b);
+    });
+  }
+
+  function tryCheckGame(){
+    if(!gameState.running) return;
+    if(gameState.locked){ generateGameQuestion(); return; }
+    if(gameAnswerEmpty()){
+      if(!confirm('Odpověď není vyplněná. Opravdu chcete zkontrolovat?')) return;
+    }
+    checkGameAnswer();
+  }
+  function trySkipGame(){
+    if(!gameState.running) return;
+    if(gameState.locked){ generateGameQuestion(); return; }
+    if(gameAnswerEmpty()){
+      if(!confirm('Odpověď není vyplněná. Opravdu chcete přeskočit? Bude to počítáno jako špatná odpověď (−5 b).')) return;
+    }
+    skipGame();
+  }
+
+  document.getElementById('btn-game-start').addEventListener('click', startGame);
+  document.getElementById('btn-game-restart').addEventListener('click', startGame);
+  document.getElementById('btn-game-check').addEventListener('click', tryCheckGame);
+  document.getElementById('btn-game-skip').addEventListener('click', trySkipGame);
+  document.getElementById('game-answer').addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); tryCheckGame(); } });
+
+  var topTabTrenink = document.getElementById('top-tab-trenink');
+  var topTabHra = document.getElementById('top-tab-hra');
+  var topTabTeorie = document.getElementById('top-tab-teorie');
+  function showTopTab(tab){
+    topTabTrenink.classList.toggle('on', tab==='trenink');
+    topTabHra.classList.toggle('on', tab==='hra');
+    topTabTeorie.classList.toggle('on', tab==='teorie');
+    document.getElementById('view-training').hidden = tab!=='trenink';
+    document.getElementById('view-game').hidden = tab!=='hra';
+    document.getElementById('view-teorie').hidden = tab!=='teorie';
+  }
+
+  // Přepnutí na jinou záložku uprostřed běžící hry na čas hru rovnou ukončí — čas
+  // by jinak běžel dál "za zády" žáka. Proto se nejdřív zeptá na potvrzení, aby se
+  // rozehraná hra nezahodila jedním omylem kliknutým přepnutím.
+  function tryShowTopTab(tab){
+    if(tab!=='hra' && gameState.running){
+      if(!confirm('Přepnutím opustíte probíhající hru na čas — hra se ukončí a započítá se aktuální skóre. Opravdu chcete pokračovat?')) return;
+      endGame();
+    }
+    showTopTab(tab);
+  }
+  topTabTrenink.addEventListener('click', function(){ tryShowTopTab('trenink'); });
+  topTabHra.addEventListener('click', function(){ tryShowTopTab('hra'); });
+  topTabTeorie.addEventListener('click', function(){ tryShowTopTab('teorie'); });
+
+  // Sbaleni panelů teorie se dělá až tady, po zapojení přepínání záložek — kdyby
+  // se tu (nečekaně) něco pokazilo, přepínání záložek to nesmí strhnout s sebou.
+  try{ makePanelsCollapsible(document.getElementById('view-teorie')); }catch(e){}
+
+  loadGameBests();
+  buildGameDurationRow();
+  updateGameBestHint();
+
+  // Po synchronizaci s cloudem (auth.js) znovu načíst nejlepší výsledky z localStorage.
+  document.addEventListener('fyzika:scores-updated', function(){
+    state.bestStreak = 0; loadStats(); updateStats();
+    gameState.bests = {}; loadGameBests(); updateGameBestHint();
+  });
+})();
+</script>
+
+</body>
+</html>

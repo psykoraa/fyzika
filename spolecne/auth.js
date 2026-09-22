@@ -20,6 +20,44 @@
   var PUBLIC_ACTIONS = { login: 1, registerStart: 1, registerFinish: 1, resetStart: 1, resetFinish: 1, getPageConfig: 1 };
   var RE_LOCAL_PAGE = /^[a-z0-9-]+\.html$/;
 
+  // Do jaké složky patří jednotlivé stránky (vzhledem ke kořeni webu) — potřeba,
+  // aby odkazy na přihlášení/administraci/rozcestník fungovaly správně bez ohledu
+  // na to, ve které složce zrovna žije aktuální stránka. index.html zůstává
+  // v kořeni webu (GitHub Pages ho tam potřebuje pro základní adresu webu),
+  // proto tam žádný záznam nemá.
+  var PAGE_DIR = {
+    'admin.html': 'ucet',
+    'prihlaseni.html': 'ucet',
+    'kvinta.html': 'rozcestniky',
+    'mereni.html': 'rozcestniky',
+    'zaokrouhlovani-vysledku.html': 'mereni',
+    'zpracovani-mereni.html': 'mereni',
+    'kalkulacka-fx82cex.html': 'kvinta',
+    'prevody-jednotek.html': 'kvinta',
+    'skladani-vektoru.html': 'kvinta'
+  };
+
+  // auth.js vždy žije na <kořen webu>/spolecne/auth.js — z jeho vlastní (absolutní)
+  // adresy si tak spočítáme kořen webu, ať se stránka, která auth.js načetla,
+  // nachází v libovolné složce. document.currentScript je platný jen během
+  // synchronního běhu tohoto <script> tagu (proto se čte hned tady, na začátku),
+  // ale vypočtená hodnota se dá bezpečně použít kdykoli později.
+  var SITE_ROOT = (function () {
+    var src = document.currentScript && document.currentScript.src;
+    if (!src) return '';
+    return src.replace(/spolecne\/auth\.js(?:[?#].*)?$/, '');
+  })();
+
+  // Absolutní adresa dané stránky (bare název souboru, např. "admin.html") bez
+  // ohledu na to, odkud se volá. Když je SITE_ROOT prázdný (auth.js se výjimečně
+  // nenačetl klasickým <script src="…">), spadne zpátky na starší chování —
+  // odkaz relativní ke stejné složce.
+  function pageUrl(file) {
+    if (!SITE_ROOT) return file;
+    var dir = PAGE_DIR[file];
+    return SITE_ROOT + (dir ? dir + '/' : '') + file;
+  }
+
   var K = {
     token: 'fyzika-auth-token',
     user: 'fyzika-auth-user',
@@ -254,7 +292,7 @@
   }
 
   function goToPasswordChange() {
-    if (currentPage() !== 'prihlaseni.html') location.href = 'prihlaseni.html?zmena=1';
+    if (currentPage() !== 'prihlaseni.html') location.href = pageUrl('prihlaseni.html') + '?zmena=1';
   }
 
   function withTimeout(promise, ms) {
@@ -533,7 +571,7 @@
     setBlocked(false);
     if (e.requiresLogin && !user) {
       // Tady přesměrování dává smysl — po přihlášení se student vrátí zpět.
-      location.replace('prihlaseni.html?dalsi=' + encodeURIComponent(currentPage()));
+      location.replace(pageUrl('prihlaseni.html') + '?dalsi=' + encodeURIComponent(currentPage()));
       return true;
     }
     return false;
@@ -565,7 +603,7 @@
     var card = el('div', { 'class': 'fz-block-card' });
     card.appendChild(el('h1', null, 'Stránka není dostupná'));
     card.appendChild(el('p', null, 'Tuhle stránku vyučující dočasně skryl. Zkuste to prosím později.'));
-    card.appendChild(el('a', { href: 'index.html' }, '← Zpět na rozcestník'));
+    card.appendChild(el('a', { href: pageUrl('index.html') }, '← Zpět na rozcestník'));
     blockScreen.appendChild(card);
     document.body.appendChild(blockScreen);
   }
@@ -578,7 +616,12 @@
     for (var i = 0; i < anchors.length; i++) {
       var a = anchors[i];
       if (a.classList.contains('back-link') || a.closest('.fz-acct')) continue;
-      var href = (a.getAttribute('href') || '').split('#')[0].split('?')[0];
+      // Odkazy na jiné stránky teď kvůli složkám mívají tvar "../kvinta/xyz.html" —
+      // pro porovnání s konfigurací viditelnosti (klíčovanou bare názvem souboru)
+      // stačí poslední část cesty, RE_LOCAL_PAGE tu jen ověří, že jde o skutečně
+      // místní stránku, ne o kotvu/externí odkaz.
+      var rawHref = (a.getAttribute('href') || '').split('#')[0].split('?')[0];
+      var href = rawHref.split('/').pop() || '';
       if (!RE_LOCAL_PAGE.test(href)) continue;
       var e = pageEntry(cfg, href);
       var hidden = !!(e && !e.visible);
@@ -621,11 +664,11 @@
     var user = getUser();
     var here = currentPage();
     if (!user) {
-      var loginHref = 'prihlaseni.html' + (RE_LOCAL_PAGE.test(here) && here !== 'prihlaseni.html' ? '?dalsi=' + encodeURIComponent(here) : '');
+      var loginHref = pageUrl('prihlaseni.html') + (RE_LOCAL_PAGE.test(here) && here !== 'prihlaseni.html' ? '?dalsi=' + encodeURIComponent(here) : '');
       bar.appendChild(el('a', { href: loginHref }, 'Přihlásit se'));
       return;
     }
-    var who = el('a', { href: 'prihlaseni.html', 'class': 'fz-user', title: 'Můj účet' });
+    var who = el('a', { href: pageUrl('prihlaseni.html'), 'class': 'fz-user', title: 'Můj účet' });
     var dot = el('span', { 'class': 'fz-dot' + (netStatus === 'ok' ? ' ok' : netStatus === 'offline' ? ' offline' : '') });
     dot.title = netStatus === 'offline'
       ? 'Server je nedostupný — výsledky se zatím ukládají jen v tomto prohlížeči.'
@@ -635,18 +678,18 @@
     bar.appendChild(who);
     if (user.mustChangePassword) {
       bar.appendChild(sep());
-      bar.appendChild(el('a', { href: 'prihlaseni.html?zmena=1', 'class': 'fz-warn' }, 'Změňte heslo'));
+      bar.appendChild(el('a', { href: pageUrl('prihlaseni.html') + '?zmena=1', 'class': 'fz-warn' }, 'Změňte heslo'));
     }
     if (user.role === 'admin') {
       bar.appendChild(sep());
-      bar.appendChild(el('a', { href: 'admin.html' }, 'Administrace'));
+      bar.appendChild(el('a', { href: pageUrl('admin.html') }, 'Administrace'));
     }
     bar.appendChild(sep());
     var out = el('button', { type: 'button' }, 'Odhlásit');
     out.addEventListener('click', function () {
       out.disabled = true;
       logout().then(function () {
-        if (here === 'admin.html') location.href = 'index.html';
+        if (here === 'admin.html') location.href = pageUrl('index.html');
         else location.reload();
       });
     });
@@ -722,7 +765,8 @@
     cachedMyResults: cachedMyResults,
     onChange: function (fn) { listeners.push(fn); },
     currentPage: currentPage,
-    isLocalPage: function (p) { return RE_LOCAL_PAGE.test(String(p || '')); }
+    isLocalPage: function (p) { return RE_LOCAL_PAGE.test(String(p || '')); },
+    pageUrl: pageUrl
   };
 
   window.FyzikaScores = {
