@@ -7,6 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="config.js"></script>
+<script src="auth.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
@@ -1626,7 +1628,10 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
 
     if(allOk && state.formulasOk){
       state.score += 10; state.streak++; state.correct++;
-      if(state.streak>state.bestStreak){ state.bestStreak = state.streak; saveStats(); }
+      if(state.streak>state.bestStreak){
+        state.bestStreak = state.streak; saveStats();
+        if(window.FyzikaScores) FyzikaScores.report('serie', state.bestStreak, false);
+      }
       fb.classList.add('ok'); fb.classList.remove('bad');
       head.textContent = 'Správně!';
     } else {
@@ -1775,6 +1780,11 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
   buildCategoryRow();
   updateStats();
   newExercise();
+
+  // Po synchronizaci s cloudem (auth.js) znovu načíst nejlepší sérii z localStorage.
+  document.addEventListener('fyzika:scores-updated', function(){
+    state.bestStreak = 0; loadStats(); updateStats();
+  });
 
   if(window.renderMathInElement){
     renderMathInElement(document.getElementById('teorie-section'), {
