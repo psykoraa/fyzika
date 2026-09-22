@@ -670,12 +670,16 @@ footer{
       <div class="panel">
         <div class="panel-title">Pravidla hry</div>
         <p class="game-rules">
-          Na čas (2 minuty) budete řešit náhodné převody jednotek napříč všemi veličinami.
+          Na čas budete řešit náhodné převody jednotek napříč všemi veličinami.
           Za správný převod mezi jednotkou s předponou a jednotkou bez předpony dostanete <strong>5 bodů</strong>,
           za převod mezi dvěma jednotkami s předponou <strong>7 bodů</strong> a za převod u kombinovaných
           jednotek (rychlost, hustota apod.) <strong>10 bodů</strong>. Za špatnou odpověď (i za odpověď „Nevím“)
-          se strhává <strong>5 bodů</strong>.
+          se strhává <strong>5 bodů</strong>. Po vypršení zvoleného času se hra ukončí.
         </p>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Délka hry</div>
+        <div class="row" id="game-duration-row"></div>
       </div>
       <div class="panel">
         <div class="panel-title">Formát odpovědi</div>
@@ -1420,11 +1424,16 @@ footer{
 
   // ---- Hra na čas ----
 
-  var GAME_DURATION = 120;
+  var GAME_DURATIONS = [
+    { key:60, name:'1 min' },
+    { key:120, name:'2 min' },
+    { key:180, name:'3 min' },
+    { key:300, name:'5 min' }
+  ];
   var gameState = {
-    running:false, timeLeft:GAME_DURATION, timerId:null,
+    duration:120, running:false, timeLeft:120, timerId:null,
     score:0, correct:0, wrong:0, answered:0,
-    current:null, locked:false, best:0, answerFormat:'decimal'
+    current:null, locked:false, bests:{}, answerFormat:'decimal'
   };
 
   function gameFormatResult(n, decimals, sig){
@@ -1435,14 +1444,18 @@ footer{
     return fmtFixed(n, decimals);
   }
 
-  function loadGameBest(){
+  function loadGameBests(){
     try{
-      var raw = localStorage.getItem('meritko-game-best');
-      if(raw) gameState.best = JSON.parse(raw).best || 0;
+      var raw = localStorage.getItem('meritko-game-bests');
+      if(raw) gameState.bests = JSON.parse(raw) || {};
     }catch(e){}
   }
-  function saveGameBest(){
-    try{ localStorage.setItem('meritko-game-best', JSON.stringify({best: gameState.best})); }catch(e){}
+  function saveGameBests(){
+    try{ localStorage.setItem('meritko-game-bests', JSON.stringify(gameState.bests)); }catch(e){}
+  }
+  function currentBest(){ return gameState.bests[gameState.duration] || 0; }
+  function updateGameBestHint(){
+    document.getElementById('game-best-hint').textContent = 'Nejlepší skóre: ' + (currentBest() || '—');
   }
 
   // Skloňování slova "bod" v koncovém skóre hry (2 body, 5 bodů…). Záporné
@@ -1725,12 +1738,12 @@ footer{
 
   function startGame(){
     gameState.running = true;
-    gameState.timeLeft = GAME_DURATION;
+    gameState.timeLeft = gameState.duration;
     gameState.score = 0; gameState.correct = 0; gameState.wrong = 0; gameState.answered = 0;
     updateGameScore();
-    document.getElementById('game-timer').textContent = formatGameTime(GAME_DURATION);
+    document.getElementById('game-timer').textContent = formatGameTime(gameState.duration);
     document.getElementById('game-timer').classList.remove('low-time');
-    document.getElementById('game-best-live').textContent = gameState.best;
+    document.getElementById('game-best-live').textContent = currentBest();
     document.getElementById('game-intro').hidden = true;
     document.getElementById('game-over').hidden = true;
     document.getElementById('game-play').hidden = false;
@@ -1744,19 +1757,38 @@ footer{
     clearInterval(gameState.timerId);
     gameState.timerId = null;
     disableGameInputs();
-    if(gameState.score>gameState.best){ gameState.best = gameState.score; saveGameBest(); }
-    if(window.FyzikaScores) FyzikaScores.report('hra-' + GAME_DURATION + 's', gameState.score, true);
+    if(gameState.score>currentBest()){ gameState.bests[gameState.duration] = gameState.score; saveGameBests(); }
+    if(window.FyzikaScores) FyzikaScores.report('hra-' + gameState.duration + 's', gameState.score, true);
     document.getElementById('game-play').hidden = true;
     document.getElementById('game-over').hidden = false;
     document.getElementById('game-final-score').textContent = gameState.score + ' ' + pointWord(gameState.score);
     document.getElementById('game-final-detail').textContent =
-      'Správně: ' + gameState.correct + ' · Špatně: ' + gameState.wrong + ' · Nejlepší skóre: ' + gameState.best;
-    document.getElementById('game-best-hint').textContent = 'Nejlepší skóre: ' + gameState.best;
+      'Správně: ' + gameState.correct + ' · Špatně: ' + gameState.wrong + ' · Nejlepší skóre: ' + currentBest();
+    updateGameBestHint();
   }
 
   function setGameAnswerFormat(fmt){
     gameState.answerFormat = fmt;
     applyGameFormatUI();
+  }
+
+  function buildGameDurationRow(){
+    var row = document.getElementById('game-duration-row');
+    row.innerHTML = '';
+    GAME_DURATIONS.forEach(function(d){
+      var b = document.createElement('button');
+      b.className = 'chip' + (d.key===gameState.duration ? ' on' : '');
+      b.textContent = d.name;
+      b.addEventListener('click', function(){
+        if(gameState.running) return;
+        gameState.duration = d.key;
+        Array.prototype.forEach.call(row.children, function(el,i){
+          el.classList.toggle('on', GAME_DURATIONS[i].key===gameState.duration);
+        });
+        updateGameBestHint();
+      });
+      row.appendChild(b);
+    });
   }
 
   function buildGameFormatRow(){
@@ -1853,8 +1885,9 @@ footer{
   sanitizeNumericInput(document.getElementById('game-answer-mantissa'), true);
   sanitizeNumericInput(document.getElementById('game-answer-exp'), false);
 
-  loadGameBest();
-  document.getElementById('game-best-hint').textContent = 'Nejlepší skóre: ' + (gameState.best || '—');
+  loadGameBests();
+  buildGameDurationRow();
+  updateGameBestHint();
   buildGameFormatRow();
   applyGameFormatUI();
 
@@ -1868,8 +1901,7 @@ footer{
   // Po synchronizaci s cloudem (auth.js) znovu načíst nejlepší výsledky z localStorage.
   document.addEventListener('fyzika:scores-updated', function(){
     state.bestStreak = 0; loadStats(); updateStats();
-    gameState.best = 0; loadGameBest();
-    document.getElementById('game-best-hint').textContent = 'Nejlepší skóre: ' + (gameState.best || '—');
+    gameState.bests = {}; loadGameBests(); updateGameBestHint();
   });
 
   if(window.renderMathInElement){

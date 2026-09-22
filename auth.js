@@ -33,7 +33,10 @@
   var SCORE_MAP = {
     'prevody-jednotek.html': [
       { d: 'serie', key: 'meritko-stats', field: 'bestStreak' },
-      { d: 'hra-120s', key: 'meritko-game-best', field: 'best' }
+      { d: 'hra-60s', key: 'meritko-game-bests', field: '60' },
+      { d: 'hra-120s', key: 'meritko-game-bests', field: '120' },
+      { d: 'hra-180s', key: 'meritko-game-bests', field: '180' },
+      { d: 'hra-300s', key: 'meritko-game-bests', field: '300' }
     ],
     'skladani-vektoru.html': [
       { d: 'serie', key: 'vektory-stats', field: 'bestStreak' },
