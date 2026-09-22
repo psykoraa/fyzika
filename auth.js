@@ -16,8 +16,7 @@
   var CFG = window.FYZIKA_CONFIG || {};
   var API_URL = String(CFG.API_URL || '').trim();
   var ENABLED = /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(API_URL);
-  var TIMEOUT_MS = 60000;      // Apps Script bývá pomalý (studený start, zápisy do tabulky)
-  var READ_TIMEOUT_MS = 35000; // čtecí dotazy se při uváznutí raději zopakují
+  var ATTEMPT_TIMEOUT_MS = 20000; // úspěšný dotaz trvá obvykle 1–8 s; "ztracený" visí 30–60 s
   var PUBLIC_ACTIONS = { login: 1, registerStart: 1, registerFinish: 1, getPageConfig: 1 };
   var RE_LOCAL_PAGE = /^[a-z0-9-]+\.html$/;
 
@@ -131,13 +130,20 @@
     return e;
   }
 
-  // Apps Script občas vrátí místo odpovědi chybovou stránku Googlu (404), odpověď pro GET
-  // nebo odpoví až po desítkách sekund. Takové "zakolísání" se u vybraných akcí zopakuje:
-  //  - čtecí akce (nic nemění) se opakují vždy, až 2×,
-  //  - přihlášení se zopakuje 1×, ale jen když Google vrátil nesmysl (ne při vypršení času),
-  //  - ostatní akce (zápisy) se neopakují, aby se neprovedly dvakrát.
-  var READ_ACTIONS = { getPageConfig: 1, me: 1, getMyResults: 1, listUsers: 1, listResults: 1, adminOverview: 1 };
-  var RETRY_ON_GLITCH = { login: 1 };
+  // Apps Script občas dotaz "ztratí": po desítkách sekund vrátí chybovou stránku Googlu (404),
+  // případně odpověď pro GET. Úspěšné dotazy přitom trvají pár sekund. Proto se každý pokus
+  // vzdá po ATTEMPT_TIMEOUT_MS a dotaz se zopakuje. Každé volání nese náhodné "rid" — server si
+  // odpověď k němu 2 minuty pamatuje, takže opakovaný dotaz se NEPROVEDE podruhé (ani zápis,
+  // přihlášení nebo registrace), jen se vrátí stejná odpověď.
+  var MAX_RETRIES = 3;
+
+  function newRid() {
+    var a = new Uint8Array(16);
+    (window.crypto || window.msCrypto).getRandomValues(a);
+    var s = '';
+    for (var i = 0; i < a.length; i++) s += ('0' + a[i].toString(16)).slice(-2);
+    return s; // 32 hex znaků
+  }
 
   function api(action, data) {
     if (!ENABLED) return Promise.reject(apiError('disabled', 'Přihlašování zatím není nastavené.'));
@@ -146,15 +152,14 @@
     body.action = action;
     var token = getToken();
     if (token && !PUBLIC_ACTIONS[action] && body.token === undefined) body.token = token;
+    body.rid = newRid();
     var payload = JSON.stringify(body);
-    var maxRetries = READ_ACTIONS[action] ? 2 : (RETRY_ON_GLITCH[action] ? 1 : 0);
 
     function attempt(n) {
-      return callOnce(action, payload, READ_ACTIONS[action] ? READ_TIMEOUT_MS : TIMEOUT_MS).then(null, function (err) {
-        var canRetry = n < maxRetries && (READ_ACTIONS[action] || err.kind === 'glitch');
-        if (!canRetry) throw err;
-        if (window.console) console.warn('[FyzikaAuth] ' + action + ': opakuji (' + (n + 1) + '/' + maxRetries + ')');
-        return new Promise(function (resolve) { setTimeout(resolve, 1500 * (n + 1)); })
+      return callOnce(action, payload, ATTEMPT_TIMEOUT_MS).then(null, function (err) {
+        if (n >= MAX_RETRIES) throw err;
+        if (window.console) console.warn('[FyzikaAuth] ' + action + ': opakuji (' + (n + 1) + '/' + MAX_RETRIES + ')');
+        return new Promise(function (resolve) { setTimeout(resolve, 1000 * (n + 1)); })
           .then(function () { return attempt(n + 1); });
       });
     }
