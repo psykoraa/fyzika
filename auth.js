@@ -494,17 +494,51 @@
   }
 
   // Pozor: jde jen o pohodlí, ne o ochranu obsahu — HTML je veřejné.
+  // Skrytá stránka se nenačte prázdná ani nepřesměruje: obsah se překryje oznámením
+  // (setBlocked). Vrací true, když se stránka nemá dál zpracovávat.
   function gate(cfg) {
     var e = pageEntry(cfg, currentPage());
-    if (!e) return false;
     var user = getUser();
-    if (user && user.role === 'admin') return false;
-    if (!e.visible) { location.replace('index.html?skryto=1'); return true; }
+    if (!e || (user && user.role === 'admin')) { setBlocked(false); return false; }
+    if (!e.visible) { setBlocked(true); return true; }
+    setBlocked(false);
     if (e.requiresLogin && !user) {
+      // Tady přesměrování dává smysl — po přihlášení se student vrátí zpět.
       location.replace('prihlaseni.html?dalsi=' + encodeURIComponent(currentPage()));
       return true;
     }
     return false;
+  }
+
+  // Překryv přes celou stránku. Volá se i dřív, než existuje <body> (auth.js běží v <head>),
+  // proto se obsah schová třídou na <html> hned a samotné oznámení se doplní, jakmile je kam.
+  var blockScreen = null;
+
+  function setBlocked(on) {
+    var root = document.documentElement;
+    if (!on) {
+      if (!root.classList.contains('fz-blocked')) return;
+      root.classList.remove('fz-blocked');
+      if (blockScreen && blockScreen.parentNode) blockScreen.parentNode.removeChild(blockScreen);
+      blockScreen = null;
+      return;
+    }
+    if (root.classList.contains('fz-blocked')) return;
+    root.classList.add('fz-blocked');
+    if (document.body) renderBlocked();
+    else document.addEventListener('DOMContentLoaded', renderBlocked);
+  }
+
+  function renderBlocked() {
+    // Mezitím mohla dorazit čerstvá konfigurace a stránku zase odemknout.
+    if (blockScreen || !document.body || !document.documentElement.classList.contains('fz-blocked')) return;
+    blockScreen = el('div', { 'class': 'fz-block', role: 'alert' });
+    var card = el('div', { 'class': 'fz-block-card' });
+    card.appendChild(el('h1', null, 'Stránka není dostupná'));
+    card.appendChild(el('p', null, 'Tuhle stránku vyučující dočasně skryl. Zkuste to prosím později.'));
+    card.appendChild(el('a', { href: 'index.html' }, '← Zpět na rozcestník'));
+    blockScreen.appendChild(card);
+    document.body.appendChild(blockScreen);
   }
 
   function applyLinks(cfg) {
@@ -590,6 +624,8 @@
     bar.appendChild(out);
   }
 
+  // Na skrytou stránku se od této verze nepřesměrovává; zůstává kvůli starším odkazům
+  // a otevřeným kartám, které na index.html?skryto=1 ještě míří.
   function showHiddenNotice() {
     if (!/[?&]skryto=1\b/.test(location.search)) return;
     var wrap = document.querySelector('.wrap');
@@ -614,6 +650,18 @@
       '.fz-dot.offline{background:var(--danger,#b3392b);opacity:1;}' +
       '.fz-hidden{display:none !important;}' +
       '.fz-admin-hidden{opacity:.55;outline:1px dashed var(--ink-soft,#5b7080);outline-offset:2px;}' +
+      '.fz-blocked body > *:not(.fz-block){display:none !important;}' +
+      '.fz-block{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;' +
+      'padding:24px 16px;background:var(--paper,#eef2f6);z-index:2147483647;overflow:auto;}' +
+      '.fz-block-card{max-width:440px;width:100%;box-sizing:border-box;text-align:center;' +
+      'background:var(--surface,#fff);border:1px solid var(--line,rgba(28,43,58,0.12));border-radius:14px;padding:32px 28px;' +
+      'font-family:"Work Sans",system-ui,sans-serif;color:var(--ink,#1c2b3a);}' +
+      '.fz-block-card h1{margin:0 0 10px;font-family:"Big Shoulders Display",sans-serif;font-weight:800;' +
+      'font-size:1.9rem;letter-spacing:0.02em;line-height:1.1;}' +
+      '.fz-block-card p{margin:0 0 20px;font-size:0.95rem;line-height:1.5;color:var(--ink-soft,#5b7080);}' +
+      '.fz-block-card a{display:inline-block;font-size:0.9rem;font-weight:600;color:var(--accent,#1e5fa8);text-decoration:none;}' +
+      '.fz-block-card a:hover{text-decoration:underline;}' +
+      '.fz-block-card a:focus-visible{outline:2px solid var(--focus,#c9581f);outline-offset:3px;border-radius:4px;}' +
       '.fz-notice{clear:both;background:var(--surface-2,#dbe4ee);border-left:4px solid var(--focus,#c9581f);border-radius:8px;' +
       'padding:12px 14px;margin:0 0 14px;font-size:0.88rem;color:var(--ink,#1c2b3a);}' +
       '@media (max-width:560px){.fz-acct{float:none;margin:0 0 10px;}}';
@@ -661,20 +709,29 @@
   if (!ENABLED) return;
 
   // Okamžitě podle uložené konfigurace (bez čekání na síť), pak znovu podle čerstvé.
-  if (gate(cachedPageConfig())) return;
+  // Zablokovaná stránka se nesmí zastavit tady: uložená konfigurace může být stará
+  // a čerstvá ji zase odemkne, jakmile vyučující stránku znovu zpřístupní.
+  var blocked = gate(cachedPageConfig());
 
   function start() {
     renderBar();
     showHiddenNotice();
+
+    var applyFresh = function () {
+      var cfg = cachedPageConfig();
+      if (!cfg) return;
+      blocked = gate(cfg);
+      if (!blocked) applyLinks(cfg);
+    };
+
+    if (blocked) {
+      fetchPageConfig().then(applyFresh).catch(function () {});
+      return;
+    }
     applyLinks(cachedPageConfig());
 
     // Stránky s vlastním načítáním (účet, administrace) si dotazy řídí samy — zbytečně je nezdvojovat.
     if (document.body && document.body.hasAttribute('data-fz-manual')) return;
-
-    var applyFresh = function () {
-      var cfg = cachedPageConfig();
-      if (cfg && !gate(cfg)) applyLinks(cfg);
-    };
     var here = currentPage();
     var user = getUser();
     if (user && !user.mustChangePassword && SCORE_MAP[here]) {
