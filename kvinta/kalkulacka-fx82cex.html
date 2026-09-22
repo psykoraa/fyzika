@@ -1240,6 +1240,23 @@
     document.getElementById('stat-accuracy').textContent = state.answered===0 ? '—' : Math.round(100*state.correct/state.answered) + ' %';
   }
 
+  // Vyhodnotí rozdělanou otázku před změnou vybraných témat, aby žák o
+  // rozepsanou odpověď nepřišel beze stopy. Vrací:
+  // 'locked'    — otázka už byla zamčená (zodpovězená/přeskočená), není co řešit
+  // 'untouched' — žák do odpovědi vůbec nezasáhl, nic se neztrácí
+  // 'cancelled' — žák zrušil potvrzovací dialog, změna témat se má zahodit
+  // jinak       — otázka byla rozepsaná a byla právě vyhodnocena (zůstává
+  //               zobrazená zpětná vazba, dokud žák sám nepokračuje na další)
+  function settleCurrentQuestion(){
+    if(state.locked) return 'locked';
+    if(!state.touched) return 'untouched';
+    if(isAnswerEmpty()){
+      if(!confirm('Odpověď není vyplněná. Opravdu chcete změnit témata?')) return 'cancelled';
+    }
+    checkAnswer();
+    return 'settled';
+  }
+
   function buildTopicRow(){
     var row = document.getElementById('topic-row');
     row.innerHTML = '';
