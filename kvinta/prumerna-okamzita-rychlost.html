@@ -73,6 +73,49 @@
   border:0;
 }
 
+.table-wrap{
+  margin-top:20px;
+  overflow-x:auto;
+  border:1px solid var(--line);
+  border-radius:10px;
+}
+.data-table{
+  border-collapse:collapse;
+  width:100%;
+  min-width:640px;
+}
+.data-table th,
+.data-table td{
+  border:1px solid var(--line);
+  padding:0;
+}
+.data-table th{
+  background:var(--surface-2);
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:700;
+  font-size:0.82rem;
+  color:var(--ink);
+  padding:9px 10px;
+  text-align:left;
+  white-space:nowrap;
+}
+.data-table td input{
+  width:100%;
+  box-sizing:border-box;
+  border:0;
+  background:var(--surface);
+  color:var(--ink);
+  font-family:'IBM Plex Mono', monospace;
+  font-size:0.88rem;
+  text-align:center;
+  padding:9px 6px;
+}
+.data-table td input:focus{
+  outline:2px solid var(--focus);
+  outline-offset:-2px;
+  background:var(--accent-ink);
+}
+
 @media (max-width:520px){
   .card{ padding:20px 16px 22px; }
 }
@@ -118,6 +161,22 @@
       <div class="video-wrap">
         <iframe src="https://www.youtube.com/embed/nuBnP_GH_20" title="Průměrná a okamžitá rychlost" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
       </div>
+
+      <div class="table-wrap">
+        <table class="data-table" id="measure-table">
+          <tbody>
+            <tr data-row="t">
+              <th scope="row">t (s)</th>
+            </tr>
+            <tr data-row="v">
+              <th scope="row">v (km/h)</th>
+            </tr>
+            <tr data-row="s">
+              <th scope="row">s (m)</th>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -128,6 +187,23 @@
 <script>
 (function(){
   "use strict";
+
+  var CELLS_PER_ROW = 8;
+  var table = document.getElementById('measure-table');
+  Array.prototype.forEach.call(table.querySelectorAll('tr'), function(tr){
+    var rowKey = tr.getAttribute('data-row');
+    for(var i=1; i<=CELLS_PER_ROW; i++){
+      var td = document.createElement('td');
+      var input = document.createElement('input');
+      input.type = 'text';
+      input.inputMode = 'decimal';
+      input.autocomplete = 'off';
+      input.setAttribute('aria-label', tr.querySelector('th').textContent + ', sloupec ' + i);
+      input.id = 'cell-' + rowKey + '-' + i;
+      td.appendChild(input);
+      tr.appendChild(td);
+    }
+  });
 
   var topTabTeorie = document.getElementById('top-tab-teorie');
   var topTabVideo = document.getElementById('top-tab-video');
