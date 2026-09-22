@@ -78,45 +78,49 @@ function makePanelsCollapsible(container){
   if(!container) return;
   var panels = container.querySelectorAll('.panel');
   panels.forEach(function(panel){
-    var title = panel.querySelector(':scope > .panel-title');
-    if(!title || title.querySelector('.category-toggle')) return;
+    // Jeden nezvyklý panel (neočekávaná struktura obsahu) nesmí přerušit
+    // zpracování ostatních — chyba by jinak "zabila" celý zbytek panels.forEach.
+    try{
+      var title = panel.querySelector(':scope > .panel-title');
+      if(!title || title.querySelector('.category-toggle')) return;
 
-    var body = document.createElement('div');
-    body.className = 'panel-body';
-    var child = title.nextSibling;
-    while(child){
-      var next = child.nextSibling;
-      body.appendChild(child);
-      child = next;
-    }
-    panel.appendChild(body);
+      var body = document.createElement('div');
+      body.className = 'panel-body';
+      var child = title.nextSibling;
+      while(child){
+        var next = child.nextSibling;
+        body.appendChild(child);
+        child = next;
+      }
+      panel.appendChild(body);
 
-    var inner = document.createElement('span');
-    inner.className = 'panel-title-inner';
-    var textSpan = document.createElement('span');
-    textSpan.textContent = title.textContent.trim();
-    var arrow = document.createElement('span');
-    arrow.className = 'toggle-arrow';
-    arrow.textContent = '▸';
-    inner.appendChild(textSpan);
-    inner.appendChild(arrow);
-    title.textContent = '';
-    title.appendChild(inner);
+      var inner = document.createElement('span');
+      inner.className = 'panel-title-inner';
+      var textSpan = document.createElement('span');
+      textSpan.textContent = title.textContent.trim();
+      var arrow = document.createElement('span');
+      arrow.className = 'toggle-arrow';
+      arrow.textContent = '▸';
+      inner.appendChild(textSpan);
+      inner.appendChild(arrow);
+      title.textContent = '';
+      title.appendChild(inner);
 
-    title.classList.add('collapsible');
-    title.setAttribute('role', 'button');
-    title.setAttribute('tabindex', '0');
-    title.setAttribute('aria-expanded', 'true');
+      title.classList.add('collapsible');
+      title.setAttribute('role', 'button');
+      title.setAttribute('tabindex', '0');
+      title.setAttribute('aria-expanded', 'true');
 
-    function toggle(){
-      var expanded = title.getAttribute('aria-expanded') === 'true';
-      title.setAttribute('aria-expanded', expanded ? 'false' : 'true');
-      body.hidden = expanded;
-    }
-    title.addEventListener('click', toggle);
-    title.addEventListener('keydown', function(e){
-      if(e.key==='Enter' || e.key===' '){ e.preventDefault(); toggle(); }
-    });
+      var toggle = function(){
+        var expanded = title.getAttribute('aria-expanded') === 'true';
+        title.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+        body.hidden = expanded;
+      };
+      title.addEventListener('click', toggle);
+      title.addEventListener('keydown', function(e){
+        if(e.key==='Enter' || e.key===' '){ e.preventDefault(); toggle(); }
+      });
+    }catch(e){}
   });
 }
 
