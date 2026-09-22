@@ -1,25 +1,39 @@
 /*
- * Fyzika — sdílené styly pro cvičné/herní stránky
- * (kalkulacka-fx82cex.html, prevody-jednotek.html, skladani-vektoru.html,
- *  zaokrouhlovani-vysledku.html, zpracovani-mereni.html).
+ * Fyzika — sdílené styly pro celý web.
+ * Cvičné/herní stránky: kalkulacka-fx82cex.html, prevody-jednotek.html,
+ * skladani-vektoru.html, zaokrouhlovani-vysledku.html, zpracovani-mereni.html.
+ * Rozcestníky a systémové stránky: admin.html, index.html, kvinta.html,
+ * mereni.html, prihlaseni.html.
  *
  * Barevná paleta (--paper, --ink, --accent, --focus, ...) NENÍ tady —
  * každá stránka má vlastní :root s vlastními hodnotami (tři různé palety
  * napříč webem) a tenhle soubor jen používá var(--...) odkazy na ně.
  * Beze změny hodnot ve stránce se tedy nic nepřebarví.
  *
- * .katex a .panel p/.panel b/.panel p:last-child tu záměrně NEJSOU, i když
- * jsou identické na 3-4 z 5 stránek: kalkulacka-fx82cex.html má vlastní
- * <p>/<b> uvnitř .panel (jinak by se jim beze změny zdrojového kódu
- * najednou začal měnit vzhled) a navíc přes KaTeX vykresluje matematiku
- * i mimo .equation (kam vlastní pravidlo .equation .katex nesahá) —
- * sdílené pravidlo by tu nezamýšleně zvětšilo ta místa o 5 %.
+ * Záměrně tu NEJSOU (i když jsou skoro/úplně identické na části stránek),
+ * protože sdílené pravidlo by přes vyšší specificitu nebo přes dosah do
+ * potomků nechtěně zasáhlo stránku, která tu třídu dřív vůbec neměla:
+ * - .katex — kalkulacka-fx82cex.html vykresluje přes KaTeX matematiku
+ *   i mimo .equation (kam vlastní pravidlo .equation .katex nesahá).
+ * - .panel p/.panel b/.panel p:last-child — kalkulacka-fx82cex.html má
+ *   v .panel odstavce a tučný text taky, ale bez tohoto stylu.
+ * - .card p — prihlaseni.html má uvnitř .card odstavce se specifičtější
+ *   třídou .card .lead; sdílené .card p by jim přes max-width přesto
+ *   nezamýšleně omezilo šířku řádků.
+ * - a.btn a jeho varianty (.primary, :active, :focus-visible, :hover) —
+ *   prihlaseni.html má vizuálně stejné tlačítko, ale pod obecnější třídou
+ *   .btn (bez vazby na <a>); sdílené a.btn by mělo vyšší specificitu
+ *   a přebilo by jí vlastní .btn na <a class="btn">.
+ * Před každým přesunutým/sdíleným pravidlem je ověřené (skriptem
+ * procházejícím HTML/JS všech stránek), že stránka, která ho v <style>
+ * neměla, danou třídu/značku v daném kontextu vůbec nepoužívá.
  *
  * Několik tříd (.panel, .chip, .card, button.btn, .feedback, .actions,
- * .cat-tag, .hint, .panel-title, .feedback .headline, .answer-input) má
- * napříč stránkami mírně odlišné rozměry/mezery — sdílí se tu společný
- * základ a drobný rozdíl (většinou skladani-vektoru.html, které má
- * kompaktnější měřítko) zůstává v <style> dané stránky jako doplněk.
+ * .cat-tag, .hint, .panel-title, .feedback .headline, .answer-input,
+ * .card h2, .wrap, footer, .top-tabs, .toptab, .hero, .hero-tag,
+ * .hero .subtitle, .section-tag) má napříč stránkami mírně odlišné
+ * rozměry/mezery — sdílí se tu společný základ (většinou většinová
+ * hodnota) a drobný rozdíl zůstává v <style> dané stránky jako doplněk.
  */
 
 *{box-sizing:border-box;}
@@ -76,6 +90,16 @@ h1,h2,h3{ text-wrap:balance; margin:0; }
   border-radius:14px;
   padding:30px 30px 30px;
   text-align:center;
+}
+
+.card h2{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.4rem;
+  letter-spacing:0.03em;
+  color:var(--ink-soft);
+  text-transform:uppercase;
+  margin-bottom:14px;
 }
 
 button.btn{
@@ -411,6 +435,51 @@ footer{
 }
 
 .back-link:hover{ color:var(--accent); }
+
+.hero{
+  text-align:center;
+  padding:64px 20px 44px;
+}
+
+.hero-tag{
+  display:inline-block;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:0.72rem;
+  letter-spacing:0.14em;
+  text-transform:uppercase;
+  color:var(--ink-soft);
+  background:var(--surface-2);
+  padding:5px 13px;
+  border-radius:999px;
+  margin-bottom:22px;
+}
+
+.hero h1{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:800;
+  font-size:clamp(2.2rem, 8vw, 3.8rem);
+  letter-spacing:0.01em;
+  line-height:0.95;
+  color:var(--ink);
+}
+
+.hero .subtitle{
+  margin:16px 0 0;
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:clamp(1.3rem, 4vw, 1.9rem);
+  letter-spacing:0.03em;
+  color:var(--accent);
+}
+
+.section-tag{
+  font-size:0.68rem;
+  text-transform:uppercase;
+  letter-spacing:0.1em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-bottom:8px;
+}
 
 .tab-section[hidden]{ display:none; }
 
