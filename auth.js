@@ -17,7 +17,7 @@
   var API_URL = String(CFG.API_URL || '').trim();
   var ENABLED = /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(API_URL);
   var ATTEMPT_TIMEOUT_MS = 20000; // úspěšný dotaz trvá obvykle 1–8 s; "ztracený" visí 30–60 s
-  var PUBLIC_ACTIONS = { login: 1, registerStart: 1, registerFinish: 1, getPageConfig: 1 };
+  var PUBLIC_ACTIONS = { login: 1, registerStart: 1, registerFinish: 1, resetStart: 1, resetFinish: 1, getPageConfig: 1 };
   var RE_LOCAL_PAGE = /^[a-z0-9-]+\.html$/;
 
   var K = {
@@ -256,6 +256,24 @@
   function registerFinish(email, kod, jmeno, trida, password, remember) {
     remember = remember === true;
     return api('registerFinish', { email: email, kod: kod, jmeno: jmeno, trida: trida, password: password, remember: remember }).then(function (res) {
+      setSession(res.token, res.user, remember);
+      return afterLogin(res.user);
+    });
+  }
+
+  // Zapomenuté heslo, krok 1: server pošle na školní e-mail kód pro nastavení nového hesla.
+  // Odpověď je záměrně stejná, ať už účet na dané adrese existuje, nebo ne (neprozrazuje,
+  // kdo je registrovaný): { ok: true, email: '…@gym-kt.cz', validMinutes: 15 }.
+  function resetStart(email) {
+    return api('resetStart', { email: email });
+  }
+
+  // Zapomenuté heslo, krok 2: ověření kódu z e-mailu a nastavení nového hesla.
+  // Server vrací { ok: true, token, user } stejně jako login — uživatel je rovnou přihlášen;
+  // ostatní zařízení server odhlásí a případné "mustChangePassword" zruší.
+  function resetFinish(email, kod, password, remember) {
+    remember = remember === true;
+    return api('resetFinish', { email: email, kod: kod, password: password, remember: remember }).then(function (res) {
       setSession(res.token, res.user, remember);
       return afterLogin(res.user);
     });
@@ -614,6 +632,8 @@
     login: login,
     registerStart: registerStart,
     registerFinish: registerFinish,
+    resetStart: resetStart,
+    resetFinish: resetFinish,
     logout: logout,
     changePassword: changePassword,
     refreshMe: refreshMe,

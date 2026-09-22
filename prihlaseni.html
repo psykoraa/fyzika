@@ -363,6 +363,9 @@ footer{
         <span>Zůstat přihlášen <span class="check-hint">— nezaškrtávejte na sdíleném počítači</span></span>
       </label>
       <div class="actions"><button class="btn primary" type="submit">Přihlásit se</button></div>
+      <div class="actions" style="margin-top:10px">
+        <button class="linklike" type="button" id="btn-forgot">Zapomněli jste heslo?</button>
+      </div>
       <div class="feedback" role="alert" hidden></div>
     </form>
 
@@ -410,6 +413,49 @@ footer{
       </div>
       <div class="actions" id="reg-resend-row" style="margin-top:10px" hidden>
         <button class="linklike" type="button" id="btn-reg-resend">Kód nepřišel? Poslat znovu</button>
+      </div>
+      <div class="feedback" role="alert" hidden></div>
+    </form>
+
+    <form class="card" id="form-reset" novalidate hidden>
+      <h2>Zapomenuté heslo</h2>
+      <p class="lead">Na školní e-mail vám pošleme kód, kterým si nastavíte nové heslo.</p>
+      <fieldset id="res-details">
+        <div class="field">
+          <label for="res-email">Školní e-mail</label>
+          <input id="res-email" name="email" type="email" autocomplete="email" autocapitalize="none" spellcheck="false" maxlength="170" required placeholder="@gym-kt.cz">
+          <div class="hint">Adresa, se kterou jste se registrovali.</div>
+        </div>
+      </fieldset>
+      <div id="res-step2" hidden>
+        <div class="note" id="res-sent"></div>
+        <div class="field">
+          <label for="res-code">Kód z e-mailu</label>
+          <input id="res-code" class="code-input" name="kod" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="000000">
+        </div>
+        <div class="field">
+          <label for="res-password">Nové heslo</label>
+          <input id="res-password" type="password" autocomplete="new-password" minlength="8" maxlength="128">
+          <div class="hint">Alespoň 8 znaků. Ostatní zařízení budou odhlášena.</div>
+        </div>
+        <div class="field">
+          <label for="res-password2">Nové heslo znovu</label>
+          <input id="res-password2" type="password" autocomplete="new-password" maxlength="128">
+        </div>
+        <label class="check">
+          <input type="checkbox" id="res-remember">
+          <span>Zůstat přihlášen <span class="check-hint">— nezaškrtávejte na sdíleném počítači</span></span>
+        </label>
+      </div>
+      <div class="actions">
+        <button class="btn ghost" type="button" id="btn-res-back" hidden>Jiný e-mail</button>
+        <button class="btn primary" type="submit" id="btn-res-submit">Poslat kód</button>
+      </div>
+      <div class="actions" id="res-resend-row" style="margin-top:10px" hidden>
+        <button class="linklike" type="button" id="btn-res-resend">Kód nepřišel? Poslat znovu</button>
+      </div>
+      <div class="actions" style="margin-top:10px">
+        <button class="linklike" type="button" id="btn-res-cancel">← Zpět na přihlášení</button>
       </div>
       <div class="feedback" role="alert" hidden></div>
     </form>
@@ -516,18 +562,26 @@ footer{
   if(next){ $('back-link').href = next; $('back-link').textContent = '← Zpět'; }
 
   // ---- záložky ----
+  // Panely 'login' a 'register' mají záložku, 'reset' (zapomenuté heslo) se otevírá odkazem.
+  var PANEL_TITLE = { login:'Přihlášení', register:'Registrace', reset:'Zapomenuté heslo' };
+  var panel = 'login';
   var tabs = document.querySelectorAll('.toptab');
-  Array.prototype.forEach.call(tabs, function(t){
-    t.addEventListener('click', function(){
-      Array.prototype.forEach.call(tabs, function(x){
-        var on = x===t;
-        x.classList.toggle('on', on);
-        x.setAttribute('aria-selected', on ? 'true' : 'false');
-      });
-      show($('form-login'), t.dataset.tab==='login');
-      show($('form-register'), t.dataset.tab==='register');
-      $('page-title').textContent = t.dataset.tab==='login' ? 'Přihlášení' : 'Registrace';
+
+  function showPanel(name){
+    panel = name;
+    Array.prototype.forEach.call(tabs, function(x){
+      var on = x.dataset.tab===name;
+      x.classList.toggle('on', on);
+      x.setAttribute('aria-selected', on ? 'true' : 'false');
     });
+    show($('form-login'), name==='login');
+    show($('form-register'), name==='register');
+    show($('form-reset'), name==='reset');
+    $('page-title').textContent = PANEL_TITLE[name];
+  }
+
+  Array.prototype.forEach.call(tabs, function(t){
+    t.addEventListener('click', function(){ showPanel(t.dataset.tab); });
   });
 
   // ---- přihlášení ----
@@ -609,6 +663,79 @@ footer{
     }).then(function(){ busy(f, false); });
   });
 
+  // ---- zapomenuté heslo ----
+  // Také dva kroky: 1) e-mail → kód na e-mail, 2) kód + nové heslo → rovnou přihlášení.
+  var resStep = 1;
+  function setResStep(step){
+    resStep = step;
+    $('res-details').disabled = step===2;
+    show($('res-step2'), step===2);
+    show($('btn-res-back'), step===2);
+    show($('res-resend-row'), step===2);
+    $('btn-res-submit').textContent = step===2 ? 'Nastavit nové heslo' : 'Poslat kód';
+    if(step===2){ $('res-code').value = ''; $('res-code').focus(); }
+  }
+  function resetFormState(){
+    setResStep(1);
+    $('res-code').value = '';
+    $('res-password').value = '';
+    $('res-password2').value = '';
+    feedback($('form-reset'));
+  }
+  function sendResetCode(f){
+    var email = $('res-email').value.trim().toLowerCase();
+    feedback(f); busy(f, true);
+    return Auth.resetStart(email).then(function(res){
+      $('res-sent').textContent = 'Pokud k adrese ' + (res.email || email) + ' patří účet, poslali jsme na ni 6místný kód. Platí ' +
+        (res.validMinutes || 15) + ' minut. Pokud nepřišel, podívejte se i do spamu.';
+      setResStep(2);
+    }, function(err){
+      feedback(f, 'bad', err.message);
+    }).then(function(){ busy(f, false); });
+  }
+  $('res-code').addEventListener('input', function(){
+    var v = this.value.replace(/\D/g,'').slice(0,6);
+    if(v!==this.value) this.value = v;
+  });
+  $('btn-forgot').addEventListener('click', function(){
+    resetFormState();
+    var u = $('login-username').value.trim();
+    if(u && !$('res-email').value) $('res-email').value = u;
+    showPanel('reset');
+    $('res-email').focus();
+  });
+  $('btn-res-cancel').addEventListener('click', function(){ resetFormState(); showPanel('login'); });
+  $('btn-res-back').addEventListener('click', function(){ feedback($('form-reset')); setResStep(1); $('res-email').focus(); });
+  $('btn-res-resend').addEventListener('click', function(){ sendResetCode($('form-reset')); });
+  $('form-reset').addEventListener('submit', function(e){
+    e.preventDefault();
+    var f = this;
+    var email = $('res-email').value.trim().toLowerCase();
+    if(resStep===1){
+      if(!email){ feedback(f, 'bad', 'Zadejte svůj školní e-mail.'); return; }
+      if(!/^[^@\s]+@gym-kt\.cz$/.test(email)){ feedback(f, 'bad', 'Použijte prosím školní e-mail končící @gym-kt.cz.'); return; }
+      sendResetCode(f);
+      return;
+    }
+    var kod = $('res-code').value;
+    var p = $('res-password').value;
+    if(!/^\d{6}$/.test(kod)){ feedback(f, 'bad', 'Zadejte 6místný kód z e-mailu.'); return; }
+    if(p.length<8){ feedback(f, 'bad', 'Nové heslo musí mít alespoň 8 znaků.'); return; }
+    if(p!==$('res-password2').value){ feedback(f, 'bad', 'Hesla se neshodují.'); return; }
+    feedback(f); busy(f, true);
+    Auth.resetFinish(email, kod, p, $('res-remember').checked).then(function(user){
+      $('res-code').value = ''; $('res-password').value = ''; $('res-password2').value = '';
+      $('login-password').value = '';
+      resetFormState();
+      showPanel('login');
+      var fb = $('acct-feedback');
+      fb.className = 'feedback ok'; fb.textContent = 'Heslo bylo změněno a jste přihlášeni.'; fb.hidden = false;
+      afterAuth(user);
+    }, function(err){
+      feedback(f, 'bad', err.message);
+    }).then(function(){ busy(f, false); });
+  });
+
   // ---- změna hesla ----
   $('btn-show-change').addEventListener('click', function(){
     $('change-lead').textContent = 'Zvolte si nové heslo.';
@@ -662,6 +789,7 @@ footer{
     Auth.deleteMyAccount(p).then(function(){
       $('del-password').value = '';
       show(f, false);
+      showPanel('login');
       render();
       var fb = $('form-login').querySelector('.feedback');
       fb.className = 'feedback ok'; fb.textContent = 'Váš účet byl smazán.'; fb.hidden = false;
@@ -681,7 +809,7 @@ footer{
     show($('view-guest'), !user);
     show($('view-user'), !!user);
     if(!user){
-      $('page-title').textContent = document.querySelector('.toptab.on').dataset.tab==='login' ? 'Přihlášení' : 'Registrace';
+      $('page-title').textContent = PANEL_TITLE[panel];
       return;
     }
     $('page-title').textContent = 'Můj účet';
