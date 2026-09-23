@@ -182,16 +182,16 @@
               <th scope="row">Δs (m)</th>
             </tr>
             <tr data-row="vi">
-              <th scope="row">v<sub>i</sub> (m/s)</th>
+              <th scope="row">v<sub>i</sub> (km/h)</th>
             </tr>
           </tbody>
         </table>
       </div>
 
       <div class="actions">
-        <button class="btn ghost" id="btn-fill-dt">Doplnit Δt</button>
-        <button class="btn ghost" id="btn-fill-ds">Doplnit Δs</button>
-        <button class="btn ghost" id="btn-fill-vi">Doplnit v<sub>i</sub></button>
+        <button class="btn primary" id="btn-fill-dt">Doplnit Δt</button>
+        <button class="btn primary" id="btn-fill-ds">Doplnit Δs</button>
+        <button class="btn primary" id="btn-fill-vi">Doplnit v<sub>i</sub></button>
         <button class="btn ghost" id="btn-clear-table">Vymazat tabulku</button>
       </div>
     </div>
@@ -313,11 +313,12 @@
       var ds = getVal('ds', col);
       var dt = getVal('dt', col);
       if(ds === null || dt === null || dt === 0) continue;
-      setVal('vi', col, ds / dt);
+      setVal('vi', col, (ds / dt) * 3.6); // m/s → km/h
     }
   });
 
-  // Zapíše čas do prvního volného políčka v řádku t (s) — jako čas videa mínus VIDEO_START.
+  // Zapíše čas do prvního volného políčka v řádku t (s) — jako čas videa mínus VIDEO_START —
+  // a přesune kurzor do políčka pod ním (řádek s), ať se do něj dá rovnou psát.
   function recordTime(videoSeconds){
     var value = videoSeconds - VIDEO_START;
     value = Math.round(value * 10) / 10;
@@ -325,6 +326,8 @@
     for(var i=0; i<cells.length; i++){
       if(cells[i].value.trim() === ''){
         cells[i].value = value.toString().replace('.', ',');
+        var below = cellAt(ROW_ORDER.indexOf('t') + 1, i + 1);
+        if(below) below.focus();
         return;
       }
     }
