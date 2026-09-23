@@ -115,9 +115,6 @@
   outline-offset:-2px;
   background:var(--accent-ink);
 }
-.data-table td.cell-na{
-  background:repeating-linear-gradient(135deg, var(--surface-2), var(--surface-2) 6px, var(--surface) 6px, var(--surface) 12px);
-}
 
 @media (max-width:520px){
   .card{ padding:20px 16px 22px; }
@@ -172,11 +169,14 @@
             <tr data-row="t">
               <th scope="row">t (s)</th>
             </tr>
+            <tr data-row="s">
+              <th scope="row">s (m)</th>
+            </tr>
             <tr data-row="v">
               <th scope="row">v (km/h)</th>
             </tr>
-            <tr data-row="s">
-              <th scope="row">s (m)</th>
+            <tr data-row="dt">
+              <th scope="row">Δt (s)</th>
             </tr>
             <tr data-row="ds">
               <th scope="row">Δs (m)</th>
@@ -203,10 +203,7 @@
   "use strict";
 
   var CELLS_PER_ROW = 8;
-  var ROW_ORDER = ['t', 'v', 's', 'ds', 'vi'];
-  // Δs v prvním sloupci nejde vyplnit — na první měření není s čím porovnávat, proto je
-  // to políčko přeškrtnuté (bez vstupního pole).
-  var NO_INPUT_CELLS = { 'ds-1': true };
+  var ROW_ORDER = ['t', 's', 'v', 'dt', 'ds', 'vi'];
   var VIDEO_START = 85; // sekund — od tohoto času video začíná a od něj se počítá i zapisovaný čas
   var table = document.getElementById('measure-table');
   var rowCells = {};
@@ -215,47 +212,56 @@
     rowCells[rowKey] = [];
     for(var i=1; i<=CELLS_PER_ROW; i++){
       var td = document.createElement('td');
-      if(NO_INPUT_CELLS[rowKey + '-' + i]){
-        td.className = 'cell-na';
-        rowCells[rowKey].push(null);
-      } else {
-        var input = document.createElement('input');
-        input.type = 'text';
-        input.inputMode = 'decimal';
-        input.autocomplete = 'off';
-        input.setAttribute('aria-label', tr.querySelector('th').textContent + ', sloupec ' + i);
-        input.id = 'cell-' + rowKey + '-' + i;
-        input.setAttribute('data-row', rowKey);
-        input.setAttribute('data-col', i);
-        td.appendChild(input);
-        rowCells[rowKey].push(input);
-      }
+      var input = document.createElement('input');
+      input.type = 'text';
+      input.inputMode = 'decimal';
+      input.autocomplete = 'off';
+      input.setAttribute('aria-label', tr.querySelector('th').textContent + ', sloupec ' + i);
+      input.id = 'cell-' + rowKey + '-' + i;
+      input.setAttribute('data-row', rowKey);
+      input.setAttribute('data-col', i);
+      td.appendChild(input);
       tr.appendChild(td);
+      rowCells[rowKey].push(input);
     }
   });
 
-  // Najde nejbližší vyplnitelnou buňku pod danou pozicí — dolů ve stejném sloupci, po
-  // posledním řádku na začátek dalšího sloupce; políčka bez vstupu (Δs ve sloupci 1) přeskočí.
-  function findNextCell(rowIdx, col){
-    var r = rowIdx + 1, c = col;
-    if(r >= ROW_ORDER.length){ r = 0; c = col + 1; }
-    if(c > CELLS_PER_ROW) return null;
-    var cell = rowCells[ROW_ORDER[r]][c - 1];
-    if(cell) return cell;
-    return findNextCell(r, c);
+  function cellAt(rowIdx, col){
+    if(rowIdx < 0 || rowIdx >= ROW_ORDER.length) return null;
+    if(col < 1 || col > CELLS_PER_ROW) return null;
+    return rowCells[ROW_ORDER[rowIdx]][col - 1];
   }
 
-  // Enter přesouvá pozornost dolů ve stejném sloupci (po posledním řádku na začátek
-  // dalšího sloupce), tabulátor mezi buňkami napravo řeší už výchozí chování prohlížeče,
-  // protože buňky jsou v DOM seřazené po řádcích zleva doprava, shora dolů.
+  // Enter přesouvá pozornost dolů ve stejném sloupci a po posledním řádku na začátek
+  // dalšího sloupce. Šipkami (nahoru/dolů/doleva/doprava) se dá po tabulce pohybovat
+  // i bez Enteru — doleva/doprava jen když je kurzor na kraji textu, aby to nebránilo
+  // běžné editaci obsahu políčka.
   Array.prototype.forEach.call(table.querySelectorAll('input'), function(input){
     input.addEventListener('keydown', function(e){
-      if(e.key !== 'Enter') return;
-      e.preventDefault();
-      var row = input.getAttribute('data-row');
+      var rowIdx = ROW_ORDER.indexOf(input.getAttribute('data-row'));
       var col = parseInt(input.getAttribute('data-col'), 10);
-      var next = findNextCell(ROW_ORDER.indexOf(row), col);
-      if(next) next.focus();
+      var next = null;
+
+      if(e.key === 'Enter'){
+        next = cellAt(rowIdx + 1, col);
+        if(!next) next = cellAt(0, col + 1);
+      } else if(e.key === 'ArrowDown'){
+        next = cellAt(rowIdx + 1, col);
+      } else if(e.key === 'ArrowUp'){
+        next = cellAt(rowIdx - 1, col);
+      } else if(e.key === 'ArrowLeft' && input.selectionStart === 0 && input.selectionEnd === 0){
+        next = cellAt(rowIdx, col - 1);
+      } else if(e.key === 'ArrowRight' && input.selectionStart === input.value.length && input.selectionEnd === input.value.length){
+        next = cellAt(rowIdx, col + 1);
+      } else {
+        return;
+      }
+
+      if(next){
+        e.preventDefault();
+        next.focus();
+        next.select();
+      }
     });
   });
 
