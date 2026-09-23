@@ -115,6 +115,9 @@
   outline-offset:-2px;
   background:var(--accent-ink);
 }
+.data-table td.cell-na{
+  background:repeating-linear-gradient(135deg, var(--surface-2), var(--surface-2) 6px, var(--surface) 6px, var(--surface) 12px);
+}
 
 @media (max-width:520px){
   .card{ padding:20px 16px 22px; }
@@ -175,6 +178,12 @@
             <tr data-row="s">
               <th scope="row">s (m)</th>
             </tr>
+            <tr data-row="ds">
+              <th scope="row">Δs (m)</th>
+            </tr>
+            <tr data-row="vi">
+              <th scope="row">v<sub>i</sub> (m/s)</th>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -194,7 +203,10 @@
   "use strict";
 
   var CELLS_PER_ROW = 8;
-  var ROW_ORDER = ['t', 'v', 's'];
+  var ROW_ORDER = ['t', 'v', 's', 'ds', 'vi'];
+  // Δs v prvním sloupci nejde vyplnit — na první měření není s čím porovnávat, proto je
+  // to políčko přeškrtnuté (bez vstupního pole).
+  var NO_INPUT_CELLS = { 'ds-1': true };
   var VIDEO_START = 85; // sekund — od tohoto času video začíná a od něj se počítá i zapisovaný čas
   var table = document.getElementById('measure-table');
   var rowCells = {};
@@ -203,19 +215,35 @@
     rowCells[rowKey] = [];
     for(var i=1; i<=CELLS_PER_ROW; i++){
       var td = document.createElement('td');
-      var input = document.createElement('input');
-      input.type = 'text';
-      input.inputMode = 'decimal';
-      input.autocomplete = 'off';
-      input.setAttribute('aria-label', tr.querySelector('th').textContent + ', sloupec ' + i);
-      input.id = 'cell-' + rowKey + '-' + i;
-      input.setAttribute('data-row', rowKey);
-      input.setAttribute('data-col', i);
-      td.appendChild(input);
+      if(NO_INPUT_CELLS[rowKey + '-' + i]){
+        td.className = 'cell-na';
+        rowCells[rowKey].push(null);
+      } else {
+        var input = document.createElement('input');
+        input.type = 'text';
+        input.inputMode = 'decimal';
+        input.autocomplete = 'off';
+        input.setAttribute('aria-label', tr.querySelector('th').textContent + ', sloupec ' + i);
+        input.id = 'cell-' + rowKey + '-' + i;
+        input.setAttribute('data-row', rowKey);
+        input.setAttribute('data-col', i);
+        td.appendChild(input);
+        rowCells[rowKey].push(input);
+      }
       tr.appendChild(td);
-      rowCells[rowKey].push(input);
     }
   });
+
+  // Najde nejbližší vyplnitelnou buňku pod danou pozicí — dolů ve stejném sloupci, po
+  // posledním řádku na začátek dalšího sloupce; políčka bez vstupu (Δs ve sloupci 1) přeskočí.
+  function findNextCell(rowIdx, col){
+    var r = rowIdx + 1, c = col;
+    if(r >= ROW_ORDER.length){ r = 0; c = col + 1; }
+    if(c > CELLS_PER_ROW) return null;
+    var cell = rowCells[ROW_ORDER[r]][c - 1];
+    if(cell) return cell;
+    return findNextCell(r, c);
+  }
 
   // Enter přesouvá pozornost dolů ve stejném sloupci (po posledním řádku na začátek
   // dalšího sloupce), tabulátor mezi buňkami napravo řeší už výchozí chování prohlížeče,
@@ -226,15 +254,7 @@
       e.preventDefault();
       var row = input.getAttribute('data-row');
       var col = parseInt(input.getAttribute('data-col'), 10);
-      var rowIdx = ROW_ORDER.indexOf(row);
-      var nextRowIdx = rowIdx + 1;
-      var nextCol = col;
-      if(nextRowIdx >= ROW_ORDER.length){
-        nextRowIdx = 0;
-        nextCol = col + 1;
-      }
-      if(nextCol > CELLS_PER_ROW) return;
-      var next = rowCells[ROW_ORDER[nextRowIdx]][nextCol - 1];
+      var next = findNextCell(ROW_ORDER.indexOf(row), col);
       if(next) next.focus();
     });
   });
