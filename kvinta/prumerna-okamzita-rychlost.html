@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Průměrná a okamžitá rychlost</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../spolecne/config.js"></script>
+<script src="../spolecne/auth.js"></script>
+<link rel="stylesheet" href="../spolecne/styl.css">
+<style>
+:root{
+  --paper:#f5f0e3;
+  --surface:#fffcf5;
+  --surface-2:#ece4d1;
+  --ink:#212b34;
+  --ink-soft:#5d6b76;
+  --line:rgba(33,43,52,0.12);
+  --accent:#c9581f;
+  --accent-ink:#fff8f0;
+  --success:#28794f;
+  --success-bg:#e3efe0;
+  --danger:#b3392b;
+  --danger-bg:#f5e4de;
+  --focus:#1e6f66;
+  --shadow: 0 1px 0 rgba(33,43,52,0.06);
+}
+
+.panel{ margin-bottom:22px; }
+.panel-title{ margin-bottom:8px; display:block; }
+.panel p{
+  margin:0 0 8px;
+  font-size:0.9rem;
+  line-height:1.55;
+}
+.panel p:last-child{ margin-bottom:0; }
+.panel b{ color:var(--ink); }
+
+.card{ padding:26px 26px 28px; text-align:left; margin-bottom:24px; }
+.cat-tag{ margin-bottom:10px; }
+.card h2{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.6rem;
+  letter-spacing:0.02em;
+  color:var(--ink);
+}
+.card .desc{
+  font-size:0.86rem;
+  color:var(--ink-soft);
+  line-height:1.5;
+  max-width:60ch;
+  margin-top:2px;
+}
+
+.katex{ font-size:1.05em; }
+.formula-box{
+  background:var(--surface-2);
+  border-radius:8px;
+  padding:12px 16px;
+  margin:10px 0;
+  font-size:1.1rem;
+  text-align:center;
+}
+
+.theory-table-wrap{ overflow-x:auto; margin:6px 0 4px; }
+.theory-table{
+  border-collapse:collapse;
+  font-size:0.88rem;
+  width:100%;
+  min-width:320px;
+}
+.theory-table th, .theory-table td{
+  border:1px solid var(--line);
+  padding:8px 12px;
+  text-align:left;
+}
+.theory-table thead th{
+  background:var(--surface-2);
+  color:var(--ink-soft);
+  font-weight:600;
+  font-size:0.72rem;
+  text-transform:uppercase;
+  letter-spacing:0.05em;
+}
+.theory-table td.mono, .theory-table th.mono{
+  font-family:'IBM Plex Mono', monospace;
+  font-variant-numeric:tabular-nums;
+  text-align:center;
+}
+.theory-table tbody tr:nth-child(even) td{ background:rgba(33,43,52,0.02); }
+
+.video-wrap{
+  position:relative;
+  width:100%;
+  padding-top:56.25%; /* poměr stran 16:9 */
+  margin-top:14px;
+  background:var(--surface-2);
+  border:1px solid var(--line);
+  border-radius:10px;
+  overflow:hidden;
+}
+.video-wrap iframe{
+  position:absolute;
+  top:0; left:0;
+  width:100%;
+  height:100%;
+  border:0;
+}
+
+.table-wrap{
+  margin-top:20px;
+  overflow-x:auto;
+  border:1px solid var(--line);
+  border-radius:10px;
+}
+.data-table{
+  border-collapse:collapse;
+  width:100%;
+  min-width:640px;
+}
+.data-table th,
+.data-table td{
+  border:1px solid var(--line);
+  padding:0;
+}
+.data-table th{
+  background:var(--surface-2);
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:700;
+  font-size:0.82rem;
+  color:var(--ink);
+  padding:9px 10px;
+  text-align:left;
+  white-space:nowrap;
+}
+.data-table td input{
+  width:100%;
+  box-sizing:border-box;
+  border:0;
+  background:var(--surface);
+  color:var(--ink);
+  font-family:'IBM Plex Mono', monospace;
+  font-size:0.88rem;
+  text-align:center;
+  padding:9px 6px;
+}
+.data-table td input:focus{
+  outline:2px solid var(--focus);
+  outline-offset:-2px;
+  background:var(--accent-ink);
+}
+
+@media (max-width:520px){
+  .card{ padding:20px 16px 22px; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <a class="back-link" href="../rozcestniky/kvinta.html">← Zpět na Kvinta/1. ročník</a>
+
+  <div class="brand">
+    <div class="brand-lockup">
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <line x1="6" y1="30" x2="34" y2="30" stroke="var(--ink-soft)" stroke-width="1.4"/>
+        <circle cx="10" cy="30" r="3" fill="var(--accent)"/>
+        <path d="M10,30 Q20,8 34,10" stroke="var(--focus)" stroke-width="2.2" fill="none" stroke-dasharray="4 4"/>
+        <circle cx="34" cy="10" r="3" fill="var(--focus)"/>
+      </svg>
+      <div class="brand-text">
+        <h1>Průměrná a okamžitá rychlost</h1>
+        <p>kinematika hmotného bodu</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="top-tabs">
+    <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+    <button class="toptab" id="top-tab-video" data-tab="video">Video</button>
+  </div>
+
+  <div id="theory-section" class="tab-section">
+
+    <div class="panel">
+      <div class="panel-title">Průměrná rychlost</div>
+      <p>Představme si traktor a osobní automobil, které vyjedou současně z téhož místa a jedou po téže silnici do místa vzdáleného např. 20&nbsp;km. Oba urazí stejnou dráhu, ale osobní automobil dorazí do cíle zpravidla dříve než traktor. Fyzikální veličina, která odlišuje pohyby obou vozidel, je <b>průměrná rychlost</b>.</p>
+      <div class="formula-box">\[ v_\mathrm{p} = \frac{s}{t} \]</div>
+      <p>kde \(s\) je celková dráha a \(t\) celková doba, za kterou byla tato dráha urazena. Průměrná rychlost se tedy vztahuje na celý pohyb (celou dobu \(t\), celou dráhu \(s\)) — neříká nic o tom, jak rychle se těleso pohybovalo v jednotlivých okamžicích.</p>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="9" cy="9" r="7.5" stroke="var(--focus)" stroke-width="1.6"/>
+          <line x1="9" y1="8" x2="9" y2="13" stroke="var(--focus)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="5.2" r="1" fill="var(--focus)"/>
+        </svg>
+        <p>Převod jednotek: \(1\ \mathrm{km\cdot h^{-1}} = \frac{1}{3{,}6}\ \mathrm{m\cdot s^{-1}}\) a naopak \(1\ \mathrm{m\cdot s^{-1}} = 3{,}6\ \mathrm{km\cdot h^{-1}}\).</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Rychlost na úseku pohybu — význam symbolu Δ</div>
+      <p>Během jízdy se rychlost mění — auto zrychluje, brzdí, projíždí zatáčky. Chceme-li zjistit, jak rychle se pohybovalo jen na <b>části</b> trajektorie, potřebujeme <b>změny</b> dráhy a času na vybraném úseku. Značíme je řeckým písmenem <b>Δ</b> (delta):</p>
+      <div class="formula-box">\[ v = \frac{\Delta s}{\Delta t} \]</div>
+      <p><b>Δ vždy znamená změnu veličiny</b> a počítá se jako <b>koncová hodnota mínus počáteční hodnota</b>. Znaménko změny udává trend — např. Δ&nbsp;&gt;&nbsp;0 znamená růst, Δ&nbsp;&lt;&nbsp;0 pokles.</p>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M9 2.5 L16 15.5 H2 Z" stroke="var(--danger)" stroke-width="1.4" stroke-linejoin="round"/>
+          <line x1="9" y1="7" x2="9" y2="11.5" stroke="var(--danger)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="13.6" r="1" fill="var(--danger)"/>
+        </svg>
+        <p>Chceme-li určit průměrnou rychlost na <b>celé</b> trajektorii složené z několika úseků \(\Delta s_1, \Delta s_2, \dots\) s dobami \(\Delta t_1, \Delta t_2, \dots\), <b>nelze</b> prostě zprůměrovat rychlosti jednotlivých úseků. Musí se sečíst zvlášť všechny dráhy a zvlášť všechny časy: \(v_\mathrm{p} = \dfrac{\Delta s_1+\Delta s_2+\dots}{\Delta t_1+\Delta t_2+\dots}\). Např. auto, které 9&nbsp;h stálo a pak 1&nbsp;h jelo rychlostí 50&nbsp;km/h, ujelo 50&nbsp;km za 10&nbsp;h, tedy \(v_\mathrm{p}=5\ \mathrm{km/h}\) — ne 25&nbsp;km/h, jak by vyšlo z chybného aritmetického průměru rychlostí.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Okamžitá rychlost</div>
+      <p>Čím kratší časový interval \(\Delta t\) zvolíme, tím přesněji vystihuje výpočet \(v = \Delta s/\Delta t\), jak rychle se těleso pohybovalo v konkrétním okamžiku. Zkrátíme-li interval \(\Delta t\) až na jediný okamžik (v limitě), dostaneme <b>okamžitou rychlost</b> — rychlost tělesa v daném časovém bodě, kterou u auta ukazuje tachometr.</p>
+      <p><b>Průměrná rychlost</b> tedy shrnuje celý úsek pohybu do jednoho čísla, zatímco <b>okamžitá rychlost</b> popisuje pohyb v konkrétním okamžiku.</p>
+      <p>Pohyb, při kterém se velikost okamžité rychlosti nemění, se nazývá <b>pohyb rovnoměrný</b>. Mění-li se, jde o <b>pohyb nerovnoměrný</b>.</p>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="9" cy="9" r="7.5" stroke="var(--focus)" stroke-width="1.6"/>
+          <line x1="9" y1="8" x2="9" y2="13" stroke="var(--focus)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="5.2" r="1" fill="var(--focus)"/>
+        </svg>
+        <p>Rychlost je ve skutečnosti <b>vektorová veličina</b> — má nejen velikost, ale i směr (leží v tečně k trajektorii). V praxi se ale slovem „rychlost" častěji míní jen její velikost, tak jako v této tabulce a v běžné řeči.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Proč vyjde rychlost vyšší, než auto vůbec jelo?</div>
+      <p>Když z videa (záložka Video) odečítáte čas zastavením přehrávače, obsahuje odečtený čas malou nepřesnost — video zastavíte jen přibližně. Na <b>krátkém</b> úseku (malé \(\Delta t\)) i malá chyba v čase výrazně zkreslí vypočítanou rychlost \(v = \Delta s/\Delta t\) — proto může u některých úseků vyjít i vyšší rychlost, než jakou auto ve skutečnosti kdy jelo. Právě proto se okamžitá rychlost definuje jako limita pro \(\Delta t \to 0\), a v praxi se měří přímo tachometrem, ne dopočítáváním z dráhy a času.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Příklad: rychlostní test Bugatti Chiron</div>
+      <p>Video v záložce <b>Video</b> zachycuje rychlostní test auta Bugatti Chiron. Zastavením videa na osmi místech získáme čas a odpovídající dráhu:</p>
+      <div class="theory-table-wrap">
+        <table class="theory-table">
+          <thead>
+            <tr><th>t (s)</th><th class="mono">6</th><th class="mono">9</th><th class="mono">13</th><th class="mono">19</th><th class="mono">23</th><th class="mono">25</th><th class="mono">35</th><th class="mono">41</th></tr>
+          </thead>
+          <tbody>
+            <tr><th>s (m)</th><td class="mono">181</td><td class="mono">391</td><td class="mono">680</td><td class="mono">1393</td><td class="mono">1764</td><td class="mono">2017</td><td class="mono">2830</td><td class="mono">3085</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Průměrná rychlost auta za celou dobu měření (v km/h):</p>
+      <div class="formula-box">\[ v_\mathrm{p} = \frac{s}{t} = \frac{3085}{41} \approx 75{,}2\ \mathrm{m/s} = 75{,}2 \cdot 3{,}6 \approx 271\ \mathrm{km/h} \]</div>
+      <p>Rychlost v prvním úseku (od 0&nbsp;s do 6&nbsp;s):</p>
+      <div class="formula-box">\[ v = \frac{\Delta s}{\Delta t} = \frac{181}{6} \approx 30{,}2\ \mathrm{m/s} \approx 109\ \mathrm{km/h} \]</div>
+      <p>Tabulku výše doplňte do interaktivní tabulky v záložce <b>Video</b> — tlačítka <b>Doplnit Δt</b>, <b>Doplnit Δs</b> a <b>Doplnit v<sub>i</sub></b> pak dopočítají zbylé řádky stejným postupem.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Shrnutí</div>
+      <p>• Průměrná rychlost: \(v_\mathrm{p} = s/t\) (za celý úsek pohybu).</p>
+      <p>• Rychlost na části pohybu: \(v = \Delta s/\Delta t\).</p>
+      <p>• \(\Delta\) = změna = koncová hodnota mínus počáteční; znaménko udává trend.</p>
+      <p>• Okamžitá rychlost = limita pro velmi krátký časový interval (ukazuje ji tachometr).</p>
+    </div>
+
+  </div>
+
+  <div id="video-section" class="tab-section" hidden>
+    <div class="card">
+      <span class="cat-tag">Video</span>
+      <h2>Průměrná a okamžitá rychlost</h2>
+      <div class="video-wrap">
+        <div id="yt-player"></div>
+      </div>
+      <p class="hint">Při každé pauze videa (tlačítkem i mezerníkem) se do tabulky do řádku <b>t (s)</b> zapíše čas videa mínus 106 s.</p>
+
+      <div class="table-wrap">
+        <table class="data-table" id="measure-table">
+          <tbody>
+            <tr data-row="t">
+              <th scope="row">t (s)</th>
+            </tr>
+            <tr data-row="s">
+              <th scope="row">s (m)</th>
+            </tr>
+            <tr data-row="v">
+              <th scope="row">v (km/h)</th>
+            </tr>
+            <tr data-row="dt">
+              <th scope="row">Δt (s)</th>
+            </tr>
+            <tr data-row="ds">
+              <th scope="row">Δs (m)</th>
+            </tr>
+            <tr data-row="vi">
+              <th scope="row">v<sub>i</sub> (km/h)</th>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="actions">
+        <button class="btn primary" id="btn-fill-dt">Doplnit Δt</button>
+        <button class="btn primary" id="btn-fill-ds">Doplnit Δs</button>
+        <button class="btn primary" id="btn-fill-vi">Doplnit v<sub>i</sub></button>
+        <button class="btn ghost" id="btn-clear-table">Vymazat tabulku</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>Fyzika — Kvinta/1. ročník</footer>
+</div>
+
+<script src="../spolecne/spolecne.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  var CELLS_PER_ROW = 8;
+  var ROW_ORDER = ['t', 's', 'v', 'dt', 'ds', 'vi'];
+  var VIDEO_START = 85; // sekund — od tohoto času video začíná
+  var RECORD_OFFSET = 106; // sekund — o tolik se zapisovaný čas při pauze zmenší
+  var table = document.getElementById('measure-table');
+  var rowCells = {};
+  Array.prototype.forEach.call(table.querySelectorAll('tr'), function(tr){
+    var rowKey = tr.getAttribute('data-row');
+    rowCells[rowKey] = [];
+    for(var i=1; i<=CELLS_PER_ROW; i++){
+      var td = document.createElement('td');
+      var input = document.createElement('input');
+      input.type = 'text';
+      input.inputMode = 'decimal';
+      input.autocomplete = 'off';
+      input.setAttribute('aria-label', tr.querySelector('th').textContent + ', sloupec ' + i);
+      input.id = 'cell-' + rowKey + '-' + i;
+      input.setAttribute('data-row', rowKey);
+      input.setAttribute('data-col', i);
+      td.appendChild(input);
+      tr.appendChild(td);
+      rowCells[rowKey].push(input);
+    }
+  });
+
+  function cellAt(rowIdx, col){
+    if(rowIdx < 0 || rowIdx >= ROW_ORDER.length) return null;
+    if(col < 1 || col > CELLS_PER_ROW) return null;
+    return rowCells[ROW_ORDER[rowIdx]][col - 1];
+  }
+
+  // Enter přesouvá pozornost dolů ve stejném sloupci a po posledním řádku na začátek
+  // dalšího sloupce. Šipkami (nahoru/dolů/doleva/doprava) se dá po tabulce pohybovat
+  // i bez Enteru — doleva/doprava jen když je kurzor na kraji textu, aby to nebránilo
+  // běžné editaci obsahu políčka.
+  Array.prototype.forEach.call(table.querySelectorAll('input'), function(input){
+    input.addEventListener('keydown', function(e){
+      var rowIdx = ROW_ORDER.indexOf(input.getAttribute('data-row'));
+      var col = parseInt(input.getAttribute('data-col'), 10);
+      var next = null;
+
+      if(e.key === 'Enter'){
+        next = cellAt(rowIdx + 1, col);
+        if(!next) next = cellAt(0, col + 1);
+      } else if(e.key === 'ArrowDown'){
+        next = cellAt(rowIdx + 1, col);
+      } else if(e.key === 'ArrowUp'){
+        next = cellAt(rowIdx - 1, col);
+      } else if(e.key === 'ArrowLeft' && input.selectionStart === 0 && input.selectionEnd === 0){
+        next = cellAt(rowIdx, col - 1);
+      } else if(e.key === 'ArrowRight' && input.selectionStart === input.value.length && input.selectionEnd === input.value.length){
+        next = cellAt(rowIdx, col + 1);
+      } else {
+        return;
+      }
+
+      if(next){
+        e.preventDefault();
+        next.focus();
+        next.select();
+      }
+    });
+  });
+
+  document.getElementById('btn-clear-table').addEventListener('click', function(){
+    Array.prototype.forEach.call(table.querySelectorAll('input'), function(input){
+      input.value = '';
+    });
+  });
+
+  // Přečte číselnou hodnotu z políčka (i se zápisem desetinné čárky) — prázdné nebo
+  // nečíselné políčko vrátí null, aby se dalo snadno poznat, že chybí zdrojová hodnota.
+  function getVal(rowKey, col){
+    var raw = rowCells[rowKey][col - 1].value.trim();
+    if(raw === '') return null;
+    var n = parseFloat(raw.replace(',', '.'));
+    return isNaN(n) ? null : n;
+  }
+  function setVal(rowKey, col, num){
+    var rounded = Math.round(num * 100) / 100;
+    if(Object.is(rounded, -0)) rounded = 0;
+    rowCells[rowKey][col - 1].value = rounded.toString().replace('.', ',');
+  }
+
+  // Doplní řádek rozdílů (Δt ze t, Δs ze s): první sloupec jen opíše hodnotu ze zdrojového
+  // řádku (na první měření není s čím porovnávat), ostatní sloupce = zdrojová buňka nad
+  // doplňovanou buňkou mínus zdrojová buňka vlevo od ní.
+  function fillDiffRow(sourceRow, targetRow){
+    for(var col = 1; col <= CELLS_PER_ROW; col++){
+      var cur = getVal(sourceRow, col);
+      if(cur === null) continue;
+      if(col === 1){
+        setVal(targetRow, col, cur);
+      } else {
+        var prev = getVal(sourceRow, col - 1);
+        if(prev === null) continue;
+        setVal(targetRow, col, cur - prev);
+      }
+    }
+  }
+
+  document.getElementById('btn-fill-dt').addEventListener('click', function(){ fillDiffRow('t', 'dt'); });
+  document.getElementById('btn-fill-ds').addEventListener('click', function(){ fillDiffRow('s', 'ds'); });
+
+  document.getElementById('btn-fill-vi').addEventListener('click', function(){
+    for(var col = 1; col <= CELLS_PER_ROW; col++){
+      var ds = getVal('ds', col);
+      var dt = getVal('dt', col);
+      if(ds === null || dt === null || dt === 0) continue;
+      setVal('vi', col, (ds / dt) * 3.6); // m/s → km/h
+    }
+  });
+
+  // Zapíše čas do prvního volného políčka v řádku t (s) — jako čas videa mínus RECORD_OFFSET —
+  // a přesune kurzor do políčka pod ním (řádek s), ať se do něj dá rovnou psát.
+  function recordTime(videoSeconds){
+    var value = videoSeconds - RECORD_OFFSET;
+    value = Math.round(value * 10) / 10;
+    var cells = rowCells.t;
+    for(var i=0; i<cells.length; i++){
+      if(cells[i].value.trim() === ''){
+        cells[i].value = value.toString().replace('.', ',');
+        var below = cellAt(ROW_ORDER.indexOf('t') + 1, i + 1);
+        if(below) below.focus();
+        return;
+      }
+    }
+  }
+
+  // ---- YouTube IFrame API — zápis času při každé pauze videa ----
+  window.onYouTubeIframeAPIReady = function(){
+    new YT.Player('yt-player', {
+      videoId: 'nuBnP_GH_20',
+      playerVars: { start: VIDEO_START },
+      events: {
+        onStateChange: function(e){
+          if(e.data === YT.PlayerState.PAUSED){
+            recordTime(e.target.getCurrentTime());
+          }
+        }
+      }
+    });
+  };
+  var ytApiScript = document.createElement('script');
+  ytApiScript.src = 'https://www.youtube.com/iframe_api';
+  document.head.appendChild(ytApiScript);
+
+  if(window.renderMathInElement){
+    renderMathInElement(document.getElementById('theory-section'), {
+      delimiters: [{left:'\\(', right:'\\)', display:false}, {left:'\\[', right:'\\]', display:true}]
+    });
+  }
+
+  var topTabTeorie = document.getElementById('top-tab-teorie');
+  var topTabVideo = document.getElementById('top-tab-video');
+  var theorySection = document.getElementById('theory-section');
+  var videoSection = document.getElementById('video-section');
+
+  function showTopTab(tab){
+    topTabTeorie.classList.toggle('on', tab==='teorie');
+    topTabVideo.classList.toggle('on', tab==='video');
+    theorySection.hidden = tab!=='teorie';
+    videoSection.hidden = tab!=='video';
+  }
+
+  topTabTeorie.addEventListener('click', function(){ showTopTab('teorie'); });
+  topTabVideo.addEventListener('click', function(){ showTopTab('video'); });
+})();
+</script>
+
+</body>
+</html>
