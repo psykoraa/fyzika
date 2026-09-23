@@ -72,6 +72,17 @@ table.grid tr.inactive td{ opacity:.55; }
 table.grid a{ color:var(--ink); font-weight:500; text-decoration:none; }
 table.grid a:hover{ color:var(--accent); }
 
+table.grid td.title-cell{ position:relative; }
+table.grid tr.lvl-1 td.title-cell{ padding-left:34px; }
+table.grid tr.lvl-2 td.title-cell{ padding-left:60px; }
+table.grid tr.lvl-1 td.title-cell::before,
+table.grid tr.lvl-2 td.title-cell::before{
+  content:'↳'; position:absolute; left:14px; color:var(--ink-soft); font-size:0.8rem;
+}
+table.grid tr.lvl-2 td.title-cell::before{ left:40px; }
+table.grid tr.root-row td.title-cell{ font-weight:700; }
+table.grid tr.other-row-sep td{ padding-top:16px; border-bottom:none; color:var(--ink-soft); font-size:0.7rem; text-transform:uppercase; letter-spacing:0.08em; }
+
 .badge{
   display:inline-block;
   font-size:0.66rem;
@@ -237,7 +248,9 @@ footer{ margin-top:40px; }
         <p><b>Jde o „měkké“ skrytí.</b> Skrytá stránka zmizí z odkazů a při otevření přesměruje na rozcestník,
         ale HTML je na GitHub Pages veřejné — kdo zná přesnou adresu a vypne JavaScript nebo si stáhne zdroj,
         obsah uvidí. Nepoužívejte to pro nic tajného (např. řešení písemek). Totéž platí pro „vyžaduje přihlášení“.
-        Změna se u studentů projeví nejpozději do minuty.</p>
+        Změna se u studentů projeví nejpozději do minuty.
+        Stránky jsou seřazené podle toho, kam patří — vypnutí rozcestníku (např. Měření nebo Kvinta)
+        automaticky vypne i všechny stránky, na které odkazuje.</p>
       </div>
       <div class="panel">
         <div class="panel-title"><span>Viditelnost stránek pro studenty</span></div>
@@ -521,6 +534,45 @@ footer{ margin-top:40px; }
   $('btn-reload-results').addEventListener('click', reloadResults);
 
   // ---- stránky ----
+  // Strom webu (kdo je rozcestník a na co odkazuje) — jen pro řazení/odsazení
+  // v adminu a pro kaskádové vypínání. Nemá vliv na to, co backend skutečně zná;
+  // stránky, které backend nevrátí v pageCfg.pages, se v tomto stromu přeskočí.
+  var PAGE_TREE = [
+    { file:'index.html', root:true, children:[
+      { file:'mereni.html', hub:true, children:[
+        { file:'zaokrouhlovani-vysledku.html' },
+        { file:'zpracovani-mereni.html' }
+      ]},
+      { file:'kvinta.html', hub:true, children:[
+        { file:'prevody-jednotek.html' },
+        { file:'skladani-vektoru.html' },
+        { file:'kalkulacka-fx82cex.html' },
+        { file:'prumerna-okamzita-rychlost.html' }
+      ]}
+    ]}
+  ];
+  function findPage(file){
+    for(var i=0;i<pageCfg.pages.length;i++) if(pageCfg.pages[i].file===file) return pageCfg.pages[i];
+    return null;
+  }
+  // Všechny soubory pod daným uzlem stromu (bez něj samotného), do libovolné hloubky.
+  function treeDescendantFiles(node){
+    var out = [];
+    (node.children || []).forEach(function(c){
+      out.push(c.file);
+      out = out.concat(treeDescendantFiles(c));
+    });
+    return out;
+  }
+  function findTreeNode(nodes, file){
+    for(var i=0;i<nodes.length;i++){
+      if(nodes[i].file===file) return nodes[i];
+      var found = findTreeNode(nodes[i].children || [], file);
+      if(found) return found;
+    }
+    return null;
+  }
+
   function makeSwitch(checked, label, onChange){
     var lab = el('label','switch');
     var inp = document.createElement('input'); inp.type = 'checkbox'; inp.checked = checked;
@@ -530,6 +582,41 @@ footer{ margin-top:40px; }
     inp.addEventListener('change', function(){ onChange(inp); });
     return lab;
   }
+  function pageRow(tb, p, level, isHub){
+    var row = tb.insertRow();
+    row.className = 'lvl-' + level;
+    var titleCell = el('td', 'title-cell');
+    var a = el('a', null, p.title); a.href = p.file;
+    titleCell.appendChild(a);
+    if(isHub) titleCell.appendChild(el('span','badge','rozcestník'));
+    row.appendChild(titleCell);
+    var f = row.insertCell(); f.className = 'mono'; f.textContent = p.file;
+    row.insertCell().appendChild(makeSwitch(p.visible, p.visible ? 'viditelná' : 'skrytá', function(inp){
+      update(p, { viditelna: inp.checked }, inp);
+    }));
+    row.insertCell().appendChild(makeSwitch(p.requiresLogin, p.requiresLogin ? 'vyžaduje' : 'nevyžaduje', function(inp){
+      update(p, { vyzadujePrihlaseni: inp.checked }, inp);
+    }));
+  }
+  function rootRow(tb, node){
+    var row = tb.insertRow();
+    row.className = 'lvl-0 root-row';
+    var titleCell = el('td', 'title-cell', 'Rozcestník (index.html)');
+    row.appendChild(titleCell);
+    var f = row.insertCell(); f.className = 'mono'; f.textContent = node.file;
+    row.insertCell().appendChild(el('span','badge ok','vždy viditelná'));
+    row.insertCell();
+  }
+  function renderTree(nodes, level, tb, seen){
+    nodes.forEach(function(node){
+      seen[node.file] = true;
+      var p = findPage(node.file);
+      if(p) pageRow(tb, p, level, !!node.hub);
+      else if(node.root) rootRow(tb, node);
+      // jinak backend tuhle stránku nezná — přeskočit řádek, ale potomky projít dál
+      renderTree(node.children || [], level + 1, tb, seen);
+    });
+  }
   function renderPages(){
     var box = $('pages-box');
     box.innerHTML = '';
@@ -538,32 +625,59 @@ footer{ margin-top:40px; }
     var hr = t.createTHead().insertRow();
     ['Stránka','Soubor','Viditelnost','Přihlášení'].forEach(function(h){ hr.appendChild(el('th', null, h)); });
     var tb = t.createTBody();
-    pageCfg.pages.forEach(function(p){
-      var row = tb.insertRow();
-      var a = el('a', null, p.title); a.href = p.file;
-      row.insertCell().appendChild(a);
-      var f = row.insertCell(); f.className = 'mono'; f.textContent = p.file;
-      row.insertCell().appendChild(makeSwitch(p.visible, p.visible ? 'viditelná' : 'skrytá', function(inp){
-        update(p, { viditelna: inp.checked }, inp);
-      }));
-      row.insertCell().appendChild(makeSwitch(p.requiresLogin, p.requiresLogin ? 'vyžaduje' : 'nevyžaduje', function(inp){
-        update(p, { vyzadujePrihlaseni: inp.checked }, inp);
-      }));
-    });
+    var seen = {};
+    renderTree(PAGE_TREE, 0, tb, seen);
+    var rest = pageCfg.pages.filter(function(p){ return !seen[p.file]; })
+      .sort(function(a,b){ return a.title.localeCompare(b.title, 'cs'); });
+    if(rest.length){
+      var sepRow = tb.insertRow(); sepRow.className = 'other-row-sep';
+      var sepCell = sepRow.insertCell(); sepCell.colSpan = 4; sepCell.textContent = 'Ostatní stránky';
+      rest.forEach(function(p){ pageRow(tb, p, 0, false); });
+    }
     box.appendChild(t);
+  }
+  function applyPageConfig(res){
+    pageCfg = { pages: res.pages || [], disciplines: res.disciplines || pageCfg.disciplines };
+    try{ localStorage.setItem('fyzika-page-config', JSON.stringify({ t: Date.now(), cfg: pageCfg })); }catch(e){}
+  }
+  function setVisibility(file, visible){
+    return Auth.api('setPageVisibility', { soubor:file, viditelna:visible }).then(applyPageConfig);
+  }
+  function subpageWord(n){
+    if(n===1) return 'podstránku';
+    if(n>=2 && n<=4) return 'podstránky';
+    return 'podstránek';
   }
   function update(p, change, inp){
     inp.disabled = true;
     var data = { soubor: p.file };
     for(var k in change) data[k] = change[k];
-    Auth.api('setPageVisibility', data).then(function(res){
-      pageCfg = { pages: res.pages || [], disciplines: res.disciplines || pageCfg.disciplines };
-      try{ localStorage.setItem('fyzika-page-config', JSON.stringify({ t: Date.now(), cfg: pageCfg })); }catch(e){}
+    var chain = Auth.api('setPageVisibility', data).then(applyPageConfig);
+
+    // Rozcestník: vypnutí shora dolů vypne i všechny stránky, na které odkazuje.
+    var cascaded = [];
+    if(change.viditelna === false){
+      var node = findTreeNode(PAGE_TREE, p.file);
+      if(node){
+        treeDescendantFiles(node).forEach(function(file){
+          var e = findPage(file);
+          if(e && e.visible) cascaded.push(file);
+        });
+      }
+    }
+    cascaded.forEach(function(file){
+      chain = chain.then(function(){ return setVisibility(file, false); });
+    });
+
+    chain.then(function(){
       renderPages();
-      message('ok', 'Uloženo: ' + p.title);
+      message('ok', cascaded.length
+        ? 'Vypnuto: ' + p.title + ' a ' + cascaded.length + ' ' + subpageWord(cascaded.length)
+        : 'Uloženo: ' + p.title);
     }, function(err){
       inp.checked = !inp.checked;
       inp.disabled = false;
+      renderPages();
       handleError(err);
     });
   }
