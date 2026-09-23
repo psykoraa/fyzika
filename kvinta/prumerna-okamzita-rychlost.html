@@ -159,8 +159,9 @@
       <span class="cat-tag">Video</span>
       <h2>Průměrná a okamžitá rychlost</h2>
       <div class="video-wrap">
-        <iframe src="https://www.youtube.com/embed/nuBnP_GH_20?start=85" title="Průměrná a okamžitá rychlost" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+        <div id="yt-player"></div>
       </div>
+      <p class="hint">Při každé pauze videa (tlačítkem i mezerníkem) se do tabulky do řádku <b>t (s)</b> zapíše čas videa mínus 85 s.</p>
 
       <div class="table-wrap">
         <table class="data-table" id="measure-table">
@@ -189,9 +190,12 @@
   "use strict";
 
   var CELLS_PER_ROW = 8;
+  var VIDEO_START = 85; // sekund — od tohoto času video začíná a od něj se počítá i zapisovaný čas
   var table = document.getElementById('measure-table');
+  var rowCells = {};
   Array.prototype.forEach.call(table.querySelectorAll('tr'), function(tr){
     var rowKey = tr.getAttribute('data-row');
+    rowCells[rowKey] = [];
     for(var i=1; i<=CELLS_PER_ROW; i++){
       var td = document.createElement('td');
       var input = document.createElement('input');
@@ -202,8 +206,40 @@
       input.id = 'cell-' + rowKey + '-' + i;
       td.appendChild(input);
       tr.appendChild(td);
+      rowCells[rowKey].push(input);
     }
   });
+
+  // Zapíše čas do prvního volného políčka v řádku t (s) — jako čas videa mínus VIDEO_START.
+  function recordTime(videoSeconds){
+    var value = videoSeconds - VIDEO_START;
+    value = Math.round(value * 10) / 10;
+    var cells = rowCells.t;
+    for(var i=0; i<cells.length; i++){
+      if(cells[i].value.trim() === ''){
+        cells[i].value = value.toString().replace('.', ',');
+        return;
+      }
+    }
+  }
+
+  // ---- YouTube IFrame API — zápis času při každé pauze videa ----
+  window.onYouTubeIframeAPIReady = function(){
+    new YT.Player('yt-player', {
+      videoId: 'nuBnP_GH_20',
+      playerVars: { start: VIDEO_START },
+      events: {
+        onStateChange: function(e){
+          if(e.data === YT.PlayerState.PAUSED){
+            recordTime(e.target.getCurrentTime());
+          }
+        }
+      }
+    });
+  };
+  var ytApiScript = document.createElement('script');
+  ytApiScript.src = 'https://www.youtube.com/iframe_api';
+  document.head.appendChild(ytApiScript);
 
   var topTabTeorie = document.getElementById('top-tab-teorie');
   var topTabVideo = document.getElementById('top-tab-video');
