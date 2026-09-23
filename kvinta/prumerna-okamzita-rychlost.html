@@ -189,6 +189,9 @@
       </div>
 
       <div class="actions">
+        <button class="btn ghost" id="btn-fill-dt">Doplnit Δt</button>
+        <button class="btn ghost" id="btn-fill-ds">Doplnit Δs</button>
+        <button class="btn ghost" id="btn-fill-vi">Doplnit v<sub>i</sub></button>
         <button class="btn ghost" id="btn-clear-table">Vymazat tabulku</button>
       </div>
     </div>
@@ -269,6 +272,49 @@
     Array.prototype.forEach.call(table.querySelectorAll('input'), function(input){
       input.value = '';
     });
+  });
+
+  // Přečte číselnou hodnotu z políčka (i se zápisem desetinné čárky) — prázdné nebo
+  // nečíselné políčko vrátí null, aby se dalo snadno poznat, že chybí zdrojová hodnota.
+  function getVal(rowKey, col){
+    var raw = rowCells[rowKey][col - 1].value.trim();
+    if(raw === '') return null;
+    var n = parseFloat(raw.replace(',', '.'));
+    return isNaN(n) ? null : n;
+  }
+  function setVal(rowKey, col, num){
+    var rounded = Math.round(num * 100) / 100;
+    if(Object.is(rounded, -0)) rounded = 0;
+    rowCells[rowKey][col - 1].value = rounded.toString().replace('.', ',');
+  }
+
+  // Doplní řádek rozdílů (Δt ze t, Δs ze s): první sloupec jen opíše hodnotu ze zdrojového
+  // řádku (na první měření není s čím porovnávat), ostatní sloupce = zdrojová buňka nad
+  // doplňovanou buňkou mínus zdrojová buňka vlevo od ní.
+  function fillDiffRow(sourceRow, targetRow){
+    for(var col = 1; col <= CELLS_PER_ROW; col++){
+      var cur = getVal(sourceRow, col);
+      if(cur === null) continue;
+      if(col === 1){
+        setVal(targetRow, col, cur);
+      } else {
+        var prev = getVal(sourceRow, col - 1);
+        if(prev === null) continue;
+        setVal(targetRow, col, cur - prev);
+      }
+    }
+  }
+
+  document.getElementById('btn-fill-dt').addEventListener('click', function(){ fillDiffRow('t', 'dt'); });
+  document.getElementById('btn-fill-ds').addEventListener('click', function(){ fillDiffRow('s', 'ds'); });
+
+  document.getElementById('btn-fill-vi').addEventListener('click', function(){
+    for(var col = 1; col <= CELLS_PER_ROW; col++){
+      var ds = getVal('ds', col);
+      var dt = getVal('dt', col);
+      if(ds === null || dt === null || dt === 0) continue;
+      setVal('vi', col, ds / dt);
+    }
   });
 
   // Zapíše čas do prvního volného políčka v řádku t (s) — jako čas videa mínus VIDEO_START.
