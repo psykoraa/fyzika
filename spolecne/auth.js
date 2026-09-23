@@ -19,6 +19,7 @@
   var ATTEMPT_TIMEOUT_MS = 20000; // úspěšný dotaz trvá obvykle 1–8 s; "ztracený" visí 30–60 s
   var PUBLIC_ACTIONS = { login: 1, registerStart: 1, registerFinish: 1, resetStart: 1, resetFinish: 1, getPageConfig: 1 };
   var RE_LOCAL_PAGE = /^[a-z0-9-]+\.html$/;
+  var FRESH_RESULTS_MS = 30000; // výsledky načtené před chvílí (typicky při přihlášení) se znovu nestahují
 
   // Do jaké složky patří jednotlivé stránky (vzhledem ke kořeni webu) — potřeba,
   // aby odkazy na přihlášení/administraci/rozcestník fungovaly správně bez ohledu
@@ -301,16 +302,26 @@
 
   // ---------- přihlášení / registrace / odhlášení ----------
 
-  function afterLogin(user) {
+  // Po přihlášení se na synchronizaci výsledků nečeká — stránka může hned pokračovat (přesměrovat).
+  // Server posílá výsledky i konfiguraci stránek rovnou v odpovědi na přihlášení, takže se sloučí
+  // bez dalšího dotazu; lepší lokální výsledky se odešlou frontou (při odchodu ze stránky přes sendBeacon).
+  function afterLogin(user, res) {
     if (user.mustChangePassword) return Promise.resolve(user);
-    return withTimeout(syncAll().catch(function () {}), 8000).then(function () { return user; });
+    if (res && Array.isArray(res.results)) {
+      storePageConfig(res);
+      cacheMyResults(user, res.results);
+      sync(Object.keys(SCORE_MAP), res.results).catch(function () {});
+    } else {
+      syncAll().catch(function () {}); // starší backend bez výsledků v odpovědi
+    }
+    return Promise.resolve(user);
   }
 
   function login(username, password, remember) {
     remember = remember === true;
     return api('login', { username: username, password: password, remember: remember }).then(function (res) {
       setSession(res.token, res.user, remember);
-      return afterLogin(res.user);
+      return afterLogin(res.user, res);
     });
   }
 
@@ -324,7 +335,7 @@
     remember = remember === true;
     return api('registerFinish', { email: email, kod: kod, jmeno: jmeno, trida: trida, password: password, remember: remember }).then(function (res) {
       setSession(res.token, res.user, remember);
-      return afterLogin(res.user);
+      return afterLogin(res.user, res);
     });
   }
 
@@ -342,7 +353,7 @@
     remember = remember === true;
     return api('resetFinish', { email: email, kod: kod, password: password, remember: remember }).then(function (res) {
       setSession(res.token, res.user, remember);
-      return afterLogin(res.user);
+      return afterLogin(res.user, res);
     });
   }
 
@@ -408,7 +419,9 @@
   var lastResults = null;
 
   // Sloučí lokální a serverové nejlepší výsledky (platí vyšší) pro zadané stránky.
-  function sync(pages) {
+  // preloaded = výsledky ze serveru, které už máme (z odpovědi na přihlášení nebo čerstvé z cache):
+  // pak se nic nenačítá a lepší lokální výsledky jdou do fronty místo samostatného čekání na zápis.
+  function sync(pages, preloaded) {
     var user = getUser();
     if (!ENABLED || !user || user.mustChangePassword) return Promise.resolve(false);
     var here = currentPage();
@@ -421,7 +434,8 @@
     }
     lsSet(K.owner, user.id);
 
-    return loadMyAccount().then(function () {
+    if (preloaded) lastResults = preloaded;
+    return (preloaded ? Promise.resolve() : loadMyAccount()).then(function () {
       var server = {};
       lastResults.forEach(function (r) { server[r.page + '|' + r.discipline] = r; });
       var push = [];
@@ -441,6 +455,12 @@
       });
       if (touchedHere) announceScores(here);
       if (!push.length) return true;
+      if (preloaded) {
+        push.slice(0, 20).forEach(function (it) { queue.push(it); });
+        clearTimeout(flushTimer);
+        flushTimer = setTimeout(function () { flush(false); }, 300);
+        return true;
+      }
       return sendResults(push.slice(0, 20)).then(function () { return true; }, function () { return true; });
     }, function (err) {
       if (wiped) announceScores(here);
@@ -809,6 +829,12 @@
     var user = getUser();
     if (user && !user.mustChangePassword && SCORE_MAP[here]) {
       // Přihlášený na stránce apletu: jeden dotaz vrátí výsledky i konfiguraci stránek.
+      // Hned po přihlášení (výsledky z odpovědi serveru jsou čerstvé) se dotaz vůbec neposílá.
+      var fresh = cachedMyResults();
+      if (fresh && Date.now() - fresh.t < FRESH_RESULTS_MS) {
+        sync([here], fresh.results).then(applyFresh, function () {});
+        return;
+      }
       sync([here]).then(applyFresh, function () {
         fetchPageConfig().then(applyFresh).catch(function () {});
       });
