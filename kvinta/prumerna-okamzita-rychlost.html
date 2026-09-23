@@ -178,6 +178,10 @@
           </tbody>
         </table>
       </div>
+
+      <div class="actions">
+        <button class="btn ghost" id="btn-clear-table">Vymazat tabulku</button>
+      </div>
     </div>
   </div>
 
@@ -190,6 +194,7 @@
   "use strict";
 
   var CELLS_PER_ROW = 8;
+  var ROW_ORDER = ['t', 'v', 's'];
   var VIDEO_START = 85; // sekund — od tohoto času video začíná a od něj se počítá i zapisovaný čas
   var table = document.getElementById('measure-table');
   var rowCells = {};
@@ -204,10 +209,40 @@
       input.autocomplete = 'off';
       input.setAttribute('aria-label', tr.querySelector('th').textContent + ', sloupec ' + i);
       input.id = 'cell-' + rowKey + '-' + i;
+      input.setAttribute('data-row', rowKey);
+      input.setAttribute('data-col', i);
       td.appendChild(input);
       tr.appendChild(td);
       rowCells[rowKey].push(input);
     }
+  });
+
+  // Enter přesouvá pozornost dolů ve stejném sloupci (po posledním řádku na začátek
+  // dalšího sloupce), tabulátor mezi buňkami napravo řeší už výchozí chování prohlížeče,
+  // protože buňky jsou v DOM seřazené po řádcích zleva doprava, shora dolů.
+  Array.prototype.forEach.call(table.querySelectorAll('input'), function(input){
+    input.addEventListener('keydown', function(e){
+      if(e.key !== 'Enter') return;
+      e.preventDefault();
+      var row = input.getAttribute('data-row');
+      var col = parseInt(input.getAttribute('data-col'), 10);
+      var rowIdx = ROW_ORDER.indexOf(row);
+      var nextRowIdx = rowIdx + 1;
+      var nextCol = col;
+      if(nextRowIdx >= ROW_ORDER.length){
+        nextRowIdx = 0;
+        nextCol = col + 1;
+      }
+      if(nextCol > CELLS_PER_ROW) return;
+      var next = rowCells[ROW_ORDER[nextRowIdx]][nextCol - 1];
+      if(next) next.focus();
+    });
+  });
+
+  document.getElementById('btn-clear-table').addEventListener('click', function(){
+    Array.prototype.forEach.call(table.querySelectorAll('input'), function(input){
+      input.value = '';
+    });
   });
 
   // Zapíše čas do prvního volného políčka v řádku t (s) — jako čas videa mínus VIDEO_START.
