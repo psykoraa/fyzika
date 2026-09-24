@@ -325,7 +325,8 @@
       <div class="video-wrap">
         <div id="yt-player"></div>
       </div>
-      <p class="hint">Stiskem <b>Enter</b> se za běhu videa (video se nezastaví) do tabulky do řádku <b>t (s)</b> zapíše čas videa mínus 106 s a k němu dráha <b>s (m)</b> a rychlost <b>v (km/h)</b> ve videu. Po čase 30,2 s se dráha a rychlost nedoplní, takže je napište ručně. Mezerníkem se video pozastaví nebo spustí.</p>
+      <p class="hint" id="hint-keyboard">Stiskem <b>Enter</b> se za běhu videa (video se nezastaví) do tabulky do řádku <b>t (s)</b> zapíše čas videa mínus 106 s a k němu dráha <b>s (m)</b> a rychlost <b>v (km/h)</b> ve videu. Po čase 30,2 s se dráha a rychlost nedoplní, takže je napište ručně. Mezerníkem se video pozastaví nebo spustí.</p>
+      <p class="hint" id="hint-touch" hidden>Při každé pauze videa se do tabulky do řádku <b>t (s)</b> zapíše čas videa mínus 106 s a k němu dráha <b>s (m)</b> a rychlost <b>v (km/h)</b> ve videu. Po čase 30,2 s se dráha a rychlost nedoplní, takže je napište ručně.</p>
 
       <div class="table-wrap">
         <table class="data-table" id="measure-table">
@@ -535,11 +536,23 @@
   }
 
   // ---- YouTube IFrame API — zápis času Enterem, video přitom běží dál ----
+  // Na dotykových zařízeních (bez klávesnice) se místo toho zapisuje při každé pauze videa.
+  var isTouch = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+  document.getElementById('hint-keyboard').hidden = isTouch;
+  document.getElementById('hint-touch').hidden = !isTouch;
+
   var player = null;
   window.onYouTubeIframeAPIReady = function(){
     player = new YT.Player('yt-player', {
       videoId: 'nuBnP_GH_20',
-      playerVars: { start: VIDEO_START, disablekb: 1 }
+      playerVars: { start: VIDEO_START, disablekb: 1 },
+      events: {
+        onStateChange: function(e){
+          if(isTouch && e.data === YT.PlayerState.PAUSED){
+            recordTime(e.target.getCurrentTime());
+          }
+        }
+      }
     });
   };
 
