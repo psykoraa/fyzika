@@ -323,7 +323,7 @@
       <div class="video-wrap">
         <div id="yt-player"></div>
       </div>
-      <p class="hint">Při každé pauze videa (tlačítkem i mezerníkem) se do tabulky do řádku <b>t (s)</b> zapíše čas videa mínus 106 s.</p>
+      <p class="hint">Při každé pauze videa (tlačítkem i mezerníkem) se do tabulky do řádku <b>t (s)</b> zapíše čas videa mínus 106 s a k němu dráha <b>s (m)</b> a rychlost <b>v (km/h)</b> ve videu. Po čase 30,2 s se dráha a rychlost nedoplní, takže je napište ručně.</p>
 
       <div class="table-wrap">
         <table class="data-table" id="measure-table">
@@ -480,8 +480,40 @@
     }
   });
 
+  // Hodnoty odečtené z videa: čas (stejný jako zapisovaný při pauze, tj. čas videa mínus
+  // RECORD_OFFSET), ujetá dráha a rychlost na tachometru.
+  var VIDEO_T = [1.7, 2.5, 3.2, 4, 4.8, 5.7, 6.5, 6.8, 7.5, 8.2, 9.2, 9.7, 10.4, 11.3, 12.1, 12.6, 13.2, 13.7, 14.2, 15, 15.8, 16.5, 17.2, 18.2, 18.9, 19.8, 20.5, 21.5, 22.5, 23.5, 24, 24.8, 25.5, 26.3, 27.4, 28.4, 29.4, 30.2];
+  var VIDEO_S = [1, 7, 20, 37, 62, 99, 139, 155, 197, 249, 314, 361, 410, 487, 559, 606, 664, 724, 774, 847, 931, 1006, 1082, 1192, 1270, 1371, 1449, 1562, 1671, 1765, 1814, 1866, 1912, 1960, 2005, 2032, 2046, 2049];
+  var VIDEO_V = [13, 43, 74, 101, 131, 165, 192, 203, 226, 246, 272, 287, 300, 319, 334, 342, 353, 361, 368, 376, 383, 388, 393, 399, 403, 403, 405, 409, 364, 313, 284, 250, 216, 173, 121, 74, 29, 1];
+
+  // Dráha a rychlost v čase t. Mezi sousedními body tabulky předpokládáme rovnoměrně
+  // zrychlený pohyb: rychlost roste lineárně (zrychlení a z rozdílu rychlostí), dráha
+  // kvadraticky — s = s1 + v0·τ + a·τ²/2, kde v0 je zvolená tak, aby parabola prošla
+  // oběma naměřenými dráhami. Před prvním bodem auto stojí (t ≤ 0) a pak se z klidu
+  // rozjíždí tak, aby v čase prvního bodu mělo naměřenou dráhu i rychlost. Za posledním
+  // bodem tabulky vrací null.
+  function videoValuesAt(t){
+    var n = VIDEO_T.length;
+    if(t <= 0) return { s: 0, v: 0 };
+    if(t < VIDEO_T[0]){
+      var k = t / VIDEO_T[0];
+      return { s: VIDEO_S[0] * k * k, v: VIDEO_V[0] * k };
+    }
+    if(t > VIDEO_T[n - 1]) return null;
+    var i = 0;
+    while(i < n - 2 && t > VIDEO_T[i + 1]) i++;
+    var dt = VIDEO_T[i + 1] - VIDEO_T[i];
+    var tau = t - VIDEO_T[i];
+    var a = (VIDEO_V[i + 1] - VIDEO_V[i]) / 3.6 / dt; // m/s²
+    var v0 = (VIDEO_S[i + 1] - VIDEO_S[i]) / dt - a * dt / 2; // m/s
+    return {
+      s: VIDEO_S[i] + v0 * tau + a * tau * tau / 2,
+      v: VIDEO_V[i] + (VIDEO_V[i + 1] - VIDEO_V[i]) * tau / dt
+    };
+  }
+
   // Zapíše čas do prvního volného políčka v řádku t (s) — jako čas videa mínus RECORD_OFFSET —
-  // a přesune kurzor do políčka pod ním (řádek s), ať se do něj dá rovnou psát.
+  // a pod něj dráhu s (m) a rychlost v (km/h) dopočtené z hodnot odečtených z videa.
   function recordTime(videoSeconds){
     var value = videoSeconds - RECORD_OFFSET;
     value = Math.round(value * 10) / 10;
@@ -489,8 +521,14 @@
     for(var i=0; i<cells.length; i++){
       if(cells[i].value.trim() === ''){
         cells[i].value = value.toString().replace('.', ',');
-        var below = cellAt(ROW_ORDER.indexOf('t') + 1, i + 1);
-        if(below) below.focus();
+        var vals = videoValuesAt(value);
+        if(vals){
+          rowCells.s[i].value = String(Math.round(vals.s));
+          rowCells.v[i].value = String(Math.round(vals.v));
+        } else {
+          var below = cellAt(ROW_ORDER.indexOf('t') + 1, i + 1);
+          if(below) below.focus();
+        }
         return;
       }
     }
