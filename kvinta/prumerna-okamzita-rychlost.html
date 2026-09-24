@@ -323,7 +323,7 @@
       <div class="video-wrap">
         <div id="yt-player"></div>
       </div>
-      <p class="hint">Při každé pauze videa (tlačítkem i mezerníkem) se do tabulky do řádku <b>t (s)</b> zapíše čas videa mínus 106 s a k němu dráha <b>s (m)</b> a rychlost <b>v (km/h)</b> ve videu. Mimo úsek 1,7–30,2 s se dráha a rychlost nedoplní, takže je napište ručně.</p>
+      <p class="hint">Při každé pauze videa (tlačítkem i mezerníkem) se do tabulky do řádku <b>t (s)</b> zapíše čas videa mínus 106 s a k němu dráha <b>s (m)</b> a rychlost <b>v (km/h)</b> ve videu. Po čase 30,2 s se dráha a rychlost nedoplní, takže je napište ručně.</p>
 
       <div class="table-wrap">
         <table class="data-table" id="measure-table">
@@ -489,10 +489,17 @@
   // Dráha a rychlost v čase t. Mezi sousedními body tabulky předpokládáme rovnoměrně
   // zrychlený pohyb: rychlost roste lineárně (zrychlení a z rozdílu rychlostí), dráha
   // kvadraticky — s = s1 + v0·τ + a·τ²/2, kde v0 je zvolená tak, aby parabola prošla
-  // oběma naměřenými dráhami. Mimo rozsah tabulky vrací null.
+  // oběma naměřenými dráhami. Před prvním bodem auto stojí (t ≤ 0) a pak se z klidu
+  // rozjíždí tak, aby v čase prvního bodu mělo naměřenou dráhu i rychlost. Za posledním
+  // bodem tabulky vrací null.
   function videoValuesAt(t){
     var n = VIDEO_T.length;
-    if(t < VIDEO_T[0] || t > VIDEO_T[n - 1]) return null;
+    if(t <= 0) return { s: 0, v: 0 };
+    if(t < VIDEO_T[0]){
+      var k = t / VIDEO_T[0];
+      return { s: VIDEO_S[0] * k * k, v: VIDEO_V[0] * k };
+    }
+    if(t > VIDEO_T[n - 1]) return null;
     var i = 0;
     while(i < n - 2 && t > VIDEO_T[i + 1]) i++;
     var dt = VIDEO_T[i + 1] - VIDEO_T[i];
