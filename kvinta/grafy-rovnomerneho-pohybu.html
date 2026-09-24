@@ -1,0 +1,1554 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grafy rovnoměrného pohybu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="../spolecne/config.js"></script>
+<script src="../spolecne/auth.js"></script>
+<link rel="stylesheet" href="../spolecne/styl.css">
+<style>
+:root{
+  --paper:#f5f0e3;
+  --surface:#fffcf5;
+  --surface-2:#ece4d1;
+  --ink:#212b34;
+  --ink-soft:#5d6b76;
+  --line:rgba(33,43,52,0.12);
+  --accent:#c9581f;
+  --accent-ink:#fff8f0;
+  --success:#28794f;
+  --success-bg:#e3efe0;
+  --danger:#b3392b;
+  --danger-bg:#f5e4de;
+  --focus:#1e6f66;
+  --shadow: 0 1px 0 rgba(33,43,52,0.06);
+}
+
+.chip.accented.on{
+  background:var(--accent);
+  color:var(--accent-ink);
+  border-color:var(--accent);
+}
+.section-block{ margin-bottom:16px; }
+.section-block:last-child{ margin-bottom:0; }
+
+.panel p{ margin:0 0 8px; font-size:0.9rem; line-height:1.55; }
+.panel p:last-child{ margin-bottom:0; }
+
+.cat-tag{ margin-bottom:14px; }
+.task{
+  font-size:1.02rem;
+  line-height:1.5;
+  max-width:52ch;
+  margin:0 auto 10px;
+  color:var(--ink);
+}
+.task-note{
+  font-size:0.82rem;
+  color:var(--ink-soft);
+  margin:-4px auto 8px;
+  max-width:56ch;
+}
+
+.graph-fig{ margin:6px 0 4px; }
+.graph-fig svg{ display:block; width:100%; max-width:560px; height:auto; margin:0 auto; }
+.graph-fig text{ font-family:'IBM Plex Mono', monospace; font-size:12px; fill:var(--ink-soft); }
+.graph-fig text.axis-title{ font-family:'Work Sans', sans-serif; font-size:13px; font-weight:600; fill:var(--ink); }
+.graph-fig .g-grid{ stroke:var(--line); stroke-width:1; }
+.graph-fig .g-axis{ stroke:var(--ink); stroke-width:1.5; fill:none; }
+.graph-fig .g-arrow{ fill:var(--ink); }
+.graph-fig .g-line{ stroke:var(--accent); stroke-width:3; fill:none; stroke-linecap:round; stroke-linejoin:round; }
+.graph-fig .g-jump{ stroke:var(--ink-soft); stroke-width:1.2; stroke-dasharray:4 4; }
+.graph-fig .g-dot{ fill:var(--accent); }
+.graph-fig .h-guide{ stroke:var(--focus); stroke-width:1.6; stroke-dasharray:5 4; fill:none; }
+.graph-fig .h-dot{ fill:var(--focus); }
+.graph-fig .h-seg{ stroke:var(--focus); stroke-width:5; fill:none; stroke-linecap:round; }
+.graph-fig .h-area{ fill:var(--focus); opacity:0.22; }
+
+.answer-row{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:600;
+  font-size:clamp(1.25rem, 4.2vw, 1.8rem);
+  display:flex;
+  align-items:baseline;
+  justify-content:center;
+  gap:0.35em;
+  flex-wrap:wrap;
+  margin-top:14px;
+  font-variant-numeric:tabular-nums;
+}
+.answer-row .sym{ font-family:'IBM Plex Mono', monospace; font-style:normal; }
+.answer-row .sym i{ font-family:'STIX Two Text', Georgia, serif; font-style:italic; }
+.answer-row .eq{ color:var(--ink-soft); }
+.answer-row .unit{ color:var(--ink-soft); font-size:0.65em; }
+.answer-input{ width:5.2em; }
+
+.feedback .steps{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:0.85rem;
+  color:var(--ink);
+  opacity:0.85;
+  white-space:pre-line;
+  line-height:1.6;
+  font-variant-numeric:tabular-nums;
+}
+
+/* hra: výběr ze čtyř grafů */
+.choice-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:16px;
+}
+.choice-btn{
+  position:relative;
+  padding:8px 6px 4px;
+  border-radius:10px;
+  border:1px solid var(--line);
+  background:var(--surface);
+  cursor:pointer;
+  transition:transform .05s ease, background .12s, border-color .12s, box-shadow .12s;
+}
+.choice-btn svg{ display:block; width:100%; height:auto; }
+.choice-btn:hover:not(:disabled){ border-color:var(--accent); }
+.choice-btn:active:not(:disabled){ transform:translateY(1px); }
+.choice-btn:disabled{ cursor:not-allowed; }
+.choice-btn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+.choice-btn.selected{ border-color:var(--ink); box-shadow:0 0 0 2px var(--ink); background:var(--surface-2); }
+.choice-btn.correct{ border-color:var(--success); box-shadow:0 0 0 2px var(--success); background:var(--success-bg); }
+.choice-btn.wrong{ border-color:var(--danger); box-shadow:0 0 0 2px var(--danger); background:var(--danger-bg); }
+.choice-letter{
+  position:absolute;
+  top:6px; right:10px;
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:800;
+  font-size:1.2rem;
+  color:var(--ink-soft);
+}
+.choice-btn.selected .choice-letter{ color:var(--ink); }
+.choice-btn.correct .choice-letter{ color:var(--success); }
+.choice-btn.wrong .choice-letter{ color:var(--danger); }
+#game-play .card{ position:relative; }
+
+@media (max-width:520px){
+  .choice-grid{ grid-template-columns:1fr; }
+  .card{ padding:22px 12px 22px; }
+  .readout .cell{ min-width:64px; padding:6px 8px; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <a class="back-link" href="../rozcestniky/kvinta.html">← Zpět na Kvinta/1. ročník</a>
+
+  <div class="brand">
+    <div class="brand-lockup">
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <polyline points="6,4 6,34 36,34" stroke="var(--ink-soft)" stroke-width="1.6" fill="none"/>
+        <polyline points="6,34 16,24 22,24 34,9" stroke="var(--accent)" stroke-width="2.4" fill="none" stroke-linejoin="round"/>
+      </svg>
+      <div class="brand-text">
+        <h1>Grafy rovnoměrného pohybu</h1>
+        <p>čtení grafů dráhy a rychlosti</p>
+      </div>
+    </div>
+    <div class="readout" id="header-readout" hidden>
+      <div class="cell"><span class="label">Skóre</span><span class="value" id="stat-score">0</span></div>
+      <div class="cell"><span class="label">Série</span><span class="value" id="stat-streak">0</span></div>
+      <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="stat-accuracy">—</span></div>
+    </div>
+  </div>
+
+  <div class="top-tabs">
+    <button class="toptab" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+    <button class="toptab on" id="top-tab-trenink" data-tab="trenink">Trénink</button>
+    <button class="toptab" id="top-tab-hra" data-tab="hra">Hra na čas</button>
+  </div>
+
+  <div id="view-theory" hidden>
+    <div class="panel">
+      <div class="panel-title">Teorie</div>
+      <p>Teorie bude doplněna.</p>
+    </div>
+  </div>
+
+  <div id="view-training">
+    <div class="panel">
+      <div class="section-block">
+        <div class="panel-title">Obtížnost</div>
+        <div class="row" id="level-row"></div>
+      </div>
+      <div class="section-block">
+        <div class="panel-title">Typ grafu</div>
+        <div class="row" id="type-row"></div>
+      </div>
+      <div class="settings-foot" style="justify-content:flex-end;">
+        <button class="linklike" id="reset-stats">vynulovat statistiku</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="cat-tag" id="cat-tag">Graf dráhy</span>
+      <p class="task" id="task-text"></p>
+      <p class="task-note" id="task-note" hidden></p>
+      <figure class="graph-fig">
+        <svg id="graph" viewBox="0 0 480 320" role="img" aria-label="Graf pohybu tělesa"></svg>
+      </figure>
+      <div class="answer-row">
+        <span class="sym" id="ans-sym"><i>v</i></span>
+        <span class="eq">=</span>
+        <input class="answer-input" id="answer" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="?">
+        <span class="unit" id="ans-unit">m/s</span>
+      </div>
+      <div class="hint" style="margin-top:8px;">Nevychází-li výsledek přesně, zaokrouhlete ho na dvě desetinná místa.</div>
+      <div class="actions">
+        <button class="btn primary" id="btn-check">Zkontrolovat</button>
+        <button class="btn ghost" id="btn-skip">Nevím / Další</button>
+      </div>
+      <div class="feedback" id="feedback" hidden>
+        <div class="headline" id="feedback-headline"></div>
+        <div class="steps" id="feedback-steps"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="view-game" hidden>
+
+    <div id="game-info">
+      <div class="panel" id="game-rules-panel">
+        <div class="panel-title">Pravidla hry</div>
+        <p class="game-rules">
+          Uvidíte zadaný graf rychlosti <i>v</i>(<i>t</i>) a čtyři grafy dráhy <i>s</i>(<i>t</i>) — nebo naopak
+          zadaný graf dráhy a čtyři grafy rychlosti. Vyberte ten graf, který popisuje <strong>stejný pohyb</strong>
+          jako zadaný graf. Za správnou odpověď získáte <strong>5 bodů</strong> v lehké obtížnosti,
+          <strong>10 bodů</strong> ve střední a <strong>15 bodů</strong> v těžké. Za špatnou odpověď
+          (i za „Nevím“) se strhává <strong>5 bodů</strong>. Po vypršení zvoleného času se hra ukončí.
+        </p>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Obtížnost</div>
+        <div class="row" id="game-level-row"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Délka hry</div>
+        <div class="row" id="game-duration-row"></div>
+      </div>
+    </div>
+
+    <div id="game-start-panel">
+      <div class="panel">
+        <div class="settings-foot">
+          <span class="hint" id="game-best-hint">Nejlepší skóre: —</span>
+          <button class="btn primary" id="btn-game-start">Spustit hru</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="game-play" hidden>
+      <div class="game-header">
+        <div class="game-timer" id="game-timer">2:00</div>
+        <div class="readout">
+          <div class="cell"><span class="label">Body</span><span class="value" id="game-score">0</span></div>
+          <div class="cell"><span class="label">Nejlepší</span><span class="value" id="game-best-live">0</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <span class="cat-tag" id="game-cat-tag">Graf rychlosti → graf dráhy</span>
+        <span class="points-badge" id="game-points-badge">+5 b</span>
+        <p class="task" id="game-task"></p>
+        <figure class="graph-fig">
+          <svg id="game-graph" viewBox="0 0 480 320" role="img" aria-label="Zadaný graf pohybu"></svg>
+        </figure>
+
+        <div class="choice-grid graph-fig" id="game-choice-grid"></div>
+
+        <div class="feedback" id="game-feedback" hidden>
+          <div class="headline" id="game-feedback-headline"></div>
+          <div class="steps" id="game-feedback-steps"></div>
+        </div>
+
+        <div class="actions">
+          <button class="btn primary" id="btn-game-check">Zkontrolovat</button>
+          <button class="btn ghost" id="btn-game-skip">Nevím / Další</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="game-over" hidden>
+      <span class="cat-tag">Konec hry</span>
+      <div class="game-final-score" id="game-final-score">0 bodů</div>
+      <div class="hint" id="game-final-detail"></div>
+      <div class="actions">
+        <button class="btn primary" id="btn-game-restart">Hrát znovu</button>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>Klávesa Enter potvrzuje odpověď a posouvá na další příklad. Ve hře lze graf vybrat i klávesami A–D.</footer>
+</div>
+
+<script src="../spolecne/spolecne.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  var STATS_KEY = 'fyzika:grafy-rovnomerneho-pohybu:stats';
+
+  var LEVELS = [
+    { key:'jednoduche', name:'Jednodušší — stálá rychlost' },
+    { key:'slozite', name:'Složitější — více úseků' }
+  ];
+  var TYPES = [
+    { key:'st', name:'Graf dráhy s(t)' },
+    { key:'vt', name:'Graf rychlosti v(t)' }
+  ];
+
+  // Velikosti jednoho dílku mřížky — všechny odečítané hodnoty leží na mřížce.
+  var T_STEPS = [1, 2, 5, 10];
+  var S_STEPS = [1, 2, 5, 10, 20, 50, 100];
+  var V_STEPS = [0.5, 1, 2, 5];
+
+  var state = {
+    level: 'jednoduche',
+    types: { st:true, vt:true },
+    score: 0, streak: 0, bestStreak: 0, answered: 0, correct: 0,
+    current: null, locked: false, touched: false
+  };
+
+  function loadStats(){
+    try{
+      var raw = localStorage.getItem(STATS_KEY);
+      if(raw){ state.bestStreak = JSON.parse(raw).bestStreak || 0; }
+    }catch(e){}
+  }
+  function saveStats(){
+    try{ localStorage.setItem(STATS_KEY, JSON.stringify({bestStreak: state.bestStreak})); }catch(e){}
+  }
+
+  // ---------- pomocné funkce ----------
+
+  function randInt(min, max){ return Math.floor(Math.random()*(max-min+1))+min; }
+  function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+  function gcd(a, b){ return b===0 ? a : gcd(b, a%b); }
+  function sum(arr){ return arr.reduce(function(a,b){ return a+b; }, 0); }
+
+  // Hodnota je "pěkná", když ji jde přesně zapsat nejvýš na dvě desetinná místa.
+  function isNice(x){ return Math.abs(roundTo(x, 2) - x) < 1e-9; }
+
+  function fmt(x){
+    var v = roundTo(x, 2);
+    var neg = v < 0;
+    var parts = Math.abs(v).toString().split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    return (neg ? '−' : '') + parts.join(',');
+  }
+  function q(x, unit){ return fmt(x) + ' ' + unit; }
+  // Výsledek do postupu řešení — u nepřesných hodnot se znaménkem ≈.
+  function res(x, unit){ return (isNice(x) ? '= ' : '≈ ') + q(x, unit); }
+
+  // Doba zadaná v úloze (u delších dob i v minutách).
+  function timeText(sec){
+    if(sec >= 60 && sec % 60 === 0) return fmt(sec/60) + ' min';
+    return q(sec, 's');
+  }
+
+  var SYM = {
+    v: '<i>v</i>',
+    vp: '<i>v</i><sub>p</sub>',
+    vmax: '<i>v</i><sub>max</sub>',
+    s: '<i>s</i>',
+    ds: 'Δ<i>s</i>',
+    t: '<i>t</i>'
+  };
+
+  // ---------- modely grafů (v jednotkách mřížky) ----------
+  // Graf s(t): lomená čára pts [{c, r}] (c = sloupec = čas, r = řádek = dráha).
+  // Graf v(t): úseky segs [{c0, c1, r}] se stálou rychlostí r.
+
+  function rowAt(g, c){
+    var p = g.pts;
+    for(var i=0; i<p.length-1; i++){
+      if(c <= p[i+1].c + 1e-9){
+        return p[i].r + (p[i+1].r - p[i].r) * (c - p[i].c) / (p[i+1].c - p[i].c);
+      }
+    }
+    return p[p.length-1].r;
+  }
+  function endCol(g){ return g.kind==='st' ? g.pts[g.pts.length-1].c : g.segs[g.segs.length-1].c1; }
+  // Sloupce (časy), ve kterých jde z grafu s(t) přesně odečíst dráhu (čára protíná uzel mřížky).
+  function readableCols(g){
+    var out = [];
+    for(var c=0; c<=endCol(g); c++){
+      var r = rowAt(g, c);
+      if(Math.abs(r - Math.round(r)) < 1e-9) out.push(c);
+    }
+    return out;
+  }
+  function tAt(g, c){ return c * g.tStep; }
+  function sAt(g, c){ return rowAt(g, c) * g.yStep; }
+  function segSpeed(g, i){
+    if(g.kind==='st'){
+      var a = g.pts[i], b = g.pts[i+1];
+      return (b.r - a.r) * g.yStep / ((b.c - a.c) * g.tStep);
+    }
+    return g.segs[i].r * g.yStep;
+  }
+  function segCount(g){ return g.kind==='st' ? g.pts.length-1 : g.segs.length; }
+  function segBounds(g, i){
+    return g.kind==='st' ? [g.pts[i].c, g.pts[i+1].c] : [g.segs[i].c0, g.segs[i].c1];
+  }
+  // Dráha z grafu v(t) mezi sloupci c1 a c2 (obsah plochy pod grafem).
+  function areaBetween(g, c1, c2){
+    var s = 0;
+    g.segs.forEach(function(sg){
+      var a = Math.max(c1, sg.c0), b = Math.min(c2, sg.c1);
+      if(b > a) s += (b - a) * g.tStep * sg.r * g.yStep;
+    });
+    return s;
+  }
+  function breakCols(g){
+    var out = [];
+    for(var i=0; i<segCount(g)-1; i++) out.push(segBounds(g, i)[1]);
+    return out;
+  }
+  function spansBreak(g, c1, c2){
+    return breakCols(g).some(function(b){ return b > c1 && b < c2; });
+  }
+  // Rychlosti musejí jít zapsat nejvýš na dvě desetinná místa a být reálné (do 40 m/s).
+  function speedsOk(speeds){
+    return speeds.every(function(v){ return v===0 || (v >= 0.2 && v <= 40 && isNice(v)); });
+  }
+
+  // ---------- generování grafů ----------
+
+  function genSimpleST(){
+    for(var tries=0; tries<1000; tries++){
+      var b = randInt(1,4), a = randInt(1,4);
+      if(gcd(a,b)!==1) continue;
+      var kMin = Math.max(Math.ceil(5/b), Math.ceil(3/a));
+      var kMax = Math.min(Math.floor(12/b), Math.floor(10/a));
+      if(kMin > kMax) continue;
+      var k = randInt(kMin, kMax);
+      var g = { kind:'st', tStep:pick(T_STEPS), yStep:pick(S_STEPS),
+        pts:[{c:0,r:0},{c:k*b,r:k*a}] };
+      if(!speedsOk([segSpeed(g,0)])) continue;
+      g.nCols = k*b;
+      g.nRows = Math.min(10, k*a + randInt(0,1));
+      return g;
+    }
+    return { kind:'st', tStep:1, yStep:2, nCols:8, nRows:8, pts:[{c:0,r:0},{c:8,r:8}] };
+  }
+
+  // Počet úseků složitějšího pohybu: 2 a 5 úseků po 9 %, 3 a 4 úseky po 41 %.
+  // Vybírá se jednou před generováním, aby opakované pokusy (u 5 úseků
+  // častější) rozložení nezkreslily.
+  function pickSegCount(){
+    var x = Math.random();
+    if(x < 0.09) return 2;
+    if(x < 0.18) return 5;
+    return x < 0.59 ? 3 : 4;
+  }
+
+  function genComplexST(nForced){
+    var n = nForced || pickSegCount();
+    for(var tries=0; tries<3000; tries++){
+      var L = [], R = [], i;
+      for(i=0; i<n; i++){ L.push(randInt(1,4)); R.push(randInt(0,4)); }
+      var sumL = sum(L), sumR = sum(R);
+      if(sumL < 6 || sumL > 12 || sumR < 4 || sumR > 10) continue;
+      var zeros = R.filter(function(r){ return r===0; }).length;
+      if(zeros > 1 || (n===2 && zeros>0)) continue;
+      var same = false;
+      for(i=0; i<n-1; i++){ if(R[i]*L[i+1] === R[i+1]*L[i]) same = true; }
+      if(same) continue;
+      var g = { kind:'st', tStep:pick(T_STEPS), yStep:pick(S_STEPS), pts:[{c:0,r:0}] };
+      var c = 0, r = 0;
+      for(i=0; i<n; i++){ c += L[i]; r += R[i]; g.pts.push({c:c, r:r}); }
+      var speeds = [];
+      for(i=0; i<n; i++) speeds.push(segSpeed(g, i));
+      if(!speedsOk(speeds)) continue;
+      g.nCols = sumL;
+      g.nRows = Math.min(10, sumR + randInt(0,1));
+      return g;
+    }
+    return genSimpleST();
+  }
+
+  function genSimpleVT(){
+    var L = randInt(4,12);
+    for(var tries=0; tries<200; tries++){
+      var g = { kind:'vt', tStep:pick(T_STEPS), yStep:pick(V_STEPS) };
+      var r = randInt(1,7);
+      g.segs = [{c0:0, c1:L, r:r}];
+      if(!speedsOk([segSpeed(g,0)])) continue;
+      g.nCols = Math.min(12, L + randInt(0,2));
+      g.nRows = Math.min(9, r + randInt(1,2));
+      return g;
+    }
+    return { kind:'vt', tStep:2, yStep:1, nCols:10, nRows:6, segs:[{c0:0,c1:8,r:4}] };
+  }
+
+  function genComplexVT(nForced){
+    var n = nForced || pickSegCount();
+    for(var tries=0; tries<3000; tries++){
+      var L = [], V = [], i;
+      for(i=0; i<n; i++){ L.push(randInt(1,4)); V.push(randInt(0,8)); }
+      var sumL = sum(L);
+      if(sumL < 6 || sumL > 12) continue;
+      if(V[0]===0 || V[n-1]===0) continue;
+      var zeros = V.filter(function(v){ return v===0; }).length;
+      if(zeros > 1) continue;
+      var same = false;
+      for(i=0; i<n-1; i++){ if(V[i]===V[i+1]) same = true; }
+      if(same) continue;
+      var maxV = Math.max.apply(null, V);
+      if(maxV < 2) continue;
+      var g = { kind:'vt', tStep:pick(T_STEPS), yStep:pick(V_STEPS), segs:[] };
+      var c = 0;
+      for(i=0; i<n; i++){ g.segs.push({c0:c, c1:c+L[i], r:V[i]}); c += L[i]; }
+      var speeds = [];
+      for(i=0; i<n; i++) speeds.push(segSpeed(g, i));
+      if(!speedsOk(speeds)) continue;
+      g.nCols = sumL;
+      g.nRows = Math.min(9, maxV + randInt(1,2));
+      return g;
+    }
+    return genSimpleVT();
+  }
+
+  // ---------- otázky ----------
+  // Každá otázka: { text, note?, sym, unit, exact, steps:[…], hl:{…} }.
+  // hl = zvýraznění v grafu po vyhodnocení: readings (odečtené body s(t)),
+  // secant (spojnice dvou bodů), segs (zvýrazněné úseky), areas (plochy pod v(t)).
+
+  function pickTwo(cols, filter){
+    for(var tries=0; tries<300; tries++){
+      var a = pick(cols), b = pick(cols);
+      if(a > b){ var x=a; a=b; b=x; }
+      if(a===b) continue;
+      if(!filter || filter(a,b)) return [a,b];
+    }
+    return null;
+  }
+
+  var EXTRAP_NOTE = 'Předpokládejte, že se těleso i po skončení grafu pohybuje stále stejnou rychlostí.';
+  var END_NOTE = 'Na konci grafu se těleso zastaví.';
+
+  function questionsSimpleST(g){
+    var cEnd = endCol(g), v = segSpeed(g,0);
+    var cols = readableCols(g).filter(function(c){ return c>0; });
+    var out = [];
+
+    var cR = pick(cols);
+    out.push({
+      text:'Určete rychlost, kterou se těleso pohybuje.',
+      sym:SYM.v, unit:'m/s', exact:v,
+      steps:[
+        'Z grafu: za dobu t = ' + q(tAt(g,cR),'s') + ' urazí těleso dráhu s = ' + q(sAt(g,cR),'m') + '.',
+        'v = s / t = ' + q(sAt(g,cR),'m') + ' / ' + q(tAt(g,cR),'s') + ' ' + res(v,'m/s')
+      ],
+      hl:{ readings:[cR] }
+    });
+
+    var pair = pickTwo(readableCols(g), function(a,b){ return a>0 || b<cEnd; });
+    if(pair){
+      var s1 = sAt(g,pair[0]), s2 = sAt(g,pair[1]);
+      out.push({
+        text: pair[0]===0
+          ? 'Jakou dráhu urazí těleso za prvních ' + q(tAt(g,pair[1]),'s') + ' pohybu?'
+          : 'Jakou dráhu urazí těleso v časovém intervalu od ' + q(tAt(g,pair[0]),'s') + ' do ' + q(tAt(g,pair[1]),'s') + '?',
+        sym:SYM.ds, unit:'m', exact:s2-s1,
+        steps: pair[0]===0 ? [
+          'Z grafu: v čase t = ' + q(tAt(g,pair[1]),'s') + ' je dráha s = ' + q(s2,'m') + '.',
+          'Δs ' + res(s2,'m')
+        ] : [
+          'Z grafu: s(' + q(tAt(g,pair[0]),'s') + ') = ' + q(s1,'m') + ', s(' + q(tAt(g,pair[1]),'s') + ') = ' + q(s2,'m') + '.',
+          'Δs = ' + q(s2,'m') + ' − ' + q(s1,'m') + ' ' + res(s2-s1,'m')
+        ],
+        hl:{ readings: pair[0]===0 ? [pair[1]] : pair }
+      });
+    }
+
+    // Dráha za delší dobu, než ukazuje graf.
+    var tEnd = tAt(g, cEnd), T;
+    var mins = [60,120,300,600].filter(function(x){ return x > tEnd*1.4 && x <= tEnd*12; });
+    T = (mins.length && Math.random()<0.5) ? pick(mins) : tEnd * randInt(2,5);
+    var sT = v*T;
+    out.push({
+      text:'Jakou dráhu urazí těleso za ' + timeText(T) + ' od začátku pohybu?',
+      note:EXTRAP_NOTE,
+      sym:SYM.s, unit:'m', exact:sT,
+      steps:[
+        'Z grafu: za ' + q(tAt(g,cR),'s') + ' urazí těleso ' + q(sAt(g,cR),'m') + ' → v = ' + q(v,'m/s') + '.',
+        (T>=60 && T%60===0 ? timeText(T) + ' = ' + q(T,'s') + '\n' : '') +
+        's = v · t = ' + q(v,'m/s') + ' · ' + q(T,'s') + ' ' + res(sT,'m')
+      ],
+      hl:{ readings:[cR] }
+    });
+
+    // Doba potřebná k uražení dráhy mimo graf.
+    var T2 = tAt(g, cEnd) * randInt(2,5) + g.tStep * randInt(0,3);
+    if(isNice(v*T2)){
+      var sX = v*T2;
+      out.push({
+        text:'Za jakou dobu od začátku pohybu urazí těleso dráhu ' + q(sX,'m') + '?',
+        note:EXTRAP_NOTE,
+        sym:SYM.t, unit:'s', exact:T2,
+        steps:[
+          'Z grafu: za ' + q(tAt(g,cR),'s') + ' urazí těleso ' + q(sAt(g,cR),'m') + ' → v = ' + q(v,'m/s') + '.',
+          't = s / v = ' + q(sX,'m') + ' / ' + q(v,'m/s') + ' ' + res(T2,'s')
+        ],
+        hl:{ readings:[cR] }
+      });
+    }
+    return out;
+  }
+
+  function questionsSimpleVT(g){
+    var sg = g.segs[0], v = segSpeed(g,0), cEnd = sg.c1, tEnd = tAt(g,cEnd);
+    var out = [];
+    out.push({
+      text:'Jakou celkovou dráhu těleso urazí?',
+      note:END_NOTE,
+      sym:SYM.s, unit:'m', exact:v*tEnd,
+      steps:[
+        'Z grafu: v = ' + q(v,'m/s') + ', doba pohybu t = ' + q(tEnd,'s') + '.',
+        's = v · t = ' + q(v,'m/s') + ' · ' + q(tEnd,'s') + ' ' + res(v*tEnd,'m') + '  (obsah obdélníku pod grafem)'
+      ],
+      hl:{ areas:[[0,cEnd]] }
+    });
+
+    var cols = []; for(var c=0; c<=cEnd; c++) cols.push(c);
+    var pair = pickTwo(cols, function(a,b){ return a>0 || b<cEnd; });
+    if(pair){
+      var dt = tAt(g,pair[1]) - tAt(g,pair[0]);
+      out.push({
+        text: pair[0]===0
+          ? 'Jakou dráhu urazí těleso za prvních ' + q(tAt(g,pair[1]),'s') + ' pohybu?'
+          : 'Jakou dráhu urazí těleso v časovém intervalu od ' + q(tAt(g,pair[0]),'s') + ' do ' + q(tAt(g,pair[1]),'s') + '?',
+        sym: pair[0]===0 ? SYM.s : SYM.ds, unit:'m', exact:v*dt,
+        steps:[
+          'Z grafu: v = ' + q(v,'m/s') + (pair[0]===0 ? ', t = ' + q(dt,'s') + '.' : ', Δt = ' + q(tAt(g,pair[1]),'s') + ' − ' + q(tAt(g,pair[0]),'s') + ' = ' + q(dt,'s') + '.'),
+          (pair[0]===0 ? 's = v · t = ' : 'Δs = v · Δt = ') + q(v,'m/s') + ' · ' + q(dt,'s') + ' ' + res(v*dt,'m')
+        ],
+        hl:{ areas:[pair] }
+      });
+    }
+
+    if(cEnd >= 2){
+      var cT = randInt(1, cEnd-1), sX = v*tAt(g,cT);
+      out.push({
+        text:'Za jakou dobu od začátku pohybu urazí těleso dráhu ' + q(sX,'m') + '?',
+        sym:SYM.t, unit:'s', exact:tAt(g,cT),
+        steps:[
+          'Z grafu: v = ' + q(v,'m/s') + '.',
+          't = s / v = ' + q(sX,'m') + ' / ' + q(v,'m/s') + ' ' + res(tAt(g,cT),'s')
+        ],
+        hl:{ areas:[[0,cT]] }
+      });
+    }
+    return out;
+  }
+
+  function speedsList(g){
+    var lines = [];
+    for(var i=0; i<segCount(g); i++){
+      var b = segBounds(g,i);
+      lines.push('  ' + q(tAt(g,b[0]),'s') + ' až ' + q(tAt(g,b[1]),'s') + ': v = ' + (g.kind==='st'
+        ? q(sAt(g,b[1]) - sAt(g,b[0]),'m') + ' / ' + q(tAt(g,b[1]) - tAt(g,b[0]),'s') + ' ' + res(segSpeed(g,i),'m/s')
+        : q(segSpeed(g,i),'m/s')));
+    }
+    return lines;
+  }
+
+  function questionsComplexST(g){
+    var n = segCount(g), cEnd = endCol(g), out = [], i;
+
+    // Rychlost na jednom úseku.
+    i = randInt(0, n-1);
+    var b = segBounds(g,i), v = segSpeed(g,i);
+    var inner = []; for(var c=b[0]+1; c<b[1]; c++) inner.push(c);
+    var ds = sAt(g,b[1]) - sAt(g,b[0]), dt = tAt(g,b[1]) - tAt(g,b[0]);
+    var intervalText = 'od ' + q(tAt(g,b[0]),'s') + ' do ' + q(tAt(g,b[1]),'s');
+    out.push({
+      text: inner.length && Math.random()<0.6
+        ? 'Jakou rychlostí se těleso pohybovalo v čase ' + q(tAt(g,pick(inner)),'s') + '?'
+        : 'Jakou rychlostí se těleso pohybovalo v časovém intervalu ' + intervalText + '?',
+      sym:SYM.v, unit:'m/s', exact:v,
+      steps: v===0 ? [
+        'Úsek ' + intervalText + ': dráha se nemění (vodorovná čára) → těleso stojí.',
+        'v = 0 m/s'
+      ] : [
+        'Úsek ' + intervalText + ': s(' + q(tAt(g,b[0]),'s') + ') = ' + q(sAt(g,b[0]),'m') + ', s(' + q(tAt(g,b[1]),'s') + ') = ' + q(sAt(g,b[1]),'m') + '.',
+        'Δs = ' + q(ds,'m') + ', Δt = ' + q(dt,'s'),
+        'v = Δs / Δt = ' + q(ds,'m') + ' / ' + q(dt,'s') + ' ' + res(v,'m/s')
+      ],
+      hl:{ readings:[b[0], b[1]], segs:[i] }
+    });
+
+    // Průměrná rychlost za celý pohyb.
+    var sTot = sAt(g,cEnd), tTot = tAt(g,cEnd);
+    out.push({
+      text:'Určete průměrnou rychlost tělesa za celou dobu pohybu.',
+      sym:SYM.vp, unit:'m/s', exact:sTot/tTot,
+      steps:[
+        'Z grafu: celková dráha s = ' + q(sTot,'m') + ', celková doba t = ' + q(tTot,'s') + '.',
+        'vₚ = s / t = ' + q(sTot,'m') + ' / ' + q(tTot,'s') + ' ' + res(sTot/tTot,'m/s')
+      ],
+      hl:{ readings:[cEnd], secant:[0,cEnd] }
+    });
+
+    // Dráha a průměrná rychlost v intervalu přes více úseků.
+    var pair = pickTwo(readableCols(g), function(a,b2){ return spansBreak(g,a,b2) && !(a===0 && b2===cEnd); });
+    if(pair){
+      var s1 = sAt(g,pair[0]), s2 = sAt(g,pair[1]), t1 = tAt(g,pair[0]), t2 = tAt(g,pair[1]);
+      var rd = 'Z grafu: s(' + q(t1,'s') + ') = ' + q(s1,'m') + ', s(' + q(t2,'s') + ') = ' + q(s2,'m') + '.';
+      out.push({
+        text: pair[0]===0
+          ? 'Jakou dráhu urazí těleso za prvních ' + q(t2,'s') + ' pohybu?'
+          : 'Jakou dráhu urazí těleso v časovém intervalu od ' + q(t1,'s') + ' do ' + q(t2,'s') + '?',
+        sym: pair[0]===0 ? SYM.s : SYM.ds, unit:'m', exact:s2-s1,
+        steps: pair[0]===0
+          ? [ 'Z grafu: v čase t = ' + q(t2,'s') + ' je dráha s = ' + q(s2,'m') + '.', 's ' + res(s2,'m') ]
+          : [ rd, 'Δs = ' + q(s2,'m') + ' − ' + q(s1,'m') + ' ' + res(s2-s1,'m') ],
+        hl:{ readings:pair }
+      });
+      out.push({
+        text: pair[0]===0
+          ? 'Určete průměrnou rychlost tělesa za prvních ' + q(t2,'s') + ' pohybu.'
+          : 'Určete průměrnou rychlost tělesa v časovém intervalu od ' + q(t1,'s') + ' do ' + q(t2,'s') + '.',
+        sym:SYM.vp, unit:'m/s', exact:(s2-s1)/(t2-t1),
+        steps:[
+          rd,
+          'Δs = ' + q(s2,'m') + ' − ' + q(s1,'m') + ' = ' + q(s2-s1,'m') + ', Δt = ' + q(t2,'s') + ' − ' + q(t1,'s') + ' = ' + q(t2-t1,'s'),
+          'vₚ = Δs / Δt = ' + q(s2-s1,'m') + ' / ' + q(t2-t1,'s') + ' ' + res((s2-s1)/(t2-t1),'m/s')
+        ],
+        hl:{ readings:pair, secant:pair }
+      });
+    }
+
+    // Největší rychlost.
+    var speeds = [], best = 0;
+    for(i=0; i<n; i++){ speeds.push(segSpeed(g,i)); if(speeds[i] > speeds[best]) best = i; }
+    out.push({
+      text:'Jaká byla největší rychlost tělesa během pohybu?',
+      sym:SYM.vmax, unit:'m/s', exact:speeds[best],
+      steps:['Rychlosti na jednotlivých úsecích (nejstrmější úsek = největší rychlost):'].concat(speedsList(g)).concat(['vₘₐₓ = ' + q(speeds[best],'m/s')]),
+      hl:{ segs:[best], readings:segBounds(g,best) }
+    });
+
+    // Jak dlouho těleso stálo.
+    for(i=0; i<n; i++){
+      if(speeds[i]===0){
+        var bs = segBounds(g,i), tS = tAt(g,bs[1]) - tAt(g,bs[0]);
+        out.push({
+          text:'Jak dlouho těleso během pohybu stálo?',
+          sym:SYM.t, unit:'s', exact:tS,
+          steps:[
+            'Těleso stojí tam, kde se dráha nemění (vodorovná část grafu): od ' + q(tAt(g,bs[0]),'s') + ' do ' + q(tAt(g,bs[1]),'s') + '.',
+            't = ' + q(tAt(g,bs[1]),'s') + ' − ' + q(tAt(g,bs[0]),'s') + ' ' + res(tS,'s')
+          ],
+          hl:{ segs:[i] }
+        });
+      }
+    }
+    return out;
+  }
+
+  function areaSteps(g, c1, c2){
+    var parts = [], terms = [];
+    g.segs.forEach(function(sg){
+      var a = Math.max(c1, sg.c0), b = Math.min(c2, sg.c1);
+      if(b > a){
+        var dt = (b-a)*g.tStep, v = sg.r*g.yStep;
+        parts.push('  ' + q(tAt(g,a),'s') + ' až ' + q(tAt(g,b),'s') + ': ' + q(v,'m/s') + ' · ' + q(dt,'s') + ' = ' + q(v*dt,'m'));
+        terms.push(fmt(v*dt));
+      }
+    });
+    return { parts:parts, sumLine: terms.length>1 ? terms.join(' + ') + ' = ' + q(areaBetween(g,c1,c2),'m') : q(areaBetween(g,c1,c2),'m') };
+  }
+
+  function questionsComplexVT(g){
+    var n = segCount(g), cEnd = endCol(g), out = [], i;
+    var sTot = areaBetween(g,0,cEnd), tTot = tAt(g,cEnd);
+    var all = areaSteps(g,0,cEnd);
+
+    out.push({
+      text:'Jakou celkovou dráhu těleso urazí?',
+      note:END_NOTE,
+      sym:SYM.s, unit:'m', exact:sTot,
+      steps:['Dráha = obsah plochy pod grafem, sečteme jednotlivé úseky (s = v · t):'].concat(all.parts).concat(['s = ' + all.sumLine]),
+      hl:{ areas:[[0,cEnd]] }
+    });
+
+    out.push({
+      text:'Určete průměrnou rychlost tělesa za celou dobu pohybu.',
+      note:END_NOTE,
+      sym:SYM.vp, unit:'m/s', exact:sTot/tTot,
+      steps:['Celková dráha (obsah plochy pod grafem):'].concat(all.parts).concat([
+        's = ' + all.sumLine + ', celková doba t = ' + q(tTot,'s'),
+        'vₚ = s / t = ' + q(sTot,'m') + ' / ' + q(tTot,'s') + ' ' + res(sTot/tTot,'m/s')
+      ]),
+      hl:{ areas:[[0,cEnd]] }
+    });
+
+    var cols = []; for(var c=0; c<=cEnd; c++) cols.push(c);
+    var pair = pickTwo(cols, function(a,b){ return spansBreak(g,a,b) && !(a===0 && b===cEnd); });
+    if(pair){
+      var part = areaSteps(g,pair[0],pair[1]);
+      out.push({
+        text: pair[0]===0
+          ? 'Jakou dráhu urazí těleso za prvních ' + q(tAt(g,pair[1]),'s') + ' pohybu?'
+          : 'Jakou dráhu urazí těleso v časovém intervalu od ' + q(tAt(g,pair[0]),'s') + ' do ' + q(tAt(g,pair[1]),'s') + '?',
+        sym: pair[0]===0 ? SYM.s : SYM.ds, unit:'m', exact:areaBetween(g,pair[0],pair[1]),
+        steps:['Dráha = obsah plochy pod grafem v daném intervalu:'].concat(part.parts).concat([(pair[0]===0 ? 's = ' : 'Δs = ') + part.sumLine]),
+        hl:{ areas:[pair] }
+      });
+    }
+
+    // Dráha na úseku s danou (jedinečnou, nenulovou) rychlostí.
+    var cand = [];
+    for(i=0; i<n; i++){
+      var vi = segSpeed(g,i);
+      if(vi===0) continue;
+      var unique = true;
+      for(var j=0; j<n; j++){ if(j!==i && segSpeed(g,j)===vi) unique = false; }
+      if(unique) cand.push(i);
+    }
+    if(cand.length){
+      i = pick(cand);
+      var b = segBounds(g,i), v = segSpeed(g,i), dt = tAt(g,b[1]) - tAt(g,b[0]);
+      out.push({
+        text:'Jakou dráhu urazilo těleso, když se pohybovalo rychlostí ' + q(v,'m/s') + '?',
+        sym:SYM.s, unit:'m', exact:v*dt,
+        steps:[
+          'Z grafu: rychlostí ' + q(v,'m/s') + ' se těleso pohybuje od ' + q(tAt(g,b[0]),'s') + ' do ' + q(tAt(g,b[1]),'s') + ', tj. t = ' + q(dt,'s') + '.',
+          's = v · t = ' + q(v,'m/s') + ' · ' + q(dt,'s') + ' ' + res(v*dt,'m')
+        ],
+        hl:{ areas:[b] }
+      });
+    }
+    return out;
+  }
+
+  // ---------- kreslení grafu ----------
+
+  // Na úzkém displeji se graf kreslí do menšího viewBoxu (a relativně vyššího),
+  // aby popisky os po zmenšení zůstaly čitelné.
+  var narrowMQ = window.matchMedia('(max-width:520px)');
+  var W, H, ML = 50, MR = 34, MT = 30, MB = 36;
+
+  function drawGraph(g, hl){
+    drawGraphInto(document.getElementById('graph'), g, hl, narrowMQ.matches ? 340 : 480, narrowMQ.matches ? 300 : 320);
+  }
+
+  function drawGraphInto(svg, g, hl, w, h){
+    svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
+    svg.innerHTML = graphMarkup(g, hl, w, h);
+  }
+
+  function graphMarkup(g, hl, w, h){
+    W = w; H = h;
+    var pw = W-ML-MR, ph = H-MT-MB;
+    var cw = pw/g.nCols, rh = ph/g.nRows;
+    function X(c){ return (ML + c*cw).toFixed(2); }
+    function Y(r){ return (H - MB - r*rh).toFixed(2); }
+    var o = [], c, r;
+
+    // plochy pod grafem v(t)
+    if(hl && hl.areas && g.kind==='vt'){
+      hl.areas.forEach(function(ab){
+        g.segs.forEach(function(sg){
+          var a = Math.max(ab[0], sg.c0), b = Math.min(ab[1], sg.c1);
+          if(b > a && sg.r > 0){
+            o.push('<rect class="h-area" x="' + X(a) + '" y="' + Y(sg.r) + '" width="' + ((b-a)*cw).toFixed(2) + '" height="' + (sg.r*rh).toFixed(2) + '"/>');
+          }
+        });
+      });
+    }
+
+    // mřížka a popisky
+    for(c=0; c<=g.nCols; c++){
+      if(c>0) o.push('<line class="g-grid" x1="' + X(c) + '" y1="' + Y(0) + '" x2="' + X(c) + '" y2="' + Y(g.nRows) + '"/>');
+      o.push('<text x="' + X(c) + '" y="' + (H-MB+17) + '" text-anchor="middle">' + fmt(c*g.tStep) + '</text>');
+    }
+    for(r=0; r<=g.nRows; r++){
+      if(r>0) o.push('<line class="g-grid" x1="' + X(0) + '" y1="' + Y(r) + '" x2="' + X(g.nCols) + '" y2="' + Y(r) + '"/>');
+      if(r>0) o.push('<text x="' + (ML-7) + '" y="' + (+Y(r)+4) + '" text-anchor="end">' + fmt(r*g.yStep) + '</text>');
+    }
+
+    // osy se šipkami
+    var xEnd = W - MR + 22, yEnd = MT - 20;
+    o.push('<line class="g-axis" x1="' + ML + '" y1="' + Y(0) + '" x2="' + (xEnd-6) + '" y2="' + Y(0) + '"/>');
+    o.push('<polygon class="g-arrow" points="' + xEnd + ',' + Y(0) + ' ' + (xEnd-9) + ',' + (+Y(0)-4) + ' ' + (xEnd-9) + ',' + (+Y(0)+4) + '"/>');
+    o.push('<line class="g-axis" x1="' + ML + '" y1="' + Y(0) + '" x2="' + ML + '" y2="' + (yEnd+6) + '"/>');
+    o.push('<polygon class="g-arrow" points="' + ML + ',' + yEnd + ' ' + (ML-4) + ',' + (yEnd+9) + ' ' + (ML+4) + ',' + (yEnd+9) + '"/>');
+    o.push('<text class="axis-title" x="' + (W-2) + '" y="' + (+Y(0)-8) + '" text-anchor="end"><tspan font-style="italic">t</tspan> / s</text>');
+    o.push('<text class="axis-title" x="' + (ML+10) + '" y="' + (yEnd+10) + '" text-anchor="start">' +
+      (g.kind==='st' ? '<tspan font-style="italic">s</tspan> / m' : '<tspan font-style="italic">v</tspan> / (m·s⁻¹)') + '</text>');
+
+    // samotný graf
+    if(g.kind==='st'){
+      o.push('<polyline class="g-line" points="' + g.pts.map(function(p){ return X(p.c) + ',' + Y(p.r); }).join(' ') + '"/>');
+    } else {
+      g.segs.forEach(function(sg, i){
+        if(i>0){
+          var prev = g.segs[i-1];
+          o.push('<line class="g-jump" x1="' + X(sg.c0) + '" y1="' + Y(prev.r) + '" x2="' + X(sg.c0) + '" y2="' + Y(sg.r) + '"/>');
+        }
+        o.push('<line class="g-line" x1="' + X(sg.c0) + '" y1="' + Y(sg.r) + '" x2="' + X(sg.c1) + '" y2="' + Y(sg.r) + '"/>');
+      });
+      var last = g.segs[g.segs.length-1];
+      o.push('<line class="g-jump" x1="' + X(last.c1) + '" y1="' + Y(last.r) + '" x2="' + X(last.c1) + '" y2="' + Y(0) + '"/>');
+    }
+
+    // zvýraznění po vyhodnocení
+    if(hl){
+      (hl.segs || []).forEach(function(i){
+        if(g.kind==='st'){
+          var a = g.pts[i], b = g.pts[i+1];
+          o.push('<line class="h-seg" x1="' + X(a.c) + '" y1="' + Y(a.r) + '" x2="' + X(b.c) + '" y2="' + Y(b.r) + '"/>');
+        } else {
+          var sg = g.segs[i];
+          o.push('<line class="h-seg" x1="' + X(sg.c0) + '" y1="' + Y(sg.r) + '" x2="' + X(sg.c1) + '" y2="' + Y(sg.r) + '"/>');
+        }
+      });
+      if(hl.secant && g.kind==='st'){
+        var c1 = hl.secant[0], c2 = hl.secant[1];
+        o.push('<line class="h-guide" x1="' + X(c1) + '" y1="' + Y(rowAt(g,c1)) + '" x2="' + X(c2) + '" y2="' + Y(rowAt(g,c2)) + '"/>');
+      }
+      if(hl.readings && g.kind==='st'){
+        hl.readings.forEach(function(c){
+          var rr = rowAt(g,c);
+          o.push('<polyline class="h-guide" points="' + X(c) + ',' + Y(0) + ' ' + X(c) + ',' + Y(rr) + ' ' + X(0) + ',' + Y(rr) + '"/>');
+          o.push('<circle class="h-dot" cx="' + X(c) + '" cy="' + Y(rr) + '" r="4.5"/>');
+        });
+      }
+    }
+
+    return o.join('');
+  }
+
+  function redraw(){
+    if(state.current) drawGraph(state.current.graph, state.locked ? state.current.hl : null);
+    gameRedraw();
+  }
+  if(narrowMQ.addEventListener) narrowMQ.addEventListener('change', redraw);
+  else if(narrowMQ.addListener) narrowMQ.addListener(redraw);
+
+  // ---------- průběh tréninku ----------
+
+  function generateQuestion(){
+    var kinds = TYPES.filter(function(t){ return state.types[t.key]; }).map(function(t){ return t.key; });
+    if(!kinds.length) kinds = ['st','vt'];
+    var kind = pick(kinds), g, list;
+    var complex = state.level==='slozite';
+    if(kind==='st'){
+      g = complex ? genComplexST() : genSimpleST();
+      list = complex ? questionsComplexST(g) : questionsSimpleST(g);
+    } else {
+      g = complex ? genComplexVT() : genSimpleVT();
+      list = complex ? questionsComplexVT(g) : questionsSimpleVT(g);
+    }
+    var qu = pick(list);
+    qu.graph = g;
+    // Tolerance: přesné hodnoty jen s plovoucí chybou; nepřesné (např. 11,666…)
+    // stačí zaokrouhlit na dvě desetinná místa (nebo tři platné číslice).
+    qu.tolerance = isNice(qu.exact)
+      ? 1e-9 * Math.max(1, Math.abs(qu.exact))
+      : Math.max(0.005*Math.abs(qu.exact), 0.0051);
+    state.current = qu;
+    renderQuestion();
+  }
+
+  function renderQuestion(){
+    var qu = state.current;
+    document.getElementById('cat-tag').textContent = (qu.graph.kind==='st' ? 'Graf dráhy s(t)' : 'Graf rychlosti v(t)') +
+      (state.level==='slozite' ? ' · více úseků' : '');
+    document.getElementById('task-text').textContent = qu.text;
+    var note = document.getElementById('task-note');
+    note.hidden = !qu.note;
+    note.textContent = qu.note || '';
+    document.getElementById('ans-sym').innerHTML = qu.sym;
+    document.getElementById('ans-unit').textContent = qu.unit;
+    drawGraph(qu.graph, null);
+
+    var input = document.getElementById('answer');
+    input.value = ''; input.disabled = false; input.classList.remove('correct','wrong');
+    var fb = document.getElementById('feedback');
+    fb.hidden = true; fb.classList.remove('ok','bad');
+    state.locked = false;
+    state.touched = false;
+    document.getElementById('btn-check').textContent = 'Zkontrolovat';
+    input.focus({ preventScroll:true });
+  }
+
+  function parseAnswer(str){
+    if(!str) return NaN;
+    str = str.trim().replace(/[−–]/g, '-').replace(',', '.').replace(/\s+/g,'');
+    return parseFloat(str);
+  }
+  function isAnswerEmpty(){ return isNaN(parseAnswer(document.getElementById('answer').value)); }
+
+  function finish(headline, ok){
+    var qu = state.current;
+    var fb = document.getElementById('feedback');
+    fb.hidden = false;
+    fb.classList.toggle('ok', ok);
+    fb.classList.toggle('bad', !ok);
+    document.getElementById('feedback-headline').textContent = headline;
+    document.getElementById('feedback-steps').textContent = qu.steps.join('\n');
+    drawGraph(qu.graph, qu.hl);
+    document.getElementById('answer').disabled = true;
+    state.locked = true;
+    var btn = document.getElementById('btn-check');
+    btn.textContent = 'Další příklad →';
+    btn.focus({ preventScroll:true });
+    updateStats();
+  }
+
+  function checkAnswer(){
+    if(state.locked){ generateQuestion(); return; }
+    var qu = state.current;
+    var val = parseAnswer(document.getElementById('answer').value);
+    var ok = !isNaN(val) && Math.abs(val - qu.exact) <= qu.tolerance;
+    state.answered++;
+    var input = document.getElementById('answer');
+    if(ok){
+      state.score += 10; state.streak++; state.correct++;
+      if(state.streak > state.bestStreak){
+        state.bestStreak = state.streak; saveStats();
+        if(window.FyzikaScores) FyzikaScores.report('serie', state.bestStreak, false);
+      }
+      input.classList.add('correct');
+      finish('Správně!', true);
+    } else {
+      state.streak = 0;
+      input.classList.add('wrong');
+      finish(isNaN(val) ? 'Doplňte odpověď.' : 'Bohužel špatně. Správně je ' + (isNice(qu.exact) ? '' : 'přibližně ') + q(qu.exact, qu.unit) + '.', false);
+    }
+  }
+
+  function skip(){
+    if(state.locked){ generateQuestion(); return; }
+    state.streak = 0;
+    state.answered++;
+    var qu = state.current;
+    finish('Správná odpověď: ' + (isNice(qu.exact) ? '' : 'přibližně ') + q(qu.exact, qu.unit), false);
+  }
+
+  function updateStats(){
+    document.getElementById('stat-score').textContent = state.score;
+    document.getElementById('stat-streak').textContent = state.streak + (state.bestStreak>0 ? ' / ' + state.bestStreak : '');
+    document.getElementById('stat-accuracy').textContent = state.answered===0 ? '—' : Math.round(100*state.correct/state.answered) + ' %';
+  }
+
+  // Rozepsaný příklad se při změně nastavení nejdřív vyhodnotí (stejně jako
+  // na ostatních trenažérech) — viz komentář u settleCurrentQuestion v prevody-jednotek.html.
+  function settleCurrentQuestion(){
+    if(state.locked) return 'locked';
+    if(!state.touched) return 'untouched';
+    if(isAnswerEmpty()){
+      if(!confirm('Odpověď není vyplněná. Opravdu chcete změnit nastavení?')) return 'cancelled';
+    }
+    checkAnswer();
+    return 'settled';
+  }
+
+  function buildLevelRow(){
+    var row = document.getElementById('level-row');
+    row.innerHTML = '';
+    LEVELS.forEach(function(l){
+      var b = document.createElement('button');
+      b.className = 'chip accented' + (l.key===state.level ? ' on' : '');
+      b.textContent = l.name;
+      b.addEventListener('click', function(){
+        if(l.key===state.level) return;
+        var r = settleCurrentQuestion();
+        if(r==='cancelled') return;
+        state.level = l.key;
+        Array.prototype.forEach.call(row.children, function(el,i){ el.classList.toggle('on', LEVELS[i].key===state.level); });
+        if(r==='locked' || r==='untouched') generateQuestion();
+      });
+      row.appendChild(b);
+    });
+  }
+
+  function buildTypeRow(){
+    var row = document.getElementById('type-row');
+    row.innerHTML = '';
+    TYPES.forEach(function(t){
+      var b = document.createElement('button');
+      b.className = 'chip' + (state.types[t.key] ? ' on' : '');
+      b.textContent = t.name;
+      b.addEventListener('click', function(){
+        var active = TYPES.filter(function(tt){ return state.types[tt.key]; }).length;
+        if(state.types[t.key] && active===1) return;
+        var r = settleCurrentQuestion();
+        if(r==='cancelled') return;
+        state.types[t.key] = !state.types[t.key];
+        b.classList.toggle('on', state.types[t.key]);
+        if(r==='locked' || r==='untouched') generateQuestion();
+      });
+      row.appendChild(b);
+    });
+  }
+
+  function tryCheck(){
+    if(state.locked){ generateQuestion(); return; }
+    if(isAnswerEmpty()){
+      if(!confirm('Odpověď není vyplněná. Opravdu chcete zkontrolovat?')) return;
+    }
+    checkAnswer();
+  }
+  function trySkip(){
+    if(state.locked){ generateQuestion(); return; }
+    skip();
+  }
+
+  document.getElementById('btn-check').addEventListener('click', tryCheck);
+  document.getElementById('btn-skip').addEventListener('click', trySkip);
+  var answerEl = document.getElementById('answer');
+  answerEl.addEventListener('input', function(){ state.touched = true; });
+  answerEl.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); tryCheck(); } });
+  sanitizeNumericInput(answerEl, true);
+  document.getElementById('reset-stats').addEventListener('click', function(){
+    state.score=0; state.streak=0; state.answered=0; state.correct=0; state.bestStreak=0;
+    try{ localStorage.removeItem(STATS_KEY); }catch(e){}
+    updateStats();
+  });
+
+  // ---------- Hra na čas: přiřazení grafu dráhy ke grafu rychlosti (a naopak) ----------
+
+  var GAME_KEY = 'fyzika:grafy-rovnomerneho-pohybu:game-bests';
+  var GAME_LEVELS = [
+    { key:'lehka', name:'Lehká — 1 úsek', counts:[1], points:5 },
+    { key:'stredni', name:'Střední — 2 až 3 úseky', counts:[2,3], points:10 },
+    { key:'tezka', name:'Těžká — 4 až 5 úseků', counts:[4,5], points:15 }
+  ];
+  var GAME_DURATIONS = [
+    { key:60, name:'1 min' },
+    { key:120, name:'2 min' },
+    { key:180, name:'3 min' },
+    { key:300, name:'5 min' }
+  ];
+  var LETTERS = ['A','B','C','D'];
+
+  var game = {
+    duration:120, level:'lehka', running:false, timeLeft:120, timerId:null,
+    score:0, correct:0, wrong:0, answered:0,
+    q:null, selected:-1, locked:false, bests:{}
+  };
+
+  function gameLevel(){
+    for(var i=0; i<GAME_LEVELS.length; i++) if(GAME_LEVELS[i].key===game.level) return GAME_LEVELS[i];
+    return GAME_LEVELS[0];
+  }
+
+  function loadGameBests(){
+    try{
+      var raw = localStorage.getItem(GAME_KEY);
+      if(raw) game.bests = JSON.parse(raw) || {};
+    }catch(e){}
+  }
+  function saveGameBests(){
+    try{ localStorage.setItem(GAME_KEY, JSON.stringify(game.bests)); }catch(e){}
+  }
+  function currentGameBest(){ return game.bests[game.duration] || 0; }
+  function updateGameBestHint(){
+    document.getElementById('game-best-hint').textContent = 'Nejlepší skóre: ' + (currentGameBest() || '—');
+  }
+  function pointWord(n){
+    var abs = Math.abs(n);
+    if(abs===1) return 'bod';
+    if(abs>=2 && abs<=4) return 'body';
+    return 'bodů';
+  }
+
+  // Pohyb s n úseky: délky úseků L (ve sloupcích mřížky), přírůstky dráhy R
+  // (v řádcích mřížky grafu s(t)) a rychlosti V (v řádcích mřížky grafu v(t)).
+  // Oba grafy musejí mít všechny zlomy v uzlech mřížky, proto se hledá takový
+  // dílek rychlosti, jehož násobky jsou všechny rychlosti.
+  function genMotion(n){
+    for(var tries=0; tries<300; tries++){
+      var g = n===1 ? genSimpleST() : genComplexST(n);
+      if(segCount(g)!==n) continue;
+      var L = [], R = [], speeds = [], i;
+      for(i=0; i<n; i++){
+        var b = segBounds(g,i);
+        L.push(b[1]-b[0]);
+        R.push(g.pts[i+1].r - g.pts[i].r);
+        speeds.push(segSpeed(g,i));
+      }
+      var maxV = Math.max.apply(null, speeds), vStep = null;
+      [0.5, 1, 2, 5, 10].some(function(st){
+        var ok = maxV/st <= 8 && speeds.every(function(v){ return Math.abs(v/st - Math.round(v/st)) < 1e-9; });
+        if(ok) vStep = st;
+        return ok;
+      });
+      if(!vStep) continue;
+      return { L:L, R:R, V:speeds.map(function(v){ return Math.round(v/vStep); }),
+        tStep:g.tStep, sStep:g.yStep, vStep:vStep };
+    }
+    return null;
+  }
+
+  // Graf z úseků: kind 'st' → vals jsou přírůstky dráhy, 'vt' → rychlosti (v řádcích mřížky).
+  function buildGraph(kind, L, vals, m, nRows){
+    var g = { kind:kind, tStep:m.tStep, yStep: kind==='st' ? m.sStep : m.vStep, nCols:sum(L), nRows:nRows };
+    var c = 0, r = 0, i;
+    if(kind==='st'){
+      g.pts = [{c:0, r:0}];
+      for(i=0; i<L.length; i++){ c += L[i]; r += vals[i]; g.pts.push({c:c, r:r}); }
+    } else {
+      g.segs = [];
+      for(i=0; i<L.length; i++){ g.segs.push({c0:c, c1:c+L[i], r:vals[i]}); c += L[i]; }
+    }
+    return g;
+  }
+
+  // Klíč podoby grafu — sousední úseky se stejnou rychlostí (stejný sklon u s(t),
+  // stejná výška u v(t)) splynou, takže dvě různé zápisy téhož grafu dají stejný klíč.
+  function shapeKey(kind, L, vals){
+    var mL = [], mX = [];
+    for(var i=0; i<L.length; i++){
+      var k = mL.length-1;
+      var same = k>=0 && (kind==='vt' ? mX[k]===vals[i] : mX[k]*L[i]===vals[i]*mL[k]);
+      if(same){ mL[k] += L[i]; mX[k] += (kind==='vt' ? 0 : vals[i]); }
+      else { mL.push(L[i]); mX.push(vals[i]); }
+    }
+    return mL.join(',') + '|' + mX.join(',');
+  }
+
+  // Chybná možnost — typické chyby: jiná rychlost na jednom úseku, prohozené
+  // úseky, posunutý okamžik změny rychlosti, dvojnásobná / poloviční rychlost.
+  function mutate(kind, L0, X0){
+    var L = L0.slice(), X = X0.slice(), n = L.length, i, d;
+    var type = pick(n>1 ? ['bump','bump','swap','shift','scale'] : ['bump','bump','scale']);
+    if(type==='bump'){
+      i = randInt(0, n-1); d = pick([-2,-1,1,2]);
+      X[i] += d;
+      if(X[i] < 0) return null;
+    } else if(type==='swap'){
+      // úseky pohybu v opačném pořadí
+      i = randInt(0, n-2);
+      d = X[i]; X[i] = X[i+1]; X[i+1] = d;
+      d = L[i]; L[i] = L[i+1]; L[i+1] = d;
+    } else if(type==='shift'){
+      i = randInt(0, n-2); d = pick([-1,1]);
+      L[i] += d; L[i+1] -= d;
+      if(L[i] < 1 || L[i+1] < 1) return null;
+      if(kind==='st'){
+        // u grafu dráhy se s posunem zlomu přepočítá dráha úseků tak, aby rychlosti zůstaly
+        // (jinak by šlo jen o jiný sklon) — musí ale vyjít celé dílky
+        var r1 = X0[i]*L[i]/L0[i], r2 = X0[i+1]*L[i+1]/L0[i+1];
+        if(r1!==Math.round(r1) || r2!==Math.round(r2)) return null;
+        X[i] = r1; X[i+1] = r2;
+      }
+    } else {
+      var half = X.every(function(x){ return x%2===0; }) && Math.random()<0.5;
+      X = X.map(function(x){ return half ? x/2 : x*2; });
+    }
+    if(X.every(function(x){ return x===0; })) return null;
+    if(kind==='st' && sum(X) > 10) return null;
+    if(kind==='vt' && Math.max.apply(null, X) > 8) return null;
+    return { L:L, X:X };
+  }
+
+  function genGameQuestion(){
+    var lvl = gameLevel();
+    for(var attempt=0; attempt<50; attempt++){
+      var n = pick(lvl.counts);
+      var m = genMotion(n);
+      if(!m) continue;
+      var given = pick(['vt','st']), optKind = given==='vt' ? 'st' : 'vt';
+      var X = optKind==='st' ? m.R : m.V;
+      var opts = [{ L:m.L, X:X }], keys = {};
+      keys[shapeKey(optKind, m.L, X)] = true;
+      for(var t=0; t<400 && opts.length<4; t++){
+        var base = opts[randInt(0, opts.length-1)];
+        var mt = mutate(optKind, base.L, base.X);
+        if(!mt) continue;
+        var k = shapeKey(optKind, mt.L, mt.X);
+        if(keys[k]) continue;
+        keys[k] = true;
+        opts.push(mt);
+      }
+      if(opts.length<4) continue;
+
+      // Všechny nabízené grafy mají stejné měřítko os.
+      var optRows = optKind==='st'
+        ? Math.max.apply(null, opts.map(function(o){ return sum(o.X); }))
+        : Math.max.apply(null, opts.map(function(o){ return Math.max.apply(null, o.X); })) + 1;
+      optRows = Math.min(optKind==='st' ? 10 : 9, Math.max(optRows, 2));
+      var givenRows = given==='st' ? Math.min(10, sum(m.R) + randInt(0,1)) : Math.min(9, Math.max.apply(null, m.V) + 1);
+
+      // náhodné pořadí možností (Fisher–Yates)
+      var order = [0,1,2,3];
+      for(var j=3; j>0; j--){ var k2 = randInt(0,j), tmp = order[j]; order[j] = order[k2]; order[k2] = tmp; }
+      var graphs = order.map(function(idx){ return buildGraph(optKind, opts[idx].L, opts[idx].X, m, optRows); });
+      return {
+        motion:m, given:given, optKind:optKind,
+        givenGraph: buildGraph(given, m.L, given==='st' ? m.R : m.V, m, givenRows),
+        options: graphs,
+        correctIndex: order.indexOf(0),
+        points: lvl.points
+      };
+    }
+    return null;
+  }
+
+  function gameExplanation(qq){
+    var m = qq.motion, c = 0, lines = [];
+    for(var i=0; i<m.L.length; i++){
+      var t0 = c*m.tStep, t1 = (c+m.L[i])*m.tStep, dt = t1-t0, v = m.V[i]*m.vStep, ds = m.R[i]*m.sStep;
+      lines.push(q(t0,'s') + ' až ' + q(t1,'s') + ': v = ' + q(v,'m/s') + ', Δs = ' + q(v,'m/s') + ' · ' + q(dt,'s') + ' = ' + q(ds,'m') +
+        (v===0 ? ' (těleso stojí)' : ''));
+      c += m.L[i];
+    }
+    return lines.join('\n');
+  }
+
+  function optionSize(){ return narrowMQ.matches ? [340, 220] : [400, 250]; }
+
+  function renderGameGraphs(){
+    var qq = game.q;
+    if(!qq) return;
+    drawGraphInto(document.getElementById('game-graph'), qq.givenGraph, null, narrowMQ.matches ? 340 : 480, narrowMQ.matches ? 260 : 300);
+    var sz = optionSize();
+    Array.prototype.forEach.call(document.querySelectorAll('#game-choice-grid .choice-btn svg'), function(svg, i){
+      drawGraphInto(svg, qq.options[i], null, sz[0], sz[1]);
+    });
+  }
+  function gameRedraw(){ if(game.q) renderGameGraphs(); }
+
+  function renderGameQuestion(){
+    var qq = game.q;
+    document.getElementById('game-cat-tag').textContent = qq.given==='vt' ? 'Graf rychlosti → graf dráhy' : 'Graf dráhy → graf rychlosti';
+    document.getElementById('game-points-badge').textContent = '+' + qq.points + ' b';
+    document.getElementById('game-task').textContent = qq.given==='vt'
+      ? 'Který graf dráhy odpovídá zadanému grafu rychlosti?'
+      : 'Který graf rychlosti odpovídá zadanému grafu dráhy?';
+    var grid = document.getElementById('game-choice-grid');
+    grid.innerHTML = '';
+    qq.options.forEach(function(g, idx){
+      var btn = document.createElement('button');
+      btn.className = 'choice-btn';
+      btn.type = 'button';
+      btn.setAttribute('aria-label', 'Možnost ' + LETTERS[idx]);
+      btn.innerHTML = '<span class="choice-letter">' + LETTERS[idx] + '</span>' +
+        '<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true"></svg>';
+      btn.addEventListener('click', function(){ selectGameOption(idx); });
+      grid.appendChild(btn);
+    });
+    renderGameGraphs();
+    var fb = document.getElementById('game-feedback');
+    fb.hidden = true; fb.classList.remove('ok','bad');
+    document.getElementById('btn-game-check').textContent = 'Zkontrolovat';
+  }
+
+  // Kliknutí na možnost jen vybere odpověď — vyhodnotí až Zkontrolovat / Nevím.
+  function selectGameOption(idx){
+    if(!game.running || game.locked) return;
+    game.selected = idx;
+    Array.prototype.forEach.call(document.querySelectorAll('#game-choice-grid .choice-btn'), function(btn, i){
+      btn.classList.toggle('selected', i===idx);
+    });
+  }
+
+  function nextGameQuestion(){
+    game.q = genGameQuestion();
+    game.selected = -1;
+    game.locked = false;
+    renderGameQuestion();
+  }
+
+  function evaluateGame(idx, bySkip){
+    if(game.locked) return;
+    game.locked = true;
+    game.answered++;
+    var qq = game.q;
+    var ok = !bySkip && idx===qq.correctIndex;
+    Array.prototype.forEach.call(document.querySelectorAll('#game-choice-grid .choice-btn'), function(btn, i){
+      btn.disabled = true;
+      btn.classList.remove('selected');
+      if(i===qq.correctIndex) btn.classList.add('correct');
+      else if(i===idx) btn.classList.add('wrong');
+    });
+    var fb = document.getElementById('game-feedback');
+    fb.hidden = false;
+    var head = document.getElementById('game-feedback-headline');
+    if(ok){
+      game.score += qq.points; game.correct++;
+      fb.className = 'feedback ok';
+      head.textContent = 'Správně! +' + qq.points + ' b';
+    } else {
+      game.score -= 5; game.wrong++;
+      fb.className = 'feedback bad';
+      head.textContent = (bySkip ? 'Přeskočeno.' : 'Bohužel, špatně.') + ' −5 b · Správně je graf ' + LETTERS[qq.correctIndex] + '.';
+    }
+    document.getElementById('game-feedback-steps').textContent = gameExplanation(qq);
+    var btn = document.getElementById('btn-game-check');
+    btn.textContent = 'Další příklad →';
+    btn.focus({ preventScroll:true });
+    document.getElementById('game-score').textContent = game.score;
+  }
+
+  function tryCheckGame(){
+    if(!game.running) return;
+    if(game.locked){ nextGameQuestion(); return; }
+    if(game.selected===-1){
+      if(!confirm('Nevybrali jste žádnou možnost. Opravdu chcete zkontrolovat?')) return;
+    }
+    evaluateGame(game.selected, false);
+  }
+  function trySkipGame(){
+    if(!game.running) return;
+    if(game.locked){ nextGameQuestion(); return; }
+    if(game.selected===-1){
+      if(!confirm('Nevybrali jste žádnou možnost. Opravdu chcete přeskočit? Bude to počítáno jako špatná odpověď (−5 b).')) return;
+    }
+    evaluateGame(-1, true);
+  }
+
+  function tickGameTimer(){
+    game.timeLeft--;
+    var timerEl = document.getElementById('game-timer');
+    timerEl.textContent = formatGameTime(Math.max(0, game.timeLeft));
+    timerEl.classList.toggle('low-time', game.timeLeft<=20 && game.timeLeft>0);
+    if(game.timeLeft<=0) endGame();
+  }
+
+  function startGame(){
+    game.running = true;
+    game.timeLeft = game.duration;
+    game.score = 0; game.correct = 0; game.wrong = 0; game.answered = 0;
+    document.getElementById('game-score').textContent = '0';
+    var timerEl = document.getElementById('game-timer');
+    timerEl.textContent = formatGameTime(game.duration);
+    timerEl.classList.remove('low-time');
+    document.getElementById('game-best-live').textContent = currentGameBest();
+    document.getElementById('game-info').hidden = true;
+    document.getElementById('game-start-panel').hidden = true;
+    document.getElementById('game-over').hidden = true;
+    document.getElementById('game-play').hidden = false;
+    nextGameQuestion();
+    if(game.timerId) clearInterval(game.timerId);
+    game.timerId = setInterval(tickGameTimer, 1000);
+  }
+
+  function endGame(){
+    if(!game.running) return;
+    game.running = false;
+    clearInterval(game.timerId);
+    game.timerId = null;
+    if(game.score > currentGameBest()){ game.bests[game.duration] = game.score; saveGameBests(); }
+    if(window.FyzikaScores) FyzikaScores.report('hra-' + game.duration + 's', game.score, true);
+    document.getElementById('game-play').hidden = true;
+    document.getElementById('game-over').hidden = false;
+    // Po konci hry zůstane nabídka nastavení viditelná nad výsledkem; pravidla
+    // a tlačítko „Spustit hru“ se skryjí — hra se spouští tlačítkem „Hrát znovu“.
+    document.getElementById('game-rules-panel').hidden = true;
+    document.getElementById('game-info').hidden = false;
+    document.getElementById('game-final-score').textContent = game.score + ' ' + pointWord(game.score);
+    document.getElementById('game-final-detail').textContent =
+      'Správně: ' + game.correct + ' · Špatně: ' + game.wrong + ' · Nejlepší skóre: ' + currentGameBest();
+    updateGameBestHint();
+  }
+
+  function buildChipRow(rowId, items, getKey, setKey){
+    var row = document.getElementById(rowId);
+    row.innerHTML = '';
+    items.forEach(function(it){
+      var b = document.createElement('button');
+      b.className = 'chip' + (it.key===getKey() ? ' on' : '');
+      b.textContent = it.name;
+      b.addEventListener('click', function(){
+        if(game.running) return;
+        setKey(it.key);
+        Array.prototype.forEach.call(row.children, function(el, i){ el.classList.toggle('on', items[i].key===getKey()); });
+        updateGameBestHint();
+      });
+      row.appendChild(b);
+    });
+  }
+  function buildGameLevelRow(){
+    buildChipRow('game-level-row', GAME_LEVELS, function(){ return game.level; }, function(k){ game.level = k; });
+  }
+  function buildGameDurationRow(){
+    buildChipRow('game-duration-row', GAME_DURATIONS, function(){ return game.duration; }, function(k){ game.duration = k; });
+  }
+
+  document.getElementById('btn-game-start').addEventListener('click', startGame);
+  document.getElementById('btn-game-restart').addEventListener('click', startGame);
+  document.getElementById('btn-game-check').addEventListener('click', tryCheckGame);
+  document.getElementById('btn-game-skip').addEventListener('click', trySkipGame);
+  // Klávesnice během hry: A–D nebo 1–4 vybere graf, Enter zkontroluje / posune dál.
+  // Enter na tlačítku se nechá na jeho vlastním kliknutí, aby se akce neprovedla dvakrát.
+  document.addEventListener('keydown', function(e){
+    if(!game.running || document.getElementById('view-game').hidden) return;
+    if(e.ctrlKey || e.metaKey || e.altKey) return;
+    if(e.key==='Enter'){
+      if(e.target && e.target.tagName==='BUTTON') return;
+      e.preventDefault(); tryCheckGame(); return;
+    }
+    var idx = 'abcd'.indexOf(e.key.toLowerCase());
+    if(idx===-1) idx = '1234'.indexOf(e.key);
+    if(idx!==-1) selectGameOption(idx);
+  });
+
+  // ---- horní přepínač Teorie / Trénink / Hra na čas ----
+  var tabTeorie = document.getElementById('top-tab-teorie');
+  var tabTrenink = document.getElementById('top-tab-trenink');
+  var tabHra = document.getElementById('top-tab-hra');
+  function showTab(tab){
+    tabTeorie.classList.toggle('on', tab==='teorie');
+    tabTrenink.classList.toggle('on', tab==='trenink');
+    tabHra.classList.toggle('on', tab==='hra');
+    document.getElementById('view-theory').hidden = tab!=='teorie';
+    document.getElementById('view-training').hidden = tab!=='trenink';
+    document.getElementById('view-game').hidden = tab!=='hra';
+    document.getElementById('header-readout').hidden = tab!=='trenink';
+  }
+  // Přepnutí na jinou záložku uprostřed běžící hry ji ukončí — čas by jinak běžel
+  // dál „za zády“ žáka. Proto se nejdřív zeptá na potvrzení.
+  function tryShowTab(tab){
+    if(tab!=='hra' && game.running){
+      if(!confirm('Přepnutím opustíte probíhající hru na čas — hra se ukončí a započítá se aktuální skóre. Opravdu chcete pokračovat?')) return;
+      endGame();
+    }
+    showTab(tab);
+  }
+  tabTeorie.addEventListener('click', function(){ tryShowTab('teorie'); });
+  tabTrenink.addEventListener('click', function(){ tryShowTab('trenink'); });
+  tabHra.addEventListener('click', function(){ tryShowTab('hra'); });
+
+  loadStats();
+  buildLevelRow();
+  buildTypeRow();
+  updateStats();
+  loadGameBests();
+  buildGameLevelRow();
+  buildGameDurationRow();
+  updateGameBestHint();
+  showTab('trenink');
+  generateQuestion();
+
+  // Po synchronizaci s cloudem (auth.js) znovu načíst nejlepší sérii z localStorage.
+  document.addEventListener('fyzika:scores-updated', function(){
+    state.bestStreak = 0; loadStats(); updateStats();
+    game.bests = {}; loadGameBests(); updateGameBestHint();
+  });
+})();
+</script>
+
+</body>
+</html>
