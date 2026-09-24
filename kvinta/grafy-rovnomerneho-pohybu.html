@@ -334,9 +334,19 @@
     return { kind:'st', tStep:1, yStep:2, nCols:8, nRows:8, pts:[{c:0,r:0},{c:8,r:8}] };
   }
 
+  // Počet úseků složitějšího pohybu: 2 a 5 úseků po 9 %, 3 a 4 úseky po 41 %.
+  // Vybírá se jednou před generováním, aby opakované pokusy (u 5 úseků
+  // častější) rozložení nezkreslily.
+  function pickSegCount(){
+    var x = Math.random();
+    if(x < 0.09) return 2;
+    if(x < 0.18) return 5;
+    return x < 0.59 ? 3 : 4;
+  }
+
   function genComplexST(){
+    var n = pickSegCount();
     for(var tries=0; tries<3000; tries++){
-      var n = pick([2,3,3,4,4,5]);
       var L = [], R = [], i;
       for(i=0; i<n; i++){ L.push(randInt(1,4)); R.push(randInt(0,4)); }
       var sumL = sum(L), sumR = sum(R);
@@ -374,8 +384,8 @@
   }
 
   function genComplexVT(){
+    var n = pickSegCount();
     for(var tries=0; tries<3000; tries++){
-      var n = pick([2,3,3,4,4,5]);
       var L = [], V = [], i;
       for(i=0; i<n; i++){ L.push(randInt(1,4)); V.push(randInt(0,8)); }
       var sumL = sum(L);
