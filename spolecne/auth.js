@@ -35,7 +35,8 @@
     'zpracovani-mereni.html': 'mereni',
     'kalkulacka-fx82cex.html': 'kvinta',
     'prevody-jednotek.html': 'kvinta',
-    'skladani-vektoru.html': 'kvinta'
+    'skladani-vektoru.html': 'kvinta',
+    'grafy-rovnomerneho-pohybu.html': 'kvinta'
   };
 
   // auth.js vždy žije na <kořen webu>/spolecne/auth.js — z jeho vlastní (absolutní)
@@ -96,6 +97,9 @@
     ],
     'zpracovani-mereni.html': [
       { d: 'serie', key: 'fyzika:zpracovani-mereni:stats', field: 'bestStreak' }
+    ],
+    'grafy-rovnomerneho-pohybu.html': [
+      { d: 'serie', key: 'fyzika:grafy-rovnomerneho-pohybu:stats', field: 'bestStreak' }
     ]
   };
 
