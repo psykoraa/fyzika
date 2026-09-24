@@ -323,7 +323,7 @@
       <div class="video-wrap">
         <div id="yt-player"></div>
       </div>
-      <p class="hint">Při každé pauze videa (tlačítkem i mezerníkem) se do tabulky do řádku <b>t (s)</b> zapíše čas videa mínus 106 s a k němu dráha <b>s (m)</b> a rychlost <b>v (km/h)</b> ve videu. Po čase 30,2 s se dráha a rychlost nedoplní, takže je napište ručně.</p>
+      <p class="hint">Stiskem <b>Enter</b> se za běhu videa (video se nezastaví) do tabulky do řádku <b>t (s)</b> zapíše čas videa mínus 106 s a k němu dráha <b>s (m)</b> a rychlost <b>v (km/h)</b> ve videu. Po čase 30,2 s se dráha a rychlost nedoplní, takže je napište ručně. Mezerníkem se video pozastaví nebo spustí.</p>
 
       <div class="table-wrap">
         <table class="data-table" id="measure-table">
@@ -514,6 +514,7 @@
 
   // Zapíše čas do prvního volného políčka v řádku t (s) — jako čas videa mínus RECORD_OFFSET —
   // a pod něj dráhu s (m) a rychlost v (km/h) dopočtené z hodnot odečtených z videa.
+  // Fokus se nepřesouvá, aby další Enter zase zapisoval a neskákal po políčkách.
   function recordTime(videoSeconds){
     var value = videoSeconds - RECORD_OFFSET;
     value = Math.round(value * 10) / 10;
@@ -525,29 +526,47 @@
         if(vals){
           rowCells.s[i].value = String(Math.round(vals.s));
           rowCells.v[i].value = String(Math.round(vals.v));
-        } else {
-          var below = cellAt(ROW_ORDER.indexOf('t') + 1, i + 1);
-          if(below) below.focus();
         }
         return;
       }
     }
   }
 
-  // ---- YouTube IFrame API — zápis času při každé pauze videa ----
+  // ---- YouTube IFrame API — zápis času Enterem, video přitom běží dál ----
+  var player = null;
   window.onYouTubeIframeAPIReady = function(){
-    new YT.Player('yt-player', {
+    player = new YT.Player('yt-player', {
       videoId: 'nuBnP_GH_20',
-      playerVars: { start: VIDEO_START },
-      events: {
-        onStateChange: function(e){
-          if(e.data === YT.PlayerState.PAUSED){
-            recordTime(e.target.getCurrentTime());
-          }
-        }
-      }
+      playerVars: { start: VIDEO_START, disablekb: 1 }
     });
   };
+
+  // Klávesy stisknuté uvnitř přehrávače (iframe z youtube.com) stránka vůbec nezachytí.
+  // Proto po každém kliknutí do videa vrátíme fokus zpět na stránku — myš ovládá
+  // přehrávač dál normálně, ale Enter a mezerník obslouží stránka.
+  window.addEventListener('blur', function(){
+    setTimeout(function(){
+      var active = document.activeElement;
+      if(active && active.tagName === 'IFRAME' && active.closest('.video-wrap')) active.blur();
+    }, 0);
+  });
+
+  // Enter zapíše aktuální čas videa (a dopočtenou dráhu a rychlost), mezerník pozastaví
+  // nebo spustí video. V políčkách tabulky a na tlačítkách si klávesy ponechají svou funkci.
+  document.addEventListener('keydown', function(e){
+    if(!player || typeof player.getCurrentTime !== 'function') return;
+    if(videoSection.hidden) return;
+    var tag = e.target && e.target.tagName;
+    if(tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'BUTTON' || tag === 'SELECT' || tag === 'A') return;
+    if(e.key === 'Enter'){
+      e.preventDefault();
+      recordTime(player.getCurrentTime());
+    } else if(e.key === ' '){
+      e.preventDefault();
+      if(player.getPlayerState() === YT.PlayerState.PLAYING) player.pauseVideo();
+      else player.playVideo();
+    }
+  });
   var ytApiScript = document.createElement('script');
   ytApiScript.src = 'https://www.youtube.com/iframe_api';
   document.head.appendChild(ytApiScript);
