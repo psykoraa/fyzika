@@ -635,6 +635,13 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
       var v = mu + (raw[i]-meanD);
       values.push(Math.round(v*f)/f);
     }
+    // Po zaokrouhlení mohou (při malém rozptylu) vyjít všechny hodnoty stejné —
+    // pak by průměrná odchylka byla nulová a úloha nemá smysl. Jednu hodnotu
+    // posuneme o nejmenší dílek nahoru a druhou dolů, průměr se tím nezmění.
+    if(values.every(function(x){ return x===values[0]; })){
+      values[0] = Math.round((values[0]*f)+1)/f;
+      values[1] = Math.round((values[1]*f)-1)/f;
+    }
     return { n:n, values:values };
   }
 
@@ -1603,11 +1610,11 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
       cellAvg.classList.remove('correct','wrong');
       cellDev.classList.remove('correct','wrong');
 
-      var values = [], hasEmpty = false, hasInvalid = false;
+      var values = [], hasEmpty = false, hasInvalid = false, dataDecimals = 0;
       dataInputs.forEach(function(inp){
         var p = parseAnswer(inp.value);
         if(isNaN(p.value)){ if(inp.value.trim()===''){ hasEmpty = true; } else { hasInvalid = true; } }
-        else { values.push(p.value); }
+        else { values.push(p.value); dataDecimals = Math.max(dataDecimals, p.decimals); }
       });
       var avgParsed = parseAnswer(avgInput.value);
       var devParsed = parseAnswer(devInput.value);
@@ -1641,8 +1648,13 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
       var avgMag = mean===0 ? 0 : Math.floor(Math.log10(Math.abs(mean)));
       var roundedDev = roundSig(dev,1);
       var devOrder;
-      if(roundedDev===0){
-        devOrder = avgMag-3;
+      // Všechny hodnoty stejné → odchylka je nulová a řád zaokrouhlení z ní
+      // nejde určit. Průměr se pak zapíše s přesností, s jakou byly hodnoty
+      // naměřeny (stejný počet desetinných míst), a odchylka 0 se uzná
+      // v libovolném zápisu (0 i 0,0…).
+      var zeroDev = roundedDev===0;
+      if(zeroDev){
+        devOrder = -dataDecimals;
       } else {
         devOrder = Math.floor(Math.log10(Math.abs(roundedDev)));
         // Odchylka smí být klidně ve stejném řádu jako průměr (pak má průměr po
@@ -1658,7 +1670,7 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
       var answerDecimals = decimalsForOrder(devOrder);
 
       var avgOk = isCorrectAnswer(avgParsed, roundedAvg, answerDecimals);
-      var devOk = isCorrectAnswer(devParsed, roundedDev, answerDecimals);
+      var devOk = zeroDev ? devParsed.value===0 : isCorrectAnswer(devParsed, roundedDev, answerDecimals);
       cellAvg.classList.add(avgOk ? 'correct' : 'wrong');
       cellDev.classList.add(devOk ? 'correct' : 'wrong');
 
@@ -1686,7 +1698,8 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
       var unitTex = unit ? texUnit(unit) : '';
       steps.innerHTML =
         'Ze zadaných hodnot vychází: průměr ≈ ' + tex(texNumCZ(mean,6) + (unitTex?('\\ '+unitTex):'')) + ', průměrná odchylka ≈ ' + tex(texNumCZ(dev,6) + (unitTex?('\\ '+unitTex):'')) + '\n' +
-        'Správně zaokrouhleno: ' + tex('\\bar{x} = ' + texNum(roundedAvg, answerDecimals) + (unitTex?('\\ '+unitTex):'') + '\\qquad \\Delta x = ' + texNum(roundedDev, answerDecimals) + (unitTex?('\\ '+unitTex):''));
+        'Správně zaokrouhleno: ' + tex('\\bar{x} = ' + texNum(roundedAvg, answerDecimals) + (unitTex?('\\ '+unitTex):'') + '\\qquad \\Delta x = ' + texNum(roundedDev, zeroDev ? 0 : answerDecimals) + (unitTex?('\\ '+unitTex):'')) +
+        (zeroDev ? '\n' + 'Všechny hodnoty jsou stejné, průměrná odchylka je proto nulová. Průměr se zapisuje se stejným počtem desetinných míst, s jakým byly hodnoty naměřeny.' : '');
     }
 
     var rowCountInput = document.getElementById('kontrola-row-count-input');
