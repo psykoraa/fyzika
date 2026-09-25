@@ -128,6 +128,15 @@
 .graph-fig text.t-label.alt{ fill:var(--focus); }
 .graph-fig text.t-label.soft{ fill:var(--ink-soft); }
 
+.feedback .steps i, .task i, .task-note i, .cat-tag i, .chip i, .panel-title i{
+  font-family:'STIX Two Text', Georgia, serif;
+  font-style:italic;
+  text-transform:none;
+  letter-spacing:0;
+}
+.feedback .steps i{ font-size:1.08em; }
+.cat-tag i, .panel-title i{ font-size:1.15em; }
+
 .answer-row{
   font-family:'IBM Plex Mono', monospace;
   font-weight:600;
@@ -291,7 +300,7 @@
     </div>
 
     <div class="panel">
-      <div class="panel-title">Graf dráhy s(t)</div>
+      <div class="panel-title">Graf dráhy <i>s</i>(<i>t</i>)</div>
       <p>Závislost dráhy na čase znázorňujeme v pravoúhlé soustavě souřadnic: <b>čas na vodorovné ose</b>, <b>dráha na svislé ose</b>. Takovému grafu stručně říkáme <b>graf dráhy</b>.</p>
       <p>Protože dráha rovnoměrného pohybu je lineární funkcí času, je <b>grafem dráhy část přímky</b>. Může tedy vypadat následovně:</p>
       <figure class="theory-fig graph-fig">
@@ -329,7 +338,7 @@
     </div>
 
     <div class="panel">
-      <div class="panel-title">Graf rychlosti v(t)</div>
+      <div class="panel-title">Graf rychlosti <i>v</i>(<i>t</i>)</div>
       <p>Rychlost rovnoměrného pohybu se s časem nemění, proto je <b>grafem rychlosti část přímky rovnoběžná s časovou osou</b>.</p>
       <figure class="theory-fig graph-fig">
         <svg class="theory-graph" data-graph="vozik-vt" viewBox="0 0 480 320" role="img" aria-label="Graf rychlosti vozíku: vodorovná přímka ve výšce 1,5 m/s; plocha pod grafem od 0 do 4 s je vybarvená a odpovídá dráze 6 m."></svg>
@@ -551,8 +560,9 @@
     { key:'slozite', name:'Složitější — více úseků' }
   ];
   var TYPES = [
-    { key:'st', name:'Graf dráhy s(t)' },
-    { key:'vt', name:'Graf rychlosti v(t)' }
+    // Obaleno do <span>: tlačítko je flex kontejner, který by jinak smazal mezeru před kurzívou.
+    { key:'st', name:'<span>Graf dráhy <i>s</i>(<i>t</i>)</span>' },
+    { key:'vt', name:'<span>Graf rychlosti <i>v</i>(<i>t</i>)</span>' }
   ];
 
   // Velikosti jednoho dílku mřížky — všechny odečítané hodnoty leží na mřížce.
@@ -610,6 +620,8 @@
     vmax: '<i>v</i><sub>max</sub>',
     s: '<i>s</i>',
     ds: 'Δ<i>s</i>',
+    st: '<i>s</i>(<i>t</i>)',
+    vt: '<i>v</i>(<i>t</i>)',
     t: '<i>t</i>'
   };
 
@@ -796,8 +808,8 @@
       text:'Určete rychlost, kterou se těleso pohybuje.',
       sym:SYM.v, unit:'m/s', exact:v,
       steps:[
-        'Z grafu: za dobu t = ' + q(tAt(g,cR),'s') + ' urazí těleso dráhu s = ' + q(sAt(g,cR),'m') + '.',
-        'v = s / t = ' + q(sAt(g,cR),'m') + ' / ' + q(tAt(g,cR),'s') + ' ' + res(v,'m/s')
+        'Z grafu: za dobu <i>t</i> = ' + q(tAt(g,cR),'s') + ' urazí těleso dráhu <i>s</i> = ' + q(sAt(g,cR),'m') + '.',
+        '<i>v</i> = <i>s</i> / <i>t</i> = ' + q(sAt(g,cR),'m') + ' / ' + q(tAt(g,cR),'s') + ' ' + res(v,'m/s')
       ],
       hl:{ readings:[cR] }
     });
@@ -811,11 +823,11 @@
           : 'Jakou dráhu urazí těleso v časovém intervalu od ' + q(tAt(g,pair[0]),'s') + ' do ' + q(tAt(g,pair[1]),'s') + '?',
         sym:SYM.ds, unit:'m', exact:s2-s1,
         steps: pair[0]===0 ? [
-          'Z grafu: v čase t = ' + q(tAt(g,pair[1]),'s') + ' je dráha s = ' + q(s2,'m') + '.',
-          'Δs ' + res(s2,'m')
+          'Z grafu: v čase <i>t</i> = ' + q(tAt(g,pair[1]),'s') + ' je dráha <i>s</i> = ' + q(s2,'m') + '.',
+          'Δ<i>s</i> ' + res(s2,'m')
         ] : [
-          'Z grafu: s(' + q(tAt(g,pair[0]),'s') + ') = ' + q(s1,'m') + ', s(' + q(tAt(g,pair[1]),'s') + ') = ' + q(s2,'m') + '.',
-          'Δs = ' + q(s2,'m') + ' − ' + q(s1,'m') + ' ' + res(s2-s1,'m')
+          'Z grafu: <i>s</i>(' + q(tAt(g,pair[0]),'s') + ') = ' + q(s1,'m') + ', <i>s</i>(' + q(tAt(g,pair[1]),'s') + ') = ' + q(s2,'m') + '.',
+          'Δ<i>s</i> = ' + q(s2,'m') + ' − ' + q(s1,'m') + ' ' + res(s2-s1,'m')
         ],
         hl:{ readings: pair[0]===0 ? [pair[1]] : pair }
       });
@@ -831,9 +843,9 @@
       note:EXTRAP_NOTE,
       sym:SYM.s, unit:'m', exact:sT,
       steps:[
-        'Z grafu: za ' + q(tAt(g,cR),'s') + ' urazí těleso ' + q(sAt(g,cR),'m') + ' → v = ' + q(v,'m/s') + '.',
+        'Z grafu: za ' + q(tAt(g,cR),'s') + ' urazí těleso ' + q(sAt(g,cR),'m') + ' → <i>v</i> = ' + q(v,'m/s') + '.',
         (T>=60 && T%60===0 ? timeText(T) + ' = ' + q(T,'s') + '\n' : '') +
-        's = v · t = ' + q(v,'m/s') + ' · ' + q(T,'s') + ' ' + res(sT,'m')
+        '<i>s</i> = <i>v</i> · <i>t</i> = ' + q(v,'m/s') + ' · ' + q(T,'s') + ' ' + res(sT,'m')
       ],
       hl:{ readings:[cR] }
     });
@@ -847,8 +859,8 @@
         note:EXTRAP_NOTE,
         sym:SYM.t, unit:'s', exact:T2,
         steps:[
-          'Z grafu: za ' + q(tAt(g,cR),'s') + ' urazí těleso ' + q(sAt(g,cR),'m') + ' → v = ' + q(v,'m/s') + '.',
-          't = s / v = ' + q(sX,'m') + ' / ' + q(v,'m/s') + ' ' + res(T2,'s')
+          'Z grafu: za ' + q(tAt(g,cR),'s') + ' urazí těleso ' + q(sAt(g,cR),'m') + ' → <i>v</i> = ' + q(v,'m/s') + '.',
+          '<i>t</i> = <i>s</i> / <i>v</i> = ' + q(sX,'m') + ' / ' + q(v,'m/s') + ' ' + res(T2,'s')
         ],
         hl:{ readings:[cR] }
       });
@@ -864,8 +876,8 @@
       note:END_NOTE,
       sym:SYM.s, unit:'m', exact:v*tEnd,
       steps:[
-        'Z grafu: v = ' + q(v,'m/s') + ', doba pohybu t = ' + q(tEnd,'s') + '.',
-        's = v · t = ' + q(v,'m/s') + ' · ' + q(tEnd,'s') + ' ' + res(v*tEnd,'m') + '  (obsah obdélníku pod grafem)'
+        'Z grafu: <i>v</i> = ' + q(v,'m/s') + ', doba pohybu <i>t</i> = ' + q(tEnd,'s') + '.',
+        '<i>s</i> = <i>v</i> · <i>t</i> = ' + q(v,'m/s') + ' · ' + q(tEnd,'s') + ' ' + res(v*tEnd,'m') + '  (obsah obdélníku pod grafem)'
       ],
       hl:{ areas:[[0,cEnd]] }
     });
@@ -880,8 +892,8 @@
           : 'Jakou dráhu urazí těleso v časovém intervalu od ' + q(tAt(g,pair[0]),'s') + ' do ' + q(tAt(g,pair[1]),'s') + '?',
         sym: pair[0]===0 ? SYM.s : SYM.ds, unit:'m', exact:v*dt,
         steps:[
-          'Z grafu: v = ' + q(v,'m/s') + (pair[0]===0 ? ', t = ' + q(dt,'s') + '.' : ', Δt = ' + q(tAt(g,pair[1]),'s') + ' − ' + q(tAt(g,pair[0]),'s') + ' = ' + q(dt,'s') + '.'),
-          (pair[0]===0 ? 's = v · t = ' : 'Δs = v · Δt = ') + q(v,'m/s') + ' · ' + q(dt,'s') + ' ' + res(v*dt,'m')
+          'Z grafu: <i>v</i> = ' + q(v,'m/s') + (pair[0]===0 ? ', <i>t</i> = ' + q(dt,'s') + '.' : ', Δ<i>t</i> = ' + q(tAt(g,pair[1]),'s') + ' − ' + q(tAt(g,pair[0]),'s') + ' = ' + q(dt,'s') + '.'),
+          (pair[0]===0 ? '<i>s</i> = <i>v</i> · <i>t</i> = ' : 'Δ<i>s</i> = <i>v</i> · Δ<i>t</i> = ') + q(v,'m/s') + ' · ' + q(dt,'s') + ' ' + res(v*dt,'m')
         ],
         hl:{ areas:[pair] }
       });
@@ -893,8 +905,8 @@
         text:'Za jakou dobu od začátku pohybu urazí těleso dráhu ' + q(sX,'m') + '?',
         sym:SYM.t, unit:'s', exact:tAt(g,cT),
         steps:[
-          'Z grafu: v = ' + q(v,'m/s') + '.',
-          't = s / v = ' + q(sX,'m') + ' / ' + q(v,'m/s') + ' ' + res(tAt(g,cT),'s')
+          'Z grafu: <i>v</i> = ' + q(v,'m/s') + '.',
+          '<i>t</i> = <i>s</i> / <i>v</i> = ' + q(sX,'m') + ' / ' + q(v,'m/s') + ' ' + res(tAt(g,cT),'s')
         ],
         hl:{ areas:[[0,cT]] }
       });
@@ -906,7 +918,7 @@
     var lines = [];
     for(var i=0; i<segCount(g); i++){
       var b = segBounds(g,i);
-      lines.push('  ' + q(tAt(g,b[0]),'s') + ' až ' + q(tAt(g,b[1]),'s') + ': v = ' + (g.kind==='st'
+      lines.push('  ' + q(tAt(g,b[0]),'s') + ' až ' + q(tAt(g,b[1]),'s') + ': <i>v</i> = ' + (g.kind==='st'
         ? q(sAt(g,b[1]) - sAt(g,b[0]),'m') + ' / ' + q(tAt(g,b[1]) - tAt(g,b[0]),'s') + ' ' + res(segSpeed(g,i),'m/s')
         : q(segSpeed(g,i),'m/s')));
     }
@@ -929,11 +941,11 @@
       sym:SYM.v, unit:'m/s', exact:v,
       steps: v===0 ? [
         'Úsek ' + intervalText + ': dráha se nemění (vodorovná čára) → těleso stojí.',
-        'v = 0 m/s'
+        '<i>v</i> = 0 m/s'
       ] : [
-        'Úsek ' + intervalText + ': s(' + q(tAt(g,b[0]),'s') + ') = ' + q(sAt(g,b[0]),'m') + ', s(' + q(tAt(g,b[1]),'s') + ') = ' + q(sAt(g,b[1]),'m') + '.',
-        'Δs = ' + q(ds,'m') + ', Δt = ' + q(dt,'s'),
-        'v = Δs / Δt = ' + q(ds,'m') + ' / ' + q(dt,'s') + ' ' + res(v,'m/s')
+        'Úsek ' + intervalText + ': <i>s</i>(' + q(tAt(g,b[0]),'s') + ') = ' + q(sAt(g,b[0]),'m') + ', <i>s</i>(' + q(tAt(g,b[1]),'s') + ') = ' + q(sAt(g,b[1]),'m') + '.',
+        'Δ<i>s</i> = ' + q(ds,'m') + ', Δ<i>t</i> = ' + q(dt,'s'),
+        '<i>v</i> = Δ<i>s</i> / Δ<i>t</i> = ' + q(ds,'m') + ' / ' + q(dt,'s') + ' ' + res(v,'m/s')
       ],
       hl:{ readings:[b[0], b[1]], segs:[i] }
     });
@@ -944,8 +956,8 @@
       text:'Určete průměrnou rychlost tělesa za celou dobu pohybu.',
       sym:SYM.vp, unit:'m/s', exact:sTot/tTot,
       steps:[
-        'Z grafu: celková dráha s = ' + q(sTot,'m') + ', celková doba t = ' + q(tTot,'s') + '.',
-        'vₚ = s / t = ' + q(sTot,'m') + ' / ' + q(tTot,'s') + ' ' + res(sTot/tTot,'m/s')
+        'Z grafu: celková dráha <i>s</i> = ' + q(sTot,'m') + ', celková doba <i>t</i> = ' + q(tTot,'s') + '.',
+        '<i>v</i><sub>p</sub> = <i>s</i> / <i>t</i> = ' + q(sTot,'m') + ' / ' + q(tTot,'s') + ' ' + res(sTot/tTot,'m/s')
       ],
       hl:{ readings:[cEnd], secant:[0,cEnd] }
     });
@@ -954,15 +966,15 @@
     var pair = pickTwo(readableCols(g), function(a,b2){ return spansBreak(g,a,b2) && !(a===0 && b2===cEnd); });
     if(pair){
       var s1 = sAt(g,pair[0]), s2 = sAt(g,pair[1]), t1 = tAt(g,pair[0]), t2 = tAt(g,pair[1]);
-      var rd = 'Z grafu: s(' + q(t1,'s') + ') = ' + q(s1,'m') + ', s(' + q(t2,'s') + ') = ' + q(s2,'m') + '.';
+      var rd = 'Z grafu: <i>s</i>(' + q(t1,'s') + ') = ' + q(s1,'m') + ', <i>s</i>(' + q(t2,'s') + ') = ' + q(s2,'m') + '.';
       out.push({
         text: pair[0]===0
           ? 'Jakou dráhu urazí těleso za prvních ' + q(t2,'s') + ' pohybu?'
           : 'Jakou dráhu urazí těleso v časovém intervalu od ' + q(t1,'s') + ' do ' + q(t2,'s') + '?',
         sym: pair[0]===0 ? SYM.s : SYM.ds, unit:'m', exact:s2-s1,
         steps: pair[0]===0
-          ? [ 'Z grafu: v čase t = ' + q(t2,'s') + ' je dráha s = ' + q(s2,'m') + '.', 's ' + res(s2,'m') ]
-          : [ rd, 'Δs = ' + q(s2,'m') + ' − ' + q(s1,'m') + ' ' + res(s2-s1,'m') ],
+          ? [ 'Z grafu: v čase <i>t</i> = ' + q(t2,'s') + ' je dráha <i>s</i> = ' + q(s2,'m') + '.', '<i>s</i> ' + res(s2,'m') ]
+          : [ rd, 'Δ<i>s</i> = ' + q(s2,'m') + ' − ' + q(s1,'m') + ' ' + res(s2-s1,'m') ],
         hl:{ readings:pair }
       });
       out.push({
@@ -972,8 +984,8 @@
         sym:SYM.vp, unit:'m/s', exact:(s2-s1)/(t2-t1),
         steps:[
           rd,
-          'Δs = ' + q(s2,'m') + ' − ' + q(s1,'m') + ' = ' + q(s2-s1,'m') + ', Δt = ' + q(t2,'s') + ' − ' + q(t1,'s') + ' = ' + q(t2-t1,'s'),
-          'vₚ = Δs / Δt = ' + q(s2-s1,'m') + ' / ' + q(t2-t1,'s') + ' ' + res((s2-s1)/(t2-t1),'m/s')
+          'Δ<i>s</i> = ' + q(s2,'m') + ' − ' + q(s1,'m') + ' = ' + q(s2-s1,'m') + ', Δ<i>t</i> = ' + q(t2,'s') + ' − ' + q(t1,'s') + ' = ' + q(t2-t1,'s'),
+          '<i>v</i><sub>p</sub> = Δ<i>s</i> / Δ<i>t</i> = ' + q(s2-s1,'m') + ' / ' + q(t2-t1,'s') + ' ' + res((s2-s1)/(t2-t1),'m/s')
         ],
         hl:{ readings:pair, secant:pair }
       });
@@ -985,7 +997,7 @@
     out.push({
       text:'Jaká byla největší rychlost tělesa během pohybu?',
       sym:SYM.vmax, unit:'m/s', exact:speeds[best],
-      steps:['Rychlosti na jednotlivých úsecích (nejstrmější úsek = největší rychlost):'].concat(speedsList(g)).concat(['vₘₐₓ = ' + q(speeds[best],'m/s')]),
+      steps:['Rychlosti na jednotlivých úsecích (nejstrmější úsek = největší rychlost):'].concat(speedsList(g)).concat(['<i>v</i><sub>max</sub> = ' + q(speeds[best],'m/s')]),
       hl:{ segs:[best], readings:segBounds(g,best) }
     });
 
@@ -998,7 +1010,7 @@
           sym:SYM.t, unit:'s', exact:tS,
           steps:[
             'Těleso stojí tam, kde se dráha nemění (vodorovná část grafu): od ' + q(tAt(g,bs[0]),'s') + ' do ' + q(tAt(g,bs[1]),'s') + '.',
-            't = ' + q(tAt(g,bs[1]),'s') + ' − ' + q(tAt(g,bs[0]),'s') + ' ' + res(tS,'s')
+            '<i>t</i> = ' + q(tAt(g,bs[1]),'s') + ' − ' + q(tAt(g,bs[0]),'s') + ' ' + res(tS,'s')
           ],
           hl:{ segs:[i] }
         });
@@ -1029,7 +1041,7 @@
       text:'Jakou celkovou dráhu těleso urazí?',
       note:END_NOTE,
       sym:SYM.s, unit:'m', exact:sTot,
-      steps:['Dráha = obsah plochy pod grafem, sečteme jednotlivé úseky (s = v · t):'].concat(all.parts).concat(['s = ' + all.sumLine]),
+      steps:['Dráha = obsah plochy pod grafem, sečteme jednotlivé úseky (<i>s</i> = <i>v</i> · <i>t</i>):'].concat(all.parts).concat(['<i>s</i> = ' + all.sumLine]),
       hl:{ areas:[[0,cEnd]] }
     });
 
@@ -1038,8 +1050,8 @@
       note:END_NOTE,
       sym:SYM.vp, unit:'m/s', exact:sTot/tTot,
       steps:['Celková dráha (obsah plochy pod grafem):'].concat(all.parts).concat([
-        's = ' + all.sumLine + ', celková doba t = ' + q(tTot,'s'),
-        'vₚ = s / t = ' + q(sTot,'m') + ' / ' + q(tTot,'s') + ' ' + res(sTot/tTot,'m/s')
+        '<i>s</i> = ' + all.sumLine + ', celková doba <i>t</i> = ' + q(tTot,'s'),
+        '<i>v</i><sub>p</sub> = <i>s</i> / <i>t</i> = ' + q(sTot,'m') + ' / ' + q(tTot,'s') + ' ' + res(sTot/tTot,'m/s')
       ]),
       hl:{ areas:[[0,cEnd]] }
     });
@@ -1053,7 +1065,7 @@
           ? 'Jakou dráhu urazí těleso za prvních ' + q(tAt(g,pair[1]),'s') + ' pohybu?'
           : 'Jakou dráhu urazí těleso v časovém intervalu od ' + q(tAt(g,pair[0]),'s') + ' do ' + q(tAt(g,pair[1]),'s') + '?',
         sym: pair[0]===0 ? SYM.s : SYM.ds, unit:'m', exact:areaBetween(g,pair[0],pair[1]),
-        steps:['Dráha = obsah plochy pod grafem v daném intervalu:'].concat(part.parts).concat([(pair[0]===0 ? 's = ' : 'Δs = ') + part.sumLine]),
+        steps:['Dráha = obsah plochy pod grafem v daném intervalu:'].concat(part.parts).concat([(pair[0]===0 ? '<i>s</i> = ' : 'Δ<i>s</i> = ') + part.sumLine]),
         hl:{ areas:[pair] }
       });
     }
@@ -1074,8 +1086,8 @@
         text:'Jakou dráhu urazilo těleso, když se pohybovalo rychlostí ' + q(v,'m/s') + '?',
         sym:SYM.s, unit:'m', exact:v*dt,
         steps:[
-          'Z grafu: rychlostí ' + q(v,'m/s') + ' se těleso pohybuje od ' + q(tAt(g,b[0]),'s') + ' do ' + q(tAt(g,b[1]),'s') + ', tj. t = ' + q(dt,'s') + '.',
-          's = v · t = ' + q(v,'m/s') + ' · ' + q(dt,'s') + ' ' + res(v*dt,'m')
+          'Z grafu: rychlostí ' + q(v,'m/s') + ' se těleso pohybuje od ' + q(tAt(g,b[0]),'s') + ' do ' + q(tAt(g,b[1]),'s') + ', tj. <i>t</i> = ' + q(dt,'s') + '.',
+          '<i>s</i> = <i>v</i> · <i>t</i> = ' + q(v,'m/s') + ' · ' + q(dt,'s') + ' ' + res(v*dt,'m')
         ],
         hl:{ areas:[b] }
       });
@@ -1382,12 +1394,12 @@
 
   function renderQuestion(){
     var qu = state.current;
-    document.getElementById('cat-tag').textContent = (qu.graph.kind==='st' ? 'Graf dráhy s(t)' : 'Graf rychlosti v(t)') +
+    document.getElementById('cat-tag').innerHTML = (qu.graph.kind==='st' ? 'Graf dráhy ' + SYM.st : 'Graf rychlosti ' + SYM.vt) +
       (state.level==='slozite' ? ' · více úseků' : '');
-    document.getElementById('task-text').textContent = qu.text;
+    document.getElementById('task-text').innerHTML = qu.text;
     var note = document.getElementById('task-note');
     note.hidden = !qu.note;
-    note.textContent = qu.note || '';
+    note.innerHTML = qu.note || '';
     document.getElementById('ans-sym').innerHTML = qu.sym;
     document.getElementById('ans-unit').textContent = qu.unit;
     drawGraph(qu.graph, null);
@@ -1416,7 +1428,7 @@
     fb.classList.toggle('ok', ok);
     fb.classList.toggle('bad', !ok);
     document.getElementById('feedback-headline').textContent = headline;
-    document.getElementById('feedback-steps').textContent = qu.steps.join('\n');
+    document.getElementById('feedback-steps').innerHTML = qu.steps.join('\n');
     drawGraph(qu.graph, qu.hl);
     document.getElementById('answer').disabled = true;
     state.locked = true;
@@ -1499,7 +1511,7 @@
     TYPES.forEach(function(t){
       var b = document.createElement('button');
       b.className = 'chip' + (state.types[t.key] ? ' on' : '');
-      b.textContent = t.name;
+      b.innerHTML = t.name;
       b.addEventListener('click', function(){
         var active = TYPES.filter(function(tt){ return state.types[tt.key]; }).length;
         if(state.types[t.key] && active===1) return;
@@ -1721,7 +1733,7 @@
     var m = qq.motion, c = 0, lines = [];
     for(var i=0; i<m.L.length; i++){
       var t0 = c*m.tStep, t1 = (c+m.L[i])*m.tStep, dt = t1-t0, v = m.V[i]*m.vStep, ds = m.R[i]*m.sStep;
-      lines.push(q(t0,'s') + ' až ' + q(t1,'s') + ': v = ' + q(v,'m/s') + ', Δs = ' + q(v,'m/s') + ' · ' + q(dt,'s') + ' = ' + q(ds,'m') +
+      lines.push(q(t0,'s') + ' až ' + q(t1,'s') + ': <i>v</i> = ' + q(v,'m/s') + ', Δ<i>s</i> = ' + q(v,'m/s') + ' · ' + q(dt,'s') + ' = ' + q(ds,'m') +
         (v===0 ? ' (těleso stojí)' : ''));
       c += m.L[i];
     }
@@ -1806,7 +1818,7 @@
       fb.className = 'feedback bad';
       head.textContent = (bySkip ? 'Přeskočeno.' : 'Bohužel, špatně.') + ' −5 b · Správně je graf ' + LETTERS[qq.correctIndex] + '.';
     }
-    document.getElementById('game-feedback-steps').textContent = gameExplanation(qq);
+    document.getElementById('game-feedback-steps').innerHTML = gameExplanation(qq);
     var btn = document.getElementById('btn-game-check');
     btn.textContent = 'Další příklad →';
     btn.focus({ preventScroll:true });
