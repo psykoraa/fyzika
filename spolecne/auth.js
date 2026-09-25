@@ -36,7 +36,8 @@
     'kalkulacka-fx82cex.html': 'kvinta',
     'prevody-jednotek.html': 'kvinta',
     'skladani-vektoru.html': 'kvinta',
-    'grafy-rovnomerneho-pohybu.html': 'kvinta'
+    'grafy-rovnomerneho-pohybu.html': 'kvinta',
+    'prumerna-okamzita-rychlost.html': 'kvinta'
   };
 
   // auth.js vždy žije na <kořen webu>/spolecne/auth.js — z jeho vlastní (absolutní)
