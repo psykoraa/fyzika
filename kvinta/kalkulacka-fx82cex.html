@@ -597,11 +597,13 @@
 
   // Vrací zlomek pro použití ve výrazu – někdy jednoduchý (n/d), někdy složený
   // (zlomek, jehož čitatel/jmenovatel je opět zlomek nebo součet zlomků).
+  // exitKeys = klávesy, kterými se kurzor dostane za celý zlomek: u jednoduchého
+  // jedno ▶, u složeného dvě (kurzor končí ve jmenovateli vnořeného zlomku).
   function genFracTerm(){
     var kind = randInt(1,3);
     if(kind===1){
       var n=randInt(1,9), d=randInt(2,12);
-      return { tex: fracTex(n,d), keys: fracKeys(n,d), value: n/d };
+      return { tex: fracTex(n,d), keys: fracKeys(n,d), exitKeys: ['▶'], value: n/d };
     }
     if(kind===2){
       var a=randInt(1,9), b=randInt(2,9), c=randInt(1,9), d2=randInt(2,9);
@@ -609,6 +611,7 @@
       return {
         tex: fracTex(fracTex(a,b), fracTex(c,d2)),
         keys: compoundFracKeys(fracKeys(a,b), fracKeys(c,d2)),
+        exitKeys: ['▶','▶'],
         value: value
       };
     }
@@ -629,6 +632,7 @@
     return {
       tex: fracTex(numTex, fracTex(e2,f2)),
       keys: compoundFracKeys(numKeys, fracKeys(e2,f2)),
+      exitKeys: ['▶','▶'],
       value: value2
     };
   }
@@ -745,7 +749,7 @@
         exact = Math.pow(frac.value, power);
         displayTex = '\\left(' + frac.tex + '\\right)^{'+power+'} =';
         // Bez ▶ za zlomkem by se x²/x³ umocnil jen jmenovatel, ne celý zlomek.
-        keys = frac.keys.concat(['▶']).concat(power===2?['x²']:['x³']).concat(['=','S⇔D']);
+        keys = frac.keys.concat(frac.exitKeys).concat(power===2?['x²']:['x³']).concat(['=','S⇔D']);
         break;
       case 4:
         frac=genFracTerm();
@@ -761,7 +765,7 @@
         exact = applyOp(frac.value, op, a*a);
         displayTex = frac.tex+' '+texOp(op)+' '+powTex2+' =';
         // Bez ▶ za zlomkem by se operátor zapsal ještě do jmenovatele.
-        keys = frac.keys.concat(['▶',op]).concat(numberToKeys(a,0)).concat(['x²','=','S⇔D']);
+        keys = frac.keys.concat(frac.exitKeys).concat([op]).concat(numberToKeys(a,0)).concat(['x²','=','S⇔D']);
         break;
     }
     dec = Math.min(decimalsNeeded(exact),4);
@@ -833,7 +837,7 @@
     var displayTex, keys;
     if(fracFirst){
       // Bez ▶ za zlomkem by se operátor zapsal ještě do jmenovatele.
-      keys = frac.keys.concat(['▶',op]).concat(powerTerm.keys).concat(['=','S⇔D']);
+      keys = frac.keys.concat(frac.exitKeys).concat([op]).concat(powerTerm.keys).concat(['=','S⇔D']);
       displayTex = op==='÷' ? fracTex(frac.tex, powerTerm.tex)+' =' : frac.tex+' '+texOp(op)+' '+powerTerm.tex+' =';
     } else {
       keys = powerTerm.keys.concat([op]).concat(frac.keys).concat(['=','S⇔D']);
