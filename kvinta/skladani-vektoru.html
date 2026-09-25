@@ -663,6 +663,13 @@ button.btn{ font-size:0.84rem; padding:9px 16px; }
     return { mag: mag, ang: ang };
   }
 
+  // Nulový vektor (např. a − b při a = b) nemá směr, takže úhel φ není
+  // definovaný. Řídí se zobrazenou velikostí — vyjde-li |v| = 0,0, nepíše se
+  // ani úhel (atan2 by jinak dal 0° nebo úhel ze zaokrouhlovacího šumu).
+  function angleText(ma){
+    return fmt1(ma.mag) === '0,0' ? 'φ není definován' : 'φ = '+fmt1(ma.ang)+'°';
+  }
+
   function setLine(el, x1, y1, x2, y2){
     el.setAttribute('x1', x1); el.setAttribute('y1', y1);
     el.setAttribute('x2', x2); el.setAttribute('y2', y2);
@@ -808,7 +815,7 @@ button.btn{ font-size:0.84rem; padding:9px 16px; }
         }
 
         var ma = magAngle(val);
-        v.statEl.textContent = '('+fmt1(val.x)+'; '+fmt1(val.y)+')   |'+v.key+'| = '+fmt1(ma.mag)+'   φ = '+fmt1(ma.ang)+'°';
+        v.statEl.textContent = '('+fmt1(val.x)+'; '+fmt1(val.y)+')   |'+v.key+'| = '+fmt1(ma.mag)+'   '+angleText(ma);
 
         prev = next;
       });
@@ -820,7 +827,7 @@ button.btn{ font-size:0.84rem; padding:9px 16px; }
       if(showResult){ placeLabel(resultLabel, origin, rp, opts.resultText); }
       if(resultStatWrap){ setHidden(resultStatWrap, !showResult); }
       var mr = magAngle(prev);
-      resultStat.textContent = '('+fmt1(prev.x)+'; '+fmt1(prev.y)+')   |s| = '+fmt1(mr.mag)+'   φ = '+fmt1(mr.ang)+'°';
+      resultStat.textContent = '('+fmt1(prev.x)+'; '+fmt1(prev.y)+')   |s| = '+fmt1(mr.mag)+'   '+angleText(mr);
 
       diagram.origin = origin;
       diagram.unit = unit;
