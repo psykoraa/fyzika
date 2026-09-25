@@ -1372,11 +1372,10 @@
     }
     var qu = pick(list);
     qu.graph = g;
-    // Tolerance: přesné hodnoty jen s plovoucí chybou; nepřesné (např. 11,666…)
-    // stačí zaokrouhlit na dvě desetinná místa (nebo tři platné číslice).
-    qu.tolerance = isNice(qu.exact)
-      ? 1e-9 * Math.max(1, Math.abs(qu.exact))
-      : Math.max(0.005*Math.abs(qu.exact), 0.0051);
+    // Uznává se jen hodnota zaokrouhlená na dvě desetinná místa, jak říká nápověda
+    // (u 23,333… jen 23,33, ne 23,3 ani 23,4). Tolerance pokrývá jen plovoucí chybu.
+    qu.expected = roundTo(qu.exact, 2);
+    qu.tolerance = 1e-9 * Math.max(1, Math.abs(qu.expected));
     state.current = qu;
     renderQuestion();
   }
@@ -1431,7 +1430,7 @@
     if(state.locked){ generateQuestion(); return; }
     var qu = state.current;
     var val = parseAnswer(document.getElementById('answer').value);
-    var ok = !isNaN(val) && Math.abs(val - qu.exact) <= qu.tolerance;
+    var ok = !isNaN(val) && Math.abs(val - qu.expected) <= qu.tolerance;
     state.answered++;
     var input = document.getElementById('answer');
     if(ok){
