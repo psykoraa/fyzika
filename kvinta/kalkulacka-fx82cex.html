@@ -710,8 +710,11 @@
         keys = ['√'].concat(numberToKeys(a,0)).concat(['+']).concat(numberToKeys(b,0)).concat(['=','S⇔D']);
         break;
     }
-    var resultDecimals = (kind<=3 || kind===7) ? 2 : 4;
-    var note = resultDecimals===2 ? 'Výsledek zaokrouhlete na 2 desetinná místa.' : 'Výsledek zaokrouhlete na 4 desetinná místa.';
+    // Vyjde-li výsledek přesně s méně desetinnými místy (např. 6⁶ = 46 656),
+    // nemá smysl chtít zaokrouhlení na 2 nebo 4 místa — stejně jako u ostatních
+    // typů úloh se pak požadavek řídí skutečným počtem desetinných míst.
+    var resultDecimals = Math.min(decimalsNeeded(exact), (kind<=3 || kind===7) ? 2 : 4);
+    var note = roundNote(resultDecimals);
     return {
       displayTex: displayTex + ' =',
       exact: exact,
