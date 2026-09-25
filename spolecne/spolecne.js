@@ -96,14 +96,16 @@ function makePanelsCollapsible(container){
 
       var inner = document.createElement('span');
       inner.className = 'panel-title-inner';
+      // Obsah nadpisu se přesouvá i se značkami (např. <i>s</i>(<i>t</i>) — veličiny kurzívou).
       var textSpan = document.createElement('span');
-      textSpan.textContent = title.textContent.trim();
+      while(title.firstChild) textSpan.appendChild(title.firstChild);
+      if(textSpan.firstChild && textSpan.firstChild.nodeType===3) textSpan.firstChild.nodeValue = textSpan.firstChild.nodeValue.replace(/^\s+/, '');
+      if(textSpan.lastChild && textSpan.lastChild.nodeType===3) textSpan.lastChild.nodeValue = textSpan.lastChild.nodeValue.replace(/\s+$/, '');
       var arrow = document.createElement('span');
       arrow.className = 'toggle-arrow';
       arrow.textContent = '▸';
       inner.appendChild(textSpan);
       inner.appendChild(arrow);
-      title.textContent = '';
       title.appendChild(inner);
 
       title.classList.add('collapsible');
