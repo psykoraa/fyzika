@@ -37,7 +37,8 @@
     'prevody-jednotek.html': 'kvinta',
     'skladani-vektoru.html': 'kvinta',
     'grafy-rovnomerneho-pohybu.html': 'kvinta',
-    'prumerna-okamzita-rychlost.html': 'kvinta'
+    'prumerna-okamzita-rychlost.html': 'kvinta',
+    'grafy-rovnomerne-zrychleneho-pohybu.html': 'kvinta'
   };
 
   // auth.js vždy žije na <kořen webu>/spolecne/auth.js — z jeho vlastní (absolutní)
@@ -105,6 +106,9 @@
       { d: 'hra-120s', key: 'fyzika:grafy-rovnomerneho-pohybu:game-bests', field: '120' },
       { d: 'hra-180s', key: 'fyzika:grafy-rovnomerneho-pohybu:game-bests', field: '180' },
       { d: 'hra-300s', key: 'fyzika:grafy-rovnomerneho-pohybu:game-bests', field: '300' }
+    ],
+    'grafy-rovnomerne-zrychleneho-pohybu.html': [
+      { d: 'serie', key: 'fyzika:grafy-rovnomerne-zrychleneho-pohybu:stats', field: 'bestStreak' }
     ]
   };
 
