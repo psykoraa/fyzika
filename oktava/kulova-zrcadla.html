@@ -679,7 +679,7 @@ svg.trainer-svg text{ font-family:'Work Sans', sans-serif; paint-order:stroke; s
             <span><svg width="26" height="10"><line x1="1" y1="5" x2="25" y2="5" stroke="var(--ink-soft)" stroke-width="1.6" stroke-dasharray="5 4"/></svg>prodloužení paprsku</span>
           </div>
         </div>
-        <p class="hint">Předmět chytněte myší nebo prstem (za šipku nebo kroužek na ose). Po kliknutí na předmět ho lze posouvat i šipkami ← → po 0,5&nbsp;cm. Ohniskovou vzdálenost měníte posunutím značky <i>f</i> pod posuvníkem. Jeden dílek na ose = 1&nbsp;cm, velikost předmětu <i>y</i>&nbsp;=&nbsp;3&nbsp;cm. Zrcadlo je jen náčrtek: jeho zakřivení se mění s ohniskovou vzdáleností, ale neodpovídá přesně poloměru křivosti. Paprsky se na něm odrážejí podle pravidel pro význačné paprsky, a proto se protnou jen přibližně v bodě obrazu, který je spočtený ze zobrazovací rovnice.</p>
+        <p class="hint">Předmět chytněte myší nebo prstem (za šipku nebo kroužek na ose). Po kliknutí na předmět ho lze posouvat i šipkami ← → po 0,5&nbsp;cm. Ohniskovou vzdálenost měníte posunutím značky <i>f</i> pod posuvníkem. Jeden dílek na ose = 1&nbsp;cm, velikost předmětu <i>y</i>&nbsp;=&nbsp;3&nbsp;cm. Zrcadlo je jen náčrtek: jeho zakřivení se mění s ohniskovou vzdáleností, ale neodpovídá přesně poloměru křivosti. Paprsky se na něm odrážejí podle pravidel pro význačné paprsky.</p>
       </div>
 
       <div class="applet-results">
@@ -1024,13 +1024,16 @@ svg.trainer-svg text{ font-family:'Work Sans', sans-serif; paint-order:stroke; s
     }
   }
 
-  // Paprsky se odrážejí přímo na nakresleném oblouku (je to náčrtek) a dodržují pravidla:
-  //  – rovnoběžný dopadá ve výšce y, odražený (u vypuklého jeho prodloužení) prochází ohniskem F,
-  //  – ohniskový prochází (míří do) F, odražený jde rovnoběžně s osou,
-  //  – středový leží na přímce R–B a odráží se zpět po téže přímce,
-  //  – vrcholový dopadá do V a odráží se souměrně podle osy.
-  // Obraz se kreslí podle zobrazovací rovnice; protože se paprsky neodrážejí v rovině vrcholu
-  // (jak předpokládá paraxiální přiblížení), protnou se jen přibližně v bodě B′.
+  // Paprsky se odrážejí přímo na nakresleném oblouku (je to náčrtek). Aby přitom dodržely
+  // pravidla a zároveň se všechny protnuly přesně v bodě B′ obrazu (spočteném ze zobrazovací
+  // rovnice), mají tam, kde by jinak nesouhlasily, nepatrný zlom — vždy schovaný pod tečkou
+  // ohniska, pod hrotem šipky předmětu či obrazu, nebo pod čarou zrcadla:
+  //  – rovnoběžný dopadá ve výšce y a odráží se přes F (zlom v F), odkud pokračuje do B′,
+  //  – ohniskový prochází F (zlom v F, popř. v bodě B předmětu), odráží se na oblouku ve výšce y′
+  //    a pokračuje rovnoběžně s osou — přesně přes B′,
+  //  – středový leží na přímce R–B, odráží se zpět po téže přímce (B′ na ní leží),
+  //  – vrcholový dopadá do V a odráží se souměrně podle osy (B′ na něm leží).
+  // U zdánlivého obrazu vede čárkované prodloužení od bodu odrazu (zlom pod čarou zrcadla) do B′.
   function drawRays(r){
     layerRays.textContent = '';
     var g = layerRays;
@@ -1041,74 +1044,78 @@ svg.trainer-svg text{ font-family:'Work Sans', sans-serif; paint-order:stroke; s
     var convex = ff < 0;
     var virtual = !r.infinite && !r.real;
     var missed = [];
-
+    var DASH = { dash:'6 5', w:1.6, opacity:0.85 }, DOTS = { dash:'2 5', w:1.4, opacity:0.8 };
+    function dir(p, q){ return { x:q.x - p.x, y:q.y - p.y }; }
+    function onArc(y){ return { x:arcX(R, y), y:y }; }
     // bod, kde přímka z Q ve směru d dopadne na zrcadlo (null, když ho mine)
     function hit(Q, d){
       var M = hitArc(R, Q, d);
       return M && Math.abs(M.y) <= hap ? M : null;
     }
-    // čárkované zpětné prodloužení odraženého paprsku (směr d) za zrcadlo — u zdánlivého obrazu
-    // až k obrazu (u rovnoběžného paprsku vypuklého zrcadla dál až ke zdánlivému ohnisku)
-    function back(M, d, color, extraTo){
-      if(!virtual || Math.abs(d.x) < EPS) return;
-      var xe = Math.max(Pimg.x, extraTo ? extraTo.x : -Infinity);
-      if(xe <= M.x) return;
-      var t = (xe - M.x) / d.x;
-      seg(g, M, { x:xe, y:M.y + d.y * t }, color, { dash:'6 5', w:1.6, opacity:0.85 });
-    }
 
     // 1) rovnoběžný s osou → odražený prochází ohniskem (u vypuklého jeho prodloužení)
     if(state.rays[1]){
       var c1 = 'var(--ray1)';
-      var M1 = { x:arcX(R, Y_OBJ), y:Y_OBJ };
-      // směr odraženého paprsku vždy od zrcadla: u dutého k F, u vypuklého od F
-      var d1 = convex ? { x:M1.x - F.x, y:M1.y - F.y } : { x:F.x - M1.x, y:F.y - M1.y };
+      var M1 = onArc(Y_OBJ);
       seg(g, P, M1, c1, { arrow:true });
-      seg(g, M1, toLeftEdge(M1, d1), c1, { arrow:true, arrowAt:0.25 });
-      back(M1, d1, c1, convex ? F : null);
+      if(!convex && (r.infinite || r.real)){
+        // odražený jde do F a odtud dál přes B′ (skutečný obraz leží za ohniskem)
+        seg(g, M1, F, c1, { arrow:true });
+        var d1 = r.infinite ? dir(M1, F) : dir(F, Pimg);
+        seg(g, F, toLeftEdge(F, d1), c1);
+      } else {
+        // zdánlivý obraz: odražený paprsek přesně přes F (u vypuklého jako by z F vycházel),
+        // čárkované prodloužení za zrcadlo do B′ (u vypuklého dál až do F)
+        var d1v = convex ? dir(F, M1) : dir(M1, F);
+        seg(g, M1, toLeftEdge(M1, d1v), c1, { arrow:true, arrowAt:0.25 });
+        seg(g, M1, Pimg, c1, DASH);
+        if(convex) seg(g, Pimg, F, c1, DASH);
+      }
     }
 
-    // 2) ohniskový (u vypuklého mířící do ohniska) → odráží se rovnoběžně s osou
-    if(state.rays[2] && Math.abs(a - ff) > EPS){
+    // 2) ohniskový (u vypuklého mířící do ohniska) → odráží se rovnoběžně s osou ve výšce y′
+    if(state.rays[2] && !r.infinite){
       var c2 = 'var(--ray2)';
-      var M2 = hit(P, { x:F.x - P.x, y:F.y - P.y });
-      if(!M2){
+      if(Math.abs(r.y2) > hap){
         missed.push('ohniskový');
       } else {
-        if(!convex && a < ff) seg(g, F, P, c2, { dash:'2 5', w:1.4, opacity:0.8 }); // jako by vycházel z F
-        seg(g, P, M2, c2, { arrow:true });
-        if(convex) seg(g, M2, F, c2, { dash:'6 5', w:1.6, opacity:0.85 });
+        var M2 = onArc(r.y2);
+        if(!convex && a > ff){
+          seg(g, P, F, c2, { arrow:true });
+          seg(g, F, M2, c2);
+        } else {
+          if(!convex) seg(g, F, P, c2, DOTS);   // jako by vycházel z F (zlom pod hrotem šipky předmětu)
+          seg(g, P, M2, c2, { arrow:true });
+          if(convex) seg(g, M2, F, c2, DASH);   // mířil do F (zlom pod čarou zrcadla)
+        }
         seg(g, M2, toLeftEdge(M2, { x:-1, y:0 }), c2, { arrow:true, arrowAt:0.25 });
-        back(M2, { x:-1, y:0 }, c2);
+        if(virtual) seg(g, M2, Pimg, c2, DASH);
       }
     }
 
     // 3) středový (u vypuklého mířící do středu křivosti) → odráží se zpět po téže přímce
     if(state.rays[3]){
       var c3 = 'var(--ray3)';
-      var M3 = Math.abs(a - R) < EPS ? null : hit(P, { x:C.x - P.x, y:C.y - P.y });
-      // u dutého zrcadla s předmětem mezi R a zrcadlem jde paprsek od R přes B k zrcadlu
-      if(!M3 && !convex && a < R) M3 = hit(P, { x:P.x - C.x, y:P.y - C.y });
+      var M3 = Math.abs(a - R) < EPS ? null : hit(P, dir(P, C));
       if(!M3){
         missed.push('středový');
       } else {
-        if(!convex && a < R) seg(g, C, P, c3, { dash:'2 5', w:1.4, opacity:0.8 });
-        if(convex) seg(g, M3, C, c3, { dash:'6 5', w:1.6, opacity:0.85 });
+        if(!convex && a < R) seg(g, C, P, c3, DOTS);
+        if(convex) seg(g, M3, C, c3, DASH);
         // dopadající a odražený paprsek leží na téže přímce — odražený je tenčí a se šipkou zpět
-        var d3 = { x:P.x - M3.x, y:P.y - M3.y };
         seg(g, P, M3, c3, { arrow:true, arrowAt:0.35 });
-        seg(g, M3, toLeftEdge(M3, d3), c3, { w:1.6, arrow:true, arrowAt:0.12 });
-        back(M3, d3, c3);
+        seg(g, M3, toLeftEdge(M3, dir(M3, P)), c3, { w:1.6, arrow:true, arrowAt:0.12 });
+        if(virtual) seg(g, M3, Pimg, c3, DASH);
       }
     }
 
     // 4) vrcholový → dopadá do V a odráží se souměrně podle optické osy
     if(state.rays[4]){
       var c4 = 'var(--ray4)';
-      var V = { x:0, y:0 }, d4 = { x:-a, y:-Y_OBJ };
+      var V = { x:0, y:0 };
       seg(g, P, V, c4, { arrow:true });
-      seg(g, V, toLeftEdge(V, d4), c4, { arrow:true, arrowAt:0.2 });
-      back(V, d4, c4);
+      seg(g, V, toLeftEdge(V, { x:-a, y:-Y_OBJ }), c4, { arrow:true, arrowAt:0.2 });
+      if(virtual) seg(g, V, Pimg, c4, DASH);
     }
     return missed;
   }
@@ -1856,7 +1863,7 @@ svg.trainer-svg text{ font-family:'Work Sans', sans-serif; paint-order:stroke; s
 
   // význačné paprsky řešení: vrcholový (souměrně podle osy) a jeden další podle chooseRay —
   // rovnoběžný (→ ohniskem), ohniskový (→ rovnoběžně s osou), nebo středový (→ zpět po sobě).
-  // Každý se odráží v bodě, kde dopadne na oblouk (náčrtek), takže bodem obrazu projde jen přibližně.
+  // Každý se odráží v bodě, kde dopadne na oblouk (náčrtek), a prochází přesně bodem obrazu.
   function drawRays(){
     var g = layers.rays; g.textContent = '';
     var t = state.task;
@@ -1884,7 +1891,6 @@ svg.trainer-svg text{ font-family:'Work Sans', sans-serif; paint-order:stroke; s
       if(d.y < 0) s = Math.min(s, (-Y_MAX - M.y) / d.y);
       return { x:M.x + d.x * s, y:M.y + d.y * s };
     }
-    function onCurve(Q, d){ return hitCurve(Q, d) || Q; }
     // dopadající paprsek z B do Mi, odražený z Mr ve směru d; zdánlivý obraz → čárkovaně za zrcadlo
     // dopadající paprsek z B do M, odražený z téhož bodu M ve směru d; u zdánlivého obrazu
     // čárkované prodloužení odraženého paprsku za zrcadlo až nad obraz (popř. k bodu backTo)
@@ -1899,21 +1905,41 @@ svg.trainer-svg text{ font-family:'Work Sans', sans-serif; paint-order:stroke; s
     // vrcholový — dopadá do V (ten na obloučku leží přesně)
     ray({ x:0, y:0 }, { x:-t.a, y:-t.y }, 'var(--ray4)');
 
+    // Rovnoběžný a ohniskový paprsek se odrážejí na oblouku a mají nepatrný zlom schovaný pod
+    // tečkou ohniska, hrotem šipky nebo čarou zrcadla — tak dodrží pravidla a projdou přesně B′.
     var c;
+    function dir(p, q){ return { x:q.x - p.x, y:q.y - p.y }; }
     if(t.ray === 'parallel'){
-      // rovnoběžný: odražený míří do F (duté), resp. jako by z F vycházel (vypuklé) — směr vždy od zrcadla
       c = 'var(--ray1)';
       var M1 = { x:arcX(t.y), y:t.y };
-      var d1 = convex ? { x:M1.x - F.x, y:M1.y - F.y } : { x:F.x - M1.x, y:F.y - M1.y };
-      // u vypuklého zrcadla prodloužení až do ohniska (leží za obrazem)
-      ray(M1, d1, c, convex && F.x > B2.x ? F : null);
+      seg(B, M1, c); mid(B, M1, c, 0.5);
+      if(!convex && real){
+        // odražený do F a odtud dál přes B′
+        seg(M1, F, c); mid(M1, F, c, 0.5);
+        seg(F, toEdge(F, dir(F, B2)), c);
+      } else {
+        // zdánlivý obraz: odražený přesně přes F (u vypuklého jako by z F vycházel),
+        // čárkované prodloužení do B′ (u vypuklého dál až do F)
+        var d1 = convex ? dir(F, M1) : dir(M1, F), E1 = toEdge(M1, d1);
+        seg(M1, E1, c); mid(M1, E1, c, 0.3);
+        seg(M1, B2, c, DASH, 1.5);
+        if(convex) seg(B2, F, c, DASH, 1.5);
+      }
     } else if(t.ray === 'focal'){
-      // ohniskový: míří přes F (u vypuklého do F), odráží se rovnoběžně s osou ve výšce y′
+      // ohniskový: přes F (u vypuklého do F), odráží se ve výšce y′ rovnoběžně s osou
       c = 'var(--ray2)';
-      var M2 = onCurve(B, { x:F.x - B.x, y:F.y - B.y });
-      if(!convex && t.a < t.f) seg(F, B, c, DOTS, 1.4);   // jako by vycházel z F
-      if(convex) seg(M2, F, c, DASH, 1.5);
-      ray(M2, { x:-1, y:0 }, c);
+      var M2 = { x:arcX(t.y2), y:t.y2 };
+      if(!convex && t.a > t.f){
+        seg(B, F, c); mid(B, F, c, 0.5);
+        seg(F, M2, c);
+      } else {
+        if(!convex) seg(F, B, c, DOTS, 1.4);   // jako by vycházel z F
+        seg(B, M2, c); mid(B, M2, c, 0.5);
+        if(convex) seg(M2, F, c, DASH, 1.5);
+      }
+      var E2 = toEdge(M2, { x:-1, y:0 });
+      seg(M2, E2, c); mid(M2, E2, c, 0.3);
+      if(!real) seg(M2, B2, c, DASH, 1.5);
     } else {
       // středový: leží na přímce R–B, odráží se zpět po téže přímce
       c = 'var(--ray3)';
