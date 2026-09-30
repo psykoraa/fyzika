@@ -1611,13 +1611,14 @@ svg.trainer-svg text{ font-family:'Work Sans', sans-serif; paint-order:stroke; s
     var Rd = curR(f === undefined ? state.task.f : f);
     return -Rd + (Rd > 0 ? 1 : -1) * Math.sqrt(Math.max(0, Rd * Rd - y * y));
   }
-  // průsečík přímky Q + t·d s obloukem nejblíž bodu Q (null, pokud ho mine)
+  // průsečík přímky Q + t·d s obloukem zrcadla (část kružnice u vrcholu; null, pokud ho mine)
   function hitCurve(Q, d, f){
     var Rd = curR(f === undefined ? state.task.f : f);
     var qx = Q.x + Rd, A = d.x * d.x + d.y * d.y, B = 2 * (qx * d.x + Q.y * d.y), C = qx * qx + Q.y * Q.y - Rd * Rd;
     var D = B * B - 4 * A * C;
     if(D < 0) return null;
-    var t1 = (-B + Math.sqrt(D)) / (2 * A), t2 = (-B - Math.sqrt(D)) / (2 * A), t = Math.abs(t1) < Math.abs(t2) ? t1 : t2;
+    var t1 = (-B + Math.sqrt(D)) / (2 * A), t2 = (-B - Math.sqrt(D)) / (2 * A);
+    var t = Math.abs(Q.x + t1 * d.x) < Math.abs(Q.x + t2 * d.x) ? t1 : t2;
     return { x:Q.x + t * d.x, y:Q.y + t * d.y };
   }
   // posun podél oblouku mezi vodorovným paprskem ve výšce h a přímkou (0; h) → F
@@ -1854,7 +1855,8 @@ svg.trainer-svg text{ font-family:'Work Sans', sans-serif; paint-order:stroke; s
   }
 
   // význačné paprsky řešení: vrcholový (souměrně podle osy) a jeden další podle chooseRay —
-  // rovnoběžný (→ ohniskem), ohniskový (→ rovnoběžně s osou), nebo středový (→ zpět po sobě)
+  // rovnoběžný (→ ohniskem), ohniskový (→ rovnoběžně s osou), nebo středový (→ zpět po sobě).
+  // Každý se odráží v bodě, kde dopadne na oblouk (náčrtek), takže bodem obrazu projde jen přibližně.
   function drawRays(){
     var g = layers.rays; g.textContent = '';
     var t = state.task;
@@ -1884,40 +1886,41 @@ svg.trainer-svg text{ font-family:'Work Sans', sans-serif; paint-order:stroke; s
     }
     function onCurve(Q, d){ return hitCurve(Q, d) || Q; }
     // dopadající paprsek z B do Mi, odražený z Mr ve směru d; zdánlivý obraz → čárkovaně za zrcadlo
-    function ray(Mi, Mr, d, c, backTo){
-      seg(B, Mi, c); mid(B, Mi, c, 0.5);
-      var E = toEdge(Mr, d);
-      seg(Mr, E, c); mid(Mr, E, c, 0.3);
-      if(!real) seg(Mr, backTo || B2, c, DASH, 1.5);
+    // dopadající paprsek z B do M, odražený z téhož bodu M ve směru d; u zdánlivého obrazu
+    // čárkované prodloužení odraženého paprsku za zrcadlo až nad obraz (popř. k bodu backTo)
+    function ray(M, d, c, backTo){
+      seg(B, M, c); mid(B, M, c, 0.5);
+      var E = toEdge(M, d);
+      seg(M, E, c); mid(M, E, c, 0.3);
+      var xe = (backTo || B2).x;
+      if(!real && Math.abs(d.x) > 1e-9 && xe > M.x) seg(M, { x:xe, y:M.y + d.y * (xe - M.x) / d.x }, c, DASH, 1.5);
     }
 
     // vrcholový — dopadá do V (ten na obloučku leží přesně)
-    ray({ x:0, y:0 }, { x:0, y:0 }, { x:-t.a, y:-t.y }, 'var(--ray4)');
+    ray({ x:0, y:0 }, { x:-t.a, y:-t.y }, 'var(--ray4)');
 
     var c;
     if(t.ray === 'parallel'){
       // rovnoběžný: odražený míří do F (duté), resp. jako by z F vycházel (vypuklé) — směr vždy od zrcadla
       c = 'var(--ray1)';
-      var Q1 = { x:0, y:t.y };
-      var d1 = convex ? { x:Q1.x - F.x, y:Q1.y - F.y } : { x:F.x - Q1.x, y:F.y - Q1.y };
-      var M1r = onCurve(Q1, d1);
+      var M1 = { x:arcX(t.y), y:t.y };
+      var d1 = convex ? { x:M1.x - F.x, y:M1.y - F.y } : { x:F.x - M1.x, y:F.y - M1.y };
       // u vypuklého zrcadla prodloužení až do ohniska (leží za obrazem)
-      ray({ x:arcX(t.y), y:t.y }, M1r, d1, c, convex && F.x > B2.x ? F : null);
+      ray(M1, d1, c, convex && F.x > B2.x ? F : null);
     } else if(t.ray === 'focal'){
       // ohniskový: míří přes F (u vypuklého do F), odráží se rovnoběžně s osou ve výšce y′
       c = 'var(--ray2)';
-      var Q2 = { x:0, y:t.y2 };
-      var M2 = onCurve(Q2, { x:B.x - Q2.x, y:B.y - Q2.y });
+      var M2 = onCurve(B, { x:F.x - B.x, y:F.y - B.y });
       if(!convex && t.a < t.f) seg(F, B, c, DOTS, 1.4);   // jako by vycházel z F
       if(convex) seg(M2, F, c, DASH, 1.5);
-      ray(M2, { x:arcX(t.y2), y:t.y2 }, { x:-1, y:0 }, c);
+      ray(M2, { x:-1, y:0 }, c);
     } else {
       // středový: leží na přímce R–B, odráží se zpět po téže přímce
       c = 'var(--ray3)';
       var M3 = centerHit(t);
       if(!convex && t.a < 2 * t.f) seg(C, B, c, DOTS, 1.4);   // jako by vycházel z R
       if(convex) seg(M3, C, c, DASH, 1.5);
-      ray(M3, M3, { x:B.x - M3.x, y:B.y - M3.y }, c);
+      ray(M3, { x:B.x - M3.x, y:B.y - M3.y }, c);
     }
   }
 
