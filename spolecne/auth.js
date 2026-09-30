@@ -31,6 +31,7 @@
     'prihlaseni.html': 'ucet',
     'kvinta.html': 'rozcestniky',
     'mereni.html': 'rozcestniky',
+    'septima.html': 'rozcestniky',
     'zaokrouhlovani-vysledku.html': 'mereni',
     'zpracovani-mereni.html': 'mereni',
     'kalkulacka-fx82cex.html': 'kvinta',
@@ -38,7 +39,8 @@
     'skladani-vektoru.html': 'kvinta',
     'grafy-rovnomerneho-pohybu.html': 'kvinta',
     'prumerna-okamzita-rychlost.html': 'kvinta',
-    'grafy-rovnomerne-zrychleneho-pohybu.html': 'kvinta'
+    'grafy-rovnomerne-zrychleneho-pohybu.html': 'kvinta',
+    'kulova-zrcadla.html': 'septima'
   };
 
   // auth.js vždy žije na <kořen webu>/spolecne/auth.js — z jeho vlastní (absolutní)
