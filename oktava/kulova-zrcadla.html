@@ -679,7 +679,7 @@ svg.trainer-svg text{ font-family:'Work Sans', sans-serif; paint-order:stroke; s
             <span><svg width="26" height="10"><line x1="1" y1="5" x2="25" y2="5" stroke="var(--ink-soft)" stroke-width="1.6" stroke-dasharray="5 4"/></svg>prodloužení paprsku</span>
           </div>
         </div>
-        <p class="hint">Předmět chytněte myší nebo prstem (za šipku nebo kroužek na ose). Po kliknutí na předmět ho lze posouvat i šipkami ← → po 0,5&nbsp;cm. Ohniskovou vzdálenost měníte posunutím značky <i>f</i> pod posuvníkem. Jeden dílek na ose = 1&nbsp;cm, velikost předmětu <i>y</i>&nbsp;=&nbsp;3&nbsp;cm. Zrcadlo je nakreslené jen v okolí optické osy, kde kulové zrcadlo zobrazuje téměř ideálně (paraxiální oblast); paprsek, který by dopadl výš, zrcadlo mine.</p>
+        <p class="hint">Předmět chytněte myší nebo prstem (za šipku nebo kroužek na ose). Po kliknutí na předmět ho lze posouvat i šipkami ← → po 0,5&nbsp;cm. Ohniskovou vzdálenost měníte posunutím značky <i>f</i> pod posuvníkem. Jeden dílek na ose = 1&nbsp;cm, velikost předmětu <i>y</i>&nbsp;=&nbsp;3&nbsp;cm. Zrcadlo je jen náčrtek: jeho zakřivení se mění s ohniskovou vzdáleností, ale neodpovídá přesně poloměru křivosti. Paprsky jsou kreslené podle pravidel pro význačné paprsky.</p>
       </div>
 
       <div class="applet-results">
@@ -745,7 +745,7 @@ svg.trainer-svg text{ font-family:'Work Sans', sans-serif; paint-order:stroke; s
           <button class="btn ghost" type="button" data-dx="1" data-dy="0" aria-label="doprava">→</button>
         </div>
       </div>
-      <p class="hint">Klikněte na mřížový bod, kde podle Vás končí hledaná šipka (vybraný bod jde doladit šipkami na klávesnici, na telefonu tlačítky), a potvrďte tlačítkem Zkontrolovat. Po kontrole se dokreslí správné řešení i význačné paprsky. Paprsky jsou kreslené podle pravidel pro paraxiální paprsky.</p>
+      <p class="hint">Klikněte na mřížový bod, kde podle Vás končí hledaná šipka (vybraný bod jde doladit šipkami na klávesnici, na telefonu tlačítky), a potvrďte tlačítkem Zkontrolovat. Po kontrole se dokreslí správné řešení i význačné paprsky. Zrcadlo je jen náčrtek (jeho zakřivení se mění s ohniskovou vzdáleností), paprsky jsou kreslené podle pravidel pro význačné paprsky.</p>
 
       <div class="feedback" id="tr-feedback" hidden>
         <div class="headline" id="tr-feedback-headline"></div>
@@ -792,40 +792,23 @@ svg.trainer-svg text{ font-family:'Work Sans', sans-serif; paint-order:stroke; s
   function py(y){ return AY - y * S; }
   function f(){ return state.type === 'concave' ? state.fAbs : -state.fAbs; }
 
-  // Kulová plocha zrcadla: střed křivosti R (v kódu bod C) = (−R; 0), R = 2f (se znaménkem), vrchol V = (0; 0).
+  // Střed křivosti R (v kódu bod C) = (−R; 0), R = 2f (se znaménkem), vrchol V = (0; 0).
+  // Zrcadlo je náčrtek, ne přesná konstrukce: oblouk kružnice s poloměrem SKETCH·|R| (skutečná
+  // kulová plocha by pro velký předmět byla moc malá) — čím menší ohnisková vzdálenost, tím
+  // víc je oblouk zakřivený. Paprsky se kreslí podle pravidel pro význačné paprsky (viz drawRays).
+  var SKETCH = 5, AP = 14;   // poloměr náčrtku = 5·|R|, zrcadlo sahá ±14 cm od osy
+  function aperture(){ return AP; }
   function arcX(R, y){
-    return -R + (R > 0 ? 1 : -1) * Math.sqrt(Math.max(0, R * R - y * y));
+    var Rd = SKETCH * R;
+    return -Rd + (Rd > 0 ? 1 : -1) * Math.sqrt(Math.max(0, Rd * Rd - y * y));
   }
-  // Průsečík přímky Q + t·d s kulovou plochou nejblíž bodu Q (null, pokud ji přímka mine).
+  // Průsečík přímky Q + t·d s obloukem nejblíž bodu Q (null, pokud ho přímka mine).
   function hitArc(R, Q, d){
-    var qx = Q.x + R, A = d.x * d.x + d.y * d.y, B = 2 * (qx * d.x + Q.y * d.y), Cc = qx * qx + Q.y * Q.y - R * R;
+    var Rd = SKETCH * R, qx = Q.x + Rd, A = d.x * d.x + d.y * d.y, B = 2 * (qx * d.x + Q.y * d.y), Cc = qx * qx + Q.y * Q.y - Rd * Rd;
     var D = B * B - 4 * A * Cc;
     if(D < 0) return null;
     var t1 = (-B + Math.sqrt(D)) / (2 * A), t2 = (-B - Math.sqrt(D)) / (2 * A), t = Math.abs(t1) < Math.abs(t2) ? t1 : t2;
     return { x:Q.x + t * d.x, y:Q.y + t * d.y };
-  }
-  // Význačné paprsky se kreslí jako přesné paraxiální přímky (rovnoběžný a ohniskový tedy
-  // procházejí přesně ohniskem F i bodem B′) a na kulové ploše končí, resp. začínají.
-  // Paraxiální přímky se ale protínají v rovině vrcholu, ne na oblouku — dopadající a odražený
-  // paprsek se proto oblouku dotknou ve dvou blízkých bodech. Jejich vzdálenost (měřená podél
-  // zrcadla, takže ji kryje čára zrcadla) roste s výškou dopadu h zhruba jako h³/(4f²).
-  // Zrcadlo je proto kreslené jen do výšky ±aperture, kde je tento posun nejvýš GAP_MAX —
-  // to je právě paraxiální oblast, kde kulové zrcadlo zobrazuje (téměř) ideálně.
-  // Paprsek, který by dopadl výš, zrcadlo mine.
-  var GAP_MAX = 0.33;   // cm (≈ 4 px)
-  function reflGap(R, h){
-    var Mi = { x:arcX(R, h), y:h }, Mr = hitArc(R, { x:0, y:h }, { x:-R / 2, y:-h });   // přímka (0; h) → F
-    return Mr ? Math.hypot(Mi.x - Mr.x, Mi.y - Mr.y) : Infinity;
-  }
-  var apCache = {};
-  function aperture(R){
-    if(apCache[R] !== undefined) return apCache[R];
-    var hi = Math.min(15, 0.6 * Math.abs(R)), lo = 0;
-    if(reflGap(R, hi) > GAP_MAX){
-      for(var i = 0; i < 40; i++){ var m = (lo + hi) / 2; if(reflGap(R, m) > GAP_MAX) hi = m; else lo = m; }
-      hi = lo;
-    }
-    return (apCache[R] = hi);
   }
 
   function el(tag, attrs, parent){
@@ -998,7 +981,7 @@ svg.trainer-svg text{ font-family:'Work Sans', sans-serif; paint-order:stroke; s
     obstacle(0, AY, W, AY);
     label('o', 8, AY, [[6, -14], [6, 14], [20, -14]], { 'font-size':16, 'font-style':'italic', 'font-weight':600, fill:'var(--ink-soft)' });
 
-    // kulové zrcadlo — oblouk kružnice se středem v bodě R, zezadu šedý pruh jako v učebnici
+    // kulové zrcadlo — náčrtek oblouku (viz SKETCH), zezadu šedý pruh jako v učebnici
     var R = r.R, hap = aperture(R), d = '', dBack = '';
     for(var i = 0; i <= 80; i++){
       var yy = -hap + 2 * hap * i / 80;
@@ -1039,12 +1022,15 @@ svg.trainer-svg text{ font-family:'Work Sans', sans-serif; paint-order:stroke; s
     }
   }
 
-  // Paprsky jsou přesné paraxiální přímky (viz aperture), které končí a začínají na oblouku:
+  // Paprsky se kreslí podle pravidel pro význačné paprsky a končí, resp. začínají na oblouku:
   //  – rovnoběžný dopadá ve výšce y, odražený (u vypuklého jeho prodloužení) prochází ohniskem F,
-  //  – ohniskový míří přes F, odražený jde rovnoběžně s osou ve výšce y′,
-  //  – středový leží na přímce R–B, na kouli dopadá kolmo a odráží se zpět po téže přímce,
+  //  – ohniskový prochází (míří do) F, odražený jde rovnoběžně s osou,
+  //  – středový leží na přímce R–B a odráží se zpět po téže přímce,
   //  – vrcholový dopadá do V a odráží se souměrně podle osy.
-  // Všechny odražené paprsky (popř. jejich prodloužení) procházejí přesně bodem B′ obrazu.
+  // Přímky jsou paraxiální, takže všechny odražené paprsky (popř. jejich prodloužení) procházejí
+  // přesně bodem B′ obrazu. Paraxiální přímky se ale protínají v rovině vrcholu, ne na oblouku —
+  // u rovnoběžného a ohniskového paprsku proto dopadající a odražený paprsek začínají v dvou
+  // blízkých bodech oblouku (posun leží podél zrcadla).
   function drawRays(r){
     layerRays.textContent = '';
     var g = layerRays;
@@ -1099,15 +1085,13 @@ svg.trainer-svg text{ font-family:'Work Sans', sans-serif; paint-order:stroke; s
       }
     }
 
-    // 3) středový (u vypuklého mířící do středu křivosti) → dopadá kolmo, odráží se zpět
+    // 3) středový (u vypuklého mířící do středu křivosti) → odráží se zpět po téže přímce
     if(state.rays[3]){
       var c3 = 'var(--ray3)';
-      var ux = P.x - C.x, uy = P.y - C.y, ul = Math.hypot(ux, uy);
-      ux /= ul; uy /= ul;
-      // zrcadlo leží od C směrem k vrcholu: u dutého vpravo od C, u vypuklého vlevo
-      if((convex && ux > 0) || (!convex && ux < 0)){ ux = -ux; uy = -uy; }
-      var M3 = { x:C.x + Math.abs(R) * ux, y:C.y + Math.abs(R) * uy };
-      if(Math.abs(M3.y) > hap || Math.abs(ux) < 0.05){
+      // přímka R–B protne rovinu vrcholu ve výšce y·R/(R − a); při a = R je svislá
+      var h3 = Math.abs(R - a) < EPS ? Infinity : Y_OBJ * R / (R - a);
+      var M3 = isFinite(h3) && Math.abs(h3) < 1e3 ? hitArc(R, { x:0, y:h3 }, { x:P.x, y:P.y - h3 }) : null;
+      if(!M3 || Math.abs(M3.y) > hap){
         missed.push('středový');
       } else {
         if(!convex && a < -C.x) seg(g, C, P, c3, { dash:'2 5', w:1.4, opacity:0.8 });
@@ -1614,45 +1598,46 @@ svg.trainer-svg text{ font-family:'Work Sans', sans-serif; paint-order:stroke; s
   }
 
   // ---- zrcadlo a význačné paprsky ----
-  // Zrcadlo je kreslené jako oblouček x = ±SAG·(y/HH)² přes celou výšku mřížky. Paprsky jsou
+  // Zrcadlo je náčrtek: oblouk kružnice s poloměrem SKETCH·|f| přes celou výšku mřížky (čím menší
+  // ohnisková vzdálenost, tím víc zakřivený). Paprsky jsou
   // přesné paraxiální přímky (rovnoběžný tedy prochází přesně ohniskem F i bodem B′), které
   // končí a začínají na obloučku. Paraxiální přímky se ale protínají v rovině vrcholu, takže
   // dopadající a odražený paprsek se obloučku dotknou ve dvou blízkých bodech — u strmých
   // odražených paprsků (velké y, malé f) by byly daleko od sebe. Proto se ke každému zadání
   // vybere paprsek, u něhož je tento posun nejvýš GAP_MAX (rovnoběžný, jinak ohniskový),
   // nebo středový (dopadající i odražený leží na téže přímce, posun je nulový).
-  var SAG = 0.6, HH = Y_MAX + 0.3, GAP_MAX = 0.17;   // cm (0,17 cm ≈ 4 px)
-  function curveK(mirror){ return (mirror === 'concave' ? -1 : 1) * SAG / (HH * HH); }
-  function arcX(y, mirror){ return curveK(mirror || state.mirror) * y * y; }
-  // průsečík přímky Q + t·d s obloučkem nejblíž bodu Q (null, pokud ho mine)
-  function hitCurve(Q, d, mirror){
-    var k = curveK(mirror || state.mirror);
-    var A = k * d.y * d.y, B = 2 * k * Q.y * d.y - d.x, C = k * Q.y * Q.y - Q.x, t;
-    if(Math.abs(A) < 1e-12) t = -C / B;
-    else {
-      var D = B * B - 4 * A * C;
-      if(D < 0) return null;
-      var t1 = (-B + Math.sqrt(D)) / (2 * A), t2 = (-B - Math.sqrt(D)) / (2 * A);
-      t = Math.abs(t1) < Math.abs(t2) ? t1 : t2;
-    }
+  var SKETCH = 10, HH = Y_MAX + 0.3, GAP_MAX = 0.25;   // poloměr náčrtku = 10·|f|; 0,25 cm ≈ 6 px
+  function curR(f){ return SKETCH * f; }   // se znaménkem jako f (duté > 0)
+  function arcX(y, f){
+    var Rd = curR(f === undefined ? state.task.f : f);
+    return -Rd + (Rd > 0 ? 1 : -1) * Math.sqrt(Math.max(0, Rd * Rd - y * y));
+  }
+  // průsečík přímky Q + t·d s obloukem nejblíž bodu Q (null, pokud ho mine)
+  function hitCurve(Q, d, f){
+    var Rd = curR(f === undefined ? state.task.f : f);
+    var qx = Q.x + Rd, A = d.x * d.x + d.y * d.y, B = 2 * (qx * d.x + Q.y * d.y), C = qx * qx + Q.y * Q.y - Rd * Rd;
+    var D = B * B - 4 * A * C;
+    if(D < 0) return null;
+    var t1 = (-B + Math.sqrt(D)) / (2 * A), t2 = (-B - Math.sqrt(D)) / (2 * A), t = Math.abs(t1) < Math.abs(t2) ? t1 : t2;
     return { x:Q.x + t * d.x, y:Q.y + t * d.y };
   }
-  // posun podél obloučku mezi vodorovným paprskem ve výšce h a přímkou (0; h) → F
-  function reflGap(f, h, mirror){
-    var Mr = hitCurve({ x:0, y:h }, { x:-f, y:-h }, mirror);
-    return Mr ? Math.hypot(arcX(h, mirror) - Mr.x, h - Mr.y) : Infinity;
+  // posun podél oblouku mezi vodorovným paprskem ve výšce h a přímkou (0; h) → F
+  function reflGap(f, h){
+    var Mr = hitCurve({ x:0, y:h }, { x:-f, y:-h }, f);
+    return Mr ? Math.hypot(arcX(h, f) - Mr.x, h - Mr.y) : Infinity;
   }
-  // bod, kde středový paprsek (přímka R–B) dopadne na oblouček (null, když mimo mřížku)
-  function centerHit(t, mirror){
+  // bod, kde středový paprsek (přímka R–B) dopadne na oblouk (null, když mimo mřížku)
+  function centerHit(t){
     if(2 * t.f === t.a) return null;
     var h = t.y * 2 * t.f / (2 * t.f - t.a);
-    var M = hitCurve({ x:0, y:h }, { x:-t.a, y:t.y - h }, mirror);
+    if(Math.abs(h) > 1e3) return null;
+    var M = hitCurve({ x:0, y:h }, { x:-t.a, y:t.y - h }, t.f);
     return M && Math.abs(M.y) <= Y_MAX ? M : null;
   }
-  function chooseRay(t, mirror){
-    if(reflGap(t.f, t.y, mirror) <= GAP_MAX) return 'parallel';
-    if(reflGap(t.f, t.y2, mirror) <= GAP_MAX) return 'focal';
-    if(centerHit(t, mirror)) return 'center';
+  function chooseRay(t){
+    if(reflGap(t.f, t.y) <= GAP_MAX) return 'parallel';
+    if(reflGap(t.f, t.y2) <= GAP_MAX) return 'focal';
+    if(centerHit(t)) return 'center';
     return null;
   }
 
@@ -1672,7 +1657,7 @@ svg.trainer-svg text{ font-family:'Work Sans', sans-serif; paint-order:stroke; s
           if(y2 === 0 || Math.abs(y2) > 7) continue;
           if(a === a2 && y === y2) continue;
           var t = { f:f, a:a, y:y, a2:a2, y2:y2 };
-          t.ray = chooseRay(t, mirror);
+          t.ray = chooseRay(t);
           if(t.ray) out.push(t);
         }
       }
