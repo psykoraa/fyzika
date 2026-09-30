@@ -36,9 +36,7 @@
   --ray3:#2f6fd0;
   --ray4:#7b5ea7;
   --real:#d23f24;
-  --real-bg:#fbe6e1;
   --virtual:#0f8a84;
-  --virtual-bg:#dcf1ef;
   --mirror-back:#cbc4da;
 }
 
@@ -105,7 +103,7 @@ button.btn.fs-btn svg{ flex:none; }
   color:var(--ink-soft);
   font-weight:600;
   margin-right:2px;
-  min-width:150px;
+  flex:0 0 205px;   /* stejná šířka ve všech řádcích — oba posuvníky pak začínají na stejném místě */
 }
 .seg{ display:flex; gap:6px; flex-wrap:wrap; }
 .chip{ font-size:0.82rem; gap:7px; }
@@ -121,10 +119,8 @@ button.btn.fs-btn svg{ flex:none; }
 }
 .chip.ray.on{ background:var(--surface-2); color:var(--ink); border-color:var(--c); }
 .chip.ray:not(.on) .dot{ background:transparent; border:2px solid var(--c); }
-.presets[hidden]{ display:none; }
 
 .slider-wrap{ display:flex; align-items:center; gap:14px; flex:1 1 280px; min-width:0; }
-.slider-wrap input[type=range]{ flex:1; accent-color:var(--accent); min-width:120px; }
 .slider-value{
   font-family:'IBM Plex Mono', monospace;
   font-weight:600;
@@ -132,57 +128,64 @@ button.btn.fs-btn svg{ flex:none; }
   font-size:0.9rem;
   white-space:nowrap;
   text-align:right;
+  flex:none;
+  width:12.5ch;   /* pevná šířka — posuvník se při změně hodnoty nesmí zkracovat ani prodlužovat */
 }
 
-/* posuvník předmětové vzdálenosti se zónami a značkami F (a = f) a C (a = r) */
-.a-slider{ position:relative; flex:1; min-width:160px; padding:4px 0 22px; }
-.a-slider:has(.a-note:not([hidden])){ padding-bottom:4px; }
-.a-zones{
-  position:absolute;
-  left:9px; right:9px; top:13px;
-  height:8px;
-  border-radius:4px;
-  overflow:hidden;
-  display:flex;
-  background:var(--surface-2);
-}
-.a-zones span{ display:block; height:100%; }
-.a-zones .z-virtual{ background:var(--virtual); opacity:0.45; }
-.a-zones .z-real-big{ background:var(--real); opacity:0.55; }
-.a-zones .z-real-small{ background:var(--real); opacity:0.28; }
-.a-slider input[type=range]{
-  position:relative;
-  width:100%;
-  margin:0;
-  height:26px;
-  background:transparent;
+/* Oba posuvníky mají stejný vzhled i stejné měřítko (px na 1 cm): posuvník f je jen kratší
+   a posunutý tak, aby hodnota f ležela přesně nad značkou f na posuvníku a. */
+.slider-track{ position:relative; flex:1; min-width:0; }
+.slider-track.with-marks{ padding-bottom:22px; }
+.slider-track.with-note{ padding-bottom:0; }
+.rng{
   -webkit-appearance:none;
   appearance:none;
+  display:block;
+  width:100%;
+  height:22px;
+  margin:0;
+  background:transparent;
   cursor:pointer;
+  --p:50%;
 }
-.a-slider input[type=range]:focus{ outline:none; }
-.a-slider input[type=range]::-webkit-slider-runnable-track{ height:26px; background:transparent; }
-.a-slider input[type=range]::-moz-range-track{ height:26px; background:transparent; }
-.a-slider input[type=range]::-webkit-slider-thumb{
+.rng:focus{ outline:none; }
+.rng::-webkit-slider-runnable-track{
+  height:6px;
+  border-radius:3px;
+  background:linear-gradient(to right, var(--accent) 0, var(--accent) var(--p), var(--surface-2) var(--p), var(--surface-2) 100%);
+}
+.rng::-moz-range-track{
+  height:6px;
+  border-radius:3px;
+  background:linear-gradient(to right, var(--accent) 0, var(--accent) var(--p), var(--surface-2) var(--p), var(--surface-2) 100%);
+}
+.rng::-webkit-slider-thumb{
   -webkit-appearance:none;
-  width:18px; height:18px; margin-top:4px;
+  width:18px; height:18px;
+  margin-top:-6px;
   border-radius:50%;
-  background:var(--surface);
-  border:3px solid var(--accent);
-  box-shadow:0 1px 3px rgba(36,31,54,0.25);
+  background:var(--accent);
+  border:2px solid var(--surface);
+  box-shadow:0 0 0 1px var(--accent), 0 1px 3px rgba(36,31,54,0.3);
 }
-.a-slider input[type=range]::-moz-range-thumb{
-  width:12px; height:12px;
+.rng::-moz-range-thumb{
+  box-sizing:border-box;
+  width:18px; height:18px;
   border-radius:50%;
-  background:var(--surface);
-  border:3px solid var(--accent);
-  box-shadow:0 1px 3px rgba(36,31,54,0.25);
+  background:var(--accent);
+  border:2px solid var(--surface);
+  box-shadow:0 0 0 1px var(--accent), 0 1px 3px rgba(36,31,54,0.3);
 }
-.a-slider input[type=range]:focus-visible::-webkit-slider-thumb{ outline:2px solid var(--focus); outline-offset:2px; }
-.a-slider input[type=range]:focus-visible::-moz-range-thumb{ outline:2px solid var(--focus); outline-offset:2px; }
+.rng:focus-visible::-webkit-slider-thumb{ outline:2px solid var(--focus); outline-offset:2px; }
+.rng:focus-visible::-moz-range-thumb{ outline:2px solid var(--focus); outline-offset:2px; }
+#f-slider{
+  /* rozsah 5–20 cm ve stejném měřítku jako posuvník a (0,5–50 cm); 18px = šířka jezdce */
+  width:calc(18px + (100% - 18px) * 15 / 49.5);
+  margin-left:calc((100% - 18px) * 4.5 / 49.5);
+}
 .a-mark{
   position:absolute;
-  top:6px;
+  top:15px;
   transform:translateX(-50%);
   pointer-events:none;
   text-align:center;
@@ -190,16 +193,17 @@ button.btn.fs-btn svg{ flex:none; }
 .a-mark::before{
   content:'';
   display:block;
-  width:2px; height:22px;
+  width:2px; height:9px;
   margin:0 auto;
   background:var(--ink);
 }
 .a-mark span{
   display:block;
-  margin-top:1px;
   font-family:'STIX Two Text', Georgia, serif;
   font-size:0.95rem;
   font-weight:700;
+  font-style:italic;
+  line-height:1.1;
   color:var(--ink);
   white-space:nowrap;
 }
@@ -254,8 +258,6 @@ svg.optics .obj-group.dragging .obj-grip{ fill:var(--accent); }
 .readout .cell{ min-width:0; flex:1 1 80px; padding:6px 8px; }
 .readout .cell .label{ text-transform:none; font-family:'STIX Two Text', Georgia, serif; font-size:0.9rem; letter-spacing:0; opacity:0.8; }
 .readout .cell .value{ font-size:1rem; white-space:nowrap; }
-.readout .cell.img-real{ background:var(--real); color:#fff; }
-.readout .cell.img-virtual{ background:var(--virtual); color:#fff; }
 
 .props{ display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
 .prop{
@@ -269,8 +271,6 @@ svg.optics .obj-group.dragging .obj-grip{ fill:var(--accent); }
   color:var(--ink);
   border:1px solid var(--line);
 }
-.prop.real{ background:var(--real-bg); color:var(--real); border-color:var(--real); }
-.prop.virtual{ background:var(--virtual-bg); color:var(--virtual); border-color:var(--virtual); }
 .prop.none{ background:var(--danger-bg); color:var(--danger); border-color:var(--danger); }
 .position-note{ font-size:0.84rem; color:var(--ink-soft); margin:10px 0 0; line-height:1.5; }
 
@@ -304,8 +304,8 @@ svg.optics .obj-group.dragging .obj-grip{ fill:var(--accent); }
   background:var(--surface);
   display:grid;
   grid-template-columns:minmax(300px, 400px) minmax(0, 1fr);
-  grid-template-rows:auto auto 1fr;
-  grid-template-areas:"head stage" "controls stage" "results stage";
+  grid-template-rows:auto 1fr;
+  grid-template-areas:"head stage" "controls stage";
   column-gap:22px;
   align-items:start;
 }
@@ -313,14 +313,15 @@ svg.optics .obj-group.dragging .obj-grip{ fill:var(--accent); }
 .applet-card.is-full .applet-head{ grid-area:head; }
 .applet-card.is-full .applet-controls{ grid-area:controls; }
 .applet-card.is-full .applet-stage{ grid-area:stage; position:sticky; top:0; }
-.applet-card.is-full .applet-results{ grid-area:results; }
+.applet-card.is-full .applet-results,
+.applet-card.is-full .hint,
+.applet-card.is-full svg .param{ display:none; }
 .applet-card.is-full .desc{ display:none; }
 .applet-card.is-full h2{ font-size:1.35rem; }
 .applet-card.is-full .mode-row{ margin-top:10px; padding-top:10px; }
-.applet-card.is-full .mode-row-label{ min-width:0; width:100%; }
+.applet-card.is-full .mode-row-label{ flex-basis:100%; }
 .applet-card.is-full .canvas-wrap{ margin-top:0; }
-.applet-card.is-full svg.optics{ max-height:calc(100vh - 150px); }
-.applet-card.is-full .results{ grid-template-columns:1fr; margin-top:14px; }
+.applet-card.is-full svg.optics{ max-height:calc(100vh - 110px); }
 
 .theory-table-wrap{ overflow-x:auto; margin:6px 0 4px; }
 .theory-table{
@@ -343,8 +344,6 @@ svg.optics .obj-group.dragging .obj-grip{ fill:var(--accent); }
   letter-spacing:0.05em;
 }
 .theory-table tbody tr:nth-child(even) td{ background:rgba(36,31,54,0.02); }
-.t-real, .panel b.t-real{ color:var(--real); font-weight:600; }
-.t-virtual, .panel b.t-virtual{ color:var(--virtual); font-weight:600; }
 
 @media (max-width:900px){
   .applet-card.is-full{
@@ -354,7 +353,7 @@ svg.optics .obj-group.dragging .obj-grip{ fill:var(--accent); }
 }
 @media (max-width:720px){
   .results{ grid-template-columns:1fr; }
-  .mode-row-label{ min-width:0; width:100%; }
+  .mode-row-label{ flex-basis:100%; }
 }
 @media (max-width:520px){
   .card{ padding:20px 16px 22px; }
@@ -433,9 +432,9 @@ svg.optics .obj-group.dragging .obj-grip{ fill:var(--accent); }
         <li><b style="color:var(--ray3)">Paprsek procházející středem křivosti</b> (u vypuklého zrcadla do něj mířící) dopadá na zrcadlo kolmo a odráží se zpět po stejné přímce.</li>
         <li><b style="color:var(--ray1)">Paprsek rovnoběžný s optickou osou</b> se odráží do ohniska (u vypuklého zrcadla tak, že ohniskem prochází jeho zpětné prodloužení).</li>
         <li><b style="color:var(--ray2)">Paprsek procházející ohniskem</b> (u vypuklého zrcadla do něj mířící) se odráží rovnoběžně s optickou osou — plyne to ze záměnnosti chodu paprsků.</li>
+        <li><b style="color:var(--ray4)">Paprsek mířící do vrcholu</b> \(V\) se odráží souměrně podle optické osy (úhel odrazu se rovná úhlu dopadu). Z podobných trojúhelníků, které s ním vzniknou, plyne vztah pro příčné zvětšení.</li>
       </ol>
-      <p>Pro konstrukci se hodí i <b style="color:var(--ray4)">paprsek mířící do vrcholu</b> \(V\): odráží se souměrně podle optické osy (úhel odrazu se rovná úhlu dopadu). Z podobných trojúhelníků, které s ním vzniknou, plyne vztah pro příčné zvětšení.</p>
-      <p>Protnou-li se <b>odražené paprsky</b>, vznikne <b class="t-real">skutečný obraz</b> — lze ho zachytit na stínítku. Protnou-li se jen jejich <b>zpětná prodloužení</b> za zrcadlem, vznikne <b class="t-virtual">zdánlivý obraz</b> — vidíme ho v zrcadle, ale na stínítko ho zachytit nelze.</p>
+      <p>Protnou-li se <b>odražené paprsky</b>, vznikne <b>skutečný obraz</b> — lze ho zachytit na stínítku. Protnou-li se jen jejich <b>zpětná prodloužení</b> za zrcadlem, vznikne <b>zdánlivý obraz</b> — vidíme ho v zrcadle, ale na stínítko ho zachytit nelze.</p>
     </div>
 
     <div class="panel">
@@ -452,7 +451,7 @@ svg.optics .obj-group.dragging .obj-grip{ fill:var(--accent); }
         <table class="theory-table" style="min-width:360px">
           <thead><tr><th>Veličina</th><th>kladná (+)</th><th>záporná (−)</th></tr></thead>
           <tbody>
-            <tr><td>\(a'\)</td><td>obraz před zrcadlem — <span class="t-real">skutečný</span></td><td>obraz za zrcadlem — <span class="t-virtual">zdánlivý</span></td></tr>
+            <tr><td>\(a'\)</td><td>obraz před zrcadlem — skutečný</td><td>obraz za zrcadlem — zdánlivý</td></tr>
             <tr><td>\(y'\), \(Z\)</td><td>vzpřímený</td><td>převrácený</td></tr>
           </tbody>
         </table>
@@ -468,12 +467,12 @@ svg.optics .obj-group.dragging .obj-grip{ fill:var(--accent); }
             <tr><th>Zrcadlo</th><th>Předmětová vzdálenost</th><th>Obrazová vzdálenost</th><th>Vlastnosti obrazu</th></tr>
           </thead>
           <tbody>
-            <tr><td>duté</td><td>\(\infty &gt; a &gt; r\)</td><td>\(f &lt; a' &lt; r\)</td><td><span class="t-real">skutečný</span>, převrácený, zmenšený</td></tr>
-            <tr><td>duté</td><td>\(a = r\)</td><td>\(a' = r\)</td><td><span class="t-real">skutečný</span>, převrácený, stejně velký</td></tr>
-            <tr><td>duté</td><td>\(r &gt; a &gt; f\)</td><td>\(r &lt; a' &lt; \infty\)</td><td><span class="t-real">skutečný</span>, převrácený, zvětšený</td></tr>
+            <tr><td>duté</td><td>\(\infty &gt; a &gt; r\)</td><td>\(f &lt; a' &lt; r\)</td><td>skutečný, převrácený, zmenšený</td></tr>
+            <tr><td>duté</td><td>\(a = r\)</td><td>\(a' = r\)</td><td>skutečný, převrácený, stejně velký</td></tr>
+            <tr><td>duté</td><td>\(r &gt; a &gt; f\)</td><td>\(r &lt; a' &lt; \infty\)</td><td>skutečný, převrácený, zvětšený</td></tr>
             <tr><td>duté</td><td>\(a = f\)</td><td>\(a' \to \infty\)</td><td>obraz nevzniká (odražené paprsky jsou rovnoběžné)</td></tr>
-            <tr><td>duté</td><td>\(a &lt; f\)</td><td>\(a' &lt; 0\) (za zrcadlem)</td><td><span class="t-virtual">zdánlivý</span>, vzpřímený, zvětšený</td></tr>
-            <tr><td>vypuklé</td><td>\(\infty &gt; a &gt; 0\)</td><td>\(f &lt; a' &lt; 0\) (za zrcadlem)</td><td><span class="t-virtual">zdánlivý</span>, vzpřímený, zmenšený</td></tr>
+            <tr><td>duté</td><td>\(a &lt; f\)</td><td>\(a' &lt; 0\) (za zrcadlem)</td><td>zdánlivý, vzpřímený, zvětšený</td></tr>
+            <tr><td>vypuklé</td><td>\(\infty &gt; a &gt; 0\)</td><td>\(f &lt; a' &lt; 0\) (za zrcadlem)</td><td>zdánlivý, vzpřímený, zmenšený</td></tr>
           </tbody>
         </table>
       </div>
@@ -509,7 +508,9 @@ svg.optics .obj-group.dragging .obj-grip{ fill:var(--accent); }
         <div class="mode-row">
           <label class="mode-row-label" for="f-slider">Ohnisková vzdálenost</label>
           <div class="slider-wrap">
-            <input type="range" id="f-slider" min="5" max="20" step="0.5" value="10">
+            <div class="slider-track">
+              <input type="range" class="rng" id="f-slider" min="5" max="20" step="0.5" value="10">
+            </div>
             <span class="slider-value" id="f-value">f = 10,0 cm</span>
           </div>
         </div>
@@ -517,25 +518,13 @@ svg.optics .obj-group.dragging .obj-grip{ fill:var(--accent); }
         <div class="mode-row">
           <label class="mode-row-label" for="a-slider">Předmětová vzdálenost</label>
           <div class="slider-wrap">
-            <div class="a-slider">
-              <div class="a-zones" id="a-zones" aria-hidden="true"></div>
-              <input type="range" id="a-slider" min="0.5" max="50" step="0.5" value="16" title="Značky: a = f (předmět v ohnisku), a = r (předmět ve středu křivosti)">
-              <div class="a-mark" id="mark-f" aria-hidden="true"><span><i>f</i></span></div>
-              <div class="a-mark" id="mark-r" aria-hidden="true"><span><i>r</i></span></div>
+            <div class="slider-track with-marks" id="a-track">
+              <input type="range" class="rng" id="a-slider" min="0.5" max="50" step="0.5" value="16" title="Značky: a = f (předmět v ohnisku), a = r (předmět ve středu křivosti)">
+              <div class="a-mark" id="mark-f" aria-hidden="true"><span>f</span></div>
+              <div class="a-mark" id="mark-r" aria-hidden="true"><span>r</span></div>
               <div class="a-note" id="a-note" hidden>u vypuklého zrcadla leží <i>F</i> i <i>C</i> za zrcadlem</div>
             </div>
             <span class="slider-value" id="a-value">a = 16,0 cm</span>
-          </div>
-        </div>
-
-        <div class="mode-row presets" id="preset-row">
-          <span class="mode-row-label">Poloha předmětu</span>
-          <div class="seg" id="preset-seg">
-            <button class="chip" data-preset="far"><i>a</i>&nbsp;&gt;&nbsp;<i>r</i></button>
-            <button class="chip" data-preset="r"><i>a</i>&nbsp;=&nbsp;<i>r</i></button>
-            <button class="chip" data-preset="between"><i>r</i>&nbsp;&gt;&nbsp;<i>a</i>&nbsp;&gt;&nbsp;<i>f</i></button>
-            <button class="chip" data-preset="f"><i>a</i>&nbsp;=&nbsp;<i>f</i></button>
-            <button class="chip" data-preset="near"><i>a</i>&nbsp;&lt;&nbsp;<i>f</i></button>
           </div>
         </div>
 
@@ -857,12 +846,13 @@ svg.optics .obj-group.dragging .obj-grip{ fill:var(--accent); }
     text('B′', x + side * 10, clampY(y1 + (dir < 0 ? 6 : 4)), { 'font-size':15, 'font-weight':700, 'font-style':'italic', fill:color, 'text-anchor':anchor }, g);
     text('A′', x - side * 8, clampY(AY + (dir < 0 ? 20 : -8)), { 'font-size':15, 'font-weight':700, 'font-style':'italic', fill:color, 'text-anchor': r.real ? 'start' : 'end' }, g);
     var tagY = clampY(dir < 0 ? y1 - 12 : y1 + 24);
-    text(r.real ? 'skutečný obraz' : 'zdánlivý obraz', x, tagY, { 'font-size':13, 'font-weight':600, fill:color, 'text-anchor':'middle' }, g);
+    text(r.real ? 'skutečný obraz' : 'zdánlivý obraz', x, tagY, { 'class':'param', 'font-size':13, 'font-weight':600, fill:color, 'text-anchor':'middle' }, g);
   }
 
   // Kóty a, a′ dole pod osou
   function dimension(parent, x1, x2, yPx, label, color){
     if(Math.abs(x2 - x1) < 1) return;
+    parent = el('g', { 'class':'param' }, parent);  // na celé obrazovce se kóty skryjí
     var l = Math.min(x1, x2), rr = Math.max(x1, x2);
     var L = Math.max(4, l), R = Math.min(W - 4, rr);
     el('line', { x1:L, y1:yPx, x2:R, y2:yPx, stroke:color, 'stroke-width':1.3 }, parent);
@@ -959,7 +949,6 @@ svg.optics .obj-group.dragging .obj-grip{ fill:var(--accent); }
   // ---- výpis výsledků ----
   var outA = document.getElementById('out-a'), outA2 = document.getElementById('out-a2');
   var outZ = document.getElementById('out-z'), outY2 = document.getElementById('out-y2');
-  var cellA2 = document.getElementById('cell-a2');
   var propsBox = document.getElementById('props'), posNote = document.getElementById('position-note');
   var calcBox = document.getElementById('calc-math');
 
@@ -973,7 +962,6 @@ svg.optics .obj-group.dragging .obj-grip{ fill:var(--accent); }
   function renderResults(r, missed){
     outA.textContent = fmt(r.a, 1) + ' cm';
     propsBox.textContent = '';
-    cellA2.classList.remove('img-real', 'img-virtual');
     var lines = [];
     lines.push('a\' = \\frac{a f}{a - f} = \\frac{' + tex(r.a, 1) + ' \\cdot ' + texPar(r.f, 1) + '}{' + tex(r.a, 1) + ' - ' + texPar(r.f, 1) + '}\\ \\mathrm{cm}');
     var note;
@@ -990,11 +978,10 @@ svg.optics .obj-group.dragging .obj-grip{ fill:var(--accent); }
       outA2.textContent = fmt(r.a2, 1) + ' cm';
       outZ.textContent = fmt(r.Z, 2);
       outY2.textContent = fmt(r.y2, 1) + ' cm';
-      cellA2.classList.add(r.real ? 'img-real' : 'img-virtual');
 
       var absZ = Math.abs(r.Z);
       var sizeWord = Math.abs(absZ - 1) < 1e-9 ? 'stejně velký' : (absZ > 1 ? 'zvětšený' : 'zmenšený');
-      prop(r.real ? 'skutečný' : 'zdánlivý', r.real ? 'real' : 'virtual');
+      prop(r.real ? 'skutečný' : 'zdánlivý');
       prop(r.Z > 0 ? 'vzpřímený' : 'převrácený');
       prop(sizeWord);
 
@@ -1028,39 +1015,34 @@ svg.optics .obj-group.dragging .obj-grip{ fill:var(--accent); }
     });
   }
 
-  // ---- posuvník a se zónami a značkami F a C ----
+  var fSlider = document.getElementById('f-slider'), fValue = document.getElementById('f-value');
+
+  // ---- posuvník a se značkami f a r (stejné měřítko jako posuvník f) ----
   var aSlider = document.getElementById('a-slider'), aValue = document.getElementById('a-value');
-  var aZones = document.getElementById('a-zones'), aNote = document.getElementById('a-note');
+  var aTrack = document.getElementById('a-track'), aNote = document.getElementById('a-note');
   var markF = document.getElementById('mark-f'), markR = document.getElementById('mark-r');
   var THUMB = 18; // px — šířka jezdce (stejná jako v CSS)
-  function sliderPos(v){
-    var pct = (v - A_MIN) / (A_MAX - A_MIN);
-    return 'calc(' + (THUMB / 2) + 'px + (100% - ' + THUMB + 'px) * ' + pct.toFixed(5) + ')';
+  // Poloha středu jezdce pro hodnotu v na posuvníku s rozsahem min–max (v CSS jednotkách).
+  function thumbPos(v, min, max){
+    return 'calc(' + (THUMB / 2) + 'px + (100% - ' + THUMB + 'px) * ' + ((v - min) / (max - min)).toFixed(5) + ')';
   }
-  function updateASlider(){
+  function fillSlider(input){
+    input.style.setProperty('--p', thumbPos(parseFloat(input.value), parseFloat(input.min), parseFloat(input.max)));
+  }
+  function updateSliders(){
     aSlider.value = state.a;
+    fSlider.value = state.fAbs;
+    fillSlider(aSlider);
+    fillSlider(fSlider);
     aValue.textContent = 'a = ' + fmt(state.a, 1) + ' cm';
     var concave = state.type === 'concave';
-    var fa = state.fAbs, ra = 2 * fa, span = A_MAX - A_MIN;
-    aZones.textContent = '';
-    function zone(cls, from, to){
-      var s = document.createElement('span');
-      s.className = cls;
-      s.style.width = (Math.max(0, Math.min(A_MAX, to) - Math.max(A_MIN, from)) / span * 100) + '%';
-      aZones.appendChild(s);
-    }
-    if(concave){
-      zone('z-virtual', A_MIN, fa);
-      zone('z-real-big', fa, ra);
-      zone('z-real-small', ra, A_MAX);
-    } else {
-      zone('z-virtual', A_MIN, A_MAX);
-    }
+    var fa = state.fAbs, ra = 2 * fa;
     markF.hidden = !concave;
     markR.hidden = !concave || ra > A_MAX;
     aNote.hidden = concave;
-    markF.style.left = sliderPos(fa);
-    markR.style.left = sliderPos(ra);
+    aTrack.classList.toggle('with-note', !concave);
+    markF.style.left = thumbPos(fa, A_MIN, A_MAX);
+    markR.style.left = thumbPos(ra, A_MIN, A_MAX);
   }
   aSlider.addEventListener('input', function(){
     state.a = parseFloat(aSlider.value);
@@ -1074,13 +1056,11 @@ svg.optics .obj-group.dragging .obj-grip{ fill:var(--accent); }
     drawImage(r);
     drawObject(r);
     renderResults(r, missed);
-    updateASlider();
+    updateSliders();
   }
 
   // ---- ovládání ----
-  var fSlider = document.getElementById('f-slider'), fValue = document.getElementById('f-value');
-  var presetRow = document.getElementById('preset-row');
-  function updateFLabel(){ fValue.textContent = 'f = ' + fmt(f(), 1) + ' cm, r = ' + fmt(2 * f(), 1) + ' cm'; }
+  function updateFLabel(){ fValue.textContent = 'f = ' + fmt(f(), 1) + ' cm'; }
 
   Array.prototype.forEach.call(document.querySelectorAll('#type-seg .chip'), function(b){
     b.addEventListener('click', function(){
@@ -1090,7 +1070,6 @@ svg.optics .obj-group.dragging .obj-grip{ fill:var(--accent); }
         o.classList.toggle('on', on);
         o.setAttribute('aria-pressed', on ? 'true' : 'false');
       });
-      presetRow.hidden = state.type !== 'concave';
       updateFLabel();
       render();
     });
@@ -1108,23 +1087,6 @@ svg.optics .obj-group.dragging .obj-grip{ fill:var(--accent); }
       state.rays[k] = !state.rays[k];
       b.classList.toggle('on', state.rays[k]);
       b.setAttribute('aria-pressed', state.rays[k] ? 'true' : 'false');
-      render();
-    });
-  });
-
-  // Rychlé nastavení polohy předmětu vůči F a C (jen u dutého zrcadla). Poloha „a > r“
-  // se volí tak, aby se předmět vešel do obrázku i při velké ohniskové vzdálenosti.
-  Array.prototype.forEach.call(document.querySelectorAll('#preset-seg .chip'), function(b){
-    b.addEventListener('click', function(){
-      var fa = state.fAbs, a;
-      switch(b.getAttribute('data-preset')){
-        case 'far': a = Math.min(A_MAX, Math.max(2 * fa + 2, 3 * fa)); break;
-        case 'r': a = 2 * fa; break;
-        case 'between': a = 1.5 * fa; break;
-        case 'f': a = fa; break;
-        case 'near': a = 0.6 * fa; break;
-      }
-      state.a = Math.max(A_MIN, Math.min(A_MAX, Math.round(a / A_STEP) * A_STEP));
       render();
     });
   });
