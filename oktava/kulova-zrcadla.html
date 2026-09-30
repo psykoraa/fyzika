@@ -435,10 +435,10 @@ svg.optics .obj-group.dragging .obj-grip{ fill:var(--accent); }
       <div class="panel-title">Kulové zrcadlo</div>
       <p>Zrcadlící plocha nemusí být jen rovinná. Zrcadla, u nichž je zrcadlící plocha nanesena na kulovém vrchlíku, označujeme jako <b>kulová</b> (sférická) <b>zrcadla</b>. Odráží-li světlo vnitřní strana vrchlíku, jde o <b>duté zrcadlo</b>, odráží-li vnější strana, jde o <b>vypuklé zrcadlo</b>.</p>
       <ul>
-        <li><b>Střed křivosti</b> \(C\) — střed kulové plochy. Paprsky, které jím procházejí (popř. do něj míří), dopadají na zrcadlo kolmo.</li>
+        <li><b>Střed křivosti</b> \(R\) — střed kulové plochy. Paprsky, které jím procházejí (popř. do něj míří), dopadají na zrcadlo kolmo.</li>
         <li><b>Vrchol zrcadla</b> \(V\) — střed zrcadlící plochy.</li>
-        <li><b>Optická osa</b> \(o\) — přímka procházející body \(C\) a \(V\).</li>
-        <li><b>Poloměr křivosti</b> \(r = |CV|\).</li>
+        <li><b>Optická osa</b> \(o\) — přímka procházející body \(R\) a \(V\).</li>
+        <li><b>Poloměr křivosti</b> \(r = |RV|\).</li>
       </ul>
       <p>Omezíme se jen na paprsky, které svírají s optickou osou malé úhly a dopadají blízko ní — tzv. <b>paraxiální paprsky</b> (paraxiální prostor). Jen pro ně je zobrazení ideální: bodu předmětu odpovídá právě jeden bod obrazu.</p>
       <div class="note">
@@ -680,7 +680,7 @@ svg.optics .obj-group.dragging .obj-grip{ fill:var(--accent); }
   function py(y){ return AY - y * S; }
   function f(){ return state.type === 'concave' ? state.fAbs : -state.fAbs; }
 
-  // Kulová plocha zrcadla: střed křivosti C = (−R; 0), R = 2f (se znaménkem), vrchol V = (0; 0).
+  // Kulová plocha zrcadla: střed křivosti R (v kódu bod C) = (−R; 0), R = 2f (se znaménkem), vrchol V = (0; 0).
   // Zrcadlo je kreslené jen do výšky ±aperture — kulové zrcadlo zobrazuje ideálně jen
   // paprsky blízko osy (paraxiální), proto nemá smysl kreslit velký kus kulové plochy.
   function aperture(R){ return Math.min(15, 0.6 * Math.abs(R)); }
@@ -783,7 +783,7 @@ svg.optics .obj-group.dragging .obj-grip{ fill:var(--accent); }
     }
     text('o', 8, AY - 8, { 'font-size':16, 'font-style':'italic', 'font-weight':600, fill:'var(--ink-soft)' }, g);
 
-    // kulové zrcadlo — oblouk kružnice se středem v C, zezadu šedý pruh jako v učebnici
+    // kulové zrcadlo — oblouk kružnice se středem v bodě R, zezadu šedý pruh jako v učebnici
     var R = r.R, hap = aperture(R), d = '', dBack = '';
     for(var i = 0; i <= 80; i++){
       var yy = -hap + 2 * hap * i / 80;
@@ -797,17 +797,17 @@ svg.optics .obj-group.dragging .obj-grip{ fill:var(--accent); }
     var labelX = Math.max(X0, px(arcX(R, hap))) + 12;
     text(state.type === 'concave' ? 'duté zrcadlo' : 'vypuklé zrcadlo', labelX, Math.max(18, py(hap) + 4), { 'font-size':14, 'font-weight':600, fill:'var(--ink-soft)' }, g);
 
-    // body V, F, C
-    var pts = [ { x:0, name:'V' }, { x:-r.f, name:'F' }, { x:-R, name:'C' } ];
+    // body V, F, R
+    var pts = [ { x:0, name:'V' }, { x:-r.f, name:'F' }, { x:-R, name:'R' } ];
     pts.forEach(function(p){
       if(p.x < X_MIN || p.x > X_MAX) return;
       if(p.name !== 'V') el('circle', { cx:px(p.x), cy:AY, r:4, fill:'var(--ink)' }, g);
       var lx = p.name === 'V' ? px(p.x) + (r.R > 0 ? -12 : 12) : px(p.x);
       text(p.name, lx, AY + 22, { 'font-size':16, 'font-weight':700, 'font-style':'italic', fill:'var(--ink)', 'text-anchor':'middle' }, g);
     });
-    // C mimo obrázek (vypuklé zrcadlo s velkým r) — aspoň šipka k okraji
+    // R mimo obrázek (vypuklé zrcadlo s velkým r) — aspoň šipka k okraji
     if(-R > X_MAX){
-      text('C →', W - 10, AY + 22, { 'font-size':15, 'font-weight':700, 'font-style':'italic', fill:'var(--ink-soft)', 'text-anchor':'end' }, g);
+      text('R →', W - 10, AY + 22, { 'font-size':15, 'font-weight':700, 'font-style':'italic', fill:'var(--ink-soft)', 'text-anchor':'end' }, g);
     }
   }
 
@@ -958,7 +958,7 @@ svg.optics .obj-group.dragging .obj-grip{ fill:var(--accent); }
     arrowHead(objGroup, x, top, 0, -1, 'var(--ink)', 14);
     text('y', x - 10, (AY + top) / 2 + 5, { 'font-size':17, 'font-weight':700, 'font-style':'italic', fill:'var(--ink)', 'text-anchor':'end' }, objGroup);
     text('B', x - 10, top + 2, { 'font-size':15, 'font-weight':700, 'font-style':'italic', fill:'var(--ink)', 'text-anchor':'end' }, objGroup);
-    // A pod osou; blízko F nebo C se posune níž, aby se popisky nepřekrývaly
+    // A pod osou; blízko F nebo R se posune níž, aby se popisky nepřekrývaly
     var nearPoint = Math.abs(r.a - Math.abs(r.f)) < 2 && r.f > 0 || Math.abs(r.a - r.R) < 2 && r.R > 0;
     text('A', x - 10, AY + (nearPoint ? 38 : 20), { 'font-size':15, 'font-weight':700, 'font-style':'italic', fill:'var(--ink)', 'text-anchor':'end' }, objGroup);
     text('předmět', x, top - 12, { 'font-size':13, 'font-weight':600, fill:'var(--ink-soft)', 'text-anchor':'middle' }, objGroup);
@@ -1093,7 +1093,7 @@ svg.optics .obj-group.dragging .obj-grip{ fill:var(--accent); }
   }
 
   // ---- posuvník a s přetahovatelnou značkou f a pevnou značkou r ----
-  // U vypuklého zrcadla leží F i C za zrcadlem; značky pak ukazují |f| a |r| (stejné ovládání).
+  // U vypuklého zrcadla leží F i R za zrcadlem; značky pak ukazují |f| a |r| (stejné ovládání).
   var F_MIN = 5, F_MAX = 20;
   var aSlider = document.getElementById('a-slider'), aValue = document.getElementById('a-value');
   var fValue = document.getElementById('f-value'), aTrack = document.getElementById('a-track');
