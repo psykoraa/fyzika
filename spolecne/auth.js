@@ -111,6 +111,9 @@
     ],
     'grafy-rovnomerne-zrychleneho-pohybu.html': [
       { d: 'serie', key: 'fyzika:grafy-rovnomerne-zrychleneho-pohybu:stats', field: 'bestStreak' }
+    ],
+    'kulova-zrcadla.html': [
+      { d: 'serie', key: 'fyzika:kulova-zrcadla:stats', field: 'bestStreak' }
     ]
   };
 
