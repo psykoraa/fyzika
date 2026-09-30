@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Konstrukce obrazu kulovým zrcadlem</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../spolecne/config.js"></script>
+<script src="../spolecne/auth.js"></script>
+<link rel="stylesheet" href="../spolecne/styl.css">
+<style>
+:root{
+  --paper:#f2eff8;
+  --surface:#fdfcff;
+  --surface-2:#e6e0f1;
+  --ink:#241f36;
+  --ink-soft:#645d7a;
+  --line:rgba(36,31,54,0.12);
+  --accent:#6b3fb5;
+  --accent-ink:#faf7ff;
+  --success:#28794f;
+  --success-bg:#e3efe0;
+  --danger:#b3392b;
+  --danger-bg:#f5e4de;
+  --focus:#1e6f66;
+  --shadow: 0 1px 0 rgba(36,31,54,0.06);
+
+  /* barvy v apletu: čtyři význačné paprsky, skutečný a zdánlivý obraz, zadní strana zrcadla */
+  --ray1:#c77c0e;
+  --ray2:#c2378f;
+  --ray3:#2f6fd0;
+  --ray4:#7b5ea7;
+  --real:#d23f24;
+  --real-bg:#fbe6e1;
+  --virtual:#0f8a84;
+  --virtual-bg:#dcf1ef;
+  --mirror-back:#cbc4da;
+}
+
+.panel{ margin-bottom:22px; }
+.panel-title{ margin-bottom:8px; }
+.panel p{
+  margin:0 0 8px;
+  font-size:0.9rem;
+  line-height:1.55;
+}
+.panel p:last-child{ margin-bottom:0; }
+.panel b{ color:var(--ink); }
+.panel ul, .panel ol{ margin:0 0 8px; padding-left:22px; font-size:0.9rem; line-height:1.55; }
+.panel li{ margin-bottom:4px; }
+
+.card{ padding:26px 26px 28px; text-align:left; margin-bottom:24px; }
+.card h2{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.6rem;
+  letter-spacing:0.02em;
+  color:var(--ink);
+  text-transform:none;
+  margin-bottom:6px;
+}
+.card .desc{
+  font-size:0.86rem;
+  color:var(--ink-soft);
+  line-height:1.5;
+  max-width:70ch;
+  margin:0;
+}
+
+.katex{ font-size:1.05em; }
+.formula-box{
+  background:var(--surface-2);
+  border-radius:8px;
+  padding:12px 16px;
+  margin:10px 0;
+  font-size:1.1rem;
+  text-align:center;
+}
+
+/* ---- hlavička apletu s tlačítkem na celou obrazovku ---- */
+.applet-head{ display:flex; gap:16px; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; }
+.applet-head-text{ flex:1 1 360px; }
+.applet-head .cat-tag{ margin-bottom:10px; }
+button.btn.fs-btn{ display:inline-flex; align-items:center; gap:8px; flex:none; padding:9px 16px; font-size:0.86rem; }
+button.btn.fs-btn svg{ flex:none; }
+
+.mode-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:16px;
+  padding-top:14px;
+  border-top:1px solid var(--line);
+}
+.mode-row-label{
+  font-size:0.68rem;
+  text-transform:uppercase;
+  letter-spacing:0.1em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-right:2px;
+  min-width:150px;
+}
+.seg{ display:flex; gap:6px; flex-wrap:wrap; }
+.chip{ font-size:0.82rem; gap:7px; }
+.chip.accented.on{
+  background:var(--accent);
+  color:var(--accent-ink);
+  border-color:var(--accent);
+}
+.chip:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+.chip .dot{
+  width:10px; height:10px; border-radius:50%;
+  background:var(--c); flex:none;
+}
+.chip.ray.on{ background:var(--surface-2); color:var(--ink); border-color:var(--c); }
+.chip.ray:not(.on) .dot{ background:transparent; border:2px solid var(--c); }
+.presets[hidden]{ display:none; }
+
+.slider-wrap{ display:flex; align-items:center; gap:14px; flex:1 1 280px; min-width:0; }
+.slider-wrap input[type=range]{ flex:1; accent-color:var(--accent); min-width:120px; }
+.slider-value{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:600;
+  font-variant-numeric:tabular-nums;
+  font-size:0.9rem;
+  white-space:nowrap;
+  text-align:right;
+}
+
+/* posuvník předmětové vzdálenosti se zónami a značkami F (a = f) a C (a = r) */
+.a-slider{ position:relative; flex:1; min-width:160px; padding:4px 0 22px; }
+.a-slider:has(.a-note:not([hidden])){ padding-bottom:4px; }
+.a-zones{
+  position:absolute;
+  left:9px; right:9px; top:13px;
+  height:8px;
+  border-radius:4px;
+  overflow:hidden;
+  display:flex;
+  background:var(--surface-2);
+}
+.a-zones span{ display:block; height:100%; }
+.a-zones .z-virtual{ background:var(--virtual); opacity:0.45; }
+.a-zones .z-real-big{ background:var(--real); opacity:0.55; }
+.a-zones .z-real-small{ background:var(--real); opacity:0.28; }
+.a-slider input[type=range]{
+  position:relative;
+  width:100%;
+  margin:0;
+  height:26px;
+  background:transparent;
+  -webkit-appearance:none;
+  appearance:none;
+  cursor:pointer;
+}
+.a-slider input[type=range]:focus{ outline:none; }
+.a-slider input[type=range]::-webkit-slider-runnable-track{ height:26px; background:transparent; }
+.a-slider input[type=range]::-moz-range-track{ height:26px; background:transparent; }
+.a-slider input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:18px; height:18px; margin-top:4px;
+  border-radius:50%;
+  background:var(--surface);
+  border:3px solid var(--accent);
+  box-shadow:0 1px 3px rgba(36,31,54,0.25);
+}
+.a-slider input[type=range]::-moz-range-thumb{
+  width:12px; height:12px;
+  border-radius:50%;
+  background:var(--surface);
+  border:3px solid var(--accent);
+  box-shadow:0 1px 3px rgba(36,31,54,0.25);
+}
+.a-slider input[type=range]:focus-visible::-webkit-slider-thumb{ outline:2px solid var(--focus); outline-offset:2px; }
+.a-slider input[type=range]:focus-visible::-moz-range-thumb{ outline:2px solid var(--focus); outline-offset:2px; }
+.a-mark{
+  position:absolute;
+  top:6px;
+  transform:translateX(-50%);
+  pointer-events:none;
+  text-align:center;
+}
+.a-mark::before{
+  content:'';
+  display:block;
+  width:2px; height:22px;
+  margin:0 auto;
+  background:var(--ink);
+}
+.a-mark span{
+  display:block;
+  margin-top:1px;
+  font-family:'STIX Two Text', Georgia, serif;
+  font-size:0.95rem;
+  font-weight:700;
+  color:var(--ink);
+  white-space:nowrap;
+}
+.a-mark[hidden]{ display:none; }
+.a-note{ font-size:0.74rem; color:var(--ink-soft); margin-top:2px; line-height:1.4; }
+.a-note[hidden]{ display:none; }
+
+.canvas-wrap{
+  margin-top:18px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:10px;
+  overflow:hidden;
+}
+svg.optics{
+  width:100%;
+  height:auto;
+  display:block;
+  background:var(--surface);
+  touch-action:none;
+  user-select:none;
+  -webkit-user-select:none;
+}
+svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke:var(--surface); stroke-width:4px; stroke-linejoin:round; }
+svg.optics .obj-hit{ cursor:ew-resize; fill:transparent; }
+svg.optics .obj-hit:focus{ outline:none; }
+svg.optics .obj-grip{ fill:var(--surface); stroke:var(--accent); stroke-width:2.5; }
+svg.optics .obj-group.focused .obj-grip,
+svg.optics .obj-group.dragging .obj-grip{ fill:var(--accent); }
+
+.legend{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 18px;
+  padding:10px 14px;
+  border-top:1px solid var(--line);
+  font-size:0.78rem;
+  color:var(--ink-soft);
+}
+.legend span{ display:inline-flex; align-items:center; gap:7px; }
+.legend svg{ flex:none; }
+
+.hint{ margin:10px 0 0; line-height:1.5; }
+
+.results{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  gap:18px;
+  margin-top:20px;
+}
+.readout{ flex-wrap:wrap; }
+.readout .cell{ min-width:0; flex:1 1 80px; padding:6px 8px; }
+.readout .cell .label{ text-transform:none; font-family:'STIX Two Text', Georgia, serif; font-size:0.9rem; letter-spacing:0; opacity:0.8; }
+.readout .cell .value{ font-size:1rem; white-space:nowrap; }
+.readout .cell.img-real{ background:var(--real); color:#fff; }
+.readout .cell.img-virtual{ background:var(--virtual); color:#fff; }
+
+.props{ display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+.prop{
+  display:inline-flex;
+  align-items:center;
+  font-weight:600;
+  font-size:0.88rem;
+  padding:7px 13px;
+  border-radius:999px;
+  background:var(--surface-2);
+  color:var(--ink);
+  border:1px solid var(--line);
+}
+.prop.real{ background:var(--real-bg); color:var(--real); border-color:var(--real); }
+.prop.virtual{ background:var(--virtual-bg); color:var(--virtual); border-color:var(--virtual); }
+.prop.none{ background:var(--danger-bg); color:var(--danger); border-color:var(--danger); }
+.position-note{ font-size:0.84rem; color:var(--ink-soft); margin:10px 0 0; line-height:1.5; }
+
+.calc{
+  background:var(--surface-2);
+  border-radius:10px;
+  padding:10px 14px;
+  font-size:1rem;
+  overflow-x:auto;
+}
+.calc .katex-display{ margin:0.3em 0; }
+.calc-title{
+  font-size:0.68rem;
+  text-transform:uppercase;
+  letter-spacing:0.1em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-bottom:2px;
+}
+
+/* ---- celá obrazovka: vlevo ovládání a výsledky, vpravo co největší obrázek ---- */
+.applet-card.is-full{
+  position:fixed;
+  inset:0;
+  z-index:1000;
+  margin:0;
+  border-radius:0;
+  border:0;
+  overflow:auto;
+  padding:18px 20px;
+  background:var(--surface);
+  display:grid;
+  grid-template-columns:minmax(300px, 400px) minmax(0, 1fr);
+  grid-template-rows:auto auto 1fr;
+  grid-template-areas:"head stage" "controls stage" "results stage";
+  column-gap:22px;
+  align-items:start;
+}
+.applet-card:fullscreen{ width:100%; height:100%; }
+.applet-card.is-full .applet-head{ grid-area:head; }
+.applet-card.is-full .applet-controls{ grid-area:controls; }
+.applet-card.is-full .applet-stage{ grid-area:stage; position:sticky; top:0; }
+.applet-card.is-full .applet-results{ grid-area:results; }
+.applet-card.is-full .desc{ display:none; }
+.applet-card.is-full h2{ font-size:1.35rem; }
+.applet-card.is-full .mode-row{ margin-top:10px; padding-top:10px; }
+.applet-card.is-full .mode-row-label{ min-width:0; width:100%; }
+.applet-card.is-full .canvas-wrap{ margin-top:0; }
+.applet-card.is-full svg.optics{ max-height:calc(100vh - 150px); }
+.applet-card.is-full .results{ grid-template-columns:1fr; margin-top:14px; }
+
+.theory-table-wrap{ overflow-x:auto; margin:6px 0 4px; }
+.theory-table{
+  border-collapse:collapse;
+  font-size:0.88rem;
+  width:100%;
+  min-width:520px;
+}
+.theory-table th, .theory-table td{
+  border:1px solid var(--line);
+  padding:8px 12px;
+  text-align:left;
+}
+.theory-table thead th{
+  background:var(--surface-2);
+  color:var(--ink-soft);
+  font-weight:600;
+  font-size:0.72rem;
+  text-transform:uppercase;
+  letter-spacing:0.05em;
+}
+.theory-table tbody tr:nth-child(even) td{ background:rgba(36,31,54,0.02); }
+.t-real, .panel b.t-real{ color:var(--real); font-weight:600; }
+.t-virtual, .panel b.t-virtual{ color:var(--virtual); font-weight:600; }
+
+@media (max-width:900px){
+  .applet-card.is-full{
+    display:block;
+  }
+  .applet-card.is-full .applet-stage{ position:static; margin-top:12px; }
+}
+@media (max-width:720px){
+  .results{ grid-template-columns:1fr; }
+  .mode-row-label{ min-width:0; width:100%; }
+}
+@media (max-width:520px){
+  .card{ padding:20px 16px 22px; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <a class="back-link" href="../rozcestniky/oktava.html">← Zpět na Oktáva/4. ročník</a>
+
+  <div class="brand">
+    <div class="brand-lockup">
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <line x1="3" y1="24" x2="37" y2="24" stroke="var(--ink-soft)" stroke-width="1.2"/>
+        <path d="M31,4 Q37,20 31,36" stroke="var(--ink)" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+        <line x1="8" y1="24" x2="8" y2="12" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round"/>
+        <path d="M8,12 L33,12 L10,32" stroke="var(--ray1)" stroke-width="1.5" fill="none" stroke-linejoin="round"/>
+        <line x1="17" y1="24" x2="17" y2="32" stroke="var(--real)" stroke-width="2.4" stroke-linecap="round"/>
+      </svg>
+      <div class="brand-text">
+        <h1>Konstrukce obrazu kulovým zrcadlem</h1>
+        <p>optika — zobrazování optickými soustavami</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="top-tabs">
+    <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+    <button class="toptab" id="top-tab-aplet" data-tab="aplet">Aplet</button>
+  </div>
+
+  <!-- ============ TEORIE ============ -->
+  <div id="theory-section" class="tab-section">
+
+    <div class="panel">
+      <div class="panel-title">Kulové zrcadlo</div>
+      <p>Zrcadlící plocha nemusí být jen rovinná. Zrcadla, u nichž je zrcadlící plocha nanesena na kulovém vrchlíku, označujeme jako <b>kulová</b> (sférická) <b>zrcadla</b>. Odráží-li světlo vnitřní strana vrchlíku, jde o <b>duté zrcadlo</b>, odráží-li vnější strana, jde o <b>vypuklé zrcadlo</b>.</p>
+      <ul>
+        <li><b>Střed křivosti</b> \(C\) — střed kulové plochy. Paprsky, které jím procházejí (popř. do něj míří), dopadají na zrcadlo kolmo.</li>
+        <li><b>Vrchol zrcadla</b> \(V\) — střed zrcadlící plochy.</li>
+        <li><b>Optická osa</b> \(o\) — přímka procházející body \(C\) a \(V\).</li>
+        <li><b>Poloměr křivosti</b> \(r = |CV|\).</li>
+      </ul>
+      <p>Omezíme se jen na paprsky, které svírají s optickou osou malé úhly a dopadají blízko ní — tzv. <b>paraxiální paprsky</b> (paraxiální prostor). Jen pro ně je zobrazení ideální: bodu předmětu odpovídá právě jeden bod obrazu.</p>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="9" cy="9" r="7.5" stroke="var(--focus)" stroke-width="1.6"/>
+          <line x1="9" y1="8" x2="9" y2="13" stroke="var(--focus)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="5.2" r="1" fill="var(--focus)"/>
+        </svg>
+        <p>U kulového zrcadla se do ohniska odrážejí jen rovnoběžné paprsky blízko optické osy. Tam, kde je potřeba, aby se do ohniska odrazily všechny rovnoběžné paprsky (nebo aby zdroj v ohnisku vytvořil široký svazek rovnoběžných paprsků, např. automobilové světlomety), se používají <b>parabolická</b> (paraboloidická) <b>zrcadla</b>.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Ohnisko a znaménková konvence</div>
+      <p>Paprsky rovnoběžné s optickou osou se po odrazu od dutého zrcadla protínají v bodě \(F\) — <b>ohnisku</b>. Vzdálenost ohniska od vrcholu je <b>ohnisková vzdálenost</b>:</p>
+      <div class="formula-box">\[ f = |FV| = \frac{r}{2} \]</div>
+      <p>U dutého zrcadla se odražené paprsky v ohnisku skutečně protínají — jde o <b>skutečné ohnisko</b> (před zrcadlem). U vypuklého zrcadla jsou odražené paprsky rozbíhavé a protínají se jen jejich zpětná prodloužení — jde o <b>zdánlivé ohnisko</b> (za zrcadlem).</p>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="9" cy="9" r="7.5" stroke="var(--focus)" stroke-width="1.6"/>
+          <line x1="9" y1="8" x2="9" y2="13" stroke="var(--focus)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="5.2" r="1" fill="var(--focus)"/>
+        </svg>
+        <p><b>Znaménková konvence:</b> vzdálenosti (\(r\), \(f\), \(a\), \(a'\)) mají <b>před zrcadlem</b> hodnotu kladnou, <b>za zrcadlem</b> zápornou. Duté zrcadlo má tedy \(f &gt; 0\), vypuklé \(f &lt; 0\). Velikosti \(y\), \(y'\) jsou <b>nad optickou osou</b> kladné, <b>pod ní</b> záporné.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Význačné paprsky</div>
+      <p>Obraz bodu předmětu sestrojíme pomocí význačných paprsků. Ke konstrukci stačí dva, další můžeme použít ke kontrole:</p>
+      <ol>
+        <li><b style="color:var(--ray3)">Paprsek procházející středem křivosti</b> (u vypuklého zrcadla do něj mířící) dopadá na zrcadlo kolmo a odráží se zpět po stejné přímce.</li>
+        <li><b style="color:var(--ray1)">Paprsek rovnoběžný s optickou osou</b> se odráží do ohniska (u vypuklého zrcadla tak, že ohniskem prochází jeho zpětné prodloužení).</li>
+        <li><b style="color:var(--ray2)">Paprsek procházející ohniskem</b> (u vypuklého zrcadla do něj mířící) se odráží rovnoběžně s optickou osou — plyne to ze záměnnosti chodu paprsků.</li>
+      </ol>
+      <p>Pro konstrukci se hodí i <b style="color:var(--ray4)">paprsek mířící do vrcholu</b> \(V\): odráží se souměrně podle optické osy (úhel odrazu se rovná úhlu dopadu). Z podobných trojúhelníků, které s ním vzniknou, plyne vztah pro příčné zvětšení.</p>
+      <p>Protnou-li se <b>odražené paprsky</b>, vznikne <b class="t-real">skutečný obraz</b> — lze ho zachytit na stínítku. Protnou-li se jen jejich <b>zpětná prodloužení</b> za zrcadlem, vznikne <b class="t-virtual">zdánlivý obraz</b> — vidíme ho v zrcadle, ale na stínítko ho zachytit nelze.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Zobrazovací rovnice a příčné zvětšení</div>
+      <p>Předmět \(AB\) (bod \(A\) na optické ose) má <b>velikost předmětu</b> \(y\) a leží v <b>předmětové vzdálenosti</b> \(a = |AV|\). Jeho obraz \(A'B'\) má <b>velikost obrazu</b> \(y'\) a leží v <b>obrazové vzdálenosti</b> \(a' = |A'V|\). Pro paraxiální paprsky platí <b>zobrazovací rovnice</b></p>
+      <div class="formula-box">\[ \frac{1}{a} + \frac{1}{a'} = \frac{1}{f} \qquad\Longrightarrow\qquad a' = \frac{a f}{a - f} \]</div>
+      <p>Kolikrát je obraz větší (popř. menší) než předmět, vyjadřuje <b>příčné zvětšení</b></p>
+      <div class="formula-box">\[ Z = \frac{y'}{y} = -\frac{a'}{a} = -\frac{a' - f}{f} = -\frac{f}{a - f} \]</div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Jak číst výsledek</div>
+      <div class="theory-table-wrap">
+        <table class="theory-table" style="min-width:360px">
+          <thead><tr><th>Veličina</th><th>kladná (+)</th><th>záporná (−)</th></tr></thead>
+          <tbody>
+            <tr><td>\(a'\)</td><td>obraz před zrcadlem — <span class="t-real">skutečný</span></td><td>obraz za zrcadlem — <span class="t-virtual">zdánlivý</span></td></tr>
+            <tr><td>\(y'\), \(Z\)</td><td>vzpřímený</td><td>převrácený</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Je-li \(|Z| &gt; 1\), je obraz <b>zvětšený</b>; je-li \(|Z| &lt; 1\), je <b>zmenšený</b>; při \(|Z| = 1\) je <b>stejně velký</b>.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Přehled případů</div>
+      <div class="theory-table-wrap">
+        <table class="theory-table">
+          <thead>
+            <tr><th>Zrcadlo</th><th>Předmětová vzdálenost</th><th>Obrazová vzdálenost</th><th>Vlastnosti obrazu</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>duté</td><td>\(\infty &gt; a &gt; r\)</td><td>\(f &lt; a' &lt; r\)</td><td><span class="t-real">skutečný</span>, převrácený, zmenšený</td></tr>
+            <tr><td>duté</td><td>\(a = r\)</td><td>\(a' = r\)</td><td><span class="t-real">skutečný</span>, převrácený, stejně velký</td></tr>
+            <tr><td>duté</td><td>\(r &gt; a &gt; f\)</td><td>\(r &lt; a' &lt; \infty\)</td><td><span class="t-real">skutečný</span>, převrácený, zvětšený</td></tr>
+            <tr><td>duté</td><td>\(a = f\)</td><td>\(a' \to \infty\)</td><td>obraz nevzniká (odražené paprsky jsou rovnoběžné)</td></tr>
+            <tr><td>duté</td><td>\(a &lt; f\)</td><td>\(a' &lt; 0\) (za zrcadlem)</td><td><span class="t-virtual">zdánlivý</span>, vzpřímený, zvětšený</td></tr>
+            <tr><td>vypuklé</td><td>\(\infty &gt; a &gt; 0\)</td><td>\(f &lt; a' &lt; 0\) (za zrcadlem)</td><td><span class="t-virtual">zdánlivý</span>, vzpřímený, zmenšený</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ============ APLET ============ -->
+  <div id="applet-section" class="tab-section" hidden>
+    <div class="card applet-card" id="applet-card">
+
+      <div class="applet-head">
+        <div class="applet-head-text">
+          <span class="cat-tag">Aplet</span>
+          <h2>Kde vznikne obraz?</h2>
+          <p class="desc">Zvolte druh zrcadla a ohniskovou vzdálenost a <b>posouvejte předmět</b> tažením v obrázku nebo posuvníkem. Program dokreslí význačné paprsky, sestrojí obraz a vypíše jeho polohu, zvětšení a vlastnosti. <span style="color:var(--real);font-weight:600">Skutečný obraz</span> je kreslený plnou čarou, <span style="color:var(--virtual);font-weight:600">zdánlivý obraz</span> čárkovaně.</p>
+        </div>
+        <button class="btn ghost fs-btn" id="fs-btn" type="button" aria-pressed="false">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path id="fs-icon" d="M1.5 5.5V1.5H5.5M10.5 1.5H14.5V5.5M14.5 10.5V14.5H10.5M5.5 14.5H1.5V10.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="fs-label">Celá obrazovka</span>
+        </button>
+      </div>
+
+      <div class="applet-controls">
+        <div class="mode-row">
+          <span class="mode-row-label">Zrcadlo</span>
+          <div class="seg" id="type-seg">
+            <button class="chip accented on" data-type="concave" aria-pressed="true">Duté zrcadlo</button>
+            <button class="chip accented" data-type="convex" aria-pressed="false">Vypuklé zrcadlo</button>
+          </div>
+        </div>
+
+        <div class="mode-row">
+          <label class="mode-row-label" for="f-slider">Ohnisková vzdálenost</label>
+          <div class="slider-wrap">
+            <input type="range" id="f-slider" min="5" max="20" step="0.5" value="10">
+            <span class="slider-value" id="f-value">f = 10,0 cm</span>
+          </div>
+        </div>
+
+        <div class="mode-row">
+          <label class="mode-row-label" for="a-slider">Předmětová vzdálenost</label>
+          <div class="slider-wrap">
+            <div class="a-slider">
+              <div class="a-zones" id="a-zones" aria-hidden="true"></div>
+              <input type="range" id="a-slider" min="0.5" max="50" step="0.5" value="16" title="Značky: a = f (předmět v ohnisku), a = r (předmět ve středu křivosti)">
+              <div class="a-mark" id="mark-f" aria-hidden="true"><span><i>f</i></span></div>
+              <div class="a-mark" id="mark-r" aria-hidden="true"><span><i>r</i></span></div>
+              <div class="a-note" id="a-note" hidden>u vypuklého zrcadla leží <i>F</i> i <i>C</i> za zrcadlem</div>
+            </div>
+            <span class="slider-value" id="a-value">a = 16,0 cm</span>
+          </div>
+        </div>
+
+        <div class="mode-row presets" id="preset-row">
+          <span class="mode-row-label">Poloha předmětu</span>
+          <div class="seg" id="preset-seg">
+            <button class="chip" data-preset="far"><i>a</i>&nbsp;&gt;&nbsp;<i>r</i></button>
+            <button class="chip" data-preset="r"><i>a</i>&nbsp;=&nbsp;<i>r</i></button>
+            <button class="chip" data-preset="between"><i>r</i>&nbsp;&gt;&nbsp;<i>a</i>&nbsp;&gt;&nbsp;<i>f</i></button>
+            <button class="chip" data-preset="f"><i>a</i>&nbsp;=&nbsp;<i>f</i></button>
+            <button class="chip" data-preset="near"><i>a</i>&nbsp;&lt;&nbsp;<i>f</i></button>
+          </div>
+        </div>
+
+        <div class="mode-row">
+          <span class="mode-row-label">Význačné paprsky</span>
+          <div class="seg" id="ray-seg">
+            <button class="chip ray on" data-ray="1" style="--c:var(--ray1)" aria-pressed="true"><span class="dot"></span>rovnoběžný</button>
+            <button class="chip ray on" data-ray="2" style="--c:var(--ray2)" aria-pressed="true"><span class="dot"></span>ohniskový</button>
+            <button class="chip ray" data-ray="3" style="--c:var(--ray3)" aria-pressed="false"><span class="dot"></span>středový</button>
+            <button class="chip ray on" data-ray="4" style="--c:var(--ray4)" aria-pressed="true"><span class="dot"></span>vrcholový</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="applet-stage">
+        <div class="canvas-wrap">
+          <svg class="optics" id="optics-svg" viewBox="0 0 960 460" role="img" aria-label="Optická osa s kulovým zrcadlem, předmětem, význačnými paprsky a obrazem."></svg>
+          <div class="legend" aria-hidden="true">
+            <span><svg width="26" height="10"><line x1="1" y1="5" x2="25" y2="5" stroke="var(--ray1)" stroke-width="2.4"/></svg>rovnoběžný → do ohniska</span>
+            <span><svg width="26" height="10"><line x1="1" y1="5" x2="25" y2="5" stroke="var(--ray2)" stroke-width="2.4"/></svg>ohniskový → rovnoběžně s osou</span>
+            <span><svg width="26" height="10"><line x1="1" y1="5" x2="25" y2="5" stroke="var(--ray3)" stroke-width="2.4"/></svg>středový → zpět po sobě</span>
+            <span><svg width="26" height="10"><line x1="1" y1="5" x2="25" y2="5" stroke="var(--ray4)" stroke-width="2.4"/></svg>vrcholový → souměrně podle osy</span>
+            <span><svg width="26" height="10"><line x1="1" y1="5" x2="25" y2="5" stroke="var(--ink-soft)" stroke-width="1.6" stroke-dasharray="5 4"/></svg>prodloužení paprsku</span>
+          </div>
+        </div>
+        <p class="hint">Předmět chytněte myší nebo prstem (za šipku nebo kroužek na ose). Po kliknutí na předmět ho lze posouvat i šipkami ← → po 0,5&nbsp;cm. Jeden dílek na ose = 1&nbsp;cm, velikost předmětu <i>y</i>&nbsp;=&nbsp;3&nbsp;cm.</p>
+      </div>
+
+      <div class="applet-results">
+        <div class="results">
+          <div>
+            <div class="readout" id="readout">
+              <div class="cell"><span class="label"><i>a</i></span><span class="value" id="out-a">—</span></div>
+              <div class="cell" id="cell-a2"><span class="label"><i>a′</i></span><span class="value" id="out-a2">—</span></div>
+              <div class="cell"><span class="label"><i>Z</i></span><span class="value" id="out-z">—</span></div>
+              <div class="cell"><span class="label"><i>y′</i></span><span class="value" id="out-y2">—</span></div>
+            </div>
+            <div class="props" id="props"></div>
+            <p class="position-note" id="position-note"></p>
+          </div>
+          <div class="calc">
+            <div class="calc-title">Výpočet</div>
+            <div id="calc-math"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>Fyzika — Oktáva/4. ročník</footer>
+</div>
+
+<script src="../spolecne/spolecne.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  // ---- geometrie plátna (viewBox 960 × 460) ----
+  // Fyzikální souřadnice v cm: vrchol zrcadla V je v x = 0, předmět vlevo (x = −a),
+  // obraz v x = −a′ (skutečný vlevo, zdánlivý vpravo za zrcadlem); y míří nahoru.
+  var W = 960, H = 460;
+  var X0 = 640;      // vrchol zrcadla na plátně (px)
+  var AY = 205;      // optická osa (px)
+  var S = 12;        // px na 1 cm
+  var X_MIN = -X0 / S, X_MAX = (W - X0) / S;   // viditelný rozsah v cm
+  var Y_OBJ = 3;     // velikost předmětu y (cm)
+  var A_MIN = 0.5, A_MAX = 50, A_STEP = 0.5;
+  var EPS = 1e-9;
+
+  var state = { type:'concave', fAbs:10, a:16, rays:{1:true, 2:true, 3:false, 4:true} };
+
+  var svg = document.getElementById('optics-svg');
+  var NS = 'http://www.w3.org/2000/svg';
+
+  function px(x){ return X0 + x * S; }
+  function py(y){ return AY - y * S; }
+  function f(){ return state.type === 'concave' ? state.fAbs : -state.fAbs; }
+
+  // Kulová plocha zrcadla: střed křivosti C = (−R; 0), R = 2f (se znaménkem), vrchol V = (0; 0).
+  // Zrcadlo je kreslené jen do výšky ±aperture — kulové zrcadlo zobrazuje ideálně jen
+  // paprsky blízko osy (paraxiální), proto nemá smysl kreslit velký kus kulové plochy.
+  function aperture(R){ return Math.min(15, 0.6 * Math.abs(R)); }
+  function arcX(R, y){
+    return -R + (R > 0 ? 1 : -1) * Math.sqrt(Math.max(0, R * R - y * y));
+  }
+
+  function el(tag, attrs, parent){
+    var n = document.createElementNS(NS, tag);
+    for(var k in attrs) if(attrs.hasOwnProperty(k)) n.setAttribute(k, attrs[k]);
+    if(parent) parent.appendChild(n);
+    return n;
+  }
+  function text(str, x, y, attrs, parent){
+    var t = el('text', attrs, parent);
+    t.setAttribute('x', x); t.setAttribute('y', y);
+    t.textContent = str;
+    return t;
+  }
+
+  // Čísla po česku: desetinná čárka, skutečné minus.
+  function fmt(x, d){
+    var s = roundTo(x, d).toFixed(d).replace('.', ',');
+    return s.charAt(0) === '-' ? '−' + s.slice(1) : s;
+  }
+  // Totéž pro KaTeX ({,} = čárka bez mezery za ní).
+  function tex(x, d){
+    return roundTo(x, d).toFixed(d).replace('.', '{,}');
+  }
+  function texPar(x, d){ return x < 0 ? '(' + tex(x, d) + ')' : tex(x, d); }
+
+  // ---- výpočet zobrazení ----
+  function compute(){
+    var ff = f(), a = state.a;
+    var r = { f:ff, R:2 * ff, a:a, infinite:false };
+    if(Math.abs(a - ff) < EPS){
+      r.infinite = true;
+      return r;
+    }
+    r.a2 = a * ff / (a - ff);
+    r.Z = -r.a2 / a;
+    r.y2 = r.Z * Y_OBJ;
+    r.real = r.a2 > 0;
+    return r;
+  }
+
+  // ---- kreslení ----
+  var layerStatic, layerRays, layerImage, layerObj;
+
+  function arrowHead(parent, x, y, dx, dy, color, size){
+    var len = Math.hypot(dx, dy); if(len < EPS) return;
+    var ux = dx / len, uy = dy / len, s = size || 9;
+    var bx = x - ux * s, by = y - uy * s;
+    el('path', {
+      d: 'M' + x + ',' + y + ' L' + (bx - uy * s * 0.5) + ',' + (by + ux * s * 0.5) + ' L' + (bx + uy * s * 0.5) + ',' + (by - ux * s * 0.5) + ' Z',
+      fill: color
+    }, parent);
+  }
+  function seg(parent, p, q, color, opts){
+    opts = opts || {};
+    var a = { x1:px(p.x), y1:py(p.y), x2:px(q.x), y2:py(q.y), stroke:color, 'stroke-width':opts.w || 2.2, 'stroke-linecap':'round' };
+    if(opts.dash) a['stroke-dasharray'] = opts.dash;
+    if(opts.opacity) a.opacity = opts.opacity;
+    el('line', a, parent);
+    if(opts.arrow){
+      // šipka ve směru paprsku (standardně v polovině úsečky)
+      var t = opts.arrowAt || 0.5;
+      var mx = px(p.x + (q.x - p.x) * t), my = py(p.y + (q.y - p.y) * t);
+      arrowHead(parent, mx, my, px(q.x) - px(p.x), py(q.y) - py(p.y), color, 10);
+    }
+  }
+  // Bod na paprsku z M ve směru d (d.x < 0), kde paprsek opustí levý okraj plátna
+  // (nebo odejde hodně vysoko/nízko — tam ho stejně ořízne clipPath).
+  function toLeftEdge(M, d){
+    var t = (X_MIN - 2 - M.x) / d.x;
+    if(Math.abs(d.y) > EPS) t = Math.min(t, 80 / Math.abs(d.y));
+    return { x: M.x + d.x * t, y: M.y + d.y * t };
+  }
+
+  function buildSvg(){
+    svg.textContent = '';
+    var defs = el('defs', {}, svg);
+    var cp = el('clipPath', { id:'clip-plot' }, defs);
+    el('rect', { x:0, y:0, width:W, height:H }, cp);
+    layerStatic = el('g', {}, svg);
+    layerRays = el('g', { 'clip-path':'url(#clip-plot)' }, svg);
+    layerImage = el('g', { 'clip-path':'url(#clip-plot)' }, svg);
+    layerObj = el('g', {}, svg);
+  }
+
+  function drawStatic(r){
+    layerStatic.textContent = '';
+    var g = layerStatic;
+    // optická osa + dílky po 1 cm (delší po 5 cm, měřeno od vrcholu)
+    el('line', { x1:0, y1:AY, x2:W, y2:AY, stroke:'var(--ink-soft)', 'stroke-width':1.3, 'stroke-dasharray':'14 4 2 4' }, g);
+    for(var x = Math.ceil(X_MIN); x <= Math.floor(X_MAX); x++){
+      if(x === 0) continue;
+      var big = x % 5 === 0;
+      el('line', { x1:px(x), y1:AY - (big ? 5 : 2.5), x2:px(x), y2:AY + (big ? 5 : 2.5), stroke:'var(--ink-soft)', 'stroke-width':1, opacity: big ? 0.8 : 0.5 }, g);
+    }
+    text('o', 8, AY - 8, { 'font-size':16, 'font-style':'italic', 'font-weight':600, fill:'var(--ink-soft)' }, g);
+
+    // kulové zrcadlo — oblouk kružnice se středem v C, zezadu šedý pruh jako v učebnici
+    var R = r.R, hap = aperture(R), d = '', dBack = '';
+    for(var i = 0; i <= 80; i++){
+      var yy = -hap + 2 * hap * i / 80;
+      var xx = arcX(R, yy);
+      d += (i ? ' L' : 'M') + px(xx).toFixed(2) + ',' + py(yy).toFixed(2);
+      dBack += (i ? ' L' : 'M') + (px(xx) + 5).toFixed(2) + ',' + py(yy).toFixed(2);
+    }
+    el('path', { d:dBack, stroke:'var(--mirror-back)', 'stroke-width':8, fill:'none', 'stroke-linecap':'round' }, g);
+    el('path', { d:d, stroke:'var(--ink)', 'stroke-width':3, fill:'none', 'stroke-linecap':'round' }, g);
+    // popisek vpravo od horního okraje zrcadla (u dutého zrcadla se okraj stáčí k předmětu)
+    var labelX = Math.max(X0, px(arcX(R, hap))) + 12;
+    text(state.type === 'concave' ? 'duté zrcadlo' : 'vypuklé zrcadlo', labelX, Math.max(18, py(hap) + 4), { 'font-size':14, 'font-weight':600, fill:'var(--ink-soft)' }, g);
+
+    // body V, F, C
+    var pts = [ { x:0, name:'V' }, { x:-r.f, name:'F' }, { x:-R, name:'C' } ];
+    pts.forEach(function(p){
+      if(p.x < X_MIN || p.x > X_MAX) return;
+      if(p.name !== 'V') el('circle', { cx:px(p.x), cy:AY, r:4, fill:'var(--ink)' }, g);
+      var lx = p.name === 'V' ? px(p.x) + (r.R > 0 ? -12 : 12) : px(p.x);
+      text(p.name, lx, AY + 22, { 'font-size':16, 'font-weight':700, 'font-style':'italic', fill:'var(--ink)', 'text-anchor':'middle' }, g);
+    });
+    // C mimo obrázek (vypuklé zrcadlo s velkým r) — aspoň šipka k okraji
+    if(-R > X_MAX){
+      text('C →', W - 10, AY + 22, { 'font-size':15, 'font-weight':700, 'font-style':'italic', fill:'var(--ink-soft)', 'text-anchor':'end' }, g);
+    }
+  }
+
+  // Paprsky se kreslí tak, aby dopadaly přímo na kulovou plochu a všechny se (stejně jako
+  // při paraxiálním výpočtu) protnuly přesně v bodě B′ obrazu:
+  //  – středový paprsek leží na přímce C–B, na kouli dopadá kolmo a B′ na ní leží přesně,
+  //  – vrcholový paprsek dopadá do V a odráží se souměrně podle osy (přesně),
+  //  – ohniskový paprsek se odráží ve výšce y′, takže po odrazu míří rovnoběžně přesně do B′,
+  //  – rovnoběžný paprsek dopadá ve výšce y a po odrazu míří do B′ (ohniskem pak prochází
+  //    jen v rámci paraxiálního přiblížení, tj. s nepatrnou odchylkou pod rozlišením obrázku).
+  function drawRays(r){
+    layerRays.textContent = '';
+    var g = layerRays;
+    var a = r.a, ff = r.f, R = r.R, hap = aperture(R);
+    var P = { x:-a, y:Y_OBJ };
+    var F = { x:-ff, y:0 }, C = { x:-R, y:0 };
+    var Pimg = r.infinite ? null : { x:-r.a2, y:r.y2 };
+    var convex = ff < 0;
+    var virtual = !r.infinite && !r.real;
+    var missed = [];
+
+    function onArc(y){ return { x:arcX(R, y), y:y }; }
+    // Směr odraženého paprsku z bodu M: ke skutečnému obrazu, resp. od zdánlivého obrazu.
+    function dirVia(M, fallback){
+      if(!Pimg) return fallback;
+      var d = r.real ? { x:Pimg.x - M.x, y:Pimg.y - M.y } : { x:M.x - Pimg.x, y:M.y - Pimg.y };
+      return d;
+    }
+    function back(M, color, extraTo){
+      // čárkované zpětné prodloužení odraženého paprsku za zrcadlo až ke zdánlivému obrazu
+      // (u rovnoběžného paprsku vypuklého zrcadla dál až ke zdánlivému ohnisku)
+      if(!virtual) return;
+      var end = Pimg;
+      if(extraTo && extraTo.x > end.x){
+        var t = (extraTo.x - M.x) / (Pimg.x - M.x);
+        end = { x:extraTo.x, y:M.y + (Pimg.y - M.y) * t };
+      }
+      seg(g, M, end, color, { dash:'6 5', w:1.6, opacity:0.85 });
+    }
+
+    // 1) rovnoběžný s osou → odražený prochází ohniskem (u vypuklého jeho prodloužení)
+    if(state.rays[1]){
+      var c1 = 'var(--ray1)';
+      var M1 = onArc(Y_OBJ);
+      var d1 = dirVia(M1, { x:F.x - M1.x, y:F.y - M1.y });
+      seg(g, P, M1, c1, { arrow:true });
+      seg(g, M1, toLeftEdge(M1, d1), c1, { arrow:true, arrowAt:0.25 });
+      back(M1, c1, convex ? F : null);
+    }
+
+    // 2) ohniskový (u vypuklého mířící do ohniska) → odráží se rovnoběžně s osou
+    if(state.rays[2] && !r.infinite){
+      var c2 = 'var(--ray2)';
+      if(Math.abs(r.y2) > hap){
+        missed.push('ohniskový');
+      } else {
+        var M2 = onArc(r.y2);
+        if(!convex && a < ff) seg(g, F, P, c2, { dash:'2 5', w:1.4, opacity:0.8 }); // jako by vycházel z F
+        seg(g, P, M2, c2, { arrow:true });
+        if(convex) seg(g, M2, F, c2, { dash:'6 5', w:1.6, opacity:0.85 });
+        seg(g, M2, toLeftEdge(M2, { x:-1, y:0 }), c2, { arrow:true, arrowAt:0.25 });
+        back(M2, c2);
+      }
+    }
+
+    // 3) středový (u vypuklého mířící do středu křivosti) → dopadá kolmo, odráží se zpět
+    if(state.rays[3]){
+      var c3 = 'var(--ray3)';
+      var ux = P.x - C.x, uy = P.y - C.y, ul = Math.hypot(ux, uy);
+      ux /= ul; uy /= ul;
+      // zrcadlo leží od C směrem k vrcholu: u dutého vpravo od C, u vypuklého vlevo
+      if((convex && ux > 0) || (!convex && ux < 0)){ ux = -ux; uy = -uy; }
+      var M3 = { x:C.x + Math.abs(R) * ux, y:C.y + Math.abs(R) * uy };
+      if(Math.abs(M3.y) > hap || Math.abs(ux) < 0.05){
+        missed.push('středový');
+      } else {
+        if(!convex && a < -C.x) seg(g, C, P, c3, { dash:'2 5', w:1.4, opacity:0.8 });
+        if(convex) seg(g, M3, C, c3, { dash:'6 5', w:1.6, opacity:0.85 });
+        // dopadající a odražený paprsek leží na téže přímce — odražený je tenčí a se šipkou zpět
+        seg(g, P, M3, c3, { arrow:true, arrowAt:0.35 });
+        seg(g, M3, toLeftEdge(M3, { x:P.x - M3.x, y:P.y - M3.y }), c3, { w:1.6, arrow:true, arrowAt:0.12 });
+        back(M3, c3);
+      }
+    }
+
+    // 4) vrcholový → dopadá do V a odráží se souměrně podle optické osy
+    if(state.rays[4]){
+      var c4 = 'var(--ray4)';
+      var V = { x:0, y:0 };
+      seg(g, P, V, c4, { arrow:true });
+      seg(g, V, toLeftEdge(V, { x:-a, y:-Y_OBJ }), c4, { arrow:true, arrowAt:0.2 });
+      back(V, c4);
+    }
+    return missed;
+  }
+
+  function drawImage(r){
+    layerImage.textContent = '';
+    if(r.infinite) return;
+    var g = layerImage;
+    var color = r.real ? 'var(--real)' : 'var(--virtual)';
+    var x = px(-r.a2), y0 = AY, y1 = py(r.y2);
+    var dir = y1 < y0 ? -1 : 1;
+    var line = { x1:x, y1:y0, x2:x, y2:y1 - dir * 9, stroke:color, 'stroke-width':4, 'stroke-linecap':'round' };
+    if(!r.real) line['stroke-dasharray'] = '7 5';
+    el('line', line, g);
+    arrowHead(g, x, y1, 0, y1 - y0, color, 14);
+    el('circle', { cx:x, cy:AY, r:3.5, fill:color }, g);
+    var side = r.real ? -1 : 1;
+    var anchor = r.real ? 'end' : 'start';
+    var clampY = function(v){ return Math.max(16, Math.min(H - 64, v)); };
+    text('y′', x + side * 10, clampY((y0 + y1) / 2 + 5), { 'font-size':17, 'font-weight':700, 'font-style':'italic', fill:color, 'text-anchor':anchor }, g);
+    text('B′', x + side * 10, clampY(y1 + (dir < 0 ? 6 : 4)), { 'font-size':15, 'font-weight':700, 'font-style':'italic', fill:color, 'text-anchor':anchor }, g);
+    text('A′', x - side * 8, clampY(AY + (dir < 0 ? 20 : -8)), { 'font-size':15, 'font-weight':700, 'font-style':'italic', fill:color, 'text-anchor': r.real ? 'start' : 'end' }, g);
+    var tagY = clampY(dir < 0 ? y1 - 12 : y1 + 24);
+    text(r.real ? 'skutečný obraz' : 'zdánlivý obraz', x, tagY, { 'font-size':13, 'font-weight':600, fill:color, 'text-anchor':'middle' }, g);
+  }
+
+  // Kóty a, a′ dole pod osou
+  function dimension(parent, x1, x2, yPx, label, color){
+    if(Math.abs(x2 - x1) < 1) return;
+    var l = Math.min(x1, x2), rr = Math.max(x1, x2);
+    var L = Math.max(4, l), R = Math.min(W - 4, rr);
+    el('line', { x1:L, y1:yPx, x2:R, y2:yPx, stroke:color, 'stroke-width':1.3 }, parent);
+    if(l >= 4) el('line', { x1:l, y1:yPx - 6, x2:l, y2:yPx + 6, stroke:color, 'stroke-width':1.3 }, parent);
+    if(rr <= W - 4) el('line', { x1:rr, y1:yPx - 6, x2:rr, y2:yPx + 6, stroke:color, 'stroke-width':1.3 }, parent);
+    var w = label.length * 7.4 + 12;
+    var tx = (L + R) / 2;
+    // krátká kóta: popisek vedle ní (na straně dál od zrcadla), ať ji nezakryje
+    if(R - L < w + 8) tx = (l < X0 - 1) ? L - w / 2 - 6 : R + w / 2 + 6;
+    el('rect', { x:tx - w / 2, y:yPx - 10, width:w, height:18, rx:4, fill:'var(--surface)' }, parent);
+    text(label, tx, yPx + 4.5, { 'font-size':13, 'font-weight':600, fill:color, 'text-anchor':'middle', 'font-family':'IBM Plex Mono, monospace' }, parent);
+  }
+
+  var objGroup;
+  function drawObject(r){
+    layerObj.textContent = '';
+    var g = layerObj;
+    dimension(g, px(-r.a), X0, H - 40, 'a = ' + fmt(r.a, 1) + ' cm', 'var(--ink)');
+    if(!r.infinite){
+      dimension(g, px(-r.a2), X0, H - 14, 'a′ = ' + fmt(r.a2, 1) + ' cm', r.real ? 'var(--real)' : 'var(--virtual)');
+    }
+
+    objGroup = el('g', { 'class':'obj-group' + (dragging ? ' dragging' : '') + (objFocused ? ' focused' : '') }, g);
+    var x = px(-r.a), top = py(Y_OBJ);
+    el('line', { x1:x, y1:AY, x2:x, y2:top + 9, stroke:'var(--ink)', 'stroke-width':4, 'stroke-linecap':'round' }, objGroup);
+    arrowHead(objGroup, x, top, 0, -1, 'var(--ink)', 14);
+    text('y', x - 10, (AY + top) / 2 + 5, { 'font-size':17, 'font-weight':700, 'font-style':'italic', fill:'var(--ink)', 'text-anchor':'end' }, objGroup);
+    text('B', x - 10, top + 2, { 'font-size':15, 'font-weight':700, 'font-style':'italic', fill:'var(--ink)', 'text-anchor':'end' }, objGroup);
+    // A pod osou; blízko F nebo C se posune níž, aby se popisky nepřekrývaly
+    var nearPoint = Math.abs(r.a - Math.abs(r.f)) < 2 && r.f > 0 || Math.abs(r.a - r.R) < 2 && r.R > 0;
+    text('A', x - 10, AY + (nearPoint ? 38 : 20), { 'font-size':15, 'font-weight':700, 'font-style':'italic', fill:'var(--ink)', 'text-anchor':'end' }, objGroup);
+    text('předmět', x, top - 12, { 'font-size':13, 'font-weight':600, fill:'var(--ink-soft)', 'text-anchor':'middle' }, objGroup);
+    el('circle', { 'class':'obj-grip', cx:x, cy:AY, r:7 }, objGroup);
+    var hit = el('rect', { 'class':'obj-hit', x:x - 20, y:top - 28, width:40, height:AY - top + 42,
+      tabindex:0, role:'slider', 'aria-label':'Poloha předmětu (předmětová vzdálenost a)',
+      'aria-valuemin':A_MIN, 'aria-valuemax':A_MAX, 'aria-valuenow':r.a, 'aria-valuetext':'a = ' + fmt(r.a, 1) + ' cm' }, objGroup);
+    attachObjEvents(hit);
+  }
+
+  // ---- tažení předmětu ----
+  var dragging = false, objFocused = false, restoreFocus = false;
+  function cmFromEvent(e){
+    var pt = svg.createSVGPoint();
+    pt.x = e.clientX; pt.y = e.clientY;
+    var loc = pt.matrixTransform(svg.getScreenCTM().inverse());
+    return (loc.x - X0) / S;
+  }
+  function setA(a){
+    a = Math.round(a / A_STEP) * A_STEP;
+    a = Math.max(A_MIN, Math.min(A_MAX, a));
+    if(a === state.a) return;
+    state.a = a;
+    render();
+  }
+  function attachObjEvents(hit){
+    hit.addEventListener('keydown', function(e){
+      var step = 0;
+      if(e.key === 'ArrowLeft' || e.key === 'ArrowDown') step = A_STEP;      // doleva = dál od zrcadla
+      else if(e.key === 'ArrowRight' || e.key === 'ArrowUp') step = -A_STEP;
+      else if(e.key === 'PageDown') step = 5;
+      else if(e.key === 'PageUp') step = -5;
+      if(!step) return;
+      e.preventDefault();
+      restoreFocus = true;
+      setA(state.a + step);
+    });
+    hit.addEventListener('focus', function(){ objFocused = true; if(objGroup) objGroup.classList.add('focused'); });
+    hit.addEventListener('blur', function(){ objFocused = false; if(objGroup) objGroup.classList.remove('focused'); });
+    if(restoreFocus){ restoreFocus = false; hit.focus(); }
+  }
+  // Předmět jde chytit kdekoli ve svislém pásu kolem něj (i kousek vedle) — na telefonu
+  // je obrázek zmenšený a samotná šipka by byla pro prst příliš úzký cíl.
+  svg.addEventListener('pointerdown', function(e){
+    var dx = Math.abs(cmFromEvent(e) + state.a) * S;
+    if(dx > (e.pointerType === 'touch' ? 70 : 30)) return;
+    dragging = true;
+    try{ svg.setPointerCapture(e.pointerId); }catch(err){}
+    if(objGroup) objGroup.classList.add('dragging');
+    e.preventDefault();
+  });
+  svg.addEventListener('pointermove', function(e){
+    if(!dragging) return;
+    e.preventDefault();
+    setA(-cmFromEvent(e));
+  });
+  ['pointerup', 'pointercancel'].forEach(function(ev){
+    svg.addEventListener(ev, function(){
+      if(!dragging) return;
+      dragging = false;
+      if(objGroup) objGroup.classList.remove('dragging');
+    });
+  });
+
+  // ---- výpis výsledků ----
+  var outA = document.getElementById('out-a'), outA2 = document.getElementById('out-a2');
+  var outZ = document.getElementById('out-z'), outY2 = document.getElementById('out-y2');
+  var cellA2 = document.getElementById('cell-a2');
+  var propsBox = document.getElementById('props'), posNote = document.getElementById('position-note');
+  var calcBox = document.getElementById('calc-math');
+
+  function prop(label, cls){
+    var s = document.createElement('span');
+    s.className = 'prop' + (cls ? ' ' + cls : '');
+    s.textContent = label;
+    propsBox.appendChild(s);
+  }
+
+  function renderResults(r, missed){
+    outA.textContent = fmt(r.a, 1) + ' cm';
+    propsBox.textContent = '';
+    cellA2.classList.remove('img-real', 'img-virtual');
+    var lines = [];
+    lines.push('a\' = \\frac{a f}{a - f} = \\frac{' + tex(r.a, 1) + ' \\cdot ' + texPar(r.f, 1) + '}{' + tex(r.a, 1) + ' - ' + texPar(r.f, 1) + '}\\ \\mathrm{cm}');
+    var note;
+
+    if(r.infinite){
+      outA2.textContent = '∞';
+      outZ.textContent = '—';
+      outY2.textContent = '—';
+      prop('obraz nevzniká', 'none');
+      note = 'Předmět leží v ohnisku: odražené paprsky jsou navzájem rovnoběžné a neprotnou se ani jejich prodloužení — obraz je „v nekonečnu“ (a′ → ∞).';
+      lines[0] += ' \\to \\infty';
+      lines.push('\\text{jmenovatel } a - f = 0 \\ \\Rightarrow\\ \\text{obraz nevzniká}');
+    } else {
+      outA2.textContent = fmt(r.a2, 1) + ' cm';
+      outZ.textContent = fmt(r.Z, 2);
+      outY2.textContent = fmt(r.y2, 1) + ' cm';
+      cellA2.classList.add(r.real ? 'img-real' : 'img-virtual');
+
+      var absZ = Math.abs(r.Z);
+      var sizeWord = Math.abs(absZ - 1) < 1e-9 ? 'stejně velký' : (absZ > 1 ? 'zvětšený' : 'zmenšený');
+      prop(r.real ? 'skutečný' : 'zdánlivý', r.real ? 'real' : 'virtual');
+      prop(r.Z > 0 ? 'vzpřímený' : 'převrácený');
+      prop(sizeWord);
+
+      note = (r.real
+        ? 'a′ > 0 — obraz leží před zrcadlem, odražené paprsky se v něm skutečně protínají (lze ho zachytit na stínítko). '
+        : 'a′ < 0 — obraz leží za zrcadlem, protínají se jen prodloužení odražených paprsků (vidíme ho v zrcadle, na stínítko ho zachytit nelze). ')
+        + (r.y2 > 0 ? 'y′ > 0 — vzpřímený. ' : 'y′ < 0 — převrácený. ')
+        + (sizeWord === 'stejně velký' ? '|Z| = 1 — stejně velký.' : (absZ > 1 ? '|Z| > 1 — zvětšený.' : '|Z| < 1 — zmenšený.'));
+      var xImg = -r.a2;
+      if(xImg < X_MIN || xImg > X_MAX || Math.abs(r.y2) > AY / S) note += ' Obraz je tak daleko nebo tak velký, že přesahuje okraj obrázku.';
+
+      var exactA2 = Math.abs(roundTo(r.a2, 1) - r.a2) < 1e-9;
+      lines[0] += (exactA2 ? ' = ' : ' \\doteq ') + tex(r.a2, 1) + '\\ \\mathrm{cm}';
+      var exactZ = Math.abs(roundTo(r.Z, 2) - r.Z) < 1e-9;
+      lines.push('Z = -\\frac{a\'}{a} = -\\frac{' + texPar(r.a2, 1) + '}{' + tex(r.a, 1) + '}' + (exactZ && exactA2 ? ' = ' : ' \\doteq ') + tex(r.Z, 2));
+      lines.push('y\' = Z\\,y = ' + texPar(r.Z, 2) + ' \\cdot ' + tex(Y_OBJ, 1) + '\\ \\mathrm{cm}' + (exactZ && exactA2 ? ' = ' : ' \\doteq ') + tex(r.y2, 1) + '\\ \\mathrm{cm}');
+    }
+    if(missed.length){
+      note += ' ' + (missed.length > 1 ? 'Paprsky ' + missed.join(' a ') + ' by dopadly' : (missed[0] === 'ohniskový' ? 'Ohniskový' : 'Středový') + ' paprsek by dopadl')
+        + ' mimo zrcadlo, proto nejsou nakreslené — obraz sestrojte pomocí ostatních.';
+    }
+    posNote.textContent = note;
+
+    calcBox.textContent = '';
+    lines.forEach(function(l){
+      var d = document.createElement('div');
+      calcBox.appendChild(d);
+      if(window.katex){
+        try{ katex.render(l, d, { displayMode:true, throwOnError:false }); }catch(e){ d.textContent = l; }
+      } else d.textContent = l;
+    });
+  }
+
+  // ---- posuvník a se zónami a značkami F a C ----
+  var aSlider = document.getElementById('a-slider'), aValue = document.getElementById('a-value');
+  var aZones = document.getElementById('a-zones'), aNote = document.getElementById('a-note');
+  var markF = document.getElementById('mark-f'), markR = document.getElementById('mark-r');
+  var THUMB = 18; // px — šířka jezdce (stejná jako v CSS)
+  function sliderPos(v){
+    var pct = (v - A_MIN) / (A_MAX - A_MIN);
+    return 'calc(' + (THUMB / 2) + 'px + (100% - ' + THUMB + 'px) * ' + pct.toFixed(5) + ')';
+  }
+  function updateASlider(){
+    aSlider.value = state.a;
+    aValue.textContent = 'a = ' + fmt(state.a, 1) + ' cm';
+    var concave = state.type === 'concave';
+    var fa = state.fAbs, ra = 2 * fa, span = A_MAX - A_MIN;
+    aZones.textContent = '';
+    function zone(cls, from, to){
+      var s = document.createElement('span');
+      s.className = cls;
+      s.style.width = (Math.max(0, Math.min(A_MAX, to) - Math.max(A_MIN, from)) / span * 100) + '%';
+      aZones.appendChild(s);
+    }
+    if(concave){
+      zone('z-virtual', A_MIN, fa);
+      zone('z-real-big', fa, ra);
+      zone('z-real-small', ra, A_MAX);
+    } else {
+      zone('z-virtual', A_MIN, A_MAX);
+    }
+    markF.hidden = !concave;
+    markR.hidden = !concave || ra > A_MAX;
+    aNote.hidden = concave;
+    markF.style.left = sliderPos(fa);
+    markR.style.left = sliderPos(ra);
+  }
+  aSlider.addEventListener('input', function(){
+    state.a = parseFloat(aSlider.value);
+    render();
+  });
+
+  function render(){
+    var r = compute();
+    drawStatic(r);
+    var missed = drawRays(r);
+    drawImage(r);
+    drawObject(r);
+    renderResults(r, missed);
+    updateASlider();
+  }
+
+  // ---- ovládání ----
+  var fSlider = document.getElementById('f-slider'), fValue = document.getElementById('f-value');
+  var presetRow = document.getElementById('preset-row');
+  function updateFLabel(){ fValue.textContent = 'f = ' + fmt(f(), 1) + ' cm, r = ' + fmt(2 * f(), 1) + ' cm'; }
+
+  Array.prototype.forEach.call(document.querySelectorAll('#type-seg .chip'), function(b){
+    b.addEventListener('click', function(){
+      state.type = b.getAttribute('data-type');
+      Array.prototype.forEach.call(document.querySelectorAll('#type-seg .chip'), function(o){
+        var on = o === b;
+        o.classList.toggle('on', on);
+        o.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+      presetRow.hidden = state.type !== 'concave';
+      updateFLabel();
+      render();
+    });
+  });
+
+  fSlider.addEventListener('input', function(){
+    state.fAbs = parseFloat(fSlider.value);
+    updateFLabel();
+    render();
+  });
+
+  Array.prototype.forEach.call(document.querySelectorAll('#ray-seg .chip'), function(b){
+    b.addEventListener('click', function(){
+      var k = b.getAttribute('data-ray');
+      state.rays[k] = !state.rays[k];
+      b.classList.toggle('on', state.rays[k]);
+      b.setAttribute('aria-pressed', state.rays[k] ? 'true' : 'false');
+      render();
+    });
+  });
+
+  // Rychlé nastavení polohy předmětu vůči F a C (jen u dutého zrcadla). Poloha „a > r“
+  // se volí tak, aby se předmět vešel do obrázku i při velké ohniskové vzdálenosti.
+  Array.prototype.forEach.call(document.querySelectorAll('#preset-seg .chip'), function(b){
+    b.addEventListener('click', function(){
+      var fa = state.fAbs, a;
+      switch(b.getAttribute('data-preset')){
+        case 'far': a = Math.min(A_MAX, Math.max(2 * fa + 2, 3 * fa)); break;
+        case 'r': a = 2 * fa; break;
+        case 'between': a = 1.5 * fa; break;
+        case 'f': a = fa; break;
+        case 'near': a = 0.6 * fa; break;
+      }
+      state.a = Math.max(A_MIN, Math.min(A_MAX, Math.round(a / A_STEP) * A_STEP));
+      render();
+    });
+  });
+
+  // ---- celá obrazovka ----
+  // Použije se Fullscreen API; kde chybí (např. Safari na iPhonu), aspoň se karta s apletem
+  // roztáhne přes celé okno. Styl obou případů řídí třída .is-full.
+  var card = document.getElementById('applet-card');
+  var fsBtn = document.getElementById('fs-btn'), fsLabel = document.getElementById('fs-label'), fsIcon = document.getElementById('fs-icon');
+  var ICON_ENTER = 'M1.5 5.5V1.5H5.5M10.5 1.5H14.5V5.5M14.5 10.5V14.5H10.5M5.5 14.5H1.5V10.5';
+  var ICON_EXIT = 'M5.5 1.5V5.5H1.5M14.5 5.5H10.5V1.5M10.5 14.5V10.5H14.5M1.5 10.5H5.5V14.5';
+  function setFullClass(on){
+    card.classList.toggle('is-full', on);
+    document.documentElement.style.overflow = on ? 'hidden' : '';
+    fsLabel.textContent = on ? 'Zavřít celou obrazovku' : 'Celá obrazovka';
+    fsIcon.setAttribute('d', on ? ICON_EXIT : ICON_ENTER);
+    fsBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+  }
+  function fsElement(){ return document.fullscreenElement || document.webkitFullscreenElement || null; }
+  fsBtn.addEventListener('click', function(){
+    if(card.classList.contains('is-full')){
+      if(fsElement()){
+        (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+      } else setFullClass(false);
+      return;
+    }
+    var req = card.requestFullscreen || card.webkitRequestFullscreen;
+    setFullClass(true);
+    if(req){
+      try{
+        var p = req.call(card);
+        if(p && p.catch) p.catch(function(){});
+      }catch(e){}
+    }
+  });
+  function onFsChange(){ if(!fsElement() && card.classList.contains('is-full')) setFullClass(false); }
+  document.addEventListener('fullscreenchange', onFsChange);
+  document.addEventListener('webkitfullscreenchange', onFsChange);
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape' && card.classList.contains('is-full') && !fsElement()) setFullClass(false);
+  });
+
+  // ---- záložky (#aplet v adrese otevře rovnou aplet) ----
+  var tabs = { teorie: document.getElementById('top-tab-teorie'), aplet: document.getElementById('top-tab-aplet') };
+  var sections = { teorie: document.getElementById('theory-section'), aplet: document.getElementById('applet-section') };
+  function showTab(name){
+    for(var k in tabs){
+      tabs[k].classList.toggle('on', k === name);
+      sections[k].hidden = k !== name;
+    }
+  }
+  tabs.teorie.addEventListener('click', function(){ showTab('teorie'); });
+  tabs.aplet.addEventListener('click', function(){ showTab('aplet'); });
+  if(location.hash === '#aplet') showTab('aplet');
+
+  if(window.renderMathInElement){
+    try{
+      renderMathInElement(document.getElementById('theory-section'), {
+        delimiters: [{left:'\\(', right:'\\)', display:false}, {left:'\\[', right:'\\]', display:true}]
+      });
+    }catch(e){}
+  }
+  try{ makePanelsCollapsible(document.getElementById('theory-section')); }catch(e){}
+
+  buildSvg();
+  updateFLabel();
+  render();
+})();
+</script>
+
+</body>
+</html>
