@@ -796,6 +796,7 @@ svg.trainer-svg text{ font-family:'Work Sans', sans-serif; paint-order:stroke; s
   // Zrcadlo je náčrtek, ne přesná konstrukce: oblouk kružnice s poloměrem SKETCH·|R| (skutečná
   // kulová plocha by pro velký předmět byla moc malá) — čím menší ohnisková vzdálenost, tím
   // víc je oblouk zakřivený. Paprsky se kreslí podle pravidel pro význačné paprsky (viz drawRays).
+  var FOCAL_TILT0 = 1;   // ° — do tohoto zlomu zůstává odražený ohniskový paprsek přesně rovnoběžný s osou
   var SKETCH = 5, AP = 16;   // poloměr náčrtku = 5·|R|, zrcadlo sahá ±16 cm od osy (téměř celá výška obrázku)
   function aperture(){ return AP; }
   function arcX(R, y){
@@ -1047,6 +1048,10 @@ svg.trainer-svg text{ font-family:'Work Sans', sans-serif; paint-order:stroke; s
     var DASH = { dash:'6 5', w:1.6, opacity:0.85 }, DOTS = { dash:'2 5', w:1.4, opacity:0.8 };
     function dir(p, q){ return { x:q.x - p.x, y:q.y - p.y }; }
     function onArc(y){ return { x:arcX(R, y), y:y }; }
+    function angleDeg(u, v){
+      var d = Math.abs(Math.atan2(u.y, u.x) - Math.atan2(v.y, v.x)) * 180 / Math.PI;
+      return d > 180 ? 360 - d : d;
+    }
     // bod, kde přímka z Q ve směru d dopadne na zrcadlo (null, když ho mine)
     function hit(Q, d){
       var M = hitArc(R, Q, d);
@@ -1073,14 +1078,33 @@ svg.trainer-svg text{ font-family:'Work Sans', sans-serif; paint-order:stroke; s
       }
     }
 
-    // 2) ohniskový (u vypuklého mířící do ohniska) → odráží se rovnoběžně s osou ve výšce y′
+    // 2) ohniskový (u vypuklého mířící do ohniska) → odráží se rovnoběžně s osou ve výšce y′.
+    // Zlom v F (u dutého zrcadla s předmětem před ohniskem v bodě B, u vypuklého na zrcadle)
+    // bývá nepatrný; kde by byl větší než FOCAL_TILT0, rozdělí se oprava mezi zlom a mírný
+    // sklon odraženého paprsku (ten pak není přesně rovnoběžný s osou, ale míří přesně do B′).
     if(state.rays[2] && !r.infinite){
       var c2 = 'var(--ray2)';
       if(Math.abs(r.y2) > hap){
         missed.push('ohniskový');
       } else {
-        var M2 = onArc(r.y2);
-        if(!convex && a > ff){
+        var farSide = !convex && a > ff;
+        var kink = function(M){
+          return farSide ? angleDeg(dir(P, F), dir(F, M))
+            : (convex ? angleDeg(dir(P, M), dir(M, F)) : angleDeg(dir(F, P), dir(P, M)));
+        };
+        var reflDir = function(M){ return r.real ? dir(M, Pimg) : dir(Pimg, M); };
+        var tilt = function(M){ return angleDeg(reflDir(M), { x:-1, y:0 }); };
+        var h2 = r.y2, M2 = onArc(h2);
+        var Mx = hit(P, dir(P, F));   // kde by na zrcadlo dopadl paprsek přímo přes F (bez zlomu)
+        if(Mx && kink(M2) > FOCAL_TILT0){
+          var lo = r.y2, hi = Mx.y;   // na straně lo převažuje zlom, na straně hi sklon
+          for(var it = 0; it < 40; it++){
+            var hm = (lo + hi) / 2, Mm = onArc(hm);
+            if(kink(Mm) > tilt(Mm) + FOCAL_TILT0) lo = hm; else hi = hm;
+          }
+          h2 = (lo + hi) / 2; M2 = onArc(h2);
+        }
+        if(farSide){
           seg(g, P, F, c2, { arrow:true });
           seg(g, F, M2, c2);
         } else {
@@ -1088,7 +1112,9 @@ svg.trainer-svg text{ font-family:'Work Sans', sans-serif; paint-order:stroke; s
           seg(g, P, M2, c2, { arrow:true });
           if(convex) seg(g, M2, F, c2, DASH);   // mířil do F (zlom pod čarou zrcadla)
         }
-        seg(g, M2, toLeftEdge(M2, { x:-1, y:0 }), c2, { arrow:true, arrowAt:0.25 });
+        var d2 = reflDir(M2);
+        if(d2.x > -EPS) d2 = { x:-1, y:0 };
+        seg(g, M2, toLeftEdge(M2, d2), c2, { arrow:true, arrowAt:0.25 });
         if(virtual) seg(g, M2, Pimg, c2, DASH);
       }
     }
@@ -1612,7 +1638,8 @@ svg.trainer-svg text{ font-family:'Work Sans', sans-serif; paint-order:stroke; s
   // odražených paprsků (velké y, malé f) by byly daleko od sebe. Proto se ke každému zadání
   // vybere paprsek, u něhož je tento posun nejvýš GAP_MAX (rovnoběžný, jinak ohniskový),
   // nebo středový (dopadající i odražený leží na téže přímce, posun je nulový).
-  var SKETCH = 10, HH = Y_MAX + 0.3, GAP_MAX = 0.25;   // poloměr náčrtku = 10·|f|; 0,25 cm ≈ 6 px
+  var SKETCH = 10, HH = Y_MAX + 0.3, GAP_MAX = 0.25;
+  var FOCAL_TILT0 = 1;   // ° — do tohoto zlomu zůstává odražený ohniskový paprsek přesně rovnoběžný s osou   // poloměr náčrtku = 10·|f|; 0,25 cm ≈ 6 px
   function curR(f){ return SKETCH * f; }   // se znaménkem jako f (duté > 0)
   function arcX(y, f){
     var Rd = curR(f === undefined ? state.task.f : f);
@@ -1926,10 +1953,26 @@ svg.trainer-svg text{ font-family:'Work Sans', sans-serif; paint-order:stroke; s
         if(convex) seg(B2, F, c, DASH, 1.5);
       }
     } else if(t.ray === 'focal'){
-      // ohniskový: přes F (u vypuklého do F), odráží se ve výšce y′ rovnoběžně s osou
+      // ohniskový: přes F (u vypuklého do F), odráží se ve výšce y′ rovnoběžně s osou; kde by byl
+      // zlom větší než FOCAL_TILT0, rozdělí se oprava mezi zlom a mírný sklon odraženého paprsku
       c = 'var(--ray2)';
-      var M2 = { x:arcX(t.y2), y:t.y2 };
-      if(!convex && t.a > t.f){
+      var farSide = !convex && t.a > t.f;
+      var ang = function(u, v){ var d = Math.abs(Math.atan2(u.y, u.x) - Math.atan2(v.y, v.x)) * 180 / Math.PI; return d > 180 ? 360 - d : d; };
+      var kink = function(M){
+        return farSide ? ang(dir(B, F), dir(F, M)) : (convex ? ang(dir(B, M), dir(M, F)) : ang(dir(F, B), dir(B, M)));
+      };
+      var reflDir = function(M){ return real ? dir(M, B2) : dir(B2, M); };
+      var tilt = function(M){ return ang(reflDir(M), { x:-1, y:0 }); };
+      var M2 = { x:arcX(t.y2), y:t.y2 }, Mx = hitCurve(B, dir(B, F));
+      if(Mx && kink(M2) > FOCAL_TILT0){
+        var lo = t.y2, hi = Mx.y;
+        for(var it = 0; it < 40; it++){
+          var hm = (lo + hi) / 2, Mm = { x:arcX(hm), y:hm };
+          if(kink(Mm) > tilt(Mm) + FOCAL_TILT0) lo = hm; else hi = hm;
+        }
+        M2 = { x:arcX((lo + hi) / 2), y:(lo + hi) / 2 };
+      }
+      if(farSide){
         seg(B, F, c); mid(B, F, c, 0.5);
         seg(F, M2, c);
       } else {
@@ -1937,7 +1980,9 @@ svg.trainer-svg text{ font-family:'Work Sans', sans-serif; paint-order:stroke; s
         seg(B, M2, c); mid(B, M2, c, 0.5);
         if(convex) seg(M2, F, c, DASH, 1.5);
       }
-      var E2 = toEdge(M2, { x:-1, y:0 });
+      var d2 = reflDir(M2);
+      if(d2.x > -1e-9) d2 = { x:-1, y:0 };
+      var E2 = toEdge(M2, d2);
       seg(M2, E2, c); mid(M2, E2, c, 0.3);
       if(!real) seg(M2, B2, c, DASH, 1.5);
     } else {
