@@ -796,8 +796,12 @@ svg.trainer-svg text{ font-family:'Work Sans', sans-serif; paint-order:stroke; s
   // Zrcadlo je náčrtek, ne přesná konstrukce: oblouk kružnice s poloměrem SKETCH·|R| (skutečná
   // kulová plocha by pro velký předmět byla moc malá) — čím menší ohnisková vzdálenost, tím
   // víc je oblouk zakřivený. Paprsky se kreslí podle pravidel pro význačné paprsky (viz drawRays).
-  var SKETCH = 5, AP = 14;   // poloměr náčrtku = 5·|R|, zrcadlo sahá ±14 cm od osy
+  var SKETCH = 5, AP = 16;   // poloměr náčrtku = 5·|R|, zrcadlo sahá ±16 cm od osy (téměř celá výška obrázku)
   function aperture(){ return AP; }
+  // Dopadá-li ohniskový paprsek daleko od osy, rozejdou se body, kde se oblouku dotkne dopadající
+  // a odražený paprsek (viz drawRays), o víc než FAR_GAP — tam už kulové zrcadlo neostří
+  // (paprsek není paraxiální) a paprsek se nekreslí.
+  var FAR_GAP = 0.5;   // cm (6 px)
   function arcX(R, y){
     var Rd = SKETCH * R;
     return -Rd + (Rd > 0 ? 1 : -1) * Math.sqrt(Math.max(0, Rd * Rd - y * y));
@@ -1041,6 +1045,7 @@ svg.trainer-svg text{ font-family:'Work Sans', sans-serif; paint-order:stroke; s
     var convex = ff < 0;
     var virtual = !r.infinite && !r.real;
     var missed = [];
+    missed.far = [];   // paprsky daleko od osy, viz FAR_GAP
 
     function onArc(y){ return { x:arcX(R, y), y:y }; }
     // bod, kde přímka procházející bodem Q ve směru d protne oblouk (když ho mine, zůstane Q)
@@ -1071,12 +1076,16 @@ svg.trainer-svg text{ font-family:'Work Sans', sans-serif; paint-order:stroke; s
 
     // 2) ohniskový (u vypuklého mířící do ohniska) → odráží se rovnoběžně s osou
     if(state.rays[2] && !r.infinite){
-      var c2 = 'var(--ray2)';
+      var c2 = 'var(--ray2)', M2 = null, M2r = null;
       if(Math.abs(r.y2) > hap){
         missed.push('ohniskový');
       } else {
         var Q2 = { x:0, y:r.y2 };
-        var M2 = lineOnArc(Q2, { x:P.x - Q2.x, y:P.y - Q2.y }), M2r = onArc(r.y2);
+        M2 = lineOnArc(Q2, { x:P.x - Q2.x, y:P.y - Q2.y }); M2r = onArc(r.y2);
+      }
+      if(M2 && Math.hypot(M2.x - M2r.x, M2.y - M2r.y) > FAR_GAP){
+        missed.far.push('ohniskový');
+      } else if(M2){
         if(!convex && a < ff) seg(g, F, P, c2, { dash:'2 5', w:1.4, opacity:0.8 }); // jako by vycházel z F
         seg(g, P, M2, c2, { arrow:true });
         if(convex) seg(g, M2, F, c2, { dash:'6 5', w:1.6, opacity:0.85 });
@@ -1298,6 +1307,9 @@ svg.trainer-svg text{ font-family:'Work Sans', sans-serif; paint-order:stroke; s
     if(missed.length){
       note += ' ' + (missed.length > 1 ? 'Paprsky ' + missed.join(' a ') + ' by dopadly' : (missed[0] === 'ohniskový' ? 'Ohniskový' : 'Středový') + ' paprsek by dopadl')
         + ' mimo zrcadlo, proto nejsou nakreslené — obraz sestrojte pomocí ostatních.';
+    }
+    if(missed.far && missed.far.length){
+      note += ' Ohniskový paprsek by dopadl daleko od optické osy, kde kulové zrcadlo už nezobrazuje ostře (paprsek není paraxiální), proto není nakreslený — obraz sestrojte pomocí ostatních.';
     }
     posNote.innerHTML = note;   // jen pevné texty a čísla z fmt()
 
