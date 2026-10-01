@@ -40,7 +40,8 @@
     'grafy-rovnomerneho-pohybu.html': 'kvinta',
     'prumerna-okamzita-rychlost.html': 'kvinta',
     'grafy-rovnomerne-zrychleneho-pohybu.html': 'kvinta',
-    'kulova-zrcadla.html': 'oktava'
+    'kulova-zrcadla.html': 'oktava',
+    'cocky.html': 'oktava'
   };
 
   // auth.js vždy žije na <kořen webu>/spolecne/auth.js — z jeho vlastní (absolutní)
@@ -114,6 +115,9 @@
     ],
     'kulova-zrcadla.html': [
       { d: 'serie', key: 'fyzika:kulova-zrcadla:stats', field: 'bestStreak' }
+    ],
+    'cocky.html': [
+      { d: 'serie', key: 'fyzika:cocky:stats', field: 'bestStreak' }
     ]
   };
 
