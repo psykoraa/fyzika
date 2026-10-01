@@ -662,9 +662,9 @@ svg.bench-svg .mover.focused .mover-foot, svg.bench-svg .mover.dragging .mover-f
         <svg class="bench-svg" id="tr-bench" viewBox="0 0 960 260" role="img" aria-label="Optická lavice se zdrojem, čočkou a stínítkem nebo fotoaparátem."></svg>
       </div>
       <div class="bench-controls">
-        <div class="nudge-btns" role="group" aria-label="Posunout o 1 cm">
-          <button class="btn ghost" type="button" id="tr-left" aria-label="posunout o 1 cm doleva">← 1 cm</button>
-          <button class="btn ghost" type="button" id="tr-right" aria-label="posunout o 1 cm doprava">1 cm →</button>
+        <div class="nudge-btns" role="group" aria-label="Posunout o jeden krok">
+          <button class="btn ghost" type="button" id="tr-left" aria-label="posunout doleva">← <span class="tr-step">1 cm</span></button>
+          <button class="btn ghost" type="button" id="tr-right" aria-label="posunout doprava"><span class="tr-step">1 cm</span> →</button>
         </div>
         <span id="tr-pos" aria-live="polite"></span>
       </div>
@@ -1711,7 +1711,7 @@ svg.bench-svg .mover.focused .mover-foot, svg.bench-svg .mover.dragging .mover-f
   // polohy posouvané věci, při nichž je obraz ostrý (celé centimetry; u čočky jsou u skutečného obrazu dvě)
   function sharpPositions(){
     var m = state.task.move, r = range(m, state.pos), out = [];
-    for(var x = r[0]; x <= r[1]; x++){
+    for(var x = r[0]; x <= r[1]; x += 0.5){
       var q = Object.assign({}, state.pos); q[m] = x;
       if(isSharp(q)) out.push(x);
     }
@@ -1841,13 +1841,13 @@ svg.bench-svg .mover.focused .mover-foot, svg.bench-svg .mover.dragging .mover-f
       var nm = el('text', { x:it.nameAt.x, y:18 * K + it.nameAt.row * 16 * K, 'text-anchor':'middle', 'font-size':13 * K, 'font-weight':isMover ? 700 : 600, fill:color }, grp);
       nm.textContent = isMover ? '↔ ' + it.name : it.name;
       var pl = el('text', { x:it.posAt.x, y:RAIL + 30 + 26 * K + it.posAt.row * 17 * K, 'text-anchor':'middle', 'font-size':13 * K, 'font-weight':700, fill:color, 'font-variant-numeric':'tabular-nums' }, grp);
-      pl.textContent = it.x + NB + 'cm';
+      pl.textContent = num(it.x) + NB + 'cm';
       if(isMover){
         moverGroup = grp;
         var r = range(t.move, p);
         moverHit = el('rect', { 'class':'mover-hit', x:X - 24, y:TOP - 30 * K, width:48, height:RAIL - TOP + 30 * K + 12,
           tabindex:0, role:'slider', 'aria-label':'Poloha: ' + it.name + ' (šipky doleva a doprava)',
-          'aria-valuemin':r[0], 'aria-valuemax':r[1], 'aria-valuenow':it.x, 'aria-valuetext':it.x + ' cm' }, grp);
+          'aria-valuemin':r[0], 'aria-valuemax':r[1], 'aria-valuenow':it.x, 'aria-valuetext':num(it.x) + ' cm' }, grp);
         attachKeys(moverHit);
       }
     });
@@ -1874,6 +1874,9 @@ svg.bench-svg .mover.focused .mover-foot, svg.bench-svg .mover.dragging .mover-f
   // ---- pohled na stínítko / přes čočku ----
   // Písmeno F (výška 4 cm) v souřadnicích s osou y nahoru.
   var F_PATH = 'M-1.3,-2 L-0.5,-2 L-0.5,-0.1 L0.9,-0.1 L0.9,0.6 L-0.5,0.6 L-0.5,1.3 L1.3,1.3 L1.3,2 L-1.3,2 Z';
+  // rozmazání (px) podle chyby zaostření d v cm: plynule roste, 1 cm ≈ mírně neostré, od 5 cm skvrna
+  function blurOf(d){ return 18 * (1 - Math.exp(-d / 4.5)); }
+
   function renderView(){
     view.textContent = '';
     var t = state.task, p = state.pos;
@@ -1889,20 +1892,18 @@ svg.bench-svg .mover.focused .mover-foot, svg.bench-svg .mover.dragging .mover-f
       // velikost obrazu na stínítku (hlavní paprsek přes střed čočky) a rozmazání podle zaostření
       var s = p.target - p.lens, ys = 4 * s / a;
       var scale = Math.max(2, Math.min(80, 110 / (4 * t.a2 / t.a)));   // px na cm — ostrý obraz cca 110 px
-      // průměr rozmazané skvrny od jednoho bodu předmětu (clona čočky 5 cm); bez skutečného obrazu je skvrna velká
-      var spotPx, d = 0;
-      if(!im || im.a2 <= 0) spotPx = 240;
-      else { d = Math.abs(s - im.a2); spotPx = 5 * d / im.a2 * scale; }
-      var sigma = Math.min(18, 0.5 * spotPx + 2.5 * d);
+      // rozmazání podle toho, kolik cm je stínítko od místa obrazu (stejně v každém zadání, nezávisle
+      // na zvětšení náhledu); bez skutečného obrazu je obraz úplně rozmazaný
+      var sigma = !im || im.a2 <= 0 ? 18 : blurOf(Math.abs(s - im.a2));
       blur.setAttribute('stdDeviation', sigma.toFixed(2));
       var m = ys / 4 * scale;
       // rozmazaná skvrna světla (při velkém rozostření je obraz jen neostrá světlá plocha)
-      if(spotPx > 6){
-        var glow = el('g', { filter:'url(#tr-blur)', opacity:0.28 }, view);
-        el('ellipse', { cx:160, cy:110, rx:Math.min(150, spotPx / 2 + 1.3 * Math.abs(m)), ry:Math.min(100, spotPx / 2 + 2 * Math.abs(m)), fill:'#ffe7a3' }, glow);
+      if(sigma > 4){
+        var spot = 4 * sigma, glow = el('g', { filter:'url(#tr-blur)', opacity:0.28 }, view);
+        el('ellipse', { cx:160, cy:110, rx:Math.min(150, spot + 1.3 * Math.abs(m)), ry:Math.min(100, spot + 2 * Math.abs(m)), fill:'#ffe7a3' }, glow);
       }
       // filtr na obalové skupině — jeho oblast je pak v px obrázku, ne v cm písmena
-      var fg = el('g', { filter:'url(#tr-blur)', opacity:Math.max(0.3, 1 / (1 + spotPx / 40)) }, view);
+      var fg = el('g', { filter:'url(#tr-blur)', opacity:Math.max(0.3, 1 / (1 + sigma / 12)) }, view);
       el('path', { d:F_PATH, fill:'#ffe7a3', transform:'translate(160,110) scale(' + (-m) + ',' + m + ')' }, fg);
       note.textContent = 'Obraz je ostrý, když má písmeno co nejostřejší okraje. Obraz na stínítku je převrácený.';
     } else {
@@ -1925,7 +1926,7 @@ svg.bench-svg .mover.focused .mover-foot, svg.bench-svg .mover.dragging .mover-f
         // velikost podle úhlu, pod kterým fotoaparát obraz vidí; rozmazání podle chyby zaostření
         var dist = p.target - im.x, ang = 4 * (-im.a2 / a) / dist;
         var hpx = Math.max(24, Math.min(110, ang * 1100));
-        blur.setAttribute('stdDeviation', Math.min(18, 2.6 * Math.abs(dist - t.fd)).toFixed(2));
+        blur.setAttribute('stdDeviation', blurOf(Math.abs(dist - t.fd)).toFixed(2));
         var fg2 = el('g', { filter:'url(#tr-blur)' }, inner);
         el('path', { d:F_PATH, fill:'var(--ink)', transform:'translate(' + cx + ',' + cy + ') scale(' + (hpx / 4) + ',' + (-hpx / 4) + ')' }, fg2);
         note.textContent = 'Fotoaparát je zaostřený na ' + t.fd + NB + 'cm. Obraz v hledáčku je ostrý, když je zdánlivý obraz právě ' + t.fd + NB + 'cm před fotoaparátem.';
@@ -1945,7 +1946,8 @@ svg.bench-svg .mover.focused .mover-foot, svg.bench-svg .mover.dragging .mover-f
     renderBench();
     renderView();
     var t = state.task, nm = t.move === 'target' ? targetName() : NAMES[t.move];
-    posEl.textContent = 'Posouváte: ' + nm + ' (' + state.pos[t.move] + NB + 'cm). Jezdce jde táhnout myší či prstem, nebo použijte šipky.';
+    posEl.textContent = 'Posouváte: ' + nm + ' (' + num(state.pos[t.move]) + NB + 'cm). Jezdce jde táhnout myší či prstem, nebo použijte šipky.';
+    Array.prototype.forEach.call(document.querySelectorAll('.tr-step'), function(e){ e.textContent = num(step()) + NB + 'cm'; });
   }
   if(window.ResizeObserver) new ResizeObserver(function(){ if(state.task && updateScale()) render(); }).observe(bench);
 
@@ -1959,18 +1961,22 @@ svg.bench-svg .mover.focused .mover-foot, svg.bench-svg .mover.dragging .mover-f
   }
 
   // ---- posouvání ----
+  // Zdroj a čočka se posouvají po 0,5 cm (při velkém zvětšení se obraz posouvá mnohem rychleji
+  // než předmět, viz podélné zvětšení), stínítko a fotoaparát po 1 cm. Ostrá poloha je vždy v celém cm.
+  function step(){ return state.task.move === 'target' ? 1 : 0.5; }
   function moveTo(x){
     if(state.revealed) return;
-    var m = state.task.move, r = range(m, state.pos);
-    x = Math.max(r[0], Math.min(r[1], Math.round(x)));
+    var m = state.task.move, r = range(m, state.pos), st = step();
+    x = Math.max(r[0], Math.min(r[1], Math.round(x / st) * st));
     if(x === state.pos[m]) return;
     state.pos[m] = x;
     render();
   }
   function attachKeys(hit){
     hit.addEventListener('keydown', function(e){
-      var d = { ArrowLeft:-1, ArrowRight:1, ArrowDown:-1, ArrowUp:1, PageDown:-5, PageUp:5 }[e.key];
+      var d = { ArrowLeft:-1, ArrowRight:1, ArrowDown:-1, ArrowUp:1, PageDown:-10, PageUp:10 }[e.key];
       if(!d) return;
+      d *= step();
       e.preventDefault();
       restoreFocus = true;
       moveTo(state.pos[state.task.move] + d);
@@ -1979,8 +1985,8 @@ svg.bench-svg .mover.focused .mover-foot, svg.bench-svg .mover.dragging .mover-f
     hit.addEventListener('blur', function(){ focused = false; if(moverGroup) moverGroup.classList.remove('focused'); });
     if(restoreFocus){ restoreFocus = false; hit.focus(); }
   }
-  document.getElementById('tr-left').addEventListener('click', function(){ moveTo(state.pos[state.task.move] - 1); });
-  document.getElementById('tr-right').addEventListener('click', function(){ moveTo(state.pos[state.task.move] + 1); });
+  document.getElementById('tr-left').addEventListener('click', function(){ moveTo(state.pos[state.task.move] - step()); });
+  document.getElementById('tr-right').addEventListener('click', function(){ moveTo(state.pos[state.task.move] + step()); });
 
   function svgPoint(e){
     var pt = bench.createSVGPoint();
