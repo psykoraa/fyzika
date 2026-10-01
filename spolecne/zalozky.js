@@ -38,7 +38,9 @@
     if(hideStyle && hideStyle.parentNode) hideStyle.parentNode.removeChild(hideStyle);
     hideStyle = null;
   }
-  if(hideStyle) setTimeout(reveal, 2000);   // pojistka, kdyby se cokoli pokazilo
+  // Pojistka jen pro případ, že by se skript stránky vůbec nedoběhl. Musí být dlouhá: na pomalém
+  // telefonu se stránka (KaTeX, aplet) připravuje i přes 2 s a dřívější odkrytí by ukázalo Teorii.
+  if(hideStyle) setTimeout(reveal, 10000);
 
   // Uloží se až záložka, která se po kliknutí opravdu otevřela (např. potvrzení
   // „opustit běžící hru?“ jde odmítnout a záložka se pak nepřepne). Posluchač na
