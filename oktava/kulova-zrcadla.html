@@ -133,6 +133,7 @@ button.btn.fs-btn svg{ flex:none; }
 .nw{ white-space:nowrap; }
 
 .canvas-wrap{
+  position:relative;
   margin-top:18px;
   background:var(--surface);
   border:1px solid var(--line);
@@ -166,6 +167,18 @@ svg.optics .f-grip{ fill:var(--ink); stroke:var(--accent); }
 svg.optics .f-group:hover .f-grip,
 svg.optics .f-group.focused .f-grip,
 svg.optics .f-group.dragging .f-grip{ fill:var(--accent); stroke:var(--accent); }
+/* krátká zpráva nad obrázkem (např. že zapnutý paprsek by dopadl mimo zrcadlo) */
+.ray-toast{
+  position:absolute; top:10px; left:50%; transform:translate(-50%, -6px);
+  max-width:calc(100% - 24px); width:max-content;
+  padding:8px 14px; border-radius:8px;
+  background:var(--ink); color:var(--surface);
+  font-size:0.88rem; line-height:1.4; text-align:center;
+  box-shadow:0 4px 14px rgba(0,0,0,0.18);
+  opacity:0; pointer-events:none;
+  transition:opacity .25s, transform .25s;
+}
+.ray-toast.show{ opacity:1; transform:translate(-50%, 0); }
 
 .legend{
   display:flex;
@@ -569,6 +582,7 @@ svg.trainer-svg text{ font-family:'Work Sans', sans-serif; paint-order:stroke; s
       <div class="applet-stage">
         <div class="canvas-wrap">
           <svg class="optics" id="optics-svg" viewBox="0 0 960 460" role="img" aria-label="Optická osa s kulovým zrcadlem, předmětem, význačnými paprsky a obrazem."></svg>
+          <div class="ray-toast" id="ray-toast" role="status" aria-live="polite"></div>
           <div class="legend" aria-hidden="true">
             <span><svg width="26" height="10"><line x1="1" y1="5" x2="25" y2="5" stroke="var(--ray1)" stroke-width="2.4"/></svg>rovnoběžný → do ohniska</span>
             <span><svg width="26" height="10"><line x1="1" y1="5" x2="25" y2="5" stroke="var(--ray2)" stroke-width="2.4"/></svg>ohniskový → rovnoběžně s osou</span>
@@ -1357,12 +1371,13 @@ svg.trainer-svg text{ font-family:'Work Sans', sans-serif; paint-order:stroke; s
     if(calcBox.clientWidth && (calcBox.clientWidth < CALC_MIN) !== was) render();
   }).observe(calcBox);
 
+  var lastMissed = [];   // paprsky, které se při posledním vykreslení nenakreslily (mimo zrcadlo)
   function render(){
     updateScale();
     var r = compute();
     obstacles = []; labelQueue = [];
     drawStatic(r);
-    var missed = drawRays(r);
+    var missed = lastMissed = drawRays(r);
     drawImage(r);
     drawObject(r);
     renderResults(r, missed);
@@ -1398,8 +1413,20 @@ svg.trainer-svg text{ font-family:'Work Sans', sans-serif; paint-order:stroke; s
       b.classList.toggle('on', state.rays[k]);
       b.setAttribute('aria-pressed', state.rays[k] ? 'true' : 'false');
       render();
+      var name = b.textContent.trim();
+      if(state.rays[k] && lastMissed.indexOf(name) >= 0)
+        showToast(name.charAt(0).toUpperCase() + name.slice(1) + ' paprsek se nezobrazil, protože by dopadl mimo zrcadlo.');
     });
   });
+
+  // krátká zpráva nad obrázkem, po chvíli sama zmizí
+  var toast = document.getElementById('ray-toast'), toastTimer = null;
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ toast.classList.remove('show'); }, 3500);
+  }
 
   // ---- celá obrazovka ----
   // Použije se Fullscreen API; kde chybí (např. Safari na iPhonu), aspoň se karta s apletem
