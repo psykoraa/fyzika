@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Konstrukce obrazu kulovým zrcadlem</title>
+<title>Kulová zrcadla</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
@@ -12,6 +12,7 @@
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script src="../spolecne/config.js"></script>
 <script src="../spolecne/auth.js"></script>
+<script src="../spolecne/zalozky.js"></script>
 <link rel="stylesheet" href="../spolecne/styl.css">
 <style>
 :root{
@@ -133,6 +134,7 @@ button.btn.fs-btn svg{ flex:none; }
 .nw{ white-space:nowrap; }
 
 .canvas-wrap{
+  position:relative;
   margin-top:18px;
   background:var(--surface);
   border:1px solid var(--line);
@@ -144,7 +146,7 @@ svg.optics{
   height:auto;
   display:block;
   background:var(--surface);
-  touch-action:none;
+  touch-action:pan-y pinch-zoom;   /* stránku jde posouvat i přes obrázek; tažení puntíků blokuje posun v JS */
   user-select:none;
   -webkit-user-select:none;
 }
@@ -166,6 +168,18 @@ svg.optics .f-grip{ fill:var(--ink); stroke:var(--accent); }
 svg.optics .f-group:hover .f-grip,
 svg.optics .f-group.focused .f-grip,
 svg.optics .f-group.dragging .f-grip{ fill:var(--accent); stroke:var(--accent); }
+/* krátká zpráva nad obrázkem (např. že zapnutý paprsek by dopadl mimo zrcadlo) */
+.ray-toast{
+  position:absolute; top:10px; left:50%; transform:translate(-50%, -6px);
+  max-width:calc(100% - 24px); width:max-content;
+  padding:8px 14px; border-radius:8px;
+  background:var(--ink); color:var(--surface);
+  font-size:0.88rem; line-height:1.4; text-align:center;
+  box-shadow:0 4px 14px rgba(0,0,0,0.18);
+  opacity:0; pointer-events:none;
+  transition:opacity .25s, transform .25s;
+}
+.ray-toast.show{ opacity:1; transform:translate(-50%, 0); }
 
 .legend{
   display:flex;
@@ -255,6 +269,28 @@ svg.optics .f-group.dragging .f-grip{ fill:var(--accent); stroke:var(--accent); 
 .applet-card.is-full .mode-row-label{ flex-basis:100%; }
 .applet-card.is-full .canvas-wrap{ margin-top:0; }
 .applet-card.is-full svg.optics{ max-height:calc(100vh - 110px); }
+/* telefon na výšku, který neumí zamknout orientaci (např. iPhone): karta se otočí o 90° */
+.applet-card.is-full.rotated{
+  inset:auto; top:0; left:0;
+  width:100vh; height:100vw;
+  width:100dvh; height:100dvw;
+  transform-origin:top left;
+  transform:translateX(100vw) rotate(90deg);
+  display:grid;
+  padding:12px 16px;
+}
+.applet-card.is-full.rotated .applet-stage{ position:sticky; top:0; margin-top:0; }
+/* telefon na šířku (zamčený i otočený): užší ovládání a bez legendy, ať je obrázek co největší */
+.applet-card.is-full.rotated{ grid-template-columns:minmax(200px, 250px) minmax(0, 1fr); column-gap:14px; }
+.applet-card.is-full.rotated .legend{ display:none; }
+.applet-card.is-full.rotated h2{ font-size:1.1rem; }
+@media (max-height:500px) and (orientation:landscape){
+  .applet-card.is-full{ grid-template-columns:minmax(200px, 250px) minmax(0, 1fr); column-gap:14px; padding:12px 16px; }
+  .applet-card.is-full .legend{ display:none; }
+  .applet-card.is-full h2{ font-size:1.1rem; }
+  .applet-card.is-full svg.optics{ max-height:calc(100vh - 30px); }
+}
+.applet-card.is-full.rotated svg.optics{ max-height:calc(100vw - 30px); max-height:calc(100dvw - 30px); }
 
 /* ---- ukázky význačných paprsků v teorii ---- */
 .ray-demo{ margin:12px 0 14px; }
@@ -286,7 +322,7 @@ svg.optics .f-group.dragging .f-grip{ fill:var(--accent); stroke:var(--accent); 
 }
 .theory-table tbody tr:nth-child(even) td{ background:rgba(36,31,54,0.02); }
 
-@media (max-width:900px){
+@media (max-width:900px) and (orientation:portrait){
   .applet-card.is-full{
     display:block;
   }
@@ -361,7 +397,7 @@ svg.trainer-svg text{ font-family:'Work Sans', sans-serif; paint-order:stroke; s
         <line x1="17" y1="24" x2="17" y2="32" stroke="var(--real)" stroke-width="2.4" stroke-linecap="round"/>
       </svg>
       <div class="brand-text">
-        <h1>Konstrukce obrazu kulovým zrcadlem</h1>
+        <h1>Kulová zrcadla</h1>
         <p>optika — zobrazování optickými soustavami</p>
       </div>
     </div>
@@ -569,6 +605,7 @@ svg.trainer-svg text{ font-family:'Work Sans', sans-serif; paint-order:stroke; s
       <div class="applet-stage">
         <div class="canvas-wrap">
           <svg class="optics" id="optics-svg" viewBox="0 0 960 460" role="img" aria-label="Optická osa s kulovým zrcadlem, předmětem, význačnými paprsky a obrazem."></svg>
+          <div class="ray-toast" id="ray-toast" role="status" aria-live="polite"></div>
           <div class="legend" aria-hidden="true">
             <span><svg width="26" height="10"><line x1="1" y1="5" x2="25" y2="5" stroke="var(--ray1)" stroke-width="2.4"/></svg>rovnoběžný → do ohniska</span>
             <span><svg width="26" height="10"><line x1="1" y1="5" x2="25" y2="5" stroke="var(--ray2)" stroke-width="2.4"/></svg>ohniskový → rovnoběžně s osou</span>
@@ -1210,21 +1247,34 @@ svg.trainer-svg text{ font-family:'Work Sans', sans-serif; paint-order:stroke; s
     pt.x = e.clientX; pt.y = e.clientY;
     return pt.matrixTransform(svg.getScreenCTM().inverse());
   }
-  svg.addEventListener('pointerdown', function(e){
-    var touch = e.pointerType === 'touch', loc = svgPoint(e);
-    var scr = svg.getScreenCTM().a || 1;   // px obrazovky na jednotku obrázku
+  // Co je pod bodem (clientX, clientY): 'tip' (hrot šipky B), 'f' (ohnisko), 'obj' (předmět), nebo null.
+  // Myší jde předmět chytit kdekoli ve svislém pásu kolem něj; prstem jen za puntíky
+  // (kroužek na ose, tečka na hrotu, ohnisko) — jinde prst posouvá stránkou.
+  function grabAt(e, touch){
+    var loc = svgPoint(e), m = svg.getScreenCTM();
+    var scr = Math.hypot(m.a, m.b) || 1;   // px obrazovky na jednotku obrázku (i v otočeném zobrazení)
     var dxObj = Math.abs(loc.x - px(-state.a)) * scr, dxF = Math.abs(loc.x - px(-f())) * scr, dyF = Math.abs(loc.y - AY) * scr;
-    var objOk = Math.abs(loc.x - px(-state.a)) <= (touch ? 70 : 30);
+    var objOk = touch ? dxObj <= 26 && dyF <= 26 : Math.abs(loc.x - px(-state.a)) <= 30;
     var fOk = dxF <= (touch ? 22 : 12) && dyF <= (touch ? 26 : 14);
     // hrot šipky: v okolí bodu B (prstem větší okolí) — tažením se mění jen velikost předmětu
     var tipOk = dxObj <= (touch ? 26 : 14) && Math.abs(loc.y - py(state.y)) * scr <= (touch ? 26 : 14);
-    if(tipOk){
+    if(tipOk) return 'tip';
+    if(fOk && (!objOk || dxF < dxObj)) return 'f';
+    return objOk ? 'obj' : null;
+  }
+  // Dotyk na puntíku nesmí posunout stránku (touch-action dovoluje svislý posun všude).
+  svg.addEventListener('touchstart', function(e){
+    if(e.touches.length === 1 && grabAt(e.touches[0], true)) e.preventDefault();
+  }, { passive:false });
+  svg.addEventListener('pointerdown', function(e){
+    var what = grabAt(e, e.pointerType === 'touch');
+    if(what === 'tip'){
       tipDragging = true;
       if(objGroup) objGroup.classList.add('tip-dragging');
-    } else if(fOk && (!objOk || dxF < dxObj)){
+    } else if(what === 'f'){
       fDragging = true;
       if(fGroup) fGroup.classList.add('dragging');
-    } else if(objOk){
+    } else if(what === 'obj'){
       dragging = true;
       if(objGroup) objGroup.classList.add('dragging');
     } else return;
@@ -1333,7 +1383,8 @@ svg.trainer-svg text{ font-family:'Work Sans', sans-serif; paint-order:stroke; s
   function updateScale(){
     var b = svg.getBoundingClientRect();
     if(!b.width || !b.height) return false;   // záložka je skrytá — ponechat poslední měřítko
-    var sc = Math.min(b.width / W, b.height / H);
+    var rot = svg.closest('.applet-card').classList.contains('rotated');
+    var sc = Math.min((rot ? b.height : b.width) / W, (rot ? b.width : b.height) / H);
     var k = Math.round(Math.max(1, Math.min(2.6, 0.8 / sc)) * 20) / 20;
     if(k === K) return false;
     K = k; LK = Math.min(K, 1.7);
@@ -1357,12 +1408,13 @@ svg.trainer-svg text{ font-family:'Work Sans', sans-serif; paint-order:stroke; s
     if(calcBox.clientWidth && (calcBox.clientWidth < CALC_MIN) !== was) render();
   }).observe(calcBox);
 
+  var lastMissed = [];   // paprsky, které se při posledním vykreslení nenakreslily (mimo zrcadlo)
   function render(){
     updateScale();
     var r = compute();
     obstacles = []; labelQueue = [];
     drawStatic(r);
-    var missed = drawRays(r);
+    var missed = lastMissed = drawRays(r);
     drawImage(r);
     drawObject(r);
     renderResults(r, missed);
@@ -1398,8 +1450,20 @@ svg.trainer-svg text{ font-family:'Work Sans', sans-serif; paint-order:stroke; s
       b.classList.toggle('on', state.rays[k]);
       b.setAttribute('aria-pressed', state.rays[k] ? 'true' : 'false');
       render();
+      var name = b.textContent.trim();
+      if(state.rays[k] && lastMissed.indexOf(name) >= 0)
+        showToast(name.charAt(0).toUpperCase() + name.slice(1) + ' paprsek se nezobrazil, protože by dopadl mimo zrcadlo.');
     });
   });
+
+  // krátká zpráva nad obrázkem, po chvíli sama zmizí
+  var toast = document.getElementById('ray-toast'), toastTimer = null;
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ toast.classList.remove('show'); }, 3500);
+  }
 
   // ---- celá obrazovka ----
   // Použije se Fullscreen API; kde chybí (např. Safari na iPhonu), aspoň se karta s apletem
@@ -1408,8 +1472,46 @@ svg.trainer-svg text{ font-family:'Work Sans', sans-serif; paint-order:stroke; s
   var fsBtn = document.getElementById('fs-btn'), fsLabel = document.getElementById('fs-label'), fsIcon = document.getElementById('fs-icon');
   var ICON_ENTER = 'M1.5 5.5V1.5H5.5M10.5 1.5H14.5V5.5M14.5 10.5V14.5H10.5M5.5 14.5H1.5V10.5';
   var ICON_EXIT = 'M5.5 1.5V5.5H1.5M14.5 5.5H10.5V1.5M10.5 14.5V10.5H14.5M1.5 10.5H5.5V14.5';
+  // Na mobilu se celá obrazovka zobrazí na šířku: zamkne se orientace, a kde to nejde
+  // (např. iPhone), otočí se karta pomocí CSS (třída .rotated), dokud je telefon na výšku.
+  var isPhone = window.matchMedia && matchMedia('(pointer:coarse)').matches && Math.min(screen.width, screen.height) < 600;
+  var portraitMq = window.matchMedia ? matchMedia('(orientation:portrait)') : null;
+  var orientLocked = false;
+  function updateRotated(){
+    var on = card.classList.contains('is-full') && isPhone && !orientLocked && !!portraitMq && portraitMq.matches;
+    if(on === card.classList.contains('rotated')) return;
+    card.classList.toggle('rotated', on);
+    render();
+  }
+  if(portraitMq){
+    if(portraitMq.addEventListener) portraitMq.addEventListener('change', updateRotated);
+    else if(portraitMq.addListener) portraitMq.addListener(updateRotated);
+  }
+  // Režim celé obrazovky prohlížeče nedovolí kartu otočit (transform se v něm ignoruje),
+  // proto se při nezdaru zámku na telefonu drženém na výšku opustí a karta jen vyplní okno.
+  var keepFull = false;
+  function lockFailed(){
+    if(isPhone && portraitMq && portraitMq.matches && fsElement()){
+      keepFull = true;
+      try{ (document.exitFullscreen || document.webkitExitFullscreen).call(document); }catch(e){ keepFull = false; }
+    }
+    updateRotated();
+  }
+  function lockLandscape(){
+    var so = screen.orientation;
+    if(!isPhone){ updateRotated(); return; }
+    if(!so || !so.lock){ lockFailed(); return; }
+    try{
+      so.lock('landscape').then(function(){ orientLocked = true; updateRotated(); }, lockFailed);
+    }catch(e){ lockFailed(); }
+  }
   function setFullClass(on){
     card.classList.toggle('is-full', on);
+    if(!on){
+      if(orientLocked){ try{ screen.orientation.unlock(); }catch(e){} }
+      orientLocked = false;
+    }
+    updateRotated();
     document.documentElement.style.overflow = on ? 'hidden' : '';
     fsLabel.textContent = on ? 'Zavřít celou obrazovku' : 'Celá obrazovka';
     fsIcon.setAttribute('d', on ? ICON_EXIT : ICON_ENTER);
@@ -1428,11 +1530,16 @@ svg.trainer-svg text{ font-family:'Work Sans', sans-serif; paint-order:stroke; s
     if(req){
       try{
         var p = req.call(card);
-        if(p && p.catch) p.catch(function(){});
-      }catch(e){}
-    }
+        if(p && p.then) p.then(lockLandscape, lockLandscape);
+        else lockLandscape();
+      }catch(e){ lockLandscape(); }
+    } else lockLandscape();
   });
-  function onFsChange(){ if(!fsElement() && card.classList.contains('is-full')) setFullClass(false); }
+  function onFsChange(){
+    if(fsElement()) return;
+    if(keepFull){ keepFull = false; return; }
+    if(card.classList.contains('is-full')) setFullClass(false);
+  }
   document.addEventListener('fullscreenchange', onFsChange);
   document.addEventListener('webkitfullscreenchange', onFsChange);
   document.addEventListener('keydown', function(e){
