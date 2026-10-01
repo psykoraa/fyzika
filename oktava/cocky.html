@@ -1,0 +1,2152 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Čočky</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../spolecne/config.js"></script>
+<script src="../spolecne/auth.js"></script>
+<script src="../spolecne/zalozky.js?v=3"></script>
+<link rel="stylesheet" href="../spolecne/styl.css">
+<style>
+:root{
+  --paper:#f2eff8;
+  --surface:#fdfcff;
+  --surface-2:#e6e0f1;
+  --ink:#241f36;
+  --ink-soft:#645d7a;
+  --line:rgba(36,31,54,0.12);
+  --accent:#6b3fb5;
+  --accent-ink:#faf7ff;
+  --success:#28794f;
+  --success-bg:#e3efe0;
+  --danger:#b3392b;
+  --danger-bg:#f5e4de;
+  --focus:#1e6f66;
+  --shadow: 0 1px 0 rgba(36,31,54,0.06);
+
+  /* barvy v apletu: tři význačné paprsky, skutečný a zdánlivý obraz, výplň čočky */
+  --ray1:#c77c0e;
+  --ray2:#c2378f;
+  --ray3:#2f6fd0;
+  --real:#d23f24;
+  --virtual:#0f8a84;
+  --lens:rgba(107,63,181,0.13);
+}
+
+.panel{ margin-bottom:22px; }
+.panel-title{ margin-bottom:8px; }
+.panel p{
+  margin:0 0 8px;
+  font-size:0.9rem;
+  line-height:1.55;
+}
+.panel p:last-child{ margin-bottom:0; }
+.panel b{ color:var(--ink); }
+.panel ul, .panel ol{ margin:0 0 8px; padding-left:22px; font-size:0.9rem; line-height:1.55; }
+.panel li{ margin-bottom:4px; }
+
+.card{ padding:26px 26px 28px; text-align:left; margin-bottom:24px; }
+.card h2{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.6rem;
+  letter-spacing:0.02em;
+  color:var(--ink);
+  text-transform:none;
+  margin-bottom:6px;
+}
+.card .desc{
+  font-size:0.86rem;
+  color:var(--ink-soft);
+  line-height:1.5;
+  max-width:70ch;
+  margin:0;
+}
+
+.katex{ font-size:1.05em; }
+.formula-box{
+  background:var(--surface-2);
+  border-radius:8px;
+  padding:12px 16px;
+  margin:10px 0;
+  font-size:1.1rem;
+  text-align:center;
+}
+
+/* ---- hlavička apletu s tlačítkem na celou obrazovku ---- */
+.applet-head{ display:flex; gap:16px; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; }
+.applet-head-text{ flex:1 1 360px; }
+.applet-head .cat-tag{ margin-bottom:10px; }
+button.btn.fs-btn{ display:inline-flex; align-items:center; gap:8px; flex:none; padding:9px 16px; font-size:0.86rem; }
+button.btn.fs-btn svg{ flex:none; }
+
+.mode-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:16px;
+  padding-top:14px;
+  border-top:1px solid var(--line);
+}
+.mode-row-label{
+  font-size:0.68rem;
+  text-transform:uppercase;
+  letter-spacing:0.1em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-right:2px;
+  flex:0 0 205px;   /* stejná šířka ve všech řádcích */
+}
+.seg{ display:flex; gap:6px; flex-wrap:wrap; }
+.chip{ font-size:0.82rem; gap:7px; }
+.chip.accented.on{
+  background:var(--accent);
+  color:var(--accent-ink);
+  border-color:var(--accent);
+}
+.chip:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+.chip .dot{
+  width:10px; height:10px; border-radius:50%;
+  background:var(--c); flex:none;
+}
+.chip.ray.on{ background:var(--surface-2); color:var(--ink); border-color:var(--c); }
+.chip.ray:not(.on) .dot{ background:transparent; border:2px solid var(--c); }
+
+.dist-values{
+  display:flex;
+  flex-wrap:wrap;
+  gap:4px 22px;
+  font-weight:600;
+  font-variant-numeric:tabular-nums;
+  font-size:0.95rem;
+  white-space:nowrap;
+}
+.dist-values i, .position-note i, .sel-point i{ font-family:'STIX Two Text', Georgia, serif; font-size:1.08em; }
+.nw{ white-space:nowrap; }
+
+.canvas-wrap{
+  position:relative;
+  margin-top:18px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:10px;
+  overflow:hidden;
+}
+svg.optics{
+  width:100%;
+  height:auto;
+  display:block;
+  background:var(--surface);
+  touch-action:pan-y pinch-zoom;   /* stránku jde posouvat i přes obrázek; tažení puntíků blokuje posun v JS */
+  user-select:none;
+  -webkit-user-select:none;
+}
+svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke:var(--surface); stroke-width:4px; stroke-linejoin:round; }
+svg.optics .obj-hit{ cursor:ew-resize; fill:transparent; }
+svg.optics .obj-hit:focus{ outline:none; }
+svg.optics .obj-grip{ fill:var(--surface); stroke:var(--accent); stroke-width:2.5; }
+svg.optics .obj-group.focused .obj-grip,
+svg.optics .obj-group.dragging .obj-grip{ fill:var(--accent); }
+/* hrot šipky předmětu (bod B) jde táhnout i nahoru a dolů — mění se velikost předmětu */
+svg.optics .tip-hit{ cursor:ns-resize; fill:transparent; }
+svg.optics .tip-grip{ fill:var(--surface); stroke:var(--accent); }
+svg.optics .obj-group.tip-dragging .tip-grip,
+svg.optics .obj-group:hover .tip-grip{ fill:var(--accent); }
+/* ohnisko F jde v obrázku chytit a posouvat (mění se ohnisková vzdálenost) */
+svg.optics .f-hit{ cursor:ew-resize; fill:transparent; }
+svg.optics .f-hit:focus{ outline:none; }
+svg.optics .f-grip{ fill:var(--ink); stroke:var(--accent); }
+svg.optics .f-group:hover .f-grip,
+svg.optics .f-group.focused .f-grip,
+svg.optics .f-group.dragging .f-grip{ fill:var(--accent); stroke:var(--accent); }
+/* krátká zpráva nad obrázkem (např. že zapnutý paprsek by dopadl mimo čočku) */
+.ray-toast{
+  position:absolute; top:10px; left:50%; transform:translate(-50%, -6px);
+  max-width:calc(100% - 24px); width:max-content;
+  padding:8px 14px; border-radius:8px;
+  background:var(--ink); color:var(--surface);
+  font-size:0.88rem; line-height:1.4; text-align:center;
+  box-shadow:0 4px 14px rgba(0,0,0,0.18);
+  opacity:0; pointer-events:none;
+  transition:opacity .25s, transform .25s;
+}
+.ray-toast.show{ opacity:1; transform:translate(-50%, 0); }
+
+.legend{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 18px;
+  padding:10px 14px;
+  border-top:1px solid var(--line);
+  font-size:0.78rem;
+  color:var(--ink-soft);
+}
+.legend span{ display:inline-flex; align-items:center; gap:7px; }
+.legend svg{ flex:none; }
+
+.hint{ margin:10px 0 0; line-height:1.5; }
+
+.results{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  gap:18px;
+  margin-top:20px;
+}
+#readout{ flex-wrap:wrap; }
+#readout .cell{ min-width:0; flex:1 1 80px; padding:6px 8px; }
+#readout .cell .label{ text-transform:none; font-family:'STIX Two Text', Georgia, serif; font-size:0.9rem; letter-spacing:0; opacity:0.8; }
+#readout .cell .value{ font-size:1rem; white-space:nowrap; }
+
+.props{ display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+.prop{
+  display:inline-flex;
+  align-items:center;
+  font-weight:600;
+  font-size:0.88rem;
+  padding:7px 13px;
+  border-radius:999px;
+  background:var(--surface-2);
+  color:var(--ink);
+  border:1px solid var(--line);
+}
+.prop.none{ background:var(--danger-bg); color:var(--danger); border-color:var(--danger); }
+.position-note{ font-size:0.84rem; color:var(--ink-soft); margin:10px 0 0; line-height:1.5; }
+
+.calc{
+  background:var(--surface-2);
+  border-radius:10px;
+  padding:10px 14px;
+  font-size:1rem;
+  overflow-x:auto;
+}
+.calc .katex-display{ margin:0.3em 0; }
+.calc-title{
+  font-size:0.68rem;
+  text-transform:uppercase;
+  letter-spacing:0.1em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-bottom:2px;
+}
+
+/* ---- celá obrazovka: vlevo ovládání a výsledky, vpravo co největší obrázek ---- */
+.applet-card.is-full{
+  position:fixed;
+  inset:0;
+  z-index:1000;
+  margin:0;
+  border-radius:0;
+  border:0;
+  overflow:auto;
+  padding:18px 20px;
+  background:var(--surface);
+  display:grid;
+  grid-template-columns:minmax(300px, 400px) minmax(0, 1fr);
+  grid-template-rows:auto 1fr;
+  grid-template-areas:"head stage" "controls stage";
+  column-gap:22px;
+  align-items:start;
+}
+.applet-card:fullscreen{ width:100%; height:100%; }
+.applet-card.is-full .applet-head{ grid-area:head; }
+.applet-card.is-full .applet-controls{ grid-area:controls; }
+.applet-card.is-full .applet-stage{ grid-area:stage; position:sticky; top:0; }
+.applet-card.is-full .applet-results,
+.applet-card.is-full .hint,
+.applet-card.is-full svg .param{ display:none; }
+.applet-card.is-full .desc{ display:none; }
+.applet-card.is-full h2{ font-size:1.35rem; }
+.applet-card.is-full .mode-row{ margin-top:10px; padding-top:10px; }
+.applet-card.is-full .mode-row-label{ flex-basis:100%; }
+.applet-card.is-full .canvas-wrap{ margin-top:0; }
+.applet-card.is-full svg.optics{ max-height:calc(100vh - 110px); }
+/* telefon na výšku, který neumí zamknout orientaci (např. iPhone): karta se otočí o 90° */
+.applet-card.is-full.rotated{
+  inset:auto; top:0; left:0;
+  width:100vh; height:100vw;
+  width:100dvh; height:100dvw;
+  transform-origin:top left;
+  transform:translateX(100vw) rotate(90deg);
+  display:grid;
+  padding:12px 16px;
+}
+.applet-card.is-full.rotated .applet-stage{ position:sticky; top:0; margin-top:0; }
+/* telefon na šířku (zamčený i otočený): užší ovládání a bez legendy, ať je obrázek co největší */
+.applet-card.is-full.rotated{ grid-template-columns:minmax(200px, 250px) minmax(0, 1fr); column-gap:14px; }
+.applet-card.is-full.rotated .legend{ display:none; }
+.applet-card.is-full.rotated h2{ font-size:1.1rem; }
+@media (max-height:500px) and (orientation:landscape){
+  .applet-card.is-full{ grid-template-columns:minmax(200px, 250px) minmax(0, 1fr); column-gap:14px; padding:12px 16px; }
+  .applet-card.is-full .legend{ display:none; }
+  .applet-card.is-full h2{ font-size:1.1rem; }
+  .applet-card.is-full svg.optics{ max-height:calc(100vh - 30px); }
+}
+.applet-card.is-full.rotated svg.optics{ max-height:calc(100vw - 30px); max-height:calc(100dvw - 30px); }
+
+/* ---- ukázky význačných paprsků v teorii ---- */
+.ray-demo{ margin:12px 0 14px; }
+.ray-controls{ display:flex; flex-direction:column; gap:8px; margin-bottom:10px; }
+.ray-fig{ margin:0; background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:8px 10px 10px; }
+.ray-fig[hidden]{ display:none; }
+.ray-fig svg{ width:100%; height:auto; display:block; }
+.ray-fig svg text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke:var(--surface); stroke-width:3px; stroke-linejoin:round; }
+.ray-fig figcaption{ font-size:0.88rem; line-height:1.45; color:var(--ink-soft); margin-top:6px; }
+.theory-table-wrap{ overflow-x:auto; margin:6px 0 4px; }
+.theory-table{
+  border-collapse:collapse;
+  font-size:0.88rem;
+  width:100%;
+  min-width:520px;
+}
+.theory-table th, .theory-table td{
+  border:1px solid var(--line);
+  padding:8px 12px;
+  text-align:left;
+}
+.theory-table thead th{
+  background:var(--surface-2);
+  color:var(--ink-soft);
+  font-weight:600;
+  font-size:0.72rem;
+  text-transform:uppercase;
+  letter-spacing:0.05em;
+}
+.theory-table tbody tr:nth-child(even) td{ background:rgba(36,31,54,0.02); }
+
+@media (max-width:900px) and (orientation:portrait){
+  .applet-card.is-full{
+    display:block;
+  }
+  .applet-card.is-full .applet-stage{ position:static; margin-top:12px; }
+}
+@media (max-width:720px){
+  .results{ grid-template-columns:1fr; }
+  .mode-row-label{ flex-basis:100%; }
+}
+@media (max-width:520px){
+  .card{ padding:20px 16px 22px; }
+}
+/* ---- trénink: zadání na mřížce, žák klikne na konec hledané šipky ---- */
+.task-banner{
+  display:flex;
+  align-items:baseline;
+  gap:6px 12px;
+  flex-wrap:wrap;
+  margin-top:14px;
+  background:var(--surface-2);
+  border:1px solid var(--line);
+  border-left:4px solid var(--accent);
+  border-radius:8px;
+  padding:11px 16px;
+}
+.task-banner-label{
+  font-size:0.78rem;
+  text-transform:uppercase;
+  letter-spacing:0.08em;
+  color:var(--ink-soft);
+  font-weight:600;
+}
+.task-banner-op{ font-weight:700; font-size:1.15rem; color:var(--accent); }
+.task-banner-given{ font-size:1rem; color:var(--ink); }
+.trainer-wrap{
+  margin-top:16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:10px;
+  overflow:hidden;
+}
+svg.trainer-svg{ width:100%; height:auto; display:block; background:var(--surface); touch-action:manipulation; user-select:none; -webkit-user-select:none; }
+svg.trainer-svg text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke:var(--surface); stroke-width:4px; stroke-linejoin:round; pointer-events:none; }
+.trainer-hit{ fill:transparent; cursor:crosshair; }
+/* vybraný bod: slovní popis a na mobilu tlačítka pro doladění (dílky jsou tam malé na přesné ťuknutí) */
+.sel-row{ display:flex; align-items:center; gap:8px 14px; flex-wrap:wrap; margin-top:10px; font-size:0.88rem; color:var(--ink-soft); }
+.nudge{ display:none; gap:6px; }
+.nudge button{ min-width:40px; padding:6px 10px; font-size:1rem; line-height:1; }
+@media (max-width:760px){ .nudge{ display:flex; } }
+.guess-marker{ fill:none; stroke-width:3; pointer-events:none; }
+.guess-marker.pending{ stroke:var(--focus); }
+.guess-marker.correct{ stroke:var(--success); }
+.guess-marker.wrong{ stroke:var(--danger); }
+.trainer-card .actions{ margin-top:16px; gap:8px; justify-content:normal; }
+.trainer-card .feedback .steps{ font-size:0.88rem; line-height:1.6; margin-top:4px; }
+.trainer-card .feedback .steps > span{ display:block; margin-bottom:2px; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <a class="back-link" href="../rozcestniky/oktava.html">← Zpět na Oktáva/4. ročník</a>
+
+  <div class="brand">
+    <div class="brand-lockup">
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <line x1="2" y1="24" x2="38" y2="24" stroke="var(--ink-soft)" stroke-width="1.2"/>
+        <path d="M20,4 Q27,20 20,36 Q13,20 20,4 Z" stroke="var(--ink)" stroke-width="2" fill="var(--lens)" stroke-linejoin="round"/>
+        <line x1="6" y1="24" x2="6" y2="13" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round"/>
+        <path d="M6,13 L20,13 L37,35" stroke="var(--ray1)" stroke-width="1.5" fill="none" stroke-linejoin="round"/>
+        <line x1="33" y1="24" x2="33" y2="31" stroke="var(--real)" stroke-width="2.4" stroke-linecap="round"/>
+      </svg>
+      <div class="brand-text">
+        <h1>Čočky</h1>
+        <p>optika — zobrazování optickými soustavami</p>
+      </div>
+    </div>
+    <div class="readout" id="header-readout" hidden>
+      <div class="cell"><span class="label">Skóre</span><span class="value" id="stat-score">0</span></div>
+      <div class="cell"><span class="label">Série</span><span class="value" id="stat-streak">0</span></div>
+      <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="stat-accuracy">—</span></div>
+    </div>
+  </div>
+
+  <div class="top-tabs">
+    <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+    <button class="toptab" id="top-tab-aplet" data-tab="aplet">Aplet</button>
+    <button class="toptab" id="top-tab-trenink" data-tab="trenink">Trénink</button>
+  </div>
+
+  <!-- ============ TEORIE ============ -->
+  <div id="theory-section" class="tab-section">
+
+    <div class="panel">
+      <div class="panel-title">Čočka</div>
+      <p><b>Čočka</b> je optická soustava ze stejnorodé průhledné látky (sklo, plast), která je ohraničená dvěma lámavými plochami — nejčastěji kulovými, popř. jednou kulovou a jednou rovinnou. Světlo se na obou plochách láme. Omezíme se na <b>tenké čočky</b>, jejichž tloušťka je zanedbatelná proti poloměrům křivosti ploch; u nich si můžeme představit, že se paprsek láme jen jednou, v rovině procházející středem čočky.</p>
+      <ul>
+        <li><b>Spojky</b> (spojné čočky) jsou uprostřed tlustší než na okrajích — dvojvypuklá, ploskovypuklá a dutovypuklá čočka. Rovnoběžný svazek paprsků po průchodu spojkou <b>konverguje</b> (sbíhá se).</li>
+        <li><b>Rozptylky</b> (rozptylné čočky) jsou uprostřed tenčí než na okrajích — dvojdutá, ploskodutá a vypuklodutá čočka. Rovnoběžný svazek paprsků po průchodu rozptylkou <b>diverguje</b> (rozbíhá se).</li>
+      </ul>
+      <p>(Platí to pro čočku z látky s větším indexem lomu, než má okolí, např. skleněnou čočku ve vzduchu.)</p>
+      <ul>
+        <li><b>Optická osa</b> \(o\) — přímka procházející středy křivosti obou ploch.</li>
+        <li><b>Optický střed</b> \(O\) — průsečík optické osy s čočkou (u tenké čočky její střed).</li>
+        <li><b>Předmětové ohnisko</b> \(F\) a <b>obrazové ohnisko</b> \(F'\) — leží na optické ose souměrně po obou stranách čočky.</li>
+        <li><b>Ohnisková vzdálenost</b> \(f = |OF| = |OF'|\).</li>
+      </ul>
+      <p>Opět uvažujeme jen <b>paraxiální paprsky</b> (blízko optické osy a s malými úhly vůči ní) — jen pro ně čočka zobrazuje bod předmětu do jediného bodu obrazu.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Ohniska, optická mohutnost a znaménková konvence</div>
+      <p>Paprsky rovnoběžné s optickou osou se po průchodu <b>spojkou</b> protínají v <b>obrazovém ohnisku</b> \(F'\) za čočkou — je to <b>skutečné ohnisko</b>. Po průchodu <b>rozptylkou</b> se rozbíhají a v ohnisku \(F'\) (před čočkou) se protínají jen jejich zpětná prodloužení — jde o <b>zdánlivé ohnisko</b>. Paprsky vycházející z předmětového ohniska \(F\) (u rozptylky do něj mířící) z čočky vycházejí rovnoběžně s osou.</p>
+      <p>Lámavost čočky vyjadřuje <b>optická mohutnost</b></p>
+      <div class="formula-box">\[ \varphi = \frac{1}{f}, \qquad [\varphi] = \mathrm{m^{-1}} = \mathrm{D}\ \text{(dioptrie)} \]</div>
+      <p>Ohnisková vzdálenost tenké čočky závisí na poloměrech křivosti \(r_1\), \(r_2\) jejích ploch a na indexu lomu \(n_2\) látky čočky vzhledem k indexu lomu \(n_1\) okolí:</p>
+      <div class="formula-box">\[ \varphi = \frac{1}{f} = \left(\frac{n_2}{n_1} - 1\right)\left(\frac{1}{r_1} + \frac{1}{r_2}\right) \]</div>
+      <p>Poloměr křivosti vypuklé plochy je kladný, duté plochy záporný; pro rovinnou plochu je \(\frac{1}{r} = 0\).</p>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="9" cy="9" r="7.5" stroke="var(--focus)" stroke-width="1.6"/>
+          <line x1="9" y1="8" x2="9" y2="13" stroke="var(--focus)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="5.2" r="1" fill="var(--focus)"/>
+        </svg>
+        <p><b>Znaménková konvence:</b> předmětová vzdálenost \(a\) je kladná <b>před čočkou</b> (na straně, odkud přichází světlo), obrazová vzdálenost \(a'\) je kladná <b>za čočkou</b>. Spojka má \(f &gt; 0\) a \(\varphi &gt; 0\), rozptylka \(f &lt; 0\) a \(\varphi &lt; 0\). Velikosti \(y\), \(y'\) jsou <b>nad optickou osou</b> kladné, <b>pod ní</b> záporné.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Význačné paprsky</div>
+      <p>Obraz bodu předmětu sestrojíme pomocí význačných paprsků. Ke konstrukci stačí dva, třetí můžeme použít ke kontrole:</p>
+      <ol>
+        <li><b style="color:var(--ray1)">Paprsek rovnoběžný s optickou osou</b> se láme do obrazového ohniska \(F'\) (u rozptylky tak, že ohniskem \(F'\) prochází jeho zpětné prodloužení).</li>
+        <li><b style="color:var(--ray2)">Paprsek procházející předmětovým ohniskem</b> \(F\) (u rozptylky do něj mířící) se láme rovnoběžně s optickou osou.</li>
+        <li><b style="color:var(--ray3)">Paprsek procházející optickým středem</b> \(O\) nemění svůj směr.</li>
+      </ol>
+      <p>Vyberte druh čočky a význačný paprsek. Plná čára je skutečný paprsek, <b>čárkovaně</b> je jeho zpětné prodloužení.</p>
+      <div class="ray-demo">
+        <div class="ray-controls">
+          <div class="seg" id="demo-lens-seg" role="group" aria-label="Druh čočky">
+            <button class="chip accented on" data-lens="convex" aria-pressed="true">Spojka</button>
+            <button class="chip accented" data-lens="concave" aria-pressed="false">Rozptylka</button>
+          </div>
+          <div class="seg" id="demo-ray-seg" role="group" aria-label="Význačný paprsek">
+            <button class="chip ray on" data-ray="1" style="--c:var(--ray1)" aria-pressed="true"><span class="dot"></span>rovnoběžný</button>
+            <button class="chip ray" data-ray="2" style="--c:var(--ray2)" aria-pressed="false"><span class="dot"></span>ohniskový</button>
+            <button class="chip ray" data-ray="3" style="--c:var(--ray3)" aria-pressed="false"><span class="dot"></span>středový</button>
+          </div>
+        </div>
+        <figure class="ray-fig" id="demo-fig">
+          <svg id="demo-svg" viewBox="0 0 480 170" role="img"></svg>
+          <figcaption id="demo-caption"></figcaption>
+        </figure>
+      </div>
+      <p>Protnou-li se <b>lomené paprsky</b> za čočkou, vznikne <b>skutečný obraz</b> — lze ho zachytit na stínítku. Protnou-li se jen jejich <b>zpětná prodloužení</b> před čočkou, vznikne <b>zdánlivý obraz</b> — vidíme ho při pohledu přes čočku, ale na stínítko ho zachytit nelze.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Zobrazovací rovnice a příčné zvětšení</div>
+      <p>Předmět \(AB\) (bod \(A\) na optické ose) má <b>velikost předmětu</b> \(y\) a leží v <b>předmětové vzdálenosti</b> \(a = |AO|\). Jeho obraz \(A'B'\) má <b>velikost obrazu</b> \(y'\) a leží v <b>obrazové vzdálenosti</b> \(a' = |A'O|\). Pro tenkou čočku a paraxiální paprsky platí <b>zobrazovací rovnice čočky</b> — stejného tvaru jako u kulového zrcadla:</p>
+      <div class="formula-box">\[ \frac{1}{a} + \frac{1}{a'} = \frac{1}{f} \qquad\Longrightarrow\qquad a' = \frac{a f}{a - f} \]</div>
+      <p>Kolikrát je obraz větší (popř. menší) než předmět, vyjadřuje <b>příčné zvětšení</b></p>
+      <div class="formula-box">\[ Z = \frac{y'}{y} = -\frac{a'}{a} = -\frac{f}{a - f} \]</div>
+      <p>Vztah pro zvětšení plyne z podobnosti trojúhelníků, které vytíná středový paprsek: \(\triangle ABO \sim \triangle A'B'O\).</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Jak číst výsledek</div>
+      <div class="theory-table-wrap">
+        <table class="theory-table" style="min-width:360px">
+          <thead><tr><th>Veličina</th><th>kladná (+)</th><th>záporná (−)</th></tr></thead>
+          <tbody>
+            <tr><td>\(a'\)</td><td>obraz za čočkou — skutečný</td><td>obraz před čočkou — zdánlivý</td></tr>
+            <tr><td>\(y'\), \(Z\)</td><td>vzpřímený</td><td>převrácený</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Je-li \(|Z| &gt; 1\), je obraz <b>zvětšený</b>; je-li \(|Z| &lt; 1\), je <b>zmenšený</b>; při \(|Z| = 1\) je <b>stejně velký</b>.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Přehled případů</div>
+      <div class="theory-table-wrap">
+        <table class="theory-table">
+          <thead>
+            <tr><th>Čočka</th><th>Předmětová vzdálenost</th><th>Obrazová vzdálenost</th><th>Vlastnosti obrazu</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>spojka</td><td>\(\infty &gt; a &gt; 2f\)</td><td>\(f &lt; a' &lt; 2f\)</td><td>skutečný, převrácený, zmenšený</td></tr>
+            <tr><td>spojka</td><td>\(a = 2f\)</td><td>\(a' = 2f\)</td><td>skutečný, převrácený, stejně velký</td></tr>
+            <tr><td>spojka</td><td>\(2f &gt; a &gt; f\)</td><td>\(2f &lt; a' &lt; \infty\)</td><td>skutečný, převrácený, zvětšený</td></tr>
+            <tr><td>spojka</td><td>\(a = f\)</td><td>\(a' \to \infty\)</td><td>obraz nevzniká (lomené paprsky jsou rovnoběžné)</td></tr>
+            <tr><td>spojka</td><td>\(a &lt; f\)</td><td>\(a' &lt; 0\) (před čočkou)</td><td>zdánlivý, vzpřímený, zvětšený (lupa)</td></tr>
+            <tr><td>rozptylka</td><td>\(\infty &gt; a &gt; 0\)</td><td>\(f &lt; a' &lt; 0\) (před čočkou)</td><td>zdánlivý, vzpřímený, zmenšený</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="9" cy="9" r="7.5" stroke="var(--focus)" stroke-width="1.6"/>
+          <line x1="9" y1="8" x2="9" y2="13" stroke="var(--focus)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="5.2" r="1" fill="var(--focus)"/>
+        </svg>
+        <p>Skutečný zmenšený obraz vytváří spojka např. ve fotoaparátu nebo v oku, skutečný zvětšený v projektoru. Předmět mezi ohniskem a spojkou vidíme zdánlivě zvětšený — tak funguje <b>lupa</b>. Rozptylky se používají např. v brýlích pro krátkozraké.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ============ APLET ============ -->
+  <div id="applet-section" class="tab-section" hidden>
+    <div class="card applet-card" id="applet-card">
+
+      <div class="applet-head">
+        <div class="applet-head-text">
+          <span class="cat-tag">Aplet</span>
+          <h2>Kde vznikne obraz?</h2>
+          <p class="desc">Zvolte druh čočky a <b>posouvejte předmět</b> tažením v obrázku (za tečku na hrotu šipky měníte jeho velikost); tažením ohniska <i>F</i> nebo <i>F′</i> měníte ohniskovou vzdálenost. Program dokreslí význačné paprsky, sestrojí obraz a vypíše jeho polohu, zvětšení a vlastnosti. <b>Skutečný obraz</b> je kreslený plnou čarou, <b>zdánlivý</b> čárkovaně.</p>
+        </div>
+        <button class="btn ghost fs-btn" id="fs-btn" type="button" aria-pressed="false">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path id="fs-icon" d="M1.5 5.5V1.5H5.5M10.5 1.5H14.5V5.5M14.5 10.5V14.5H10.5M5.5 14.5H1.5V10.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="fs-label">Celá obrazovka</span>
+        </button>
+      </div>
+
+      <div class="applet-controls">
+        <div class="mode-row">
+          <span class="mode-row-label">Čočka</span>
+          <div class="seg" id="type-seg">
+            <button class="chip accented on" data-type="convex" aria-pressed="true">Spojka</button>
+            <button class="chip accented" data-type="concave" aria-pressed="false">Rozptylka</button>
+          </div>
+        </div>
+
+        <div class="mode-row">
+          <span class="mode-row-label">Předmět a ohnisková vzdálenost</span>
+          <div class="dist-values" aria-live="polite"><span id="a-value"><i>a</i>&nbsp;=&nbsp;16,0&nbsp;cm</span><span id="y-value"><i>y</i>&nbsp;=&nbsp;6,0&nbsp;cm</span><span id="f-value"><i>f</i>&nbsp;=&nbsp;10,0&nbsp;cm</span><span id="phi-value"><i>φ</i>&nbsp;=&nbsp;10,0&nbsp;D</span></div>
+        </div>
+
+        <div class="mode-row">
+          <span class="mode-row-label">Význačné paprsky</span>
+          <div class="seg" id="ray-seg">
+            <button class="chip ray" data-ray="1" style="--c:var(--ray1)" aria-pressed="false"><span class="dot"></span>rovnoběžný</button>
+            <button class="chip ray" data-ray="2" style="--c:var(--ray2)" aria-pressed="false"><span class="dot"></span>ohniskový</button>
+            <button class="chip ray" data-ray="3" style="--c:var(--ray3)" aria-pressed="false"><span class="dot"></span>středový</button>
+          </div>
+        </div>
+
+        <div class="mode-row">
+          <span class="mode-row-label">Obraz</span>
+          <div class="seg" id="image-seg">
+            <button class="chip accented" id="image-toggle" aria-pressed="false">zobrazit obraz</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="applet-stage">
+        <div class="canvas-wrap">
+          <svg class="optics" id="optics-svg" viewBox="0 0 960 460" role="img" aria-label="Optická osa s tenkou čočkou, předmětem, význačnými paprsky a obrazem."></svg>
+          <div class="ray-toast" id="ray-toast" role="status" aria-live="polite"></div>
+          <div class="legend" aria-hidden="true">
+            <span><svg width="26" height="10"><line x1="1" y1="5" x2="25" y2="5" stroke="var(--ray1)" stroke-width="2.4"/></svg>rovnoběžný → do ohniska <i>F′</i></span>
+            <span><svg width="26" height="10"><line x1="1" y1="5" x2="25" y2="5" stroke="var(--ray2)" stroke-width="2.4"/></svg>ohniskový → rovnoběžně s osou</span>
+            <span><svg width="26" height="10"><line x1="1" y1="5" x2="25" y2="5" stroke="var(--ray3)" stroke-width="2.4"/></svg>středový → nemění směr</span>
+            <span><svg width="26" height="10"><line x1="1" y1="5" x2="25" y2="5" stroke="var(--ink-soft)" stroke-width="1.6" stroke-dasharray="5 4"/></svg>prodloužení paprsku</span>
+          </div>
+        </div>
+        <p class="hint">Předmět chytněte myší nebo prstem (za šipku nebo kroužek na ose); tažením za tečku na hrotu šipky měníte jeho velikost <i>y</i>. Ohniskovou vzdálenost měníte posunutím ohniska <i>F</i> nebo <i>F′</i> v obrázku. Jeden dílek na ose = 1&nbsp;cm. Tenká čočka je nakreslená jen schematicky: paprsky se lámou v rovině jejího středu a její vyklenutí jen naznačuje, jak silně láme (čím menší ohnisková vzdálenost, tím je vypouklejší).</p>
+      </div>
+
+      <div class="applet-results">
+        <div class="results">
+          <div>
+            <div class="readout" id="readout">
+              <div class="cell"><span class="label"><i>a</i></span><span class="value" id="out-a">—</span></div>
+              <div class="cell" id="cell-a2"><span class="label"><i>a′</i></span><span class="value" id="out-a2">—</span></div>
+              <div class="cell"><span class="label"><i>Z</i></span><span class="value" id="out-z">—</span></div>
+              <div class="cell"><span class="label"><i>y′</i></span><span class="value" id="out-y2">—</span></div>
+            </div>
+            <div class="props" id="props"></div>
+            <p class="position-note" id="position-note"></p>
+          </div>
+          <div class="calc">
+            <div class="calc-title">Výpočet</div>
+            <div id="calc-math"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TRÉNINK ============ -->
+  <div id="trenink-section" class="tab-section" hidden>
+    <div class="card trainer-card">
+      <span class="cat-tag">Trénink</span>
+      <h2>Kde končí předmět/obraz?</h2>
+      <p class="desc">V obrázku je zadaný <b>předmět</b>, nebo <b>obraz</b>. Z hodnot \(f\), \(a\) a \(y\) (popř. \(a'\) a <span class="nw">\(y'\))</span> dopočítejte, kde leží ten druhý, klikněte do mřížky na bod, kde má končit jeho šipka (bod \(B'\), popř. <span class="nw">\(B\)),</span> a potvrďte tlačítkem Zkontrolovat. Jeden dílek mřížky je 1&nbsp;cm.</p>
+
+      <div class="mode-row">
+        <span class="mode-row-label">Čočka</span>
+        <div class="seg" id="tr-lens-seg">
+          <button class="chip accented on" data-lens="convex" aria-pressed="true">Spojka</button>
+          <button class="chip accented" data-lens="concave" aria-pressed="false">Rozptylka</button>
+        </div>
+        <button class="linklike" id="tr-reset-stats">vynulovat statistiku</button>
+      </div>
+      <div class="mode-row">
+        <span class="mode-row-label">Zadáno</span>
+        <div class="seg" id="tr-given-seg">
+          <button class="chip accented on" data-given="random" aria-pressed="true">Náhodně</button>
+          <button class="chip accented" data-given="object" aria-pressed="false">Předmět</button>
+          <button class="chip accented" data-given="image" aria-pressed="false">Obraz</button>
+        </div>
+      </div>
+
+      <div class="task-banner">
+        <span class="task-banner-label">Vaším úkolem je najít</span>
+        <span class="task-banner-op" id="tr-task-op">obraz</span>
+        <span class="task-banner-given" id="tr-task-given"></span>
+      </div>
+
+      <div class="trainer-wrap">
+        <svg class="trainer-svg" id="tr-svg" viewBox="0 0 960 470" role="img" aria-label="Mřížka s optickou osou, čočkou a zadaným předmětem nebo obrazem."></svg>
+      </div>
+      <div class="sel-row">
+        <span class="sel-point" id="tr-sel" aria-live="polite">Zatím není vybraný žádný bod.</span>
+        <div class="nudge" id="tr-nudge" role="group" aria-label="Posunout vybraný bod">
+          <button class="btn ghost" type="button" data-dx="-1" data-dy="0" aria-label="doleva">←</button>
+          <button class="btn ghost" type="button" data-dx="0" data-dy="1" aria-label="nahoru">↑</button>
+          <button class="btn ghost" type="button" data-dx="0" data-dy="-1" aria-label="dolů">↓</button>
+          <button class="btn ghost" type="button" data-dx="1" data-dy="0" aria-label="doprava">→</button>
+        </div>
+      </div>
+      <p class="hint">Klikněte na mřížový bod, kde podle Vás končí hledaná šipka (vybraný bod jde doladit šipkami na klávesnici, na telefonu tlačítky), a potvrďte tlačítkem Zkontrolovat. Po kontrole se dokreslí správné řešení i význačné paprsky. Světlo přichází zleva: kladná obrazová vzdálenost <i>a′</i> znamená obraz vpravo za čočkou.</p>
+
+      <div class="feedback" id="tr-feedback" hidden>
+        <div class="headline" id="tr-feedback-headline"></div>
+        <div class="steps" id="tr-feedback-steps"></div>
+      </div>
+
+      <div class="actions">
+        <button class="btn primary" id="tr-check">Zkontrolovat</button>
+        <button class="btn ghost" id="tr-skip">Nevím / Zobrazit řešení</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>Fyzika — Oktáva/4. ročník</footer>
+</div>
+
+<script src="../spolecne/spolecne.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  // ---- geometrie plátna (viewBox 960 × 460) ----
+  // Fyzikální souřadnice v cm: optický střed čočky O je v x = 0, světlo přichází zleva,
+  // předmět vlevo (x = −a), obraz v x = a′ (skutečný vpravo za čočkou, zdánlivý vlevo); y míří nahoru.
+  var W = 960, H = 460;   // H se na úzkém displeji zvětší (víc místa na zvětšené kóty dole)
+  var X0 = 510;      // optický střed čočky na plátně (px)
+  var AY = 205;      // optická osa (px)
+  var S = 11;        // px na 1 cm
+  var X_MIN = -X0 / S, X_MAX = (W - X0) / S;   // viditelný rozsah v cm
+  var Y_MIN = 0.5, Y_MAX = 8;   // velikost předmětu y (cm)
+  var A_MIN = 3, A_MAX = 44, A_STEP = 0.5;   // předmět nejblíž 3 cm od čočky
+  var AP = 16;       // čočka sahá ±16 cm od osy
+  var EPS = 1e-9;
+  // Na telefonu je obrázek zmenšený na zlomek šířky 960 — popisky a čáry se proto zvětšují
+  // (K = násobek velikosti písma, LK = násobek tloušťky čar), aby zůstaly čitelné.
+  var K = 1, LK = 1;
+  var NB = ' ';
+
+  var state = { y:6, type:'convex', fAbs:10, a:16, rays:{1:false, 2:false, 3:false}, showImage:false };
+
+  var svg = document.getElementById('optics-svg');
+  var NS = 'http://www.w3.org/2000/svg';
+
+  function px(x){ return X0 + x * S; }
+  function py(y){ return AY - y * S; }
+  function f(){ return state.type === 'convex' ? state.fAbs : -state.fAbs; }
+
+  function el(tag, attrs, parent){
+    var n = document.createElementNS(NS, tag);
+    for(var k in attrs) if(attrs.hasOwnProperty(k)) n.setAttribute(k, attrs[k]);
+    if(parent) parent.appendChild(n);
+    return n;
+  }
+  // Text „a = 16,0 cm“ se vysází s veličinou kurzívou a pevnými mezerami.
+  function text(str, x, y, attrs, parent){
+    var t = el('text', attrs, parent);
+    t.setAttribute('x', x); t.setAttribute('y', y);
+    var m = /^(\S+) = (.+)$/.exec(str);
+    if(m){
+      el('tspan', { 'font-style':'italic' }, t).textContent = m[1];
+      el('tspan', { 'font-style':'normal' }, t).textContent = NB + '=' + NB + m[2].replace(/ /g, NB);
+    } else t.textContent = str;
+    return t;
+  }
+
+  // Čísla po česku: desetinná čárka, skutečné minus.
+  function fmt(x, d){
+    var s = roundTo(x, d).toFixed(d).replace('.', ',');
+    return s.charAt(0) === '-' ? '−' + s.slice(1) : s;
+  }
+  // veličina kurzívou, pevné mezery kolem „=“ a před jednotkou (HTML)
+  function eqHtml(v, x, d){ return '<i>' + v + '</i>&nbsp;=&nbsp;' + fmt(x, d) + '&nbsp;cm'; }
+  // Totéž pro KaTeX ({,} = čárka bez mezery za ní).
+  function tex(x, d){
+    return roundTo(x, d).toFixed(d).replace('.', '{,}');
+  }
+  function texPar(x, d){ return x < 0 ? '(' + tex(x, d) + ')' : tex(x, d); }
+  // bez zbytečných nul na konci (0,100 → 0,1)
+  function texTrim(x, d){ return String(roundTo(x, d)).replace('.', '{,}'); }
+
+  // ---- výpočet zobrazení ----
+  function compute(){
+    var ff = f(), a = state.a;
+    var r = { f:ff, a:a, phi:100 / ff, infinite:false };
+    if(Math.abs(a - ff) < EPS){
+      r.infinite = true;
+      return r;
+    }
+    r.a2 = a * ff / (a - ff);
+    r.Z = -r.a2 / a;
+    r.y2 = r.Z * state.y;
+    r.real = r.a2 > 0;
+    return r;
+  }
+
+  // Obrys tenké čočky (jen náčrtek): spojka je uprostřed tlustší, rozptylka tenčí než na okrajích.
+  // h = polovina „vyklenutí“ v px — čím menší ohnisková vzdálenost, tím je čočka vypouklejší.
+  function lensPath(X, top, bot, h, convex){
+    var mid = (top + bot) / 2;
+    if(convex){
+      return 'M' + X + ',' + top + ' Q' + (X + 2 * h) + ',' + mid + ' ' + X + ',' + bot +
+        ' Q' + (X - 2 * h) + ',' + mid + ' ' + X + ',' + top + ' Z';
+    }
+    var E = 4 + h, k = 2 * 3 - E;   // okraj ±E, uprostřed ±3 px
+    return 'M' + (X - E) + ',' + top + ' L' + (X + E) + ',' + top + ' Q' + (X + k) + ',' + mid + ' ' + (X + E) + ',' + bot +
+      ' L' + (X - E) + ',' + bot + ' Q' + (X - k) + ',' + mid + ' ' + (X - E) + ',' + top + ' Z';
+  }
+  function lensBulge(){ return (3 + 110 / state.fAbs) * LK; }
+
+  // ---- kreslení ----
+  var layerStatic, layerRays, layerImage, layerLabels, layerObj, clipRect;
+
+  // ---- popisky mimo čáry ----
+  // Čáry (paprsky, osa, čočka, šipky) se při kreslení zapamatují jako překážky
+  // a popisky se rozmístí až nakonec tam, kde je žádná čára ani jiný popisek nepřekrývá.
+  var obstacles = [], labelQueue = [];
+  function obstacle(x1, y1, x2, y2){ obstacles.push([x1, y1, x2, y2]); }
+  function obstacleBox(cx, cy, r){
+    obstacles.push([cx - r, cy - r, cx + r, cy - r], [cx + r, cy - r, cx + r, cy + r], [cx + r, cy + r, cx - r, cy + r], [cx - r, cy + r, cx - r, cy - r]);
+  }
+  // prefs = preferované posuny středu popisku od kotvy [dx, dy]
+  function label(str, ax, ay, prefs, attrs){
+    var a = Object.assign({}, attrs);
+    a['font-size'] = (attrs['font-size'] || 14) * K;
+    labelQueue.push({ str:str, ax:ax, ay:ay, prefs:prefs.map(function(p){ return [p[0] * K, p[1] * K]; }), attrs:a });
+  }
+  function segHitsRect(sg, b){
+    var x1 = sg[0], y1 = sg[1], dx = sg[2] - x1, dy = sg[3] - y1, t0 = 0, t1 = 1;
+    var p = [-dx, dx, -dy, dy], q = [x1 - b.x1, b.x2 - x1, y1 - b.y1, b.y2 - y1];
+    for(var i = 0; i < 4; i++){
+      if(Math.abs(p[i]) < 1e-9){ if(q[i] < 0) return false; }
+      else {
+        var t = q[i] / p[i];
+        if(p[i] < 0){ if(t > t1) return false; if(t > t0) t0 = t; }
+        else { if(t < t0) return false; if(t < t1) t1 = t; }
+      }
+    }
+    return true;
+  }
+  function placeLabels(){
+    var g = layerLabels; g.textContent = '';
+    var placed = [];
+    labelQueue.forEach(function(L){
+      var fs = L.attrs['font-size'] || 14;
+      var w = L.str.length * fs * 0.6 + 6, h = fs + 4;
+      var cands = L.prefs.slice();
+      for(var rr = 14 * K; rr <= 110 * K; rr += 8 * K){
+        for(var k = 0; k < 16; k++){
+          var ang = k * Math.PI / 8;
+          cands.push([Math.cos(ang) * (rr + w / 2), Math.sin(ang) * (rr + h / 2)]);
+        }
+      }
+      var best = null, bestCost = Infinity;
+      for(var i = 0; i < cands.length; i++){
+        var cx = L.ax + cands[i][0], cy = L.ay + cands[i][1];
+        var b = { x1:cx - w / 2, y1:cy - h / 2, x2:cx + w / 2, y2:cy + h / 2 };
+        if(b.x1 < 2 || b.x2 > W - 2 || b.y1 < 2 || b.y2 > H - 58 * K) continue;   // dole jsou kóty a, a′
+        var cost = 0;
+        for(var j = 0; j < obstacles.length; j++) if(segHitsRect(obstacles[j], b)) cost += 10;
+        for(var m = 0; m < placed.length; m++){
+          var o = placed[m];
+          if(o.x1 < b.x2 && b.x1 < o.x2 && o.y1 < b.y2 && b.y1 < o.y2) cost += 10;
+        }
+        if(cost === 0){ best = b; break; }
+        if(cost < bestCost){ bestCost = cost; best = b; }
+      }
+      if(!best) return;
+      placed.push(best);
+      var cls = L.attrs['class'];
+      var bg = { x:best.x1, y:best.y1, width:best.x2 - best.x1, height:best.y2 - best.y1, rx:3, fill:'var(--surface)', opacity:0.92 };
+      if(cls) bg['class'] = cls;
+      el('rect', bg, g);
+      text(L.str, (best.x1 + best.x2) / 2, (best.y1 + best.y2) / 2 + fs * 0.36, Object.assign({}, L.attrs, { 'text-anchor':'middle' }), g);
+    });
+    labelQueue = [];
+  }
+
+  function arrowHead(parent, x, y, dx, dy, color, size){
+    var len = Math.hypot(dx, dy); if(len < EPS) return;
+    var ux = dx / len, uy = dy / len, s = size || 9;
+    var bx = x - ux * s, by = y - uy * s;
+    el('path', {
+      d: 'M' + x + ',' + y + ' L' + (bx - uy * s * 0.5) + ',' + (by + ux * s * 0.5) + ' L' + (bx + uy * s * 0.5) + ',' + (by - ux * s * 0.5) + ' Z',
+      fill: color
+    }, parent);
+  }
+  function seg(parent, p, q, color, opts){
+    opts = opts || {};
+    var a = { x1:px(p.x), y1:py(p.y), x2:px(q.x), y2:py(q.y), stroke:color, 'stroke-width':(opts.w || 2.2) * LK, 'stroke-linecap':'round' };
+    if(opts.dash) a['stroke-dasharray'] = opts.dash;
+    if(opts.opacity) a.opacity = opts.opacity;
+    el('line', a, parent);
+    obstacle(a.x1, a.y1, a.x2, a.y2);
+    if(opts.arrow){
+      // šipka ve směru paprsku (standardně v polovině úsečky)
+      var t = opts.arrowAt || 0.5;
+      var mx = px(p.x + (q.x - p.x) * t), my = py(p.y + (q.y - p.y) * t);
+      arrowHead(parent, mx, my, px(q.x) - px(p.x), py(q.y) - py(p.y), color, 10 * LK);
+    }
+  }
+  // Bod na paprsku z M ve směru d (d.x > 0), kde paprsek opustí pravý okraj plátna
+  // (nebo odejde hodně vysoko/nízko — tam ho stejně ořízne clipPath).
+  function toRightEdge(M, d){
+    var t = (X_MAX + 2 - M.x) / d.x;
+    if(Math.abs(d.y) > EPS) t = Math.min(t, 80 / Math.abs(d.y));
+    return { x: M.x + d.x * t, y: M.y + d.y * t };
+  }
+
+  function buildSvg(){
+    svg.textContent = '';
+    var defs = el('defs', {}, svg);
+    var cp = el('clipPath', { id:'clip-plot' }, defs);
+    clipRect = el('rect', { x:0, y:0, width:W, height:H }, cp);
+    layerStatic = el('g', {}, svg);
+    layerRays = el('g', { 'clip-path':'url(#clip-plot)' }, svg);
+    layerImage = el('g', { 'clip-path':'url(#clip-plot)' }, svg);
+    layerLabels = el('g', { 'pointer-events':'none' }, svg);
+    layerObj = el('g', {}, svg);
+  }
+
+  function drawStatic(r){
+    layerStatic.textContent = '';
+    var g = layerStatic;
+    // optická osa + dílky po 1 cm (delší po 5 cm, měřeno od optického středu)
+    el('line', { x1:0, y1:AY, x2:W, y2:AY, stroke:'var(--ink-soft)', 'stroke-width':1.3, 'stroke-dasharray':'14 4 2 4' }, g);
+    for(var x = Math.ceil(X_MIN); x <= Math.floor(X_MAX); x++){
+      if(x === 0) continue;
+      var big = x % 5 === 0;
+      el('line', { x1:px(x), y1:AY - (big ? 5 : 2.5), x2:px(x), y2:AY + (big ? 5 : 2.5), stroke:'var(--ink-soft)', 'stroke-width':1, opacity: big ? 0.8 : 0.5 }, g);
+    }
+    obstacle(0, AY, W, AY);
+    label('o', 8, AY, [[6, -14], [6, 14], [20, -14]], { 'font-size':16, 'font-style':'italic', 'font-weight':600, fill:'var(--ink-soft)' });
+
+    // tenká čočka — náčrtek obrysu, paprsky se lámou v její střední rovině (tenká svislá čára)
+    var convex = state.type === 'convex', top = py(AP), bot = py(-AP), h = lensBulge();
+    el('path', { d:lensPath(X0, top, bot, h, convex), fill:'var(--lens)', stroke:'var(--ink)', 'stroke-width':2.2 * LK, 'stroke-linejoin':'round' }, g);
+    el('line', { x1:X0, y1:top, x2:X0, y2:bot, stroke:'var(--ink-soft)', 'stroke-width':1, opacity:0.55 }, g);
+    var hw = convex ? h : 4 + h;
+    obstacle(X0 - hw, top, X0 - hw, bot); obstacle(X0, top, X0, bot); obstacle(X0 + hw, top, X0 + hw, bot);
+    obstacle(X0 - hw, top, X0 + hw, top);
+    // popisek vpravo od horního okraje čočky (na telefonu se vynechá — je i v přepínači)
+    if(K <= 1.5){
+      var lName = convex ? 'spojka' : 'rozptylka';
+      var mw = lName.length * 8.4 / 2 + 3;
+      label(lName, X0 + hw + 10, top + 4, [[mw, 0], [mw, 16], [mw, 32]], { 'font-size':14, 'font-weight':600, fill:'var(--ink-soft)' });
+    }
+
+    // body O, F, F′ (F a F′ se kreslí až v drawObject jako úchyty, které jde táhnout)
+    var st = { 'font-size':16, 'font-weight':700, 'font-style':'italic', fill:'var(--ink)' };
+    label('O', X0, AY, [[-14, 17], [14, 17], [-14, -17], [14, -17]], st);
+    [{ x:-r.f, name:'F' }, { x:r.f, name:'F′' }].forEach(function(p){
+      if(p.x < X_MIN || p.x > X_MAX) return;
+      obstacleBox(px(p.x), AY, 5 * LK);
+      label(p.name, px(p.x), AY, [[0, 17], [0, -17], [-12, 17], [12, 17], [-12, -17], [12, -17]], st);
+    });
+  }
+
+  // Tenká čočka láme paprsky v rovině optického středu (x = 0), takže význačné paprsky jsou přesné
+  // přímky a protnou se (popř. jejich prodloužení) přesně v bodě B′ ze zobrazovací rovnice:
+  //  – rovnoběžný dopadá ve výšce y a láme se přes F′ (u rozptylky jako by z F′ vycházel),
+  //  – ohniskový prochází F (u rozptylky do F míří), na čočku dopadá ve výšce y′ a dál jde rovnoběžně s osou,
+  //  – středový prochází optickým středem O a nemění směr.
+  // U zdánlivého obrazu vede čárkované prodloužení lomeného paprsku zpět před čočku do B′.
+  function drawRays(r){
+    layerRays.textContent = '';
+    var g = layerRays;
+    var a = r.a, ff = r.f;
+    var P = { x:-a, y:state.y };
+    var F = { x:-ff, y:0 }, F2 = { x:ff, y:0 }, O = { x:0, y:0 };
+    var Pimg = r.infinite ? null : { x:r.a2, y:r.y2 };
+    var concave = ff < 0;
+    var virtual = !r.infinite && !r.real;
+    var missed = [];
+    var DASH = { dash:'6 5', w:1.6, opacity:0.85 }, DOTS = { dash:'2 5', w:1.4, opacity:0.8 };
+
+    // 1) rovnoběžný s osou → lomený prochází obrazovým ohniskem F′ (u rozptylky jeho prodloužení)
+    if(state.rays[1]){
+      var c1 = 'var(--ray1)';
+      var M1 = { x:0, y:state.y };
+      seg(g, P, M1, c1, { arrow:true });
+      var d1 = { x:1, y:-state.y / ff };   // přímka přes M1 a F′
+      seg(g, M1, toRightEdge(M1, d1), c1, { arrow:true, arrowAt:0.25 });
+      if(concave) seg(g, M1, F2, c1, DASH);            // jako by vycházel z F′ (B′ leží mezi O a F′)
+      else if(virtual) seg(g, M1, Pimg, c1, DASH);
+    }
+
+    // 2) ohniskový (u rozptylky mířící do F) → za čočkou rovnoběžně s osou ve výšce y′
+    if(state.rays[2] && !r.infinite){
+      var c2 = 'var(--ray2)';
+      if(Math.abs(r.y2) > AP){
+        missed.push('ohniskový');
+      } else {
+        var M2 = { x:0, y:r.y2 };
+        if(!concave && a > ff){
+          seg(g, P, F, c2, { arrow:true });
+          seg(g, F, M2, c2);
+        } else {
+          if(!concave) seg(g, F, P, c2, DOTS);   // jako by vycházel z F (předmět je mezi F a čočkou)
+          seg(g, P, M2, c2, { arrow:true });
+          if(concave) seg(g, M2, F, c2, DASH);   // mířil do F za čočkou
+        }
+        seg(g, M2, toRightEdge(M2, { x:1, y:0 }), c2, { arrow:true, arrowAt:0.25 });
+        if(virtual) seg(g, M2, Pimg, c2, DASH);
+      }
+    }
+
+    // 3) středový → prochází optickým středem a nemění směr
+    if(state.rays[3]){
+      var c3 = 'var(--ray3)';
+      seg(g, P, O, c3, { arrow:true });
+      seg(g, O, toRightEdge(O, { x:a, y:-state.y }), c3, { arrow:true, arrowAt:0.25 });
+      // zdánlivý obraz spojky (lupa) leží na téže přímce dál než předmět
+      if(virtual && Pimg.x < P.x) seg(g, P, Pimg, c3, DASH);
+    }
+    return missed;
+  }
+
+  function drawImage(r){
+    layerImage.textContent = '';
+    if(r.infinite || !state.showImage) return;
+    var g = layerImage;
+    var color = r.real ? 'var(--real)' : 'var(--virtual)';
+    var x = px(r.a2), y0 = AY, y1 = py(r.y2);
+    var dir = y1 < y0 ? -1 : 1;
+    var line = { x1:x, y1:y0, x2:x, y2:y1 - dir * 9 * LK, stroke:color, 'stroke-width':4 * LK, 'stroke-linecap':'round' };
+    if(!r.real) line['stroke-dasharray'] = (7 * LK) + ' ' + (5 * LK);
+    el('line', line, g);
+    arrowHead(g, x, y1, 0, y1 - y0, color, 14 * LK);
+    el('circle', { cx:x, cy:AY, r:3.5 * LK, fill:color }, g);
+    obstacle(x - 7, y0, x - 7, y1); obstacle(x, y0, x, y1); obstacle(x + 7, y0, x + 7, y1);
+    var side = r.real ? 1 : -1;   // popisky přednostně na straně dál od čočky
+    var clampY = function(v){ return Math.max(16 * K, Math.min(H - 64 * K, v)); };
+    var yM = clampY((y0 + y1) / 2), yT = clampY(y1), yA = AY;
+    var st = { 'font-size':15, 'font-weight':700, 'font-style':'italic', fill:color };
+    label('y′', x, yM, [[side * 16, 0], [-side * 16, 0], [side * 16, 14], [side * 16, -14]], Object.assign({}, st, { 'font-size':17 }));
+    label('B′', x, yT, [[side * 16, 0], [-side * 16, 0], [side * 16, -dir * 10], [0, dir * 16]], st);
+    label('A′', x, yA, [[side * 14, -dir * 15], [-side * 14, -dir * 15], [side * 14, dir * 15], [-side * 14, dir * 15]], st);
+    if(K <= 1.5) label(r.real ? 'skutečný obraz' : 'zdánlivý obraz', x, yT, [[0, dir * 20], [0, dir * 34], [side * 60, dir * 20]], { 'class':'param', 'font-size':13, 'font-weight':600, fill:color });
+  }
+
+  // Kóty a, a′ dole pod osou
+  function dimension(parent, x1, x2, yPx, label, color){
+    if(Math.abs(x2 - x1) < 1) return;
+    parent = el('g', { 'class':'param' }, parent);  // na celé obrazovce se kóty skryjí
+    var l = Math.min(x1, x2), rr = Math.max(x1, x2);
+    var L = Math.max(4, l), R = Math.min(W - 4, rr);
+    var lw = 1.3 * LK, tk = 6 * LK;
+    el('line', { x1:L, y1:yPx, x2:R, y2:yPx, stroke:color, 'stroke-width':lw }, parent);
+    if(l >= 4) el('line', { x1:l, y1:yPx - tk, x2:l, y2:yPx + tk, stroke:color, 'stroke-width':lw }, parent);
+    if(rr <= W - 4) el('line', { x1:rr, y1:yPx - tk, x2:rr, y2:yPx + tk, stroke:color, 'stroke-width':lw }, parent);
+    var fs = 14 * K, w = label.length * fs * 0.56 + 12 * K;
+    var tx = (L + R) / 2;
+    // krátká kóta: popisek vedle ní (na straně dál od čočky), ať ji nezakryje
+    if(R - L < w + 8) tx = (l < X0 - 1) ? L - w / 2 - 6 : R + w / 2 + 6;
+    tx = Math.max(w / 2 + 2, Math.min(W - w / 2 - 2, tx));
+    el('rect', { x:tx - w / 2, y:yPx - fs * 0.75, width:w, height:fs * 1.4, rx:4, fill:'var(--surface)' }, parent);
+    text(label, tx, yPx + fs * 0.35, { 'font-size':fs, 'font-weight':600, fill:color, 'text-anchor':'middle', 'font-variant-numeric':'tabular-nums' }, parent);
+  }
+
+  var objGroup;
+  function drawObject(r){
+    layerObj.textContent = '';
+    var g = layerObj;
+    dimension(g, px(-r.a), X0, H - 42 * K, 'a = ' + fmt(r.a, 1) + ' cm', 'var(--ink)');
+    if(!r.infinite && state.showImage){
+      dimension(g, X0, px(r.a2), H - 16 * K, 'a′ = ' + fmt(r.a2, 1) + ' cm', r.real ? 'var(--real)' : 'var(--virtual)');
+    }
+
+    objGroup = el('g', { 'class':'obj-group' + (dragging ? ' dragging' : '') + (tipDragging ? ' tip-dragging' : '') + (objFocused ? ' focused' : '') }, g);
+    var x = px(-r.a), top = py(state.y);
+    el('line', { x1:x, y1:AY, x2:x, y2:top + 9 * LK, stroke:'var(--ink)', 'stroke-width':4 * LK, 'stroke-linecap':'round' }, objGroup);
+    arrowHead(objGroup, x, top, 0, -1, 'var(--ink)', 14 * LK);
+    obstacle(x - 7, AY + 8, x - 7, top); obstacle(x, AY + 8, x, top); obstacle(x + 7, AY + 8, x + 7, top);
+    obstacleBox(x, AY, 8);
+    var st = { 'font-size':15, 'font-weight':700, 'font-style':'italic', fill:'var(--ink)' };
+    label('y', x, (AY + top) / 2, [[-15, 0], [15, 0], [-15, 14], [-15, -14]], Object.assign({}, st, { 'font-size':17 }));
+    label('B', x, top, [[-15, 2], [15, 2], [-15, -10], [15, -10]], st);
+    label('A', x, AY, [[-15, 18], [15, 18], [-15, 34], [15, 34], [-15, -16]], st);
+    if(K <= 1.5) label('předmět', x, top, [[0, -22], [0, -36], [-40, -22], [40, -22]], { 'font-size':13, 'font-weight':600, fill:'var(--ink-soft)' });
+    placeLabels();
+    el('circle', { 'class':'obj-grip', cx:x, cy:AY, r:7 * LK }, objGroup);
+    var hit = el('rect', { 'class':'obj-hit', x:x - 20, y:top - 28, width:40, height:AY - top + 42,
+      tabindex:0, role:'slider', 'aria-label':'Předmět: ← → předmětová vzdálenost a, ↑ ↓ velikost y',
+      'aria-valuemin':A_MIN, 'aria-valuemax':A_MAX, 'aria-valuenow':r.a,
+      'aria-valuetext':'a = ' + fmt(r.a, 1) + ' cm, y = ' + fmt(state.y, 1) + ' cm' }, objGroup);
+    attachObjEvents(hit);
+    // úchyt na hrotu šipky (bod B): tažením se mění jen velikost předmětu
+    el('circle', { 'class':'tip-grip', cx:x, cy:top - 3 * LK, r:5 * LK, 'stroke-width':2.2 * LK }, objGroup);
+    el('rect', { 'class':'tip-hit', x:x - 12 * K, y:top - 16 * K, width:24 * K, height:24 * K }, objGroup);
+
+    // úchyty ohnisek F a F′ (tažením kteréhokoli se mění ohnisková vzdálenost)
+    fGroups = [];
+    [{ x:-r.f, name:'F' }, { x:r.f, name:'F′' }].forEach(function(p){
+      var fx = px(p.x);
+      var fg = el('g', { 'class':'f-group' + (fDragging ? ' dragging' : '') + (fFocused === p.name ? ' focused' : '') }, g);
+      el('circle', { 'class':'f-grip', cx:fx, cy:AY, r:5.5 * LK, 'stroke-width':2.5 * LK }, fg);
+      var fHit = el('rect', { 'class':'f-hit', x:fx - 14 * K, y:AY - 14 * K, width:28 * K, height:28 * K,
+        tabindex:0, role:'slider', 'aria-label':'Ohnisko ' + p.name + ' (ohnisková vzdálenost f)',
+        'aria-valuemin':F_MIN, 'aria-valuemax':F_MAX, 'aria-valuenow':state.fAbs, 'aria-valuetext':'f = ' + fmt(r.f, 1) + ' cm' }, fg);
+      fGroups.push(fg);
+      attachFEvents(fHit, fg, p);
+    });
+  }
+
+  // ---- tažení předmětu ----
+  var dragging = false, tipDragging = false, objFocused = false, restoreFocus = false;
+  function cmFromEvent(e){
+    var pt = svg.createSVGPoint();
+    pt.x = e.clientX; pt.y = e.clientY;
+    var loc = pt.matrixTransform(svg.getScreenCTM().inverse());
+    return (loc.x - X0) / S;
+  }
+  function setY(y){
+    y = Math.max(Y_MIN, Math.min(Y_MAX, Math.round(y / A_STEP) * A_STEP));
+    if(y === state.y) return;
+    state.y = y;
+    render();
+  }
+  function setA(a){
+    a = Math.round(a / A_STEP) * A_STEP;
+    a = Math.max(A_MIN, Math.min(A_MAX, a));
+    if(a === state.a) return;
+    state.a = a;
+    render();
+  }
+  function attachObjEvents(hit){
+    hit.addEventListener('keydown', function(e){
+      var step = 0;
+      if(e.key === 'ArrowUp' || e.key === 'ArrowDown'){   // nahoru / dolů = velikost předmětu
+        e.preventDefault();
+        restoreFocus = true;
+        setY(state.y + (e.key === 'ArrowUp' ? A_STEP : -A_STEP));
+        return;
+      }
+      if(e.key === 'ArrowLeft') step = A_STEP;      // doleva = dál od čočky
+      else if(e.key === 'ArrowRight') step = -A_STEP;
+      else if(e.key === 'PageDown') step = 5;
+      else if(e.key === 'PageUp') step = -5;
+      if(!step) return;
+      e.preventDefault();
+      restoreFocus = true;
+      setA(state.a + step);
+    });
+    hit.addEventListener('focus', function(){ objFocused = true; if(objGroup) objGroup.classList.add('focused'); });
+    hit.addEventListener('blur', function(){ objFocused = false; if(objGroup) objGroup.classList.remove('focused'); });
+    if(restoreFocus){ restoreFocus = false; hit.focus(); }
+  }
+  // ---- tažení ohnisek F, F′ ----
+  // Ohniska leží souměrně kolem čočky, |f| je tedy vzdálenost taženého bodu od optického středu.
+  var F_MIN = 5, F_MAX = 20;
+  var fGroups = [], fDragging = false, fFocused = null, restoreFFocus = null;
+  function setF(v){
+    v = Math.max(F_MIN, Math.min(F_MAX, Math.round(v / A_STEP) * A_STEP));
+    if(v === state.fAbs) return;
+    state.fAbs = v;
+    render();
+  }
+  function attachFEvents(hit, fg, p){
+    hit.addEventListener('keydown', function(e){
+      var dx = 0;   // posun bodu v obrázku (+ doprava)
+      if(e.key === 'ArrowRight' || e.key === 'ArrowUp') dx = A_STEP;
+      else if(e.key === 'ArrowLeft' || e.key === 'ArrowDown') dx = -A_STEP;
+      else if(e.key === 'PageUp') dx = 5;
+      else if(e.key === 'PageDown') dx = -5;
+      else if(e.key === 'Home' || e.key === 'End'){
+        e.preventDefault(); restoreFFocus = p.name; setF(e.key === 'Home' ? F_MIN : F_MAX); return;
+      }
+      if(!dx) return;
+      e.preventDefault();
+      restoreFFocus = p.name;
+      setF(Math.abs(p.x + dx));
+    });
+    hit.addEventListener('focus', function(){ fFocused = p.name; fg.classList.add('focused'); });
+    hit.addEventListener('blur', function(){ fFocused = null; fg.classList.remove('focused'); });
+    if(restoreFFocus === p.name){ restoreFFocus = null; hit.focus(); }
+  }
+
+  // Předmět jde chytit kdekoli ve svislém pásu kolem něj (i kousek vedle) — na telefonu
+  // je obrázek zmenšený a samotná šipka by byla pro prst příliš úzký cíl. Ohniska jdou chytit
+  // v okolí bodu na ose; když jsou předmět a ohnisko blízko sebe, vezme se to, co je blíž.
+  function svgPoint(e){
+    var pt = svg.createSVGPoint();
+    pt.x = e.clientX; pt.y = e.clientY;
+    return pt.matrixTransform(svg.getScreenCTM().inverse());
+  }
+  // Co je pod bodem (clientX, clientY): 'tip' (hrot šipky B), 'f' (ohnisko), 'obj' (předmět), nebo null.
+  // Myší jde předmět chytit kdekoli ve svislém pásu kolem něj; prstem jen za puntíky
+  // (kroužek na ose, tečka na hrotu, ohniska) — jinde prst posouvá stránkou.
+  function grabAt(e, touch){
+    var loc = svgPoint(e), m = svg.getScreenCTM();
+    var scr = Math.hypot(m.a, m.b) || 1;   // px obrazovky na jednotku obrázku (i v otočeném zobrazení)
+    var dxObj = Math.abs(loc.x - px(-state.a)) * scr, dyF = Math.abs(loc.y - AY) * scr;
+    var dxF = Math.min(Math.abs(loc.x - px(-f())), Math.abs(loc.x - px(f()))) * scr;
+    var objOk = touch ? dxObj <= 26 && dyF <= 26 : Math.abs(loc.x - px(-state.a)) <= 30;
+    var fOk = dxF <= (touch ? 22 : 12) && dyF <= (touch ? 26 : 14);
+    // hrot šipky: v okolí bodu B (prstem větší okolí) — tažením se mění jen velikost předmětu
+    var tipOk = dxObj <= (touch ? 26 : 14) && Math.abs(loc.y - py(state.y)) * scr <= (touch ? 26 : 14);
+    if(tipOk) return 'tip';
+    if(fOk && (!objOk || dxF < dxObj)) return 'f';
+    return objOk ? 'obj' : null;
+  }
+  // Dotyk na puntíku nesmí posunout stránku (touch-action dovoluje svislý posun všude).
+  svg.addEventListener('touchstart', function(e){
+    if(e.touches.length === 1 && grabAt(e.touches[0], true)) e.preventDefault();
+  }, { passive:false });
+  svg.addEventListener('pointerdown', function(e){
+    var what = grabAt(e, e.pointerType === 'touch');
+    if(what === 'tip'){
+      tipDragging = true;
+      if(objGroup) objGroup.classList.add('tip-dragging');
+    } else if(what === 'f'){
+      fDragging = true;
+      fGroups.forEach(function(fg){ fg.classList.add('dragging'); });
+    } else if(what === 'obj'){
+      dragging = true;
+      if(objGroup) objGroup.classList.add('dragging');
+    } else return;
+    try{ svg.setPointerCapture(e.pointerId); }catch(err){}
+    e.preventDefault();
+  });
+  svg.addEventListener('pointermove', function(e){
+    if(!dragging && !fDragging && !tipDragging) return;
+    e.preventDefault();
+    if(fDragging) setF(Math.abs(cmFromEvent(e)));
+    else if(tipDragging) setY((AY - svgPoint(e).y) / S);
+    else setA(-cmFromEvent(e));
+  });
+  ['pointerup', 'pointercancel'].forEach(function(ev){
+    svg.addEventListener(ev, function(){
+      if(dragging){ dragging = false; if(objGroup) objGroup.classList.remove('dragging'); }
+      if(tipDragging){ tipDragging = false; if(objGroup) objGroup.classList.remove('tip-dragging'); }
+      if(fDragging){ fDragging = false; fGroups.forEach(function(fg){ fg.classList.remove('dragging'); }); }
+    });
+  });
+
+  // ---- výpis výsledků ----
+  var outA = document.getElementById('out-a'), outA2 = document.getElementById('out-a2');
+  var outZ = document.getElementById('out-z'), outY2 = document.getElementById('out-y2');
+  var propsBox = document.getElementById('props'), posNote = document.getElementById('position-note');
+  var calcBox = document.getElementById('calc-math');
+
+  function prop(label, cls){
+    var s = document.createElement('span');
+    s.className = 'prop' + (cls ? ' ' + cls : '');
+    s.textContent = label;
+    propsBox.appendChild(s);
+  }
+
+  function renderResults(r, missed){
+    outA.textContent = fmt(r.a, 1) + NB + 'cm';
+    propsBox.textContent = '';
+    var lines = [];
+    var exact = function(v, d){ return Math.abs(roundTo(v, d) - v) < 1e-9; };
+    // v úzkém bloku Výpočet se každý řádek zalomí za obecným vzorcem (BR), jinak by přetekl
+    var BR = calcNarrow() ? ' \\\\ &= ' : ' = ';
+    lines.push('\\varphi &= \\frac{1}{f} = \\frac{1}{' + texTrim(r.f / 100, 4) + '\\ \\mathrm{m}}' + (exact(r.phi, 1) ? ' = ' : ' \\doteq ') + tex(r.phi, 1) + '\\ \\mathrm{D}');
+    lines.push('a\' &= \\frac{a f}{a - f}' + BR + '\\frac{' + tex(r.a, 1) + ' \\cdot ' + texPar(r.f, 1) + '}{' + tex(r.a, 1) + ' - ' + texPar(r.f, 1) + '}\\ \\mathrm{cm}');
+    var note;
+
+    if(r.infinite){
+      outA2.textContent = '∞';
+      outZ.textContent = '—';
+      outY2.textContent = '—';
+      prop('obraz nevzniká', 'none');
+      note = 'Předmět leží v ohnisku <i>F</i>: lomené paprsky jsou navzájem rovnoběžné a neprotnou se ani jejich prodloužení — obraz je „v&nbsp;nekonečnu“ (<i>a′</i>&nbsp;→&nbsp;∞).';
+      lines[1] += ' \\to \\infty';
+      lines.push('&\\text{jmenovatel } a - f = 0 \\ \\Rightarrow\\ \\text{obraz nevzniká}');
+    } else {
+      outA2.textContent = fmt(r.a2, 1) + NB + 'cm';
+      outZ.textContent = fmt(r.Z, 2);
+      outY2.textContent = fmt(r.y2, 1) + NB + 'cm';
+
+      var absZ = Math.abs(r.Z);
+      var sizeWord = Math.abs(absZ - 1) < 1e-9 ? 'stejně velký' : (absZ > 1 ? 'zvětšený' : 'zmenšený');
+      prop(r.real ? 'skutečný' : 'zdánlivý');
+      prop(r.Z > 0 ? 'vzpřímený' : 'převrácený');
+      prop(sizeWord);
+
+      note = (r.real
+        ? '<i>a′</i>&nbsp;&gt;&nbsp;0 — obraz leží za čočkou, lomené paprsky se v&nbsp;něm skutečně protínají (lze ho zachytit na stínítko). '
+        : '<i>a′</i>&nbsp;&lt;&nbsp;0 — obraz leží před čočkou (na straně předmětu), protínají se jen prodloužení lomených paprsků (vidíme ho při pohledu přes čočku, na stínítko ho zachytit nelze). ')
+        + (r.y2 > 0 ? '<i>y′</i>&nbsp;&gt;&nbsp;0 — vzpřímený. ' : '<i>y′</i>&nbsp;&lt;&nbsp;0 — převrácený. ')
+        + (sizeWord === 'stejně velký' ? '|<i>Z</i>|&nbsp;=&nbsp;1 — stejně velký.' : (absZ > 1 ? '|<i>Z</i>|&nbsp;&gt;&nbsp;1 — zvětšený.' : '|<i>Z</i>|&nbsp;&lt;&nbsp;1 — zmenšený.'));
+      if(!r.real && r.f > 0) note += ' Předmět je mezi ohniskem a spojkou — tak funguje lupa.';
+      if(r.a2 < X_MIN || r.a2 > X_MAX || Math.abs(r.y2) > AY / S) note += ' Obraz je tak daleko nebo tak velký, že přesahuje okraj obrázku.';
+
+      // Z a y′ se dosazují jen zadané (přesné) hodnoty a, f, y — ne zaokrouhlené a′, Z —,
+      // aby výsledek vždy odpovídal zobrazeným číslům; „=“ jen tam, kde výsledek vychází přesně.
+      var den = tex(r.a, 1) + ' - ' + texPar(r.f, 1);
+      lines[1] += (exact(r.a2, 1) ? ' = ' : ' \\doteq ') + tex(r.a2, 1) + '\\ \\mathrm{cm}';
+      lines.push('Z &= -\\frac{a\'}{a} = -\\frac{f}{a - f}' + BR + '-\\frac{' + texPar(r.f, 1) + '}{' + den + '}' + (exact(r.Z, 2) ? ' = ' : ' \\doteq ') + tex(r.Z, 2));
+      lines.push('y\' &= Z\\,y = -\\frac{f\\,y}{a - f}' + BR + '-\\frac{' + texPar(r.f, 1) + ' \\cdot ' + tex(state.y, 1) + '}{' + den + '}\\ \\mathrm{cm}' + (exact(r.y2, 1) ? ' = ' : ' \\doteq ') + tex(r.y2, 1) + '\\ \\mathrm{cm}');
+    }
+    if(missed.length){
+      note += ' Ohniskový paprsek by prošel mimo čočku, proto není nakreslený — obraz sestrojte pomocí ostatních.';
+    }
+    posNote.innerHTML = note;   // jen pevné texty a čísla z fmt()
+
+    calcBox.textContent = '';
+    lines.forEach(function(l){
+      var d = document.createElement('div');
+      calcBox.appendChild(d);
+      if(window.katex){
+        try{ katex.render('\\begin{aligned}' + l + '\\end{aligned}', d, { displayMode:true, throwOnError:false }); }catch(e){ d.textContent = l; }
+      } else d.textContent = l;
+    });
+  }
+
+  // ---- výpis hodnot a, y, f nad obrázkem ----
+  var aValue = document.getElementById('a-value'), fValue = document.getElementById('f-value'), yValue = document.getElementById('y-value');
+  var phiValue = document.getElementById('phi-value');
+  function updateValues(){
+    aValue.innerHTML = eqHtml('a', state.a, 1);
+    yValue.innerHTML = eqHtml('y', state.y, 1);
+    fValue.innerHTML = eqHtml('f', f(), 1);
+    phiValue.innerHTML = '<i>φ</i>&nbsp;=&nbsp;' + fmt(100 / f(), 1) + '&nbsp;D';
+  }
+
+  // Měřítko popisků podle skutečné velikosti obrázku na obrazovce (viz K, LK).
+  function updateScale(){
+    var b = svg.getBoundingClientRect();
+    if(!b.width || !b.height) return false;   // záložka je skrytá — ponechat poslední měřítko
+    var rot = svg.closest('.applet-card').classList.contains('rotated');
+    var sc = Math.min((rot ? b.height : b.width) / W, (rot ? b.width : b.height) / H);
+    var k = Math.round(Math.max(1, Math.min(2.6, 0.8 / sc)) * 20) / 20;
+    if(k === K) return false;
+    K = k; LK = Math.min(K, 1.7);
+    H = Math.round(402 + 58 * K);
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+    if(clipRect) clipRect.setAttribute('height', H);
+    return true;
+  }
+  if(window.ResizeObserver) new ResizeObserver(function(){ if(updateScale()) render(); }).observe(svg);
+  // Řádky Výpočtu se lámou podle skutečné šířky bloku (i na celé obrazovce či při změně okna).
+  var CALC_MIN = 470;   // px — užší blok už se řádky na jeden řádek nevejdou
+  var calcWasNarrow = null;
+  function calcNarrow(){
+    var w = calcBox.clientWidth;
+    calcWasNarrow = w ? w < CALC_MIN : (calcWasNarrow === null ? window.innerWidth < 720 : calcWasNarrow);
+    return calcWasNarrow;
+  }
+  if(window.ResizeObserver) new ResizeObserver(function(){
+    var was = calcWasNarrow;
+    if(calcBox.clientWidth && (calcBox.clientWidth < CALC_MIN) !== was) render();
+  }).observe(calcBox);
+
+  var lastMissed = [];   // paprsky, které se při posledním vykreslení nenakreslily (mimo čočku)
+  function render(){
+    updateScale();
+    var r = compute();
+    obstacles = []; labelQueue = [];
+    drawStatic(r);
+    var missed = lastMissed = drawRays(r);
+    drawImage(r);
+    drawObject(r);
+    renderResults(r, missed);
+    updateValues();
+  }
+
+  // ---- ovládání ----
+
+  Array.prototype.forEach.call(document.querySelectorAll('#type-seg .chip'), function(b){
+    b.addEventListener('click', function(){
+      state.type = b.getAttribute('data-type');
+      Array.prototype.forEach.call(document.querySelectorAll('#type-seg .chip'), function(o){
+        var on = o === b;
+        o.classList.toggle('on', on);
+        o.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+      render();
+    });
+  });
+
+  var imageToggle = document.getElementById('image-toggle');
+  imageToggle.addEventListener('click', function(){
+    state.showImage = !state.showImage;
+    imageToggle.classList.toggle('on', state.showImage);
+    imageToggle.setAttribute('aria-pressed', state.showImage ? 'true' : 'false');
+    render();
+  });
+
+  Array.prototype.forEach.call(document.querySelectorAll('#ray-seg .chip'), function(b){
+    b.addEventListener('click', function(){
+      var k = b.getAttribute('data-ray');
+      state.rays[k] = !state.rays[k];
+      b.classList.toggle('on', state.rays[k]);
+      b.setAttribute('aria-pressed', state.rays[k] ? 'true' : 'false');
+      render();
+      var name = b.textContent.trim();
+      if(state.rays[k] && lastMissed.indexOf(name) >= 0)
+        showToast(name.charAt(0).toUpperCase() + name.slice(1) + ' paprsek se nezobrazil, protože by prošel mimo čočku.');
+    });
+  });
+
+  // krátká zpráva nad obrázkem, po chvíli sama zmizí
+  var toast = document.getElementById('ray-toast'), toastTimer = null;
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ toast.classList.remove('show'); }, 3500);
+  }
+
+  // ---- celá obrazovka ----
+  // Použije se Fullscreen API; kde chybí (např. Safari na iPhonu), aspoň se karta s apletem
+  // roztáhne přes celé okno. Styl obou případů řídí třída .is-full.
+  var card = document.getElementById('applet-card');
+  var fsBtn = document.getElementById('fs-btn'), fsLabel = document.getElementById('fs-label'), fsIcon = document.getElementById('fs-icon');
+  var ICON_ENTER = 'M1.5 5.5V1.5H5.5M10.5 1.5H14.5V5.5M14.5 10.5V14.5H10.5M5.5 14.5H1.5V10.5';
+  var ICON_EXIT = 'M5.5 1.5V5.5H1.5M14.5 5.5H10.5V1.5M10.5 14.5V10.5H14.5M1.5 10.5H5.5V14.5';
+  // Na mobilu se celá obrazovka zobrazí na šířku: zamkne se orientace, a kde to nejde
+  // (např. iPhone), otočí se karta pomocí CSS (třída .rotated), dokud je telefon na výšku.
+  var isPhone = window.matchMedia && matchMedia('(pointer:coarse)').matches && Math.min(screen.width, screen.height) < 600;
+  var portraitMq = window.matchMedia ? matchMedia('(orientation:portrait)') : null;
+  var orientLocked = false;
+  function updateRotated(){
+    var on = card.classList.contains('is-full') && isPhone && !orientLocked && !!portraitMq && portraitMq.matches;
+    if(on === card.classList.contains('rotated')) return;
+    card.classList.toggle('rotated', on);
+    render();
+  }
+  if(portraitMq){
+    if(portraitMq.addEventListener) portraitMq.addEventListener('change', updateRotated);
+    else if(portraitMq.addListener) portraitMq.addListener(updateRotated);
+  }
+  // Režim celé obrazovky prohlížeče nedovolí kartu otočit (transform se v něm ignoruje),
+  // proto se při nezdaru zámku na telefonu drženém na výšku opustí a karta jen vyplní okno.
+  var keepFull = false;
+  function lockFailed(){
+    if(isPhone && portraitMq && portraitMq.matches && fsElement()){
+      keepFull = true;
+      try{ (document.exitFullscreen || document.webkitExitFullscreen).call(document); }catch(e){ keepFull = false; }
+    }
+    updateRotated();
+  }
+  function lockLandscape(){
+    var so = screen.orientation;
+    if(!isPhone){ updateRotated(); return; }
+    if(!so || !so.lock){ lockFailed(); return; }
+    try{
+      so.lock('landscape').then(function(){ orientLocked = true; updateRotated(); }, lockFailed);
+    }catch(e){ lockFailed(); }
+  }
+  function setFullClass(on){
+    card.classList.toggle('is-full', on);
+    if(!on){
+      if(orientLocked){ try{ screen.orientation.unlock(); }catch(e){} }
+      orientLocked = false;
+    }
+    updateRotated();
+    document.documentElement.style.overflow = on ? 'hidden' : '';
+    fsLabel.textContent = on ? 'Zavřít celou obrazovku' : 'Celá obrazovka';
+    fsIcon.setAttribute('d', on ? ICON_EXIT : ICON_ENTER);
+    fsBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+  }
+  function fsElement(){ return document.fullscreenElement || document.webkitFullscreenElement || null; }
+  fsBtn.addEventListener('click', function(){
+    if(card.classList.contains('is-full')){
+      if(fsElement()){
+        (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+      } else setFullClass(false);
+      return;
+    }
+    var req = card.requestFullscreen || card.webkitRequestFullscreen;
+    setFullClass(true);
+    if(req){
+      try{
+        var p = req.call(card);
+        if(p && p.then) p.then(lockLandscape, lockLandscape);
+        else lockLandscape();
+      }catch(e){ lockLandscape(); }
+    } else lockLandscape();
+  });
+  function onFsChange(){
+    if(fsElement()) return;
+    if(keepFull){ keepFull = false; return; }
+    if(card.classList.contains('is-full')) setFullClass(false);
+  }
+  document.addEventListener('fullscreenchange', onFsChange);
+  document.addEventListener('webkitfullscreenchange', onFsChange);
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape' && card.classList.contains('is-full') && !fsElement()) setFullClass(false);
+  });
+
+  // ---- záložky (#aplet / #trenink v adrese otevře rovnou danou záložku) ----
+  var tabs = { teorie: document.getElementById('top-tab-teorie'), aplet: document.getElementById('top-tab-aplet'), trenink: document.getElementById('top-tab-trenink') };
+  var sections = { teorie: document.getElementById('theory-section'), aplet: document.getElementById('applet-section'), trenink: document.getElementById('trenink-section') };
+  function showTab(name){
+    for(var k in tabs){
+      tabs[k].classList.toggle('on', k === name);
+      sections[k].hidden = k !== name;
+    }
+    // skóre, série a úspěšnost v hlavičce jen u tréninku
+    document.getElementById('header-readout').hidden = name !== 'trenink';
+  }
+  Object.keys(tabs).forEach(function(k){ tabs[k].addEventListener('click', function(){ showTab(k); }); });
+  if(location.hash === '#aplet') showTab('aplet');
+  if(location.hash === '#trenink') showTab('trenink');
+
+  if(window.renderMathInElement){
+    try{
+      renderMathInElement(document.getElementById('theory-section'), {
+        delimiters: [{left:'\\(', right:'\\)', display:false}, {left:'\\[', right:'\\]', display:true}]
+      });
+    }catch(e){}
+  }
+  try{ makePanelsCollapsible(document.getElementById('theory-section')); }catch(e){}
+
+  buildSvg();
+  render();
+})();
+</script>
+
+<script>
+// Teorie — ukázka význačných paprsků (druh čočky × paprsek), kreslí se do jednoho obrázku
+(function(){
+  var NS = 'http://www.w3.org/2000/svg';
+  var svg = document.getElementById('demo-svg'), cap = document.getElementById('demo-caption');
+  if(!svg) return;
+  var demo = { lens:'convex', ray:'1' };
+  var X = 240, AY = 85, FP = 80;   // optický střed, osa, ohnisková vzdálenost (px)
+
+  function el(tag, attrs, parent){
+    var n = document.createElementNS(NS, tag);
+    for(var k in attrs) n.setAttribute(k, attrs[k]);
+    parent.appendChild(n);
+    return n;
+  }
+  function line(p, q, color, dash){
+    var a = { x1:p[0], y1:p[1], x2:q[0], y2:q[1], stroke:color, 'stroke-width':dash ? 1.5 : 2, 'stroke-linecap':'round' };
+    if(dash){ a['stroke-dasharray'] = dash; a.opacity = 0.85; }
+    el('line', a, svg);
+  }
+  // šipka ve směru p → q v polovině úsečky
+  function arrow(p, q, color){
+    var dx = q[0] - p[0], dy = q[1] - p[1], L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L, s = 9;
+    var x = (p[0] + q[0]) / 2 + ux * 4, y = (p[1] + q[1]) / 2 + uy * 4, bx = x - ux * s, by = y - uy * s;
+    el('path', { d:'M' + x + ',' + y + ' L' + (bx - uy * s * 0.5) + ',' + (by + ux * s * 0.5) + ' L' + (bx + uy * s * 0.5) + ',' + (by - ux * s * 0.5) + ' Z', fill:color }, svg);
+  }
+  function txt(s, x, y, attrs){
+    var t = el('text', Object.assign({ x:x, y:y, 'text-anchor':'middle', 'font-size':14, 'font-weight':700, 'font-style':'italic', fill:'var(--ink)' }, attrs || {}), svg);
+    t.textContent = s;
+  }
+  // prodloužení přímky p → q až k x = xe
+  function extend(p, q, xe){ return [xe, p[1] + (q[1] - p[1]) * (xe - p[0]) / (q[0] - p[0])]; }
+
+  var CAPS = {
+    convex: {
+      '1':['rovnoběžný', 'rovnoběžný s osou → láme se do obrazového ohniska F′'],
+      '2':['ohniskový', 'prochází předmětovým ohniskem F → láme se rovnoběžně s osou'],
+      '3':['středový', 'prochází optickým středem O → nemění směr']
+    },
+    concave: {
+      '1':['rovnoběžný', 'rovnoběžný s osou → láme se tak, jako by vycházel z ohniska F′'],
+      '2':['ohniskový', 'míří do předmětového ohniska F → láme se rovnoběžně s osou'],
+      '3':['středový', 'prochází optickým středem O → nemění směr']
+    }
+  };
+  var LABELS = { '1':'rovnoběžný s osou', '2':'ohniskový', '3':'procházející optickým středem' };
+
+  function draw(){
+    svg.textContent = '';
+    var convex = demo.lens === 'convex', c = 'var(--ray' + demo.ray + ')';
+    var fx = convex ? X - FP : X + FP, f2x = convex ? X + FP : X - FP;   // F a F′
+    el('line', { x1:14, y1:AY, x2:466, y2:AY, stroke:'var(--ink-soft)', 'stroke-width':1.1, 'stroke-dasharray':'12 4 2 4' }, svg);
+    // čočka
+    var top = 18, bot = 152, mid = AY, d;
+    if(convex) d = 'M' + X + ',' + top + ' Q' + (X + 24) + ',' + mid + ' ' + X + ',' + bot + ' Q' + (X - 24) + ',' + mid + ' ' + X + ',' + top + ' Z';
+    else d = 'M' + (X - 14) + ',' + top + ' L' + (X + 14) + ',' + top + ' Q' + (X - 8) + ',' + mid + ' ' + (X + 14) + ',' + bot + ' L' + (X - 14) + ',' + bot + ' Q' + (X + 8) + ',' + mid + ' ' + (X - 14) + ',' + top + ' Z';
+    el('path', { d:d, fill:'var(--lens)', stroke:'var(--ink)', 'stroke-width':2, 'stroke-linejoin':'round' }, svg);
+    el('line', { x1:X, y1:top, x2:X, y2:bot, stroke:'var(--ink-soft)', 'stroke-width':1, opacity:0.55 }, svg);
+
+    var labelY = { F:104, F2:104, O:104 };
+    if(demo.ray === '1'){
+      var h = 45, M = [X, h];
+      line([24, h], M, c); arrow([24, h], M, c);
+      var E = extend(M, [f2x, AY], 466);
+      if(!convex){ E = extend([f2x, AY], M, 466); line(M, [f2x, AY], c, '5 4'); labelY.F2 = 76; }
+      line(M, E, c); arrow(M, E, c);
+    } else if(demo.ray === '2'){
+      if(convex){
+        var M2 = [X, 45], S2 = extend(M2, [fx, AY], 24);
+        line(S2, M2, c); arrow(S2, [fx, AY], c);
+        labelY.F = 76;
+      } else {
+        var M3 = [X, 65], S3 = extend([fx, AY], M3, 24);
+        line(S3, M3, c); arrow(S3, M3, c);
+        line(M3, [fx, AY], c, '5 4');
+        M2 = M3;
+      }
+      line(M2, [466, M2[1]], c); arrow(M2, [466, M2[1]], c);
+    } else {
+      var S4 = [24, 30], E4 = extend(S4, [X, AY], 466);
+      line(S4, E4, c); arrow(S4, [X, AY], c); arrow([X, AY], E4, c);
+      labelY.O = 76;
+    }
+    [fx, f2x].forEach(function(x){ el('circle', { cx:x, cy:AY, r:3, fill:'var(--ink)' }, svg); });
+    txt('F', fx, labelY.F);
+    txt('F′', f2x, labelY.F2);
+    txt('O', convex ? X - 22 : X - 18, labelY.O);
+    txt('o', 28, demo.ray === '2' && convex ? 100.7 : 78.7, { 'font-size':13, 'font-weight':600, fill:'var(--ink-soft)' });
+    svg.setAttribute('aria-label', (convex ? 'Spojka' : 'Rozptylka') + ': paprsek ' + LABELS[demo.ray] + '.');
+    var cc = CAPS[demo.lens][demo.ray];
+    cap.innerHTML = '<b style="color:var(--ray' + demo.ray + ')">' + cc[0] + '</b> — ' + cc[1];
+  }
+  function bind(segId, key){
+    var btns = document.querySelectorAll('#' + segId + ' .chip');
+    Array.prototype.forEach.call(btns, function(b){
+      b.addEventListener('click', function(){
+        demo[key] = b.dataset[key];
+        Array.prototype.forEach.call(btns, function(o){
+          var on = o === b;
+          o.classList.toggle('on', on);
+          o.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        draw();
+      });
+    });
+  }
+  bind('demo-lens-seg', 'lens');
+  bind('demo-ray-seg', 'ray');
+  draw();
+})();
+</script>
+<script>
+// Trénink — zadaný předmět (nebo obraz) na mřížce, žák klikne na mřížový bod,
+// kde končí šipka hledaného obrazu (předmětu). Zadání se volí tak, aby všechny
+// hodnoty (f, a, a′, y, y′) vyšly v celých centimetrech a hledaný bod ležel v mřížce.
+(function(){
+  "use strict";
+  var NS = 'http://www.w3.org/2000/svg';
+  var svg = document.getElementById('tr-svg');
+  if(!svg) return;
+
+  // ---- geometrie mřížky: 1 dílek = 1 cm, optický střed O v x = 0, světlo zleva, y nahoru ----
+  var W = 960, H = 470, U = 24;
+  var X_MIN = -19, X_MAX = 19, Y_MAX = 8;
+  var X0 = 24 - X_MIN * U;          // optický střed O na plátně (px)
+  var AY = 24 + Y_MAX * U;          // optická osa (px)
+  var GRID_BOTTOM = AY + Y_MAX * U;
+  var DIM1 = GRID_BOTTOM + 22, DIM2 = GRID_BOTTOM + 46;
+  // Na telefonu je celá mřížka zmenšená na šířku displeje — popisky a čáry se zvětšují
+  // (K = násobek velikosti písma, LK = tloušťky čar), aby zůstaly čitelné; H, DIM1, DIM2 se přepočítají.
+  var K = 1, LK = 1;
+  var NB = ' ';
+  function px(x){ return X0 + x * U; }
+  function py(y){ return AY - y * U; }
+
+  var STATS_KEY = 'fyzika:cocky:stats';
+  var state = {
+    lens:'convex', givenMode:'random',
+    task:null, guess:null, revealed:false,
+    score:0, streak:0, bestStreak:0, answered:0, correct:0
+  };
+
+  function el(name, attrs, parent){
+    var e = document.createElementNS(NS, name);
+    for(var k in attrs) e.setAttribute(k, attrs[k]);
+    if(parent) parent.appendChild(e);
+    return e;
+  }
+  // Text „y = 3 cm“ se vysází s veličinou kurzívou a pevnými mezerami.
+  function text(str, x, y, attrs, parent){
+    var t = el('text', Object.assign({ x:x, y:y }, attrs || {}), parent);
+    var m = /^(\S+) = (.+)$/.exec(str);
+    if(m){
+      el('tspan', { 'font-style':'italic' }, t).textContent = m[1];
+      el('tspan', { 'font-style':'normal' }, t).textContent = NB + '=' + NB + m[2].replace(/ /g, NB);
+    } else t.textContent = str;
+    return t;
+  }
+  // čísla s desetinnou čárkou a typografickým minus
+  function num(v){
+    var r = Math.round(v * 100) / 100;
+    return String(r).replace('.', ',').replace('-', '−');
+  }
+  // totéž pro KaTeX
+  function tnum(v){ return String(Math.round(v * 100) / 100).replace('.', '{,}'); }
+  function tnumP(v){ return v < 0 ? '(' + tnum(v) + ')' : tnum(v); }
+  // Text s matematikou mezi $…$ (vysází KaTeX) jako HTML.
+  function esc(t){ return t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function mathHtml(str){
+    return str.split('$').map(function(part, i){
+      if(i % 2 === 0) return esc(part);
+      if(window.katex){ try{ return katex.renderToString(part, { throwOnError:false }); }catch(e){} }
+      return esc(part);
+    }).join('');
+  }
+
+  // ---- všechna zadání s celočíselnými hodnotami, která se vejdou do mřížky ----
+  function buildTasks(lens){
+    var out = [];
+    var fs = lens === 'convex' ? [2,3,4,5,6,7,8] : [-2,-3,-4,-5,-6,-8];
+    fs.forEach(function(f){
+      // předmět i obraz aspoň 3 cm, popř. 2 cm od čočky, ať je nezakryje její obrys
+      for(var a = 3; a <= -X_MIN - 1; a++){
+        if(a === f || (a * f) % (a - f) !== 0) continue;
+        var a2 = a * f / (a - f);
+        if(Math.abs(a2) < 2 || a2 < X_MIN + 1 || a2 > X_MAX - 1) continue;
+        for(var y = -7; y <= 7; y++){
+          if(y === 0 || (a2 * y) % a !== 0) continue;
+          var y2 = -a2 * y / a;
+          if(y2 === 0 || Math.abs(y2) > 7) continue;
+          out.push({ f:f, a:a, y:y, a2:a2, y2:y2 });
+        }
+      }
+    });
+    return out;
+  }
+  var TASKS = { convex: buildTasks('convex'), concave: buildTasks('concave') };
+
+  function pick(list){ return list[Math.floor(Math.random() * list.length)]; }
+
+  function newTask(){
+    var prev = state.task;
+    var list = TASKS[state.lens], t;
+    // jen ne stejné zadání dvakrát po sobě
+    for(var i = 0; i < 20; i++){
+      t = pick(list);
+      if(!prev || t.f !== prev.f || t.a !== prev.a || t.y !== prev.y) break;
+    }
+    var given = state.givenMode === 'random' ? (Math.random() < 0.5 ? 'object' : 'image') : state.givenMode;
+    state.task = Object.assign({ given:given }, t);
+    state.guess = null;
+    state.revealed = false;
+    fb.hidden = true;
+    updateSel();
+    btnCheck.textContent = 'Zkontrolovat';
+    updateBanner();
+    render();
+  }
+
+  function target(){
+    var t = state.task;
+    return t.given === 'object' ? { x:t.a2, y:t.y2 } : { x:-t.a, y:t.y };
+  }
+
+  // ---- kreslení ----
+  // Všechny čáry se nejdřív nakreslí a zapamatují (obstacles), popisky se pak
+  // rozmísťují až nakonec tak, aby je žádná čára ani jiný popisek nepřekrýval.
+  var layers = {}, obstacles = [], labelQueue = [];
+
+  function buildSvg(){
+    svg.textContent = '';
+    var defs = el('defs', {}, svg);
+    var cp = el('clipPath', { id:'tr-clip' }, defs);
+    el('rect', { x:px(X_MIN), y:py(Y_MAX), width:(X_MAX - X_MIN) * U, height:2 * Y_MAX * U }, cp);
+    var g = el('g', {}, svg);
+    for(var x = X_MIN; x <= X_MAX; x++){
+      el('line', { x1:px(x), y1:py(Y_MAX), x2:px(x), y2:py(-Y_MAX), stroke:'var(--line)', 'stroke-width':1 }, g);
+    }
+    for(var y = -Y_MAX; y <= Y_MAX; y++){
+      el('line', { x1:px(X_MIN), y1:py(y), x2:px(X_MAX), y2:py(y), stroke:'var(--line)', 'stroke-width':1 }, g);
+    }
+    el('line', { x1:px(X_MIN) - 10, y1:AY, x2:px(X_MAX) + 10, y2:AY, stroke:'var(--ink-soft)', 'stroke-width':1.4, 'stroke-dasharray':'14 4 2 4' }, g);
+    layers.lens = el('g', {}, svg);
+    layers.rays = el('g', { 'clip-path':'url(#tr-clip)' }, svg);
+    layers.arrows = el('g', {}, svg);
+    layers.labels = el('g', {}, svg);
+    layers.marks = el('g', {}, svg);
+    layers.hit = el('rect', { 'class':'trainer-hit', x:px(X_MIN) - U / 2, y:py(Y_MAX) - U / 2, width:(X_MAX - X_MIN + 1) * U, height:(2 * Y_MAX + 1) * U }, svg);
+    layers.hit.addEventListener('click', onClick);
+  }
+
+  // překážka pro popisky: úsečka v pixelech
+  function obstacle(x1, y1, x2, y2){ obstacles.push([x1, y1, x2, y2]); }
+  function obstacleBox(cx, cy, r){ obstacles.push([cx - r, cy - r, cx + r, cy - r], [cx + r, cy - r, cx + r, cy + r], [cx + r, cy + r, cx - r, cy + r], [cx - r, cy + r, cx - r, cy - r]); }
+
+  // Popisek: kotevní bod a seznam preferovaných posunů [dx, dy] středu popisku.
+  function label(str, ax, ay, prefs, style){
+    var st = Object.assign({}, style);
+    st['font-size'] = (style['font-size'] || 14) * K;
+    labelQueue.push({ str:str, ax:ax, ay:ay, prefs:prefs.map(function(p){ return [p[0] * K, p[1] * K]; }), style:st });
+  }
+
+  function segHitsRect(s, r){
+    // Liang–Barsky: protíná úsečka obdélník?
+    var x1 = s[0], y1 = s[1], dx = s[2] - x1, dy = s[3] - y1, t0 = 0, t1 = 1;
+    var p = [-dx, dx, -dy, dy], q = [x1 - r.x1, r.x2 - x1, y1 - r.y1, r.y2 - y1];
+    for(var i = 0; i < 4; i++){
+      if(Math.abs(p[i]) < 1e-9){ if(q[i] < 0) return false; }
+      else {
+        var t = q[i] / p[i];
+        if(p[i] < 0){ if(t > t1) return false; if(t > t0) t0 = t; }
+        else { if(t < t0) return false; if(t < t1) t1 = t; }
+      }
+    }
+    return true;
+  }
+  function boxesOverlap(a, b){ return a.x1 < b.x2 && b.x1 < a.x2 && a.y1 < b.y2 && b.y1 < a.y2; }
+
+  function placeLabels(){
+    var g = layers.labels; g.textContent = '';
+    var placed = [];
+    labelQueue.forEach(function(L){
+      var fs = L.style['font-size'] || 14;
+      var w = L.str.length * fs * 0.6 + 6, h = fs + 4;
+      // nejdřív preferovaná místa, pak kružnice kolem kotvy s rostoucím poloměrem
+      var cands = L.prefs.slice();
+      for(var r = 16 * K; r <= 90 * K; r += 8 * K){
+        for(var k = 0; k < 16; k++){
+          var ang = k * Math.PI / 8;
+          cands.push([Math.cos(ang) * (r + w / 2), Math.sin(ang) * (r + h / 2)]);
+        }
+      }
+      var best = null, bestCost = Infinity;
+      for(var i = 0; i < cands.length; i++){
+        var cx = L.ax + cands[i][0], cy = L.ay + cands[i][1];
+        var box = { x1:cx - w / 2, y1:cy - h / 2, x2:cx + w / 2, y2:cy + h / 2 };
+        if(box.x1 < 2 || box.x2 > W - 2 || box.y1 < 2 || box.y2 > GRID_BOTTOM + 8 * K) continue;
+        var cost = 0;
+        for(var j = 0; j < obstacles.length; j++) if(segHitsRect(obstacles[j], box)) cost += 10;
+        for(var m = 0; m < placed.length; m++) if(boxesOverlap(placed[m], box)) cost += 10;
+        if(cost === 0){ best = box; break; }
+        if(cost < bestCost){ bestCost = cost; best = box; }
+      }
+      if(!best) return;
+      placed.push(best);
+      // podklad v barvě plochy — i kdyby se místo úplně bez čar nenašlo, čára text nepřeškrtne
+      el('rect', { x:best.x1, y:best.y1, width:best.x2 - best.x1, height:best.y2 - best.y1, rx:3, fill:'var(--surface)', opacity:0.92 }, g);
+      text(L.str, (best.x1 + best.x2) / 2, (best.y1 + best.y2) / 2 + fs * 0.36, Object.assign({ 'text-anchor':'middle' }, L.style), g);
+    });
+    labelQueue = [];
+  }
+
+  // tenká čočka přes celou výšku mřížky (náčrtek — čím menší |f|, tím vypouklejší), ohniska F, F′
+  function drawLens(){
+    var g = layers.lens; g.textContent = '';
+    var t = state.task, convex = t.f > 0;
+    var top = py(Y_MAX + 0.3), bot = py(-Y_MAX - 0.3), mid = AY, h = (2 + 16 / Math.abs(t.f)) * LK, d, hw;
+    if(convex){
+      d = 'M' + X0 + ',' + top + ' Q' + (X0 + 2 * h) + ',' + mid + ' ' + X0 + ',' + bot + ' Q' + (X0 - 2 * h) + ',' + mid + ' ' + X0 + ',' + top + ' Z';
+      hw = h;
+    } else {
+      var E = 4 + h, k = 6 - E;
+      d = 'M' + (X0 - E) + ',' + top + ' L' + (X0 + E) + ',' + top + ' Q' + (X0 + k) + ',' + mid + ' ' + (X0 + E) + ',' + bot +
+        ' L' + (X0 - E) + ',' + bot + ' Q' + (X0 - k) + ',' + mid + ' ' + (X0 - E) + ',' + top + ' Z';
+      hw = E;
+    }
+    el('path', { d:d, fill:'var(--lens)', stroke:'var(--ink)', 'stroke-width':2.2 * LK, 'stroke-linejoin':'round' }, g);
+    el('line', { x1:X0, y1:top, x2:X0, y2:bot, stroke:'var(--ink-soft)', 'stroke-width':1, opacity:0.55 }, g);
+    obstacle(X0 - hw, top, X0 - hw, bot); obstacle(X0, top, X0, bot); obstacle(X0 + hw, top, X0 + hw, bot);
+    obstacle(px(X_MIN) - 10, AY, px(X_MAX) + 10, AY);   // optická osa
+    var ptStyle = { 'font-size':16, 'font-weight':700, 'font-style':'italic', fill:'var(--ink)' };
+    [{ x:-t.f, n:'F' }, { x:t.f, n:'F′' }].forEach(function(p){
+      el('circle', { cx:px(p.x), cy:AY, r:4 * LK, fill:'var(--ink)' }, g);
+      obstacleBox(px(p.x), AY, 4 * LK);
+      label(p.n, px(p.x), AY, [[0, 17], [0, -17], [-12, 17], [12, 17], [-12, -17], [12, -17]], ptStyle);
+    });
+    label('O', X0, AY, [[-hw / K - 10, 17], [hw / K + 10, 17], [-hw / K - 10, -17], [hw / K + 10, -17]], ptStyle);
+    label('o', px(X_MIN), AY, [[8, -14], [8, 14], [22, -14]], { 'font-size':16, 'font-style':'italic', 'font-weight':600, fill:'var(--ink-soft)' });
+  }
+
+  function arrowHead(parent, x, y, dx, dy, color, s){
+    var len = Math.hypot(dx, dy); if(len < 1e-9) return;
+    var ux = dx / len, uy = dy / len, bx = x - ux * s, by = y - uy * s;
+    el('path', { d:'M' + x + ',' + y + ' L' + (bx - uy * s * 0.5) + ',' + (by + ux * s * 0.5) + ' L' + (bx + uy * s * 0.5) + ',' + (by - ux * s * 0.5) + ' Z', fill:color }, parent);
+  }
+
+  // svislá šipka předmětu / obrazu s popisky
+  function drawArrow(x, y, kind){
+    var g = layers.arrows, t = state.task;
+    var isObj = kind === 'object';
+    var real = isObj || t.a2 > 0;
+    var color = isObj ? 'var(--ink)' : (real ? 'var(--real)' : 'var(--virtual)');
+    var X = px(x), Y1 = py(y), dir = y > 0 ? -1 : 1;
+    var ln = { x1:X, y1:AY, x2:X, y2:Y1 - dir * 11 * LK, stroke:color, 'stroke-width':4 * LK, 'stroke-linecap':'round' };
+    if(!real) ln['stroke-dasharray'] = (7 * LK) + ' ' + (5 * LK);
+    el('line', ln, g);
+    arrowHead(g, X, Y1, 0, Y1 - AY, color, 14 * LK);
+    obstacle(X - 7, AY, X - 7, Y1); obstacle(X + 7, AY, X + 7, Y1); obstacle(X, AY, X, Y1);
+    var p = isObj ? '' : '′';
+    // popisky přednostně na straně dál od druhé šipky
+    var side = isObj ? -1 : (t.a2 >= -t.a ? 1 : -1);
+    var st = { 'font-size':16, 'font-weight':700, 'font-style':'italic', fill:color };
+    label('B' + p, X, Y1, [[side * 16, 0], [-side * 16, 0], [side * 16, dir * 12], [-side * 16, dir * 12], [0, dir * 16]], st);
+    label('A' + p, X, AY, [[-side * 14, dir * -15], [side * 14, dir * -15], [-side * 14, dir * 15], [side * 14, dir * 15]], Object.assign({}, st, { 'font-size':15 }));
+    var yl = 'y' + p + ' = ' + num(y) + ' cm', half = yl.length * 14 * 0.3 + 12, mid = (AY + Y1) / 2;
+    var hv = (Y1 - AY) / 4 / K;   // posuny v label() se násobí K
+    label(yl, X, mid, [[side * half, 0], [-side * half, 0], [side * half, hv], [side * half, -hv],
+      [-side * half, hv], [-side * half, -hv]], { 'font-size':14, 'font-weight':600, fill:color });
+    var val = isObj ? t.a : t.a2;
+    dimension(g, px(x), X0, isObj ? DIM1 : DIM2, (isObj ? 'a' : 'a′') + ' = ' + num(val) + ' cm', color);
+  }
+
+  // kóta pod mřížkou — popisek sedí v přerušení kótovací čáry, takže ho čára nepřekrývá
+  function dimension(parent, x1, x2, yPx, label, color){
+    var l = Math.min(x1, x2), r = Math.max(x1, x2), lw = 1.3 * LK, tk = 6 * LK;
+    var fs = 14 * K, w = label.length * fs * 0.56 + 14 * K, tx = (l + r) / 2;
+    var inside = r - l >= w + 16;
+    if(!inside) tx = l - w / 2 - 8 < 4 ? r + w / 2 + 8 : l - w / 2 - 8;
+    tx = Math.max(w / 2 + 2, Math.min(W - w / 2 - 2, tx));
+    if(inside){
+      el('line', { x1:l, y1:yPx, x2:tx - w / 2, y2:yPx, stroke:color, 'stroke-width':lw }, parent);
+      el('line', { x1:tx + w / 2, y1:yPx, x2:r, y2:yPx, stroke:color, 'stroke-width':lw }, parent);
+    } else {
+      el('line', { x1:l, y1:yPx, x2:r, y2:yPx, stroke:color, 'stroke-width':lw }, parent);
+    }
+    el('line', { x1:l, y1:yPx - tk, x2:l, y2:yPx + tk, stroke:color, 'stroke-width':lw }, parent);
+    el('line', { x1:r, y1:yPx - tk, x2:r, y2:yPx + tk, stroke:color, 'stroke-width':lw }, parent);
+    text(label, tx, yPx + fs * 0.35, { 'font-size':fs, 'font-weight':600, fill:color, 'text-anchor':'middle', 'font-variant-numeric':'tabular-nums' }, parent);
+  }
+
+  // význačné paprsky řešení — všechny tři; tenká čočka je láme v rovině x = 0,
+  // takže jde o přesné přímky, které (popř. jejich prodloužení) procházejí bodem B′.
+  function drawRays(){
+    var g = layers.rays; g.textContent = '';
+    var t = state.task;
+    var B = { x:-t.a, y:t.y }, B2 = { x:t.a2, y:t.y2 }, F = { x:-t.f, y:0 }, F2 = { x:t.f, y:0 }, O = { x:0, y:0 };
+    var real = t.a2 > 0, concave = t.f < 0;
+    var DASH = (6 * LK) + ' ' + (5 * LK), DOTS = (2 * LK) + ' ' + (5 * LK);
+    function seg(p, q, color, dash, w){
+      var a = { x1:px(p.x), y1:py(p.y), x2:px(q.x), y2:py(q.y), stroke:color, 'stroke-width':(w || 2) * LK, 'stroke-linecap':'round' };
+      if(dash){ a['stroke-dasharray'] = dash; a.opacity = 0.85; }
+      el('line', a, g);
+      obstacle(a.x1, a.y1, a.x2, a.y2);
+    }
+    // šipka ve směru paprsku v daném místě úsečky
+    function mid(p, q, color, at){
+      var x1 = px(p.x), y1 = py(p.y), x2 = px(q.x), y2 = py(q.y);
+      var L = Math.hypot(x2 - x1, y2 - y1); if(L < 1e-9) return;
+      var ux = (x2 - x1) / L, uy = (y2 - y1) / L;
+      arrowHead(g, x1 + (x2 - x1) * at + ux * 5, y1 + (y2 - y1) * at + uy * 5, ux, uy, color, 9 * LK);
+    }
+    // lomený paprsek až k okraji mřížky (vpravo, nahoře nebo dole)
+    function toEdge(M, d){
+      var s = Infinity;
+      if(d.x > 0) s = Math.min(s, (X_MAX - M.x) / d.x);
+      if(d.y > 0) s = Math.min(s, (Y_MAX - M.y) / d.y);
+      if(d.y < 0) s = Math.min(s, (-Y_MAX - M.y) / d.y);
+      return { x:M.x + d.x * s, y:M.y + d.y * s };
+    }
+
+    // středový — prochází O a nemění směr
+    var c = 'var(--ray3)', E3 = toEdge(O, { x:t.a, y:-t.y });
+    seg(B, O, c); mid(B, O, c, 0.5);
+    seg(O, E3, c); mid(O, E3, c, 0.4);
+    if(!real && B2.x < B.x) seg(B, B2, c, DASH, 1.5);
+
+    // rovnoběžný — láme se přes F′ (u rozptylky jako by z F′ vycházel)
+    c = 'var(--ray1)';
+    var M1 = { x:0, y:t.y }, E1 = toEdge(M1, { x:1, y:-t.y / t.f });
+    seg(B, M1, c); mid(B, M1, c, 0.5);
+    seg(M1, E1, c); mid(M1, E1, c, 0.4);
+    if(concave) seg(M1, F2, c, DASH, 1.5);
+    else if(!real) seg(M1, B2, c, DASH, 1.5);
+
+    // ohniskový — přes F (u rozptylky do F), za čočkou rovnoběžně s osou ve výšce y′
+    c = 'var(--ray2)';
+    var M2 = { x:0, y:t.y2 }, E2 = toEdge(M2, { x:1, y:0 });
+    if(!concave && t.a > t.f){
+      seg(B, F, c); mid(B, F, c, 0.5);
+      seg(F, M2, c);
+    } else {
+      if(!concave) seg(F, B, c, DOTS, 1.4);   // jako by vycházel z F
+      seg(B, M2, c); mid(B, M2, c, 0.5);
+      if(concave) seg(M2, F, c, DASH, 1.5);
+    }
+    seg(M2, E2, c); mid(M2, E2, c, 0.4);
+    if(!real) seg(M2, B2, c, DASH, 1.5);
+  }
+
+  function drawMarks(){
+    var g = layers.marks; g.textContent = '';
+    if(state.guess){
+      var cls = 'guess-marker ' + (!state.revealed ? 'pending' : (isCorrect() ? 'correct' : 'wrong'));
+      el('circle', { 'class':cls, cx:px(state.guess.x), cy:py(state.guess.y), r:9 * LK, 'stroke-width':3 * LK }, g);
+    }
+  }
+
+  function isCorrect(){
+    var tg = target();
+    return !!state.guess && state.guess.x === tg.x && state.guess.y === tg.y;
+  }
+
+  // Měřítko popisků podle skutečné šířky mřížky na obrazovce (viz K, LK).
+  function updateScale(){
+    var w = svg.getBoundingClientRect().width;
+    if(!w) return false;   // záložka je skrytá — ponechat poslední měřítko
+    var k = Math.round(Math.max(1, Math.min(2.4, 0.8 * W / w)) * 20) / 20;
+    if(k === K) return false;
+    K = k; LK = Math.min(K, 1.7);
+    DIM1 = GRID_BOTTOM + 22 * K; DIM2 = GRID_BOTTOM + 48 * K;
+    H = Math.round(GRID_BOTTOM + 62 * K);
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+    return true;
+  }
+  if(window.ResizeObserver) new ResizeObserver(function(){ if(updateScale() && state.task) render(); }).observe(svg);
+
+  function render(){
+    var t = state.task;
+    updateScale();
+    obstacles = []; labelQueue = [];
+    layers.arrows.textContent = '';
+    layers.rays.textContent = '';
+    drawLens();
+    if(state.revealed) drawRays();
+    if(t.given === 'object' || state.revealed) drawArrow(-t.a, t.y, 'object');
+    if(t.given === 'image' || state.revealed) drawArrow(t.a2, t.y2, 'image');
+    placeLabels();
+    drawMarks();
+  }
+
+  function updateBanner(){
+    var t = state.task;
+    document.getElementById('tr-task-op').innerHTML = t.given === 'object' ? 'obraz (bod ' + mathHtml("$B'$") + ')' : 'předmět (bod ' + mathHtml('$B$') + ')';
+    // každá rovnost zvlášť a nezalomitelně („f = 6 cm“ zůstane pohromadě), zalomit lze jen za čárkou
+    var parts = t.given === 'object'
+      ? [['f', t.f], ['a', t.a], ['y', t.y]]
+      : [['f', t.f], ["a'", t.a2], ["y'", t.y2]];
+    document.getElementById('tr-task-given').innerHTML = parts.map(function(q){
+      return '<span class="nw">' + mathHtml('$' + q[0] + ' = ' + tnum(q[1]) + '\\ \\mathrm{cm}$') + '</span>';
+    }).join(', ');
+  }
+
+  function onClick(e){
+    if(state.revealed) return;
+    var pt = svg.createSVGPoint();
+    pt.x = e.clientX; pt.y = e.clientY;
+    var loc = pt.matrixTransform(svg.getScreenCTM().inverse());
+    var gx = Math.round((loc.x - X0) / U), gy = Math.round((AY - loc.y) / U);
+    setGuess(gx, gy);
+  }
+  var selEl = document.getElementById('tr-sel');
+  function setGuess(gx, gy){
+    state.guess = { x:Math.max(X_MIN, Math.min(X_MAX, gx)), y:Math.max(-Y_MAX, Math.min(Y_MAX, gy)) };
+    drawMarks();
+    updateSel();
+  }
+  // slovní popis vybraného bodu — na telefonu je mřížka malá, takže se podle něj dá ověřit ťuknutí
+  function updateSel(){
+    var g = state.guess;
+    if(!g){ selEl.textContent = 'Zatím není vybraný žádný bod.'; return; }
+    var xs = g.x === 0 ? 'v rovině čočky' : Math.abs(g.x) + NB + 'cm ' + (g.x < 0 ? 'před čočkou' : 'za čočkou');
+    var ys = g.y === 0 ? 'na optické ose' : Math.abs(g.y) + NB + 'cm ' + (g.y > 0 ? 'nad osou' : 'pod osou');
+    selEl.textContent = 'Vybraný bod: ' + xs + ', ' + ys + '.';
+  }
+  function nudge(dx, dy){
+    if(state.revealed) return;
+    var g = state.guess || { x:0, y:0 };
+    setGuess(g.x + dx, g.y + dy);
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('#tr-nudge button'), function(b){
+    b.addEventListener('click', function(){ nudge(+b.getAttribute('data-dx'), +b.getAttribute('data-dy')); });
+  });
+  // šipky na klávesnici posouvají vybraný bod (je-li otevřená záložka tréninku a fokus není v poli)
+  document.addEventListener('keydown', function(e){
+    if(document.getElementById('trenink-section').hidden || !state.guess || state.revealed) return;
+    var tg = e.target && e.target.tagName;
+    if(tg === 'INPUT' || tg === 'TEXTAREA' || tg === 'SELECT') return;
+    var m = { ArrowLeft:[-1, 0], ArrowRight:[1, 0], ArrowUp:[0, 1], ArrowDown:[0, -1] }[e.key];
+    if(!m) return;
+    e.preventDefault();
+    nudge(m[0], m[1]);
+  });
+
+  // ---- vyhodnocení ----
+  var fb = document.getElementById('tr-feedback');
+  var fbHead = document.getElementById('tr-feedback-headline');
+  var fbSteps = document.getElementById('tr-feedback-steps');
+  var btnCheck = document.getElementById('tr-check');
+  var btnSkip = document.getElementById('tr-skip');
+
+  // Řádky řešení: text s matematikou mezi $…$ (vysází KaTeX — veličiny kurzívou, číslo
+  // a jednotka se nerozdělí). Dosazují se jen zadané celočíselné hodnoty.
+  function solutionLines(){
+    var t = state.task, Z = -t.a2 / t.a, lines = [];
+    var zEq = Math.abs(Math.round(Z * 100) / 100 - Z) < 1e-9 ? ' = ' : ' \\doteq ';
+    var zLine = "$Z = -\\dfrac{a'}{a} = -\\dfrac{" + tnumP(t.a2) + '}{' + tnum(t.a) + '}' + zEq + tnum(Z) + '$';
+    if(t.given === 'object'){
+      lines.push("$a' = \\dfrac{a f}{a - f} = \\dfrac{" + tnum(t.a) + ' \\cdot ' + tnumP(t.f) + '}{' + tnum(t.a) + ' - ' + tnumP(t.f) + '} = ' + tnum(t.a2) + '\\ \\mathrm{cm}$');
+      lines.push(zLine);
+      lines.push("$y' = Z\\,y = -\\dfrac{a'\\,y}{a} = -\\dfrac{" + tnumP(t.a2) + ' \\cdot ' + tnumP(t.y) + '}{' + tnum(t.a) + '} = ' + tnum(t.y2) + '\\ \\mathrm{cm}$');
+    } else {
+      lines.push("$a = \\dfrac{a' f}{a' - f} = \\dfrac{" + tnumP(t.a2) + ' \\cdot ' + tnumP(t.f) + '}{' + tnum(t.a2) + ' - ' + tnumP(t.f) + '} = ' + tnum(t.a) + '\\ \\mathrm{cm}$');
+      lines.push(zLine);
+      lines.push("$y = \\dfrac{y'}{Z} = -\\dfrac{a\\,y'}{a'} = -\\dfrac{" + tnum(t.a) + ' \\cdot ' + tnumP(t.y2) + '}{' + tnumP(t.a2) + '} = ' + tnum(t.y) + '\\ \\mathrm{cm}$');
+    }
+    var props = [t.a2 > 0 ? 'skutečný' : 'zdánlivý', Z < 0 ? 'převrácený' : 'vzpřímený',
+      Math.abs(Z) > 1 ? 'zvětšený' : (Math.abs(Z) < 1 ? 'zmenšený' : 'stejně velký')];
+    lines.push('Obraz je ' + props.join(', ') + '.');
+    return lines;
+  }
+
+  function evaluate(bySkip){
+    if(state.revealed) return;
+    var ok = !bySkip && isCorrect();
+    state.revealed = true;
+    state.answered++;
+    if(ok){
+      state.score += 10; state.streak++; state.correct++;
+      if(state.streak > state.bestStreak){
+        state.bestStreak = state.streak; saveStats();
+        if(window.FyzikaScores) FyzikaScores.report('serie', state.bestStreak, false);
+      }
+    } else {
+      state.streak = 0;
+    }
+    render();
+    var tg = target(), what = state.task.given === 'object' ? "Bod $B'$ obrazu" : 'Bod $B$ předmětu';
+    fb.hidden = false;
+    if(bySkip){
+      fb.className = 'feedback neutral';
+      fbHead.textContent = 'Řešení';
+    } else if(ok){
+      fb.className = 'feedback ok';
+      fbHead.textContent = 'Správně!';
+    } else {
+      fb.className = 'feedback bad';
+      fbHead.textContent = state.guess ? 'Bohužel, špatně.' : 'Nevybrali jste žádný bod.';
+    }
+    fbSteps.textContent = '';
+    var lines = solutionLines();
+    lines.unshift(what + ' leží ' + (tg.x < 0 ? num(-tg.x) + NB + 'cm před čočkou' : num(tg.x) + NB + 'cm za čočkou') +
+      ' a ' + num(Math.abs(tg.y)) + NB + 'cm ' + (tg.y > 0 ? 'nad' : 'pod') + ' optickou osou.');
+    lines.forEach(function(s){ var sp = document.createElement('span'); sp.innerHTML = mathHtml(s); fbSteps.appendChild(sp); });
+    btnCheck.textContent = 'Další příklad →';
+    btnCheck.focus();
+    updateStats();
+  }
+
+  btnCheck.addEventListener('click', function(){
+    if(state.revealed){ newTask(); return; }
+    if(!state.guess && !confirm('Nevybrali jste žádný bod. Opravdu chcete zkontrolovat?')) return;
+    evaluate(false);
+  });
+  btnSkip.addEventListener('click', function(){
+    if(state.revealed){ newTask(); return; }
+    evaluate(true);
+  });
+
+  // Přepnutí čočky/zadání uprostřed příkladu: vybraný bod se nejdřív vyhodnotí
+  // (aby se přepínáním nedalo vyhnout špatné odpovědi), jinak rovnou nový příklad.
+  function bindSeg(id, key, attr){
+    var btns = document.querySelectorAll('#' + id + ' .chip');
+    Array.prototype.forEach.call(btns, function(b){
+      b.addEventListener('click', function(){
+        Array.prototype.forEach.call(btns, function(o){
+          o.classList.toggle('on', o === b);
+          o.setAttribute('aria-pressed', o === b ? 'true' : 'false');
+        });
+        state[key] = b.getAttribute(attr);
+        if(!state.revealed && state.guess){ evaluate(false); return; }
+        newTask();
+      });
+    });
+  }
+  bindSeg('tr-lens-seg', 'lens', 'data-lens');
+  bindSeg('tr-given-seg', 'givenMode', 'data-given');
+
+  // ---- statistika ----
+  var scoreEl = document.getElementById('stat-score');
+  var streakEl = document.getElementById('stat-streak');
+  var accEl = document.getElementById('stat-accuracy');
+  function loadStats(){
+    try{ var raw = localStorage.getItem(STATS_KEY); if(raw) state.bestStreak = JSON.parse(raw).bestStreak || 0; }catch(e){}
+  }
+  function saveStats(){
+    try{ localStorage.setItem(STATS_KEY, JSON.stringify({ bestStreak:state.bestStreak })); }catch(e){}
+  }
+  function updateStats(){
+    scoreEl.textContent = state.score;
+    streakEl.textContent = state.streak + (state.bestStreak > 0 ? ' / ' + state.bestStreak : '');
+    accEl.textContent = state.answered === 0 ? '—' : Math.round(100 * state.correct / state.answered) + ' %';
+  }
+  document.getElementById('tr-reset-stats').addEventListener('click', function(){
+    state.score = 0; state.streak = 0; state.answered = 0; state.correct = 0; state.bestStreak = 0;
+    try{ localStorage.removeItem(STATS_KEY); }catch(e){}
+    updateStats();
+  });
+  // Po synchronizaci s cloudem (auth.js) znovu načíst nejlepší sérii.
+  document.addEventListener('fyzika:scores-updated', function(){ state.bestStreak = 0; loadStats(); updateStats(); });
+
+  if(window.renderMathInElement){
+    try{
+      renderMathInElement(document.getElementById('trenink-section'), {
+        delimiters: [{left:'\\(', right:'\\)', display:false}]
+      });
+    }catch(e){}
+  }
+
+  buildSvg();
+  loadStats();
+  updateStats();
+  newTask();
+
+  // Po prvním zobrazení záložky se měřítko popisků přepočítá (dokud byla skrytá, šířka byla 0).
+  var tabBtn = document.getElementById('top-tab-trenink');
+  if(tabBtn) tabBtn.addEventListener('click', function(){ setTimeout(function(){ if(updateScale()) render(); }, 0); });
+})();
+</script>
+</body>
+</html>
