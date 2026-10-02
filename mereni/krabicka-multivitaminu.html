@@ -434,8 +434,8 @@ button.vbtn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
         <li><b>Zajištění.</b> Před odečtením můžete posuvné rameno aretačním šroubem zajistit, aby se hodnota nezměnila při vyjmutí předmětu.</li>
       </ul>
       <div class="callout warn">
-        <b>Šuplera s přesností 0,05 mm.</b> Hlavní stupnice má kromě milimetrových čárek i <b>půlmilimetrové</b> čárky a nonius má <b>10 dílků na 9,5 mm</b> — jeden dílek je 0,95 mm, tedy o 0,05 mm kratší než milimetr. Popisky 0–5 na noniu jsou desetiny milimetru. Hodnota = celé milimetry + 0,5 mm (je-li nulová čárka noniu za půlmilimetrovou čárkou) + pořadí kryjící se čárky noniu (počítané od nulové) · 0,05 mm.
-        Například: nulová čárka noniu je mezi 23,5 a 24 mm a kryje se 7. čárka → 23 + 0,5 + 0,35 = <b>23,85 mm</b>. Před měřením zkontrolujte, jakou přesnost vaše šuplera má, a podle toho určete chybu měřidla pro tabulku.
+        <b>Šuplera s přesností 0,05 mm.</b> Hlavní stupnice je po milimetrech, nonius má <b>20 dílků na 19 mm</b> — jeden dílek je 0,95 mm, tedy o 0,05 mm kratší než milimetr. Popsaná je každá druhá čárka noniu čísly 0–10 (desetiny milimetru). Celé milimetry se odečítají stejně, k nim se přičte pořadí kryjící se čárky noniu (počítané od nulové) · 0,05 mm.
+        Například: nulová čárka noniu je mezi 23 a 24 mm a kryje se 17. čárka (mezi popisky 8 a 9) → 23 + 17 · 0,05 = 23 + 0,85 = <b>23,85 mm</b>. Před měřením zkontrolujte, jakou přesnost vaše šuplera má, a podle toho určete chybu měřidla pro tabulku.
       </div>
     </div>
 
@@ -579,41 +579,40 @@ button.vbtn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
 
   // Šuplera s noniem.
   // o.hund — poloha nulové čárky noniu v setinách mm
-  // o.fine — přesnost 0,05 mm: hlavní stupnice s půlmilimetrovými čárkami, nonius 10 dílků = 9,5 mm;
-  //          jinak přesnost 0,1 mm: hlavní stupnice po 1 mm, nonius 10 dílků = 9 mm
+  // o.fine — přesnost 0,05 mm: nonius 20 dílků = 19 mm (popisky 0–10 = desetiny mm);
+  //          jinak přesnost 0,1 mm: nonius 10 dílků = 9 mm.
+  //          Hlavní stupnice je vždy po 1 mm. U o.fine je měřítko menší, aby nonius
+  //          (19 mm) zabíral na obrazovce stejně místa jako 9mm nonius u přesnosti 0,1 mm.
   // o.windowStart — první zobrazený milimetr hlavní stupnice (výchozí: kousek před noniem)
   // o.mainEvery — po kolika mm jsou popisky hlavní stupnice
   // o.highlight — zvýraznit nulovou čárku noniu a kryjící se čárku
   function drawVernier(svg, o){
     var fine = !!o.fine;
-    var PX = 20, X0 = 30, MAIN_Y = 80, VERN_Y = 100, span = 29;
+    var n = fine ? 20 : 10;                       // počet dílků noniu
+    var PX = fine ? 9.5 : 20;                     // pixelů na 1 mm (19 mm · 9,5 ≈ 9 mm · 20)
+    var X0 = 30, MAIN_Y = 80, VERN_Y = 100;
+    var span = Math.floor(600 / PX);
     var h = o.hund, whole = Math.floor(h / 100), frac = h % 100;
-    var half = fine && frac >= 50;
-    var k = fine ? (frac - (half ? 50 : 0)) / 5 : frac / 10;   // číslo kryjící se čárky noniu (od nulové)
-    var W = (o.windowStart != null) ? o.windowStart : Math.max(0, whole - 6);
-    var step = (fine ? 0.95 : 0.9) * PX;
+    var k = frac / (100 / n);                     // číslo kryjící se čárky noniu (od nulové)
+    var W = (o.windowStart != null) ? o.windowStart : Math.max(0, whole - (fine ? 12 : 6));
+    var step = (n - 1) / n * PX;                  // délka dílku noniu: 0,95 mm, resp. 0,9 mm
     svg.setAttribute('viewBox', '0 0 640 160');
     svg.innerHTML = '';
 
     svgAdd(svg, 'rect', {x: 10, y: 20, width: 620, height: MAIN_Y - 20, fill: 'none', stroke: 'var(--ink)', 'stroke-width': 1.5});
     svgAdd(svg, 'text', {x: 16, y: 36, 'font-size': 11, fill: 'var(--ink-soft)'}, 'hlavní stupnice (mm)');
     if(o.caption) svgAdd(svg, 'text', {x: 624, y: 36, 'font-size': 11, 'text-anchor': 'end', fill: 'var(--ink-soft)'}, o.caption);
+    var every = o.mainEvery || (fine ? 10 : 5);
     for(var i = 0; i <= span; i++){
       var mm = W + i, x = X0 + i * PX, major = mm % 5 === 0;
       var isWhole = o.highlight && mm === whole;
-      var redTick = isWhole && !half;
       svgAdd(svg, 'line', {
         x1: x, x2: x, y1: MAIN_Y, y2: MAIN_Y - (mm % 10 === 0 ? 20 : (major ? 16 : 10)),
-        stroke: redTick ? 'var(--danger)' : 'var(--ink)', 'stroke-width': redTick ? 2.4 : (major ? 1.6 : 1)
+        stroke: isWhole ? 'var(--danger)' : 'var(--ink)', 'stroke-width': isWhole ? 2.4 : (fine ? 1 : (major ? 1.6 : 1))
       });
-      if(fine && i < span){
-        var redHalf = isWhole && half;
-        svgAdd(svg, 'line', {
-          x1: x + PX / 2, x2: x + PX / 2, y1: MAIN_Y, y2: MAIN_Y - 6,
-          stroke: redHalf ? 'var(--danger)' : 'var(--ink)', 'stroke-width': redHalf ? 2.4 : 1
-        });
-      }
-      if(mm % (o.mainEvery || 5) === 0 || isWhole){
+      // u hustší stupnice (0,05 mm) se popisek těsně vedle zvýrazněného milimetru vynechá, aby se nepřekrývaly
+      var crowded = fine && o.highlight && !isWhole && Math.abs(mm - whole) < 4;
+      if((mm % every === 0 && !crowded) || isWhole){
         svgAdd(svg, 'text', {
           x: x, y: MAIN_Y - 24, 'font-size': 11, 'text-anchor': 'middle',
           fill: isWhole ? 'var(--danger)' : 'var(--ink)', 'font-weight': isWhole ? 700 : 400
@@ -622,27 +621,28 @@ button.vbtn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
     }
 
     var vx = X0 + (h / 100 - W) * PX;
-    svgAdd(svg, 'rect', {x: vx - 14, y: VERN_Y, width: 10 * step + 28, height: 46, fill: 'rgba(47,122,79,0.08)', stroke: 'var(--ink)', 'stroke-width': 1.5});
-    for(var j = 0; j <= 10; j++){
+    svgAdd(svg, 'rect', {x: vx - 14, y: VERN_Y, width: n * step + 28, height: 46, fill: 'rgba(47,122,79,0.08)', stroke: 'var(--ink)', 'stroke-width': 1.5});
+    for(var j = 0; j <= n; j++){
       var nx = vx + j * step;
       var hl = o.highlight && j === k;
+      var len = fine ? (j % 10 === 0 ? 18 : (j % 2 === 0 ? 13 : 8)) : (j % 5 === 0 ? 18 : 11);
       svgAdd(svg, 'line', {
-        x1: nx, x2: nx, y1: VERN_Y, y2: VERN_Y + (j % 5 === 0 ? 18 : (fine && j % 2 === 0 ? 14 : 11)),
-        stroke: hl ? 'var(--accent)' : 'var(--ink)', 'stroke-width': hl ? 2.6 : 1.2
+        x1: nx, x2: nx, y1: VERN_Y, y2: VERN_Y + len,
+        stroke: hl ? 'var(--accent)' : 'var(--ink)', 'stroke-width': hl ? 2.2 : (fine ? 1 : 1.2)
       });
-      // nonius s přesností 0,05 mm má popsanou každou druhou čárku 0–5 (desetiny mm)
+      // 20dílkový nonius má popsanou každou druhou čárku 0–10 (desetiny mm)
       var lab = fine ? (j % 2 === 0 ? j / 2 : null) : j;
       if(lab !== null){
         svgAdd(svg, 'text', {
-          x: nx, y: VERN_Y + 32, 'font-size': 10, 'text-anchor': 'middle',
+          x: nx, y: VERN_Y + 32, 'font-size': fine ? 9 : 10, 'text-anchor': 'middle',
           fill: hl ? 'var(--accent)' : 'var(--ink)', 'font-weight': hl ? 700 : 400
         }, lab);
       }
     }
     if(o.highlight){
       var mx = vx + k * step;
-      svgAdd(svg, 'line', {x1: mx, x2: mx, y1: MAIN_Y - 18, y2: VERN_Y + 18, stroke: 'var(--accent)', 'stroke-width': 1.6, 'stroke-dasharray': '4 3'});
-      svgAdd(svg, 'line', {x1: vx, x2: vx, y1: VERN_Y, y2: MAIN_Y - 4, stroke: 'var(--danger)', 'stroke-width': 1.6, 'stroke-dasharray': '2 3'});
+      svgAdd(svg, 'line', {x1: mx, x2: mx, y1: MAIN_Y - 18, y2: VERN_Y + 18, stroke: 'var(--accent)', 'stroke-width': 1.4, 'stroke-dasharray': '4 3'});
+      svgAdd(svg, 'line', {x1: vx, x2: vx, y1: VERN_Y, y2: MAIN_Y - 4, stroke: 'var(--danger)', 'stroke-width': 1.4, 'stroke-dasharray': '2 3'});
     }
   }
 
@@ -673,13 +673,9 @@ button.vbtn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
     }
     if(uh % 100 !== h % 100){
       if(fine){
-        var half = h % 100 >= 50, k = (h % 100 - (half ? 50 : 0)) / 5;
+        var k = (h % 100) / 5;
         var where = k % 2 === 0 ? 'čárka s popiskem ' + (k / 2) : 'krátká čárka mezi popisky ' + ((k - 1) / 2) + ' a ' + ((k + 1) / 2);
-        msgs.push(half
-          ? 'Nulová čárka noniu je až <b>za půlmilimetrovou čárkou</b> → přičtěte <b>0,5 mm</b>.'
-          : 'Nulová čárka noniu je ještě <b>před půlmilimetrovou čárkou</b> → půl milimetru se nepřičítá.');
-        msgs.push('Kryje se <b>' + k + '. čárka</b> noniu počítáno od nulové (' + where + ') → ' + k + ' · 0,05 mm = <b>' + fmtHund(k * 5, 2) + ' mm</b>.' +
-                  (half ? ' Dohromady 0,5 + ' + fmtHund(k * 5, 2) + ' = <b>' + fmtHund(h % 100, 2) + ' mm</b>.' : ''));
+        msgs.push('Setiny: kryje se <b>' + k + '. čárka</b> noniu počítáno od nulové (' + where + ') → ' + k + ' · 0,05 mm = <b>' + fmtHund(h % 100, 2) + ' mm</b>.');
       } else {
         var d = (h % 100) / 10;
         msgs.push('Desetiny: kryje se čárka noniu číslo <b>' + d + '</b> → <b>0,' + d + ' mm</b>.');
@@ -704,7 +700,7 @@ button.vbtn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
     var DESC = {
       lehka: 'Šuplera s přesností 0,1 mm. Celé milimetry jsou zadané, odečítáte jen desetiny podle noniu.',
       stredni: 'Šuplera s přesností 0,1 mm (nonius má 10 dílků na 9 mm). Odečítáte celou hodnotu na desetiny, např. 23,4.',
-      tezka: 'Šuplera s přesností 0,05 mm: hlavní stupnice má i půlmilimetrové čárky, nonius má 10 dílků na 9,5 mm (popisky 0–5 jsou desetiny mm). Odečítáte celou hodnotu na setiny, např. 23,85.'
+      tezka: 'Šuplera s přesností 0,05 mm: nonius má 20 dílků na 19 mm, popisky 0–10 jsou desetiny mm (stupnice je zmenšená, aby se vešla). Odečítáte celou hodnotu na setiny, např. 23,85.'
     };
 
     // level = vybraná obtížnost; tLevel = obtížnost, se kterou byla vytvořena právě zobrazená úloha
@@ -714,7 +710,7 @@ button.vbtn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
 
     function decimals(){ return tLevel === 'tezka' ? 2 : 1; }
     function draw(highlight){
-      drawVernier(svg, {hund: hund, fine: tLevel === 'tezka', mainEvery: 5, highlight: highlight});
+      drawVernier(svg, {hund: hund, fine: tLevel === 'tezka', highlight: highlight});
     }
     function updateStats(){
       document.getElementById('trn-streak').textContent = streak;
