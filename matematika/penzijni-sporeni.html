@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kalkulačka penzijního spoření</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../spolecne/styl.css">
+<style>
+:root{
+  --paper:#f5f0e3;
+  --surface:#fffcf5;
+  --surface-2:#ece4d1;
+  --ink:#212b34;
+  --ink-soft:#5d6b76;
+  --line:rgba(33,43,52,0.12);
+  --accent:#c9581f;
+  --accent-ink:#fff8f0;
+  --success:#28794f;
+  --success-bg:#e3efe0;
+  --danger:#b3392b;
+  --danger-bg:#f5e4de;
+  --focus:#1e6f66;
+}
+
+.panel p{ margin:0 0 8px; font-size:0.9rem; line-height:1.55; }
+.panel p:last-child{ margin-bottom:0; }
+.panel b{ color:var(--ink); }
+.panel h3{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700; font-size:1.05rem; letter-spacing:0.01em;
+  margin:16px 0 6px;
+}
+.panel h3:first-child{ margin-top:0; }
+.katex{ font-size:1.05em; }
+.formula-box{
+  background:var(--surface-2);
+  border-radius:8px; padding:12px 16px; margin:10px 0;
+  font-size:1.05rem; text-align:center; overflow-x:auto;
+}
+
+/* ---------- vstupy ---------- */
+.field-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(190px, 1fr));
+  gap:14px 18px;
+}
+.field label, .field .label{
+  display:block;
+  font-size:0.8rem; font-weight:600; color:var(--ink-soft);
+  margin-bottom:5px;
+}
+.input-wrap{
+  display:flex; align-items:center;
+  border:1px solid var(--line);
+  border-radius:8px;
+  background:#fff;
+  padding:0 12px;
+  transition:border-color .12s;
+}
+.input-wrap:focus-within{ border-color:var(--focus); }
+.input-wrap input{
+  flex:1; min-width:0;
+  border:none; outline:none; background:transparent;
+  font-family:'IBM Plex Mono', monospace; font-weight:600; font-size:1.05rem;
+  color:var(--ink);
+  padding:10px 0;
+  font-variant-numeric:tabular-nums;
+}
+.input-wrap .suffix{ color:var(--ink-soft); font-size:0.85rem; margin-left:8px; white-space:nowrap; }
+
+.block{ margin-top:18px; padding-top:16px; border-top:1px solid var(--line); }
+.block:first-child{ margin-top:0; padding-top:0; border-top:none; }
+.block-title{
+  font-size:0.8rem; font-weight:600; color:var(--ink-soft); margin-bottom:8px;
+}
+
+.switch{
+  display:flex; align-items:center; gap:10px;
+  cursor:pointer; user-select:none;
+  font-size:0.92rem; font-weight:600;
+  min-height:32px;
+}
+.switch input{ position:absolute; opacity:0; width:0; height:0; }
+.switch .track{
+  flex:none; width:40px; height:22px; border-radius:999px;
+  background:var(--surface-2); border:1px solid var(--line);
+  position:relative; transition:background .15s;
+}
+.switch .track::after{
+  content:""; position:absolute; top:2px; left:2px;
+  width:16px; height:16px; border-radius:50%;
+  background:var(--ink-soft); transition:transform .15s, background .15s;
+}
+.switch input:checked + .track{ background:var(--accent); border-color:var(--accent); }
+.switch input:checked + .track::after{ transform:translateX(18px); background:var(--accent-ink); }
+.switch input:focus-visible + .track{ outline:2px solid var(--focus); outline-offset:2px; }
+
+.sub{ margin-top:10px; padding-left:50px; }
+.sub[hidden]{ display:none; }
+.sub .hint{ margin-top:8px; line-height:1.45; }
+.sub .input-wrap{ max-width:170px; }
+
+.fund-grid{ display:flex; flex-wrap:wrap; gap:8px; }
+.fund-grid .chip{ flex-direction:column; align-items:flex-start; gap:1px; border-radius:12px; padding:8px 14px; text-align:left; }
+.fund-grid .chip .rate{ font-size:0.72rem; opacity:0.8; font-family:'IBM Plex Mono', monospace; }
+
+.warn{
+  margin-top:10px; padding:10px 12px; border-radius:8px;
+  background:var(--danger-bg); color:var(--danger);
+  font-size:0.86rem; line-height:1.45;
+}
+.warn[hidden]{ display:none; }
+
+/* ---------- výsledky ---------- */
+.result-main{
+  background:var(--ink); color:var(--accent-ink);
+  border-radius:12px; padding:18px 20px; margin-bottom:12px;
+}
+.result-main .label{ font-size:0.74rem; text-transform:uppercase; letter-spacing:0.1em; opacity:0.75; font-weight:600; }
+.result-main .value{
+  font-family:'IBM Plex Mono', monospace; font-weight:700;
+  font-size:clamp(1.7rem, 6vw, 2.5rem); margin-top:4px;
+  font-variant-numeric:tabular-nums;
+}
+.result-main .sub-line{ font-size:0.82rem; opacity:0.8; margin-top:2px; }
+
+.stat-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:10px; }
+.stat{ background:var(--surface-2); border-radius:10px; padding:11px 14px; }
+.stat .label{ font-size:0.7rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-soft); font-weight:600; }
+.stat .value{
+  font-family:'IBM Plex Mono', monospace; font-weight:600; font-size:1.05rem; margin-top:3px;
+  font-variant-numeric:tabular-nums;
+}
+.stat .value.pos{ color:var(--success); }
+.stat .value.neg{ color:var(--danger); }
+.stat[hidden]{ display:none; }
+
+/* ---------- graf ---------- */
+.chart-box{ position:relative; }
+.chart-box svg{ width:100%; height:auto; display:block; touch-action:pan-y; }
+.chart-box text{ font-family:'Work Sans', sans-serif; font-size:11px; fill:var(--ink-soft); }
+.chart-legend{ display:flex; flex-wrap:wrap; gap:6px 18px; font-size:0.82rem; margin-top:8px; color:var(--ink-soft); }
+.chart-legend i{ display:inline-block; width:18px; height:3px; border-radius:2px; vertical-align:middle; margin-right:6px; }
+.chart-tip{
+  position:absolute; pointer-events:none; z-index:2;
+  background:var(--ink); color:var(--accent-ink);
+  border-radius:8px; padding:8px 10px; font-size:0.78rem; line-height:1.5;
+  white-space:nowrap; transform:translate(-50%, 0);
+  font-variant-numeric:tabular-nums;
+}
+.chart-tip b{ color:inherit; }
+.chart-tip[hidden]{ display:none; }
+
+/* ---------- tabulka ---------- */
+details.table-details summary{
+  cursor:pointer; font-weight:600; font-size:0.9rem; padding:4px 0;
+}
+details.table-details summary:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+.theory-table-wrap{ overflow-x:auto; margin:10px 0 4px; }
+.theory-table{ border-collapse:collapse; font-size:0.84rem; width:100%; min-width:560px; }
+.theory-table th, .theory-table td{
+  border:1px solid var(--line); padding:7px 10px; text-align:right;
+  font-family:'IBM Plex Mono', monospace; font-variant-numeric:tabular-nums;
+}
+.theory-table thead th{
+  background:var(--surface-2); color:var(--ink-soft);
+  font-family:'Work Sans', sans-serif;
+  font-weight:600; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.05em;
+}
+.theory-table tbody tr:nth-child(even) td{ background:rgba(33,43,52,0.02); }
+.theory-table td:first-child, .theory-table th:first-child{ text-align:center; }
+
+.note{
+  display:flex; gap:10px; align-items:flex-start;
+  background:var(--surface-2); border-radius:10px; padding:11px 14px; margin-top:10px;
+}
+.note p{ margin:0; font-size:0.84rem; line-height:1.5; }
+
+.tab-section[hidden]{ display:none; }
+
+@media (max-width:520px){
+  .sub{ padding-left:0; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <div class="brand">
+    <div class="brand-lockup">
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <line x1="5" y1="34" x2="36" y2="34" stroke="var(--accent)" stroke-width="2"/>
+        <line x1="5" y1="34" x2="5" y2="6" stroke="var(--accent)" stroke-width="2"/>
+        <path d="M8 30 C 16 29, 22 24, 28 15 S 34 9, 36 8" stroke="var(--accent)" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <circle cx="36" cy="8" r="2.4" fill="var(--accent)"/>
+      </svg>
+      <div class="brand-text">
+        <h1>Penzijní spoření</h1>
+        <p>kalkulačka výnosů se složeným úročením</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="top-tabs">
+    <button class="toptab on" id="top-tab-kalkulacka" data-tab="kalkulacka">Kalkulačka</button>
+    <button class="toptab" id="top-tab-postup" data-tab="postup">Jak se počítá</button>
+  </div>
+
+  <div id="view-kalkulacka" class="tab-section">
+
+    <div class="panel">
+      <div class="panel-title">Vstupy</div>
+
+      <div class="block">
+        <div class="field-grid">
+          <div class="field">
+            <label for="in-initial">Počáteční vklad</label>
+            <div class="input-wrap"><input id="in-initial" type="text" inputmode="decimal" value="10000" autocomplete="off"><span class="suffix">Kč</span></div>
+          </div>
+          <div class="field">
+            <label for="in-monthly">Pravidelný měsíční vklad</label>
+            <div class="input-wrap"><input id="in-monthly" type="text" inputmode="decimal" value="1000" autocomplete="off"><span class="suffix">Kč</span></div>
+          </div>
+          <div class="field">
+            <label for="in-start">Věk na začátku spoření</label>
+            <div class="input-wrap"><input id="in-start" type="text" inputmode="numeric" value="25" autocomplete="off"><span class="suffix">let</span></div>
+          </div>
+          <div class="field">
+            <label for="in-end">Věk na konci spoření</label>
+            <div class="input-wrap"><input id="in-end" type="text" inputmode="numeric" value="65" autocomplete="off"><span class="suffix">let</span></div>
+          </div>
+        </div>
+        <div class="warn" id="warn" hidden></div>
+      </div>
+
+      <div class="block">
+        <div class="block-title">Typ fondu</div>
+        <div class="fund-grid" id="fund-row" role="radiogroup" aria-label="Typ fondu"></div>
+        <p class="hint" id="fund-hint" style="margin-top:8px;line-height:1.45"></p>
+      </div>
+
+      <div class="block">
+        <label class="switch"><input type="checkbox" id="sw-fee"><span class="track"></span>Započítat poplatek za správu</label>
+        <div class="sub" id="sub-fee" hidden>
+          <div class="row" id="fee-row" role="radiogroup" aria-label="Výše poplatku"></div>
+          <p class="hint">Roční poplatek z objemu spravovaných prostředků.</p>
+        </div>
+      </div>
+
+      <div class="block">
+        <label class="switch"><input type="checkbox" id="sw-state" checked><span class="track"></span>Započítat státní příspěvek</label>
+        <div class="sub" id="sub-state">
+          <p class="hint" id="state-hint"></p>
+        </div>
+      </div>
+
+      <div class="block">
+        <label class="switch"><input type="checkbox" id="sw-infl"><span class="track"></span>Započítat inflaci (výsledek v dnešních cenách)</label>
+        <div class="sub" id="sub-infl" hidden>
+          <div class="field">
+            <label for="in-infl">Průměrná roční inflace</label>
+            <div class="input-wrap"><input id="in-infl" type="text" inputmode="decimal" value="2,5" autocomplete="off"><span class="suffix">% / rok</span></div>
+          </div>
+          <p class="hint">Všechny částky se pak přepočtou na dnešní kupní sílu koruny.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-result">
+      <div class="panel-title">Výsledek</div>
+      <div class="result-main">
+        <div class="label" id="res-label">Naspořená částka</div>
+        <div class="value" id="res-final">—</div>
+        <div class="sub-line" id="res-sub"></div>
+      </div>
+      <div class="stat-grid">
+        <div class="stat"><div class="label">Vlastní vklady</div><div class="value" id="res-own">—</div></div>
+        <div class="stat" id="stat-state"><div class="label">Státní příspěvek</div><div class="value" id="res-state">—</div></div>
+        <div class="stat"><div class="label">Výnos z investic</div><div class="value" id="res-gain">—</div></div>
+        <div class="stat" id="stat-fee"><div class="label">Zaplacené poplatky</div><div class="value" id="res-fee">—</div></div>
+        <div class="stat"><div class="label">Násobek vlastních vkladů</div><div class="value" id="res-mult">—</div></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Vývoj spoření</div>
+      <div class="chart-box" id="chart-box">
+        <svg id="chart" viewBox="0 0 720 340" role="img" aria-label="Graf vývoje naspořené částky"></svg>
+        <div class="chart-tip" id="chart-tip" hidden></div>
+      </div>
+      <div class="chart-legend">
+        <span><i style="background:var(--accent)"></i>Hodnota účtu</span>
+        <span><i style="background:var(--focus)"></i>Vloženo (včetně státního příspěvku)</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <details class="table-details">
+        <summary>Tabulka po jednotlivých letech</summary>
+        <div class="theory-table-wrap">
+          <table class="theory-table" id="year-table">
+            <thead><tr>
+              <th>Věk</th><th>Dynamický podíl</th><th>Roční výnos</th><th>Vlastní vklady</th><th>Státní příspěvek</th><th>Poplatky</th><th>Hodnota účtu</th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="hint">Hodnoty jsou vždy na konci daného roku spoření (věk = dosažený věk). Sloupce „Roční výnos“ a „Dynamický podíl“ platí pro rok, který právě skončil.</p>
+      </details>
+    </div>
+  </div>
+
+  <div id="view-postup" class="tab-section" hidden>
+
+    <div class="panel">
+      <div class="panel-title">Princip výpočtu</div>
+      <p>Spoření se počítá po <b>měsících</b>. Na začátku se vloží počáteční vklad, a pak se na začátku každého měsíce přičte pravidelný vklad. Během měsíce se zůstatek zhodnotí měsíční úrokovou mírou odvozenou z ročního výnosu fondu:</p>
+      <div class="formula-box">\[ i_m = (1 + i_r)^{1/12} - 1 \]</div>
+      <p>Zůstatek \(Z\) se tedy mění podle vztahu</p>
+      <div class="formula-box">\[ Z_{k+1} = (Z_k + V)\,(1 + i_m) \]</div>
+      <p>kde \(V\) je měsíční vklad. Roční výnos \(i_r\) je průměrný výnos fondu (konzervativní 1,5 %, vyvážený 4 %, dynamický 8 %). Výnosy se neustále připisují ke zůstatku, takže se úročí i dřívější výnosy (<b>složené úročení</b>).</p>
+
+      <h3>Strategie životního cyklu</h3>
+      <p>Do 43 let je celý zůstatek v dynamickém fondu. Od 43 do 60 let se každý rok přesune rovnoměrně část investic do konzervativního fondu, takže v 60 letech je vše v konzervativním fondu. Podíl dynamického fondu v roce, který začíná v těchto letech věku \(a\), je</p>
+      <div class="formula-box">\[ p(a) = \frac{60 - a}{17}\qquad (43 \le a \le 60) \]</div>
+      <p>Roční výnos je pak vážený průměr \( i_r = p\cdot 8\,\% + (1-p)\cdot 1{,}5\,\% \). Pro \(a \le 43\) je \(p = 1\), pro \(a \ge 60\) je \(p = 0\). Přesun se provádí s celým dosavadním zůstatkem, ne jen s novými vklady.</p>
+
+      <h3>Poplatek za správu</h3>
+      <p>Poplatek se každý měsíc odečte z aktuálního zůstatku ve výši \(1/12\) ročního poplatku (0,5 % nebo 1 % ročně).</p>
+
+      <h3>Státní příspěvek</h3>
+      <p>Za každý měsíc se státní příspěvek rovná 20 % z měsíčního vkladu, ale jen pokud je vklad aspoň 500 Kč, a započítává se nejvýše z vkladu 1 700 Kč (tedy maximálně 340 Kč měsíčně):</p>
+      <div class="formula-box">\[ P = 0{,}2 \cdot \min(V;\ 1700\ \mathrm{Kč})\quad\text{pro } V \ge 500\ \mathrm{Kč},\qquad P = 0\ \text{jinak} \]</div>
+      <p>Příspěvky se sčítají a na účet se připíšou <b>jednou za čtvrtletí</b> (po třech měsících spoření). Případný nedokončený poslední čtvrtletí se připíše na konci spoření.</p>
+
+      <h3>Inflace</h3>
+      <p>Při zapnuté inflaci \(\pi\) se každá částka vzniklá v čase \(t\) (v letech od začátku spoření) přepočte na dnešní ceny:</p>
+      <div class="formula-box">\[ \text{částka v dnešních cenách} = \frac{\text{nominální částka}}{(1+\pi)^{t}} \]</div>
+      <p>Zobrazený výnos je pak <b>reálný výnos</b>, tedy po odečtení znehodnocení peněz.</p>
+
+      <div class="note">
+        <p>Předpoklady: výnosy fondů jsou konstantní průměr (skutečné výnosy kolísají), měsíční vklad se v průběhu let nemění (není indexován inflací) a nezapočítává se daňová úleva ani zaměstnavatelský příspěvek. Jde o orientační výpočet, ne o investiční radu.</p>
+      </div>
+    </div>
+  </div>
+
+  <footer>Orientační kalkulačka, výsledky nejsou zárukou budoucích výnosů.</footer>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  // ---------- konstanty modelu ----------
+  var FUNDS = [
+    {id:'kons', name:'Konzervativní',  rate:1.5},
+    {id:'vyv',  name:'Vyvážený',       rate:4},
+    {id:'dyn',  name:'Dynamický',      rate:8},
+    {id:'cyk',  name:'Strategie životního cyklu', rate:null}
+  ];
+  var R_DYN = 8, R_KONS = 1.5;
+  var CYCLE_FROM = 43, CYCLE_TO = 60;
+  var FEES = [0.5, 1];
+  var STATE_RATE = 0.2, STATE_MIN = 500, STATE_CAP = 1700;
+
+  var fmtNum = new Intl.NumberFormat('cs-CZ', {maximumFractionDigits:0});
+  var fmtDec = new Intl.NumberFormat('cs-CZ', {maximumFractionDigits:1});
+  var fmtPct = new Intl.NumberFormat('cs-CZ', {maximumFractionDigits:1});
+
+  // ---------- model (čistá funkce) ----------
+  function dynShare(age){
+    if(age <= CYCLE_FROM) return 1;
+    if(age >= CYCLE_TO) return 0;
+    return (CYCLE_TO - age) / (CYCLE_TO - CYCLE_FROM);
+  }
+
+  // Roční výnos (v %) a podíl dynamického fondu pro dané fondové nastavení a věk.
+  function yearReturn(fund, age){
+    if(fund === 'kons') return {r:R_KONS, share:0};
+    if(fund === 'vyv')  return {r:4, share:null};
+    if(fund === 'dyn')  return {r:R_DYN, share:1};
+    var w = dynShare(age);
+    return {r: w*R_DYN + (1-w)*R_KONS, share:w};
+  }
+
+  function stateMonthly(monthly){
+    return monthly >= STATE_MIN ? STATE_RATE * Math.min(monthly, STATE_CAP) : 0;
+  }
+
+  /*
+   * p: {initial, monthly, startAge, endAge, fund, fee (% nebo 0), state (bool), infl (% nebo 0)}
+   * Vrací {years:[...], final, own, state, fee, gain}; všechny částky v dnešních cenách,
+   * pokud je infl > 0 (jinak nominálně).
+   */
+  function simulate(p){
+    var months = (p.endAge - p.startAge) * 12;
+    var defl = function(m){ return p.infl > 0 ? Math.pow(1 + p.infl/100, -m/12) : 1; };
+    var bal = p.initial;
+    var ownR = p.initial, stateR = 0, feeR = 0;
+    var stateQ = 0;
+    var stateM = p.state ? stateMonthly(p.monthly) : 0;
+    var years = [{age:p.startAge, t:0, bal:p.initial, own:p.initial, state:0, fee:0, share:null, r:null}];
+    var points = [{t:0, bal:p.initial, dep:p.initial}];
+
+    for(var m = 0; m < months; m++){
+      var age = p.startAge + Math.floor(m/12);
+      var yr = yearReturn(p.fund, age);
+      var im = Math.pow(1 + yr.r/100, 1/12) - 1;
+
+      bal += p.monthly;
+      ownR += p.monthly * defl(m);
+      stateQ += stateM;
+
+      bal *= (1 + im);
+      var f = bal * (p.fee/100) / 12;
+      bal -= f;
+      feeR += f * defl(m+1);
+
+      var lastMonth = (m === months-1);
+      if(stateQ > 0 && ((m+1) % 3 === 0 || lastMonth)){
+        bal += stateQ;
+        stateR += stateQ * defl(m+1);
+        stateQ = 0;
+      }
+
+      var d = defl(m+1);
+      points.push({t:(m+1)/12, bal:bal*d, dep:ownR+stateR});
+      if((m+1) % 12 === 0){
+        years.push({age:age+1, t:(m+1)/12, bal:bal*d, own:ownR, state:stateR, fee:feeR, share:yr.share, r:yr.r});
+      }
+    }
+    var fin = bal * defl(months);
+    return {years:years, points:points, final:fin, own:ownR, state:stateR, fee:feeR, gain:fin-ownR-stateR};
+  }
+
+  // ---------- vstupy ----------
+  var $ = function(id){ return document.getElementById(id); };
+  var S = {fund:'cyk', fee:0.5};
+
+  function parseNum(s){
+    var v = parseFloat(String(s).replace(/[\s ]/g,'').replace(',','.'));
+    return isFinite(v) ? v : NaN;
+  }
+  function keepChars(el, re){
+    el.addEventListener('input', function(){
+      var v = el.value.replace(re,'');
+      if(v !== el.value){ var pos = el.selectionStart - (el.value.length - v.length); el.value = v; try{ el.setSelectionRange(pos,pos); }catch(e){} }
+      update();
+    });
+  }
+  keepChars($('in-initial'), /[^0-9,.\s]/g);
+  keepChars($('in-monthly'), /[^0-9,.\s]/g);
+  keepChars($('in-infl'),    /[^0-9,.]/g);
+  keepChars($('in-start'),   /[^0-9]/g);
+  keepChars($('in-end'),     /[^0-9]/g);
+
+  function buildChips(){
+    var fr = $('fund-row');
+    FUNDS.forEach(function(f){
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'chip'; b.dataset.id = f.id;
+      b.setAttribute('role','radio');
+      b.innerHTML = f.name + '<span class="rate">' + (f.rate === null ? '8 % → 1,5 %' : fmtPct.format(f.rate) + ' % ročně') + '</span>';
+      b.addEventListener('click', function(){ S.fund = f.id; update(); });
+      fr.appendChild(b);
+    });
+    var er = $('fee-row');
+    FEES.forEach(function(v){
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'chip'; b.dataset.fee = v;
+      b.setAttribute('role','radio');
+      b.textContent = fmtPct.format(v) + ' % ročně';
+      b.addEventListener('click', function(){ S.fee = v; update(); });
+      er.appendChild(b);
+    });
+  }
+
+  ['sw-fee','sw-state','sw-infl'].forEach(function(id){ $(id).addEventListener('change', update); });
+
+  // ---------- formátování ----------
+  function kc(x){ return fmtNum.format(Math.round(x)) + ' Kč'; }
+
+  // ---------- graf ----------
+  var W = 720, H = 340, ML = 64, MR = 16, MT = 14, MB = 34;
+
+  function niceStep(maxv, n){
+    var raw = maxv / n, mag = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / mag;
+    var nf = f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10;
+    return nf * mag;
+  }
+  function axisLabel(v){
+    if(v >= 1e6) return fmtDec.format(v/1e6) + ' mil.';
+    if(v >= 1e3) return fmtNum.format(v/1e3) + ' tis.';
+    return fmtNum.format(v);
+  }
+
+  var chartData = null;
+  function drawChart(res, startAge, endAge){
+    var pts = res.points;
+    var maxY = 0;
+    pts.forEach(function(q){ maxY = Math.max(maxY, q.bal, q.dep); });
+    if(maxY <= 0) maxY = 1;
+    var step = niceStep(maxY, 5);
+    var top = Math.ceil(maxY/step) * step;
+    var span = endAge - startAge;
+    var x = function(t){ return ML + (t/span) * (W-ML-MR); };
+    var y = function(v){ return MT + (1 - v/top) * (H-MT-MB); };
+    chartData = {pts:pts, x:x, y:y, startAge:startAge, span:span};
+
+    var s = '';
+    for(var v = 0; v <= top + step/1000; v += step){
+      s += '<line x1="'+ML+'" x2="'+(W-MR)+'" y1="'+y(v)+'" y2="'+y(v)+'" stroke="rgba(33,43,52,0.12)"/>';
+      s += '<text x="'+(ML-8)+'" y="'+(y(v)+4)+'" text-anchor="end">'+axisLabel(v)+'</text>';
+    }
+    var xs = niceStep(span, 7); if(xs < 1) xs = 1;
+    for(var a = 0; a <= span + 1e-9; a += xs){
+      s += '<line x1="'+x(a)+'" x2="'+x(a)+'" y1="'+(H-MB)+'" y2="'+(H-MB+4)+'" stroke="var(--ink-soft)"/>';
+      s += '<text x="'+x(a)+'" y="'+(H-MB+18)+'" text-anchor="middle">'+(startAge+a)+'</text>';
+    }
+    s += '<text x="'+(W-MR)+'" y="'+(H-4)+'" text-anchor="end">věk (roky)</text>';
+    s += '<line x1="'+ML+'" x2="'+(W-MR)+'" y1="'+(H-MB)+'" y2="'+(H-MB)+'" stroke="var(--ink-soft)"/>';
+
+    // sloupec bez příliš hustých bodů: stačí každý druhý/třetí bod, ale pro plynulost vykreslíme všechny
+    var line = function(key){
+      return pts.map(function(q,i){ return (i?'L':'M') + x(q.t).toFixed(1) + ' ' + y(q[key]).toFixed(1); }).join(' ');
+    };
+    var area = line('bal') + ' L' + x(span).toFixed(1) + ' ' + y(0) + ' L' + x(0).toFixed(1) + ' ' + y(0) + ' Z';
+    s += '<path d="'+area+'" fill="var(--accent)" opacity="0.12"/>';
+    s += '<path d="'+line('dep')+'" fill="none" stroke="var(--focus)" stroke-width="2.2" stroke-linejoin="round"/>';
+    s += '<path d="'+line('bal')+'" fill="none" stroke="var(--accent)" stroke-width="2.6" stroke-linejoin="round"/>';
+    s += '<g id="chart-cursor" visibility="hidden"><line id="cur-line" y1="'+MT+'" y2="'+(H-MB)+'" stroke="var(--ink-soft)" stroke-dasharray="3 3"/>'
+       + '<circle id="cur-bal" r="4.5" fill="var(--accent)" stroke="#fff" stroke-width="1.5"/>'
+       + '<circle id="cur-dep" r="4" fill="var(--focus)" stroke="#fff" stroke-width="1.5"/></g>';
+    $('chart').innerHTML = s;
+  }
+
+  (function wireChartHover(){
+    var svg = $('chart'), tip = $('chart-tip'), box = $('chart-box');
+    function hide(){ tip.hidden = true; var c = $('chart-cursor'); if(c) c.setAttribute('visibility','hidden'); }
+    function move(e){
+      if(!chartData) return;
+      var rect = svg.getBoundingClientRect();
+      var px = (e.clientX - rect.left) / rect.width * W;
+      var d = chartData;
+      var t = (px - ML) / (W-ML-MR) * d.span;
+      t = Math.max(0, Math.min(d.span, t));
+      var i = Math.round(t * 12);
+      var q = d.pts[Math.min(i, d.pts.length-1)];
+      var cx = d.x(q.t);
+      var c = $('chart-cursor'); if(!c) return;
+      c.setAttribute('visibility','visible');
+      $('cur-line').setAttribute('x1', cx); $('cur-line').setAttribute('x2', cx);
+      $('cur-bal').setAttribute('cx', cx); $('cur-bal').setAttribute('cy', d.y(q.bal));
+      $('cur-dep').setAttribute('cx', cx); $('cur-dep').setAttribute('cy', d.y(q.dep));
+      var ageTxt = fmtDec.format(d.startAge + q.t);
+      tip.innerHTML = '<b>Věk ' + ageTxt + '</b><br>Hodnota účtu: ' + kc(q.bal) + '<br>Vloženo: ' + kc(q.dep);
+      tip.hidden = false;
+      var left = cx / W * rect.width;
+      left = Math.max(70, Math.min(rect.width - 70, left));
+      tip.style.left = left + 'px';
+      tip.style.top = '6px';
+    }
+    svg.addEventListener('pointermove', move);
+    svg.addEventListener('pointerdown', move);
+    svg.addEventListener('pointerleave', hide);
+  })();
+
+  // ---------- tabulka ----------
+  function drawTable(res, fund){
+    var tb = document.querySelector('#year-table tbody');
+    var rows = '';
+    res.years.slice(1).forEach(function(y){
+      var share = fund === 'vyv' ? '—' : (y.share === null ? '—' : fmtNum.format(Math.round(y.share*100)) + ' %');
+      if(fund === 'kons') share = '0 %';
+      rows += '<tr><td>' + y.age + '</td><td>' + share + '</td><td>' + fmtPct.format(Math.round(y.r*100)/100).replace(/\.0+$/,'') + ' %</td>'
+            + '<td>' + fmtNum.format(Math.round(y.own)) + '</td><td>' + fmtNum.format(Math.round(y.state)) + '</td>'
+            + '<td>' + fmtNum.format(Math.round(y.fee)) + '</td><td><b>' + fmtNum.format(Math.round(y.bal)) + '</b></td></tr>';
+    });
+    tb.innerHTML = rows;
+  }
+
+  // ---------- hlavní aktualizace ----------
+  function setWarn(msg){
+    var w = $('warn');
+    if(msg){ w.textContent = msg; w.hidden = false; } else { w.hidden = true; }
+  }
+
+  function update(){
+    // stav přepínačů a čipů
+    var feeOn = $('sw-fee').checked, stateOn = $('sw-state').checked, inflOn = $('sw-infl').checked;
+    $('sub-fee').hidden = !feeOn;
+    $('sub-infl').hidden = !inflOn;
+    $('sub-state').hidden = !stateOn;
+    Array.prototype.forEach.call($('fund-row').children, function(b){
+      var on = b.dataset.id === S.fund; b.classList.toggle('on', on); b.setAttribute('aria-checked', on);
+    });
+    Array.prototype.forEach.call($('fee-row').children, function(b){
+      var on = parseFloat(b.dataset.fee) === S.fee; b.classList.toggle('on', on); b.setAttribute('aria-checked', on);
+    });
+    $('fund-hint').textContent = S.fund === 'cyk'
+      ? 'Do ' + CYCLE_FROM + ' let celý zůstatek v dynamickém fondu (8 %), od ' + CYCLE_FROM + ' do ' + CYCLE_TO + ' let se každý rok rovnoměrně přesouvá do konzervativního (1,5 %), od ' + CYCLE_TO + ' let je vše konzervativní.'
+      : '';
+
+    var initial = parseNum($('in-initial').value), monthly = parseNum($('in-monthly').value);
+    var startAge = parseInt($('in-start').value, 10), endAge = parseInt($('in-end').value, 10);
+    var infl = parseNum($('in-infl').value);
+    if(isNaN(initial)) initial = 0;
+    if(isNaN(monthly)) monthly = 0;
+    if(isNaN(infl)) infl = 0;
+
+    // nápověda ke státnímu příspěvku
+    var sm = stateMonthly(monthly);
+    var hint;
+    if(monthly < STATE_MIN) hint = 'Při měsíčním vkladu ' + kc(monthly) + ' státní příspěvek nenáleží (minimum je ' + kc(STATE_MIN) + ').';
+    else if(monthly > STATE_CAP) hint = 'Státní příspěvek se počítá nejvýše z ' + kc(STATE_CAP) + ': ' + kc(sm) + ' měsíčně (vklad nad tuto částku už příspěvek nezvyšuje).';
+    else hint = 'Státní příspěvek: 20 % z ' + kc(monthly) + ' = ' + kc(sm) + ' měsíčně, připisuje se čtvrtletně.';
+    $('state-hint').textContent = hint;
+
+    var err = null;
+    if(isNaN(startAge) || isNaN(endAge)) err = 'Zadejte věk na začátku a na konci spoření.';
+    else if(endAge <= startAge) err = 'Věk na konci spoření musí být větší než věk na začátku.';
+    else if(endAge > 120) err = 'Věk na konci spoření je příliš vysoký.';
+    if(infl > 50) err = 'Inflace je nastavena příliš vysoko.';
+    setWarn(err);
+    if(err){
+      ['res-final','res-own','res-state','res-gain','res-fee','res-mult'].forEach(function(id){ $(id).textContent = '—'; });
+      $('res-sub').textContent = '';
+      $('chart').innerHTML = ''; chartData = null;
+      document.querySelector('#year-table tbody').innerHTML = '';
+      return;
+    }
+
+    var res = simulate({
+      initial:initial, monthly:monthly, startAge:startAge, endAge:endAge,
+      fund:S.fund, fee: feeOn ? S.fee : 0, state: stateOn, infl: inflOn ? infl : 0
+    });
+
+    var years = endAge - startAge;
+    $('res-label').textContent = inflOn ? 'Naspořená částka v dnešních cenách' : 'Naspořená částka';
+    $('res-final').textContent = kc(res.final);
+    $('res-sub').textContent = 'po ' + years + ' ' + (years === 1 ? 'roce' : 'letech') + ' spoření (věk ' + startAge + ' až ' + endAge + ')';
+    $('res-own').textContent = kc(res.own);
+    $('res-state').textContent = kc(res.state);
+    $('stat-state').hidden = !stateOn;
+    var g = $('res-gain');
+    g.textContent = (res.gain < 0 ? '−' : '') + kc(Math.abs(res.gain));
+    g.className = 'value ' + (res.gain >= 0 ? 'pos' : 'neg');
+    $('res-fee').textContent = kc(res.fee);
+    $('stat-fee').hidden = !feeOn;
+    var base = res.own;
+    $('res-mult').textContent = base > 0 ? '× ' + new Intl.NumberFormat('cs-CZ',{maximumFractionDigits:2}).format(res.final / base) : '—';
+
+    drawChart(res, startAge, endAge);
+    drawTable(res, S.fund);
+  }
+
+  // ---------- záložky ----------
+  Array.prototype.forEach.call(document.querySelectorAll('.toptab'), function(b){
+    b.addEventListener('click', function(){
+      Array.prototype.forEach.call(document.querySelectorAll('.toptab'), function(x){ x.classList.toggle('on', x === b); });
+      $('view-kalkulacka').hidden = b.dataset.tab !== 'kalkulacka';
+      $('view-postup').hidden = b.dataset.tab !== 'postup';
+    });
+  });
+
+  buildChips();
+  update();
+
+  if(window.renderMathInElement){
+    renderMathInElement($('view-postup'), {
+      delimiters: [{left:'\\(', right:'\\)', display:false}, {left:'\\[', right:'\\]', display:true}]
+    });
+  }
+
+  // pro ověření výpočtů v konzoli / testech
+  window.__penzijni = {simulate:simulate, dynShare:dynShare};
+})();
+</script>
+
+</body>
+</html>
