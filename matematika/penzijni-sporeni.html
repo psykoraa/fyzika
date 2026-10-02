@@ -264,7 +264,6 @@ details.table-details summary:focus-visible{ outline:2px solid var(--focus); out
       <div class="block">
         <label class="switch"><input type="checkbox" id="sw-tax"><span class="track"></span>Započítat daňový odpočet</label>
         <div class="sub" id="sub-tax" hidden>
-          <div class="row" id="tax-row" role="radiogroup" aria-label="Sazba daně z příjmu"></div>
           <p class="hint" id="tax-hint"></p>
         </div>
       </div>
@@ -352,7 +351,7 @@ details.table-details summary:focus-visible{ outline:2px solid var(--focus); out
       <h3>Daňový odpočet</h3>
       <p>Vklady klienta lze odečíst od základu daně z příjmů, ale <b>jen část nad 1 700 Kč měsíčně</b> (tj. nad 20 400 Kč ročně), protože do této výše už má klient nárok na státní příspěvek. Odpočet je navíc omezen na 48 000 Kč za rok (limit je společný pro všechny daňově podporované produkty spoření na stáří). Při ročních vkladech \(R\) je odpočet a úspora na dani</p>
       <div class="formula-box">\[ O = \min\bigl(48\,000;\ \max(0;\ R - 20\,400)\bigr),\qquad \text{úspora} = O \cdot s \]</div>
-      <p>kde \(s\) je sazba daně z příjmu (15 %, resp. 23 % u vyšších příjmů). Do ročních vkladů \(R\) se počítá i počáteční vklad (v prvním roce). Úsporu získáte zpět při podání daňového přiznání (nebo ročním zúčtování), proto se v kalkulačce zaznamenává <b>na konci každého roku</b> a do hodnoty účtu se <b>nepřičítá</b> — zobrazuje se zvlášť. Příspěvky zaměstnavatele se do odpočtu nezapočítávají.</p>
+      <p>kde \(s\) je sazba daně z příjmu (v kalkulačce 15 %). Do ročních vkladů \(R\) se počítá i počáteční vklad (v prvním roce). Úsporu získáte zpět při podání daňového přiznání (nebo ročním zúčtování), proto se v kalkulačce zaznamenává <b>na konci každého roku</b> a do hodnoty účtu se <b>nepřičítá</b> — zobrazuje se zvlášť. Příspěvky zaměstnavatele se do odpočtu nezapočítávají.</p>
 
       <h3>Inflace</h3>
       <p>Při zapnuté inflaci \(\pi\) se každá částka vzniklá v čase \(t\) (v letech od začátku spoření) přepočte na dnešní ceny:</p>
@@ -383,7 +382,7 @@ details.table-details summary:focus-visible{ outline:2px solid var(--focus); out
   var CYCLE_FROM = 43, CYCLE_TO = 60;
   var FEES = [0.5, 1];
   var STATE_RATE = 0.2, STATE_MIN = 500, STATE_CAP = 1700;
-  var TAX_RATES = [15, 23];
+  var TAX_RATE = 15;                      // sazba daně z příjmu v %
   var TAX_FREE_YEARLY = STATE_CAP * 12;   // 20 400 Kč ročně: část vkladů nad touto hranicí je odečitatelná
   var TAX_LIMIT = 48000;                  // maximální odpočet za rok
 
@@ -478,7 +477,7 @@ details.table-details summary:focus-visible{ outline:2px solid var(--focus); out
 
   // ---------- vstupy ----------
   var $ = function(id){ return document.getElementById(id); };
-  var S = {fund:'cyk', fee:0.5, tax:15};
+  var S = {fund:'cyk', fee:0.5};
 
   function parseNum(s){
     var v = parseFloat(String(s).replace(/[\s ]/g,'').replace(',','.'));
@@ -506,15 +505,6 @@ details.table-details summary:focus-visible{ outline:2px solid var(--focus); out
       b.innerHTML = f.name + '<span class="rate">' + (f.rate === null ? '8 % → 1,5 %' : fmtPct.format(f.rate) + ' % ročně') + '</span>';
       b.addEventListener('click', function(){ S.fund = f.id; update(); });
       fr.appendChild(b);
-    });
-    var tr = $('tax-row');
-    TAX_RATES.forEach(function(v){
-      var b = document.createElement('button');
-      b.type = 'button'; b.className = 'chip'; b.dataset.tax = v;
-      b.setAttribute('role','radio');
-      b.textContent = 'Sazba ' + v + ' %';
-      b.addEventListener('click', function(){ S.tax = v; update(); });
-      tr.appendChild(b);
     });
     var er = $('fee-row');
     FEES.forEach(function(v){
@@ -650,9 +640,6 @@ details.table-details summary:focus-visible{ outline:2px solid var(--focus); out
     Array.prototype.forEach.call($('fee-row').children, function(b){
       var on = parseFloat(b.dataset.fee) === S.fee; b.classList.toggle('on', on); b.setAttribute('aria-checked', on);
     });
-    Array.prototype.forEach.call($('tax-row').children, function(b){
-      var on = parseFloat(b.dataset.tax) === S.tax; b.classList.toggle('on', on); b.setAttribute('aria-checked', on);
-    });
     $('fund-hint').textContent = S.fund === 'cyk'
       ? 'Do ' + CYCLE_FROM + ' let celý zůstatek v dynamickém fondu (8 %), od ' + CYCLE_FROM + ' do ' + CYCLE_TO + ' let se každý rok rovnoměrně přesouvá do konzervativního (1,5 %), od ' + CYCLE_TO + ' let je vše konzervativní.'
       : '';
@@ -674,7 +661,7 @@ details.table-details summary:focus-visible{ outline:2px solid var(--focus); out
 
     var yc = monthly * 12, ded = taxDeduction(yc);
     $('tax-hint').textContent = ded > 0
-      ? 'Odečitatelná je jen část vkladů nad ' + kc(STATE_CAP) + ' měsíčně (' + kc(TAX_FREE_YEARLY) + ' ročně). Při vkladu ' + kc(monthly) + ' měsíčně je odpočet ' + kc(ded) + ' ročně, tedy úspora ' + kc(ded * S.tax / 100) + ' ročně.'
+      ? 'Odečitatelná je jen část vkladů nad ' + kc(STATE_CAP) + ' měsíčně (' + kc(TAX_FREE_YEARLY) + ' ročně). Při vkladu ' + kc(monthly) + ' měsíčně je odpočet ' + kc(ded) + ' ročně, tedy úspora ' + kc(ded * TAX_RATE / 100) + ' ročně.'
       : 'Při měsíčním vkladu ' + kc(monthly) + ' žádný odpočet nevzniká — odečítá se jen část vkladů nad ' + kc(STATE_CAP) + ' měsíčně.' + (initial > TAX_FREE_YEARLY ? ' Počáteční vklad se ale počítá do vkladů prvního roku.' : '');
 
     var err = null;
@@ -693,7 +680,7 @@ details.table-details summary:focus-visible{ outline:2px solid var(--focus); out
 
     var res = simulate({
       initial:initial, monthly:monthly, startAge:startAge, endAge:endAge,
-      fund:S.fund, fee: feeOn ? S.fee : 0, state: stateOn, tax: taxOn ? S.tax : 0, infl: inflOn ? infl : 0
+      fund:S.fund, fee: feeOn ? S.fee : 0, state: stateOn, tax: taxOn ? TAX_RATE : 0, infl: inflOn ? infl : 0
     });
 
     var years = endAge - startAge;
