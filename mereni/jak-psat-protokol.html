@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jak psát protokol</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="../spolecne/config.js"></script>
+<script src="../spolecne/auth.js"></script>
+<script src="../spolecne/zalozky.js?v=3"></script>
+<link rel="stylesheet" href="../spolecne/styl.css">
+<style>
+:root{
+  --paper:#eef5ee;
+  --surface:#fbfef9;
+  --surface-2:#dce8da;
+  --ink:#1f2e22;
+  --ink-soft:#5c705d;
+  --line:rgba(31,46,34,0.12);
+  --accent:#2f7a4f;
+  --accent-ink:#f2fbf5;
+  --success:#28794f;
+  --success-bg:#e3efe0;
+  --danger:#b3392b;
+  --danger-bg:#f5e4de;
+  --focus:#1e6f66;
+  --shadow: 0 1px 0 rgba(31,46,34,0.06);
+}
+.card{ padding:30px; text-align:left; }
+.card + .card{ margin-top:20px; }
+.card h2{ text-align:center; }
+.card p, .card li{
+  font-size:0.95rem;
+  line-height:1.55;
+  color:var(--ink);
+}
+.card p{ margin:0 0 10px; }
+.card p:last-child{ margin-bottom:0; }
+.card ul, .card ol{ margin:0; padding-left:22px; }
+.card li + li{ margin-top:6px; }
+.card li > ul, .card li > ol{ margin-top:6px; }
+.card p + ul, .card p + ol{ margin-top:4px; }
+.card ul + p, .card ol + p{ margin-top:12px; }
+.card h3{
+  font-size:1rem;
+  margin:20px 0 8px;
+  color:var(--ink);
+}
+.example{
+  margin:14px 0 0;
+  padding:12px 16px;
+  border-radius:8px;
+  background:var(--surface-2);
+  font-size:0.9rem;
+  line-height:1.5;
+}
+.example ol, .example ul{ padding-left:20px; }
+.example li{ font-size:0.9rem; }
+.example p{ font-size:0.9rem; margin:0 0 6px; }
+.example .label{
+  display:block;
+  font-size:0.68rem;
+  text-transform:uppercase;
+  letter-spacing:0.1em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-bottom:4px;
+}
+.ai{
+  margin:16px 0 0;
+  padding:12px 16px;
+  border-radius:8px;
+  border:1px solid var(--line);
+  border-left:4px solid var(--accent);
+  background:var(--surface);
+  font-size:0.9rem;
+  line-height:1.5;
+}
+.ai.no{ border-left-color:var(--danger); }
+.ai .label{
+  display:block;
+  font-size:0.68rem;
+  text-transform:uppercase;
+  letter-spacing:0.1em;
+  color:var(--accent);
+  font-weight:700;
+  margin-bottom:4px;
+}
+.ai.no .label{ color:var(--danger); }
+.ai ul{ padding-left:20px; }
+.ai li{ font-size:0.9rem; }
+.ai li + li{ margin-top:4px; }
+.ai .ok{ color:var(--success); font-weight:600; }
+.ai .ban{ color:var(--danger); font-weight:600; }
+.ai a{ color:var(--accent); font-weight:600; }
+.responsibility{
+  margin:0 0 20px;
+  padding:14px 18px;
+  border-radius:10px;
+  border:1px solid rgba(179,57,43,0.25);
+  background:var(--danger-bg);
+  color:var(--ink);
+  text-align:center;
+}
+.responsibility strong{
+  display:block;
+  font-size:1.1rem;
+  font-weight:700;
+  color:var(--danger);
+}
+.responsibility span{
+  display:block;
+  margin-top:4px;
+  font-size:0.92rem;
+  line-height:1.45;
+}
+.toc{ columns:2; column-gap:28px; }
+.toc li{ break-inside:avoid; }
+.toc a{ color:var(--accent); font-weight:600; text-decoration:none; }
+.toc a:hover{ text-decoration:underline; }
+.head-table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:0.88rem;
+  background:var(--surface);
+}
+.head-table td{
+  border:1px solid var(--line);
+  padding:6px 10px;
+  vertical-align:top;
+}
+.head-table .title{ text-align:center; font-weight:700; }
+.head-table .small{ display:block; font-size:0.72rem; color:var(--ink-soft); }
+.scale{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:10px;
+  font-size:0.9rem;
+}
+.scale th, .scale td{
+  border:1px solid var(--line);
+  padding:6px 10px;
+  text-align:left;
+}
+.scale th{ background:var(--surface-2); font-weight:600; }
+.cmp li .tag{
+  display:inline-block;
+  font-size:0.72rem;
+  font-weight:700;
+  padding:1px 8px;
+  border-radius:999px;
+  margin-left:4px;
+}
+.tag.same{ background:var(--success-bg); color:var(--success); }
+.tag.almost{ background:#f3ecd2; color:#7a5d12; }
+.tag.diff{ background:var(--danger-bg); color:var(--danger); }
+a.btn-link{
+  display:inline-block;
+  font-weight:600;
+  font-size:0.95rem;
+  padding:10px 22px;
+  border-radius:8px;
+  background:var(--accent);
+  color:var(--accent-ink);
+  text-decoration:none;
+}
+a.btn-link:hover{ filter:brightness(1.06); }
+a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+.links{ margin-top:14px; display:flex; flex-wrap:wrap; gap:10px; justify-content:center; }
+.credit{
+  margin-top:24px;
+  font-size:0.8rem;
+  line-height:1.5;
+  color:var(--ink-soft);
+  text-align:center;
+}
+.credit a{ color:inherit; }
+footer{ margin-top:40px; }
+@media (max-width:520px){
+  .hero{ padding:44px 16px 32px; }
+  .card{ padding:24px 18px; }
+  .toc{ columns:1; }
+  .head-table{ font-size:0.8rem; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <a class="back-link" href="../rozcestniky/mereni.html">← Zpět na Měření</a>
+
+  <div class="hero">
+    <span class="hero-tag">Gymnázium</span>
+    <h1>Jak psát protokol</h1>
+  </div>
+
+  <div class="top-tabs">
+    <button class="toptab on" id="top-tab-casti" data-tab="casti">Části protokolu</button>
+    <button class="toptab" id="top-tab-srovnani" data-tab="srovnani">Srovnání hodnot</button>
+  </div>
+
+  <div id="casti-section" class="tab-section">
+
+  <div class="card">
+    <div class="section-tag">Přehled</div>
+    <h2>Struktura protokolu</h2>
+    <div class="responsibility">
+      <strong>Za celý protokol odpovídáte vy, ne AI.</strong>
+      <span>U každé části je uvedeno, k čemu smíte umělou inteligenci použít a k čemu ne. Podrobnosti najdete na stránce Pravidla pro využívání AI.</span>
+    </div>
+    <p>Protokol má tyto části v tomto pořadí:</p>
+    <ol class="toc">
+      <li><a href="#hlavicka">Hlavička</a></li>
+      <li><a href="#pomucky">Pomůcky</a></li>
+      <li><a href="#zadani">Zadání</a></li>
+      <li><a href="#teorie">Teoretický úvod</a></li>
+      <li><a href="#postup">Postup práce</a></li>
+      <li><a href="#zpracovani">Zpracování dat</a></li>
+      <li><a href="#zaver">Závěr</a></li>
+      <li><a href="#vyuziti-ai">Využití AI</a></li>
+      <li><a href="#zdroje">Seznam zdrojů</a></li>
+    </ol>
+  </div>
+
+  <div class="card" id="hlavicka">
+    <div class="section-tag">1. část</div>
+    <h2>Hlavička protokolu</h2>
+    <ul>
+      <li>Je součástí základní šablony dokumentu, kterou musíte používat.</li>
+      <li>Je umístěná na prvním listu nahoře.</li>
+      <li>Pod hlavičkou následuje text protokolu.</li>
+    </ul>
+    <div class="example">
+      <span class="label">Příklad hlavičky</span>
+      <table class="head-table">
+        <tr><td colspan="3" class="title">Laboratorní práce číslo: 8</td></tr>
+        <tr><td colspan="2"><b>Název měření:</b> Měření rozměrů válečku</td><td rowspan="3">podpis vyučujícího:</td></tr>
+        <tr><td colspan="2"><b>Vypracovali:</b> Alfons Mucha, Břetislav Pohrobek<span class="small">(jméno a příjmení)</span></td></tr>
+        <tr><td><b>Třída:</b> VII. D</td><td><b>Datum:</b> 25. února &nbsp; <b>Školní rok:</b> 1947/1948</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card" id="pomucky">
+    <div class="section-tag">2. část</div>
+    <h2>Pomůcky</h2>
+    <ul>
+      <li>Ze záznamového listu opíšete všechny používané pomůcky.</li>
+      <li>Vynechte ty, které jste nepoužili.</li>
+      <li>Ke každému měřidlu zapíšete do závorky, s jakou nepřesností (chybou) měří:
+        <ul>
+          <li><b>měřidlo se stupnicí</b> — ± polovina nejmenšího dílku stupnice, např. pravítko ±0,5&nbsp;mm, úhloměr ±0°30′, odměrný válec s dílky po 2&nbsp;ml ±1&nbsp;ml;</li>
+          <li><b>měřidlo s displejem</b> — ± nejmenší hodnota, která se na displeji může objevit, např. digitální váhy se 4místným displejem a rozsahem do 300&nbsp;g ±0,1&nbsp;g, digitální posuvné měřítko s 5místným displejem a rozsahem do 20&nbsp;cm ±0,001&nbsp;cm.</li>
+        </ul>
+      </li>
+    </ul>
+    <div class="example">
+      <span class="label">Příklad pomůcek</span>
+      posuvné měřítko (±0,05&nbsp;mm), mikrometr (±0,005&nbsp;mm)
+    </div>
+    <div class="ai no">
+      <span class="label">AI v této části</span>
+      <span class="ban">Nepřesnosti měřidel určujete vždy sami</span> — podle stupnice nebo displeje měřidla, které jste skutečně použili.
+    </div>
+  </div>
+
+  <div class="card" id="zadani">
+    <div class="section-tag">3. část</div>
+    <h2>Zadání</h2>
+    <ul>
+      <li>Opíšete všechny úkoly z návodu k měření — nic neupravujte ani nepředělávejte.</li>
+      <li>Stačí je zkopírovat.</li>
+      <li>Pokud jste některé úkoly neměřili, vynecháte je.</li>
+    </ul>
+    <div class="example">
+      <span class="label">Příklad zadání</span>
+      <ol>
+        <li>Změřte průměr válečku posuvným měřítkem.</li>
+        <li>Změřte výšku válečku mikrometrem.</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="card" id="teorie">
+    <div class="section-tag">4. část</div>
+    <h2>Teoretický úvod</h2>
+    <ul>
+      <li>Stručně a srozumitelně vysvětlíte fyzikální podstatu úlohy.</li>
+      <li>Uvedete zákony a definice, které se měření týkají.</li>
+      <li>Odvodíte vzorce, ze kterých budete počítat výsledky.</li>
+      <li>U všech písmen, která se ve vzorcích vyskytnou, vždy uvedete, kterou fyzikální veličinu označují.</li>
+      <li>Pokud jsou v návodu otázky k teoretickému úvodu, stačí na ně odpovědět. (Pozor na písmenné označení fyzikálních veličin bez vysvětlení!)</li>
+      <li>Když použijete informaci, vzorec nebo obrázek z cizího zdroje, uveďte v textu odkaz na zdroj, např. [1].</li>
+    </ul>
+    <div class="example">
+      <span class="label">Příklad — otázky z návodu k měření</span>
+      <ol>
+        <li>Jak je definována jednotka metr?</li>
+        <li>K čemu je nonius na posuvném měřítku?</li>
+      </ol>
+    </div>
+    <div class="example">
+      <span class="label">Příklad — teoretický úvod</span>
+      <ol>
+        <li>Metr je délka, kterou urazí světlo ve vakuu za 1/299&nbsp;792&nbsp;458&nbsp;s.</li>
+        <li>Nonius je pomocná stupnice, která má nejčastěji 10 nebo 20 dílků. Je vyražen na pohyblivé čelisti a má délku 19&nbsp;mm (resp. 39&nbsp;mm); díky tomu rozdělí 1&nbsp;mm na 10 (20) dílků a umožní měřit v desetinách (dvacetinách) milimetru.</li>
+      </ol>
+    </div>
+    <div class="ai no">
+      <span class="label">AI v této části</span>
+      <ul>
+        <li><span class="ban">Teorii sepisujete sami.</span></li>
+        <li><span class="ok">Smíte</span> použít AI jako vyhledávač informací. Odpověď AI ale necitujete — citujete <b>primární zdroj</b> (učebnici, článek, web), který si sami otevřete a ověříte, že obsahuje to, co tvrdí AI.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card" id="postup">
+    <div class="section-tag">5. část</div>
+    <h2>Postup práce</h2>
+    <ul>
+      <li>Stručně sepíšete, jakým postupem jste získali měřené veličiny — v první osobě a v minulém čase („změřili jsme…“).</li>
+      <li>Postup musí odpovídat tomu, jak jste <b>skutečně</b> měřili, ne jen tomu, co stojí v návodu.</li>
+      <li>Popis bude srozumitelnější, když ho doplníte obrázkem.</li>
+      <li>Při měření elektrických veličin nesmíte zapomenout nakreslit schéma zapojení.</li>
+    </ul>
+    <div class="example">
+      <span class="label">Příklad postupu</span>
+      Nejprve jsme změřili průměr válečku. Měření jsme opakovali celkem 10×, 1.–5. měření prováděl Mucha, 6.–10. měření Pohrobek. Výšku válečku jsme měřili také 10×, první pětici měření opět provedl Mucha a druhou pětici Pohrobek.
+    </div>
+    <div class="ai">
+      <span class="label">AI v této části</span>
+      <ul>
+        <li><span class="ok">Smíte</span> nechat AI převést postup ze zadání (psaný ve druhé osobě) do první osoby. Rozdíly mezi návodem a skutečným měřením ale <b>doplňujete sami</b>.</li>
+        <li><span class="ok">Smíte</span> s pomocí AI vytvořit obrázek nebo schéma zapojení. Zkontrolujte, že zobrazuje přesně to, co má, a ocitujte ho — v popisku uveďte, že je vytvořen pomocí AI, a odkaz na citaci, např. „Obr. 1: Schéma zapojení (vytvořeno pomocí AI, [3])“.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card" id="zpracovani">
+    <div class="section-tag">6. část</div>
+    <h2>Zpracování dat</h2>
+    <ul>
+      <li>Naměřené hodnoty zapíšete přehledně do tabulek (s veličinou a jednotkou v záhlaví).</li>
+      <li>Hodnoty zpracujete v tabulkovém editoru: průměr, odchylky, absolutní a relativní chyba, správné zaokrouhlení.</li>
+      <li>U nepřímých měření uvedete vzorec, ze kterého výsledek počítáte.</li>
+      <li>Zpracování přímého měření a zaokrouhlování si můžete procvičit na stránkách níže; nepřímé měření a regrese přijdou později.</li>
+    </ul>
+    <div class="links">
+      <a class="btn-link" href="zpracovani-mereni.html">Přímé měření →</a>
+      <a class="btn-link" href="zaokrouhlovani-vysledku.html">Zaokrouhlování měření →</a>
+    </div>
+    <div class="ai no">
+      <span class="label">AI v této části</span>
+      <ul>
+        <li><span class="ban">Naměřené hodnoty AI nikdy nevymýšlí, neupravuje ani „nedopočítává“.</span> Všechna data musí pocházet z vašeho měření.</li>
+        <li><span class="ban">Výpočty provádíte sami</span> v tabulkovém editoru.</li>
+        <li><span class="ok">Smíte</span> nechat AI zkontrolovat výsledky, které jste spočítali sami, a jejich zaokrouhlení.</li>
+        <li><span class="ok">Smíte</span> nechat AI upravit vzhled tabulek a vytvořit graf. Graf zkontrolujte a ocitujte (popisek s poznámkou o AI + citace v seznamu zdrojů).</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card" id="zaver">
+    <div class="section-tag">7. část</div>
+    <h2>Závěr</h2>
+    <ul>
+      <li>Sepíšete výsledky přehledně v pořadí podle zadání.</li>
+      <li>Opíšete správné zápisy výsledků (včetně relativní chyby) ze zpracování dat.</li>
+      <li>Za každým výsledkem napíšete, jak přesně bylo měření provedeno:
+        <table class="scale">
+          <tr><th>Hodnocení</th><th>Relativní chyba</th></tr>
+          <tr><td>velmi přesně</td><td>do 1&nbsp;% (včetně)</td></tr>
+          <tr><td>přesně</td><td>od 1&nbsp;% do 10&nbsp;% (včetně)</td></tr>
+          <tr><td>nepřesně</td><td>větší než 10&nbsp;%</td></tr>
+        </table>
+      </li>
+      <li>Pokud jste stejnou veličinu měřili více metodami, výsledky mezi sebou srovnáte.</li>
+      <li>Pokud má měřená veličina tabulkovou hodnotu (hustota, měrná tepelná kapacita…), srovnáte s ní i svůj výsledek.</li>
+      <li>Vysvětlíte rozdíly zjištěné při srovnávání — tedy diskutujete chyby měření (viz záložka Srovnání hodnot).</li>
+    </ul>
+    <div class="example">
+      <span class="label">Příklad závěru</span>
+      <p>Průměr válečku je <i>d</i> = (45,5 ± 0,4)&nbsp;mm, <i>δd</i> = 0,88&nbsp;%, měření bylo provedeno velmi přesně.</p>
+      <p>Výška válečku je <i>h</i> = (120,4 ± 0,3)&nbsp;mm, <i>δh</i> = 0,25&nbsp;%, měření bylo provedeno velmi přesně.</p>
+      <p>Podle manuálu k soupravě Mechanika od firmy NTL má váleček rozměry 45 × 120&nbsp;mm. Z našeho měření vyplývá, že váleček je větší. Manuál bohužel neuvádí, s jakou přesností byl váleček vyroben, proto lze naše měření považovat za přesnější údaj.</p>
+    </div>
+    <div class="ai no">
+      <span class="label">AI v této části</span>
+      <span class="ban">Závěr píšete vždy sami</span>, a to včetně diskuse chyb měření. AI smí nanejvýš opravit pravopis.
+    </div>
+  </div>
+
+  <div class="card" id="vyuziti-ai">
+    <div class="section-tag">8. část</div>
+    <h2>Využití AI</h2>
+    <p>Na konci protokolu (před seznamem zdrojů) je samostatný oddíl <b>Využití AI</b>. U každého použití uvedete:</p>
+    <ul>
+      <li><b>Nástroj</b> — např. ChatGPT, Gemini, Claude, Copilot;</li>
+      <li><b>Účel</b> — k čemu jste AI použili a které části protokolu se to týká;</li>
+      <li><b>Datum</b> — kdy jste AI použili.</li>
+    </ul>
+    <div class="example">
+      <span class="label">Příklad</span>
+      <b>Využití AI</b><br>
+      ChatGPT (2. 10. 2026) — převedení postupu práce ze zadání do první osoby; postup jsem poté upravil podle skutečného měření.<br>
+      Gemini (3. 10. 2026) — kontrola pravopisu v celém protokolu a kontrola zaokrouhlení výsledků v tabulce 2.
+    </div>
+    <p style="margin-top:12px">Pokud jste AI nepoužili vůbec, napište: <i>„AI jsem při zpracování protokolu nepoužil(a).“</i></p>
+  </div>
+
+  <div class="card" id="zdroje">
+    <div class="section-tag">9. část</div>
+    <h2>Seznam zdrojů</h2>
+    <ul>
+      <li>Očíslovaný seznam všech použitých zdrojů ve stejném pořadí, v jakém se poprvé objevily v textu ([1], [2], …).</li>
+      <li>Zdroje zapisujte podle normy ČSN ISO 690 — pomoci vám může generátor <b>citace.com</b> (citaci vždy zkontrolujte).</li>
+      <li>Do seznamu patří i obrázky, grafy a schémata, na jejichž tvorbě se podílela AI.</li>
+    </ul>
+    <div class="example">
+      <span class="label">Příklad citace výstupu AI</span>
+      [7] [Graf závislosti tlaku ideálního plynu na objemu při izotermickém ději]. Online. In: <i>ChatGPT</i>. Verze z 10. 10. 2026. Dostupné z: OpenAI, https://chatgpt.com/share/…. [cit. 2026-10-15].
+    </div>
+    <div class="links">
+      <a class="btn-link" href="pravidla-pro-vyuzivani-ai.html">Pravidla pro využívání AI →</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-tag">Před odevzdáním</div>
+    <h2>Kontrola protokolu</h2>
+    <ul>
+      <li>Obsahuje protokol všechny části 1–9 ve správném pořadí?</li>
+      <li>Mají všechna měřidla uvedenou nepřesnost?</li>
+      <li>Je u každého písmene ve vzorcích vysvětleno, jakou veličinu označuje?</li>
+      <li>Odpovídá postup tomu, jak jste skutečně měřili?</li>
+      <li>Jsou výsledky v závěru správně zaokrouhlené, s jednotkou a relativní chybou?</li>
+      <li>Jsou všechny převzaté informace a výstupy AI ocitované a je vyplněný oddíl Využití AI?</li>
+    </ul>
+    <div class="ai">
+      <span class="label">AI v této části</span>
+      <span class="ok">Smíte</span> nechat AI zkontrolovat úplnost protokolu a opravit pravopis. Za obsah ale odpovídáte vy.
+    </div>
+  </div>
+
+  </div>
+
+  <div id="srovnani-section" class="tab-section" hidden>
+
+  <div class="card">
+    <div class="section-tag">Závěr</div>
+    <h2>Srovnání naměřených hodnot</h2>
+    <p>Každá naměřená veličina má <b>interval správných hodnot</b> (<i>x̄</i> − Δ<i>x</i>; <i>x̄</i> + Δ<i>x</i>). Například pro <i>d</i> = (45,5 ± 0,4)&nbsp;mm je to (45,1; 45,9)&nbsp;mm.</p>
+
+    <h3>Srovnání dvou naměřených hodnot</h3>
+    <p>Dvě naměřené hodnoty jsou shodné, pokud se jejich intervaly protínají nebo jeden obsahuje druhý (ideální stav).</p>
+    <ul class="cmp">
+      <li>(45,1; 45,9)&nbsp;mm a (44; 46)&nbsp;mm <span class="tag same">shodné</span></li>
+      <li>(45,1; 45,9)&nbsp;mm a (45,8; 46,5)&nbsp;mm <span class="tag same">shodné</span></li>
+      <li>(45,1; 45,9)&nbsp;mm a (46,2; 46,8)&nbsp;mm <span class="tag almost">téměř shodné</span> — odchylku musíte vysvětlit, např. chybnou metodou měření nebo chybným odečítáním hodnot.</li>
+      <li>(45,1; 45,9)&nbsp;mm a (47,1; 47,5)&nbsp;mm <span class="tag diff">různé</span> — i zde musíte objasnit, čím je rozdíl způsoben.</li>
+    </ul>
+
+    <h3>Srovnání s tabulkovou (definovanou) hodnotou</h3>
+    <p>Naměřená hodnota odpovídá tabulkové hodnotě, pokud ji interval správných hodnot obsahuje.</p>
+    <ul class="cmp">
+      <li>(45,1; 45,9)&nbsp;mm a 45,8&nbsp;mm <span class="tag same">odpovídá</span></li>
+      <li>(45,1; 45,9)&nbsp;mm a 46,1&nbsp;mm <span class="tag almost">téměř odpovídá</span> — nejde o zásadní chybu, ale i tak ji musíte objasnit.</li>
+      <li>(45,1; 45,9)&nbsp;mm a 47,5&nbsp;mm <span class="tag diff">neodpovídá</span> — velká chyba; vysvětlete, proč k ní došlo.</li>
+    </ul>
+
+    <div class="ai no">
+      <span class="label">AI v této části</span>
+      <span class="ban">Srovnání a vysvětlení rozdílů (diskusi chyb) píšete sami</span> — je to součást závěru.
+    </div>
+  </div>
+
+  </div>
+
+  <p class="credit">Upraveno podle materiálu Václav Skřivan: <i>Jak napsat protokol</i>, Gymnázium Jaroslava Vrchlického, Klatovy, 2022 (licence <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.cs" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a>).</p>
+
+  <footer>Fyzika — Měření</footer>
+</div>
+
+<script>
+(function(){
+  var tabs = ['casti', 'srovnani'];
+  function showTopTab(tab){
+    tabs.forEach(function(t){
+      document.getElementById('top-tab-' + t).classList.toggle('on', t === tab);
+      document.getElementById(t + '-section').hidden = t !== tab;
+    });
+  }
+  tabs.forEach(function(t){
+    document.getElementById('top-tab-' + t).addEventListener('click', function(){ showTopTab(t); });
+  });
+})();
+</script>
+
+</body>
+</html>
