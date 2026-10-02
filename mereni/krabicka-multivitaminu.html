@@ -195,6 +195,18 @@ button.vbtn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
   .opt-grid{ grid-template-columns:1fr; }
 }
 
+.opt-grid.three{ grid-template-columns:repeat(3, 1fr); }
+.scene-svg{ touch-action:none; cursor:ew-resize; user-select:none; -webkit-user-select:none; }
+.scene-svg:focus{ outline:none; }
+.scene-svg:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+.move-row{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:center; margin-top:10px; }
+.contact{ font-size:0.86rem; font-weight:600; min-width:190px; text-align:center; color:var(--ink-soft); }
+.contact.on{ color:var(--success); }
+@media (max-width:520px){
+  .opt-grid.three{ grid-template-columns:1fr; }
+  .contact{ order:-1; flex-basis:100%; }
+}
+
 @media (max-width:520px){
   .lab-table th, .lab-table td{ min-width:44px; }
 }
@@ -374,7 +386,7 @@ button.vbtn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
 
     <div class="panel">
       <div class="panel-title">Vyzkoušejte si odečítání</div>
-      <p class="scale-note">Odečtěte hodnotu, kterou ukazuje šuplera, a zapište ji v milimetrech na desetiny (např. 23,4). Po kontrole se zvýrazní nulová čárka noniu (červeně) a čárka noniu, která se kryje s hlavní stupnicí (zeleně).</p>
+      <p class="scale-note">Odečtěte hodnotu, kterou ukazuje šuplera, a zapište ji v milimetrech (na desetiny, u těžké obtížnosti na setiny). Po kontrole se zvýrazní nulová čárka noniu (červeně) a čárka noniu, která se kryje s hlavní stupnicí (zeleně).</p>
       <div class="level-row" role="group" aria-label="Obtížnost">
         <span class="lbl">Obtížnost:</span>
         <button class="chip" type="button" data-level="lehka">Lehká</button>
@@ -420,43 +432,82 @@ button.vbtn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
 
   </div>
 
-  <!-- ============ HRA: NAJDI CHYBU ============ -->
+  <!-- ============ HRA: ZMĚŘ KRABIČKU ============ -->
   <div id="hra-section" class="tab-section" hidden>
 
     <div class="panel">
-      <div class="panel-title">Najdi chybu měření</div>
-      <p class="game-text">Kolo má <b>5 situací</b>. V každé udělal žák při měření šuplerou chybu — poznejte, jakou. Za každou správnou odpověď získáte <b>10 bodů</b>. Po odpovědi se zobrazí vysvětlení.</p>
+      <div class="panel-title">Změř krabičku</div>
+      <p class="game-text">Hra vám zadá rozměr krabičky. <b>1.</b> Vyberte správnou část šuplery (vnější čelisti, vnitřní čelisti, nebo hloubkoměr). <b>2.</b> Tažením myší či prstem (nebo tlačítky) posuňte šupleru, až dosedne na krabičku. <b>3.</b> Odečtěte hodnotu ze stupnice a zapište ji. Za správně zvolenou část napoprvé získáte <b>5 bodů</b>, za správně změřený rozměr <b>10 bodů</b>. Šuplera ve hře má přesnost 0,1 mm.</p>
 
-      <div id="hra-start" class="center-actions">
-        <button class="vbtn primary" id="hra-start-btn" type="button">Začít kolo</button>
+      <div id="hra-start">
+        <div class="level-row" role="group" aria-label="Délka hry">
+          <span class="lbl">Délka hry:</span>
+          <button class="chip on" type="button" data-dur="60">1 min</button>
+          <button class="chip" type="button" data-dur="120">2 min</button>
+          <button class="chip" type="button" data-dur="180">3 min</button>
+          <button class="chip" type="button" data-dur="300">5 min</button>
+        </div>
+        <p class="hint" id="hra-start-best"></p>
+        <div class="center-actions">
+          <button class="vbtn primary" id="hra-start-btn" type="button">Začít hru</button>
+        </div>
       </div>
 
       <div id="hra-play" hidden>
         <div class="stat-row">
           <div class="readout">
-            <div class="cell"><span class="label">Situace</span><span class="value" id="hra-progress">1/5</span></div>
+            <div class="cell"><span class="label">Čas</span><span class="value" id="hra-time">1:00</span></div>
             <div class="cell"><span class="label">Body</span><span class="value" id="hra-score">0</span></div>
-            <div class="cell"><span class="label">Rekord</span><span class="value" id="hra-best">0</span></div>
+            <div class="cell"><span class="label">Úloha</span><span class="value" id="hra-count">1</span></div>
           </div>
         </div>
-        <p class="game-text" id="hra-text"></p>
-        <div class="vernier-wrap">
-          <svg id="hra-svg" class="vernier-svg" viewBox="0 0 640 160" role="img" aria-label="Obrázek k situaci"></svg>
+        <p class="game-text" id="hra-task"></p>
+
+        <div id="hra-tool-step">
+          <p class="game-text"><b>Čím budete měřit?</b></p>
+          <div class="opt-grid three" id="hra-tools">
+            <button class="opt" type="button" data-tool="vnejsi">Vnější (dolní) čelisti</button>
+            <button class="opt" type="button" data-tool="vnitrni">Vnitřní (horní) čelisti</button>
+            <button class="opt" type="button" data-tool="hloubka">Hloubkoměr</button>
+          </div>
+          <div class="fb" id="hra-tool-fb" hidden></div>
         </div>
-        <p class="game-text" style="margin-top:12px;"><b>Jakou chybu žák udělal?</b></p>
-        <div class="opt-grid" id="hra-options"></div>
+
+        <div id="hra-measure" hidden>
+          <div class="vernier-wrap">
+            <svg id="hra-scene" class="vernier-svg scene-svg" viewBox="0 0 640 220" role="img" aria-label="Šuplera a krabička — táhněte posuvné rameno"></svg>
+          </div>
+          <div class="move-row">
+            <button class="vbtn" type="button" data-move="-10">− 1 mm</button>
+            <button class="vbtn" type="button" data-move="-1">− 0,1</button>
+            <span class="contact" id="hra-contact"></span>
+            <button class="vbtn" type="button" data-move="1">+ 0,1</button>
+            <button class="vbtn" type="button" data-move="10">+ 1 mm</button>
+          </div>
+          <p class="hint" style="margin-top:12px;">Detail stupnice:</p>
+          <div class="vernier-wrap">
+            <svg id="hra-vernier" class="vernier-svg" viewBox="0 0 640 160" role="img" aria-label="Detail stupnice šuplery"></svg>
+          </div>
+          <div class="answer-row">
+            <label for="hra-input">Naměřená hodnota:</label>
+            <input id="hra-input" type="text" inputmode="decimal" autocomplete="off">
+            <span>mm</span>
+            <button class="vbtn primary" id="hra-submit" type="button">Zapsat</button>
+          </div>
+        </div>
+
         <div class="fb" id="hra-feedback" hidden></div>
         <div class="center-actions">
-          <button class="vbtn primary" id="hra-next" type="button" hidden>Další situace →</button>
+          <button class="vbtn primary" id="hra-next" type="button" hidden>Další úloha →</button>
         </div>
       </div>
 
       <div id="hra-end" class="game-end" hidden>
-        <div>Výsledek kola</div>
+        <div>Konec hry</div>
         <div class="big" id="hra-end-score">0</div>
         <p class="game-text" id="hra-end-text"></p>
         <div class="center-actions">
-          <button class="vbtn primary" id="hra-again" type="button">Nové kolo</button>
+          <button class="vbtn primary" id="hra-again" type="button">Hrát znovu</button>
         </div>
       </div>
     </div>
@@ -501,44 +552,39 @@ button.vbtn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
     svg.appendChild(e);
     return e;
   }
-  // hodnota v desetinách mm → "23,4"
-  function fmtTenths(t){ return (t / 10).toFixed(1).replace('.', ','); }
+  // hodnota v setinách mm → "23,4" (decimals = 1) nebo "23,45" (decimals = 2)
+  function fmtHund(h, decimals){ return (h / 100).toFixed(decimals).replace('.', ','); }
   function rnd(a, b){ return a + Math.floor(Math.random() * (b - a + 1)); }
-  function pick(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
-  function shuffle(arr){
-    for(var i = arr.length - 1; i > 0; i--){
-      var j = Math.floor(Math.random() * (i + 1));
-      var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
-    }
-    return arr;
-  }
   function lsGet(key){ try{ return localStorage.getItem(key); }catch(e){ return null; } }
   function lsSet(key, v){ try{ localStorage.setItem(key, v); }catch(e){} }
 
-  // Šuplera s noniem 10 dílků = 9 mm (přesnost 0,1 mm).
-  // o.tenths — poloha nulové čárky noniu v desetinách mm
+  // Šuplera s noniem.
+  // o.hund — poloha nulové čárky noniu v setinách mm
+  // o.n — počet dílků noniu: 10 (10 dílků = 9 mm, přesnost 0,1 mm) nebo 20 (20 dílků = 19 mm, přesnost 0,05 mm)
   // o.windowStart — první zobrazený milimetr hlavní stupnice (výchozí: kousek před noniem)
   // o.mainEvery — po kolika mm jsou popisky hlavní stupnice
-  // o.nonLabels — 'all' (0–10) nebo 'major' (jen 0, 5, 10)
   // o.highlight — zvýraznit nulovou čárku noniu a kryjící se čárku
   function drawVernier(svg, o){
-    var PX = 20, X0 = 30, MAIN_Y = 80, VERN_Y = 100;
-    var t = o.tenths, whole = Math.floor(t / 10), dec = t % 10;
-    var W = (o.windowStart != null) ? o.windowStart : Math.max(0, whole - 6);
+    var n = o.n || 10;
+    var PX = n === 20 ? 28 : 20, X0 = 30, MAIN_Y = 80, VERN_Y = 100;
+    var span = n === 20 ? 21 : 29;
+    var h = o.hund, whole = Math.floor(h / 100), k = Math.round((h % 100) / (100 / n));
+    var W = (o.windowStart != null) ? o.windowStart : Math.max(0, whole - (n === 20 ? 1 : 6));
+    var step = (n - 1) / n * PX;
     svg.setAttribute('viewBox', '0 0 640 160');
     svg.innerHTML = '';
 
     svgAdd(svg, 'rect', {x: 10, y: 20, width: 620, height: MAIN_Y - 20, fill: 'none', stroke: 'var(--ink)', 'stroke-width': 1.5});
     svgAdd(svg, 'text', {x: 16, y: 36, 'font-size': 11, fill: 'var(--ink-soft)'}, 'hlavní stupnice (mm)');
     if(o.caption) svgAdd(svg, 'text', {x: 624, y: 36, 'font-size': 11, 'text-anchor': 'end', fill: 'var(--ink-soft)'}, o.caption);
-    for(var i = 0; i <= 29; i++){
+    for(var i = 0; i <= span; i++){
       var mm = W + i, x = X0 + i * PX, major = mm % 5 === 0;
       var isWhole = o.highlight && mm === whole;
       svgAdd(svg, 'line', {
         x1: x, x2: x, y1: MAIN_Y, y2: MAIN_Y - (mm % 10 === 0 ? 20 : (major ? 16 : 10)),
         stroke: isWhole ? 'var(--danger)' : 'var(--ink)', 'stroke-width': isWhole ? 2.4 : (major ? 1.6 : 1)
       });
-      if(mm % o.mainEvery === 0 || isWhole){
+      if(mm % (o.mainEvery || 5) === 0 || isWhole){
         svgAdd(svg, 'text', {
           x: x, y: MAIN_Y - 24, 'font-size': 11, 'text-anchor': 'middle',
           fill: isWhole ? 'var(--danger)' : 'var(--ink)', 'font-weight': isWhole ? 700 : 400
@@ -546,27 +592,68 @@ button.vbtn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
       }
     }
 
-    var vx = X0 + (t / 10 - W) * PX;
-    svgAdd(svg, 'rect', {x: vx - 14, y: VERN_Y, width: 9 * PX + 28, height: 46, fill: 'rgba(47,122,79,0.08)', stroke: 'var(--ink)', 'stroke-width': 1.5});
-    for(var k = 0; k <= 10; k++){
-      var nx = vx + k * 0.9 * PX;
-      var hl = o.highlight && k === dec;
+    var vx = X0 + (h / 100 - W) * PX;
+    svgAdd(svg, 'rect', {x: vx - 14, y: VERN_Y, width: (n - 1) * PX + 28, height: 46, fill: 'rgba(47,122,79,0.08)', stroke: 'var(--ink)', 'stroke-width': 1.5});
+    for(var j = 0; j <= n; j++){
+      var nx = vx + j * step;
+      var hl = o.highlight && j === k;
+      var len = n === 20 ? (j % 10 === 0 ? 18 : (j % 2 === 0 ? 13 : 8)) : (j % 5 === 0 ? 18 : 11);
       svgAdd(svg, 'line', {
-        x1: nx, x2: nx, y1: VERN_Y, y2: VERN_Y + (k % 5 === 0 ? 18 : 11),
-        stroke: hl ? 'var(--accent)' : 'var(--ink)', 'stroke-width': hl ? 2.6 : 1.2
+        x1: nx, x2: nx, y1: VERN_Y, y2: VERN_Y + len,
+        stroke: hl ? 'var(--accent)' : 'var(--ink)', 'stroke-width': hl ? 2.6 : (n === 20 ? 1 : 1.2)
       });
-      if(o.nonLabels === 'all' || k % 5 === 0){
+      // 20dílkový nonius má popsanou každou druhou čárku 0–10 (desetiny mm)
+      var lab = n === 20 ? (j % 2 === 0 ? j / 2 : null) : j;
+      if(lab !== null){
         svgAdd(svg, 'text', {
           x: nx, y: VERN_Y + 32, 'font-size': 10, 'text-anchor': 'middle',
           fill: hl ? 'var(--accent)' : 'var(--ink)', 'font-weight': hl ? 700 : 400
-        }, k);
+        }, lab);
       }
     }
     if(o.highlight){
-      var mx = vx + dec * 0.9 * PX;
+      var mx = vx + k * step;
       svgAdd(svg, 'line', {x1: mx, x2: mx, y1: MAIN_Y - 18, y2: VERN_Y + 18, stroke: 'var(--accent)', 'stroke-width': 1.6, 'stroke-dasharray': '4 3'});
       svgAdd(svg, 'line', {x1: vx, x2: vx, y1: VERN_Y, y2: MAIN_Y - 4, stroke: 'var(--danger)', 'stroke-width': 1.6, 'stroke-dasharray': '2 3'});
     }
+  }
+
+  // Rozbor zápisu žáka: vrátí {hund} nebo {error}. decimals = počet desetinných míst, na která šuplera měří.
+  function parseReading(raw, decimals){
+    raw = raw.trim().replace(',', '.');
+    if(!/^\d+(\.\d+)?$/.test(raw)) return {error: 'Zapište číslo, např. ' + (decimals === 2 ? '23,45' : '23,4') + '.'};
+    var v = Number(raw) * 100, uh = Math.round(v);
+    var unit = decimals === 2 ? 5 : 10;
+    if(Math.abs(v - uh) > 1e-6 || uh % unit !== 0){
+      return {error: decimals === 2
+        ? 'Šuplera s přesností 0,05 mm ukazuje na místě setin jen 0, nebo 5 — zapište hodnotu na setiny, např. 23,45.'
+        : 'Šuplera měří na desetiny milimetru — zapište hodnotu s jedním desetinným místem, např. 23,4.'};
+    }
+    var dot = raw.indexOf('.');
+    return {hund: uh, shortForm: dot < 0 || raw.length - dot - 1 < decimals};
+  }
+
+  // Vysvětlení chyby v odečtu (celé mm / zlomek mm).
+  function readingHints(uh, h, n){
+    var msgs = [], whole = Math.floor(h / 100), uw = Math.floor(uh / 100);
+    if(uw !== whole){
+      if(uw === whole + 1){
+        msgs.push('Celé milimetry: nulová čárka noniu leží mezi ' + whole + ' a ' + (whole + 1) + ' mm. Bere se vždy čárka hlavní stupnice <b>vlevo</b> od ní, tedy <b>' + whole + ' mm</b> — nezaokrouhluje se.');
+      } else {
+        msgs.push('Celé milimetry: čárka hlavní stupnice těsně vlevo od nulové čárky noniu je <b>' + whole + ' mm</b>.');
+      }
+    }
+    if(uh % 100 !== h % 100){
+      if(n === 20){
+        var k = (h % 100) / 5;
+        var where = k % 2 === 0 ? 'je to čárka s popiskem ' + (k / 2) : 'je to krátká čárka mezi popisky ' + ((k - 1) / 2) + ' a ' + ((k + 1) / 2);
+        msgs.push('Setiny: kryje se <b>' + k + '. čárka</b> noniu počítáno od nulové (' + where + ') → ' + k + ' · 0,05 mm = <b>' + fmtHund(h % 100, 2) + ' mm</b>.');
+      } else {
+        var d = (h % 100) / 10;
+        msgs.push('Desetiny: kryje se čárka noniu číslo <b>' + d + '</b> → <b>0,' + d + ' mm</b>.');
+      }
+    }
+    return msgs;
   }
 
   // ---- trénink odečítání (záložka Měření šuplerou) ----
@@ -583,21 +670,18 @@ button.vbtn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
     var BEST_KEY = 'fyzika:krabicka-multivitaminu:best-streak';
 
     var DESC = {
-      lehka: 'Celé milimetry jsou zadané, odečítáte jen desetiny podle noniu.',
-      stredni: 'Odečítáte celou hodnotu, čárky noniu jsou očíslované.',
-      tezka: 'Odečítáte celou hodnotu, nonius má popsané jen čárky 0, 5 a 10 a hlavní stupnice jen desítky.'
+      lehka: 'Šuplera s přesností 0,1 mm. Celé milimetry jsou zadané, odečítáte jen desetiny podle noniu.',
+      stredni: 'Šuplera s přesností 0,1 mm (nonius má 10 dílků na 9 mm). Odečítáte celou hodnotu na desetiny, např. 23,4.',
+      tezka: 'Šuplera s přesností 0,05 mm (nonius má 20 dílků na 19 mm, popisky 0–10 jsou desetiny mm). Odečítáte celou hodnotu na setiny, např. 23,45.'
     };
 
-    var level = 'stredni', tenths = 0, answered = false;
+    var level = 'stredni', hund = 0, answered = false;
     var streak = 0, best = parseInt(lsGet(BEST_KEY), 10) || 0, total = 0, correct = 0;
 
+    function nDiv(){ return level === 'tezka' ? 20 : 10; }
+    function decimals(){ return level === 'tezka' ? 2 : 1; }
     function draw(highlight){
-      drawVernier(svg, {
-        tenths: tenths,
-        mainEvery: level === 'tezka' ? 10 : 5,
-        nonLabels: level === 'tezka' ? 'major' : 'all',
-        highlight: highlight
-      });
+      drawVernier(svg, {hund: hund, n: nDiv(), mainEvery: 5, highlight: highlight});
     }
     function updateStats(){
       document.getElementById('trn-streak').textContent = streak;
@@ -606,13 +690,13 @@ button.vbtn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
     }
     function newTask(focus){
       // 0,5 až 110,0 mm — pokryje všechny rozměry krabičky
-      tenths = rnd(5, 1100);
+      hund = level === 'tezka' ? rnd(10, 2200) * 5 : rnd(5, 1100) * 10;
       answered = false;
       draw(false);
       levelDesc.textContent = DESC[level];
       if(level === 'lehka'){
         hint.hidden = false;
-        hint.innerHTML = 'Celé milimetry: <b>' + Math.floor(tenths / 10) + ' mm</b>. Kolik je desetin milimetru?';
+        hint.innerHTML = 'Celé milimetry: <b>' + Math.floor(hund / 100) + ' mm</b>. Kolik je desetin milimetru?';
         label.textContent = 'Desetiny (číslo kryjící se čárky noniu):';
         document.getElementById('trn-unit').textContent = '';
       } else {
@@ -634,11 +718,11 @@ button.vbtn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
     }
     function check(){
       if(answered) return;
-      var raw = input.value.trim().replace(',', '.');
-      var whole = Math.floor(tenths / 10), dec = tenths % 10;
+      var raw = input.value.trim();
       var ok, msgs = [];
 
       if(level === 'lehka'){
+        var dec = (hund % 100) / 10;
         if(!/^\d$/.test(raw)){
           showFb(false, 'Zapište jednu číslici 0 až 9.', ['Je to číslo čárky noniu, která se kryje s některou čárkou hlavní stupnice.']);
           return;
@@ -647,26 +731,11 @@ button.vbtn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
         ok = d === dec;
         if(!ok) msgs.push('Kryje se čárka noniu číslo <b>' + dec + '</b> (ne ' + d + ') → desetiny jsou <b>0,' + dec + ' mm</b>.');
       } else {
-        if(!/^\d+(\.\d+)?$/.test(raw)){
-          showFb(false, 'Zapište číslo, např. 23,4.', []);
-          return;
-        }
-        var v = Number(raw) * 10, ut = Math.round(v);
-        if(Math.abs(v - ut) > 1e-6){
-          showFb(false, 'Šuplera měří na desetiny milimetru.', ['Zapište hodnotu s jedním desetinným místem, např. 23,4.']);
-          return;
-        }
-        var uw = Math.floor(ut / 10), ud = ut % 10;
-        ok = ut === tenths;
-        if(uw !== whole){
-          if(uw === whole + 1){
-            msgs.push('Celé milimetry: nulová čárka noniu leží mezi ' + whole + ' a ' + (whole + 1) + ' mm. Bere se vždy čárka hlavní stupnice <b>vlevo</b> od ní, tedy <b>' + whole + ' mm</b> — nezaokrouhluje se.');
-          } else {
-            msgs.push('Celé milimetry: čárka hlavní stupnice těsně vlevo od nulové čárky noniu je <b>' + whole + ' mm</b>.');
-          }
-        }
-        if(ud !== dec) msgs.push('Desetiny: kryje se čárka noniu číslo <b>' + dec + '</b> → <b>0,' + dec + ' mm</b>.');
-        if(ok && raw.indexOf('.') < 0) msgs.push('Příště zapište i nulu na místě desetin: <b>' + fmtTenths(tenths) + ' mm</b>.');
+        var r = parseReading(raw, decimals());
+        if(r.error){ showFb(false, r.error, []); return; }
+        ok = r.hund === hund;
+        msgs = readingHints(r.hund, hund, nDiv());
+        if(ok && r.shortForm) msgs.push('Příště zapište hodnotu na ' + (decimals() === 2 ? 'setiny' : 'desetiny') + ' i s nulami na konci: <b>' + fmtHund(hund, decimals()) + ' mm</b>.');
       }
 
       answered = true;
@@ -679,7 +748,8 @@ button.vbtn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
       }
       updateStats();
       draw(true);
-      msgs.push('Správná hodnota: ' + whole + ' mm + 0,' + dec + ' mm = <b>' + fmtTenths(tenths) + ' mm</b>.');
+      var whole = Math.floor(hund / 100);
+      msgs.push('Správná hodnota: ' + whole + ' mm + ' + fmtHund(hund % 100, decimals()) + ' mm = <b>' + fmtHund(hund, decimals()) + ' mm</b>.');
       showFb(ok, ok ? 'Správně!' : 'Bohužel, není to správně.', msgs);
       input.disabled = true;
       checkBtn.hidden = true;
@@ -703,211 +773,294 @@ button.vbtn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
     newTask(false);
   })();
 
-  // ---- hra Najdi chybu měření ----
+  // ---- hra Změř krabičku (hra na čas) ----
   (function(){
-    var svg = document.getElementById('hra-svg');
-    var textEl = document.getElementById('hra-text');
-    var optsEl = document.getElementById('hra-options');
+    var scene = document.getElementById('hra-scene');
+    var vern = document.getElementById('hra-vernier');
+    var input = document.getElementById('hra-input');
     var fb = document.getElementById('hra-feedback');
+    var toolFb = document.getElementById('hra-tool-fb');
     var nextBtn = document.getElementById('hra-next');
-    var BEST_KEY = 'fyzika:krabicka-multivitaminu:game-best';
-    var ROUND = 5, POINTS = 10;
+    var submitBtn = document.getElementById('hra-submit');
+    var contactEl = document.getElementById('hra-contact');
+    var toolBtns = Array.prototype.slice.call(document.querySelectorAll('#hra-tools [data-tool]'));
+    var moveBtns = Array.prototype.slice.call(document.querySelectorAll('[data-move]'));
+    var durBtns = Array.prototype.slice.call(document.querySelectorAll('[data-dur]'));
+    var BESTS_KEY = 'fyzika:krabicka-multivitaminu:game-bests';
+    var TOOL_POINTS = 5, MEASURE_POINTS = 10;
 
-    // Měřené rozměry krabičky a jejich reálné rozsahy (v desetinách mm).
+    var S = 4.5;          // pixelů na 1 mm ve scéně
+    var X_F = 50;         // vnitřní líc pevné čelisti (vnější i vnitřní měření)
+    var X_R = 150;        // čelo šuplery opřené o okraj krabičky (hloubka)
+    var MAX_OUTER = 1160; // největší otevření v desetinách mm, které se vejde do scény
+
+    // Rozměry krabičky (v desetinách mm) — reálné rozsahy, nástroj, kterým se měří.
     var QTY = [
-      {name: 'výšku <i>v</i> krabičky', min: 950, max: 1050},
-      {name: 'hloubku <i>h</i> krabičky', min: 880, max: 980},
-      {name: 'vnější průměr <i>D</i> u víčka', min: 450, max: 500},
-      {name: 'vnější průměr <i>D′</i> u dna', min: 440, max: 490},
-      {name: 'vnitřní průměr <i>d</i> u víčka', min: 410, max: 460}
+      {key: 'v', name: 'výšku <i>v</i> krabičky', obj: 'krabička (na boku)', min: 950, max: 1050, tool: 'vnejsi'},
+      {key: 'D', name: 'vnější průměr <i>D</i> u víčka', obj: 'víčko', min: 450, max: 500, tool: 'vnejsi'},
+      {key: 'D2', name: 'vnější průměr <i>D′</i> u dna', obj: 'dno krabičky', min: 440, max: 490, tool: 'vnejsi'},
+      {key: 'd', name: 'vnitřní průměr <i>d</i> u víčka', obj: 'víčko (řez)', min: 410, max: 460, tool: 'vnitrni'},
+      {key: 'h', name: 'hloubku <i>h</i> krabičky', obj: 'krabička (řez)', min: 880, max: 980, tool: 'hloubka'}
     ];
-    var LABELS = {
-      nula: 'Nezohlednil nulovou chybu šuplery',
-      paralaxa: 'Odečítal šikmo, ne kolmo shora (paralaxa)',
-      tlak: 'Tlačil čelistmi na krabičku příliš silně',
-      cele: 'Špatně odečetl celé milimetry'
+    var TOOL_WHY = {
+      vnejsi: 'Vnější rozměry (výška, vnější průměr) se měří <b>dolními (vnějšími) čelistmi</b>, které se k předmětu přisouvají zvenku.',
+      vnitrni: 'Vnitřní průměr se měří <b>horními (vnitřními) čelistmi</b>, které se roztahují proti vnitřním stěnám.',
+      hloubka: 'Hloubka se měří <b>hloubkoměrem</b> — tenkým páskem, který se vysouvá z konce šuplery až ke dnu.'
     };
 
-    function drawEye(cx, cy, color){
-      svgAdd(svg, 'ellipse', {cx: cx, cy: cy, rx: 15, ry: 8, fill: 'var(--surface)', stroke: color, 'stroke-width': 1.6});
-      svgAdd(svg, 'circle', {cx: cx, cy: cy, r: 4, fill: color});
-    }
-    function arrow(x1, x2, y){
-      var dir = x2 > x1 ? 1 : -1;
-      svgAdd(svg, 'line', {x1: x1, x2: x2 - dir * 8, y1: y, y2: y, stroke: 'var(--danger)', 'stroke-width': 2.4});
-      svgAdd(svg, 'polygon', {points: x2 + ',' + y + ' ' + (x2 - dir * 10) + ',' + (y - 6) + ' ' + (x2 - dir * 10) + ',' + (y + 6), fill: 'var(--danger)'});
-    }
+    var dur = 60, endAt = 0, timer = null, running = false;
+    var score = 0, count = 0, lastKey = null;
+    var task = null;   // {q, dim, opening, toolDone, toolMistake, answered}
 
-    var GEN = {
-      nula: function(){
-        var s = pick([2, 3, 4, 6, 7]), q = pick(QTY), R = rnd(q.min, q.max);
-        return {
-          text: 'Před měřením žák zavřel čelisti a šuplera ukazovala stav na obrázku. Pak změřil ' + q.name +
-                ' a do tabulky zapsal <b>' + fmtTenths(R) + ' mm</b> — tak, jak hodnotu odečetl, bez jakékoli úpravy.',
-          draw: function(hl){
-            drawVernier(svg, {tenths: s, windowStart: 0, mainEvery: 5, nonLabels: 'all', highlight: hl, caption: 'čelisti zavřené'});
-          },
-          explain: 'Při zavřených čelistech šuplera neukazuje 0, ale <b>0,' + s + ' mm</b> — má <b>nulovou chybu</b>. ' +
-                   'Tu je potřeba od každé naměřené hodnoty odečíst: ' + fmtTenths(R) + ' − 0,' + s + ' = <b>' + fmtTenths(R - s) + ' mm</b>.'
-        };
-      },
-      cele: function(){
-        var q = pick(QTY), base = rnd(q.min, q.max);
-        var t = Math.floor(base / 10) * 10 + rnd(5, 9), w = Math.floor(t / 10);
-        return {
-          text: 'Žák změřil ' + q.name + '. Šuplera ukazovala stav na obrázku a žák zapsal <b>' + fmtTenths(t + 10) + ' mm</b>.',
-          draw: function(hl){
-            drawVernier(svg, {tenths: t, mainEvery: 5, nonLabels: 'all', highlight: hl});
-          },
-          explain: 'Desetiny žák odečetl správně, ale nulová čárka noniu leží mezi ' + w + ' a ' + (w + 1) + ' mm. ' +
-                   'Celé milimetry se berou podle čárky hlavní stupnice <b>vlevo</b> od nulové čárky noniu — nezaokrouhluje se. ' +
-                   'Správně: <b>' + fmtTenths(t) + ' mm</b>.'
-        };
-      },
-      paralaxa: function(){
-        var q = pick(QTY), R = rnd(q.min, q.max), delta = pick([2, 3]);
-        var variant = rnd(1, 2);
-        var text = variant === 1
-          ? 'Žák změřil ' + q.name + '. Šuplera ležela na lavici a žák hodnotu odečítal vsedě, s očima stranou od stupnice (viz obrázek). ' +
-            'Zapsal <b>' + fmtTenths(R + delta) + ' mm</b>, spolužák, který se na stejnou šupleru díval přímo shora, odečetl <b>' + fmtTenths(R) + ' mm</b>.'
-          : 'Žák měřil ' + q.name + '. Když při odečítání pohnul hlavou do strany (viz obrázek), zdálo se mu, že se s hlavní stupnicí kryje jiná čárka noniu, a nevěděl, kterou hodnotu zapsat.';
-        return {
-          text: text,
-          draw: function(hl){
-            svg.setAttribute('viewBox', '0 0 640 160');
-            svg.innerHTML = '';
-            var MAIN = 128, TOP = 104, i;
-            // pevné rameno (hlavní stupnice) a na něm vyvýšený nonius — boční řez
-            svgAdd(svg, 'rect', {x: 20, y: MAIN, width: 600, height: 22, fill: 'var(--surface-2)', stroke: 'var(--ink)', 'stroke-width': 1.4});
-            for(i = 0; i <= 24; i++) svgAdd(svg, 'line', {x1: 30 + i * 24, x2: 30 + i * 24, y1: MAIN, y2: MAIN - 6, stroke: 'var(--ink)', 'stroke-width': 1});
-            svgAdd(svg, 'rect', {x: 230, y: TOP, width: 250, height: MAIN - TOP, fill: 'rgba(47,122,79,0.15)', stroke: 'var(--ink)', 'stroke-width': 1.4});
-            for(i = 0; i <= 10; i++) svgAdd(svg, 'line', {x1: 246 + i * 21.6, x2: 246 + i * 21.6, y1: TOP, y2: TOP - 6, stroke: 'var(--ink)', 'stroke-width': 1});
-            svgAdd(svg, 'text', {x: 236, y: MAIN - 9, 'font-size': 10, fill: 'var(--ink-soft)'}, 'nonius');
-            svgAdd(svg, 'text', {x: 26, y: MAIN + 15, 'font-size': 10, fill: 'var(--ink-soft)'}, 'hlavní stupnice');
-            // šikmý pohled žáka přes 4. čárku noniu
-            var nx = 246 + 4 * 21.6, ex = 590, ey = 56;
-            var tHit = (MAIN - ey) / (TOP - ey), hx = ex + (nx - ex) * tHit;
-            svgAdd(svg, 'line', {x1: ex, y1: ey, x2: hx, y2: MAIN, stroke: 'var(--danger)', 'stroke-width': 1.6, 'stroke-dasharray': '5 3'});
-            drawEye(ex, ey, 'var(--danger)');
-            svgAdd(svg, 'text', {x: ex - 22, y: ey + 4, 'font-size': 11, 'text-anchor': 'end', fill: 'var(--danger)'}, 'pohled žáka');
-            if(hl){
-              svgAdd(svg, 'circle', {cx: hx, cy: MAIN, r: 4, fill: 'var(--danger)'});
-              svgAdd(svg, 'text', {x: hx - 6, y: MAIN - 10, 'font-size': 10, 'text-anchor': 'end', fill: 'var(--danger)'}, 'zdánlivá shoda');
-              svgAdd(svg, 'line', {x1: nx, y1: 30, x2: nx, y2: MAIN, stroke: 'var(--accent)', 'stroke-width': 1.6, 'stroke-dasharray': '5 3'});
-              drawEye(nx, 22, 'var(--accent)');
-              svgAdd(svg, 'text', {x: nx + 22, y: 26, 'font-size': 11, fill: 'var(--accent)'}, 'správně: kolmo shora');
-            }
-          },
-          explain: 'Nonius leží o kousek výš než hlavní stupnice, čárky tedy nejsou v jedné rovině. Při pohledu šikmo se čárky noniu ' +
-                   'promítají na hlavní stupnici posunutě a zdá se, že se kryje jiná čárka — to je <b>paralaxa</b>. ' +
-                   'Stupnici je potřeba číst <b>kolmo shora</b> (zelená čára).' +
-                   (variant === 1 ? ' Správná je hodnota spolužáka, <b>' + fmtTenths(R) + ' mm</b>.' : '')
-        };
-      },
-      tlak: function(){
-        var q = pick(QTY.slice(2, 4)), Rr = rnd(q.min, q.max), Rm = Rr - rnd(6, 15);
-        return {
-          text: 'Žák měřil ' + q.name + '. Aby šuplera „dobře držela“, stiskl čelisti co nejvíc (viz obrázek, pohled shora). ' +
-                'Naměřil <b>' + fmtTenths(Rm) + ' mm</b>, spolužáci u stejné krabičky naměřili kolem <b>' + fmtTenths(Rr) + ' mm</b>.',
-          draw: function(hl){
-            svg.setAttribute('viewBox', '0 0 640 160');
-            svg.innerHTML = '';
-            var cx = 320, cy = 82;
-            if(hl) svgAdd(svg, 'circle', {cx: cx, cy: cy, r: 64, fill: 'none', stroke: 'var(--accent)', 'stroke-width': 1.6, 'stroke-dasharray': '5 3'});
-            svgAdd(svg, 'ellipse', {cx: cx, cy: cy, rx: 54, ry: 73, fill: 'var(--surface-2)', stroke: 'var(--ink)', 'stroke-width': 1.6});
-            svgAdd(svg, 'rect', {x: cx - 54 - 14, y: 12, width: 14, height: 140, fill: 'var(--ink-soft)'});
-            svgAdd(svg, 'rect', {x: cx + 54, y: 12, width: 14, height: 140, fill: 'var(--ink-soft)'});
-            arrow(cx - 130, cx - 74, cy);
-            arrow(cx + 130, cx + 74, cy);
-            svgAdd(svg, 'text', {x: cx - 100, y: cy - 14, 'font-size': 11, 'text-anchor': 'middle', fill: 'var(--danger)'}, 'velká síla');
-            svgAdd(svg, 'text', {x: cx + 100, y: cy - 14, 'font-size': 11, 'text-anchor': 'middle', fill: 'var(--danger)'}, 'velká síla');
-            svgAdd(svg, 'text', {x: 20, y: 24, 'font-size': 11, fill: 'var(--ink-soft)'}, 'víčko krabičky mezi čelistmi');
-            if(hl) svgAdd(svg, 'text', {x: 620, y: 24, 'font-size': 11, 'text-anchor': 'end', fill: 'var(--accent)'}, 'původní tvar');
-          },
-          explain: 'Krabička je z tenkého plastu a při silném stisku se zdeformuje (zmáčkne se do oválu) — naměřený rozměr je pak ' +
-                   '<b>menší</b> než skutečný. Čelisti se k předmětu přikládají jen lehce, bez tlačení; hodnotu pak lze zajistit aretačním šroubem.'
-        };
-      }
-    };
-
-    var order = [], idx = 0, score = 0, current = null;
-    var best = parseInt(lsGet(BEST_KEY), 10) || 0;
-
+    function bests(){ try{ return JSON.parse(lsGet(BESTS_KEY)) || {}; }catch(e){ return {}; } }
     function show(id){
-      ['hra-start', 'hra-play', 'hra-end'].forEach(function(x){
-        document.getElementById(x).hidden = x !== id;
-      });
+      ['hra-start', 'hra-play', 'hra-end'].forEach(function(x){ document.getElementById(x).hidden = x !== id; });
     }
-    function buildOrder(){
-      // každá chyba aspoň jednou, pátá situace náhodně (ne stejná jako předchozí)
-      var types = shuffle(Object.keys(GEN));
-      var extra;
-      do { extra = pick(Object.keys(GEN)); } while(extra === types[types.length - 1]);
-      types.push(extra);
-      return types;
+    function updateStartBest(){
+      var b = bests()[dur];
+      document.getElementById('hra-start-best').textContent = b != null ? 'Váš rekord pro tuto délku: ' + b + ' bodů.' : 'Pro tuto délku zatím nemáte rekord.';
     }
-    function startRound(){
-      order = buildOrder();
-      idx = 0; score = 0;
-      show('hra-play');
-      nextSituation();
+    function fmtTime(sec){ return Math.floor(sec / 60) + ':' + ('0' + (sec % 60)).slice(-2); }
+    function tick(){
+      var left = Math.max(0, Math.ceil((endAt - Date.now()) / 1000));
+      document.getElementById('hra-time').textContent = fmtTime(left);
+      if(left <= 0) endGame();
     }
-    function nextSituation(){
-      var type = order[idx];
-      current = GEN[type]();
-      current.type = type;
-      document.getElementById('hra-progress').textContent = (idx + 1) + '/' + ROUND;
-      document.getElementById('hra-score').textContent = score;
-      document.getElementById('hra-best').textContent = best;
-      textEl.innerHTML = current.text;
-      current.draw(false);
-      optsEl.innerHTML = '';
-      shuffle(Object.keys(LABELS)).forEach(function(key){
-        var b = document.createElement('button');
-        b.type = 'button';
-        b.className = 'opt';
-        b.textContent = LABELS[key];
-        b.setAttribute('data-key', key);
-        b.addEventListener('click', function(){ answer(key); });
-        optsEl.appendChild(b);
-      });
+
+    // ---- kreslení scény ----
+    function rect(x, y, w, h, fill, extra){
+      var a = {x: x, y: y, width: Math.max(0, w), height: h, fill: fill, stroke: 'var(--ink)', 'stroke-width': 1.2};
+      for(var k in extra) a[k] = extra[k];
+      return svgAdd(scene, 'rect', a);
+    }
+    function beamTicks(x1, x2, y, up){
+      for(var x = x1; x <= x2; x += 10 * S){
+        svgAdd(scene, 'line', {x1: x, x2: x, y1: y, y2: y + (up ? -5 : 5), stroke: 'var(--ink)', 'stroke-width': 1});
+      }
+    }
+    function drawScene(){
+      scene.innerHTML = '';
+      var q = task.q, op = task.opening / 10, dim = task.dim / 10;
+      var JAW = 'var(--ink-soft)', SLIDE = 'rgba(47,122,79,0.25)', OBJ = 'var(--surface-2)';
+      if(q.tool === 'vnejsi'){
+        var mx = X_F + op * S;
+        rect(X_F, 88, dim * S, 76, OBJ);
+        svgAdd(scene, 'text', {x: X_F + dim * S / 2, y: 130, 'font-size': 12, 'text-anchor': 'middle', fill: 'var(--ink-soft)'}, q.obj);
+        rect(14, 30, 616, 18, 'var(--surface)');
+        beamTicks(X_F, 620, 48, true);
+        rect(X_F - 14, 8, 14, 22, JAW, {opacity: 0.35});
+        rect(X_F - 14, 48, 14, 124, JAW);
+        rect(mx - 4, 24, 60, 30, SLIDE);
+        rect(mx, 8, 14, 22, JAW, {opacity: 0.35});
+        rect(mx, 48, 14, 124, JAW);
+        svgAdd(scene, 'text', {x: mx + 26, y: 196, 'font-size': 11, 'text-anchor': 'middle', fill: 'var(--accent)'}, '⇆ táhněte');
+      } else if(q.tool === 'vnitrni'){
+        var mx2 = X_F + op * S;
+        rect(X_F - 16, 40, 16, 84, OBJ);
+        rect(X_F + dim * S, 40, 16, 84, OBJ);
+        svgAdd(scene, 'text', {x: X_F + dim * S / 2, y: 30, 'font-size': 12, 'text-anchor': 'middle', fill: 'var(--ink-soft)'}, q.obj);
+        rect(14, 150, 616, 18, 'var(--surface)');
+        beamTicks(X_F, 620, 150, true);
+        rect(X_F, 60, 10, 90, JAW);
+        rect(X_F - 14, 168, 14, 40, JAW, {opacity: 0.35});
+        rect(mx2 - 4, 144, 60, 30, SLIDE);
+        rect(mx2 - 10, 60, 10, 90, JAW);
+        rect(mx2, 168, 14, 40, JAW, {opacity: 0.35});
+        svgAdd(scene, 'text', {x: mx2 + 26, y: 140, 'font-size': 11, 'text-anchor': 'middle', fill: 'var(--accent)'}, '⇆ táhněte');
+      } else {
+        var tip = X_R + op * S, bottom = X_R + dim * S;
+        rect(X_R, 60, dim * S + 10, 10, OBJ);
+        rect(X_R, 150, dim * S + 10, 10, OBJ);
+        rect(bottom, 60, 10, 100, OBJ);
+        svgAdd(scene, 'text', {x: X_R + dim * S / 2, y: 120, 'font-size': 12, 'text-anchor': 'middle', fill: 'var(--ink-soft)'}, q.obj);
+        rect(10, 42, X_R - 10, 28, 'var(--surface)');
+        beamTicks(20, X_R - 5, 70, true);
+        rect(X_R - 70, 38, 56, 36, SLIDE);
+        rect(X_R, 70, op * S, 5, 'var(--accent)', {stroke: 'none'});
+        svgAdd(scene, 'text', {x: 16, y: 92, 'font-size': 11, fill: 'var(--accent)'}, 'hloubkoměr — táhněte ⇆');
+      }
+    }
+    function drawDetail(highlight){
+      drawVernier(vern, {hund: task.opening * 10, n: 10, mainEvery: 5, highlight: highlight});
+    }
+    function refresh(){
+      drawScene();
+      drawDetail(false);
+      var touching = task.opening === task.dim;
+      contactEl.textContent = touching ? '● šuplera dosedá na krabičku' : '○ šuplera nedosedá';
+      contactEl.classList.toggle('on', touching);
+    }
+
+    // ---- posouvání šuplery ----
+    function clampOpening(t){
+      var tool = task.q.tool;
+      t = Math.max(0, Math.min(MAX_OUTER, t));
+      if(tool === 'vnejsi') t = Math.max(task.dim, t);   // čelisti neprojdou krabičkou
+      else t = Math.min(task.dim, t);                    // vnitřní čelisti / hloubkoměr narazí na stěnu / dno
+      return t;
+    }
+    function setOpening(t){
+      if(!task || task.answered || !task.toolDone) return;
+      t = clampOpening(t);
+      if(t === task.opening) return;
+      task.opening = t;
+      refresh();
+    }
+    function svgX(evt){
+      var pt = scene.createSVGPoint();
+      pt.x = evt.clientX; pt.y = evt.clientY;
+      return pt.matrixTransform(scene.getScreenCTM().inverse()).x;
+    }
+    function fromPointer(evt){
+      var x = svgX(evt);
+      var base = task.q.tool === 'hloubka' ? X_R : X_F;
+      setOpening(Math.round((x - base) / S * 10));
+    }
+    var dragging = false;
+    scene.addEventListener('pointerdown', function(e){
+      if(!task || task.answered) return;
+      dragging = true;
+      try{ scene.setPointerCapture(e.pointerId); }catch(err){}
+      fromPointer(e);
+    });
+    scene.addEventListener('pointermove', function(e){ if(dragging) fromPointer(e); });
+    ['pointerup', 'pointercancel'].forEach(function(ev){
+      scene.addEventListener(ev, function(){ dragging = false; });
+    });
+    scene.setAttribute('tabindex', '0');
+    scene.addEventListener('keydown', function(e){
+      if(!task) return;
+      var d = e.shiftKey ? 10 : 1;
+      if(e.key === 'ArrowLeft'){ e.preventDefault(); setOpening(task.opening - d); }
+      if(e.key === 'ArrowRight'){ e.preventDefault(); setOpening(task.opening + d); }
+    });
+    moveBtns.forEach(function(b){
+      b.addEventListener('click', function(){ if(task) setOpening(task.opening + parseInt(b.getAttribute('data-move'), 10)); });
+    });
+
+    // ---- průběh hry ----
+    function newTask(){
+      var q;
+      do { q = QTY[rnd(0, QTY.length - 1)]; } while(q.key === lastKey);
+      lastKey = q.key;
+      var dim = rnd(q.min, q.max), start;
+      if(q.tool === 'vnejsi') start = Math.min(MAX_OUTER, dim + rnd(80, 250));
+      else start = rnd(150, Math.max(160, dim - 150));
+      task = {q: q, dim: dim, opening: start, toolDone: false, toolMistake: false, answered: false};
+      count++;
+      document.getElementById('hra-count').textContent = count;
+      document.getElementById('hra-task').innerHTML = 'Změřte ' + q.name + '.';
+      toolBtns.forEach(function(b){ b.disabled = false; b.classList.remove('correct', 'wrong'); });
+      toolFb.hidden = true;
+      document.getElementById('hra-measure').hidden = true;
       fb.hidden = true;
       nextBtn.hidden = true;
+      input.value = '';
+      input.disabled = false;
+      submitBtn.hidden = false;
+      moveBtns.forEach(function(b){ b.disabled = false; });
     }
-    function answer(key){
-      var ok = key === current.type;
-      Array.prototype.forEach.call(optsEl.children, function(b){
-        var k = b.getAttribute('data-key');
-        b.disabled = true;
-        if(k === current.type) b.classList.add('correct');
-        else if(k === key) b.classList.add('wrong');
-      });
-      if(ok) score += POINTS;
+    function chooseTool(tool){
+      if(!task || task.toolDone) return;
+      var btn = toolBtns.filter(function(b){ return b.getAttribute('data-tool') === tool; })[0];
+      if(tool !== task.q.tool){
+        task.toolMistake = true;
+        btn.classList.add('wrong');
+        btn.disabled = true;
+        toolFb.className = 'fb bad';
+        toolFb.innerHTML = '<div class="headline">Tímto ' + task.q.name + ' nezměříte.</div><p>Zkuste to znovu.</p>';
+        toolFb.hidden = false;
+        return;
+      }
+      task.toolDone = true;
+      btn.classList.add('correct');
+      toolBtns.forEach(function(b){ b.disabled = true; });
+      if(!task.toolMistake) score += TOOL_POINTS;
       document.getElementById('hra-score').textContent = score;
-      current.draw(true);
+      toolFb.className = 'fb ok';
+      toolFb.innerHTML = '<div class="headline">' + (task.toolMistake ? 'Ano, teď správně.' : 'Správně! +' + TOOL_POINTS + ' bodů') + '</div><p>' + TOOL_WHY[tool] + '</p>';
+      toolFb.hidden = false;
+      document.getElementById('hra-measure').hidden = false;
+      refresh();
+    }
+    function submit(){
+      if(!task || task.answered || !task.toolDone) return;
+      var r = parseReading(input.value, 1);
+      if(r.error){
+        fb.className = 'fb bad';
+        fb.innerHTML = '<div class="headline">' + r.error + '</div>';
+        fb.hidden = false;
+        return;
+      }
+      task.answered = true;
+      var touching = task.opening === task.dim;
+      var readOk = r.hund === task.opening * 10;
+      var ok = touching && readOk;
+      var msgs = [];
+      if(!touching){
+        msgs.push('Šuplera nedosedla na krabičku: ukazovala <b>' + fmtHund(task.opening * 10, 1) + ' mm</b>, ale skutečný rozměr je <b>' + fmtHund(task.dim * 10, 1) + ' mm</b>. Posouvejte rameno, dokud se o krabičku nezastaví.');
+      }
+      if(!readOk){
+        msgs.push('Šuplera ukazovala <b>' + fmtHund(task.opening * 10, 1) + ' mm</b>, vy jste zapsali ' + fmtHund(r.hund, 1) + ' mm.');
+        msgs = msgs.concat(readingHints(r.hund, task.opening * 10, 10));
+      }
+      if(ok){
+        score += MEASURE_POINTS;
+        msgs.push('Skutečný rozměr je <b>' + fmtHund(task.dim * 10, 1) + ' mm</b>.');
+      }
+      document.getElementById('hra-score').textContent = score;
+      drawDetail(true);
       fb.className = 'fb ' + (ok ? 'ok' : 'bad');
-      fb.innerHTML = '<div class="headline">' + (ok ? 'Správně! +' + POINTS + ' bodů' : 'Bohužel. Chyba byla: ' + LABELS[current.type].toLowerCase()) + '</div>' +
-                     '<p>' + current.explain + '</p>';
+      fb.innerHTML = '<div class="headline">' + (ok ? 'Správně změřeno! +' + MEASURE_POINTS + ' bodů' : 'Bohužel, měření není správně.') + '</div>' +
+                     msgs.map(function(m){ return '<p>' + m + '</p>'; }).join('');
       fb.hidden = false;
-      nextBtn.textContent = idx + 1 < ROUND ? 'Další situace →' : 'Zobrazit výsledek';
+      input.disabled = true;
+      submitBtn.hidden = true;
+      moveBtns.forEach(function(b){ b.disabled = true; });
       nextBtn.hidden = false;
       nextBtn.focus({preventScroll: true});
     }
-    function endRound(){
-      var newBest = score > best;
-      if(newBest){ best = score; lsSet(BEST_KEY, String(best)); }
+    function startGame(){
+      score = 0; count = 0; lastKey = null; running = true;
+      document.getElementById('hra-score').textContent = '0';
+      endAt = Date.now() + dur * 1000;
+      show('hra-play');
+      tick();
+      clearInterval(timer);
+      timer = setInterval(tick, 250);
+      newTask();
+    }
+    function endGame(){
+      if(!running) return;
+      running = false;
+      clearInterval(timer);
+      task = null;
+      var b = bests(), prev = b[dur], isNew = prev == null || score > prev;
+      if(isNew){ b[dur] = score; lsSet(BESTS_KEY, JSON.stringify(b)); }
       document.getElementById('hra-end-score').textContent = score + ' bodů';
-      document.getElementById('hra-end-text').innerHTML = 'Správně ' + (score / POINTS) + ' z ' + ROUND + ' situací.' +
-        (newBest ? ' <b>Nový rekord!</b>' : ' Rekord: ' + best + ' bodů.');
+      document.getElementById('hra-end-text').innerHTML = 'Za ' + fmtTime(dur) + ' min jste začali ' + count + (count === 1 ? ' úlohu' : (count < 5 ? ' úlohy' : ' úloh')) + '.' +
+        (isNew ? ' <b>Nový rekord!</b>' : ' Rekord pro tuto délku: ' + prev + ' bodů.');
       show('hra-end');
     }
 
-    nextBtn.addEventListener('click', function(){
-      idx++;
-      if(idx < ROUND) nextSituation(); else endRound();
+    toolBtns.forEach(function(b){
+      b.addEventListener('click', function(){ chooseTool(b.getAttribute('data-tool')); });
     });
-    document.getElementById('hra-start-btn').addEventListener('click', startRound);
-    document.getElementById('hra-again').addEventListener('click', startRound);
+    submitBtn.addEventListener('click', submit);
+    input.addEventListener('keydown', function(e){
+      if(e.key === 'Enter'){ e.preventDefault(); submit(); }
+    });
+    nextBtn.addEventListener('click', function(){ if(running) newTask(); });
+    durBtns.forEach(function(b){
+      b.addEventListener('click', function(){
+        dur = parseInt(b.getAttribute('data-dur'), 10);
+        durBtns.forEach(function(x){ x.classList.toggle('on', x === b); });
+        updateStartBest();
+      });
+    });
+    document.getElementById('hra-start-btn').addEventListener('click', startGame);
+    document.getElementById('hra-again').addEventListener('click', function(){ show('hra-start'); updateStartBest(); });
+    updateStartBest();
   })();
 </script>
 
