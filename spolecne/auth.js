@@ -35,6 +35,7 @@
     'zaokrouhlovani-vysledku.html': 'mereni',
     'zpracovani-mereni.html': 'mereni',
     'krabicka-multivitaminu.html': 'mereni',
+    'pravidla-pro-vyuzivani-ai.html': 'mereni',
     'kalkulacka-fx82cex.html': 'kvinta',
     'prevody-jednotek.html': 'kvinta',
     'skladani-vektoru.html': 'kvinta',
