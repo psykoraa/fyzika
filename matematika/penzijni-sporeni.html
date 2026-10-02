@@ -163,7 +163,7 @@ details.table-details summary{
 }
 details.table-details summary:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
 .theory-table-wrap{ overflow-x:auto; margin:10px 0 4px; }
-.theory-table{ border-collapse:collapse; font-size:0.84rem; width:100%; min-width:560px; }
+.theory-table{ border-collapse:collapse; font-size:0.84rem; width:100%; min-width:640px; }
 .theory-table th, .theory-table td{
   border:1px solid var(--line); padding:7px 10px; text-align:right;
   font-family:'IBM Plex Mono', monospace; font-variant-numeric:tabular-nums;
@@ -262,6 +262,14 @@ details.table-details summary:focus-visible{ outline:2px solid var(--focus); out
       </div>
 
       <div class="block">
+        <label class="switch"><input type="checkbox" id="sw-tax"><span class="track"></span>Započítat daňový odpočet</label>
+        <div class="sub" id="sub-tax" hidden>
+          <div class="row" id="tax-row" role="radiogroup" aria-label="Sazba daně z příjmu"></div>
+          <p class="hint" id="tax-hint"></p>
+        </div>
+      </div>
+
+      <div class="block">
         <label class="switch"><input type="checkbox" id="sw-infl"><span class="track"></span>Započítat inflaci (výsledek v dnešních cenách)</label>
         <div class="sub" id="sub-infl" hidden>
           <div class="field">
@@ -285,6 +293,7 @@ details.table-details summary:focus-visible{ outline:2px solid var(--focus); out
         <div class="stat" id="stat-state"><div class="label">Státní příspěvek</div><div class="value" id="res-state">—</div></div>
         <div class="stat"><div class="label">Výnos z investic</div><div class="value" id="res-gain">—</div></div>
         <div class="stat" id="stat-fee"><div class="label">Zaplacené poplatky</div><div class="value" id="res-fee">—</div></div>
+        <div class="stat" id="stat-tax" hidden><div class="label">Úspora na daních (mimo účet)</div><div class="value" id="res-tax">—</div></div>
         <div class="stat"><div class="label">Násobek vlastních vkladů</div><div class="value" id="res-mult">—</div></div>
       </div>
     </div>
@@ -307,7 +316,7 @@ details.table-details summary:focus-visible{ outline:2px solid var(--focus); out
         <div class="theory-table-wrap">
           <table class="theory-table" id="year-table">
             <thead><tr>
-              <th>Věk</th><th>Dynamický podíl</th><th>Roční výnos</th><th>Vlastní vklady</th><th>Státní příspěvek</th><th>Poplatky</th><th>Hodnota účtu</th>
+              <th>Věk</th><th>Dynamický podíl</th><th>Roční výnos</th><th>Vlastní vklady</th><th>Státní příspěvek</th><th>Poplatky</th><th>Daňová úspora</th><th>Hodnota účtu</th>
             </tr></thead>
             <tbody></tbody>
           </table>
@@ -340,13 +349,18 @@ details.table-details summary:focus-visible{ outline:2px solid var(--focus); out
       <div class="formula-box">\[ P = 0{,}2 \cdot \min(V;\ 1700\ \mathrm{Kč})\quad\text{pro } V \ge 500\ \mathrm{Kč},\qquad P = 0\ \text{jinak} \]</div>
       <p>Příspěvky se sčítají a na účet se připíšou <b>jednou za čtvrtletí</b> (po třech měsících spoření, počítaných od začátku spoření). Případný nedokončený poslední čtvrtletí se připíše na konci spoření.</p>
 
+      <h3>Daňový odpočet</h3>
+      <p>Vklady klienta lze odečíst od základu daně z příjmů, ale <b>jen část nad 1 700 Kč měsíčně</b> (tj. nad 20 400 Kč ročně), protože do této výše už má klient nárok na státní příspěvek. Odpočet je navíc omezen na 48 000 Kč za rok (limit je společný pro všechny daňově podporované produkty spoření na stáří). Při ročních vkladech \(R\) je odpočet a úspora na dani</p>
+      <div class="formula-box">\[ O = \min\bigl(48\,000;\ \max(0;\ R - 20\,400)\bigr),\qquad \text{úspora} = O \cdot s \]</div>
+      <p>kde \(s\) je sazba daně z příjmu (15 %, resp. 23 % u vyšších příjmů). Do ročních vkladů \(R\) se počítá i počáteční vklad (v prvním roce). Úsporu získáte zpět při podání daňového přiznání (nebo ročním zúčtování), proto se v kalkulačce zaznamenává <b>na konci každého roku</b> a do hodnoty účtu se <b>nepřičítá</b> — zobrazuje se zvlášť. Příspěvky zaměstnavatele se do odpočtu nezapočítávají.</p>
+
       <h3>Inflace</h3>
       <p>Při zapnuté inflaci \(\pi\) se každá částka vzniklá v čase \(t\) (v letech od začátku spoření) přepočte na dnešní ceny:</p>
       <div class="formula-box">\[ \text{částka v dnešních cenách} = \frac{\text{nominální částka}}{(1+\pi)^{t}} \]</div>
       <p>Zobrazený výnos je pak <b>reálný výnos</b>, tedy po odečtení znehodnocení peněz.</p>
 
       <div class="note">
-        <p>Předpoklady: výnosy fondů jsou konstantní průměr (skutečné výnosy kolísají), měsíční vklad se v průběhu let nemění (není indexován inflací) a nezapočítává se daňová úleva ani zaměstnavatelský příspěvek. Jde o orientační výpočet, ne o investiční radu.</p>
+        <p>Předpoklady: výnosy fondů jsou konstantní průměr (skutečné výnosy kolísají), měsíční vklad se v průběhu let nemění (není indexován inflací) a nezapočítává se zaměstnavatelský příspěvek ani jiné produkty sdílející limit 48 000 Kč. Jde o orientační výpočet, ne o investiční radu.</p>
       </div>
     </div>
   </div>
@@ -369,6 +383,14 @@ details.table-details summary:focus-visible{ outline:2px solid var(--focus); out
   var CYCLE_FROM = 43, CYCLE_TO = 60;
   var FEES = [0.5, 1];
   var STATE_RATE = 0.2, STATE_MIN = 500, STATE_CAP = 1700;
+  var TAX_RATES = [15, 23];
+  var TAX_FREE_YEARLY = STATE_CAP * 12;   // 20 400 Kč ročně: část vkladů nad touto hranicí je odečitatelná
+  var TAX_LIMIT = 48000;                  // maximální odpočet za rok
+
+  // Roční odpočet od základu daně z ročních vkladů klienta
+  function taxDeduction(yearContrib){
+    return Math.min(TAX_LIMIT, Math.max(0, yearContrib - TAX_FREE_YEARLY));
+  }
 
   var fmtNum = new Intl.NumberFormat('cs-CZ', {maximumFractionDigits:0});
   var fmtDec = new Intl.NumberFormat('cs-CZ', {maximumFractionDigits:1});
@@ -395,7 +417,7 @@ details.table-details summary:focus-visible{ outline:2px solid var(--focus); out
   }
 
   /*
-   * p: {initial, monthly, startAge, endAge, fund, fee (% nebo 0), state (bool), infl (% nebo 0)}
+   * p: {initial, monthly, startAge, endAge, fund, fee (% nebo 0), state (bool), infl (% nebo 0), tax (sazba daně v % nebo 0)}
    * Počítá se po dnech (rok = 365 dní, měsíc = 365/12 dne zaokrouhleno na celé dny).
    * Vrací {years:[...], points:[...], final, own, state, fee, gain}; všechny částky v dnešních cenách,
    * pokud je infl > 0 (jinak nominálně).
@@ -411,10 +433,10 @@ details.table-details summary:focus-visible{ outline:2px solid var(--focus); out
 
     var defl = function(d){ return p.infl > 0 ? Math.pow(1 + p.infl/100, -d/DAYS) : 1; };
     var bal = p.initial;
-    var ownR = p.initial, stateR = 0, feeR = 0;
+    var ownR = p.initial, stateR = 0, feeR = 0, taxR = 0, yearContrib = p.initial;
     var stateQ = 0;
     var stateM = p.state ? stateMonthly(p.monthly) : 0;
-    var years = [{age:p.startAge, t:0, bal:p.initial, own:p.initial, state:0, fee:0, share:null, r:null}];
+    var years = [{age:p.startAge, t:0, bal:p.initial, own:p.initial, state:0, fee:0, taxSaved:0, share:null, r:null}];
     var points = [{t:0, bal:p.initial, dep:p.initial}];
     var yr = null, id = 0, feeD = p.fee/100/DAYS, monthsDone = 0;
 
@@ -426,6 +448,7 @@ details.table-details summary:focus-visible{ outline:2px solid var(--focus); out
       if(monthStart[d]){
         bal += p.monthly;
         ownR += p.monthly * defl(d);
+        yearContrib += p.monthly;
         stateQ += stateM;
       }
       bal *= (1 + id);                              // denní připsání výnosu
@@ -444,16 +467,18 @@ details.table-details summary:focus-visible{ outline:2px solid var(--focus); out
         points.push({t:monthsDone/12, bal:bal*dd, dep:ownR+stateR});
       }
       if((d+1) % DAYS === 0){
-        years.push({age:p.startAge + (d+1)/DAYS, t:(d+1)/DAYS, bal:bal*dd, own:ownR, state:stateR, fee:feeR, share:yr.share, r:yr.r});
+        if(p.tax > 0) taxR += taxDeduction(yearContrib) * p.tax/100 * dd;   // úleva z daňového přiznání na konci roku
+        yearContrib = 0;
+        years.push({age:p.startAge + (d+1)/DAYS, t:(d+1)/DAYS, bal:bal*dd, own:ownR, state:stateR, fee:feeR, taxSaved:taxR, share:yr.share, r:yr.r});
       }
     }
     var fin = bal * defl(total);
-    return {years:years, points:points, final:fin, own:ownR, state:stateR, fee:feeR, gain:fin-ownR-stateR};
+    return {years:years, points:points, final:fin, own:ownR, state:stateR, fee:feeR, tax:taxR, gain:fin-ownR-stateR};
   }
 
   // ---------- vstupy ----------
   var $ = function(id){ return document.getElementById(id); };
-  var S = {fund:'cyk', fee:0.5};
+  var S = {fund:'cyk', fee:0.5, tax:15};
 
   function parseNum(s){
     var v = parseFloat(String(s).replace(/[\s ]/g,'').replace(',','.'));
@@ -482,6 +507,15 @@ details.table-details summary:focus-visible{ outline:2px solid var(--focus); out
       b.addEventListener('click', function(){ S.fund = f.id; update(); });
       fr.appendChild(b);
     });
+    var tr = $('tax-row');
+    TAX_RATES.forEach(function(v){
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'chip'; b.dataset.tax = v;
+      b.setAttribute('role','radio');
+      b.textContent = 'Sazba ' + v + ' %';
+      b.addEventListener('click', function(){ S.tax = v; update(); });
+      tr.appendChild(b);
+    });
     var er = $('fee-row');
     FEES.forEach(function(v){
       var b = document.createElement('button');
@@ -493,7 +527,7 @@ details.table-details summary:focus-visible{ outline:2px solid var(--focus); out
     });
   }
 
-  ['sw-fee','sw-state','sw-infl'].forEach(function(id){ $(id).addEventListener('change', update); });
+  ['sw-fee','sw-state','sw-tax','sw-infl'].forEach(function(id){ $(id).addEventListener('change', update); });
 
   // ---------- formátování ----------
   function kc(x){ return fmtNum.format(Math.round(x)) + ' Kč'; }
@@ -592,7 +626,7 @@ details.table-details summary:focus-visible{ outline:2px solid var(--focus); out
       if(fund === 'kons') share = '0 %';
       rows += '<tr><td>' + y.age + '</td><td>' + share + '</td><td>' + fmtPct.format(Math.round(y.r*100)/100).replace(/\.0+$/,'') + ' %</td>'
             + '<td>' + fmtNum.format(Math.round(y.own)) + '</td><td>' + fmtNum.format(Math.round(y.state)) + '</td>'
-            + '<td>' + fmtNum.format(Math.round(y.fee)) + '</td><td><b>' + fmtNum.format(Math.round(y.bal)) + '</b></td></tr>';
+            + '<td>' + fmtNum.format(Math.round(y.fee)) + '</td><td>' + fmtNum.format(Math.round(y.taxSaved)) + '</td><td><b>' + fmtNum.format(Math.round(y.bal)) + '</b></td></tr>';
     });
     tb.innerHTML = rows;
   }
@@ -605,8 +639,9 @@ details.table-details summary:focus-visible{ outline:2px solid var(--focus); out
 
   function update(){
     // stav přepínačů a čipů
-    var feeOn = $('sw-fee').checked, stateOn = $('sw-state').checked, inflOn = $('sw-infl').checked;
+    var taxOn = $('sw-tax').checked, feeOn = $('sw-fee').checked, stateOn = $('sw-state').checked, inflOn = $('sw-infl').checked;
     $('sub-fee').hidden = !feeOn;
+    $('sub-tax').hidden = !taxOn;
     $('sub-infl').hidden = !inflOn;
     $('sub-state').hidden = !stateOn;
     Array.prototype.forEach.call($('fund-row').children, function(b){
@@ -614,6 +649,9 @@ details.table-details summary:focus-visible{ outline:2px solid var(--focus); out
     });
     Array.prototype.forEach.call($('fee-row').children, function(b){
       var on = parseFloat(b.dataset.fee) === S.fee; b.classList.toggle('on', on); b.setAttribute('aria-checked', on);
+    });
+    Array.prototype.forEach.call($('tax-row').children, function(b){
+      var on = parseFloat(b.dataset.tax) === S.tax; b.classList.toggle('on', on); b.setAttribute('aria-checked', on);
     });
     $('fund-hint').textContent = S.fund === 'cyk'
       ? 'Do ' + CYCLE_FROM + ' let celý zůstatek v dynamickém fondu (8 %), od ' + CYCLE_FROM + ' do ' + CYCLE_TO + ' let se každý rok rovnoměrně přesouvá do konzervativního (1,5 %), od ' + CYCLE_TO + ' let je vše konzervativní.'
@@ -634,6 +672,11 @@ details.table-details summary:focus-visible{ outline:2px solid var(--focus); out
     else hint = 'Státní příspěvek: 20 % z ' + kc(monthly) + ' = ' + kc(sm) + ' měsíčně, připisuje se čtvrtletně.';
     $('state-hint').textContent = hint;
 
+    var yc = monthly * 12, ded = taxDeduction(yc);
+    $('tax-hint').textContent = ded > 0
+      ? 'Odečitatelná je jen část vkladů nad ' + kc(STATE_CAP) + ' měsíčně (' + kc(TAX_FREE_YEARLY) + ' ročně). Při vkladu ' + kc(monthly) + ' měsíčně je odpočet ' + kc(ded) + ' ročně, tedy úspora ' + kc(ded * S.tax / 100) + ' ročně.'
+      : 'Při měsíčním vkladu ' + kc(monthly) + ' žádný odpočet nevzniká — odečítá se jen část vkladů nad ' + kc(STATE_CAP) + ' měsíčně.' + (initial > TAX_FREE_YEARLY ? ' Počáteční vklad se ale počítá do vkladů prvního roku.' : '');
+
     var err = null;
     if(isNaN(startAge) || isNaN(endAge)) err = 'Zadejte věk na začátku a na konci spoření.';
     else if(endAge <= startAge) err = 'Věk na konci spoření musí být větší než věk na začátku.';
@@ -641,7 +684,7 @@ details.table-details summary:focus-visible{ outline:2px solid var(--focus); out
     if(infl > 50) err = 'Inflace je nastavena příliš vysoko.';
     setWarn(err);
     if(err){
-      ['res-final','res-own','res-state','res-gain','res-fee','res-mult'].forEach(function(id){ $(id).textContent = '—'; });
+      ['res-final','res-own','res-state','res-gain','res-fee','res-tax','res-mult'].forEach(function(id){ $(id).textContent = '—'; });
       $('res-sub').textContent = '';
       $('chart').innerHTML = ''; chartData = null;
       document.querySelector('#year-table tbody').innerHTML = '';
@@ -650,7 +693,7 @@ details.table-details summary:focus-visible{ outline:2px solid var(--focus); out
 
     var res = simulate({
       initial:initial, monthly:monthly, startAge:startAge, endAge:endAge,
-      fund:S.fund, fee: feeOn ? S.fee : 0, state: stateOn, infl: inflOn ? infl : 0
+      fund:S.fund, fee: feeOn ? S.fee : 0, state: stateOn, tax: taxOn ? S.tax : 0, infl: inflOn ? infl : 0
     });
 
     var years = endAge - startAge;
@@ -665,6 +708,8 @@ details.table-details summary:focus-visible{ outline:2px solid var(--focus); out
     g.className = 'value ' + (res.gain >= 0 ? 'pos' : 'neg');
     $('res-fee').textContent = kc(res.fee);
     $('stat-fee').hidden = !feeOn;
+    $('res-tax').textContent = kc(res.tax);
+    $('stat-tax').hidden = !taxOn;
     var base = res.own;
     $('res-mult').textContent = base > 0 ? '× ' + new Intl.NumberFormat('cs-CZ',{maximumFractionDigits:2}).format(res.final / base) : '—';
 
