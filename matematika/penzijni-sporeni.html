@@ -250,7 +250,7 @@ details.table-details summary:focus-visible{ outline:2px solid var(--focus); out
         <label class="switch"><input type="checkbox" id="sw-fee"><span class="track"></span>Započítat poplatek za správu</label>
         <div class="sub" id="sub-fee" hidden>
           <div class="row" id="fee-row" role="radiogroup" aria-label="Výše poplatku"></div>
-          <p class="hint">Roční poplatek z objemu spravovaných prostředků.</p>
+          <p class="hint">Roční poplatek z objemu spravovaných prostředků, odečítaný každý den.</p>
         </div>
       </div>
 
@@ -321,11 +321,11 @@ details.table-details summary:focus-visible{ outline:2px solid var(--focus); out
 
     <div class="panel">
       <div class="panel-title">Princip výpočtu</div>
-      <p>Spoření se počítá po <b>měsících</b>. Na začátku se vloží počáteční vklad, a pak se na začátku každého měsíce přičte pravidelný vklad. Během měsíce se zůstatek zhodnotí měsíční úrokovou mírou odvozenou z ročního výnosu fondu:</p>
-      <div class="formula-box">\[ i_m = (1 + i_r)^{1/12} - 1 \]</div>
-      <p>Zůstatek \(Z\) se tedy mění podle vztahu</p>
-      <div class="formula-box">\[ Z_{k+1} = (Z_k + V)\,(1 + i_m) \]</div>
-      <p>kde \(V\) je měsíční vklad. Roční výnos \(i_r\) je průměrný výnos fondu (konzervativní 1,5 %, vyvážený 4 %, dynamický 8 %). Výnosy se neustále připisují ke zůstatku, takže se úročí i dřívější výnosy (<b>složené úročení</b>).</p>
+      <p>Spoření se počítá po <b>dnech</b> (rok = 365 dní). Na začátku se vloží počáteční vklad a pak se na začátku každého měsíce přičte pravidelný vklad. Výnos fondu se <b>připisuje každý den</b> rovnoměrně: roční výnos \(i_r\) se převede na denní úrokovou míru</p>
+      <div class="formula-box">\[ i_d = (1 + i_r)^{1/365} - 1 \]</div>
+      <p>a zůstatek \(Z\) se každý den změní na</p>
+      <div class="formula-box">\[ Z_{k+1} = Z_k\,(1 + i_d) \]</div>
+      <p>Roční výnos \(i_r\) je průměrný výnos fondu (konzervativní 1,5 %, vyvážený 4 %, dynamický 8 %). Vklady se přičítají k zůstatku v den vkladu. Výnosy se neustále připisují ke zůstatku, takže se úročí i dřívější výnosy (<b>složené úročení</b>).</p>
 
       <h3>Strategie životního cyklu</h3>
       <p>Do 43 let je celý zůstatek v dynamickém fondu. Od 43 do 60 let se každý rok přesune rovnoměrně část investic do konzervativního fondu, takže v 60 letech je vše v konzervativním fondu. Podíl dynamického fondu v roce, který začíná v těchto letech věku \(a\), je</p>
@@ -333,12 +333,12 @@ details.table-details summary:focus-visible{ outline:2px solid var(--focus); out
       <p>Roční výnos je pak vážený průměr \( i_r = p\cdot 8\,\% + (1-p)\cdot 1{,}5\,\% \). Pro \(a \le 43\) je \(p = 1\), pro \(a \ge 60\) je \(p = 0\). Přesun se provádí s celým dosavadním zůstatkem, ne jen s novými vklady.</p>
 
       <h3>Poplatek za správu</h3>
-      <p>Poplatek se každý měsíc odečte z aktuálního zůstatku ve výši \(1/12\) ročního poplatku (0,5 % nebo 1 % ročně).</p>
+      <p>Poplatek se odečítá <b>každý den</b> z aktuálního zůstatku ve výši \(1/365\) ročního poplatku (0,5 % nebo 1 % ročně).</p>
 
       <h3>Státní příspěvek</h3>
       <p>Za každý měsíc se státní příspěvek rovná 20 % z měsíčního vkladu, ale jen pokud je vklad aspoň 500 Kč, a započítává se nejvýše z vkladu 1 700 Kč (tedy maximálně 340 Kč měsíčně):</p>
       <div class="formula-box">\[ P = 0{,}2 \cdot \min(V;\ 1700\ \mathrm{Kč})\quad\text{pro } V \ge 500\ \mathrm{Kč},\qquad P = 0\ \text{jinak} \]</div>
-      <p>Příspěvky se sčítají a na účet se připíšou <b>jednou za čtvrtletí</b> (po třech měsících spoření). Případný nedokončený poslední čtvrtletí se připíše na konci spoření.</p>
+      <p>Příspěvky se sčítají a na účet se připíšou <b>jednou za čtvrtletí</b> (po třech měsících spoření, počítaných od začátku spoření). Případný nedokončený poslední čtvrtletí se připíše na konci spoření.</p>
 
       <h3>Inflace</h3>
       <p>Při zapnuté inflaci \(\pi\) se každá částka vzniklá v čase \(t\) (v letech od začátku spoření) přepočte na dnešní ceny:</p>
@@ -396,47 +396,58 @@ details.table-details summary:focus-visible{ outline:2px solid var(--focus); out
 
   /*
    * p: {initial, monthly, startAge, endAge, fund, fee (% nebo 0), state (bool), infl (% nebo 0)}
-   * Vrací {years:[...], final, own, state, fee, gain}; všechny částky v dnešních cenách,
+   * Počítá se po dnech (rok = 365 dní, měsíc = 365/12 dne zaokrouhleno na celé dny).
+   * Vrací {years:[...], points:[...], final, own, state, fee, gain}; všechny částky v dnešních cenách,
    * pokud je infl > 0 (jinak nominálně).
    */
+  var DAYS = 365;
   function simulate(p){
-    var months = (p.endAge - p.startAge) * 12;
-    var defl = function(m){ return p.infl > 0 ? Math.pow(1 + p.infl/100, -m/12) : 1; };
+    var nYears = p.endAge - p.startAge;
+    var nMonths = nYears * 12, total = nYears * DAYS;
+    var dayOf = function(m){ return Math.round(m * DAYS / 12); };
+    var monthStart = new Uint8Array(total + 1), quarterEnd = new Uint8Array(total + 1), monthEnd = new Uint8Array(total + 1);
+    for(var m = 0; m < nMonths; m++){ monthStart[dayOf(m)] = 1; monthEnd[dayOf(m+1)] = 1; }
+    for(var q = 3; q <= nMonths; q += 3) quarterEnd[dayOf(q)] = 1;
+
+    var defl = function(d){ return p.infl > 0 ? Math.pow(1 + p.infl/100, -d/DAYS) : 1; };
     var bal = p.initial;
     var ownR = p.initial, stateR = 0, feeR = 0;
     var stateQ = 0;
     var stateM = p.state ? stateMonthly(p.monthly) : 0;
     var years = [{age:p.startAge, t:0, bal:p.initial, own:p.initial, state:0, fee:0, share:null, r:null}];
     var points = [{t:0, bal:p.initial, dep:p.initial}];
+    var yr = null, id = 0, feeD = p.fee/100/DAYS, monthsDone = 0;
 
-    for(var m = 0; m < months; m++){
-      var age = p.startAge + Math.floor(m/12);
-      var yr = yearReturn(p.fund, age);
-      var im = Math.pow(1 + yr.r/100, 1/12) - 1;
-
-      bal += p.monthly;
-      ownR += p.monthly * defl(m);
-      stateQ += stateM;
-
-      bal *= (1 + im);
-      var f = bal * (p.fee/100) / 12;
+    for(var d = 0; d < total; d++){
+      if(d % DAYS === 0){
+        yr = yearReturn(p.fund, p.startAge + d/DAYS);
+        id = Math.pow(1 + yr.r/100, 1/DAYS) - 1;   // denní úroková míra
+      }
+      if(monthStart[d]){
+        bal += p.monthly;
+        ownR += p.monthly * defl(d);
+        stateQ += stateM;
+      }
+      bal *= (1 + id);                              // denní připsání výnosu
+      var f = bal * feeD;                           // denní poplatek ze zůstatku
       bal -= f;
-      feeR += f * defl(m+1);
+      feeR += f * defl(d+1);
 
-      var lastMonth = (m === months-1);
-      if(stateQ > 0 && ((m+1) % 3 === 0 || lastMonth)){
+      if(stateQ > 0 && (quarterEnd[d+1] || d+1 === total)){
         bal += stateQ;
-        stateR += stateQ * defl(m+1);
+        stateR += stateQ * defl(d+1);
         stateQ = 0;
       }
-
-      var d = defl(m+1);
-      points.push({t:(m+1)/12, bal:bal*d, dep:ownR+stateR});
-      if((m+1) % 12 === 0){
-        years.push({age:age+1, t:(m+1)/12, bal:bal*d, own:ownR, state:stateR, fee:feeR, share:yr.share, r:yr.r});
+      var dd = defl(d+1);
+      if(monthEnd[d+1]){
+        monthsDone++;
+        points.push({t:monthsDone/12, bal:bal*dd, dep:ownR+stateR});
+      }
+      if((d+1) % DAYS === 0){
+        years.push({age:p.startAge + (d+1)/DAYS, t:(d+1)/DAYS, bal:bal*dd, own:ownR, state:stateR, fee:feeR, share:yr.share, r:yr.r});
       }
     }
-    var fin = bal * defl(months);
+    var fin = bal * defl(total);
     return {years:years, points:points, final:fin, own:ownR, state:stateR, fee:feeR, gain:fin-ownR-stateR};
   }
 
