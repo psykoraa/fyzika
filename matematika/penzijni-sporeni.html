@@ -265,6 +265,7 @@ details.table-details summary:focus-visible{ outline:2px solid var(--focus); out
         <label class="switch"><input type="checkbox" id="sw-tax"><span class="track"></span>Započítat daňový odpočet</label>
         <div class="sub" id="sub-tax" hidden>
           <p class="hint" id="tax-hint"></p>
+          <label class="switch" style="margin-top:10px"><input type="checkbox" id="sw-reinvest"><span class="track"></span>Každý rok vložit úsporu zpět do penzijního spoření</label>
         </div>
       </div>
 
@@ -292,7 +293,7 @@ details.table-details summary:focus-visible{ outline:2px solid var(--focus); out
         <div class="stat" id="stat-state"><div class="label">Státní příspěvek</div><div class="value" id="res-state">—</div></div>
         <div class="stat"><div class="label">Výnos z investic</div><div class="value" id="res-gain">—</div></div>
         <div class="stat" id="stat-fee"><div class="label">Zaplacené poplatky</div><div class="value" id="res-fee">—</div></div>
-        <div class="stat" id="stat-tax" hidden><div class="label">Úspora na daních (mimo účet)</div><div class="value" id="res-tax">—</div></div>
+        <div class="stat" id="stat-tax" hidden><div class="label" id="lab-tax">Úspora na daních (mimo účet)</div><div class="value" id="res-tax">—</div></div>
         <div class="stat"><div class="label">Násobek vlastních vkladů</div><div class="value" id="res-mult">—</div></div>
       </div>
     </div>
@@ -351,7 +352,7 @@ details.table-details summary:focus-visible{ outline:2px solid var(--focus); out
       <h3>Daňový odpočet</h3>
       <p>Vklady klienta lze odečíst od základu daně z příjmů, ale <b>jen část nad 1 700 Kč měsíčně</b> (tj. nad 20 400 Kč ročně), protože do této výše už má klient nárok na státní příspěvek. Odpočet je navíc omezen na 48 000 Kč za rok (limit je společný pro všechny daňově podporované produkty spoření na stáří). Při ročních vkladech \(R\) je odpočet a úspora na dani</p>
       <div class="formula-box">\[ O = \min\bigl(48\,000;\ \max(0;\ R - 20\,400)\bigr),\qquad \text{úspora} = O \cdot s \]</div>
-      <p>kde \(s\) je sazba daně z příjmu (v kalkulačce 15 %). Do ročních vkladů \(R\) se počítá i počáteční vklad (v prvním roce). Úsporu získáte zpět při podání daňového přiznání (nebo ročním zúčtování), proto se v kalkulačce zaznamenává <b>na konci každého roku</b> a do hodnoty účtu se <b>nepřičítá</b> — zobrazuje se zvlášť. Příspěvky zaměstnavatele se do odpočtu nezapočítávají.</p>
+      <p>kde \(s\) je sazba daně z příjmu (v kalkulačce 15 %). Do ročních vkladů \(R\) se počítá i počáteční vklad (v prvním roce). Úsporu získáte zpět při podání daňového přiznání (nebo ročním zúčtování), proto se v kalkulačce zaznamenává <b>na konci každého roku</b> a do hodnoty účtu se <b>nepřičítá</b>, zobrazuje se zvlášť. Pokud zapnete volbu <b>vložit úsporu zpět</b>, přičte se na konci každého roku k účtu jako další vlastní vklad, který se počítá do vkladů následujícího roku (a tím může odpočet dále zvyšovat). Na tento jednorázový vklad se státní příspěvek nepočítá. Příspěvky zaměstnavatele se do odpočtu nezapočítávají.</p>
 
       <h3>Inflace</h3>
       <p>Při zapnuté inflaci \(\pi\) se každá částka vzniklá v čase \(t\) (v letech od začátku spoření) přepočte na dnešní ceny:</p>
@@ -416,7 +417,7 @@ details.table-details summary:focus-visible{ outline:2px solid var(--focus); out
   }
 
   /*
-   * p: {initial, monthly, startAge, endAge, fund, fee (% nebo 0), state (bool), infl (% nebo 0), tax (sazba daně v % nebo 0)}
+   * p: {initial, monthly, startAge, endAge, fund, fee (% nebo 0), state (bool), infl (% nebo 0), tax (sazba daně v % nebo 0), reinvest (bool: úspora na dani se vkládá zpět)}
    * Počítá se po dnech (rok = 365 dní, měsíc = 365/12 dne zaokrouhleno na celé dny).
    * Vrací {years:[...], points:[...], final, own, state, fee, gain}; všechny částky v dnešních cenách,
    * pokud je infl > 0 (jinak nominálně).
@@ -460,14 +461,23 @@ details.table-details summary:focus-visible{ outline:2px solid var(--focus); out
         stateR += stateQ * defl(d+1);
         stateQ = 0;
       }
+      if((d+1) % DAYS === 0){
+        // úleva z daňového přiznání za právě skončený rok
+        var saved = p.tax > 0 ? taxDeduction(yearContrib) * p.tax/100 : 0;
+        taxR += saved * defl(d+1);
+        yearContrib = 0;
+        if(p.reinvest && saved > 0){            // úspora se vloží zpět a počítá se do vkladů nového roku
+          bal += saved;
+          ownR += saved * defl(d+1);
+          yearContrib = saved;
+        }
+      }
       var dd = defl(d+1);
       if(monthEnd[d+1]){
         monthsDone++;
         points.push({t:monthsDone/12, bal:bal*dd, dep:ownR+stateR});
       }
       if((d+1) % DAYS === 0){
-        if(p.tax > 0) taxR += taxDeduction(yearContrib) * p.tax/100 * dd;   // úleva z daňového přiznání na konci roku
-        yearContrib = 0;
         years.push({age:p.startAge + (d+1)/DAYS, t:(d+1)/DAYS, bal:bal*dd, own:ownR, state:stateR, fee:feeR, taxSaved:taxR, share:yr.share, r:yr.r});
       }
     }
@@ -517,7 +527,7 @@ details.table-details summary:focus-visible{ outline:2px solid var(--focus); out
     });
   }
 
-  ['sw-fee','sw-state','sw-tax','sw-infl'].forEach(function(id){ $(id).addEventListener('change', update); });
+  ['sw-fee','sw-state','sw-tax','sw-reinvest','sw-infl'].forEach(function(id){ $(id).addEventListener('change', update); });
 
   // ---------- formátování ----------
   function kc(x){ return fmtNum.format(Math.round(x)) + ' Kč'; }
@@ -680,7 +690,7 @@ details.table-details summary:focus-visible{ outline:2px solid var(--focus); out
 
     var res = simulate({
       initial:initial, monthly:monthly, startAge:startAge, endAge:endAge,
-      fund:S.fund, fee: feeOn ? S.fee : 0, state: stateOn, tax: taxOn ? TAX_RATE : 0, infl: inflOn ? infl : 0
+      fund:S.fund, fee: feeOn ? S.fee : 0, state: stateOn, tax: taxOn ? TAX_RATE : 0, reinvest: taxOn && $('sw-reinvest').checked, infl: inflOn ? infl : 0
     });
 
     var years = endAge - startAge;
@@ -697,6 +707,7 @@ details.table-details summary:focus-visible{ outline:2px solid var(--focus); out
     $('stat-fee').hidden = !feeOn;
     $('res-tax').textContent = kc(res.tax);
     $('stat-tax').hidden = !taxOn;
+    $('lab-tax').textContent = $('sw-reinvest').checked ? 'Úspora na daních (vložena zpět)' : 'Úspora na daních (mimo účet)';
     var base = res.own;
     $('res-mult').textContent = base > 0 ? '× ' + new Intl.NumberFormat('cs-CZ',{maximumFractionDigits:2}).format(res.final / base) : '—';
 
