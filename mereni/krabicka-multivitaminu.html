@@ -197,13 +197,12 @@ button.vbtn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
 
 .opt-grid.three{ grid-template-columns:repeat(3, 1fr); }
 .tool-part{ cursor:pointer; }
-.tool-part .shape{ fill:var(--ink-soft); transition:fill .12s; }
-.tool-part:hover .shape, .tool-part:focus-visible .shape{ fill:var(--accent); }
+.tool-part .jaw{ transition:fill .12s; }
+.tool-part:hover .jaw, .tool-part:focus-visible .jaw{ fill:var(--accent); }
 .tool-part:focus{ outline:none; }
-.tool-part.correct .shape{ fill:var(--success); }
-.tool-part.wrong .shape{ fill:var(--danger); }
+.tool-part.correct .jaw{ fill:var(--success); }
+.tool-part.wrong .jaw{ fill:var(--danger); }
 .tool-part.off{ pointer-events:none; }
-.tool-fixed{ fill:var(--surface); stroke:var(--ink); stroke-width:1.4; }
 .scene-svg{ touch-action:none; cursor:ew-resize; user-select:none; -webkit-user-select:none; }
 .scene-svg:focus{ outline:none; }
 .scene-svg:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
@@ -843,10 +842,7 @@ button.vbtn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
     var BESTS_KEY = 'fyzika:krabicka-multivitaminu:game-bests';
     var TOOL_POINTS = 5, MEASURE_POINTS = 10;
 
-    var S = 4.5;          // pixelů na 1 mm ve scéně
-    var X_F = 50;         // vnitřní líc pevné čelisti (vnější i vnitřní měření)
-    var X_R = 150;        // čelo šuplery opřené o okraj krabičky (hloubka)
-    var MAX_OUTER = 1160; // největší otevření v desetinách mm, které se vejde do scény
+    var MAX_OUTER = 1120; // největší otevření v desetinách mm, které se vejde do scény
 
     // Rozměry krabičky (v desetinách mm) — reálné rozsahy, nástroj, kterým se měří.
     var QTY = [
@@ -886,57 +882,115 @@ button.vbtn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
       if(timeLeft <= 0) endGame();
     }
 
-    // ---- kreslení scény ----
-    function rect(x, y, w, h, fill, extra){
-      var a = {x: x, y: y, width: Math.max(0, w), height: h, fill: fill, stroke: 'var(--ink)', 'stroke-width': 1.2};
-      for(var k in extra) a[k] = extra[k];
-      return svgAdd(scene, 'rect', a);
-    }
-    function beamTicks(x1, x2, y, up){
-      for(var x = x1; x <= x2; x += 10 * S){
-        svgAdd(scene, 'line', {x1: x, x2: x, y1: y, y2: y + (up ? -5 : 5), stroke: 'var(--ink)', 'stroke-width': 1});
+    // ---- realistická šuplera (podle fotografie): kovové rameno se stupnicí, dolní (vnější)
+    //      a horní (vnitřní) čelisti, posuvné rameno s noniem, aretačním šroubem a opěrkou
+    //      pro palec, hloubkoměr vysouvaný z konce ramene ----
+    var CAL_EDGE = '#5d666c', CAL_INK = '#2b3134';
+    function metalFill(svg){
+      var id = svg.id + '-metal';
+      if(!svg.querySelector('#' + id)){
+        var defs = svgAdd(svg, 'defs', {});
+        var gr = svgAdd(defs, 'linearGradient', {id: id, x1: 0, y1: 0, x2: 0, y2: 1});
+        svgAdd(gr, 'stop', {offset: '0%', 'stop-color': '#f5f7f8'});
+        svgAdd(gr, 'stop', {offset: '55%', 'stop-color': '#d4d9dd'});
+        svgAdd(gr, 'stop', {offset: '100%', 'stop-color': '#a9b1b7'});
+        var gr2 = svgAdd(defs, 'linearGradient', {id: id + '-dark', x1: 0, y1: 0, x2: 0, y2: 1});
+        svgAdd(gr2, 'stop', {offset: '0%', 'stop-color': '#c3c9cd'});
+        svgAdd(gr2, 'stop', {offset: '100%', 'stop-color': '#8a9399'});
       }
+      return {light: 'url(#' + id + ')', dark: 'url(#' + id + '-dark)'};
+    }
+    // o.x0 — nula šuplery (líc pevné čelisti), o.y — horní hrana ramene, o.S — pixelů na 1 mm,
+    // o.op — otevření v mm, o.beamLen — délka stupnice v mm, o.jawL / o.innerH — délka dolních /
+    // horních čelistí v px, o.groups — volitelné skupiny {outer, inner, depth} pro klikání
+    function drawCaliper(svg, o){
+      var m = metalFill(svg);
+      var S = o.S, x0 = o.x0, y = o.y, BH = o.BH || 24, L = o.jawL || 100, H = o.innerH || 32;
+      var mx = x0 + o.op * S, endX = x0 + (o.beamLen || 160) * S;
+      var SW = Math.max(40, 16 * S), JW = Math.max(22, 6 * S);
+      var g = o.groups || {};
+      function part(parent, name, attrs){
+        attrs.fill = attrs.fill || m.light;
+        attrs.stroke = CAL_EDGE; attrs['stroke-width'] = attrs['stroke-width'] || 1.1; attrs['stroke-linejoin'] = 'round';
+        return svgAdd(parent, name, attrs);
+      }
+      function pts(a){ return a.join(' '); }
+
+      // hloubkoměr — pásek připevněný k posuvnému ramenu, vysouvá se z konce pevného ramene
+      part(g.depth || svg, 'rect', {x: endX - 3, y: y + BH - 4, width: o.op * S + 3, height: 3.5, 'class': 'jaw', 'stroke-width': 0.7});
+      // horní (vnitřní) čelisti — měří se jejich vnějšími líci: pevná vlevo (x0), posuvná vpravo (mx)
+      part(g.inner || svg, 'polygon', {'class': 'jaw', points: pts([x0, y + 2, x0 + JW * 0.5, y + 2, x0 + 3, y - H, x0, y - H])});
+      part(g.inner || svg, 'polygon', {'class': 'jaw', points: pts([mx, y + 2, mx - JW * 0.5, y + 2, mx - 3, y - H, mx, y - H])});
+      // dolní (vnější) čelisti — měří se jejich vnitřními líci: pevná vpravo (x0), posuvná vlevo (mx)
+      part(g.outer || svg, 'polygon', {'class': 'jaw', points: pts([x0 - JW, y + BH - 2, x0, y + BH - 2, x0, y + BH + L, x0 - 5, y + BH + L, x0 - JW, y + BH + L * 0.5])});
+      part(g.outer || svg, 'polygon', {'class': 'jaw', points: pts([mx, y + BH - 2, mx + JW, y + BH - 2, mx + JW, y + BH + L * 0.5, mx + 5, y + BH + L, mx, y + BH + L])});
+
+      // pevné rameno se stupnicí (mm, popisky v cm jako na skutečné šupleře)
+      part(svg, 'rect', {x: x0 - JW - 8, y: y, width: endX - x0 + JW + 8, height: BH, rx: 2});
+      var every = S < 3 ? 2 : 1;
+      for(var mm = 0; mm <= (o.beamLen || 160) - 4; mm += every){
+        var tx = x0 + mm * S;
+        if(tx > 660) break;
+        var len = mm % 10 === 0 ? BH * 0.42 : (mm % 5 === 0 ? BH * 0.3 : BH * 0.2);
+        svgAdd(svg, 'line', {x1: tx, x2: tx, y1: y, y2: y + len, stroke: CAL_INK, 'stroke-width': mm % 10 === 0 ? 0.9 : 0.6});
+        if(mm % 10 === 0 && S >= 2 && mm > 0){
+          svgAdd(svg, 'text', {x: tx, y: y + BH - 3, 'font-size': Math.min(9, BH * 0.36), 'text-anchor': 'middle', fill: CAL_INK, 'font-family': 'Work Sans, sans-serif'}, mm / 10);
+        }
+      }
+      // hlava pevného ramene
+      part(svg, 'rect', {x: x0 - JW - 8, y: y - 5, width: JW + 8, height: BH + 10, rx: 3});
+
+      // posuvné rameno: tělo, okénko s noniem, aretační šroub a opěrka pro palec
+      part(svg, 'circle', {cx: mx + SW * 0.32, cy: y + BH + 9, r: Math.max(5, BH * 0.28), fill: m.dark});
+      part(svg, 'rect', {x: mx - 1, y: y - 5, width: SW, height: BH + 10, rx: 3});
+      svgAdd(svg, 'rect', {x: mx + 1, y: y + BH * 0.55, width: SW - 6, height: BH * 0.45 + 3, fill: '#eef1f3', stroke: CAL_EDGE, 'stroke-width': 0.6});
+      for(var k = 0; k <= 10; k++){
+        var nx = mx + k * 0.9 * S;
+        if(nx > mx + SW - 6) break;
+        svgAdd(svg, 'line', {x1: nx, x2: nx, y1: y + BH * 0.55, y2: y + BH * 0.55 + (k % 5 === 0 ? 5 : 3), stroke: CAL_INK, 'stroke-width': 0.6});
+      }
+      part(svg, 'rect', {x: mx + SW * 0.5 - 4, y: y - 12, width: 8, height: 7, fill: m.dark});
+      part(svg, 'rect', {x: mx + SW * 0.5 - 9, y: y - 17, width: 18, height: 6, rx: 2, fill: m.dark});
+      return {mx: mx, endX: endX, SW: SW};
+    }
+
+    // ---- kreslení scény ----
+    // Vnější a vnitřní měření: měřítko 4,5 px/mm (šuplera přesahuje doprava za okraj obrázku).
+    // Hloubka: měřítko 2,2 px/mm, aby byla vidět celá šuplera i krabička za koncem ramene.
+    function sceneScale(){ return task.q.tool === 'hloubka' ? 2.2 : 4.5; }
+    function rect(x, y, w, h, fill){
+      return svgAdd(scene, 'rect', {x: x, y: y, width: Math.max(0, w), height: h, fill: fill, stroke: 'var(--ink)', 'stroke-width': 1.2});
+    }
+    function hint(x, y, anchor){
+      svgAdd(scene, 'text', {x: x, y: y, 'font-size': 11, 'text-anchor': anchor || 'start', fill: 'var(--accent)'}, '⇆ táhněte posuvné rameno');
     }
     function drawScene(){
       scene.innerHTML = '';
-      var q = task.q, op = task.opening / 10, dim = task.dim / 10;
-      var JAW = 'var(--ink-soft)', SLIDE = 'rgba(47,122,79,0.25)', OBJ = 'var(--surface-2)';
+      var q = task.q, op = task.opening / 10, dim = task.dim / 10, S = sceneScale();
+      var OBJ = 'var(--surface-2)';
       if(q.tool === 'vnejsi'){
-        var mx = X_F + op * S;
-        rect(X_F, 88, dim * S, 76, OBJ);
-        svgAdd(scene, 'text', {x: X_F + dim * S / 2, y: 130, 'font-size': 12, 'text-anchor': 'middle', fill: 'var(--ink-soft)'}, q.obj);
-        rect(14, 30, 616, 18, 'var(--surface)');
-        beamTicks(X_F, 620, 48, true);
-        rect(X_F - 14, 8, 14, 22, JAW, {opacity: 0.35});
-        rect(X_F - 14, 48, 14, 124, JAW);
-        rect(mx - 4, 24, 60, 30, SLIDE);
-        rect(mx, 8, 14, 22, JAW, {opacity: 0.35});
-        rect(mx, 48, 14, 124, JAW);
-        svgAdd(scene, 'text', {x: mx + 26, y: 196, 'font-size': 11, 'text-anchor': 'middle', fill: 'var(--accent)'}, '⇆ táhněte');
+        var x0 = 60, y = 36;
+        rect(x0, 100, dim * S, 66, OBJ);
+        svgAdd(scene, 'text', {x: x0 + dim * S / 2, y: 138, 'font-size': 12, 'text-anchor': 'middle', fill: 'var(--ink-soft)'}, q.obj);
+        drawCaliper(scene, {x0: x0, y: y, S: S, op: op, jawL: 112, innerH: 26});
+        hint(630, 214, 'end');
       } else if(q.tool === 'vnitrni'){
-        var mx2 = X_F + op * S;
-        rect(X_F - 16, 40, 16, 84, OBJ);
-        rect(X_F + dim * S, 40, 16, 84, OBJ);
-        svgAdd(scene, 'text', {x: X_F + dim * S / 2, y: 30, 'font-size': 12, 'text-anchor': 'middle', fill: 'var(--ink-soft)'}, q.obj);
-        rect(14, 150, 616, 18, 'var(--surface)');
-        beamTicks(X_F, 620, 150, true);
-        rect(X_F, 60, 10, 90, JAW);
-        rect(X_F - 14, 168, 14, 40, JAW, {opacity: 0.35});
-        rect(mx2 - 4, 144, 60, 30, SLIDE);
-        rect(mx2 - 10, 60, 10, 90, JAW);
-        rect(mx2, 168, 14, 40, JAW, {opacity: 0.35});
-        svgAdd(scene, 'text', {x: mx2 + 26, y: 140, 'font-size': 11, 'text-anchor': 'middle', fill: 'var(--accent)'}, '⇆ táhněte');
+        var x1 = 70, y1 = 150;
+        rect(x1 - 14, 92, 14, 48, OBJ);
+        rect(x1 + dim * S, 92, 14, 48, OBJ);
+        svgAdd(scene, 'text', {x: x1 + dim * S / 2, y: 84, 'font-size': 12, 'text-anchor': 'middle', fill: 'var(--ink-soft)'}, q.obj);
+        drawCaliper(scene, {x0: x1, y: y1, S: S, op: op, jawL: 40, innerH: 46});
+        hint(630, 24, 'end');
       } else {
-        var tip = X_R + op * S, bottom = X_R + dim * S;
-        rect(X_R, 60, dim * S + 10, 10, OBJ);
-        rect(X_R, 150, dim * S + 10, 10, OBJ);
-        rect(bottom, 60, 10, 100, OBJ);
-        svgAdd(scene, 'text', {x: X_R + dim * S / 2, y: 120, 'font-size': 12, 'text-anchor': 'middle', fill: 'var(--ink-soft)'}, q.obj);
-        rect(10, 42, X_R - 10, 28, 'var(--surface)');
-        beamTicks(20, X_R - 5, 70, true);
-        rect(X_R - 70, 38, 56, 36, SLIDE);
-        rect(X_R, 70, op * S, 5, 'var(--accent)', {stroke: 'none'});
-        svgAdd(scene, 'text', {x: 16, y: 92, 'font-size': 11, fill: 'var(--accent)'}, 'hloubkoměr — táhněte ⇆');
+        var x2 = 40, y2 = 60, BH = 20, endX = x2 + 160 * S;
+        var top = y2 + BH - 12, bottomY = y2 + BH + 86;
+        rect(endX, top, dim * S + 8, 8, OBJ);
+        rect(endX, bottomY, dim * S + 8, 8, OBJ);
+        rect(endX + dim * S, top, 8, bottomY + 8 - top, OBJ);
+        svgAdd(scene, 'text', {x: endX + dim * S / 2, y: (top + bottomY) / 2 + 12, 'font-size': 12, 'text-anchor': 'middle', fill: 'var(--ink-soft)'}, q.obj);
+        drawCaliper(scene, {x0: x2, y: y2, S: S, op: op, BH: BH, jawL: 80, innerH: 22});
+        svgAdd(scene, 'text', {x: endX + 6, y: top - 6, 'font-size': 11, fill: 'var(--accent)'}, 'hloubkoměr');
+        hint(16, 214);
       }
     }
     function drawDetail(highlight){
@@ -970,19 +1024,19 @@ button.vbtn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
       pt.x = evt.clientX; pt.y = evt.clientY;
       return pt.matrixTransform(scene.getScreenCTM().inverse()).x;
     }
-    function fromPointer(evt){
-      var x = svgX(evt);
-      var base = task.q.tool === 'hloubka' ? X_R : X_F;
-      setOpening(Math.round((x - base) / S * 10));
-    }
-    var dragging = false;
+    // Tažení je relativní: posuvné rameno se posune o tolik, o kolik se posunul prst/myš,
+    // ať se táhne kdekoli v obrázku.
+    var dragging = false, dragX = 0, dragOp = 0;
     scene.addEventListener('pointerdown', function(e){
-      if(!task || task.answered) return;
+      if(!task || task.answered || !task.toolDone) return;
       dragging = true;
+      dragX = svgX(e); dragOp = task.opening;
       try{ scene.setPointerCapture(e.pointerId); }catch(err){}
-      fromPointer(e);
     });
-    scene.addEventListener('pointermove', function(e){ if(dragging) fromPointer(e); });
+    scene.addEventListener('pointermove', function(e){
+      if(!dragging || !task) return;
+      setOpening(Math.round(dragOp + (svgX(e) - dragX) / sceneScale() * 10));
+    });
     ['pointerup', 'pointercancel'].forEach(function(ev){
       scene.addEventListener(ev, function(){ dragging = false; });
     });
@@ -1124,8 +1178,7 @@ button.vbtn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
 
     // ---- obrázek šuplery pro výběr části (klikací vnější čelisti, vnitřní čelisti, hloubkoměr) ----
     (function buildToolSvg(){
-      function poly(parent, pts, cls){ return svgAdd(parent, 'polygon', {points: pts, 'class': cls}); }
-      function part(tool, title){
+      function part(tool){
         var g = svgAdd(toolSvg, 'g', {'class': 'tool-part', 'data-tool': tool, tabindex: 0, role: 'button', 'aria-label': 'část šuplery'});
         toolParts.push(g);
         g.addEventListener('click', function(){ chooseTool(tool); });
@@ -1134,32 +1187,13 @@ button.vbtn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
         });
         return g;
       }
-      // pevné rameno se stupnicí
-      svgAdd(toolSvg, 'rect', {x: 96, y: 70, width: 494, height: 26, 'class': 'tool-fixed'});
-      for(var x = 110; x <= 580; x += 10){
-        svgAdd(toolSvg, 'line', {x1: x, x2: x, y1: 70, y2: 70 + (x % 50 === 10 ? 10 : 5), stroke: 'var(--ink)', 'stroke-width': 1});
-      }
-      // posuvné rameno s noniem a aretačním šroubem
-      svgAdd(toolSvg, 'rect', {x: 220, y: 62, width: 110, height: 42, rx: 3, 'class': 'tool-fixed'});
-      for(var xn = 236; xn <= 316; xn += 9){
-        svgAdd(toolSvg, 'line', {x1: xn, x2: xn, y1: 96, y2: 102, stroke: 'var(--ink)', 'stroke-width': 1});
-      }
-      svgAdd(toolSvg, 'rect', {x: 266, y: 50, width: 18, height: 12, rx: 2, 'class': 'tool-fixed'});
-
-      // vnější (dolní) čelisti
-      var outer = part('vnejsi', 'dolní čelisti');
-      svgAdd(outer, 'rect', {x: 90, y: 96, width: 150, height: 96, fill: 'transparent'});
-      poly(outer, '60,70 96,70 96,190 84,190 60,150', 'shape');
-      poly(outer, '220,104 256,104 256,150 232,190 220,190', 'shape');
-      // vnitřní (horní) čelisti
-      var inner = part('vnitrni', 'horní čelisti');
-      svgAdd(inner, 'rect', {x: 70, y: 6, width: 170, height: 60, fill: 'transparent'});
-      poly(inner, '76,70 96,70 96,12 90,12 76,42', 'shape');
-      poly(inner, '220,62 240,62 240,42 226,12 220,12', 'shape');
-      // hloubkoměr — pásek vysunutý z konce ramene
-      var depth = part('hloubka', 'hloubkoměr');
-      svgAdd(depth, 'rect', {x: 580, y: 66, width: 60, height: 36, fill: 'transparent'});
-      svgAdd(depth, 'rect', {x: 590, y: 80, width: 44, height: 6, 'class': 'shape'});
+      // průhledné plochy pro snazší kliknutí (pod obrázkem šuplery)
+      var outer = part('vnejsi'), inner = part('vnitrni'), depth = part('hloubka');
+      var x0 = 74, y = 80, S = 3.2, op = 14, BH = 24, JW = Math.max(22, 6 * S);
+      svgAdd(outer, 'rect', {x: x0 - JW - 6, y: y + BH + 6, width: op * S + 2 * JW + 12, height: 200 - y - BH - 6, fill: 'transparent'});
+      svgAdd(inner, 'rect', {x: x0 - 8, y: 4, width: op * S + 16, height: y - 22, fill: 'transparent'});
+      svgAdd(depth, 'rect', {x: x0 + 160 * S - 4, y: y + BH - 16, width: op * S + 14, height: 26, fill: 'transparent'});
+      drawCaliper(toolSvg, {x0: x0, y: y, S: S, op: op, BH: BH, jawL: 92, innerH: 44, groups: {outer: outer, inner: inner, depth: depth}});
     })();
     submitBtn.addEventListener('click', submit);
     input.addEventListener('keydown', function(e){
