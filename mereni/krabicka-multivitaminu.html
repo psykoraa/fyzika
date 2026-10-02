@@ -446,7 +446,7 @@ button.vbtn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
 
     <div class="panel">
       <div class="panel-title">Změř krabičku</div>
-      <p class="game-text">Hra vám zadá rozměr krabičky. <b>1.</b> Klikněte na část šuplery, kterou se daný rozměr měří (vnější čelisti, vnitřní čelisti, nebo hloubkoměr). <b>2.</b> Tažením myší či prstem (nebo tlačítky) posuňte šupleru, až dosedne na krabičku. <b>3.</b> Odečtěte hodnotu ze stupnice a zapište ji. Za správně zvolenou část napoprvé získáte <b>5 bodů</b>, za správně změřený rozměr <b>10 bodů</b>. Šuplera ve hře má přesnost 0,1 mm.</p>
+      <p class="game-text" id="hra-rules">Hra vám zadá rozměr krabičky. <b>1.</b> Klikněte na část šuplery, kterou se daný rozměr měří (vnější čelisti, vnitřní čelisti, nebo hloubkoměr). <b>2.</b> Tažením myší či prstem (nebo tlačítky) posuňte šupleru, až dosedne na krabičku. <b>3.</b> Odečtěte hodnotu ze stupnice a zapište ji. Za správně zvolenou část napoprvé získáte <b>5 bodů</b>, za správně změřený rozměr <b>10 bodů</b>. Šuplera ve hře má přesnost 0,1 mm.</p>
 
       <div id="hra-start">
         <div class="level-row" role="group" aria-label="Délka hry">
@@ -457,16 +457,17 @@ button.vbtn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
           <button class="chip" type="button" data-dur="300">5 min</button>
         </div>
         <p class="hint" id="hra-start-best"></p>
-        <div class="center-actions">
+        <div class="center-actions" id="hra-start-actions">
           <button class="vbtn primary" id="hra-start-btn" type="button">Začít hru</button>
         </div>
       </div>
 
       <div id="hra-play" hidden>
-        <div class="stat-row">
+        <div class="game-header">
+          <div class="game-timer" id="hra-time">1:00</div>
           <div class="readout">
-            <div class="cell"><span class="label">Čas</span><span class="value" id="hra-time">1:00</span></div>
             <div class="cell"><span class="label">Body</span><span class="value" id="hra-score">0</span></div>
+            <div class="cell"><span class="label">Nejlepší</span><span class="value" id="hra-best-live">0</span></div>
             <div class="cell"><span class="label">Úloha</span><span class="value" id="hra-count">1</span></div>
           </div>
         </div>
@@ -509,13 +510,14 @@ button.vbtn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
         </div>
       </div>
 
-      <div id="hra-end" class="game-end" hidden>
-        <div>Konec hry</div>
-        <div class="big" id="hra-end-score">0</div>
-        <p class="game-text" id="hra-end-text"></p>
-        <div class="center-actions">
-          <button class="vbtn primary" id="hra-again" type="button">Hrát znovu</button>
-        </div>
+    </div>
+
+    <div class="card" id="hra-end" hidden>
+      <span class="cat-tag">Konec hry</span>
+      <div class="game-final-score" id="hra-end-score">0 bodů</div>
+      <div class="hint" id="hra-end-text"></div>
+      <div class="actions">
+        <button class="btn primary" id="hra-again" type="button">Hrát znovu</button>
       </div>
     </div>
 
@@ -545,8 +547,18 @@ button.vbtn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
         tabs[key].section.hidden = !on;
       });
     }
+    // Přepnutí na jinou záložku uprostřed běžící hry na čas hru rovnou ukončí — čas
+    // by jinak běžel dál "za zády" žáka. Proto se nejdřív zeptá na potvrzení.
+    function tryShow(tab){
+      var game = window.KrabickaHra;
+      if(tab !== 'hra' && game && game.isRunning()){
+        if(!confirm('Přepnutím opustíte probíhající hru na čas — hra se ukončí a započítá se aktuální skóre. Opravdu chcete pokračovat?')) return;
+        game.end();
+      }
+      show(tab);
+    }
     Object.keys(tabs).forEach(function(key){
-      tabs[key].btn.addEventListener('click', function(){ show(key); });
+      tabs[key].btn.addEventListener('click', function(){ tryShow(key); });
     });
   })();
 
@@ -695,12 +707,14 @@ button.vbtn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
       tezka: 'Šuplera s přesností 0,05 mm: hlavní stupnice má i půlmilimetrové čárky, nonius má 10 dílků na 9,5 mm (popisky 0–5 jsou desetiny mm). Odečítáte celou hodnotu na setiny, např. 23,85.'
     };
 
-    var level = 'stredni', hund = 0, answered = false;
+    // level = vybraná obtížnost; tLevel = obtížnost, se kterou byla vytvořena právě zobrazená úloha
+    // (po změně obtížnosti uprostřed rozepsané úlohy se ta ještě vyhodnotí podle původní obtížnosti)
+    var level = 'stredni', tLevel = 'stredni', hund = 0, answered = false, touched = false;
     var streak = 0, best = parseInt(lsGet(BEST_KEY), 10) || 0, total = 0, correct = 0;
 
-    function decimals(){ return level === 'tezka' ? 2 : 1; }
+    function decimals(){ return tLevel === 'tezka' ? 2 : 1; }
     function draw(highlight){
-      drawVernier(svg, {hund: hund, fine: level === 'tezka', mainEvery: 5, highlight: highlight});
+      drawVernier(svg, {hund: hund, fine: tLevel === 'tezka', mainEvery: 5, highlight: highlight});
     }
     function updateStats(){
       document.getElementById('trn-streak').textContent = streak;
@@ -709,8 +723,10 @@ button.vbtn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
     }
     function newTask(focus){
       // 0,5 až 110,0 mm — pokryje všechny rozměry krabičky
+      tLevel = level;
       hund = level === 'tezka' ? rnd(10, 2200) * 5 : rnd(5, 1100) * 10;
       answered = false;
+      touched = false;
       draw(false);
       levelDesc.textContent = DESC[level];
       if(level === 'lehka'){
@@ -740,7 +756,10 @@ button.vbtn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
       var raw = input.value.trim();
       var ok, msgs = [];
 
-      if(level === 'lehka'){
+      if(raw === ''){
+        ok = false;
+        msgs.push('Nezapsali jste žádnou hodnotu.');
+      } else if(tLevel === 'lehka'){
         var dec = (hund % 100) / 10;
         if(!/^\d$/.test(raw)){
           showFb(false, 'Zapište jednu číslici 0 až 9.', ['Je to číslo čárky noniu, která se kryje s některou čárkou hlavní stupnice.']);
@@ -753,7 +772,7 @@ button.vbtn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
         var r = parseReading(raw, decimals());
         if(r.error){ showFb(false, r.error, []); return; }
         ok = r.hund === hund;
-        msgs = readingHints(r.hund, hund, level === 'tezka');
+        msgs = readingHints(r.hund, hund, tLevel === 'tezka');
         if(ok && r.shortForm) msgs.push('Příště zapište hodnotu na ' + (decimals() === 2 ? 'setiny' : 'desetiny') + ' i s nulami na konci: <b>' + fmtHund(hund, decimals()) + ' mm</b>.');
       }
 
@@ -776,16 +795,35 @@ button.vbtn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
       nextBtn.focus({preventScroll: true});
     }
 
-    checkBtn.addEventListener('click', check);
+    function tryCheck(){
+      if(answered){ newTask(true); return; }
+      if(input.value.trim() === ''){
+        if(!confirm('Odpověď není vyplněná. Opravdu chcete zkontrolovat?')) return;
+      }
+      check();
+    }
+
+    checkBtn.addEventListener('click', tryCheck);
     nextBtn.addEventListener('click', function(){ newTask(true); });
     input.addEventListener('keydown', function(e){
-      if(e.key === 'Enter'){ e.preventDefault(); check(); }
+      if(e.key === 'Enter'){ e.preventDefault(); tryCheck(); }
     });
+    input.addEventListener('input', function(){ touched = true; });
+    sanitizeNumericInput(input, true);
+    // Změna obtížnosti uprostřed rozepsané úlohy: úloha se nejdřív vyhodnotí (stejně jako
+    // u ostatních tréninků na webu), aby žák o rozepsanou odpověď nepřišel beze stopy.
     levelBtns.forEach(function(b){
       b.addEventListener('click', function(){
-        level = b.getAttribute('data-level');
+        var key = b.getAttribute('data-level');
+        if(key === level) return;
+        var settle = !answered && touched;
+        if(settle && input.value.trim() === ''){
+          if(!confirm('Odpověď není vyplněná. Opravdu chcete změnit nastavení?')) return;
+        }
+        level = key;
         levelBtns.forEach(function(x){ x.classList.toggle('on', x === b); });
-        newTask(false);
+        levelDesc.textContent = DESC[level];
+        if(settle) check(); else newTask(false);
       });
     });
     updateStats();
@@ -828,23 +866,28 @@ button.vbtn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
       hloubka: 'Hloubka se měří <b>hloubkoměrem</b> — tenkým páskem, který se vysouvá z konce šuplery až ke dnu.'
     };
 
-    var dur = 60, endAt = 0, timer = null, running = false;
-    var score = 0, count = 0, lastKey = null;
+    var dur = 60, timeLeft = 0, timer = null, running = false;
+    var score = 0, count = 0, nCorrect = 0, nWrong = 0, lastKey = null;
     var task = null;   // {q, dim, opening, toolDone, toolMistake, answered}
 
     function bests(){ try{ return JSON.parse(lsGet(BESTS_KEY)) || {}; }catch(e){ return {}; } }
-    function show(id){
-      ['hra-start', 'hra-play', 'hra-end'].forEach(function(x){ document.getElementById(x).hidden = x !== id; });
+    function pointWord(n){
+      var abs = Math.abs(n);
+      if(abs === 1) return 'bod';
+      if(abs >= 2 && abs <= 4) return 'body';
+      return 'bodů';
     }
+    function bestFor(d){ var b = bests()[d]; return b != null ? b : 0; }
     function updateStartBest(){
       var b = bests()[dur];
       document.getElementById('hra-start-best').textContent = b != null ? 'Váš rekord pro tuto délku: ' + b + ' bodů.' : 'Pro tuto délku zatím nemáte rekord.';
     }
-    function fmtTime(sec){ return Math.floor(sec / 60) + ':' + ('0' + (sec % 60)).slice(-2); }
     function tick(){
-      var left = Math.max(0, Math.ceil((endAt - Date.now()) / 1000));
-      document.getElementById('hra-time').textContent = fmtTime(left);
-      if(left <= 0) endGame();
+      timeLeft--;
+      var timerEl = document.getElementById('hra-time');
+      timerEl.textContent = formatGameTime(Math.max(0, timeLeft));
+      timerEl.classList.toggle('low-time', timeLeft <= 20 && timeLeft > 0);
+      if(timeLeft <= 0) endGame();
     }
 
     // ---- kreslení scény ----
@@ -1004,8 +1047,10 @@ button.vbtn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
       refresh();
     }
     function submit(){
-      if(!task || task.answered || !task.toolDone) return;
-      var r = parseReading(input.value, 1);
+      if(!running || !task || task.answered || !task.toolDone) return;
+      var empty = input.value.trim() === '';
+      if(empty && !confirm('Odpověď není vyplněná. Opravdu chcete zkontrolovat?')) return;
+      var r = empty ? {hund: null} : parseReading(input.value, 1);
       if(r.error){
         fb.className = 'fb bad';
         fb.innerHTML = '<div class="headline">' + r.error + '</div>';
@@ -1020,10 +1065,13 @@ button.vbtn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
       if(!touching){
         msgs.push('Šuplera nedosedla na krabičku: ukazovala <b>' + fmtHund(task.opening * 10, 1) + ' mm</b>, ale skutečný rozměr je <b>' + fmtHund(task.dim * 10, 1) + ' mm</b>. Posouvejte rameno, dokud se o krabičku nezastaví.');
       }
-      if(!readOk){
+      if(empty){
+        msgs.push('Nezapsali jste žádnou hodnotu — šuplera ukazovala <b>' + fmtHund(task.opening * 10, 1) + ' mm</b>.');
+      } else if(!readOk){
         msgs.push('Šuplera ukazovala <b>' + fmtHund(task.opening * 10, 1) + ' mm</b>, vy jste zapsali ' + fmtHund(r.hund, 1) + ' mm.');
         msgs = msgs.concat(readingHints(r.hund, task.opening * 10, false));
       }
+      if(ok){ nCorrect++; } else { nWrong++; }
       if(ok){
         score += MEASURE_POINTS;
         msgs.push('Skutečný rozměr je <b>' + fmtHund(task.dim * 10, 1) + ' mm</b>.');
@@ -1041,27 +1089,42 @@ button.vbtn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
       nextBtn.focus({preventScroll: true});
     }
     function startGame(){
-      score = 0; count = 0; lastKey = null; running = true;
+      score = 0; count = 0; nCorrect = 0; nWrong = 0; lastKey = null; running = true;
+      timeLeft = dur;
       document.getElementById('hra-score').textContent = '0';
-      endAt = Date.now() + dur * 1000;
-      show('hra-play');
-      tick();
-      clearInterval(timer);
-      timer = setInterval(tick, 250);
+      document.getElementById('hra-best-live').textContent = bestFor(dur);
+      var timerEl = document.getElementById('hra-time');
+      timerEl.textContent = formatGameTime(dur);
+      timerEl.classList.remove('low-time');
+      document.getElementById('hra-start').hidden = true;
+      document.getElementById('hra-rules').hidden = false;
+      document.getElementById('hra-end').hidden = true;
+      document.getElementById('hra-play').hidden = false;
       newTask();
+      if(timer) clearInterval(timer);
+      timer = setInterval(tick, 1000);
     }
     function endGame(){
       if(!running) return;
       running = false;
       clearInterval(timer);
+      timer = null;
       task = null;
-      var b = bests(), prev = b[dur], isNew = prev == null || score > prev;
-      if(isNew){ b[dur] = score; lsSet(BESTS_KEY, JSON.stringify(b)); }
-      document.getElementById('hra-end-score').textContent = score + ' bodů';
-      document.getElementById('hra-end-text').innerHTML = 'Za ' + fmtTime(dur) + ' min jste začali ' + count + (count === 1 ? ' úlohu' : (count < 5 ? ' úlohy' : ' úloh')) + '.' +
-        (isNew ? ' <b>Nový rekord!</b>' : ' Rekord pro tuto délku: ' + prev + ' bodů.');
-      show('hra-end');
+      if(score > bestFor(dur)){ var b = bests(); b[dur] = score; lsSet(BESTS_KEY, JSON.stringify(b)); }
+      document.getElementById('hra-play').hidden = true;
+      // Po konci hry zůstane nabídka délky hry viditelná nad výsledkem; pravidla a tlačítko
+      // „Začít hru“ se skryjí — hra se spouští tlačítkem „Hrát znovu“ (jako u ostatních her).
+      document.getElementById('hra-rules').hidden = true;
+      document.getElementById('hra-start-actions').hidden = true;
+      document.getElementById('hra-start').hidden = false;
+      document.getElementById('hra-end').hidden = false;
+      document.getElementById('hra-end-score').textContent = score + ' ' + pointWord(score);
+      document.getElementById('hra-end-text').textContent =
+        'Správně změřeno: ' + nCorrect + ' · Špatně: ' + nWrong + ' · Nejlepší skóre: ' + bestFor(dur);
+      updateStartBest();
     }
+    // Přepínač záložek se před opuštěním záložky Hra ptá, jestli neběží hra (viz výše).
+    window.KrabickaHra = { isRunning: function(){ return running; }, end: endGame };
 
     // ---- obrázek šuplery pro výběr části (klikací vnější čelisti, vnitřní čelisti, hloubkoměr) ----
     (function buildToolSvg(){
@@ -1107,15 +1170,17 @@ button.vbtn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
       if(e.key === 'Enter'){ e.preventDefault(); submit(); }
     });
     nextBtn.addEventListener('click', function(){ if(running) newTask(); });
+    sanitizeNumericInput(input, true);
     durBtns.forEach(function(b){
       b.addEventListener('click', function(){
+        if(running) return;
         dur = parseInt(b.getAttribute('data-dur'), 10);
         durBtns.forEach(function(x){ x.classList.toggle('on', x === b); });
         updateStartBest();
       });
     });
     document.getElementById('hra-start-btn').addEventListener('click', startGame);
-    document.getElementById('hra-again').addEventListener('click', function(){ show('hra-start'); updateStartBest(); });
+    document.getElementById('hra-again').addEventListener('click', startGame);
     updateStartBest();
   })();
 </script>
