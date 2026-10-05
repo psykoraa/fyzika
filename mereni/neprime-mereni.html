@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nepřímé měření</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="../spolecne/config.js"></script>
+<script src="../spolecne/auth.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../spolecne/styl.css">
+<style>
+:root{
+  --paper:#eef5ee;
+  --surface:#fbfef9;
+  --surface-2:#dce8da;
+  --ink:#1f2e22;
+  --ink-soft:#5c705d;
+  --line:rgba(31,46,34,0.12);
+  --accent:#2f7a4f;
+  --accent-ink:#f2fbf5;
+  --success:#28794f;
+  --success-bg:#e3efe0;
+  --danger:#b3392b;
+  --danger-bg:#f5e4de;
+  --focus:#1e6f66;
+  --shadow: 0 1px 0 rgba(31,46,34,0.06);
+}
+
+
+.panel p{
+  margin:0 0 8px;
+  font-size:0.9rem;
+  line-height:1.55;
+}
+.panel p:last-child{ margin-bottom:0; }
+.panel b{ color:var(--ink); }
+
+.panel ol{
+  margin:0 0 8px;
+  padding-left:22px;
+  font-size:0.9rem;
+  line-height:1.55;
+}
+.panel ol li{ margin-bottom:4px; }
+.panel ol:last-child{ margin-bottom:0; }
+
+.formula-line{
+  text-align:center;
+  font-size:1.1rem;
+  color:var(--ink);
+  line-height:1.8;
+}
+
+.katex{ font-size:1.05em; }
+
+.card .desc{
+  font-size:0.86rem;
+  color:var(--ink-soft);
+  line-height:1.5;
+  margin:-8px 0 18px;
+}
+
+.given-data{
+  font-size:clamp(0.9rem, 2.4vw, 1.05rem);
+  color:var(--ink-soft);
+  margin-bottom:20px;
+}
+
+.sheet-wrap{
+  display:flex;
+  justify-content:center;
+  margin:12px 0 4px;
+  overflow-x:auto;
+}
+.sheet-table{
+  border-collapse:collapse;
+  font-size:0.92rem;
+  box-shadow:0 1px 0 rgba(31,46,34,0.04);
+  border-radius:8px;
+  overflow:hidden;
+}
+.sheet-table th, .sheet-table td{
+  border:1px solid var(--line);
+  padding:7px 14px;
+  text-align:center;
+  background:var(--surface);
+  color:var(--ink);
+}
+.sheet-table thead th{
+  background:var(--surface-2);
+  color:var(--ink-soft);
+  font-weight:600;
+  font-size:0.78rem;
+  letter-spacing:0.04em;
+}
+.sheet-cell-label{
+  background:var(--surface-2) !important;
+  color:var(--ink-soft) !important;
+  font-weight:600;
+}
+
+.actions{ margin-top:22px; }
+
+@media (max-width:520px){
+  .card{ padding:26px 16px 24px; }
+  .sheet-table th, .sheet-table td{ padding:6px 8px; }
+  .step{ padding-left:38px; }
+  .step-num{ left:-38px; width:28px; height:28px; font-size:0.82rem; }
+  .step-connector{ left:13px; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <a class="back-link" href="../rozcestniky/mereni.html">← Zpět na Měření</a>
+
+  <div class="brand">
+    <div class="brand-lockup">
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect x="6" y="6" width="28" height="28" rx="3" fill="none" stroke="var(--accent)" stroke-width="2"/>
+        <line x1="12" y1="20" x2="28" y2="20" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="20" cy="13.5" r="1.8" fill="var(--accent)"/>
+        <circle cx="20" cy="26.5" r="1.8" fill="var(--accent)"/>
+      </svg>
+      <div class="brand-text">
+        <h1>Nepřímé měření</h1>
+        <p>hledanou veličinu vypočítáme ze vzorce z jiných změřených veličin</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="teorie-section" class="tab-section">
+
+  <div class="panel">
+    <div class="panel-title">Co je nepřímé měření</div>
+    <p>Hledanou veličinu (např. hustotu tělesa) nedokážeme změřit přímo jedním měřidlem. Změříme proto jiné, <b>pomocné veličiny</b> a hledanou veličinu z nich <b>vypočítáme podle vzorce</b>. Odchylky pomocných veličin se přitom „přenesou“ i do výsledku — jak, závisí na tom, jaké početní operace ve vzorci jsou.</p>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">Příprava a měření</div>
+    <p><b>Příprava</b></p>
+    <ol>
+      <li>Najdeme vzorec, ve kterém se nachází hledaná veličina a jehož ostatní veličiny umíme změřit.</li>
+      <li>Je-li to nutné, vyjádříme hledanou veličinu ze vzorce.</li>
+      <li>Vzorec i s odvozením zapíšeme do teoretického úvodu protokolu.</li>
+    </ol>
+    <p><b>Měření</b></p>
+    <ol>
+      <li>Vybereme vhodná měřidla pro měření pomocných veličin.</li>
+      <li>Tyto veličiny opakovaně změříme.</li>
+      <li>Naměřené hodnoty zapisujeme do přehledných tabulek.</li>
+    </ol>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">Zpracování pomocných veličin</div>
+    <p>Všechny naměřené pomocné veličiny zpracujeme podle pravidel <a href="zpracovani-mereni.html">přímého měření</a>:</p>
+    <ol>
+      <li>Určíme průměr \(\bar{x}\) každé naměřené veličiny.</li>
+      <li>Určíme absolutní odchylku \(\Delta x\) každé naměřené veličiny.</li>
+      <li>Odchylky zaokrouhlíme na jednu platnou cifru.</li>
+      <li>Průměr zaokrouhlíme na stejný řád, v jakém je zaokrouhlená odchylka.</li>
+      <li>Vypočítáme relativní odchylku \(\delta x\) a zaokrouhlíme ji na dvě platné cifry.</li>
+      <li>Pod tabulku zapíšeme všechny pomocné veličiny ve tvaru \(x = (\bar{x} \pm \Delta x)\ \text{jednotka}\), \(\delta x = \ldots\ \%\).</li>
+    </ol>
+
+    <div class="note">
+      <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <circle cx="9" cy="9" r="7.5" stroke="var(--focus)" stroke-width="1.6"/>
+        <line x1="9" y1="8" x2="9" y2="13" stroke="var(--focus)" stroke-width="1.6" stroke-linecap="round"/>
+        <circle cx="9" cy="5.2" r="1" fill="var(--focus)"/>
+      </svg>
+      <p>Měříme-li veličinu jen jednou, nahradí průměr naměřená hodnota a odchylku <b>přesnost měřidla</b>.</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">Výpočet hledané veličiny</div>
+    <ol>
+      <li>Do vzorce z teoretického úvodu dosadíme za všechny pomocné veličiny jejich <b>již zaokrouhlené</b> průměry \(\bar{x}, \bar{y}, \bar{z}, \ldots\) (jsou zapsané pod tabulkou).</li>
+      <li>Výsledek si zapíšeme s dostatečným počtem cifer — alespoň o 2 cifry více, než mělo dosazované číslo s nejvíce ciframi.</li>
+      <li>Vypočítanou hodnotu označíme \(\bar{v}\) a zapíšeme i s jednotkou. Zaokrouhlíme ji až na konci podle odchylky \(\Delta v\).</li>
+    </ol>
+    <p>Jak určit odchylku \(\Delta v\) výsledku, záleží na operacích ve vzorci — viz následující části. Ve všech případech <b>„průměrnou“ hodnotu \(\bar{v}\) už musíme mít spočítanou</b>.</p>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">Sčítání a odčítání</div>
+    <p>Ve vzorci se pomocné veličiny pouze sčítají nebo odčítají (i kombinovaně), např. \(v = x + y - z\).</p>
+    <ol>
+      <li>Bez ohledu na znaménka <b>sečteme absolutní odchylky</b> všech pomocných veličin:
+        <p class="formula-line">\[\Delta v = \Delta x + \Delta y + \Delta z + \cdots\]</p>
+      </li>
+      <li>Zaokrouhlíme odchylku \(\Delta v\) a podle ní průměrnou hodnotu \(\bar{v}\).</li>
+      <li>Dopočítáme relativní odchylku \(\delta v = \dfrac{\Delta v}{\bar{v}} \cdot 100\ \%\).</li>
+      <li>Zapíšeme výsledek.</li>
+    </ol>
+    <div class="note">
+      <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <circle cx="9" cy="9" r="7.5" stroke="var(--focus)" stroke-width="1.6"/>
+        <line x1="9" y1="8" x2="9" y2="13" stroke="var(--focus)" stroke-width="1.6" stroke-linecap="round"/>
+        <circle cx="9" cy="5.2" r="1" fill="var(--focus)"/>
+      </svg>
+      <p>Odchylky se sčítají <b>i při odčítání</b> veličin — chyby se nikdy navzájem neodečtou.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="cat-tag">Příklad — součet</span>
+    <h2>Obvod trojúhelníku</h2>
+    <p class="desc">Rozklikejte si postup krok po kroku — další krok se odemkne, jakmile otevřete ten předchozí.</p>
+
+    <div class="given-data">
+      <div class="given-line">Naměřeno: \(l_1 = (28{,}2 \pm 0{,}1)\ \mathrm{mm}\), \(l_2 = (39{,}4 \pm 0{,}1)\ \mathrm{mm}\), \(l_3 = (65{,}3 \pm 0{,}2)\ \mathrm{mm}\)</div>
+    </div>
+
+    <div class="stepper" data-reset="reset-obvod">
+      <div class="step" data-step="1">
+        <div class="step-connector"></div>
+        <button class="step-head" type="button" aria-expanded="false">
+          <span class="step-num">1</span>
+          <span class="step-title">Vypočítejte střední hodnotu \(\bar{l}\)</span>
+          <span class="step-chevron">▸</span>
+        </button>
+        <div class="step-body" hidden>
+          <p>Obvod je součet délek stran.</p>
+          <div class="step-result">\(\bar{l} = 28{,}2 + 39{,}4 + 65{,}3 = 132{,}9\ \mathrm{mm}\)</div>
+        </div>
+      </div>
+
+      <div class="step" data-step="2">
+        <div class="step-connector"></div>
+        <button class="step-head" type="button" aria-expanded="false">
+          <span class="step-num">2</span>
+          <span class="step-title">Sečtěte absolutní odchylky</span>
+          <span class="step-chevron">▸</span>
+        </button>
+        <div class="step-body" hidden>
+          <div class="step-result">\(\Delta l = 0{,}1 + 0{,}1 + 0{,}2 = 0{,}4\ \mathrm{mm}\)</div>
+        </div>
+      </div>
+
+      <div class="step" data-step="3">
+        <div class="step-connector"></div>
+        <button class="step-head" type="button" aria-expanded="false">
+          <span class="step-num">3</span>
+          <span class="step-title">Dopočítejte relativní odchylku \(\delta l\)</span>
+          <span class="step-chevron">▸</span>
+        </button>
+        <div class="step-body" hidden>
+          <div class="step-result">\(\delta l = \dfrac{0{,}4}{132{,}9} \cdot 100\ \% \approx 0{,}30\ \%\)</div>
+        </div>
+      </div>
+
+      <div class="step" data-step="4">
+        <button class="step-head" type="button" aria-expanded="false">
+          <span class="step-num">4</span>
+          <span class="step-title">Zapište výsledek</span>
+          <span class="step-chevron">▸</span>
+        </button>
+        <div class="step-body" hidden>
+          <div class="result-box">\(l = (132{,}9 \pm 0{,}4)\ \mathrm{mm} \qquad \delta l = 0{,}30\ \%\)</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn ghost" id="reset-obvod">Zopakovat postup od začátku</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="cat-tag">Příklad — rozdíl</span>
+    <h2>Objem tělesa odměrným válcem</h2>
+    <p class="desc">Objem tělesa určíme jako rozdíl objemu vody s ponořeným tělesem a bez něj.</p>
+
+    <div class="given-data">
+      <div class="given-line">Naměřeno: \(V_1 = (18{,}2 \pm 0{,}1)\ \mathrm{ml}\), \(V_2 = (32{,}4 \pm 0{,}2)\ \mathrm{ml}\)</div>
+    </div>
+
+    <div class="stepper" data-reset="reset-objem">
+      <div class="step" data-step="1">
+        <div class="step-connector"></div>
+        <button class="step-head" type="button" aria-expanded="false">
+          <span class="step-num">1</span>
+          <span class="step-title">Vypočítejte střední hodnotu \(\bar{V}\)</span>
+          <span class="step-chevron">▸</span>
+        </button>
+        <div class="step-body" hidden>
+          <div class="step-result">\(\bar{V} = 32{,}4 - 18{,}2 = 14{,}2\ \mathrm{ml}\)</div>
+        </div>
+      </div>
+
+      <div class="step" data-step="2">
+        <div class="step-connector"></div>
+        <button class="step-head" type="button" aria-expanded="false">
+          <span class="step-num">2</span>
+          <span class="step-title">Sečtěte absolutní odchylky</span>
+          <span class="step-chevron">▸</span>
+        </button>
+        <div class="step-body" hidden>
+          <p>I když objemy odčítáme, odchylky <b>sčítáme</b>.</p>
+          <div class="step-result">\(\Delta V = 0{,}1 + 0{,}2 = 0{,}3\ \mathrm{ml}\)</div>
+        </div>
+      </div>
+
+      <div class="step" data-step="3">
+        <div class="step-connector"></div>
+        <button class="step-head" type="button" aria-expanded="false">
+          <span class="step-num">3</span>
+          <span class="step-title">Dopočítejte relativní odchylku \(\delta V\)</span>
+          <span class="step-chevron">▸</span>
+        </button>
+        <div class="step-body" hidden>
+          <div class="step-result">\(\delta V = \dfrac{0{,}3}{14{,}2} \cdot 100\ \% \approx 2{,}1\ \%\)</div>
+        </div>
+      </div>
+
+      <div class="step" data-step="4">
+        <button class="step-head" type="button" aria-expanded="false">
+          <span class="step-num">4</span>
+          <span class="step-title">Zapište výsledek</span>
+          <span class="step-chevron">▸</span>
+        </button>
+        <div class="step-body" hidden>
+          <div class="result-box">\(V = (14{,}2 \pm 0{,}3)\ \mathrm{ml} \qquad \delta V = 2{,}1\ \%\)</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn ghost" id="reset-objem">Zopakovat postup od začátku</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">Násobení a dělení</div>
+    <p>Ve vzorci se pomocné veličiny pouze násobí nebo dělí (i kombinovaně), např. \(v = \dfrac{x \cdot y}{z}\).</p>
+    <ol>
+      <li>Bez ohledu na operace <b>sečteme relativní odchylky</b> všech pomocných veličin:
+        <p class="formula-line">\[\delta v = \delta x + \delta y + \delta z + \cdots\]</p>
+      </li>
+      <li>Z relativní odchylky určíme absolutní odchylku:
+        <p class="formula-line">\[\Delta v = \dfrac{\delta v \cdot \bar{v}}{100\ \%}\]</p>
+      </li>
+      <li>Zaokrouhlíme odchylku \(\Delta v\) a podle ní střední hodnotu \(\bar{v}\).</li>
+      <li>Zapíšeme výsledek — relativní odchylku <b>už nepřepočítáváme</b>.</li>
+    </ol>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">Mocnina a odmocnina</div>
+    <p>Pomocné veličiny se ve vzorci pouze umocňují nebo odmocňují.</p>
+    <ol>
+      <li>Začínáme opět relativní odchylkou:
+        <p><b>umocnění</b> — relativní odchylka se vynásobí mocnitelem:</p>
+        <p class="formula-line">\[\bar{v} = \bar{x}^{\,n} \quad\Rightarrow\quad \delta v = n \cdot \delta x\]</p>
+        <p><b>odmocnění</b> — relativní odchylka se vydělí odmocnitelem:</p>
+        <p class="formula-line">\[\bar{v} = \sqrt[n]{\bar{x}} \quad\Rightarrow\quad \delta v = \dfrac{\delta x}{n}\]</p>
+      </li>
+      <li>Určíme absolutní odchylku \(\Delta v = \dfrac{\delta v \cdot \bar{v}}{100\ \%}\).</li>
+      <li>Zaokrouhlíme odchylku \(\Delta v\) a podle ní střední hodnotu \(\bar{v}\).</li>
+      <li>Zapíšeme výsledek — relativní odchylku <b>už nepřepočítáváme</b>.</li>
+    </ol>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">Kombinace násobení, dělení, mocnin a odmocnin</div>
+    <p>Začínáme relativní odchylkou a uplatníme obě předchozí pravidla zároveň: relativní odchylky sčítáme, u mocniny je násobíme mocnitelem a u odmocniny dělíme odmocnitelem. Konstanty (čísla, \(\pi\)) odchylku nemají. Například pro hustotu válečku:</p>
+    <p class="formula-line">\[\rho = \dfrac{4 \cdot m}{\pi \cdot d^2 \cdot v} \quad\Rightarrow\quad \delta\rho = \delta m + 2 \cdot \delta d + \delta v\]</p>
+    <p>Zbylé kroky jsou stejné jako u násobení a dělení.</p>
+  </div>
+
+  <div class="card">
+    <span class="cat-tag">Příklad z praxe</span>
+    <h2>Hustota válečku</h2>
+    <p class="desc">U válečku jsme opakovaně změřili průměr \(d\), výšku \(v\) a hmotnost \(m\) a zpracovali je jako přímé měření.</p>
+
+    <div class="given-data">
+      <div class="given-line">\(d = (15{,}22 \pm 0{,}03)\ \mathrm{mm}\), \(\delta d = 0{,}20\ \%\)</div>
+      <div class="given-line">\(v = (45{,}20 \pm 0{,}03)\ \mathrm{mm}\), \(\delta v = 0{,}066\ \%\)</div>
+      <div class="given-line">\(m = (22{,}95 \pm 0{,}06)\ \mathrm{g}\), \(\delta m = 0{,}26\ \%\)</div>
+    </div>
+
+    <div class="stepper" data-reset="reset-hustota">
+      <div class="step" data-step="1">
+        <div class="step-connector"></div>
+        <button class="step-head" type="button" aria-expanded="false">
+          <span class="step-num">1</span>
+          <span class="step-title">Odvoďte vzorec pro hustotu</span>
+          <span class="step-chevron">▸</span>
+        </button>
+        <div class="step-body" hidden>
+          <p>Objem válce je \(V = \dfrac{\pi d^2}{4} \cdot v\), hustota \(\rho = \dfrac{m}{V}\).</p>
+          <div class="step-result">\(\rho = \dfrac{4 \cdot m}{\pi \cdot d^2 \cdot v}\)</div>
+        </div>
+      </div>
+
+      <div class="step" data-step="2">
+        <div class="step-connector"></div>
+        <button class="step-head" type="button" aria-expanded="false">
+          <span class="step-num">2</span>
+          <span class="step-title">Dosaďte zaokrouhlené průměry</span>
+          <span class="step-chevron">▸</span>
+        </button>
+        <div class="step-body" hidden>
+          <p>Délky převedeme na centimetry, aby vyšla hustota v \(\mathrm{g \cdot cm^{-3}}\). Výsledek si necháme s dostatečným počtem cifer.</p>
+          <div class="step-result">\(\bar{\rho} = \dfrac{4 \cdot 22{,}95}{\pi \cdot 1{,}522^2 \cdot 4{,}520}\ \mathrm{g \cdot cm^{-3}} = 2{,}79078\ \mathrm{g \cdot cm^{-3}}\)</div>
+        </div>
+      </div>
+
+      <div class="step" data-step="3">
+        <div class="step-connector"></div>
+        <button class="step-head" type="button" aria-expanded="false">
+          <span class="step-num">3</span>
+          <span class="step-title">Sečtěte relativní odchylky</span>
+          <span class="step-chevron">▸</span>
+        </button>
+        <div class="step-body" hidden>
+          <p>Průměr \(d\) je ve druhé mocnině, proto jeho relativní odchylku násobíme dvěma.</p>
+          <div class="step-result">\(\delta\rho = \delta m + 2 \cdot \delta d + \delta v = 0{,}26 + 2 \cdot 0{,}20 + 0{,}066 \approx 0{,}73\ \%\)</div>
+        </div>
+      </div>
+
+      <div class="step" data-step="4">
+        <div class="step-connector"></div>
+        <button class="step-head" type="button" aria-expanded="false">
+          <span class="step-num">4</span>
+          <span class="step-title">Určete absolutní odchylku \(\Delta\rho\)</span>
+          <span class="step-chevron">▸</span>
+        </button>
+        <div class="step-body" hidden>
+          <div class="step-result">\(\Delta\rho = \dfrac{0{,}73 \cdot 2{,}79078}{100} \approx 0{,}02037\ \mathrm{g \cdot cm^{-3}}\ \rightarrow\ 0{,}02\ \mathrm{g \cdot cm^{-3}}\)</div>
+        </div>
+      </div>
+
+      <div class="step" data-step="5">
+        <div class="step-connector"></div>
+        <button class="step-head" type="button" aria-expanded="false">
+          <span class="step-num">5</span>
+          <span class="step-title">Zaokrouhlete \(\bar{\rho}\)</span>
+          <span class="step-chevron">▸</span>
+        </button>
+        <div class="step-body" hidden>
+          <p>Odchylka je v řádu setin, proto i hustotu zaokrouhlíme na setiny.</p>
+          <div class="step-result">\(\bar{\rho} = 2{,}79078\ \mathrm{g \cdot cm^{-3}}\ \rightarrow\ 2{,}79\ \mathrm{g \cdot cm^{-3}}\)</div>
+        </div>
+      </div>
+
+      <div class="step" data-step="6">
+        <button class="step-head" type="button" aria-expanded="false">
+          <span class="step-num">6</span>
+          <span class="step-title">Zapište výsledek</span>
+          <span class="step-chevron">▸</span>
+        </button>
+        <div class="step-body" hidden>
+          <p>Relativní odchylku už nepřepočítáváme.</p>
+          <div class="result-box">\(\rho = (2{,}79 \pm 0{,}02)\ \mathrm{g \cdot cm^{-3}} \qquad \delta\rho = 0{,}73\ \%\)</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn ghost" id="reset-hustota">Zopakovat postup od začátku</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">Kombinace všech operací</div>
+    <p>Pokud vzorec kombinuje sčítání a odčítání s násobením, dělením či mocninami, je zpracování nejnáročnější.</p>
+    <ol>
+      <li>Součty a rozdíly ve vzorci <b>nahradíme novými veličinami</b> (písmeny). Uvnitř jedné náhrady smí být jen sčítání a odčítání.</li>
+      <li>Při výpočtu těchto náhrad (mezivýsledků) ještě nezaokrouhlujeme.</li>
+      <li>Náhrady jsou nepřímo měřené veličiny — jejich odchylky určíme postupem pro sčítání a odčítání.</li>
+      <li>Vzniklý vzorec pak řešíme postupem pro násobení a dělení (případně mocniny).</li>
+    </ol>
+    <p>Příklad: součet \(a + c\) nahradíme veličinou \(D\) a rozdíl \(v - d\) veličinou \(H\):</p>
+    <p class="formula-line">\[v = \dfrac{(a + c) \cdot (v - d)}{q \cdot i} \quad\Rightarrow\quad v = \dfrac{D \cdot H}{q \cdot i}\]</p>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">Shrnutí</div>
+    <div class="sheet-wrap">
+      <table class="sheet-table">
+        <thead>
+          <tr><th>Operace</th><th>Vzorec</th><th>1. krok</th><th>2. krok</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="sheet-cell-label">součet</td><td>\(v = x + y\)</td><td>\(\Delta v = \Delta x + \Delta y\)</td><td rowspan="2">\(\delta v = \dfrac{\Delta v}{\bar{v}} \cdot 100\ \%\)</td></tr>
+          <tr><td class="sheet-cell-label">rozdíl</td><td>\(v = x - y\)</td><td>\(\Delta v = \Delta x + \Delta y\)</td></tr>
+          <tr><td class="sheet-cell-label">součin</td><td>\(v = x \cdot y\)</td><td>\(\delta v = \delta x + \delta y\)</td><td rowspan="4">\(\Delta v = \dfrac{\delta v \cdot \bar{v}}{100\ \%}\)</td></tr>
+          <tr><td class="sheet-cell-label">podíl</td><td>\(v = \dfrac{x}{y}\)</td><td>\(\delta v = \delta x + \delta y\)</td></tr>
+          <tr><td class="sheet-cell-label">mocnina</td><td>\(v = x^n\)</td><td>\(\delta v = n \cdot \delta x\)</td></tr>
+          <tr><td class="sheet-cell-label">odmocnina</td><td>\(v = \sqrt[n]{x}\)</td><td>\(\delta v = \dfrac{\delta x}{n}\)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  </div>
+
+  <footer>Fyzika — Nepřímé měření</footer>
+</div>
+
+<script src="../spolecne/spolecne.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  if(window.renderMathInElement){
+    renderMathInElement(document.getElementById('teorie-section'), {
+      delimiters: [{left:'\\(', right:'\\)', display:false}, {left:'\\[', right:'\\]', display:true}]
+    });
+  }
+
+  // ---- příklady: postupně odemykané steppery ----
+  Array.prototype.forEach.call(document.querySelectorAll('.stepper'), function(wrap){
+    var steps = Array.prototype.slice.call(wrap.querySelectorAll('.step'));
+    var unlockedUpTo = 1;
+
+    function refreshLocks(){
+      steps.forEach(function(st){
+        var idx = parseInt(st.getAttribute('data-step'), 10);
+        var locked = idx > unlockedUpTo;
+        st.classList.toggle('locked', locked);
+        st.classList.toggle('unlocked', !locked && !st.classList.contains('done'));
+        st.querySelector('.step-head').setAttribute('aria-disabled', locked ? 'true' : 'false');
+      });
+    }
+
+    steps.forEach(function(st){
+      var idx = parseInt(st.getAttribute('data-step'), 10);
+      var head = st.querySelector('.step-head');
+      var body = st.querySelector('.step-body');
+      head.addEventListener('click', function(){
+        if(idx > unlockedUpTo) return;
+        var wasOpen = st.classList.contains('open');
+        st.classList.toggle('open', !wasOpen);
+        body.hidden = wasOpen;
+        head.setAttribute('aria-expanded', (!wasOpen).toString());
+        if(!wasOpen){
+          st.classList.add('done');
+          if(idx === unlockedUpTo && unlockedUpTo < steps.length){
+            unlockedUpTo++;
+          }
+          refreshLocks();
+        }
+      });
+    });
+
+    var resetBtn = document.getElementById(wrap.getAttribute('data-reset'));
+    if(resetBtn){
+      resetBtn.addEventListener('click', function(){
+        unlockedUpTo = 1;
+        steps.forEach(function(st){
+          st.classList.remove('open', 'done');
+          st.querySelector('.step-body').hidden = true;
+          st.querySelector('.step-head').setAttribute('aria-expanded', 'false');
+        });
+        refreshLocks();
+      });
+    }
+
+    refreshLocks();
+  });
+
+  try{ makePanelsCollapsible(document); }catch(e){}
+})();
+</script>
+
+</body>
+</html>
