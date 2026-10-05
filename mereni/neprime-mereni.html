@@ -158,12 +158,29 @@
 }
 .ws-step.done .ws-step-num{ background:var(--accent); color:var(--accent-ink); }
 .ws-cell{
-  display:flex;
-  flex-wrap:wrap;
-  align-items:baseline;
-  gap:0.3em;
+  min-width:0;
   font-size:1.08rem;
   color:var(--ink);
+}
+/* Řádek se nezalamuje — když se nevejde, posouvá se do strany. */
+.ws-line{
+  position:relative;
+  display:flex;
+  flex-wrap:nowrap;
+  align-items:baseline;
+  gap:0.3em;
+  white-space:nowrap;
+  overflow-x:auto;
+  overflow-y:hidden;
+  padding:2px 0 6px;
+}
+.ws-line > *{ flex:none; }
+.line-scroll{
+  position:relative;
+  white-space:nowrap;
+  overflow-x:auto;
+  overflow-y:hidden;
+  padding:2px 0 4px;
 }
 .ws-cell .answer-input{ font-family:'KaTeX_Main', Georgia, serif; font-weight:normal; width:4.2em; }
 .ws-cell .answer-input.small{ width:2.6em; }
@@ -352,7 +369,7 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
           <span class="step-chevron">▸</span>
         </button>
         <div class="step-body" hidden>
-          <div class="result-box">\(l = (132{,}9 \pm 0{,}4)\ \mathrm{mm} \qquad \delta l = 0{,}30\ \%\)</div>
+          <div class="result-box"><div class="line-scroll">\(l = (132{,}9 \pm 0{,}4)\ \mathrm{mm} \qquad \delta l = 0{,}30\ \%\)</div></div>
         </div>
       </div>
     </div>
@@ -416,7 +433,7 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
           <span class="step-chevron">▸</span>
         </button>
         <div class="step-body" hidden>
-          <div class="result-box">\(V = (14{,}2 \pm 0{,}3)\ \mathrm{ml} \qquad \delta V = 2{,}1\ \%\)</div>
+          <div class="result-box"><div class="line-scroll">\(V = (14{,}2 \pm 0{,}3)\ \mathrm{ml} \qquad \delta V = 2{,}1\ \%\)</div></div>
         </div>
       </div>
     </div>
@@ -548,7 +565,7 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
         </button>
         <div class="step-body" hidden>
           <p>Relativní odchylku už nepřepočítáváme.</p>
-          <div class="result-box">\(\rho = (2{,}79 \pm 0{,}02)\ \mathrm{g \cdot cm^{-3}} \qquad \delta\rho = 0{,}73\ \%\)</div>
+          <div class="result-box"><div class="line-scroll">\(\rho = (2{,}79 \pm 0{,}02)\ \mathrm{g \cdot cm^{-3}} \qquad \delta\rho = 0{,}73\ \%\)</div></div>
         </div>
       </div>
     </div>
@@ -776,9 +793,9 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
           el.hidden = true;
           var html = '<div class="ws-step-title"><span class="ws-step-num">' + (si + 1) + '</span><span>' + step.title + '</span></div><div class="ws-cells">';
           step.cells.forEach(function(cell, ci){
-            html += '<div class="ws-cell" data-cell="' + ci + '">' + cell.html.replace(/\{(\d)\}/g, function(_, fi){
+            html += '<div class="ws-cell" data-cell="' + ci + '"><div class="ws-line">' + cell.html.replace(/\{(\d)\}/g, function(_, fi){
               return '<input class="answer-input' + (step.inputClass ? ' ' + step.inputClass : '') + '" data-field="' + fi + '" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="?" aria-label="' + step.title + '">';
-            }) + '<div class="ws-msg"></div></div>';
+            }) + '</div><div class="ws-msg"></div></div>';
           });
           el.innerHTML = html + '</div>';
           stepsWrap.appendChild(el);
@@ -857,6 +874,7 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
         if(!allOk){ firstBad.focus(); return; }
 
         if(steps[current].after) steps[current].after(S);
+        Array.prototype.forEach.call(stepEls[current].querySelectorAll('.ws-line'), function(l){ l.scrollLeft = 0; });
         stepEls[current].classList.add('done');
         current++;
         if(current < steps.length){
@@ -994,7 +1012,7 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
       finish:function(S){
         var html = '';
         S.cols.forEach(function(C, i){
-          html += '<div>' + tex('l_' + (i + 1) + ' = (' + tn(fmt(C.lr, C.dec)) + ' \\pm ' + tn(fmt(C.d, C.dec)) + ')\\ \\mathrm{cm};\\quad \\delta l_' + (i + 1) + ' = ' + tn(fmt(C.rel, C.relDec)) + '\\ \\%') + '</div>';
+          html += '<div class="line-scroll">' + tex('l_' + (i + 1) + ' = (' + tn(fmt(C.lr, C.dec)) + ' \\pm ' + tn(fmt(C.d, C.dec)) + ')\\ \\mathrm{cm};\\quad \\delta l_' + (i + 1) + ' = ' + tn(fmt(C.rel, C.relDec)) + '\\ \\%') + '</div>';
         });
         var a = S.cols[0].rel, b = S.cols[1].rel;
         var better = a < b ? 'svinovacím metrem' : (b < a ? 'dřevěným pravítkem' : '');
@@ -1103,7 +1121,7 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
             ] }] }
       ],
       finish:function(S){
-        return '<div>' + tex('V = (' + tn(fmt(S.Vr, S.dec)) + ' \\pm ' + tn(fmt(S.d, S.dec)) + ')\\ \\mathrm{cm^3};\\quad \\delta V = ' + tn(fmt(S.rel, S.relDec)) + '\\ \\%') + '</div>';
+        return '<div class="line-scroll">' + tex('V = (' + tn(fmt(S.Vr, S.dec)) + ' \\pm ' + tn(fmt(S.d, S.dec)) + ')\\ \\mathrm{cm^3};\\quad \\delta V = ' + tn(fmt(S.rel, S.relDec)) + '\\ \\%') + '</div>';
       }
     });
   })();
