@@ -34,6 +34,7 @@
     'oktava.html': 'rozcestniky',
     'zaokrouhlovani-vysledku.html': 'mereni',
     'zpracovani-mereni.html': 'mereni',
+    'neprime-mereni.html': 'mereni',
     'krabicka-multivitaminu.html': 'mereni',
     'pravidla-pro-vyuzivani-ai.html': 'mereni',
     'jak-psat-protokol.html': 'mereni',
