@@ -595,7 +595,7 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
   <div class="card ws-card" id="ws-sirka">
     <span class="cat-tag">Úloha 1</span>
     <h2>Šířka učebny</h2>
-    <p class="desc ws-headline">Zapisujte hodnoty, které jste naměřili při laboratorní práci — šířku učebny svinovacím metrem (\(l_1\)) a dřevěným pravítkem (\(l_2\)). Po vyplnění kroku klikněte na <b>Dále</b> a objeví se další krok.</p>
+    <p class="desc ws-headline">Zapisujte hodnoty, které jste naměřili při laboratorní práci — šířku učebny svinovacím metrem (\(l_1\)) a dřevěným pravítkem (\(l_2\)). Po vyplnění kroku klikněte na <b>Dále</b> — od kroku 4 se výsledky kontrolují podle vašich naměřených hodnot.</p>
 
     <div class="ws-cols-head">
       <div>Svinovací metr</div>
@@ -700,22 +700,32 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
 
 
   // ---- Trénink: Šířka učebny (Ú1 pracovního listu) ----
-  // Žák zapisuje vlastní hodnoty z laboratorní práce, proto se nic nekontroluje
-  // proti správným odpovědím — „Dále“ jen ověří, že je krok vyplněný číslem,
-  // zamkne ho a odkryje další krok podle postupu v pracovním listu.
+  // Žák zapisuje vlastní hodnoty z laboratorní práce. Naměřené hodnoty a počet
+  // použití měřidla (kroky 1–2) se nekontrolují, jen se ověří, že jsou vyplněné.
+  // Další kroky se kontrolují — správné výsledky se dopočítají z hodnot, které
+  // žák zadal v krocích 1–2. Po druhé chybě v témže poli se ukáže správná hodnota.
   (function(){
     var root = document.getElementById('ws-sirka');
     if(!root) return;
+
+    var PREC = 0.05;   // přesnost metru i pravítka: 0,5 mm = 0,05 cm
+    var ORDER = { 0:'na jednotky', 1:'na desetiny', 2:'na setiny', 3:'na tisíciny' };
 
     function tex(latex){
       try{ return katex.renderToString(latex, {throwOnError:false}); }
       catch(e){ return latex; }
     }
-    function isNumber(str){
-      str = (str || '').trim().replace(/[−–]/g, '-').replace(/\s+/g, '');
-      return /^-?\d+([.,]\d+)?$/.test(str);
+    function parse(str){
+      str = (str || '').trim().replace(/[−–]/g, '-').replace(/\s+/g, '').replace(',', '.');
+      if(!/^-?\d+(\.\d+)?$/.test(str)) return null;
+      var dot = str.indexOf('.');
+      return { value:parseFloat(str), decimals: dot===-1 ? 0 : str.length - dot - 1 };
     }
+    function same(a, b){ return Math.abs(a - b) <= Math.max(Math.abs(b)*1e-9, 1e-9); }
+    function fmt(v, dec){ return v.toFixed(dec).replace('.', ','); }
+    function fmtAuto(v){ return String(Number(v.toPrecision(12))).replace('.', ','); }
     function texVal(str){ return str.trim().replace(/\s+/g, '').replace('.', ',').replace(',', '{,}'); }
+    function exact(p, v, dec){ return same(p.value, v) && p.decimals === dec; }
 
     // Měřidla: 1 = svinovací metr (l₁), 2 = dřevěné pravítko (l₂).
     var COLS = [
@@ -723,25 +733,82 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
       { c:2, name:'Dřevěné pravítko', used:'pravítko použito', prec:'přesnost pravítka' }
     ];
 
+    function ok(){ return { ok:true }; }
+    function bad(msg){ return { ok:false, msg:msg }; }
+
+    // Každé pole má check(p, S) → {ok, msg} a answer(S) pro zobrazení správné
+    // hodnoty po opakované chybě. S je stav sloupce (hodnoty žáka z kroků 1–2
+    // a z nich dopočítané výsledky). Pole bez check se nekontroluje.
     var STEPS = [
       { title:'Naměřená hodnota',
-        cell:function(D){ return tex('l_' + D.c + ' =') + ' {0} ' + tex('\\mathrm{cm}'); } },
+        cell:function(D){ return tex('l_' + D.c + ' =') + ' {0} ' + tex('\\mathrm{cm}'); },
+        fields:[{ store:function(p, S){ S.l = p; } }] },
       { title:'Kolikrát bylo měřidlo použito', small:true,
-        cell:function(D){ return D.used + ' = {0} ×'; } },
-      // Přesnost obou měřidel je pevně daná (0,5 mm) — krok se jen zobrazí.
+        cell:function(D){ return D.used + ' = {0} ×'; },
+        fields:[{
+          valid:function(p){ return p.decimals === 0 && p.value >= 1 ? '' : 'Zadejte celé číslo.'; },
+          store:function(p, S){ S.n = p.value; }
+        }] },
+      // Přesnost obou měřidel je pevně daná — krok se jen zobrazí.
       { title:'Přesnost měřidla', fixed:true,
         cell:function(D){ return D.prec + ' = ' + tex('0{,}5\\ \\mathrm{mm} = 0{,}05\\ \\mathrm{cm}'); } },
       { title:'Odchylka zaokrouhlená na jednu platnou cifru',
-        cell:function(D){ return tex('\\Delta l_' + D.c + ' =') + ' {0} ' + tex('\\mathrm{cm}'); } },
+        cell:function(D){ return tex('\\Delta l_' + D.c + ' =') + ' {0} ' + tex('\\mathrm{cm}'); },
+        fields:[{
+          check:function(p, S){
+            if(exact(p, S.d, S.dec)) return ok();
+            if(same(p.value, S.raw) || same(p.value, S.d)) return bad('Odchylku zaokrouhlete na jednu platnou cifru.');
+            return bad('Odchylka je počet použití měřidla krát jeho přesnost (0,05 cm), zaokrouhlená na jednu platnou cifru.');
+          },
+          answer:function(S){ return tex(S.n + ' \\cdot 0{,}05 = ' + fmtAuto(S.raw).replace(',', '{,}') + ' \\rightarrow ' + fmt(S.d, S.dec).replace(',', '{,}') + '\\ \\mathrm{cm}'); }
+        }] },
       { title:'Zaokrouhlení naměřené hodnoty',
-        cell:function(D){ return tex('l_' + D.c + ' =') + ' {0} ' + tex('\\mathrm{cm}'); } },
+        cell:function(D){ return tex('l_' + D.c + ' =') + ' {0} ' + tex('\\mathrm{cm}'); },
+        fields:[{
+          check:function(p, S){
+            if(exact(p, S.lr, S.dec)) return ok();
+            // Naměřená hodnota zapsaná s méně desetinnými místy, než má odchylka,
+            // se nedoplňuje nulami — ponechá se, jak byla naměřena.
+            if(S.l.decimals < S.dec && exact(p, S.l.value, S.l.decimals)) return ok();
+            return bad('Naměřenou hodnotu zaokrouhlete na stejný řád jako odchylku (' + ORDER[S.dec] + ').');
+          },
+          answer:function(S){ return tex(fmt(S.l.value, S.l.decimals).replace(',', '{,}') + ' \\rightarrow ' + fmt(S.lr, S.lrDec).replace(',', '{,}') + '\\ \\mathrm{cm}') + ' (' + ORDER[S.dec] + ')'; }
+        }] },
       { title:'Relativní odchylka (jen výsledek)',
-        cell:function(D){ return tex('\\delta l_' + D.c + ' =') + ' {0} ' + tex('\\%'); } },
+        cell:function(D){ return tex('\\delta l_' + D.c + ' =') + ' {0} ' + tex('\\%'); },
+        fields:[{
+          check:function(p, S){
+            if(exact(p, S.rel, S.relDec)) return ok();
+            if(Math.abs(p.value - S.relRaw) <= S.relRaw*0.05) return bad('Relativní odchylku zaokrouhlete na dvě platné cifry.');
+            return bad('Vydělte zaokrouhlenou odchylku zaokrouhlenou hodnotou a vynásobte 100 %.');
+          },
+          answer:function(S){ return tex('\\dfrac{' + fmt(S.d, S.dec).replace(',', '{,}') + '}{' + fmt(S.lr, S.lrDec).replace(',', '{,}') + '} \\cdot 100\\ \\% \\doteq ' + fmt(S.rel, S.relDec).replace(',', '{,}') + '\\ \\%'); }
+        }] },
       { title:'Zápis výsledku', inputClass:'mid',
-        cell:function(D){ return tex('l_' + D.c + ' = (') + ' {0} ' + tex('\\pm') + ' {1} ' + tex(')\\ \\mathrm{cm};\\quad \\delta l_' + D.c + ' =') + ' {2} ' + tex('\\%'); } }
+        cell:function(D){ return tex('l_' + D.c + ' = (') + ' {0} ' + tex('\\pm') + ' {1} ' + tex(')\\ \\mathrm{cm};\\quad \\delta l_' + D.c + ' =') + ' {2} ' + tex('\\%'); },
+        fields:[
+          { check:function(p, S){ return exact(p, S.lr, S.lrDec) ? ok() : bad('Na první místo patří zaokrouhlená hodnota z kroku 5.'); },
+            answer:function(S){ return fmt(S.lr, S.lrDec); } },
+          { check:function(p, S){ return exact(p, S.d, S.dec) ? ok() : bad('Za ± patří zaokrouhlená odchylka z kroku 4.'); },
+            answer:function(S){ return fmt(S.d, S.dec); } },
+          { check:function(p, S){ return exact(p, S.rel, S.relDec) ? ok() : bad('Za středník patří relativní odchylka z kroku 6.'); },
+            answer:function(S){ return fmt(S.rel, S.relDec); } }
+        ] }
     ];
 
-    var current, stepEls = [];
+    // Dopočítá správné výsledky z hodnot žáka (po kroku 2).
+    function derive(S){
+      S.raw = roundTo(S.n*PREC, 6);
+      S.d = roundSig(S.raw, 1);
+      S.dec = decimalsForSig(S.d, 1);
+      if(S.l.decimals < S.dec){ S.lr = S.l.value; S.lrDec = S.l.decimals; }
+      else { S.lr = roundTo(S.l.value, S.dec); S.lrDec = S.dec; }
+      S.relRaw = S.d/S.lr*100;
+      S.rel = roundSig(S.relRaw, 2);
+      S.relDec = decimalsForSig(S.rel, 2);
+    }
+
+    var current, stepEls = [], state = [];
     var stepsWrap = document.getElementById('ws-steps');
     var btnNext = document.getElementById('ws-next');
     var msgEl = document.getElementById('ws-msg');
@@ -754,10 +821,10 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
         el.className = 'ws-step';
         el.hidden = true;
         var html = '<div class="ws-step-title"><span class="ws-step-num">' + (si + 1) + '</span><span>' + step.title + '</span></div><div class="ws-cells">';
-        COLS.forEach(function(D){
-          html += '<div class="ws-cell">' + step.cell(D).replace(/\{(\d)\}/g, function(){
-            return '<input class="answer-input' + (step.small ? ' small' : '') + (step.inputClass ? ' ' + step.inputClass : '') + '" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="?" aria-label="' + D.name + ' — ' + step.title + '">';
-          }) + '</div>';
+        COLS.forEach(function(D, ci){
+          html += '<div class="ws-cell" data-col="' + ci + '">' + step.cell(D).replace(/\{(\d)\}/g, function(_, fi){
+            return '<input class="answer-input' + (step.small ? ' small' : '') + (step.inputClass ? ' ' + step.inputClass : '') + '" data-field="' + fi + '" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="?" aria-label="' + D.name + ' — ' + step.title + '">';
+          }) + '<div class="ws-msg"></div></div>';
         });
         el.innerHTML = html + '</div>';
         stepsWrap.appendChild(el);
@@ -788,6 +855,7 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
 
     function restart(){
       build();
+      state = COLS.map(function(){ return {}; });
       msgEl.textContent = '';
       doneBox.hidden = true;
       btnNext.disabled = false;
@@ -796,22 +864,71 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
 
     function next(){
       if(current >= STEPS.length) return;
-      var inputs = stepEls[current].querySelectorAll('input');
-      var firstEmpty = null;
-      Array.prototype.forEach.call(inputs, function(inp){
-        var okVal = isNumber(inp.value);
-        inp.classList.toggle('wrong', !okVal);
-        if(!okVal && !firstEmpty) firstEmpty = inp;
+      var step = STEPS[current];
+      var cells = stepEls[current].querySelectorAll('.ws-cell');
+
+      // 1) Všechna dosud otevřená pole musí obsahovat platné číslo.
+      var firstBad = null, empty = false;
+      Array.prototype.forEach.call(cells, function(cell){
+        var msgs = [];
+        Array.prototype.forEach.call(cell.querySelectorAll('input:not(:disabled)'), function(inp){
+          var p = parse(inp.value);
+          var f = step.fields[+inp.getAttribute('data-field')];
+          var err = !p ? 'empty' : (f.valid ? f.valid(p) : '');
+          if(err){
+            inp.classList.add('wrong');
+            if(err === 'empty') empty = true; else msgs.push(err);
+            if(!firstBad) firstBad = inp;
+          }
+        });
+        setMsg(cell, msgs.join(' '), 'bad');
       });
-      if(firstEmpty){
-        msgEl.textContent = 'Než budete pokračovat, vyplňte v tomto kroku čísla pro obě měřidla.';
-        firstEmpty.focus();
+      if(firstBad){
+        msgEl.textContent = empty ? 'Než budete pokračovat, vyplňte v tomto kroku čísla pro obě měřidla.' : '';
+        firstBad.focus();
         return;
       }
       msgEl.textContent = '';
-      Array.prototype.forEach.call(inputs, function(inp){ inp.disabled = true; });
+
+      // 2) Kontrola (jen u polí, která ji mají).
+      var allOk = true;
+      Array.prototype.forEach.call(cells, function(cell){
+        var S = state[+cell.getAttribute('data-col')];
+        var msgs = [], kind = 'bad';
+        Array.prototype.forEach.call(cell.querySelectorAll('input:not(:disabled)'), function(inp){
+          var f = step.fields[+inp.getAttribute('data-field')];
+          var p = parse(inp.value);
+          if(!f.check){
+            if(f.store) f.store(p, S);
+            inp.disabled = true;
+            return;
+          }
+          var res = f.check(p, S);
+          if(res.ok){
+            inp.classList.remove('wrong');
+            inp.classList.add('correct');
+            inp.disabled = true;
+            return;
+          }
+          allOk = false;
+          inp.classList.add('wrong');
+          inp._fails = (inp._fails || 0) + 1;
+          msgs.push(inp._fails >= 2 ? res.msg + ' Správně: ' + f.answer(S) : res.msg);
+          if(!firstBad) firstBad = inp;
+        });
+        setMsg(cell, msgs.join(' '), kind);
+      });
+      if(!allOk){ firstBad.focus(); return; }
+
+      if(current === 1) state.forEach(derive);
       stepEls[current].classList.add('done');
       showFrom(current + 1);
+    }
+
+    function setMsg(cell, html, kind){
+      var m = cell.querySelector('.ws-msg');
+      m.className = 'ws-msg' + (html ? ' ' + kind : '');
+      m.innerHTML = html;
     }
 
     // Shrnutí: zápis obou výsledků z posledního kroku.
@@ -822,7 +939,8 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
       COLS.forEach(function(D, i){
         html += '<div>' + tex('l_' + D.c + ' = (' + texVal(rec[3*i].value) + ' \\pm ' + texVal(rec[3*i + 1].value) + ')\\ \\mathrm{cm};\\quad \\delta l_' + D.c + ' = ' + texVal(rec[3*i + 2].value) + '\\ \\%') + '</div>';
       });
-      html += '<p>Přesnější je to měření, které má menší relativní odchylku.</p>';
+      var better = state[0].rel < state[1].rel ? 'svinovacím metrem' : (state[1].rel < state[0].rel ? 'dřevěným pravítkem' : '');
+      html += '<p>' + (better ? 'Přesnější je měření ' + better + ' — má menší relativní odchylku.' : 'Obě měření mají stejnou relativní odchylku.') + '</p>';
       doneBox.innerHTML = html;
       doneBox.hidden = false;
       document.getElementById('ws-restart').focus();
