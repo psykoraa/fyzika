@@ -165,6 +165,7 @@
 }
 .ws-cell .answer-input{ font-family:'KaTeX_Main', Georgia, serif; font-weight:normal; width:4.2em; }
 .ws-cell .answer-input.small{ width:2.6em; }
+.ws-cell .answer-input.mid{ width:3.3em; }
 .ws-msg{
   flex-basis:100%;
   font-size:0.8rem;
@@ -727,18 +728,17 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
         cell:function(D){ return tex('l_' + D.c + ' =') + ' {0} ' + tex('\\mathrm{cm}'); } },
       { title:'Kolikrát bylo měřidlo použito', small:true,
         cell:function(D){ return D.used + ' = {0} ×'; } },
-      { title:'Přesnost měřidla', small:true,
-        cell:function(D){ return D.prec + ' = {0} ' + tex('\\mathrm{cm}'); } },
-      { title:'Výpočet odchylky (počet použití · přesnost)',
-        cell:function(D){ return tex('\\{\\Delta l_' + D.c + '\\} =') + ' {0}'; } },
+      // Přesnost obou měřidel je pevně daná (0,5 mm) — krok se jen zobrazí.
+      { title:'Přesnost měřidla', fixed:true,
+        cell:function(D){ return D.prec + ' = ' + tex('0{,}5\\ \\mathrm{mm} = 0{,}05\\ \\mathrm{cm}'); } },
       { title:'Odchylka zaokrouhlená na jednu platnou cifru',
         cell:function(D){ return tex('\\Delta l_' + D.c + ' =') + ' {0} ' + tex('\\mathrm{cm}'); } },
       { title:'Zaokrouhlení naměřené hodnoty',
         cell:function(D){ return tex('l_' + D.c + ' =') + ' {0} ' + tex('\\mathrm{cm}'); } },
       { title:'Relativní odchylka (jen výsledek)',
         cell:function(D){ return tex('\\delta l_' + D.c + ' =') + ' {0} ' + tex('\\%'); } },
-      { title:'Zápis výsledku',
-        cell:function(D){ return tex('l_' + D.c + ' = (') + ' {0} ' + tex('\\pm') + ' {1} ' + tex(')\\ \\mathrm{cm}'); } }
+      { title:'Zápis výsledku', inputClass:'mid',
+        cell:function(D){ return tex('l_' + D.c + ' = (') + ' {0} ' + tex('\\pm') + ' {1} ' + tex(')\\ \\mathrm{cm};\\quad \\delta l_' + D.c + ' =') + ' {2} ' + tex('\\%'); } }
     ];
 
     var current, stepEls = [];
@@ -756,7 +756,7 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
         var html = '<div class="ws-step-title"><span class="ws-step-num">' + (si + 1) + '</span><span>' + step.title + '</span></div><div class="ws-cells">';
         COLS.forEach(function(D){
           html += '<div class="ws-cell">' + step.cell(D).replace(/\{(\d)\}/g, function(){
-            return '<input class="answer-input' + (step.small ? ' small' : '') + '" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="?" aria-label="' + D.name + ' — ' + step.title + '">';
+            return '<input class="answer-input' + (step.small ? ' small' : '') + (step.inputClass ? ' ' + step.inputClass : '') + '" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="?" aria-label="' + D.name + ' — ' + step.title + '">';
           }) + '</div>';
         });
         el.innerHTML = html + '</div>';
@@ -772,13 +772,26 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
       });
     }
 
+    // Odkryje krok `si`; krok bez polí (pevně daný) se rovnou označí za hotový
+    // a spolu s ním se odkryje i další krok.
+    function showFrom(si){
+      current = si;
+      while(current < STEPS.length && STEPS[current].fixed){
+        stepEls[current].hidden = false;
+        stepEls[current].classList.add('done');
+        current++;
+      }
+      if(current >= STEPS.length){ finish(); return; }
+      stepEls[current].hidden = false;
+      if(si > 0) stepEls[current].querySelector('input').focus();
+    }
+
     function restart(){
       build();
-      current = 0;
       msgEl.textContent = '';
       doneBox.hidden = true;
       btnNext.disabled = false;
-      stepEls[0].hidden = false;
+      showFrom(0);
     }
 
     function next(){
@@ -798,23 +811,16 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
       msgEl.textContent = '';
       Array.prototype.forEach.call(inputs, function(inp){ inp.disabled = true; });
       stepEls[current].classList.add('done');
-      current++;
-      if(current < STEPS.length){
-        stepEls[current].hidden = false;
-        stepEls[current].querySelector('input').focus();
-        return;
-      }
-      finish();
+      showFrom(current + 1);
     }
 
-    // Shrnutí: zápis obou výsledků z kroků 7 a 8.
+    // Shrnutí: zápis obou výsledků z posledního kroku.
     function finish(){
       btnNext.disabled = true;
-      var rel = stepEls[6].querySelectorAll('input');
-      var rec = stepEls[7].querySelectorAll('input');
+      var rec = stepEls[STEPS.length - 1].querySelectorAll('input');
       var html = '';
       COLS.forEach(function(D, i){
-        html += '<div>' + tex('l_' + D.c + ' = (' + texVal(rec[2*i].value) + ' \\pm ' + texVal(rec[2*i + 1].value) + ')\\ \\mathrm{cm} \\qquad \\delta l_' + D.c + ' = ' + texVal(rel[i].value) + '\\ \\%') + '</div>';
+        html += '<div>' + tex('l_' + D.c + ' = (' + texVal(rec[3*i].value) + ' \\pm ' + texVal(rec[3*i + 1].value) + ')\\ \\mathrm{cm};\\quad \\delta l_' + D.c + ' = ' + texVal(rec[3*i + 2].value) + '\\ \\%') + '</div>';
       });
       html += '<p>Přesnější je to měření, které má menší relativní odchylku.</p>';
       doneBox.innerHTML = html;
