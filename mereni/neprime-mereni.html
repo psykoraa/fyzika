@@ -9,6 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="../spolecne/config.js"></script>
 <script src="../spolecne/auth.js"></script>
+<script src="../spolecne/zalozky.js?v=3"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
@@ -105,6 +106,100 @@
 }
 
 .actions{ margin-top:22px; }
+
+/* ---- Trénink: pracovní list „Šířka učebny“ ---- */
+.ws-card{ text-align:left; }
+.ws-card .cat-tag, .ws-card h2{ text-align:center; }
+.ws-card .ws-headline{ text-align:center; }
+.ws-board{
+  background:var(--surface-2);
+  border-radius:10px;
+  padding:12px 16px;
+  margin:0 0 18px;
+  font-size:0.92rem;
+  line-height:1.6;
+}
+.ws-board-title{
+  font-size:0.68rem;
+  text-transform:uppercase;
+  letter-spacing:0.08em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-bottom:4px;
+}
+.ws-board b{ color:var(--ink); font-weight:600; }
+.ws-cols-head, .ws-cells{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px 28px;
+}
+.ws-cols-head{
+  font-size:0.74rem;
+  text-transform:uppercase;
+  letter-spacing:0.08em;
+  color:var(--ink-soft);
+  font-weight:600;
+  padding-bottom:8px;
+}
+.ws-step{
+  border-top:1px solid var(--line);
+  padding:12px 0 14px;
+  animation:ws-in .25s ease;
+}
+.ws-step[hidden]{ display:none; }
+@keyframes ws-in{ from{ opacity:0; transform:translateY(-4px); } to{ opacity:1; transform:none; } }
+.ws-step-title{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:0.8rem;
+  font-weight:600;
+  color:var(--ink-soft);
+  margin-bottom:8px;
+}
+.ws-step-num{
+  flex:none;
+  width:22px;
+  height:22px;
+  border-radius:50%;
+  border:2px solid var(--accent);
+  color:var(--accent);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:0.72rem;
+  font-weight:700;
+}
+.ws-step.done .ws-step-num{ background:var(--accent); color:var(--accent-ink); }
+.ws-cell{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:baseline;
+  gap:0.3em;
+  font-size:1.08rem;
+  color:var(--ink);
+}
+.ws-cell .answer-input{ font-family:'KaTeX_Main', Georgia, serif; font-weight:normal; width:4.2em; }
+.ws-cell .answer-input.small{ width:2.6em; }
+.answer-input.revealed{ border-color:var(--focus); color:var(--focus); }
+.ws-msg{
+  flex-basis:100%;
+  font-size:0.8rem;
+  line-height:1.45;
+  margin-top:4px;
+}
+.ws-msg:empty{ display:none; }
+.ws-msg.bad{ color:var(--danger); }
+.ws-msg.info{ color:var(--focus); }
+.ws-done{ margin-top:18px; }
+.ws-done p{ margin:6px 0 0; font-size:0.9rem; }
+button.btn:disabled{ opacity:0.5; cursor:default; }
+
+@media (max-width:600px){
+  .ws-cols-head{ display:none; }
+  .ws-cells{ grid-template-columns:1fr; }
+}
 
 @media (max-width:520px){
   .card{ padding:26px 16px 24px; }
@@ -512,6 +607,33 @@
   </div>
 
   <div id="trenink-section" class="tab-section" hidden>
+
+  <div class="card ws-card" id="ws-sirka">
+    <span class="cat-tag">Úloha 1</span>
+    <h2>Šířka učebny</h2>
+    <p class="desc ws-headline">Šířku učebny změřil jeden žák svinovacím metrem, druhý dřevěným pravítkem. Zpracujte obě měření — další krok se objeví, jakmile správně vyplníte ten předchozí.</p>
+
+    <div class="ws-board">
+      <div class="ws-board-title">Zapsáno na tabuli</div>
+      <div id="ws-board-1"></div>
+      <div id="ws-board-2"></div>
+    </div>
+
+    <div class="ws-cols-head">
+      <div>Svinovací metr</div>
+      <div>Dřevěné pravítko</div>
+    </div>
+    <div id="ws-steps"></div>
+
+    <div class="actions">
+      <button class="btn primary" id="ws-check">Zkontrolovat</button>
+      <button class="btn ghost" id="ws-skip">Nevím</button>
+      <button class="btn ghost" id="ws-new">Nový příklad</button>
+    </div>
+
+    <div class="result-box ws-done" id="ws-done" hidden></div>
+  </div>
+
   </div>
 
   <footer>Fyzika — Nepřímé měření</footer>
@@ -597,6 +719,327 @@
 
     refreshLocks();
   });
+
+
+  // ---- Trénink: Šířka učebny (Ú1 pracovního listu) ----
+  (function(){
+    var root = document.getElementById('ws-sirka');
+    if(!root) return;
+
+    function tex(latex){
+      try{ return katex.renderToString(latex, {throwOnError:false}); }
+      catch(e){ return latex; }
+    }
+    function fmt(v, dec){ return v.toFixed(dec).replace('.', ','); }
+    function fmtAuto(v){ return String(Number(v.toPrecision(12))).replace('.', ','); }
+    function texNum(v, dec){ return (dec===undefined ? fmtAuto(v) : fmt(v, dec)).replace(',', '{,}'); }
+    function randInt(a, b){ return a + Math.floor(Math.random()*(b - a + 1)); }
+    function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+    function parse(str){
+      str = (str || '').trim().replace(/[−–]/g, '-').replace(',', '.').replace(/\s+/g, '');
+      if(!/^-?\d+(\.\d+)?$/.test(str)) return null;
+      var dot = str.indexOf('.');
+      return { value:parseFloat(str), decimals: dot===-1 ? 0 : str.length - dot - 1 };
+    }
+    function same(a, b){ return Math.abs(a - b) <= Math.max(Math.abs(b)*1e-9, 1e-9); }
+    var ORDER = { 0:'na jednotky', 1:'na desetiny', 2:'na setiny', 3:'na tisíciny' };
+
+    // Měřidla: 1 = svinovací metr (l₁), 2 = dřevěné pravítko (l₂).
+    var COLS = [
+      { c:1, name:'Svinovací metr', used:'metr použit', prec:'přesnost metru' },
+      { c:2, name:'Dřevěné pravítko', used:'pravítko použito', prec:'přesnost pravítka' }
+    ];
+
+    // Vygeneruje nové zadání: šířku učebny a obě naměřené hodnoty tak, aby
+    // počet přiložení měřidla nebyl sporný (učebna nekončí těsně u celého násobku).
+    function generate(){
+      var tapeLen = pick([200, 300, 500]);
+      var rulerErr = pick([0.1, 0.5]);
+      var l1, l2;
+      for(var tries = 0; tries < 200; tries++){
+        var w = randInt(5200, 7800) / 10;
+        l1 = roundTo(w + (Math.random() - 0.5)*0.8, 1);
+        l2 = roundTo(Math.round((w + (Math.random() - 0.5)*2)/rulerErr)*rulerErr, 1);
+        var f1 = l1/tapeLen - Math.floor(l1/tapeLen);
+        var f2 = l2/100 - Math.floor(l2/100);
+        if(f1 > 0.1 && f1 < 0.9 && f2 > 0.1 && f2 < 0.9) break;
+      }
+      return [derive(COLS[0], l1, tapeLen, 0.1), derive(COLS[1], l2, 100, rulerErr)];
+    }
+
+    function derive(col, l, len, err){
+      var n = Math.ceil(l/len);
+      var raw = roundTo(n*err, 6);
+      var d = roundSig(raw, 1);
+      var dec = decimalsForSig(d, 1);
+      var lr = roundTo(l, dec);
+      var relRaw = d/lr*100;
+      var rel = roundSig(relRaw, 2);
+      return { col:col, c:col.c, l:l, len:len, err:err, n:n, raw:raw, d:d, dec:dec,
+               lr:lr, relRaw:relRaw, rel:rel, relDec:decimalsForSig(rel, 2) };
+    }
+
+    function ok(){ return { ok:true }; }
+    function bad(msg){ return { ok:false, msg:msg }; }
+    function lenText(cm){ return fmtAuto(cm/100) + ' m'; }
+
+    // Kroky podle pracovního listu. Každý krok má pro každé měřidlo jedno nebo
+    // více polí: check(p, D) vrací {ok, msg}, answer(D) správný zápis do pole,
+    // explain(D) krátké vysvětlení, které se ukáže po „Nevím“.
+    var STEPS = [
+      { title:'Naměřená hodnota',
+        cell:function(D){ return tex('l_' + D.c + ' =') + ' {0} ' + tex('\\mathrm{cm}'); },
+        fields:[{
+          check:function(p, D){
+            if(same(p.value, D.l)) return ok();
+            if(same(p.value, D.l/100)) return bad('To je hodnota v metrech — převeďte ji na centimetry.');
+            return bad('Opište hodnotu z tabule a převeďte ji na centimetry.');
+          },
+          answer:function(D){ return fmt(D.l, 1); }
+        }],
+        explain:function(D){ return tex('l_' + D.c + ' = ' + texNum(D.l/100, 3) + '\\ \\mathrm{m} = ' + texNum(D.l, 1) + '\\ \\mathrm{cm}'); }
+      },
+      { title:'Kolikrát bylo měřidlo použito',
+        cell:function(D){ return D.col.used + ' = {0} ×'; },
+        small:true,
+        fields:[{
+          check:function(p, D){
+            if(p.decimals===0 && p.value===D.n) return ok();
+            if(p.value===D.n - 1) return bad('Započítejte i poslední, neúplné přiložení měřidla.');
+            return bad('Kolikrát se délka měřidla (' + lenText(D.len) + ') vejde do šířky učebny? Počítá se každé přiložení, i to poslední neúplné.');
+          },
+          answer:function(D){ return String(D.n); }
+        }],
+        explain:function(D){ return tex(texNum(D.l, 1) + '\\ \\mathrm{cm} : ' + D.len + '\\ \\mathrm{cm} \\doteq ' + texNum(D.l/D.len, 2)) + ' → měřidlo bylo použito ' + D.n + '×'; }
+      },
+      { title:'Přesnost měřidla',
+        cell:function(D){ return D.col.prec + ' = {0} ' + tex('\\mathrm{cm}'); },
+        small:true,
+        fields:[{
+          check:function(p, D){
+            if(same(p.value, D.err)) return ok();
+            if(same(p.value, D.err*10)) return bad('To je chyba v milimetrech — převeďte ji na centimetry.');
+            return bad('Chyba měřidla je zapsaná na tabuli — převeďte ji na centimetry.');
+          },
+          answer:function(D){ return fmtAuto(D.err); }
+        }],
+        explain:function(D){ return tex('\\pm' + Math.round(D.err*10) + '\\ \\mathrm{mm} = ' + texNum(D.err) + '\\ \\mathrm{cm}'); }
+      },
+      { title:'Výpočet odchylky (počet použití · přesnost)',
+        cell:function(D){ return tex('\\{\\Delta l_' + D.c + '\\} =') + ' {0}'; },
+        fields:[{
+          check:function(p, D){
+            if(same(p.value, D.raw)) return ok();
+            return bad('Vynásobte počet použití měřidla jeho přesností.');
+          },
+          answer:function(D){ return fmtAuto(D.raw); }
+        }],
+        explain:function(D){ return tex(D.n + ' \\cdot ' + texNum(D.err) + ' = ' + texNum(D.raw)); }
+      },
+      { title:'Odchylka zaokrouhlená na jednu platnou cifru',
+        cell:function(D){ return tex('\\Delta l_' + D.c + ' =') + ' {0} ' + tex('\\mathrm{cm}'); },
+        fields:[{
+          check:function(p, D){
+            if(same(p.value, D.d) && p.decimals===D.dec) return ok();
+            if(same(p.value, D.d) || same(p.value, D.raw)) return bad('Odchylku zaokrouhlete na jednu platnou cifru.');
+            return bad('Vyjděte z hodnoty ' + tex('\\{\\Delta l_' + D.c + '\\}') + ' a zaokrouhlete ji na jednu platnou cifru.');
+          },
+          answer:function(D){ return fmt(D.d, D.dec); }
+        }],
+        explain:function(D){ return tex(texNum(D.raw) + ' \\rightarrow ' + texNum(D.d, D.dec) + '\\ \\mathrm{cm}') + ' (jedna platná cifra)'; }
+      },
+      { title:'Zaokrouhlení naměřené hodnoty',
+        cell:function(D){ return tex('l_' + D.c + ' =') + ' {0} ' + tex('\\mathrm{cm}'); },
+        fields:[{
+          check:function(p, D){
+            if(same(p.value, D.lr) && p.decimals===D.dec) return ok();
+            return bad('Naměřenou hodnotu zaokrouhlete na stejný řád, v jakém je zaokrouhlená odchylka (' + ORDER[D.dec] + ').');
+          },
+          answer:function(D){ return fmt(D.lr, D.dec); }
+        }],
+        explain:function(D){ return tex(texNum(D.l, 1) + '\\ \\mathrm{cm} \\rightarrow ' + texNum(D.lr, D.dec) + '\\ \\mathrm{cm}') + ' (' + ORDER[D.dec] + ', stejně jako odchylka)'; }
+      },
+      { title:'Relativní odchylka (jen výsledek)',
+        cell:function(D){ return tex('\\delta l_' + D.c + ' =') + ' {0} ' + tex('\\%'); },
+        fields:[{
+          check:function(p, D){
+            if(same(p.value, D.rel) && p.decimals===D.relDec) return ok();
+            if(Math.abs(p.value - D.relRaw) <= D.relRaw*0.05) return bad('Relativní odchylku zaokrouhlete na dvě platné cifry.');
+            return bad('Vydělte zaokrouhlenou odchylku zaokrouhlenou hodnotou a vynásobte 100 %.');
+          },
+          answer:function(D){ return fmt(D.rel, D.relDec); }
+        }],
+        explain:function(D){ return tex('\\dfrac{' + texNum(D.d, D.dec) + '}{' + texNum(D.lr, D.dec) + '} \\cdot 100\\ \\% \\doteq ' + texNum(D.relRaw, D.relDec + 2) + '\\ \\% \\rightarrow ' + texNum(D.rel, D.relDec) + '\\ \\%'); }
+      },
+      { title:'Zápis výsledku',
+        cell:function(D){ return tex('l_' + D.c + ' = (') + ' {0} ' + tex('\\pm') + ' {1} ' + tex(')\\ \\mathrm{cm}'); },
+        fields:[{
+          check:function(p, D){
+            if(same(p.value, D.lr) && p.decimals===D.dec) return ok();
+            return bad('Na první místo patří zaokrouhlená hodnota z kroku 6.');
+          },
+          answer:function(D){ return fmt(D.lr, D.dec); }
+        },{
+          check:function(p, D){
+            if(same(p.value, D.d) && p.decimals===D.dec) return ok();
+            return bad('Za ± patří zaokrouhlená odchylka z kroku 5.');
+          },
+          answer:function(D){ return fmt(D.d, D.dec); }
+        }],
+        explain:function(D){ return tex('l_' + D.c + ' = (' + texNum(D.lr, D.dec) + ' \\pm ' + texNum(D.d, D.dec) + ')\\ \\mathrm{cm}'); }
+      }
+    ];
+
+    var data, current, stepEls = [];
+    var stepsWrap = document.getElementById('ws-steps');
+    var btnCheck = document.getElementById('ws-check');
+    var btnSkip = document.getElementById('ws-skip');
+    var doneBox = document.getElementById('ws-done');
+
+    function build(){
+      stepsWrap.innerHTML = '';
+      stepEls = STEPS.map(function(step, si){
+        var el = document.createElement('div');
+        el.className = 'ws-step';
+        el.hidden = true;
+        var html = '<div class="ws-step-title"><span class="ws-step-num">' + (si + 1) + '</span><span>' + step.title + '</span></div><div class="ws-cells">';
+        data.forEach(function(D, ci){
+          var cell = step.cell(D).replace(/\{(\d)\}/g, function(_, fi){
+            return '<input class="answer-input' + (step.small ? ' small' : '') + '" data-col="' + ci + '" data-field="' + fi + '" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="?" aria-label="' + D.col.name + ' — ' + step.title + '">';
+          });
+          html += '<div class="ws-cell" data-col="' + ci + '">' + cell + '<div class="ws-msg"></div></div>';
+        });
+        el.innerHTML = html + '</div>';
+        stepsWrap.appendChild(el);
+        Array.prototype.forEach.call(el.querySelectorAll('input'), function(inp){
+          sanitizeNumericInput(inp, true);
+          inp.addEventListener('input', function(){
+            inp.classList.remove('wrong');
+          });
+          inp.addEventListener('keydown', function(e){
+            if(e.key === 'Enter'){ e.preventDefault(); check(); }
+          });
+        });
+        return el;
+      });
+    }
+
+    function renderBoard(){
+      data.forEach(function(D){
+        document.getElementById('ws-board-' + D.c).innerHTML =
+          '<b>' + D.col.name + '</b> (délka ' + lenText(D.len) + ', chyba měřidla ±' + Math.round(D.err*10) + ' mm): ' +
+          tex('l_' + D.c + ' = ' + texNum(D.l/100, 3) + '\\ \\mathrm{m}');
+      });
+    }
+
+    function newExample(){
+      data = generate();
+      renderBoard();
+      build();
+      current = 0;
+      doneBox.hidden = true;
+      btnCheck.disabled = false;
+      btnSkip.disabled = false;
+      showStep(0, false);
+    }
+
+    function showStep(si, focus){
+      var el = stepEls[si];
+      el.hidden = false;
+      if(focus){
+        var first = el.querySelector('input:not(:disabled)');
+        if(first) first.focus();
+      }
+    }
+
+    function pendingInputs(){
+      return Array.prototype.filter.call(stepEls[current].querySelectorAll('input'), function(inp){ return !inp.disabled; });
+    }
+
+    // Vyhodnotí všechna dosud nevyřešená pole aktuálního kroku. Správná pole se
+    // zamknou; krok je hotový, až jsou zamčená všechna pole obou měřidel.
+    function check(){
+      if(current >= STEPS.length) return;
+      var step = STEPS[current];
+      var el = stepEls[current];
+      var firstWrong = null;
+      Array.prototype.forEach.call(el.querySelectorAll('.ws-cell'), function(cell){
+        var ci = +cell.getAttribute('data-col');
+        var D = data[ci];
+        var msgs = [];
+        Array.prototype.forEach.call(cell.querySelectorAll('input'), function(inp){
+          if(inp.disabled) return;
+          var res;
+          var p = parse(inp.value);
+          if(!inp.value.trim()) res = bad('Doplňte hodnotu.');
+          else if(!p) res = bad('Zadejte číslo (desetinná čárka).');
+          else res = step.fields[+inp.getAttribute('data-field')].check(p, D);
+          if(res.ok){
+            inp.classList.remove('wrong');
+            inp.classList.add('correct');
+            inp.disabled = true;
+          } else {
+            inp.classList.add('wrong');
+            msgs.push(res.msg);
+            if(!firstWrong) firstWrong = inp;
+          }
+        });
+        var msgEl = cell.querySelector('.ws-msg');
+        msgEl.className = 'ws-msg' + (msgs.length ? ' bad' : '');
+        msgEl.innerHTML = msgs.join(' ');
+      });
+      if(firstWrong) firstWrong.focus();
+      else advance();
+    }
+
+    // „Nevím“: doplní správné odpovědi do nevyřešených polí aktuálního kroku
+    // a u nich ukáže krátké vysvětlení.
+    function reveal(){
+      if(current >= STEPS.length) return;
+      var step = STEPS[current];
+      Array.prototype.forEach.call(stepEls[current].querySelectorAll('.ws-cell'), function(cell){
+        var D = data[+cell.getAttribute('data-col')];
+        var any = false;
+        Array.prototype.forEach.call(cell.querySelectorAll('input'), function(inp){
+          if(inp.disabled) return;
+          inp.value = step.fields[+inp.getAttribute('data-field')].answer(D);
+          inp.classList.remove('wrong');
+          inp.classList.add('revealed');
+          inp.disabled = true;
+          any = true;
+        });
+        var msgEl = cell.querySelector('.ws-msg');
+        msgEl.className = 'ws-msg' + (any ? ' info' : '');
+        msgEl.innerHTML = any ? step.explain(D) : '';
+      });
+      advance();
+    }
+
+    function advance(){
+      stepEls[current].classList.add('done');
+      current++;
+      if(current < STEPS.length){
+        showStep(current, true);
+        return;
+      }
+      btnCheck.disabled = true;
+      btnSkip.disabled = true;
+      var a = data[0], b = data[1];
+      var better = a.rel < b.rel ? a : (b.rel < a.rel ? b : null);
+      doneBox.innerHTML =
+        '<div>' + tex('l_1 = (' + texNum(a.lr, a.dec) + ' \\pm ' + texNum(a.d, a.dec) + ')\\ \\mathrm{cm} \\qquad \\delta l_1 = ' + texNum(a.rel, a.relDec) + '\\ \\%') + '</div>' +
+        '<div>' + tex('l_2 = (' + texNum(b.lr, b.dec) + ' \\pm ' + texNum(b.d, b.dec) + ')\\ \\mathrm{cm} \\qquad \\delta l_2 = ' + texNum(b.rel, b.relDec) + '\\ \\%') + '</div>' +
+        (better ? '<p>Přesnější je měření, které má menší relativní odchylku — ' + (better.c === 1 ? 'svinovacím metrem' : 'dřevěným pravítkem') + '.</p>' : '');
+      doneBox.hidden = false;
+      document.getElementById('ws-new').focus();
+    }
+
+    btnCheck.addEventListener('click', check);
+    btnSkip.addEventListener('click', reveal);
+    document.getElementById('ws-new').addEventListener('click', newExample);
+
+    newExample();
+  })();
 
   try{ makePanelsCollapsible(document.getElementById('teorie-section')); }catch(e){}
 })();
