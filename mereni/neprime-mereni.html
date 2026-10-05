@@ -949,7 +949,7 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
               },
               answer:function(){ return tex('0{,}5\\ \\mathrm{mm} = 0{,}05\\ \\mathrm{cm}'); }
             }] }; }) },
-        { title:'Odchylka zaokrouhlená na jednu platnou cifru',
+        { title:'Odchylka',
           cells: perCol(function(D){ return { html: tex('\\Delta l_' + D.c + ' =') + ' {0} ' + tex('\\mathrm{cm}'),
             fields:[{
               check:function(p, C){
@@ -1054,7 +1054,7 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
           cells:[ measCell(1), measCell(2) ],
           after:derive },
         { title:'Objem tělesa (1 ml = 1 cm³)',
-          cells:[{ html: tex('V = V_2 - V_1 =') + ' {0} ' + tex('\\mathrm{cm^3}'),
+          cells:[{ html: tex('\\bar{V} =') + ' {0} ' + tex('\\mathrm{cm^3}'),
             fields:[{
               check:function(p, S){
                 if(same(p.value, S.V)) return ok();
@@ -1063,8 +1063,8 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
               },
               answer:function(S){ return tex(tn(fmt(S.V2.value, S.V2.decimals)) + ' - ' + tn(fmt(S.V1.value, S.V1.decimals)) + ' = ' + tn(fmt(S.V, S.Vdec)) + '\\ \\mathrm{cm^3}'); }
             }] }] },
-        { title:'Odchylka zaokrouhlená na jednu platnou cifru',
-          cells:[{ html: tex('\\Delta V = \\Delta V_1 + \\Delta V_2 =') + ' {0} ' + tex('\\mathrm{cm^3}'),
+        { title:'Odchylka objemu',
+          cells:[{ html: tex('\\Delta V =') + ' {0} ' + tex('\\mathrm{cm^3}'),
             fields:[{
               check:function(p, S){
                 if(exact(p, S.d, S.dec)) return ok();
@@ -1074,23 +1074,15 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
               },
               answer:function(S){ return tex(tn(fmt(S.dV1.value, S.dV1.decimals)) + ' + ' + tn(fmt(S.dV2.value, S.dV2.decimals)) + ' = ' + tn(WS.fmtAuto(S.raw)) + ' \\rightarrow ' + tn(fmt(S.d, S.dec)) + '\\ \\mathrm{cm^3}'); }
             }] }] },
-        { title:'Zaokrouhlení objemu',
-          cells:[{ html: tex('V =') + ' {0} ' + tex('\\mathrm{cm^3}'),
-            fields:[{
-              check:function(p, S){
-                if(exact(p, S.Vr, S.dec)) return ok();
-                if(same(p.value, S.Vr)) return bad('Hodnotu zapište na stejný řád jako odchylku (' + ORDER[S.dec] + ') — chybějící místa doplňte nulami.');
-                return bad('Objem zaokrouhlete na stejný řád jako odchylku (' + ORDER[S.dec] + ').');
-              },
-              answer:function(S){ return tex(tn(fmt(S.V, S.Vdec)) + ' \\rightarrow ' + tn(fmt(S.Vr, S.dec)) + '\\ \\mathrm{cm^3}') + ' (' + ORDER[S.dec] + ')'; }
-            }] }] },
         { title:'Relativní odchylka (jen výsledek)',
           cells:[{ html: tex('\\delta V =') + ' {0} ' + tex('\\%'),
             fields:[{
               check:function(p, S){
                 if(exact(p, S.rel, S.relDec)) return ok();
+                var q = WS.relDev(S.d, S.V);
+                if(exact(p, q.rel, q.dec)) return ok();
                 if(Math.abs(p.value - S.relRaw) <= S.relRaw*0.05) return bad('Relativní odchylku zaokrouhlete na dvě platné cifry.');
-                return bad('Vydělte zaokrouhlenou odchylku zaokrouhleným objemem a vynásobte 100 %.');
+                return bad('Vydělte odchylku objemem a vynásobte 100 %.');
               },
               answer:function(S){ return tex('\\dfrac{' + tn(fmt(S.d, S.dec)) + '}{' + tn(fmt(S.Vr, S.dec)) + '} \\cdot 100\\ \\% \\doteq ' + tn(fmt(S.rel, S.relDec)) + '\\ \\%'); }
             }] }] },
@@ -1098,11 +1090,15 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
           cells:[{
             html: tex('V = (') + ' {0} ' + tex('\\pm') + ' {1} ' + tex(')\\ \\mathrm{cm^3};\\quad \\delta V =') + ' {2} ' + tex('\\%'),
             fields:[
-              { check:function(p, S){ return exact(p, S.Vr, S.dec) ? ok() : bad('Na první místo patří zaokrouhlený objem z kroku 4.'); },
+              { check:function(p, S){
+                  if(exact(p, S.Vr, S.dec)) return ok();
+                  if(same(p.value, S.Vr)) return bad('Objem zapište na stejný řád jako odchylku (' + ORDER[S.dec] + ') — chybějící místa doplňte nulami.');
+                  return bad('Objem zaokrouhlete na stejný řád jako odchylku (' + ORDER[S.dec] + ').');
+                },
                 answer:function(S){ return fmt(S.Vr, S.dec); } },
-              { check:function(p, S){ return exact(p, S.d, S.dec) ? ok() : bad('Za ± patří zaokrouhlená odchylka z kroku 3.'); },
+              { check:function(p, S){ return exact(p, S.d, S.dec) ? ok() : bad('Za ± patří odchylka z kroku 3.'); },
                 answer:function(S){ return fmt(S.d, S.dec); } },
-              { check:function(p, S){ return exact(p, S.rel, S.relDec) ? ok() : bad('Za středník patří relativní odchylka z kroku 5.'); },
+              { check:function(p, S){ return exact(p, S.rel, S.relDec) ? ok() : bad('Za středník patří relativní odchylka z kroku 4.'); },
                 answer:function(S){ return fmt(S.rel, S.relDec); } }
             ] }] }
       ],
