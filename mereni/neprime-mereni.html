@@ -595,7 +595,7 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
   <div class="card ws-card" id="ws-sirka">
     <span class="cat-tag">Úloha 1</span>
     <h2>Šířka učebny</h2>
-    <p class="desc ws-headline">Zapisujte hodnoty, které jste naměřili při laboratorní práci — šířku učebny svinovacím metrem (\(l_1\)) a dřevěným pravítkem (\(l_2\)). Po vyplnění kroku klikněte na <b>Dále</b> — od kroku 4 se výsledky kontrolují podle vašich naměřených hodnot.</p>
+    <p class="desc ws-headline">Zapisujte hodnoty, které jste naměřili při laboratorní práci — šířku učebny svinovacím metrem (\(l_1\)) a dřevěným pravítkem (\(l_2\)). Po vyplnění kroku klikněte na <b>Dále</b> — od kroku 3 se výsledky kontrolují podle vašich naměřených hodnot.</p>
 
     <div class="ws-cols-head">
       <div>Svinovací metr</div>
@@ -702,7 +702,7 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
   // ---- Trénink: Šířka učebny (Ú1 pracovního listu) ----
   // Žák zapisuje vlastní hodnoty z laboratorní práce. Naměřené hodnoty a počet
   // použití měřidla (kroky 1–2) se nekontrolují, jen se ověří, že jsou vyplněné.
-  // Další kroky se kontrolují — správné výsledky se dopočítají z hodnot, které
+  // Od kroku 3 se kroky kontrolují — správné výsledky se dopočítají z hodnot, které
   // žák zadal v krocích 1–2. Po druhé chybě v témže poli se ukáže správná hodnota.
   (function(){
     var root = document.getElementById('ws-sirka');
@@ -749,9 +749,17 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
           valid:function(p){ return p.decimals === 0 && p.value >= 1 ? '' : 'Zadejte celé číslo.'; },
           store:function(p, S){ S.n = p.value; }
         }] },
-      // Přesnost obou měřidel je pevně daná — krok se jen zobrazí.
-      { title:'Přesnost měřidla', fixed:true,
-        cell:function(D){ return D.prec + ' = ' + tex('0{,}5\\ \\mathrm{mm} = 0{,}05\\ \\mathrm{cm}'); } },
+      // Přesnost obou měřidel je 0,5 mm — žák ji zapíše v centimetrech.
+      { title:'Přesnost měřidla', small:true,
+        cell:function(D){ return D.prec + ' = {0} ' + tex('\\mathrm{cm}'); },
+        fields:[{
+          check:function(p){
+            if(same(p.value, PREC)) return ok();
+            if(same(p.value, PREC*10)) return bad('To je přesnost v milimetrech — převeďte ji na centimetry.');
+            return bad('Přesnost metru i pravítka je 0,5 mm — zapište ji v centimetrech.');
+          },
+          answer:function(){ return tex('0{,}5\\ \\mathrm{mm} = 0{,}05\\ \\mathrm{cm}'); }
+        }] },
       { title:'Odchylka zaokrouhlená na jednu platnou cifru',
         cell:function(D){ return tex('\\Delta l_' + D.c + ' =') + ' {0} ' + tex('\\mathrm{cm}'); },
         fields:[{
@@ -839,15 +847,8 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
       });
     }
 
-    // Odkryje krok `si`; krok bez polí (pevně daný) se rovnou označí za hotový
-    // a spolu s ním se odkryje i další krok.
     function showFrom(si){
       current = si;
-      while(current < STEPS.length && STEPS[current].fixed){
-        stepEls[current].hidden = false;
-        stepEls[current].classList.add('done');
-        current++;
-      }
       if(current >= STEPS.length){ finish(); return; }
       stepEls[current].hidden = false;
       if(si > 0) stepEls[current].querySelector('input').focus();
