@@ -775,9 +775,7 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
         fields:[{
           check:function(p, S){
             if(exact(p, S.lr, S.dec)) return ok();
-            // Naměřená hodnota zapsaná s méně desetinnými místy, než má odchylka,
-            // se nedoplňuje nulami — ponechá se, jak byla naměřena.
-            if(S.l.decimals < S.dec && exact(p, S.l.value, S.l.decimals)) return ok();
+            if(same(p.value, S.lr)) return bad('Hodnotu zapište na stejný řád jako odchylku (' + ORDER[S.dec] + ') — chybějící místa doplňte nulami.');
             return bad('Naměřenou hodnotu zaokrouhlete na stejný řád jako odchylku (' + ORDER[S.dec] + ').');
           },
           answer:function(S){ return tex(fmt(S.l.value, S.l.decimals).replace(',', '{,}') + ' \\rightarrow ' + fmt(S.lr, S.lrDec).replace(',', '{,}') + '\\ \\mathrm{cm}') + ' (' + ORDER[S.dec] + ')'; }
@@ -809,8 +807,8 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
       S.raw = roundTo(S.n*PREC, 6);
       S.d = roundSig(S.raw, 1);
       S.dec = decimalsForSig(S.d, 1);
-      if(S.l.decimals < S.dec){ S.lr = S.l.value; S.lrDec = S.l.decimals; }
-      else { S.lr = roundTo(S.l.value, S.dec); S.lrDec = S.dec; }
+      S.lr = roundTo(S.l.value, S.dec);
+      S.lrDec = S.dec;
       S.relRaw = S.d/S.lr*100;
       S.rel = roundSig(S.relRaw, 2);
       S.relDec = decimalsForSig(S.rel, 2);
