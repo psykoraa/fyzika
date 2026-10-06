@@ -889,7 +889,7 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
           var html = '<div class="ws-step-title"><span class="ws-step-num">' + (si + 1) + '</span><span>' + step.title + '</span></div><div class="ws-cells">';
           step.cells.forEach(function(cell, ci){
             html += '<div class="ws-cell" data-cell="' + ci + '"><div class="ws-line">' + cell.html.replace(/\{(\d)\}/g, function(_, fi){
-              return '<input class="answer-input' + (step.inputClass ? ' ' + step.inputClass : '') + '" data-field="' + fi + '" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="?" aria-label="' + step.title + '">';
+              return '<input class="answer-input' + (step.inputClass ? ' ' + step.inputClass : '') + '" data-field="' + fi + '" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="?" aria-label="' + (step.label || step.title) + '">';
             }) + '</div><div class="ws-msg"></div></div>';
           });
           el.innerHTML = html + '</div>';
@@ -1045,9 +1045,9 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
               var q = relDev(m(S).dx.value, m(S).x.value);
               if(exact(p, q.rel, q.dec)) return ok();
               if(Math.abs(p.value - q.raw) <= q.raw*0.05) return bad('Relativní odchylku zaokrouhlete na dvě platné cifry.');
-              return bad('Relativní odchylka je odchylka vydělená hodnotou krát 100 %.');
+              return bad('Relativní odchylka je odchylka vydělená hodnotou krát 100 %.');
             },
-            answer:function(S){ var q = relDev(m(S).dx.value, m(S).x.value); return fmt(q.rel, q.dec) + '\u00a0%'; } }
+            answer:function(S){ var q = relDev(m(S).dx.value, m(S).x.value); return fmt(q.rel, q.dec) + ' %'; } }
         ]
       };
     }
@@ -1061,7 +1061,7 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
   // stačí správně zaokrouhlit (jedno na jaký řád) a nechat dost cifer — viz WS.inter.
   (function(){
     var tex = WS.tex, fmt = WS.fmt, tn = WS.tn, exact = WS.exact, same = WS.same, ok = WS.ok, bad = WS.bad, ORDER = WS.ORDER, inter = WS.inter;
-    var PREC = 0.05;   // přesnost metru i pravítka: 0,5 mm = 0,05 cm
+    var PREC = 0.05;   // přesnost metru i pravítka: 0,5 mm = 0,05 cm
     var COLS = [
       { c:1, used:'metr použit', prec:'přesnost metru' },
       { c:2, used:'pravítko použito', prec:'přesnost pravítka' }
@@ -1117,7 +1117,7 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
               check:function(p){
                 if(same(p.value, PREC)) return ok();
                 if(same(p.value, PREC*10)) return bad('To je přesnost v milimetrech — převeďte ji na centimetry.');
-                return bad('Přesnost metru i pravítka je 0,5 mm — zapište ji v centimetrech.');
+                return bad('Přesnost metru i pravítka je 0,5 mm — zapište ji v centimetrech.');
               },
               answer:function(){ return tex('0{,}5\\ \\mathrm{mm} = 0{,}05\\ \\mathrm{cm}'); }
             }] }; }) },
@@ -1125,7 +1125,7 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
           cells: perCol(function(D){ return { html: tex('\\Delta l_' + D.c + ' =') + ' {0} ' + tex('\\mathrm{cm}'),
             fields:[{
               check:function(p, C){
-                return inter(p, [{ v:C.raw, need:C.dec }], 'Odchylka je počet použití měřidla krát jeho přesnost (0,05 cm).');
+                return inter(p, [{ v:C.raw, need:C.dec }], 'Odchylka je počet použití měřidla krát jeho přesnost (0,05 cm).');
               },
               answer:function(C){ return tex(C.n + ' \\cdot 0{,}05 = ' + tn(WS.fmtAuto(C.raw)) + ' \\rightarrow ' + tn(fmt(C.d, C.dec)) + '\\ \\mathrm{cm}'); }
             }] }; }) },
@@ -1143,7 +1143,7 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
             fields:[{
               check:function(p, C){
                 return inter(p, relCands(C).map(function(q){ return { v:q.raw, need:q.dec }; }),
-                  'Vydělte odchylku naměřenou hodnotou a vynásobte 100 %.');
+                  'Vydělte odchylku naměřenou hodnotou a vynásobte 100 %.');
               },
               answer:function(C){ return tex('\\dfrac{' + tn(fmt(C.d, C.dec)) + '}{' + tn(fmt(C.lr, C.dec)) + '} \\cdot 100\\ \\% \\doteq ' + tn(fmt(C.rel, C.relDec)) + '\\ \\%'); }
             }] }; }) },
@@ -1216,17 +1216,17 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
           cells:[
             WS.measCell('V_1', 'V1', '\\mathrm{ml}'),
             WS.measCell('V_2', 'V2', '\\mathrm{ml}', function(p, S){
-              return S.m.V1 && S.m.V1.x && p.value <= S.m.V1.x.value ? 'Objem s ponořeným tělesem V₂ musí být větší než V₁.' : '';
+              return S.m.V1 && S.m.V1.x && p.value <= S.m.V1.x.value ? 'Objem s ponořeným tělesem ' + WS.tex('V_2') + ' musí být větší než ' + WS.tex('V_1') + '.' : '';
             })
           ],
           after:derive },
-        { title:'Objem tělesa (1 ml = 1 cm³)',
+        { title:'Objem tělesa (' + tex('1\\ \\mathrm{ml} = 1\\ \\mathrm{cm^3}') + ')', label:'Objem tělesa',
           cells:[{ html: tex('\\bar{V} =') + ' {0} ' + tex('\\mathrm{cm^3}'),
             fields:[{
               store:function(p, S){ S.Vst = p.value; },
               check:function(p, S){
                 return inter(p, [{ v:S.V, need:S.dec }], function(){
-                  return same(p.value, -S.V) ? 'Odečítejte v pořadí V₂ − V₁.' : 'Objem tělesa je rozdíl objemů V₂ − V₁.';
+                  return same(p.value, -S.V) ? 'Odečítejte v pořadí ' + tex('V_2 - V_1') + '.' : 'Objem tělesa je rozdíl objemů ' + tex('V_2 - V_1') + '.';
                 });
               },
               answer:function(S){ return tex(tn(fmt(S.V2.value, S.V2.decimals)) + ' - ' + tn(fmt(S.V1.value, S.V1.decimals)) + ' = ' + tn(fmt(S.V, S.Vdec)) + '\\ \\mathrm{cm^3}'); }
@@ -1245,7 +1245,7 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
           cells:[{ html: tex('\\delta V =') + ' {0} ' + tex('\\%'),
             fields:[{
               check:function(p, S){
-                return inter(p, relCands(S).map(function(q){ return { v:q.raw, need:q.dec }; }), 'Vydělte odchylku objemem a vynásobte 100 %.');
+                return inter(p, relCands(S).map(function(q){ return { v:q.raw, need:q.dec }; }), 'Vydělte odchylku objemem a vynásobte 100 %.');
               },
               answer:function(S){ return tex('\\dfrac{' + tn(fmt(S.d, S.dec)) + '}{' + tn(fmt(S.Vr, S.dec)) + '} \\cdot 100\\ \\% \\doteq ' + tn(fmt(S.rel, S.relDec)) + '\\ \\%'); }
             }] }] },
@@ -1289,7 +1289,7 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
 
     function derive(S){
       S.dia = S.m.d.x; S.hei = S.m.v.x; S.rd = S.m.d.rel; S.rv = S.m.v.rel;
-      S.V = Math.PI*S.dia.value*S.dia.value*S.hei.value/4/1000;   // mm³ → cm³
+      S.V = Math.PI*S.dia.value*S.dia.value*S.hei.value/4/1000;   // mm^3 → cm^3
       S.relRaw = roundTo(2*S.rd.value + S.rv.value, 6);
       S.rel = roundSig(S.relRaw, 2);
       S.relDec = decimalsForSig(S.rel, 2);
@@ -1321,9 +1321,9 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
               store:function(p, S){ S.Vst = p.value; },
               check:function(p, S){
                 return inter(p, [{ v:S.V, need:S.dec }], function(){
-                  if(near(p.value, S.V*1000, 0.005)) return 'Objem vychází v mm³ — převeďte ho na cm³ (1 cm³ = 1000 mm³).';
+                  if(near(p.value, S.V*1000, 0.005)) return 'Objem vychází v ' + tex('\\mathrm{mm^3}') + ' — převeďte ho na ' + tex('\\mathrm{cm^3}') + ' (' + tex('1\\ \\mathrm{cm^3} = 1000\\ \\mathrm{mm^3}') + ').';
                   if([4, 2, 0.5].some(function(k){ return near(p.value, S.V*k, 0.005); })) return 'Zkontrolujte vzorec pro objem válce.';
-                  if(near(p.value, S.V, 0.002)) return 'Použijte přesnější hodnotu π — tlačítko π na kalkulačce, ne 3,14.';
+                  if(near(p.value, S.V, 0.002)) return 'Použijte přesnější hodnotu ' + tex('\\pi') + ' — tlačítko ' + tex('\\pi') + ' na kalkulačce, ne 3,14.';
                   return 'Objem válečku vypočítejte z průměru a výšky.';
                 });
               },
@@ -1385,7 +1385,6 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
     var tex = WS.tex, fmt = WS.fmt, tn = WS.tn, exact = WS.exact, same = WS.same, ok = WS.ok, bad = WS.bad, ORDER = WS.ORDER, inter = WS.inter;
     var CV = 4180, CK = 900, N = 15;
     var UNIT_C = '\\mathrm{J \\cdot kg^{-1} \\cdot K^{-1}}';
-    var PLAIN = { 't':'t', 't_v':'tᵥ', 't_k':'tₖ' };
     var Q = [
       { key:'mv', tex:'m_v', unit:'g' },
       { key:'mk', tex:'m_k', unit:'g' },
@@ -1506,7 +1505,7 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
               var v = V(S);
               if(exact(p, v.rel, v.relDec)) return ok();
               if(near(p.value, v.relRaw, 0.05)) return bad('Relativní odchylku zaokrouhlete na dvě platné cifry.');
-              return bad('Relativní odchylka je odchylka vydělená průměrem krát 100 %.');
+              return bad('Relativní odchylka je odchylka vydělená průměrem krát 100 %.');
             },
             answer:function(S){ return fmt(V(S).rel, V(S).relDec); } }
         ]
@@ -1525,7 +1524,7 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
                 var d = D(S);
                 if(exact(p, d.xr, d.dec)) return ok();
                 if(same(p.value, d.xr)) return bad('Hodnotu zapište na stejný řád jako odchylku (' + ORDER[d.dec] + ') — chybějící místa doplňte nulami.');
-                if(same(p.value, -d.val)) return bad('Odečítejte v pořadí ' + (w === 'v' ? PLAIN['t'] + ' − ' + PLAIN['t_v'] : PLAIN['t_k'] + ' − ' + PLAIN['t']) + '.');
+                if(same(p.value, -d.val)) return bad('Odečítejte v pořadí ' + tex(w === 'v' ? 't - t_v' : 't_k - t') + '.');
                 if(near(p.value, d.val, 0.2)) return bad('Hodnotu zaokrouhlete na stejný řád jako odchylku (' + ORDER[d.dec] + ').');
                 return bad('Rozdíl teplot vypočítejte ze zapsaných hodnot.');
               },
@@ -1542,7 +1541,7 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
                 var d = D(S);
                 if([d.relA, d.relB].some(function(q){ return exact(p, q.rel, q.dec); })) return ok();
                 if([d.relA, d.relB].some(function(q){ return near(p.value, q.raw, 0.05); })) return bad('Relativní odchylku zaokrouhlete na dvě platné cifry.');
-                return bad('Relativní odchylka je odchylka vydělená hodnotou krát 100 %.');
+                return bad('Relativní odchylka je odchylka vydělená hodnotou krát 100 %.');
               },
               answer:function(S){ var d = D(S); return fmt(d.relA.rel, d.relA.dec); } }
           ] }] };
@@ -1573,7 +1572,7 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
               store:function(p, S){ S.cSt = p.value; },
               check:function(p, S){
                 return inter(p, [{ v:S.cA, need:S.need }, { v:S.cB, need:S.need }], function(){
-                  if([S.cA, S.cB].some(function(cc){ return near(p.value, cc/1000, 0.005) || near(p.value, cc*1000, 0.005); })) return 'Zkontrolujte jednotky — výsledek má vyjít v J·kg⁻¹·K⁻¹.';
+                  if([S.cA, S.cB].some(function(cc){ return near(p.value, cc/1000, 0.005) || near(p.value, cc*1000, 0.005); })) return 'Zkontrolujte jednotky — výsledek má vyjít v ' + tex(UNIT_C) + '.';
                   return 'Dosaďte do vzorce zapsané hodnoty a rozdíly teplot.';
                 });
               },
@@ -1587,7 +1586,7 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
               store:function(p, S){ S.relSt = p.value; },
               check:function(p, S){
                 return inter(p, S.relC.map(function(r){ return { v:r.raw, need:r.dec }; }),
-                  'U součinu a podílu se sčítají relativní odchylky jednotlivých veličin (c_v je konstanta).');
+                  'U součinu a podílu se sčítají relativní odchylky jednotlivých veličin (' + tex('c_v') + ' je konstanta).');
               },
               answer:function(S){
                 var r = S.relC[0];
