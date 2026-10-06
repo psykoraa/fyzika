@@ -196,6 +196,26 @@
 .ws-msg.info{ color:var(--focus); }
 .ws-global{ text-align:center; margin-top:14px; }
 .ws-done{ margin-top:18px; }
+.ws-body[hidden], .actions[hidden]{ display:none; }
+.ws-table-wrap{ position:relative; overflow-x:auto; margin:4px 0 14px; }
+.ws-table-wrap .sheet-table{ margin:0 auto; font-variant-numeric:tabular-nums; }
+.ws-table-wrap .sheet-table td{ padding:5px 12px; }
+.ws-table-wrap .sheet-table tr.ws-sum td{ font-weight:600; background:var(--surface-2); }
+.ws-given{
+  background:var(--surface-2);
+  border-radius:10px;
+  padding:10px 16px;
+  margin:0 0 16px;
+  font-size:1rem;
+}
+.ws-given-title{
+  font-size:0.68rem;
+  text-transform:uppercase;
+  letter-spacing:0.08em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin:4px 0;
+}
 .ws-done p{ margin:6px 0 0; font-size:0.9rem; }
 button.btn:disabled{ opacity:0.5; cursor:default; }
 
@@ -663,6 +683,27 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
     <div class="result-box ws-done" hidden></div>
   </div>
 
+  <div class="card ws-card ws-single" id="ws-teplo">
+    <span class="cat-tag">Úloha 4</span>
+    <h2>Měrná tepelná kapacita kovu</h2>
+    <p class="desc ws-headline">Z hodnot naměřených při určování měrné tepelné kapacity kovu vypočítejte \(c_k\) i s odchylkami. Po kliknutí na <b>Začít</b> se zobrazí tabulka naměřených hodnot — pokaždé s trochu jinými čísly.</p>
+
+    <div class="actions"><button class="btn primary ws-start">Začít</button></div>
+
+    <div class="ws-body" hidden>
+      <div class="ws-data"></div>
+      <div class="ws-steps"></div>
+      <p class="ws-msg bad ws-global" aria-live="polite"></p>
+
+      <div class="actions">
+        <button class="btn primary ws-next">Dále</button>
+        <button class="btn ghost ws-restart">Začít znovu</button>
+      </div>
+
+      <div class="result-box ws-done" hidden></div>
+    </div>
+  </div>
+
   </div>
 
   <footer>Fyzika — Nepřímé měření</footer>
@@ -905,8 +946,9 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
       }
 
       function restart(){
-        build();
         S = {};
+        if(cfg.onRestart) cfg.onRestart(S, root);
+        build();
         current = 0;
         msgEl.textContent = '';
         doneBox.hidden = true;
@@ -920,6 +962,18 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
         renderMathInElement(root.querySelector('.ws-headline'), {
           delimiters: [{left:'\\(', right:'\\)', display:false}]
         });
+      }
+      // Úloha s tlačítkem „Začít“ se rozběhne až po jeho stisknutí.
+      var btnStart = root.querySelector('.ws-start');
+      if(btnStart){
+        btnStart.addEventListener('click', function(){
+          btnStart.closest('.actions').hidden = true;
+          root.querySelector('.ws-body').hidden = false;
+          restart();
+          var first = stepEls[0].querySelector('input');
+          if(first) first.focus();
+        });
+        return;
       }
       restart();
     }
@@ -1239,6 +1293,233 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
       ],
       finish:function(S){
         return '<div class="line-scroll">' + tex("V' = (" + tn(fmt(S.Vr, S.dec)) + ' \\pm ' + tn(fmt(S.d, S.dec)) + ")\\ \\mathrm{cm^3};\\quad \\delta V' = " + tn(fmt(S.rel, S.relDec)) + '\\ \\%') + '</div>';
+      }
+    });
+  })();
+
+  // ---- Úloha 4: Měrná tepelná kapacita kovu ----
+  // c_k = m_v·c_v·Δt_v / (m_k·Δt_k), Δt_v = t − t_v, Δt_k = t_k − t.
+  // Rozdíly teplot jsou náhrady (sčítají se absolutní odchylky), pak součin
+  // a podíl (sčítají se relativní odchylky; c_v je konstanta bez odchylky).
+  (function(){
+    var tex = WS.tex, fmt = WS.fmt, tn = WS.tn, exact = WS.exact, same = WS.same, ok = WS.ok, bad = WS.bad, ORDER = WS.ORDER;
+    var CV = 4180, CK = 900, N = 15;
+    var PLAIN = { 't':'t', 't_v':'tᵥ', 't_k':'tₖ' };
+    var UNIT_C = '\\mathrm{J \\cdot kg^{-1} \\cdot K^{-1}}';
+    var Q = [
+      { key:'mv', tex:'m_v', unit:'g' },
+      { key:'mk', tex:'m_k', unit:'g' },
+      { key:'tv', tex:'t_v', unit:'°C', unitTex:'^{\\circ}\\mathrm{C}' },
+      { key:'tk', tex:'t_k', unit:'°C', unitTex:'^{\\circ}\\mathrm{C}' },
+      { key:'t',  tex:'t',   unit:'°C', unitTex:'^{\\circ}\\mathrm{C}' }
+    ];
+    function uTex(q){ return q.unitTex || '\\mathrm{' + q.unit + '}'; }
+    function near(a, b, tol){ return Math.abs(a - b) <= Math.abs(b)*tol; }
+    function gauss(){ var u = 1 - Math.random(), v = Math.random(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }
+    function r2(x){ return roundTo(x, 2); }
+    function f2(x){ return fmt(x, 2); }
+    function relOf(d, v){ var q = WS.relDev(d, v); return { rel:q.rel, dec:q.dec, raw:q.raw }; }
+
+    // Patnáct měření kolem hodnot z pracovního listu; výsledná teplota t
+    // odpovídá tepelné rovnováze pro kov s c ≈ 900 J/(kg·K) plus šum měření.
+    function generate(S){
+      var c = { mv:202 + gauss()*1.5, mk:99 + gauss()*1, tv:14.5 + gauss()*0.8, tk:98 + gauss()*1 };
+      var rows = [];
+      for(var i = 0; i < N; i++){
+        var mv = r2(c.mv + gauss()*4), mk = r2(c.mk + gauss()*1.8);
+        var tv = r2(c.tv + gauss()*1.6), tk = r2(c.tk + gauss()*2);
+        var teq = (mv*CV*tv + mk*CK*tk)/(mv*CV + mk*CK);
+        rows.push({ mv:mv, mk:mk, tv:tv, tk:tk, t:r2(teq + gauss()*1.2) });
+      }
+      S.rows = rows;
+      S.q = {};
+      Q.forEach(function(q){
+        var col = rows.map(function(r){ return r[q.key]; });
+        var mean = col.reduce(function(a, b){ return a + b; }, 0)/N;
+        var dev = col.reduce(function(a, b){ return a + Math.abs(b - mean); }, 0)/N;
+        mean = r2(mean); dev = r2(dev);
+        var r = WS.roundDev(dev);
+        var x = roundTo(mean, r.dec);
+        var rel = relOf(r.d, x);
+        S.q[q.key] = { mean:mean, dev:dev, x:x, d:r.d, dec:r.dec, rel:rel.rel, relDec:rel.dec };
+      });
+      // Rozdíly teplot ze zaokrouhlených hodnot.
+      ['v', 'k'].forEach(function(w){
+        var a = w === 'v' ? S.q.t : S.q.tk, b = w === 'v' ? S.q.tv : S.q.t;
+        var D = { val: roundTo(a.x - b.x, Math.max(0, a.dec, b.dec)), dsum: roundTo(a.d + b.d, 6) };
+        D.valDec = Math.max(0, a.dec, b.dec);
+        D.relRaw = D.dsum/D.val*100;
+        var r = WS.roundDev(D.dsum); D.d = r.d; D.dec = r.dec;
+        D.xr = roundTo(D.val, D.dec);
+        var q1 = relOf(D.d, D.xr), q2 = { rel:roundSig(D.relRaw, 2), dec:decimalsForSig(roundSig(D.relRaw, 2), 2) };
+        D.rels = [q1, q2];
+        D.a = a; D.b = b;
+        S['D' + w] = D;
+      });
+      S.c = S.q.mv.x*CV*S.Dv.val/(S.q.mk.x*S.Dk.val);
+    }
+
+    function renderData(S, root){
+      var head = '<tr><th>' + tex('N') + '</th>' + Q.map(function(q){ return '<th>' + tex(q.tex) + '</th>'; }).join('') + '</tr>' +
+                 '<tr><th></th>' + Q.map(function(q){ return '<th>' + tex(uTex(q)) + '</th>'; }).join('') + '</tr>';
+      var body = S.rows.map(function(r, i){
+        return '<tr><td class="sheet-cell-label">' + (i + 1) + '</td>' + Q.map(function(q){ return '<td>' + f2(r[q.key]) + '</td>'; }).join('') + '</tr>';
+      }).join('');
+      body += '<tr class="ws-sum"><td class="sheet-cell-label">' + tex('\\bar{x}') + '</td>' + Q.map(function(q){ return '<td>' + f2(S.q[q.key].mean) + '</td>'; }).join('') + '</tr>';
+      body += '<tr class="ws-sum"><td class="sheet-cell-label">' + tex('\\Delta x') + '</td>' + Q.map(function(q){ return '<td>' + f2(S.q[q.key].dev) + '</td>'; }).join('') + '</tr>';
+      var given = Q.map(function(q){
+        var v = S.q[q.key];
+        return '<div class="line-scroll">' + tex(q.tex + ' = (' + tn(fmt(v.x, v.dec)) + ' \\pm ' + tn(fmt(v.d, v.dec)) + ')\\ ' + uTex(q) + ';\\quad \\delta ' + q.tex + ' = ' + tn(fmt(v.rel, v.relDec)) + '\\ \\%') + '</div>';
+      }).join('');
+      root.querySelector('.ws-data').innerHTML =
+        '<div class="ws-table-wrap"><table class="sheet-table"><thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>' +
+        '<div class="ws-given"><div class="ws-given-title">Zápis naměřených hodnot</div>' + given +
+        '<div class="ws-given-title" style="margin-top:10px">Vzorec</div>' +
+        '<div class="line-scroll">' + tex('c_k = \\dfrac{m_v \\cdot c_v \\cdot \\Delta t_v}{m_k \\cdot \\Delta t_k},\\quad \\Delta t_v = t - t_v,\\quad \\Delta t_k = t_k - t,\\quad c_v = 4180\\ ' + UNIT_C) + '</div></div>';
+    }
+
+    // Krok „rozdíl teplot“ (w = 'v' nebo 'k') — tři pole na jednom řádku.
+    function diffStep(w){
+      var name = 't_' + w, A = w === 'v' ? 't' : 't_k', B = w === 'v' ? 't_v' : 't';
+      function D(S){ return S['D' + w]; }
+      return { title:'Rozdíl teplot ' + (w === 'v' ? 'vody' : 'kovu'), inputClass:'mid',
+        cells:[{
+          html: tex('\\Delta ' + name + ' =') + ' {0} ' + tex('^{\\circ}\\mathrm{C};\\quad \\Delta(\\Delta ' + name + ') =') + ' {1} ' + tex('^{\\circ}\\mathrm{C};\\quad \\delta(\\Delta ' + name + ') =') + ' {2} ' + tex('\\%'),
+          fields:[
+            { check:function(p, S){
+                var d = D(S);
+                if(same(p.value, d.val)) return ok();
+                if(same(p.value, -d.val)) return bad('Odečítejte v pořadí ' + PLAIN[A] + ' − ' + PLAIN[B] + '.');
+                if(near(p.value, d.a.mean - d.b.mean, 0.01)) return bad('Dosaďte hodnoty ze zápisu naměřených hodnot.');
+                return bad('Rozdíl teplot vypočítejte ze zápisu naměřených hodnot.');
+              },
+              answer:function(S){ var d = D(S); return tex('\\Delta ' + name + ' = ' + tn(fmt(d.a.x, d.a.dec)) + ' - ' + tn(fmt(d.b.x, d.b.dec)) + ' = ' + tn(fmt(d.val, d.valDec)) + '\\ ^{\\circ}\\mathrm{C}'); } },
+            { check:function(p, S){
+                var d = D(S);
+                if(same(p.value, d.dsum)) return ok();
+                if(same(p.value, Math.abs(d.a.d - d.b.d))) return bad('I když teploty odčítáme, odchylky se sčítají.');
+                return bad('Odchylka rozdílu je součet odchylek obou teplot.');
+              },
+              answer:function(S){ var d = D(S); return tex(tn(fmt(d.a.d, d.a.dec)) + ' + ' + tn(fmt(d.b.d, d.b.dec)) + ' = ' + tn(WS.fmtAuto(d.dsum)) + '\\ ^{\\circ}\\mathrm{C}'); } },
+            { store:function(p, S){ D(S).relSt = p.value; },
+              check:function(p, S){
+                return near(p.value, D(S).relRaw, 0.02) ? ok() : bad('Relativní odchylka je odchylka vydělená hodnotou krát 100 %.');
+              },
+              answer:function(S){ var d = D(S); return tex('\\dfrac{' + tn(WS.fmtAuto(d.dsum)) + '}{' + tn(fmt(d.val, d.valDec)) + '} \\cdot 100\\ \\% \\doteq ' + tn(WS.fmtAuto(roundSig(d.relRaw, 4))) + '\\ \\%'); } }
+          ] }] };
+    }
+    // Krok „zápis rozdílu teplot“.
+    function diffRecord(w){
+      var name = 't_' + w;
+      function D(S){ return S['D' + w]; }
+      return { title:'Zápis rozdílu teplot ' + (w === 'v' ? 'vody' : 'kovu'), inputClass:'mid',
+        cells:[{
+          html: tex('\\Delta ' + name + ' = (') + ' {0} ' + tex('\\pm') + ' {1} ' + tex(')\\ ^{\\circ}\\mathrm{C};\\quad \\delta(\\Delta ' + name + ') =') + ' {2} ' + tex('\\%'),
+          fields:[
+            { check:function(p, S){
+                var d = D(S);
+                if(exact(p, d.xr, d.dec)) return ok();
+                if(same(p.value, d.xr)) return bad('Hodnotu zapište na stejný řád jako odchylku (' + ORDER[d.dec] + ') — chybějící místa doplňte nulami.');
+                return bad('Hodnotu zaokrouhlete na stejný řád jako odchylku (' + ORDER[d.dec] + ').');
+              },
+              answer:function(S){ var d = D(S); return fmt(d.xr, d.dec); } },
+            { check:function(p, S){
+                var d = D(S);
+                if(exact(p, d.d, d.dec)) return ok();
+                if(same(p.value, d.dsum) || same(p.value, d.d)) return bad('Odchylku zaokrouhlete na jednu platnou cifru.');
+                return bad('Za ± patří odchylka rozdílu teplot.');
+              },
+              answer:function(S){ var d = D(S); return fmt(d.d, d.dec); } },
+            { check:function(p, S){
+                var d = D(S);
+                if(d.rels.some(function(q){ return exact(p, q.rel, q.dec); })) return ok();
+                if(near(p.value, d.relRaw, 0.05)) return bad('Relativní odchylku zaokrouhlete na dvě platné cifry.');
+                return bad('Za středník patří relativní odchylka rozdílu teplot.');
+              },
+              answer:function(S){ var q = D(S).rels[0]; return fmt(q.rel, q.dec); } }
+          ] }] };
+    }
+
+    // Možné správné δc: s δ rozdílů teplot nezaokrouhlenými, se zapsanými
+    // (zaokrouhlenými) i s hodnotami, které žák zadal.
+    function relCandidates(S){
+      var base = S.q.mv.rel + S.q.mk.rel;
+      var sums = [
+        base + S.Dv.relRaw + S.Dk.relRaw,
+        base + S.Dv.rels[0].rel + S.Dk.rels[0].rel,
+        base + S.Dv.rels[1].rel + S.Dk.rels[1].rel,
+        base + S.Dv.relSt + S.Dk.relSt
+      ];
+      return sums.map(function(x){ var r = roundSig(x, 2); return { raw:x, rel:r, dec:decimalsForSig(r, 2) }; });
+    }
+
+    WS.create('ws-teplo', {
+      onRestart:function(S, root){ generate(S); renderData(S, root); },
+      steps:[
+        diffStep('v'),
+        diffRecord('v'),
+        diffStep('k'),
+        diffRecord('k'),
+        { title:'Měrná tepelná kapacita',
+          cells:[{ html: tex('\\bar{c}_k =') + ' {0} ' + tex(UNIT_C),
+            fields:[{
+              store:function(p, S){ S.cSt = p.value; },
+              check:function(p, S){
+                if(near(p.value, S.c, 0.005)) return ok();
+                if(near(p.value, S.c/1000, 0.005) || near(p.value, S.c*1000, 0.005)) return bad('Zkontrolujte jednotky — výsledek má vyjít v J·kg⁻¹·K⁻¹.');
+                return bad('Dosaďte do vzorce zapsané hodnoty a rozdíly teplot.');
+              },
+              answer:function(S){
+                return tex('\\bar{c}_k = \\dfrac{' + tn(fmt(S.q.mv.x, S.q.mv.dec)) + ' \\cdot 4180 \\cdot ' + tn(fmt(S.Dv.val, S.Dv.valDec)) + '}{' + tn(fmt(S.q.mk.x, S.q.mk.dec)) + ' \\cdot ' + tn(fmt(S.Dk.val, S.Dk.valDec)) + '} \\doteq ' + tn(WS.fmtAuto(roundSig(S.c, 5))) + '\\ ' + UNIT_C);
+              }
+            }] }] },
+        { title:'Relativní odchylka',
+          cells:[{ html: tex('\\delta c_k =') + ' {0} ' + tex('\\%'),
+            fields:[{
+              store:function(p, S){ S.rel = p.value; S.relDec = p.decimals; },
+              check:function(p, S){
+                var cs = relCandidates(S);
+                if(cs.some(function(q){ return exact(p, q.rel, q.dec); })) return ok();
+                if(cs.some(function(q){ return near(p.value, q.raw, 0.05); })) return bad('Relativní odchylku zaokrouhlete na dvě platné cifry.');
+                return bad('U součinu a podílu se sčítají relativní odchylky jednotlivých veličin (c_v je konstanta).');
+              },
+              answer:function(S){
+                var q = relCandidates(S)[0];
+                return tex('\\delta c_k = ' + tn(fmt(S.q.mv.rel, S.q.mv.relDec)) + ' + ' + tn(fmt(S.q.mk.rel, S.q.mk.relDec)) + ' + ' + tn(WS.fmtAuto(roundSig(S.Dv.relRaw, 4))) + ' + ' + tn(WS.fmtAuto(roundSig(S.Dk.relRaw, 4))) + ' \\doteq ' + tn(fmt(q.rel, q.dec)) + '\\ \\%');
+              }
+            }] }] },
+        { title:'Odchylka',
+          cells:[{ html: tex('\\Delta c_k =') + ' {0} ' + tex(UNIT_C),
+            fields:[{
+              store:function(p, S){ S.d = p.value; S.dec = WS.roundDev(p.value).dec; },
+              check:function(p, S){
+                var cand = [S.c, S.cSt].map(function(c){ var raw = S.rel*c/100, r = WS.roundDev(raw); return { raw:raw, d:r.d, dec:r.dec }; });
+                if(cand.some(function(a){ return exact(p, a.d, a.dec); })) return ok();
+                if(cand.some(function(a){ return near(p.value, a.raw, 0.05) || same(p.value, a.d); })) return bad('Odchylku zaokrouhlete na jednu platnou cifru.');
+                return bad('Absolutní odchylku vypočítejte z relativní odchylky a měrné tepelné kapacity.');
+              },
+              answer:function(S){ var raw = S.rel*S.c/100, r = WS.roundDev(raw); return tex('\\Delta c_k = \\dfrac{' + tn(fmt(S.rel, S.relDec)) + ' \\cdot ' + tn(WS.fmtAuto(roundSig(S.c, 5))) + '}{100} \\doteq ' + tn(WS.fmtAuto(roundSig(raw, 3))) + ' \\rightarrow ' + tn(fmt(r.d, r.dec)) + '\\ ' + UNIT_C); }
+            }] }] },
+        { title:'Zápis výsledku', inputClass:'mid',
+          cells:[{
+            html: tex('c_k = (') + ' {0} ' + tex('\\pm') + ' {1} ' + tex(')\\ ' + UNIT_C + ';\\quad \\delta c_k =') + ' {2} ' + tex('\\%'),
+            fields:[
+              { store:function(p, S){ S.cr = p.value; },
+                check:function(p, S){
+                  var a = roundTo(S.c, S.dec), b = roundTo(S.cSt, S.dec), dec = Math.max(0, S.dec);
+                  if(exact(p, a, dec) || exact(p, b, dec)) return ok();
+                  if(same(p.value, a) || same(p.value, b)) return bad('Hodnotu zapište na stejný řád jako odchylku (' + ORDER[S.dec] + ') — chybějící místa doplňte nulami.');
+                  return bad('Měrnou tepelnou kapacitu zaokrouhlete na stejný řád jako odchylku (' + ORDER[S.dec] + ').');
+                },
+                answer:function(S){ return fmt(roundTo(S.c, S.dec), S.dec); } },
+              { check:function(p, S){ return exact(p, S.d, S.dec) ? ok() : bad('Za ± patří odchylka z kroku 7.'); },
+                answer:function(S){ return fmt(S.d, S.dec); } },
+              { check:function(p, S){ return exact(p, S.rel, S.relDec) ? ok() : bad('Za středník patří relativní odchylka z kroku 6.'); },
+                answer:function(S){ return fmt(S.rel, S.relDec); } }
+            ] }] }
+      ],
+      finish:function(S){
+        return '<div class="line-scroll">' + tex('c_k = (' + tn(fmt(S.cr, S.dec)) + ' \\pm ' + tn(fmt(S.d, S.dec)) + ')\\ ' + UNIT_C + ';\\quad \\delta c_k = ' + tn(fmt(S.rel, S.relDec)) + '\\ \\%') + '</div>';
       }
     });
   })();
