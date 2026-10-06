@@ -236,7 +236,7 @@ svg.optics .f-group.dragging .f-grip{ fill:var(--accent); stroke:var(--accent); 
   margin-bottom:2px;
 }
 
-/* ---- celá obrazovka: vlevo ovládání a výsledky, vpravo co největší obrázek ---- */
+/* ---- celá obrazovka: nahoře pruh s ovládáním, pod ním obrázek přes zbytek plochy ---- */
 .applet-card.is-full{
   position:fixed;
   inset:0;
@@ -244,29 +244,43 @@ svg.optics .f-group.dragging .f-grip{ fill:var(--accent); stroke:var(--accent); 
   margin:0;
   border-radius:0;
   border:0;
-  overflow:auto;
-  padding:18px 20px;
+  overflow:hidden;
+  padding:0;
   background:var(--surface);
-  display:grid;
-  grid-template-columns:minmax(300px, 400px) minmax(0, 1fr);
-  grid-template-rows:auto 1fr;
-  grid-template-areas:"head stage" "controls stage";
-  column-gap:22px;
-  align-items:start;
+  display:flex;
+  flex-direction:column;
 }
 .applet-card:fullscreen{ width:100%; height:100%; }
-.applet-card.is-full .applet-head{ grid-area:head; }
-.applet-card.is-full .applet-controls{ grid-area:controls; }
-.applet-card.is-full .applet-stage{ grid-area:stage; position:sticky; top:0; }
+.applet-card.is-full .applet-head{
+  flex:none; flex-wrap:nowrap; align-items:center;
+  padding:8px 14px 0; background:var(--surface);
+}
+.applet-card.is-full .applet-head-text{ flex:1 1 auto; }
+.applet-card.is-full .applet-head{ justify-content:space-between; }
+.applet-card.is-full .applet-controls{
+  flex:none; display:flex; flex-wrap:wrap; align-items:center; gap:4px 26px;
+  padding:0 14px 8px; background:var(--surface); border-bottom:1px solid var(--line);
+}
+.applet-card.is-full .mode-row{ margin:0; padding:4px 0 0; border-top:0; flex-wrap:nowrap; }
+.applet-card.is-full .mode-row-label{ flex:none; }
 .applet-card.is-full .applet-results,
 .applet-card.is-full .hint,
 .applet-card.is-full svg .param{ display:none; }
-.applet-card.is-full .desc{ display:none; }
-.applet-card.is-full h2{ font-size:1.35rem; }
-.applet-card.is-full .mode-row{ margin-top:10px; padding-top:10px; }
-.applet-card.is-full .mode-row-label{ flex-basis:100%; }
-.applet-card.is-full .canvas-wrap{ margin-top:0; }
-.applet-card.is-full svg.optics{ max-height:calc(100vh - 110px); }
+.applet-card.is-full .desc,
+.applet-card.is-full .cat-tag{ display:none; }
+.applet-card.is-full h2{ font-size:1.25rem; margin:0; }
+.applet-card.is-full .applet-stage{ flex:1 1 auto; min-height:0; position:relative; margin:0; }
+.applet-card.is-full .canvas-wrap{
+  position:absolute; inset:0; margin:0; border:0; border-radius:0;
+  display:flex; flex-direction:column;
+}
+.applet-card.is-full svg.optics{ flex:1 1 auto; min-height:0; width:100%; height:100%; max-height:none; }
+.applet-card.is-full .legend{
+  position:absolute; right:12px; bottom:12px; z-index:1;
+  max-width:min(520px, calc(100% - 24px));
+  background:rgba(253,252,255,0.9);
+  border:1px solid var(--line); border-radius:8px;
+}
 /* telefon na výšku, který neumí zamknout orientaci (např. iPhone): karta se otočí o 90° */
 .applet-card.is-full.rotated{
   inset:auto; top:0; left:0;
@@ -274,21 +288,14 @@ svg.optics .f-group.dragging .f-grip{ fill:var(--accent); stroke:var(--accent); 
   width:100dvh; height:100dvw;
   transform-origin:top left;
   transform:translateX(100vw) rotate(90deg);
-  display:grid;
-  padding:12px 16px;
 }
-.applet-card.is-full.rotated .applet-stage{ position:sticky; top:0; margin-top:0; }
-/* telefon na šířku (zamčený i otočený): užší ovládání a bez legendy, ať je obrázek co největší */
-.applet-card.is-full.rotated{ grid-template-columns:minmax(200px, 250px) minmax(0, 1fr); column-gap:14px; }
+/* telefon na šířku (zamčený i otočený): kompaktní pruh a bez legendy, ať je obrázek co největší */
 .applet-card.is-full.rotated .legend{ display:none; }
-.applet-card.is-full.rotated h2{ font-size:1.1rem; }
+.applet-card.is-full.rotated .applet-head-text{ display:none; }
 @media (max-height:500px) and (orientation:landscape){
-  .applet-card.is-full{ grid-template-columns:minmax(200px, 250px) minmax(0, 1fr); column-gap:14px; padding:12px 16px; }
   .applet-card.is-full .legend{ display:none; }
-  .applet-card.is-full h2{ font-size:1.1rem; }
-  .applet-card.is-full svg.optics{ max-height:calc(100vh - 30px); }
+  .applet-card.is-full .applet-head-text{ display:none; }
 }
-.applet-card.is-full.rotated svg.optics{ max-height:calc(100vw - 30px); max-height:calc(100dvw - 30px); }
 
 /* ---- ukázky význačných paprsků v teorii ---- */
 .ray-demo{ margin:12px 0 14px; }
@@ -320,12 +327,6 @@ svg.optics .f-group.dragging .f-grip{ fill:var(--accent); stroke:var(--accent); 
 }
 .theory-table tbody tr:nth-child(even) td{ background:rgba(36,31,54,0.02); }
 
-@media (max-width:900px) and (orientation:portrait){
-  .applet-card.is-full{
-    display:block;
-  }
-  .applet-card.is-full .applet-stage{ position:static; margin-top:12px; }
-}
 @media (max-width:720px){
   .results{ grid-template-columns:1fr; }
   .mode-row-label{ flex-basis:100%; }
