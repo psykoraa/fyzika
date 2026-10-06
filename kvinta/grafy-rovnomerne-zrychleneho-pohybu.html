@@ -69,6 +69,7 @@
 .graph-fig .g-jump{ stroke:var(--ink-soft); stroke-width:1.2; stroke-dasharray:4 4; }
 .graph-fig .g-dot{ fill:var(--accent); }
 .graph-fig .h-guide{ stroke:var(--focus); stroke-width:1.6; stroke-dasharray:5 4; fill:none; }
+.graph-fig .g-break{ fill:var(--surface); stroke:var(--accent); stroke-width:2.5; }
 .graph-fig .h-dot{ fill:var(--focus); }
 .graph-fig .h-seg{ stroke:var(--focus); stroke-width:5; fill:none; stroke-linecap:round; }
 .graph-fig .h-area{ fill:var(--focus); opacity:0.22; }
@@ -83,7 +84,10 @@
   font-size:1.1rem;
   text-align:center;
 }
-.theory-table-wrap{ overflow-x:auto; margin:6px 0 10px; }
+.theory-table-wrap{ overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; margin:6px 0 10px; }
+/* Tabulka s vzorci se nezalamuje — když se nevejde, posouvá se do strany (jako u nepřímého měření). */
+.theory-table-wrap.scroll .theory-table{ width:auto; margin:0 auto; white-space:nowrap; }
+.theory-table-wrap.scroll .theory-table th, .theory-table-wrap.scroll .theory-table td{ text-align:center; padding:7px 14px; }
 .theory-table{
   border-collapse:collapse;
   font-size:0.88rem;
@@ -382,7 +386,7 @@
     <div class="panel">
       <div class="panel-title">Pohyb složený z více úseků</div>
       <p><b>Příklad:</b> Souprava metra se z klidu rozjíždí 6&nbsp;s, až dosáhne 12&nbsp;m·s⁻¹, dalších 8&nbsp;s jede touto rychlostí a posledních 6&nbsp;s rovnoměrně brzdí do zastavení.</p>
-      <div class="theory-table-wrap">
+      <div class="theory-table-wrap scroll">
         <table class="theory-table">
           <thead>
             <tr><th>úsek</th><th>pohyb</th><th class="mono">Δ<i>t</i> (s)</th><th class="mono"><i>a</i> (m·s⁻²)</th><th class="mono">Δ<i>s</i> (m)</th></tr>
@@ -1262,6 +1266,11 @@
     } else {
       o.push('<polyline class="g-line" points="' + curvePoints(g, 0, endCol(g), X, Y) + '"/>');
     }
+
+    // přechody mezi úseky
+    breakCols(g).forEach(function(cc){
+      o.push('<circle class="g-break" cx="' + X(cc) + '" cy="' + Y(rowAt(g,cc)) + '" r="4"/>');
+    });
 
     // zvýraznění po vyhodnocení
     if(hl){
