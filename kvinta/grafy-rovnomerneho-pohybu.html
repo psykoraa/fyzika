@@ -518,7 +518,9 @@
         <div class="panel-title">Pravidla hry</div>
         <p class="game-rules">
           Uvidíte zadaný graf rychlosti <i>v</i>(<i>t</i>) a čtyři grafy dráhy <i>s</i>(<i>t</i>) — nebo naopak
-          zadaný graf dráhy a čtyři grafy rychlosti. Vyberte ten graf, který popisuje <strong>stejný pohyb</strong>
+          zadaný graf dráhy a čtyři grafy rychlosti. Stejně se přiřazují i graf polohy <i>x</i>(<i>t</i>)
+          a graf rychlosti <i>v<sub>x</sub></i>(<i>t</i>) z polohy (ten může být záporný, když se těleso vrací).
+          Vyberte ten graf, který popisuje <strong>stejný pohyb</strong>
           jako zadaný graf. Za správnou odpověď získáte <strong>5 bodů</strong> v lehké obtížnosti,
           <strong>10 bodů</strong> ve střední a <strong>15 bodů</strong> v těžké. Za špatnou odpověď
           (i za „Nevím“) se strhává <strong>5 bodů</strong>. Po vypršení zvoleného času se hra ukončí.
@@ -2122,12 +2124,41 @@
     return null;
   }
 
+  // Totéž pro pohyb, při kterém se těleso může vracet: R jsou (i záporné) přírůstky polohy
+  // v řádcích mřížky grafu x(t), V (i záporné) rychlosti v_x v řádcích mřížky grafu v_x(t),
+  // r0 je počáteční poloha v řádcích mřížky.
+  function genMotionX(n){
+    for(var tries=0; tries<300; tries++){
+      var g = n===1 ? genSimpleXT() : genComplexXT(n);
+      if(segCount(g)!==n) continue;
+      var L = [], R = [], speeds = [], i;
+      for(i=0; i<n; i++){
+        var b = segBounds(g,i);
+        L.push(b[1]-b[0]);
+        R.push(g.pts[i+1].r - g.pts[i].r);
+        speeds.push(segSpeed(g,i));
+      }
+      var maxAbs = Math.max.apply(null, speeds.map(Math.abs)), vStep = null;
+      [0.5, 1, 2, 5, 10].some(function(st){
+        var ok = maxAbs/st <= 4 && speeds.every(function(v){ return Math.abs(v/st - Math.round(v/st)) < 1e-9; });
+        if(ok) vStep = st;
+        return ok;
+      });
+      if(!vStep) continue;
+      return { L:L, R:R, V:speeds.map(function(v){ return Math.round(v/vStep); }), r0:g.pts[0].r,
+        tStep:g.tStep, sStep:g.yStep, vStep:vStep, signed:true };
+    }
+    return null;
+  }
+
   // Graf z úseků: kind 'st' → vals jsou přírůstky dráhy, 'vt' → rychlosti (v řádcích mřížky).
-  function buildGraph(kind, L, vals, m, nRows){
-    var g = { kind:kind, tStep:m.tStep, yStep: kind==='st' ? m.sStep : m.vStep, nCols:sum(L), nRows:nRows };
-    var c = 0, r = 0, i;
-    if(kind==='st'){
-      g.pts = [{c:0, r:0}];
+  // 'xt' → přírůstky polohy od počáteční polohy m.r0, 'vxt' → (i záporné) rychlosti; rMin = řádky pod osou t.
+  function buildGraph(kind, L, vals, m, nRows, rMin){
+    var g = { kind:kind, tStep:m.tStep, yStep: (kind==='st' || kind==='xt') ? m.sStep : m.vStep, nCols:sum(L), nRows:nRows };
+    if(rMin) g.rMin = rMin;
+    var c = 0, r = kind==='xt' ? m.r0 : 0, i;
+    if(kind==='st' || kind==='xt'){
+      g.pts = [{c:0, r:r}];
       for(i=0; i<L.length; i++){ c += L[i]; r += vals[i]; g.pts.push({c:c, r:r}); }
     } else {
       g.segs = [];
@@ -2138,12 +2169,13 @@
 
   // Klíč podoby grafu — sousední úseky se stejnou rychlostí (stejný sklon u s(t),
   // stejná výška u v(t)) splynou, takže dvě různé zápisy téhož grafu dají stejný klíč.
+  function isSpeedKind(kind){ return kind==='vt' || kind==='vxt'; }
   function shapeKey(kind, L, vals){
     var mL = [], mX = [];
     for(var i=0; i<L.length; i++){
       var k = mL.length-1;
-      var same = k>=0 && (kind==='vt' ? mX[k]===vals[i] : mX[k]*L[i]===vals[i]*mL[k]);
-      if(same){ mL[k] += L[i]; mX[k] += (kind==='vt' ? 0 : vals[i]); }
+      var same = k>=0 && (isSpeedKind(kind) ? mX[k]===vals[i] : mX[k]*L[i]===vals[i]*mL[k]);
+      if(same){ mL[k] += L[i]; mX[k] += (isSpeedKind(kind) ? 0 : vals[i]); }
       else { mL.push(L[i]); mX.push(vals[i]); }
     }
     return mL.join(',') + '|' + mX.join(',');
@@ -2151,13 +2183,21 @@
 
   // Chybná možnost — typické chyby: jiná rychlost na jednom úseku, prohozené
   // úseky, posunutý okamžik změny rychlosti, dvojnásobná / poloviční rychlost.
-  function mutate(kind, L0, X0){
+  function mutate(kind, L0, X0, r0){
     var L = L0.slice(), X = X0.slice(), n = L.length, i, d;
-    var type = pick(n>1 ? ['bump','bump','swap','shift','scale'] : ['bump','bump','scale']);
+    var signed = kind==='xt' || kind==='vxt';
+    var types = n>1 ? ['bump','bump','swap','shift','scale'] : ['bump','bump','scale'];
+    // u grafů se znaménkem je typická chyba záměna směru pohybu
+    if(signed) types = types.concat(['flip','flip']);
+    var type = pick(types);
     if(type==='bump'){
       i = randInt(0, n-1); d = pick([-2,-1,1,2]);
       X[i] += d;
-      if(X[i] < 0) return null;
+      if(!signed && X[i] < 0) return null;
+    } else if(type==='flip'){
+      var nz = []; X.forEach(function(x, j){ if(x!==0) nz.push(j); });
+      if(!nz.length) return null;
+      i = pick(nz); X[i] = -X[i];
     } else if(type==='swap'){
       // úseky pohybu v opačném pořadí
       i = randInt(0, n-2);
@@ -2167,8 +2207,8 @@
       i = randInt(0, n-2); d = pick([-1,1]);
       L[i] += d; L[i+1] -= d;
       if(L[i] < 1 || L[i+1] < 1) return null;
-      if(kind==='st'){
-        // u grafu dráhy se s posunem zlomu přepočítá dráha úseků tak, aby rychlosti zůstaly
+      if(kind==='st' || kind==='xt'){
+        // u grafu dráhy (polohy) se s posunem zlomu přepočítá dráha úseků tak, aby rychlosti zůstaly
         // (jinak by šlo jen o jiný sklon) — musí ale vyjít celé dílky
         var r1 = X0[i]*L[i]/L0[i], r2 = X0[i+1]*L[i+1]/L0[i+1];
         if(r1!==Math.round(r1) || r2!==Math.round(r2)) return null;
@@ -2181,22 +2221,48 @@
     if(X.every(function(x){ return x===0; })) return null;
     if(kind==='st' && sum(X) > 10) return null;
     if(kind==='vt' && Math.max.apply(null, X) > 8) return null;
+    if(kind==='xt' && !cumWithin(X, r0, 10)) return null;
+    if(kind==='vxt' && X.some(function(x){ return Math.abs(x) > 5; })) return null;
     return { L:L, X:X };
+  }
+
+  // Poloha tělesa (v řádcích mřížky) začínající na r0 zůstává v rozmezí 0 až max?
+  function cumWithin(X, r0, max){
+    var r = r0;
+    if(r < 0 || r > max) return false;
+    for(var i=0; i<X.length; i++){ r += X[i]; if(r < 0 || r > max) return false; }
+    return true;
+  }
+  function cumMax(X, r0){
+    var r = r0, hi = r0;
+    X.forEach(function(x){ r += x; hi = Math.max(hi, r); });
+    return hi;
+  }
+
+  // Měřítko svislé osy společné pro všechny nabízené grafy: { rows, rMin }.
+  function gameScale(kind, Xs, r0){
+    var all = [].concat.apply([], Xs);
+    if(kind==='st') return { rows:Math.min(10, Math.max(2, Math.max.apply(null, Xs.map(sum)))), rMin:0 };
+    if(kind==='vt') return { rows:Math.min(9, Math.max(2, Math.max.apply(null, all) + 1)), rMin:0 };
+    if(kind==='xt') return { rows:Math.min(10, Math.max(2, Math.max.apply(null, Xs.map(function(X){ return cumMax(X, r0); })))), rMin:0 };
+    return { rows:Math.max(0, Math.max.apply(null, all)) + 1, rMin:-(Math.max(0, -Math.min.apply(null, all)) + 1) };
   }
 
   function genGameQuestion(){
     var lvl = gameLevel();
     for(var attempt=0; attempt<50; attempt++){
       var n = pick(lvl.counts);
-      var m = genMotion(n);
+      // dvojice (zadaný graf, nabízené grafy): s ↔ v z dráhy, x ↔ v_x z polohy
+      var pr = pick([['vt','st'], ['st','vt'], ['vxt','xt'], ['xt','vxt']]);
+      var given = pr[0], optKind = pr[1];
+      var m = (given==='xt' || given==='vxt') ? genMotionX(n) : genMotion(n);
       if(!m) continue;
-      var given = pick(['vt','st']), optKind = given==='vt' ? 'st' : 'vt';
-      var X = optKind==='st' ? m.R : m.V;
+      var X = (optKind==='st' || optKind==='xt') ? m.R : m.V;
       var opts = [{ L:m.L, X:X }], keys = {};
       keys[shapeKey(optKind, m.L, X)] = true;
       for(var t=0; t<400 && opts.length<4; t++){
         var base = opts[randInt(0, opts.length-1)];
-        var mt = mutate(optKind, base.L, base.X);
+        var mt = mutate(optKind, base.L, base.X, m.r0);
         if(!mt) continue;
         var k = shapeKey(optKind, mt.L, mt.X);
         if(keys[k]) continue;
@@ -2206,19 +2272,20 @@
       if(opts.length<4) continue;
 
       // Všechny nabízené grafy mají stejné měřítko os.
-      var optRows = optKind==='st'
-        ? Math.max.apply(null, opts.map(function(o){ return sum(o.X); }))
-        : Math.max.apply(null, opts.map(function(o){ return Math.max.apply(null, o.X); })) + 1;
-      optRows = Math.min(optKind==='st' ? 10 : 9, Math.max(optRows, 2));
-      var givenRows = given==='st' ? Math.min(10, sum(m.R) + randInt(0,1)) : Math.min(9, Math.max.apply(null, m.V) + 1);
+      var optScale = gameScale(optKind, opts.map(function(o){ return o.X; }), m.r0);
+      var givenX = (given==='st' || given==='xt') ? m.R : m.V;
+      var givenScale = gameScale(given, [givenX], m.r0);
+      // u grafů dráhy a polohy občas rezerva nad grafem (jako dřív)
+      if(given==='st') givenScale.rows = Math.min(10, sum(m.R) + randInt(0,1));
+      if(given==='xt') givenScale.rows = Math.min(10, Math.max(2, cumMax(m.R, m.r0)) + randInt(0,1));
 
       // náhodné pořadí možností (Fisher–Yates)
       var order = [0,1,2,3];
       for(var j=3; j>0; j--){ var k2 = randInt(0,j), tmp = order[j]; order[j] = order[k2]; order[k2] = tmp; }
-      var graphs = order.map(function(idx){ return buildGraph(optKind, opts[idx].L, opts[idx].X, m, optRows); });
+      var graphs = order.map(function(idx){ return buildGraph(optKind, opts[idx].L, opts[idx].X, m, optScale.rows, optScale.rMin); });
       return {
         motion:m, given:given, optKind:optKind,
-        givenGraph: buildGraph(given, m.L, given==='st' ? m.R : m.V, m, givenRows),
+        givenGraph: buildGraph(given, m.L, givenX, m, givenScale.rows, givenScale.rMin),
         options: graphs,
         correctIndex: order.indexOf(0),
         points: lvl.points
@@ -2229,6 +2296,16 @@
 
   function gameExplanation(qq){
     var m = qq.motion, c = 0, lines = [];
+    if(m.signed){
+      lines.push('<i>x</i><sub>0</sub> = ' + q(m.r0*m.sStep,'m'));
+      for(var j=0; j<m.L.length; j++){
+        var u0 = c*m.tStep, u1 = (c+m.L[j])*m.tStep, du = u1-u0, w = m.V[j]*m.vStep, dx = m.R[j]*m.sStep;
+        lines.push(q(u0,'s') + ' až ' + q(u1,'s') + ': <i>v</i><sub><i>x</i></sub> = ' + q(w,'m·s⁻¹') + ', Δ<i>x</i> = ' + q(w,'m·s⁻¹') + ' · ' + q(du,'s') + ' = ' + q(dx,'m') +
+          (w===0 ? ' (těleso stojí)' : (w<0 ? ' (těleso se vrací)' : '')));
+        c += m.L[j];
+      }
+      return lines.join('\n');
+    }
     for(var i=0; i<m.L.length; i++){
       var t0 = c*m.tStep, t1 = (c+m.L[i])*m.tStep, dt = t1-t0, v = m.V[i]*m.vStep, ds = m.R[i]*m.sStep;
       lines.push(q(t0,'s') + ' až ' + q(t1,'s') + ': <i>v</i> = ' + q(v,'m·s⁻¹') + ', Δ<i>s</i> = ' + q(v,'m·s⁻¹') + ' · ' + q(dt,'s') + ' = ' + q(ds,'m') +
@@ -2251,13 +2328,26 @@
   }
   function gameRedraw(){ if(game.q) renderGameGraphs(); }
 
+  var GAME_TAGS = {
+    vt: 'Graf rychlosti → graf dráhy',
+    st: 'Graf dráhy → graf rychlosti',
+    vxt: 'Graf rychlosti ' + SYM.vx + ' → graf polohy',
+    xt: 'Graf polohy → graf rychlosti ' + SYM.vx
+  };
+  var GAME_TASKS = {
+    vt: 'Který graf dráhy odpovídá zadanému grafu rychlosti?',
+    st: 'Který graf rychlosti odpovídá zadanému grafu dráhy?',
+    vxt: 'Který graf polohy odpovídá zadanému grafu rychlosti ' + SYM.vx + '?',
+    xt: 'Který graf rychlosti ' + SYM.vx + ' odpovídá zadanému grafu polohy?'
+  };
+
   function renderGameQuestion(){
     var qq = game.q;
-    document.getElementById('game-cat-tag').textContent = qq.given==='vt' ? 'Graf rychlosti → graf dráhy' : 'Graf dráhy → graf rychlosti';
+    document.getElementById('game-cat-tag').innerHTML = GAME_TAGS[qq.given];
     document.getElementById('game-points-badge').textContent = '+' + qq.points + ' b';
-    document.getElementById('game-task').textContent = qq.given==='vt'
-      ? 'Který graf dráhy odpovídá zadanému grafu rychlosti?'
-      : 'Který graf rychlosti odpovídá zadanému grafu dráhy?';
+    var task = GAME_TASKS[qq.given];
+    if(qq.given==='vxt') task = 'Těleso je v čase 0 v poloze <i>x</i><sub>0</sub> = ' + q(qq.motion.r0*qq.motion.sStep,'m') + '. ' + task;
+    document.getElementById('game-task').innerHTML = task;
     var grid = document.getElementById('game-choice-grid');
     grid.innerHTML = '';
     qq.options.forEach(function(g, idx){
