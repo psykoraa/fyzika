@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rovnoměrný pohyb po kružnici</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../spolecne/config.js"></script>
+<script src="../spolecne/auth.js"></script>
+<script src="../spolecne/zalozky.js?v=3"></script>
+<link rel="stylesheet" href="../spolecne/styl.css">
+<style>
+:root{
+  --paper:#f5f0e3;
+  --surface:#fffcf5;
+  --surface-2:#ece4d1;
+  --ink:#212b34;
+  --ink-soft:#5d6b76;
+  --line:rgba(33,43,52,0.12);
+  --accent:#c9581f;
+  --accent-ink:#fff8f0;
+  --success:#28794f;
+  --success-bg:#e3efe0;
+  --danger:#b3392b;
+  --danger-bg:#f5e4de;
+  --focus:#1e6f66;
+  --shadow:0 1px 0 rgba(33,43,52,0.06);
+}
+
+.panel{ margin-bottom:22px; }
+.panel-title{ margin-bottom:8px; }
+.panel p{
+  margin:0 0 8px;
+  font-size:0.9rem;
+  line-height:1.55;
+}
+.panel p:last-child{ margin-bottom:0; }
+.panel b{ color:var(--ink); }
+.panel ul, .panel ol{ margin:0 0 8px; padding-left:22px; font-size:0.9rem; line-height:1.55; }
+.panel li{ margin-bottom:4px; }
+.panel h3{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.05rem;
+  letter-spacing:0.01em;
+  margin:16px 0 6px;
+}
+.panel h3:first-child{ margin-top:0; }
+
+.card{ padding:26px 26px 28px; text-align:left; margin-bottom:24px; }
+.cat-tag{ margin-bottom:10px; }
+.card h2{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.6rem;
+  letter-spacing:0.02em;
+  color:var(--ink);
+  text-transform:none;
+  margin-bottom:6px;
+}
+.card .desc{
+  font-size:0.86rem;
+  color:var(--ink-soft);
+  line-height:1.5;
+  margin:0 0 14px;
+}
+
+.katex{ font-size:1.05em; }
+.formula-box{
+  background:var(--surface-2);
+  border-radius:8px;
+  padding:12px 16px;
+  margin:10px 0;
+  font-size:1.1rem;
+  text-align:center;
+}
+.formula-line{
+  text-align:center;
+  font-size:1.1rem;
+  color:var(--ink);
+  line-height:1.8;
+}
+.line-scroll{
+  position:relative;
+  white-space:nowrap;
+  overflow-x:auto;
+  overflow-y:hidden;
+  padding:2px 0 4px;
+}
+.given-data{
+  font-size:clamp(0.9rem, 2.4vw, 1.05rem);
+  color:var(--ink-soft);
+  margin-bottom:20px;
+}
+
+.theory-table-wrap{ overflow-x:auto; margin:6px 0 4px; }
+.theory-table{
+  border-collapse:collapse;
+  font-size:0.88rem;
+  width:100%;
+  min-width:320px;
+}
+.theory-table th, .theory-table td{
+  border:1px solid var(--line);
+  padding:8px 12px;
+  text-align:left;
+}
+.theory-table thead th{
+  background:var(--surface-2);
+  color:var(--ink-soft);
+  font-weight:600;
+  font-size:0.72rem;
+  text-transform:uppercase;
+  letter-spacing:0.05em;
+}
+.theory-table td.mono, .theory-table th.mono{
+  font-family:'IBM Plex Mono', monospace;
+  font-variant-numeric:tabular-nums;
+  text-align:center;
+}
+.theory-table tbody tr:nth-child(even) td{ background:rgba(0,0,0,0.02); }
+
+.theory-fig{
+  margin:12px 0 10px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:10px 12px 8px;
+}
+.theory-fig svg{ display:block; width:100%; max-width:560px; height:auto; margin:0 auto; }
+.theory-fig figcaption{
+  font-size:0.8rem;
+  color:var(--ink-soft);
+  line-height:1.45;
+  text-align:center;
+  margin-top:4px;
+}
+
+.example-grid{ display:flex; flex-direction:column; gap:12px; margin-top:6px; }
+.example-item{
+  background:var(--surface-2);
+  border-radius:10px;
+  padding:12px 14px;
+}
+.example-tag{
+  font-size:0.66rem;
+  text-transform:uppercase;
+  letter-spacing:0.06em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-bottom:6px;
+  display:block;
+}
+.example-eq{
+  font-size:1.05rem;
+  margin-bottom:4px;
+}
+.example-note{ font-size:0.82rem; color:var(--ink-soft); line-height:1.45; }
+
+.links{ margin-top:14px; display:flex; flex-wrap:wrap; gap:10px; justify-content:center; }
+a.btn-link{
+  display:inline-block;
+  font-weight:600;
+  font-size:0.95rem;
+  padding:10px 22px;
+  border-radius:8px;
+  background:var(--accent);
+  color:var(--accent-ink);
+  text-decoration:none;
+}
+a.btn-link:hover{ filter:brightness(1.06); }
+a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+
+.credit{
+  margin-top:24px;
+  font-size:0.8rem;
+  line-height:1.5;
+  color:var(--ink-soft);
+  text-align:center;
+}
+.credit a{ color:inherit; }
+
+/* barvy vektorů v obrázcích a apletu: rychlost = akcent, zrychlení = focus */
+.sim-wrap{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:8px;
+  margin-bottom:14px;
+}
+.sim-wrap svg{ display:block; width:100%; max-width:520px; height:auto; margin:0 auto; touch-action:none; }
+.ctrl-row{ display:flex; align-items:center; flex-wrap:wrap; gap:8px 14px; margin-bottom:12px; }
+.ctrl-label{
+  flex:0 0 150px;
+  font-size:0.68rem;
+  text-transform:uppercase;
+  letter-spacing:0.1em;
+  color:var(--ink-soft);
+  font-weight:600;
+}
+.ctrl-row input[type=range]{ flex:1 1 180px; min-width:140px; min-height:44px; accent-color:var(--accent); }
+.ctrl-val{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:600;
+  font-size:0.9rem;
+  min-width:78px;
+  text-align:right;
+}
+.seg{ display:flex; gap:6px; flex-wrap:wrap; }
+.chip{ font-size:0.82rem; gap:7px; }
+.chip:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+.chip .dot{ width:10px; height:10px; border-radius:50%; background:var(--c); flex:none; }
+.chip.vec.on{ background:var(--surface-2); color:var(--ink); border-color:var(--c); }
+.chip.vec:not(.on) .dot{ background:transparent; border:2px solid var(--c); }
+.sim-table{ margin-top:6px; }
+.sim-table td.mono{ white-space:nowrap; }
+.col-v{ color:var(--accent); font-weight:700; }
+.col-a{ color:var(--focus); font-weight:700; }
+
+@media (max-width:520px){
+  .card{ padding:20px 16px 22px; }
+  .ctrl-label{ flex-basis:100%; }
+  .ctrl-val{ text-align:left; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <a class="back-link" href="../rozcestniky/kvinta.html">← Zpět na Kvinta/1. ročník</a>
+
+  <div class="brand">
+    <div class="brand-lockup">
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <circle cx="20" cy="20" r="12" stroke="var(--ink-soft)" stroke-width="1.4" stroke-dasharray="3 3"/>
+        <circle cx="20" cy="20" r="1.6" fill="var(--ink)"/>
+        <line x1="20" y1="20" x2="30.4" y2="14" stroke="var(--ink-soft)" stroke-width="1.2"/>
+        <circle cx="30.4" cy="14" r="3" fill="var(--accent)"/>
+        <line x1="30.4" y1="14" x2="36" y2="23" stroke="var(--accent)" stroke-width="2"/>
+        <path d="M27.6,18.8 L23.6,16.5" stroke="var(--focus)" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <div class="brand-text">
+        <h1>Rovnoměrný pohyb po kružnici</h1>
+        <p>kinematika hmotného bodu</p>
+      </div>
+    </div>
+    <!-- Hlavičkové skóre (.readout) se přidává jen u stránek se záložkou Trénink — viz references/zalozky-trenink-aplet.md -->
+  </div>
+
+  <div class="top-tabs">
+    <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+    <button class="toptab" id="top-tab-aplet" data-tab="aplet">Aplet</button>
+  </div>
+
+  <!-- ============ TEORIE ============ -->
+  <div id="theory-section" class="tab-section">
+
+    <div class="panel">
+      <div class="panel-title">Co je rovnoměrný pohyb po kružnici</div>
+      <p>Hmotný bod se pohybuje po kružnici a <b>velikost jeho rychlosti se nemění</b>. Tak se pohybuje konec ručičky na hodinách, bod na obvodu kola nebo kabinka ruského kola.</p>
+      <p>Vektor rychlosti \(\boldsymbol{v}\) míří v každém bodě ve směru <b>tečny</b> ke kružnici. Tečna se při pohybu stále otáčí, a proto se otáčí i vektor rychlosti: <b>velikost rychlosti je stálá, směr se mění</b>.</p>
+      <figure class="theory-fig">
+        <svg viewBox="0 0 440 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Kružnice se středem S. Ve třech jejích bodech jsou nakresleny vektory rychlosti stejné délky, každý ve směru tečny.">
+          <defs>
+            <marker id="arr-v1" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4.2" markerHeight="4.2" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/>
+            </marker>
+          </defs>
+          <circle cx="220" cy="100" r="70" fill="none" stroke="var(--ink)" stroke-width="2"/>
+          <circle cx="220" cy="100" r="3" fill="var(--ink)"/>
+          <text x="226" y="116" font-family="Work Sans, sans-serif" font-size="14" font-style="italic" fill="var(--ink-soft)">S</text>
+          <line x1="280.6" y1="65" x2="260.6" y2="30.4" stroke="var(--accent)" stroke-width="2.6" marker-end="url(#arr-v1)"/>
+          <line x1="159.4" y1="65" x2="139.4" y2="99.6" stroke="var(--accent)" stroke-width="2.6" marker-end="url(#arr-v1)"/>
+          <line x1="220" y1="170" x2="260" y2="170" stroke="var(--accent)" stroke-width="2.6" marker-end="url(#arr-v1)"/>
+          <circle cx="280.6" cy="65" r="5" fill="var(--ink)"/>
+          <circle cx="159.4" cy="65" r="5" fill="var(--ink)"/>
+          <circle cx="220" cy="170" r="5" fill="var(--ink)"/>
+          <g font-family="Work Sans, sans-serif" font-style="italic" font-weight="700" font-size="17" fill="var(--accent)">
+            <text x="268" y="34">v</text>
+            <text x="124" y="108">v</text>
+            <text x="248" y="190">v</text>
+          </g>
+          <text x="10" y="24" font-family="Work Sans, sans-serif" font-size="13" fill="var(--ink-soft)">pohyb proti směru</text>
+          <text x="10" y="41" font-family="Work Sans, sans-serif" font-size="13" fill="var(--ink-soft)">hodinových ručiček</text>
+        </svg>
+        <figcaption>Vektory rychlosti mají všude stejnou velikost, ale každý jiný směr — vždy tečný ke kružnici.</figcaption>
+      </figure>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M9 2.5 L16 15.5 H2 Z" stroke="var(--danger)" stroke-width="1.4" stroke-linejoin="round"/>
+          <line x1="9" y1="7" x2="9" y2="11.5" stroke="var(--danger)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="13.6" r="1" fill="var(--danger)"/>
+        </svg>
+        <p>Častá chyba: „rovnoměrný pohyb“ neznamená „bez zrychlení“. Pohyb po kružnici s&nbsp;konstantní velikostí rychlosti je <b>zrychlený</b>, protože se mění směr vektoru rychlosti (viz Dostředivé zrychlení).</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Úhel v radiánech a dráha po oblouku</div>
+      <p>Polohu bodu na kružnici určuje <b>úhel</b> \(\varphi\), který svírá spojnice středu s bodem s pevně zvoleným základním směrem. Ve fyzice ho nejčastěji měříme v <b>radiánech</b>: velikost úhlu je podíl délky oblouku \(s\) a poloměru \(r\):</p>
+      <div class="formula-box">\[ \varphi = \frac{s}{r} \qquad\Longleftrightarrow\qquad s = \varphi\, r \]</div>
+      <p>Úhel \(1\ \mathrm{rad}\) přísluší oblouku, který je stejně dlouhý jako poloměr. Podíl dvou délek nemá jednotku, proto je úhel v radiánech číslo bez rozměru a při dosazování se značka „rad“ obvykle nepíše.</p>
+      <figure class="theory-fig">
+        <svg viewBox="0 0 440 210" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Kružnice o poloměru r, na ní oblouk délky s rovné poloměru; příslušný středový úhel je 1 radián.">
+          <circle cx="150" cy="105" r="80" fill="none" stroke="var(--ink-soft)" stroke-width="1.4" stroke-dasharray="4 4"/>
+          <path d="M230,105 A80,80 0 0 0 193.2,37.7" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round"/>
+          <line x1="150" y1="105" x2="230" y2="105" stroke="var(--ink)" stroke-width="1.8"/>
+          <line x1="150" y1="105" x2="193.2" y2="37.7" stroke="var(--ink)" stroke-width="1.8"/>
+          <path d="M178,105 A28,28 0 0 0 166.9,82.8" fill="none" stroke="var(--focus)" stroke-width="2"/>
+          <circle cx="150" cy="105" r="3" fill="var(--ink)"/>
+          <g font-family="Work Sans, sans-serif" font-size="15" font-style="italic" fill="var(--ink)">
+            <text x="190" y="122">r</text>
+            <text x="156" y="62" fill="var(--ink)">r</text>
+            <text x="218" y="62" fill="var(--accent)" font-weight="700">s</text>
+            <text x="182" y="94" fill="var(--focus)" font-weight="700">φ</text>
+          </g>
+          <text x="262" y="96" font-family="Work Sans, sans-serif" font-size="14" fill="var(--ink-soft)">s = r  ⇒  φ = 1 rad</text>
+        </svg>
+        <figcaption>Pro oblouk stejně dlouhý jako poloměr je středový úhel roven \(1\ \mathrm{rad}\).</figcaption>
+      </figure>
+      <p>Plný úhel odpovídá celé kružnici, tedy oblouku \(2\pi r\), a má proto velikost \(2\pi\ \mathrm{rad}\). Z toho plyne převod mezi stupni a radiány:</p>
+      <div class="formula-box">\[ \varphi_\mathrm{rad} = \varphi_\mathrm{st}\cdot\frac{\pi}{180^\circ} \qquad\qquad 1\ \mathrm{rad} = \frac{180^\circ}{\pi} \approx 57{,}3^\circ \]</div>
+      <div class="theory-table-wrap">
+        <table class="theory-table">
+          <thead>
+            <tr><th>Úhel</th><th class="mono">30°</th><th class="mono">45°</th><th class="mono">60°</th><th class="mono">90°</th><th class="mono">180°</th><th class="mono">270°</th><th class="mono">360°</th></tr>
+          </thead>
+          <tbody>
+            <tr><th>v radiánech</th><td class="mono">\(\frac{\pi}{6}\)</td><td class="mono">\(\frac{\pi}{4}\)</td><td class="mono">\(\frac{\pi}{3}\)</td><td class="mono">\(\frac{\pi}{2}\)</td><td class="mono">\(\pi\)</td><td class="mono">\(\frac{3\pi}{2}\)</td><td class="mono">\(2\pi\)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="9" cy="9" r="7.5" stroke="var(--focus)" stroke-width="1.6"/>
+          <line x1="9" y1="8" x2="9" y2="13" stroke="var(--focus)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="5.2" r="1" fill="var(--focus)"/>
+        </svg>
+        <p>Značka „rad“ je jen připomínka, že jde o úhel. Na kalkulačce proto před počítáním s goniometrickými funkcemi zkontrolujte, zda je nastavena správná míra (stupně, nebo radiány).</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Perioda a frekvence</div>
+      <p>Rovnoměrný pohyb po kružnici se po každém oběhu opakuje, je <b>periodický</b>. Dobu jednoho oběhu nazýváme <b>perioda</b> \(T\) (jednotka sekunda). Kolik oběhů bod vykoná za jednu sekundu, udává <b>frekvence</b> \(f\) (jednotka hertz, \(1\ \mathrm{Hz} = 1\ \mathrm{s^{-1}}\)). Obě veličiny jsou navzájem převrácené:</p>
+      <div class="formula-box">\[ f = \frac{1}{T} \qquad\qquad T = \frac{1}{f} \]</div>
+      <p>V technice se místo frekvence často uvádí počet <b>otáček za minutu</b>. Jedna minuta má \(60\ \mathrm{s}\), proto pro \(N\) otáček za minutu platí \(f = N/60\) (v hertzích).</p>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="9" cy="9" r="7.5" stroke="var(--focus)" stroke-width="1.6"/>
+          <line x1="9" y1="8" x2="9" y2="13" stroke="var(--focus)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="5.2" r="1" fill="var(--focus)"/>
+        </svg>
+        <p>Měříme-li periodu stopkami, vyplatí se změřit například deset oběhů a čas vydělit deseti: chyba při spuštění a zastavení stopek se rozdělí mezi všechny oběhy.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Úhlová rychlost</div>
+      <p>Body na otáčejícím se kotouči mají různé rychlosti, ale všechny se otočí o stejný úhel za stejnou dobu. Společnou „rychlost otáčení“ vyjadřuje <b>úhlová rychlost</b> \(\omega\): podíl úhlu \(\Delta\varphi\), o který se spojnice středu s bodem otočí, a doby \(\Delta t\), za kterou k tomu dojde.</p>
+      <div class="formula-box">\[ \omega = \frac{\Delta\varphi}{\Delta t} \qquad [\omega] = \mathrm{rad\cdot s^{-1}} = \mathrm{s^{-1}} \]</div>
+      <p>Při rovnoměrném pohybu je \(\omega\) stálá. Začíná-li bod v čase \(t = 0\) na základním směru (\(\varphi_0 = 0\)), je úhel přímo úměrný času: \(\varphi = \omega t\). Za jeden oběh je \(\Delta\varphi = 2\pi\) a \(\Delta t = T\), proto</p>
+      <div class="formula-box">\[ \omega = \frac{2\pi}{T} = 2\pi f \]</div>
+      <p>Úhlová rychlost je pro otáčivý pohyb tím, čím je rychlost pro pohyb přímočarý:</p>
+      <div class="theory-table-wrap">
+        <table class="theory-table">
+          <thead>
+            <tr><th></th><th>Posuvný pohyb</th><th>Pohyb po kružnici</th></tr>
+          </thead>
+          <tbody>
+            <tr><th>poloha</th><td>dráha \(s\) (m)</td><td>úhel \(\varphi\) (rad)</td></tr>
+            <tr><th>rychlost</th><td>\(v = \dfrac{\Delta s}{\Delta t}\) (m·s⁻¹)</td><td>\(\omega = \dfrac{\Delta\varphi}{\Delta t}\) (rad·s⁻¹)</td></tr>
+            <tr><th>při rovnoměrném pohybu</th><td>\(s = vt\)</td><td>\(\varphi = \omega t\)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Obvodová rychlost</div>
+      <p>Za dobu \(\Delta t\) bod urazí po oblouku dráhu \(\Delta s = r\,\Delta\varphi\). Velikost jeho rychlosti, nazývané též <b>obvodová rychlost</b>, je proto</p>
+      <div class="formula-box">\[ v = \frac{\Delta s}{\Delta t} = r\,\frac{\Delta\varphi}{\Delta t} = \omega r \]</div>
+      <p>Při jednom oběhu urazí bod dráhu \(2\pi r\) za dobu \(T\), takže také</p>
+      <div class="formula-box">\[ v = \frac{2\pi r}{T} = 2\pi r f \]</div>
+      <p>Úhlová rychlost je pro všechny body tuhého kotouče <b>stejná</b>, obvodová rychlost je ale <b>přímo úměrná vzdálenosti od osy</b>: bod ve dvojnásobné vzdálenosti se pohybuje dvojnásobnou rychlostí. Bod ležící přímo na ose je v klidu.</p>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M9 2.5 L16 15.5 H2 Z" stroke="var(--danger)" stroke-width="1.4" stroke-linejoin="round"/>
+          <line x1="9" y1="7" x2="9" y2="11.5" stroke="var(--danger)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="13.6" r="1" fill="var(--danger)"/>
+        </svg>
+        <p>Neplést si úhlovou rychlost \(\omega\) (v&nbsp;rad·s⁻¹) s&nbsp;obvodovou rychlostí \(v\) (v&nbsp;m·s⁻¹). Spojuje je poloměr: \(v = \omega r\). Ve vztazích vždy dosazujte periodu v&nbsp;sekundách a poloměr v&nbsp;metrech.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Dostředivé zrychlení</div>
+      <p>Zrychlení měří změnu <b>vektoru</b> rychlosti. Při rovnoměrném pohybu po kružnici se mění směr rychlosti, a proto bod zrychlení má. Musí být kolmé na rychlost (kdyby mělo složku ve směru rychlosti, měnila by se její velikost) a mířit na tu stranu, kam se dráha zakřivuje, tedy <b>do středu kružnice</b>. Nazývá se <b>dostředivé zrychlení</b> \(a_\mathrm{d}\).</p>
+      <figure class="theory-fig">
+        <svg viewBox="0 0 440 210" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Bod na kružnici; vektor rychlosti míří po tečně, vektor dostředivého zrychlení míří ke středu kružnice, oba jsou navzájem kolmé.">
+          <defs>
+            <marker id="arr-v2" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4.2" markerHeight="4.2" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/>
+            </marker>
+            <marker id="arr-a2" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4.2" markerHeight="4.2" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="var(--focus)"/>
+            </marker>
+          </defs>
+          <circle cx="220" cy="115" r="75" fill="none" stroke="var(--ink)" stroke-width="2"/>
+          <circle cx="220" cy="115" r="3" fill="var(--ink)"/>
+          <text x="214" y="136" font-family="Work Sans, sans-serif" font-size="14" font-style="italic" fill="var(--ink-soft)">S</text>
+          <line x1="277.5" y1="66.8" x2="245.4" y2="28.5" stroke="var(--accent)" stroke-width="2.8" marker-end="url(#arr-v2)"/>
+          <line x1="277.5" y1="66.8" x2="246.8" y2="92.5" stroke="var(--focus)" stroke-width="2.8" marker-end="url(#arr-a2)"/>
+          <circle cx="277.5" cy="66.8" r="5" fill="var(--ink)"/>
+          <g font-family="Work Sans, sans-serif" font-style="italic" font-weight="700" font-size="17">
+            <text x="232" y="30" fill="var(--accent)">v</text>
+            <text x="228" y="98" fill="var(--focus)">a</text>
+          </g>
+          <text x="237" y="103" font-family="Work Sans, sans-serif" font-size="12" font-weight="700" fill="var(--focus)">d</text>
+        </svg>
+        <figcaption>Rychlost \(\boldsymbol{v}\) míří po tečně, dostředivé zrychlení \(\boldsymbol{a}_\mathrm{d}\) do středu. Oba vektory jsou na sebe kolmé.</figcaption>
+      </figure>
+      <p>Velikost zrychlení vyjde z toho, jak rychle se otáčí vektor rychlosti. Za dobu \(\Delta t\) se vektor rychlosti otočí o týž úhel \(\Delta\varphi\) jako spojnice středu s bodem. Rozdíl původního a nového vektoru (stejně dlouhých) má pro malý úhel velikost \(\Delta v \approx v\,\Delta\varphi\). Proto</p>
+      <div class="formula-box">\[ a_\mathrm{d} = \frac{\Delta v}{\Delta t} = v\,\frac{\Delta\varphi}{\Delta t} = v\omega \quad\Rightarrow\quad a_\mathrm{d} = \frac{v^2}{r} = \omega^2 r \]</div>
+      <p>Jednotka vychází správně: \([\omega^2 r] = \mathrm{s^{-2}\cdot m} = \mathrm{m\cdot s^{-2}}\). Při stejné úhlové rychlosti je zrychlení přímo úměrné poloměru, při stejné obvodové rychlosti naopak nepřímo úměrné (ostrá zatáčka = velké zrychlení).</p>
+    </div>
+
+    <div class="card">
+      <span class="cat-tag">Příklad z praxe</span>
+      <h2>Kabinka ruského kola</h2>
+      <p class="desc">Rozklikejte si postup krok po kroku — další krok se odemkne, jakmile otevřete ten předchozí.</p>
+      <div class="given-data">
+        <div class="given-line">Zadáno: ruské kolo o poloměru \(r = 25\ \mathrm{m}\) se otočí jednou za \(T = 2{,}0\ \mathrm{min}\). Určete frekvenci, úhlovou rychlost, rychlost a dostředivé zrychlení kabinky.</div>
+      </div>
+      <div class="stepper" data-reset="reset-ruske-kolo">
+        <div class="step" data-step="1">
+          <div class="step-connector"></div>
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">1</span>
+            <span class="step-title">Převeďte periodu na sekundy a určete frekvenci \(f\)</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <p>Základní jednotkou času je sekunda: \(T = 2{,}0\ \mathrm{min} = 120\ \mathrm{s}\).</p>
+            <div class="step-result">\(f = \dfrac{1}{T} = \dfrac{1}{120\ \mathrm{s}} \approx 8{,}3\cdot 10^{-3}\ \mathrm{Hz}\)</div>
+          </div>
+        </div>
+        <div class="step" data-step="2">
+          <div class="step-connector"></div>
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">2</span>
+            <span class="step-title">Určete úhlovou rychlost \(\omega\)</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <div class="step-result">\(\omega = \dfrac{2\pi}{T} = \dfrac{2\pi}{120\ \mathrm{s}} \approx 0{,}0524\ \mathrm{rad\cdot s^{-1}}\)</div>
+          </div>
+        </div>
+        <div class="step" data-step="3">
+          <div class="step-connector"></div>
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">3</span>
+            <span class="step-title">Určete obvodovou rychlost \(v\)</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <div class="step-result">\(v = \omega r = 0{,}0524\ \mathrm{s^{-1}}\cdot 25\ \mathrm{m} \approx 1{,}31\ \mathrm{m\cdot s^{-1}}\)</div>
+            <p>To je asi \(4{,}7\ \mathrm{km\cdot h^{-1}}\), tedy rychlost svižné chůze — pro ruské kolo velmi rozumné.</p>
+          </div>
+        </div>
+        <div class="step" data-step="4">
+                    <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">4</span>
+            <span class="step-title">Určete dostředivé zrychlení \(a_\mathrm{d}\)</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <div class="step-result">\(a_\mathrm{d} = \omega^2 r = (0{,}0524\ \mathrm{s^{-1}})^2\cdot 25\ \mathrm{m} \approx 0{,}069\ \mathrm{m\cdot s^{-2}}\)</div>
+            <p>Kontrola druhým vztahem: \(a_\mathrm{d} = v^2/r = (1{,}31\ \mathrm{m\cdot s^{-1}})^2 / 25\ \mathrm{m} \approx 0{,}069\ \mathrm{m\cdot s^{-2}}\). Je to jen asi \(0{,}7\ \%\) tíhového zrychlení, proto při jízdě nic zvláštního necítíme.</p>
+            <div class="result-box"><div class="line-scroll">\(f \approx 8{,}3\cdot 10^{-3}\ \mathrm{Hz},\quad \omega \approx 0{,}0524\ \mathrm{rad\cdot s^{-1}},\quad v \approx 1{,}31\ \mathrm{m\cdot s^{-1}},\quad a_\mathrm{d} \approx 0{,}069\ \mathrm{m\cdot s^{-2}}\)</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn ghost" id="reset-ruske-kolo">Zopakovat postup od začátku</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Krátké příklady</div>
+      <div class="example-grid">
+        <div class="example-item">
+          <span class="example-tag">Stupně na radiány</span>
+          <div class="example-eq">\[135^\circ = 135\cdot\frac{\pi}{180} = \frac{3\pi}{4}\ \ (\approx 2{,}36)\qquad 210^\circ = \frac{7\pi}{6}\ \ (\approx 3{,}67)\]</div>
+          <div class="example-note">Krátíme zlomek \(\frac{135}{180} = \frac{3}{4}\), resp. \(\frac{210}{180} = \frac{7}{6}\).</div>
+        </div>
+        <div class="example-item">
+          <span class="example-tag">Otáčky za minutu</span>
+          <div class="example-eq">\[N = 600\ \mathrm{ot/min}\ \Rightarrow\ f = \frac{600}{60}\ \mathrm{Hz} = 10\ \mathrm{Hz},\quad \omega = 2\pi f \approx 62{,}8\ \mathrm{rad\cdot s^{-1}}\]</div>
+          <div class="example-note">Stolní ventilátor: konec lopatky ve vzdálenosti \(0{,}15\ \mathrm{m}\) od osy má \(v = \omega r \approx 9{,}4\ \mathrm{m\cdot s^{-1}}\).</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Shrnutí</div>
+      <p>• Rovnoměrný pohyb po kružnici: trajektorie je kružnice, velikost rychlosti stálá, směr rychlosti (tečna) se mění.</p>
+      <p>• Úhel v radiánech: \(\varphi = s/r\); plný úhel \(2\pi\), převod \(\varphi_\mathrm{rad} = \varphi_\mathrm{st}\cdot\pi/180^\circ\).</p>
+      <p>• Perioda a frekvence: \(f = 1/T\); z otáček za minutu \(f = N/60\).</p>
+      <p>• Úhlová rychlost: \(\omega = \Delta\varphi/\Delta t = 2\pi/T = 2\pi f\); \(\varphi = \omega t\).</p>
+      <p>• Obvodová rychlost: \(v = \omega r = 2\pi r/T = 2\pi r f\); ω je pro celý kotouč stejná, \(v\) roste se vzdáleností od osy.</p>
+      <p>• Dostředivé zrychlení: \(a_\mathrm{d} = v^2/r = \omega^2 r\), míří do středu kružnice.</p>
+    </div>
+
+  </div>
+
+  <!-- ============ APLET ============ -->
+  <div id="aplet-section" class="tab-section" hidden>
+    <div class="panel">
+      <div class="panel-title">Aplet: bod na otáčejícím se kotouči</div>
+      <p>Měňte poloměr kružnice a frekvenci a sledujte, jak se mění rychlost a zrychlení. Zapněte si druhý bod ve vzdálenosti \(r/2\) od středu a porovnejte oba body: úhlová rychlost je stejná, rychlost i zrychlení se liší.</p>
+
+      <div class="sim-wrap">
+        <svg id="sim" viewBox="0 0 520 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Animace bodu pohybujícího se rovnoměrně po kružnici s vektorem rychlosti a vektorem dostředivého zrychlení.">
+          <defs>
+            <marker id="sim-arr-v" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4.2" markerHeight="4.2" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/>
+            </marker>
+            <marker id="sim-arr-a" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4.2" markerHeight="4.2" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="var(--focus)"/>
+            </marker>
+          </defs>
+          <line x1="260" y1="165" x2="400" y2="165" stroke="var(--ink-soft)" stroke-width="1" stroke-dasharray="3 4"/>
+          <circle id="sim-track" cx="260" cy="165" r="80" fill="none" stroke="var(--ink-soft)" stroke-width="1.4"/>
+          <circle id="sim-track-b" cx="260" cy="165" r="40" fill="none" stroke="var(--ink-soft)" stroke-width="1" stroke-dasharray="3 4" style="display:none"/>
+          <path id="sim-arc" d="" fill="none" stroke="var(--ink)" stroke-width="2"/>
+          <line id="sim-radius" x1="260" y1="165" x2="340" y2="165" stroke="var(--ink)" stroke-width="1.6"/>
+          <circle cx="260" cy="165" r="3" fill="var(--ink)"/>
+          <line id="sim-va" x1="0" y1="0" x2="0" y2="0" stroke="var(--accent)" stroke-width="3" marker-end="url(#sim-arr-v)"/>
+          <line id="sim-aa" x1="0" y1="0" x2="0" y2="0" stroke="var(--focus)" stroke-width="3" marker-end="url(#sim-arr-a)"/>
+          <line id="sim-vb" x1="0" y1="0" x2="0" y2="0" stroke="var(--accent)" stroke-width="2.4" marker-end="url(#sim-arr-v)" style="display:none"/>
+          <line id="sim-ab" x1="0" y1="0" x2="0" y2="0" stroke="var(--focus)" stroke-width="2.4" marker-end="url(#sim-arr-a)" style="display:none"/>
+          <circle id="sim-pa" cx="340" cy="165" r="7" fill="var(--ink)"/>
+          <circle id="sim-pb" cx="300" cy="165" r="6" fill="var(--ink-soft)" style="display:none"/>
+          <text id="sim-la" x="0" y="0" font-family="Work Sans, sans-serif" font-size="14" font-weight="700" fill="var(--ink)">A</text>
+          <text id="sim-lb" x="0" y="0" font-family="Work Sans, sans-serif" font-size="14" font-weight="700" fill="var(--ink-soft)" style="display:none">B</text>
+        </svg>
+      </div>
+
+      <div class="ctrl-row">
+        <span class="ctrl-label">Poloměr</span>
+        <input type="range" id="ctl-r" min="0.5" max="2.5" step="0.1" value="1.5" aria-label="Poloměr kružnice v metrech">
+        <span class="ctrl-val" id="val-r">1,5&nbsp;m</span>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">Frekvence</span>
+        <input type="range" id="ctl-f" min="0.1" max="0.8" step="0.05" value="0.5" aria-label="Frekvence v hertzích">
+        <span class="ctrl-val" id="val-f">0,50&nbsp;Hz</span>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">Zobrazit</span>
+        <div class="seg">
+          <button class="chip vec on" id="chip-v" type="button" aria-pressed="true" style="--c:var(--accent)"><span class="dot"></span><span>rychlost <b><i>v</i></b></span></button>
+          <button class="chip vec on" id="chip-a" type="button" aria-pressed="true" style="--c:var(--focus)"><span class="dot"></span><span>zrychlení <b><i>a</i></b><sub>d</sub></span></button>
+          <button class="chip vec" id="chip-b" type="button" aria-pressed="false" style="--c:var(--ink-soft)"><span class="dot"></span><span>druhý bod B (<i>r</i>/2)</span></button>
+        </div>
+      </div>
+      <div class="ctrl-row">
+        <button class="btn primary" id="btn-play" type="button">Pozastavit</button>
+        <button class="btn ghost" id="btn-reset" type="button">Vynulovat</button>
+      </div>
+
+      <div class="theory-table-wrap sim-table">
+        <table class="theory-table">
+          <thead>
+            <tr><th>Veličina</th><th class="mono">Bod A</th><th class="mono" id="th-b" hidden>Bod B</th></tr>
+          </thead>
+          <tbody>
+            <tr><th>Vzdálenost od středu <i>r</i></th><td class="mono" id="o-ra"></td><td class="mono" id="o-rb" hidden></td></tr>
+            <tr><th>Úhlová rychlost ω</th><td class="mono" id="o-wa"></td><td class="mono" id="o-wb" hidden></td></tr>
+            <tr><th>Rychlost <i>v</i> = ω<i>r</i></th><td class="mono col-v" id="o-va"></td><td class="mono col-v" id="o-vb" hidden></td></tr>
+            <tr><th>Zrychlení <i>a</i><sub>d</sub> = ω²<i>r</i></th><td class="mono col-a" id="o-aa"></td><td class="mono col-a" id="o-ab" hidden></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="margin-top:10px">Perioda \(T\) = <b id="o-T"></b>, úhel \(\varphi\) = <b id="o-phi"></b>, počet oběhů: <b id="o-n"></b>.</p>
+      <p class="hint">Délky šipek jsou úměrné velikosti vektorů (vektor rychlosti a vektor zrychlení mají každý své měřítko); kružnice je kreslena v měřítku poloměru.</p>
+    </div>
+  </div>
+
+
+  <footer>Fyzika — Kvinta/1. ročník</footer>
+</div>
+
+<script src="../spolecne/spolecne.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  // ---- záložky: tlačítko .toptab[data-tab="x"] ↔ sekce #x-section (Teorie = #theory-section) ----
+  var tabs = {}, sections = {};
+  Array.prototype.forEach.call(document.querySelectorAll('.toptab[data-tab]'), function(btn){
+    var name = btn.getAttribute('data-tab');
+    tabs[name] = btn;
+    sections[name] = document.getElementById(name === 'teorie' ? 'theory-section' : name + '-section');
+  });
+  function showTab(name){
+    for(var k in tabs){
+      tabs[k].classList.toggle('on', k === name);
+      if(sections[k]) sections[k].hidden = k !== name;
+    }
+    // skóre, série a úspěšnost v hlavičce jen u tréninku
+    var readout = document.getElementById('header-readout');
+    if(readout) readout.hidden = name !== 'trenink';
+  }
+  Object.keys(tabs).forEach(function(k){ tabs[k].addEventListener('click', function(){ showTab(k); }); });
+  var hash = location.hash.replace('#', '');
+  if(hash && tabs[hash]) showTab(hash);
+
+  // ---- vzorce (KaTeX) ----
+  if(window.renderMathInElement){
+    ['theory-section', 'aplet-section'].forEach(function(id){
+      try{
+        renderMathInElement(document.getElementById(id), {
+          delimiters: [{left:'\\(', right:'\\)', display:false}, {left:'\\[', right:'\\]', display:true}]
+        });
+      }catch(e){}
+    });
+  }
+
+  // ---- příklady: postupně odemykané steppery ----
+  Array.prototype.forEach.call(document.querySelectorAll('.stepper'), function(wrap){
+    var steps = Array.prototype.slice.call(wrap.querySelectorAll('.step'));
+    var unlockedUpTo = 1;
+
+    function refreshLocks(){
+      steps.forEach(function(st){
+        var idx = parseInt(st.getAttribute('data-step'), 10);
+        var locked = idx > unlockedUpTo;
+        st.classList.toggle('locked', locked);
+        st.classList.toggle('unlocked', !locked && !st.classList.contains('done'));
+        st.querySelector('.step-head').setAttribute('aria-disabled', locked ? 'true' : 'false');
+      });
+    }
+
+    steps.forEach(function(st){
+      var idx = parseInt(st.getAttribute('data-step'), 10);
+      var head = st.querySelector('.step-head');
+      var body = st.querySelector('.step-body');
+      head.addEventListener('click', function(){
+        if(idx > unlockedUpTo) return;
+        var wasOpen = st.classList.contains('open');
+        st.classList.toggle('open', !wasOpen);
+        body.hidden = wasOpen;
+        head.setAttribute('aria-expanded', (!wasOpen).toString());
+        if(!wasOpen){
+          st.classList.add('done');
+          if(idx === unlockedUpTo && unlockedUpTo < steps.length){ unlockedUpTo++; }
+          refreshLocks();
+        }
+      });
+    });
+
+    var resetBtn = document.getElementById(wrap.getAttribute('data-reset'));
+    if(resetBtn){
+      resetBtn.addEventListener('click', function(){
+        unlockedUpTo = 1;
+        steps.forEach(function(st){
+          st.classList.remove('open', 'done');
+          st.querySelector('.step-body').hidden = true;
+          st.querySelector('.step-head').setAttribute('aria-expanded', 'false');
+        });
+        refreshLocks();
+      });
+    }
+
+    refreshLocks();
+  });
+
+  // ---- aplet: rovnoměrný pohyb po kružnici ----
+  var sim = {
+    r: 1.5, f: 0.5,          // poloměr v m, frekvence v Hz
+    phi: 0,                  // úhel v rad (neomezený, kvůli počtu oběhů)
+    running: true, showV: true, showA: true, showB: false,
+    last: null
+  };
+  var CX = 260, CY = 165;
+  var K_V = 6;               // px na (m·s⁻¹)
+  var K_A = 1.3;             // px na (m·s⁻²)
+  var el = {};
+  ['sim-track','sim-track-b','sim-arc','sim-radius','sim-va','sim-aa','sim-vb','sim-ab','sim-pa','sim-pb','sim-la','sim-lb',
+   'ctl-r','ctl-f','val-r','val-f','chip-v','chip-a','chip-b','btn-play','btn-reset',
+   'th-b','o-ra','o-rb','o-wa','o-wb','o-va','o-vb','o-aa','o-ab','o-T','o-phi','o-n'].forEach(function(id){ el[id] = document.getElementById(id); });
+
+  function cz(x, d){ return String(roundTo(x, d)).replace('.', ','); }
+  function fixed(x, d){
+    var t = roundTo(x, d).toFixed(d);
+    return t.replace('.', ',');
+  }
+  function setLine(node, x1, y1, x2, y2){
+    node.setAttribute('x1', x1); node.setAttribute('y1', y1);
+    node.setAttribute('x2', x2); node.setAttribute('y2', y2);
+  }
+  function pxRadius(r){ return 50 + (r - 0.5) / 2.0 * 70; }
+
+  function drawPoint(pt, vecV, vecA, rPx, v, a, ang){
+    var c = Math.cos(ang), s = Math.sin(ang);
+    var x = CX + rPx * c, y = CY - rPx * s;
+    pt.setAttribute('cx', x); pt.setAttribute('cy', y);
+    var lv = Math.max(6, v * K_V), la = Math.max(6, a * K_A);
+    setLine(vecV, x, y, x - lv * s, y - lv * c);
+    setLine(vecA, x, y, x - la * c, y + la * s);
+    return {x: x, y: y};
+  }
+
+  function update(){
+    var w = 2 * Math.PI * sim.f;
+    var rA = sim.r, rB = sim.r / 2;
+    var vA = w * rA, aA = w * w * rA, vB = w * rB, aB = w * w * rB;
+    var ang = sim.phi % (2 * Math.PI);
+    var rpx = pxRadius(sim.r);
+
+    el['sim-track'].setAttribute('r', rpx);
+    el['sim-track-b'].setAttribute('r', rpx / 2);
+    el['sim-track-b'].style.display = sim.showB ? '' : 'none';
+
+    var pa = drawPoint(el['sim-pa'], el['sim-va'], el['sim-aa'], rpx, vA, aA, ang);
+    setLine(el['sim-radius'], CX, CY, pa.x, pa.y);
+    el['sim-va'].style.display = sim.showV ? '' : 'none';
+    el['sim-aa'].style.display = sim.showA ? '' : 'none';
+    el['sim-la'].setAttribute('x', pa.x + 10 * Math.cos(ang) - 4);
+    el['sim-la'].setAttribute('y', pa.y - 10 * Math.sin(ang) + 5);
+
+    // oblouk úhlu φ
+    var ar = 26;
+    var ex = CX + ar * Math.cos(ang), ey = CY - ar * Math.sin(ang);
+    var large = ang > Math.PI ? 1 : 0;
+    el['sim-arc'].setAttribute('d', ang < 0.001 ? '' : 'M' + (CX + ar) + ',' + CY + ' A' + ar + ',' + ar + ' 0 ' + large + ' 0 ' + ex + ',' + ey);
+
+    var showB = sim.showB;
+    ['sim-pb','sim-lb'].forEach(function(id){ el[id].style.display = showB ? '' : 'none'; });
+    if(!showB){ el['sim-vb'].style.display = 'none'; el['sim-ab'].style.display = 'none'; }
+    ['th-b','o-rb','o-wb','o-vb','o-ab'].forEach(function(id){ el[id].hidden = !showB; });
+    if(showB){
+      var pb = drawPoint(el['sim-pb'], el['sim-vb'], el['sim-ab'], rpx / 2, vB, aB, ang);
+      el['sim-vb'].style.display = sim.showV ? '' : 'none';
+      el['sim-ab'].style.display = sim.showA ? '' : 'none';
+      el['sim-lb'].setAttribute('x', pb.x + 10 * Math.cos(ang) - 4);
+      el['sim-lb'].setAttribute('y', pb.y - 10 * Math.sin(ang) + 5);
+      el['o-rb'].textContent = fixed(rB, 2) + '\u00a0m';
+      el['o-wb'].textContent = fixed(w, 2) + '\u00a0rad/s';
+      el['o-vb'].textContent = fixed(vB, 2) + '\u00a0m/s';
+      el['o-ab'].textContent = fixed(aB, 2) + '\u00a0m/s²';
+    }
+
+    el['o-ra'].textContent = fixed(rA, 2) + '\u00a0m';
+    el['o-wa'].textContent = fixed(w, 2) + '\u00a0rad/s';
+    el['o-va'].textContent = fixed(vA, 2) + '\u00a0m/s';
+    el['o-aa'].textContent = fixed(aA, 2) + '\u00a0m/s²';
+    el['o-T'].textContent = fixed(1 / sim.f, 2) + '\u00a0s';
+    el['o-phi'].textContent = fixed(ang, 2) + ' rad (' + cz(ang * 180 / Math.PI, 0) + '°)';
+    el['o-n'].textContent = Math.floor(sim.phi / (2 * Math.PI));
+  }
+
+  function tick(){
+    var now = Date.now();
+    if(sim.last !== null && sim.running){
+      var dt = Math.min(0.1, (now - sim.last) / 1000);
+      sim.phi += 2 * Math.PI * sim.f * dt;
+      update();
+    }
+    sim.last = now;
+  }
+
+  function readControls(){
+    sim.r = parseFloat(el['ctl-r'].value);
+    sim.f = parseFloat(el['ctl-f'].value);
+    el['val-r'].textContent = fixed(sim.r, 1) + '\u00a0m';
+    el['val-f'].textContent = fixed(sim.f, 2) + '\u00a0Hz';
+    update();
+  }
+  el['ctl-r'].addEventListener('input', readControls);
+  el['ctl-f'].addEventListener('input', readControls);
+
+  function bindChip(id, key){
+    el[id].addEventListener('click', function(){
+      sim[key] = !sim[key];
+      el[id].classList.toggle('on', sim[key]);
+      el[id].setAttribute('aria-pressed', sim[key] ? 'true' : 'false');
+      update();
+    });
+  }
+  bindChip('chip-v', 'showV');
+  bindChip('chip-a', 'showA');
+  bindChip('chip-b', 'showB');
+
+  el['btn-play'].addEventListener('click', function(){
+    sim.running = !sim.running;
+    el['btn-play'].textContent = sim.running ? 'Pozastavit' : 'Spustit';
+  });
+  el['btn-reset'].addEventListener('click', function(){
+    sim.phi = 0;
+    update();
+  });
+
+  readControls();
+  setInterval(tick, 33);
+
+  // ---- sbalovací panely v teorii ----
+  try{ makePanelsCollapsible(document.getElementById('theory-section')); }catch(e){}
+})();
+</script>
+</body>
+</html>
