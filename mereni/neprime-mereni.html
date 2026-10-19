@@ -664,10 +664,10 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
   <div class="card ws-card" id="ws-sirka">
     <span class="cat-tag">Úloha 1</span>
     <h2>Šířka učebny</h2>
-    <p class="desc ws-headline">Zapisujte hodnoty, které jste naměřili při laboratorní práci — šířku učebny svinovacím metrem (\(l_1\)) a dřevěným pravítkem (\(l_2\)). Po vyplnění kroku klikněte na <b>Dále</b> — od kroku 3 se výsledky kontrolují podle vašich naměřených hodnot.</p>
+    <p class="desc ws-headline">Zapisujte hodnoty, které jste naměřili při laboratorní práci — šířku učebny pásmem (\(l_1\)) a dřevěným pravítkem (\(l_2\)). Po vyplnění kroku klikněte na <b>Dále</b> — od kroku 3 se výsledky kontrolují podle vašich naměřených hodnot.</p>
 
     <div class="ws-cols-head">
-      <div>Svinovací metr</div>
+      <div>Pásmo</div>
       <div>Dřevěné pravítko</div>
     </div>
     <div class="ws-steps"></div>
@@ -1093,13 +1093,13 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
   // stačí správně zaokrouhlit (jedno na jaký řád) a nechat dost cifer — viz WS.inter.
   (function(){
     var tex = WS.tex, fmt = WS.fmt, tn = WS.tn, exact = WS.exact, same = WS.same, ok = WS.ok, bad = WS.bad, ORDER = WS.ORDER, inter = WS.inter;
-    var PREC = 0.05;   // přesnost metru i pravítka: 0,5 mm = 0,05 cm
+    // přesnost pásma 1 mm = 0,1 cm (nejmenší dílek 2 mm), pravítka 0,5 mm = 0,05 cm
     var COLS = [
-      { c:1, used:'metr použit', prec:'přesnost metru' },
-      { c:2, used:'pravítko použito', prec:'přesnost pravítka' }
+      { c:1, used:'pásmo použito', prec:'přesnost pásma', p:0.1, mm:'1', cm:'0{,}1' },
+      { c:2, used:'pravítko použito', prec:'přesnost pravítka', p:0.05, mm:'0{,}5', cm:'0{,}05' }
     ];
     // Z jednoho popisu buňky (fn(D) → {html, fields} pracující se stavem sloupce C)
-    // udělá dvě buňky — pro metr a pro pravítko.
+    // udělá dvě buňky — pro pásmo a pro pravítko.
     function perCol(fn){
       return COLS.map(function(D, i){
         var spec = fn(D);
@@ -1115,7 +1115,7 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
       });
     }
     function derive(C){
-      C.raw = roundTo(C.n*PREC, 6);
+      C.raw = roundTo(C.n*C.p, 6);
       var r = WS.roundDev(C.raw); C.d = r.d; C.dec = r.dec;
       C.lr = roundTo(C.l.value, C.dec);
       var q = WS.relDev(C.d, C.lr); C.relRaw = q.raw; C.rel = q.rel; C.relDec = q.dec;
@@ -1142,24 +1142,24 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
               valid:function(p){ return p.decimals === 0 && p.value >= 1 ? '' : 'Zadejte celé číslo.'; },
               store:function(p, C){ C.n = p.value; }
             }] }; }),
-          after:function(S){ S.cols.forEach(derive); } },
+          after:function(S){ S.cols.forEach(function(C, i){ C.p = COLS[i].p; C.cm = COLS[i].cm; derive(C); }); } },
         { title:'Přesnost měřidla', inputClass:'small',
           cells: perCol(function(D){ return { html: D.prec + ' = {0} ' + tex('\\mathrm{cm}'),
             fields:[{
               check:function(p){
-                if(same(p.value, PREC)) return ok();
-                if(same(p.value, PREC*10)) return bad('To je přesnost v milimetrech — převeďte ji na centimetry.');
-                return bad('Přesnost metru i pravítka je 0,5 mm — zapište ji v centimetrech.');
+                if(same(p.value, D.p)) return ok();
+                if(same(p.value, D.p*10)) return bad('To je přesnost v milimetrech — převeďte ji na centimetry.');
+                return bad(D.c === 1 ? 'Přesnost pásma je 1 mm (nejmenší dílek je 2 mm) — zapište ji v centimetrech.' : 'Přesnost pravítka je 0,5 mm — zapište ji v centimetrech.');
               },
-              answer:function(){ return tex('0{,}5\\ \\mathrm{mm} = 0{,}05\\ \\mathrm{cm}'); }
+              answer:function(){ return tex(D.mm + '\\ \\mathrm{mm} = ' + D.cm + '\\ \\mathrm{cm}'); }
             }] }; }) },
         { title:'Odchylka',
           cells: perCol(function(D){ return { html: tex('\\Delta l_' + D.c + ' =') + ' {0} ' + tex('\\mathrm{cm}'),
             fields:[{
               check:function(p, C){
-                return inter(p, [{ v:C.raw, need:C.dec }], 'Odchylka je počet použití měřidla krát jeho přesnost (0,05 cm).');
+                return inter(p, [{ v:C.raw, need:C.dec }], 'Odchylka je počet použití měřidla krát jeho přesnost (' + String(C.p).replace('.', ',') + ' cm).');
               },
-              answer:function(C){ return tex(C.n + ' \\cdot 0{,}05 = ' + tn(WS.fmtAuto(C.raw)) + ' \\rightarrow ' + tn(fmt(C.d, C.dec)) + '\\ \\mathrm{cm}'); }
+              answer:function(C){ return tex(C.n + ' \\cdot ' + C.cm + ' = ' + tn(WS.fmtAuto(C.raw)) + ' \\rightarrow ' + tn(fmt(C.d, C.dec)) + '\\ \\mathrm{cm}'); }
             }] }; }) },
         { title:'Zaokrouhlení naměřené hodnoty',
           cells: perCol(function(D){ return { html: tex('l_' + D.c + ' =') + ' {0} ' + tex('\\mathrm{cm}'),
@@ -1209,7 +1209,7 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
           html += '<div class="line-scroll">' + tex('l_' + (i + 1) + ' = (' + tn(fmt(C.lr, C.dec)) + ' \\pm ' + tn(fmt(C.d, C.dec)) + ')\\ \\mathrm{cm};\\quad \\delta l_' + (i + 1) + ' = ' + tn(fmt(C.rel, C.relDec)) + '\\ \\%') + '</div>';
         });
         var a = S.cols[0].rel, b = S.cols[1].rel;
-        var better = a < b ? 'svinovacím metrem' : (b < a ? 'dřevěným pravítkem' : '');
+        var better = a < b ? 'pásmem' : (b < a ? 'dřevěným pravítkem' : '');
         return html + '<p>' + (better ? 'Přesnější je měření ' + better + ' — má menší relativní odchylku.' : 'Obě měření mají stejnou relativní odchylku.') + '</p>';
       }
     });
