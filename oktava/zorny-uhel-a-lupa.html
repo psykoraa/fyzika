@@ -705,11 +705,11 @@ svg.optics .f-group.dragging .f-grip{ fill:var(--accent); stroke:var(--accent); 
   var W = 960, H = 350;
   var AY = 200;               // optická osa (px)
   var D0 = 25;                // konvenční zraková vzdálenost (cm)
-  var ER = 26;                // poloměr nakresleného oka (px)
+  var ER = 32;                // poloměr nakresleného oka (px)
   var LUPA_HALF = 6;          // polovina výšky lupy (cm)
   var Y_MIN = 0.5, Y_MAX = 5, STEP = 0.5;
   var L_MIN = 5, L_MAX = 50;  // vzdálenost předmětu od oka bez lupy (cm)
-  var A_MIN = 1;              // nejmenší vzdálenost předmětu od lupy (cm)
+  var A_MIN = 2;              // nejmenší vzdálenost předmětu od lupy (cm)
   var F_MIN = 4, F_MAX = 15;  // ohnisková vzdálenost lupy (cm)
   var EPS = 1e-9;
   var NB = ' ';
@@ -830,21 +830,35 @@ svg.optics .f-group.dragging .f-grip{ fill:var(--accent); stroke:var(--accent); 
     });
   }
 
-  function drawEye(g){
-    var vx = XE(), cx = vx + 1 + ER;
-    el('circle', { cx:cx, cy:AY, r:ER, fill:'var(--surface)', stroke:'var(--ink)', 'stroke-width':2 * LK }, g);
-    el('ellipse', { cx:vx + 7, cy:AY, rx:4, ry:ER * 0.42, fill:'var(--lens)', stroke:'var(--ink-soft)', 'stroke-width':1.5 * LK }, g);
-    txt(layerLabels, cx, AY + ER + 18 * K, ['oko'], { 'font-size':13, 'font-weight':600, fill:'var(--ink-soft)', 'text-anchor':'middle' });
+  // Poloha oka: bez lupy leží čočka oka (vrchol úhlu) v XE; s lupou stojí oko celé až za lupou, aby ji nepřekrývalo.
+  function eyeGeom(){
+    var left = state.lupa ? XE() + 12 * LK + 6 : XE() - 7;
+    return { left:left, cx:left + ER, lens:left + 7 };
   }
-  // Průsečík paprsku vycházejícího z vrcholu V (směr ux, uy, ux > 0) se sítnicí.
+  function drawEye(g){
+    var e = eyeGeom();
+    el('circle', { cx:e.cx, cy:AY, r:ER, fill:'var(--surface)', stroke:'var(--ink)', 'stroke-width':2 * LK }, g);
+    el('ellipse', { cx:e.lens, cy:AY, rx:4.5, ry:ER * 0.42, fill:'var(--lens)', stroke:'var(--ink-soft)', 'stroke-width':1.5 * LK }, g);
+    txt(layerLabels, e.cx, AY + ER + 18 * K, ['oko'], { 'font-size':13, 'font-weight':600, fill:'var(--ink-soft)', 'text-anchor':'middle' });
+  }
+  // Průsečíky paprsku o + t·u (|u| = 1) s nakresleným okem; null, když oko mine.
+  function circleHits(ox, oy, ux, uy){
+    var dx = ox - eyeGeom().cx, dy = oy - AY;
+    var b = ux * dx + uy * dy, disc = b * b - (dx * dx + dy * dy - ER * ER);
+    if(disc < 0) return null;
+    var q = Math.sqrt(disc);
+    return { t1:-b - q, t2:-b + q };
+  }
+  // Průsečík paprsku vycházejícího z vrcholu úhlu V (směr ux, uy, ux > 0) se sítnicí; null, když oko mine.
   function retinaPoint(ux, uy){
-    var vx = XE(), cx = vx + 1 + ER, L = Math.hypot(ux, uy);
+    var L = Math.hypot(ux, uy);
     ux /= L; uy /= L;
-    var b = ux * (vx - cx), c = (vx - cx) * (vx - cx) - ER * ER;
-    var t = -b + Math.sqrt(b * b - c);
-    return { x:vx + ux * t, y:AY + uy * t, ax:cx + ER };
+    var h = circleHits(XE(), AY, ux, uy);
+    if(!h || h.t2 <= 0) return null;
+    return { x:XE() + ux * h.t2, y:AY + uy * h.t2, ax:eyeGeom().cx + ER };
   }
   function retinaMark(g, rp, color){
+    if(!rp) return;
     el('path', { d:'M' + rp.ax + ',' + AY + ' A' + ER + ',' + ER + ' 0 0 ' + (rp.y > AY ? 1 : 0) + ' ' + rp.x + ',' + rp.y,
       fill:'none', stroke:color, 'stroke-width':3.6 * LK, 'stroke-linecap':'round' }, g);
   }
@@ -856,7 +870,8 @@ svg.optics .f-group.dragging .f-grip{ fill:var(--accent); stroke:var(--accent); 
   }
 
   function drawAxis(){
-    line(layerBase, 14, AY, XE() + ER * 2 + 30 + (state.lupa ? 8 * S() : 0), AY, 'var(--ink-soft)', 1.2, '10 4 2 4');
+    var end = Math.max(eyeGeom().cx + ER + 30, state.lupa ? XE() + state.f * S() + 24 : 0);
+    line(layerBase, 14, AY, end, AY, 'var(--ink-soft)', 1.2, '10 4 2 4');
   }
 
   // Předmět (šipka) s úchyty: kroužek na ose (posun), tečka na hrotu (výška).
@@ -897,7 +912,7 @@ svg.optics .f-group.dragging .f-grip{ fill:var(--accent); stroke:var(--accent); 
 
   function drawLupa(){
     var vx = XE(), top = py(LUPA_HALF), bot = py(-LUPA_HALF);
-    el('path', { d:lensPath(vx, top, bot, (3 + 110 / state.f) * LK), fill:'var(--lens)', stroke:'var(--ink)', 'stroke-width':2.2 * LK, 'stroke-linejoin':'round' }, layerBase);
+    el('path', { d:lensPath(vx, top, bot, (2 + 40 / state.f) * LK), fill:'var(--lens)', stroke:'var(--ink)', 'stroke-width':2.2 * LK, 'stroke-linejoin':'round' }, layerBase);
     txt(layerLabels, vx, top - 10 * K, ['lupa'], { 'font-size':13, 'font-weight':600, fill:'var(--ink-soft)', 'text-anchor':'middle' });
   }
 
@@ -929,7 +944,7 @@ svg.optics .f-group.dragging .f-grip{ fill:var(--accent); stroke:var(--accent); 
       el('polygon', { points:vx + ',' + AY + ' ' + bx + ',' + by + ' ' + bx + ',' + AY, fill:'var(--accent)', opacity:0.09 }, layerRays);
       line(layerRays, vx, AY, bx, by, 'var(--accent)', 2.2);
       var rp = retinaPoint(vx - bx, AY - by);
-      line(layerRays, vx, AY, rp.x, rp.y, 'var(--accent)', 2.2);
+      if(rp) line(layerRays, vx, AY, rp.x, rp.y, 'var(--accent)', 2.2);
       retinaMark(layerRays, rp, 'var(--accent)');
       drawStandard(r.tauStd);
       arcAt(layerBase, 70, r.tau, 'var(--accent)');
@@ -943,7 +958,8 @@ svg.optics .f-group.dragging .f-grip{ fill:var(--accent); stroke:var(--accent); 
       // hlavní paprsek středem lupy do oka a až na sítnici
       var rp2 = retinaPoint(vx - bx, AY - by);
       el('polygon', { points:vx + ',' + AY + ' ' + bx + ',' + by + ' ' + bx + ',' + AY, fill:'var(--accent)', opacity:0.07 }, layerRays);
-      line(layerRays, bx, by, rp2.x, rp2.y, 'var(--ray1)', 2.2);
+      var chiefEnd = rp2 || { x:vx + (vx - bx) * 0.6, y:AY + (AY - by) * 0.6 };
+      line(layerRays, bx, by, chiefEnd.x, chiefEnd.y, 'var(--ray1)', 2.2);
       // druhý paprsek vstupuje do oka kousek nad osou; za lupou se šíří, jako by vycházel ze zdánlivého obrazu
       var hp = 8 * LK, P = { x:vx, y:AY - hp }, dx, dy;
       if(r.atF){ dx = vx - bx; dy = AY - by; }
@@ -961,9 +977,15 @@ svg.optics .f-group.dragging .f-grip{ fill:var(--accent); stroke:var(--accent); 
       }
       var Ln = Math.hypot(dx, dy); dx /= Ln; dy /= Ln;
       line(layerRays, bx, by, P.x, P.y, 'var(--ray3)', 1.8);
-      var P2 = { x:vx + 7, y:P.y + dy / dx * 7 };
-      line(layerRays, P.x, P.y, P2.x, P2.y, 'var(--ray3)', 1.8);
-      line(layerRays, P2.x, P2.y, rp2.x, rp2.y, 'var(--ray3)', 1.8);
+      // druhý paprsek vstoupí do oka a čočka oka ho svede do téhož bodu sítnice jako hlavní paprsek
+      var hit = circleHits(P.x, P.y, dx, dy);
+      if(hit && hit.t2 > 0 && rp2){
+        var t0 = Math.max(hit.t1, 0), Q = { x:P.x + dx * t0, y:P.y + dy * t0 };
+        line(layerRays, P.x, P.y, Q.x, Q.y, 'var(--ray3)', 1.8);
+        line(layerRays, Q.x, Q.y, rp2.x, rp2.y, 'var(--ray3)', 1.8);
+      } else {
+        line(layerRays, P.x, P.y, P.x + dx * 60, P.y + dy * 60, 'var(--ray3)', 1.8);
+      }
       if(r.atF){
         // rovnoběžné paprsky: čárkovaně zpět — zdánlivý obraz je v nekonečnu
         [[bx, by], [P.x, P.y]].forEach(function(q){
