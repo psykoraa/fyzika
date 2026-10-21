@@ -572,7 +572,7 @@ svg.optics .f-group.dragging .f-grip{ fill:var(--accent); stroke:var(--accent); 
         <div class="mode-row" id="gamma-row" hidden>
           <span class="mode-row-label">Zvětšení lupy</span>
           <div class="seg">
-            <button class="chip accented" id="gamma-btn" type="button" aria-pressed="false">Spočítat zvětšení lupy</button>
+            <button class="chip accented" id="gamma-btn" type="button" aria-pressed="false">Zobrazit zvětšení lupy</button>
           </div>
         </div>
       </div>
@@ -582,7 +582,7 @@ svg.optics .f-group.dragging .f-grip{ fill:var(--accent); stroke:var(--accent); 
           <svg class="optics" id="optics-svg" viewBox="0 0 960 350" role="img" aria-label="Oko s předmětem, zorný úhel a standardní zorný úhel; po přidání lupy spojka s ohnisky a zdánlivým obrazem."></svg>
           <div class="legend" id="legend" aria-hidden="true"></div>
         </div>
-        <p class="hint">Předmět chytněte myší nebo prstem (za šipku nebo kroužek na ose); tažením za tečku na hrotu šipky měníte jeho výšku <i>y</i>. U lupy měníte ohniskovou vzdálenost posunutím ohniska <i>F</i> nebo <i>F′</i> v obrázku. Po označení šipky předmětu nebo ohniska jdou hodnoty měnit i klávesami ← → ↑ ↓. Při použití lupy se předmět nedá posunout za ohnisko (<i>a</i>&nbsp;≤&nbsp;<i>f</i>), protože jinak už by lupa neposloužila.</p>
+        <p class="hint">Předmět chytněte myší nebo prstem (za šipku nebo kroužek na ose); tažením za tečku na hrotu šipky měníte jeho výšku <i>y</i>. U lupy měníte ohniskovou vzdálenost posunutím ohniska <i>F</i> nebo <i>F′</i> v obrázku. Po označení šipky předmětu nebo ohniska jdou hodnoty měnit i klávesami ← → ↑ ↓. Bez lupy nejde předmět přiblížit blíž než k blízkému bodu oka (10&nbsp;cm). U lupy se předmět nedá posunout za ohnisko (<i>a</i>&nbsp;≤&nbsp;<i>f</i>) ani tak blízko, aby zvětšení přesáhlo 6 (<i>a</i>&nbsp;≥&nbsp;<i>d</i>/6&nbsp;≈&nbsp;4,2&nbsp;cm); ohnisková vzdálenost nejde zmenšit pod 4,2&nbsp;cm.</p>
       </div>
 
       <div class="applet-results">
@@ -705,12 +705,14 @@ svg.optics .f-group.dragging .f-grip{ fill:var(--accent); stroke:var(--accent); 
   var W = 960, H = 350;
   var AY = 200;               // optická osa (px)
   var D0 = 25;                // konvenční zraková vzdálenost (cm)
+  var NEAR = 10;              // blízký bod oka (cm): blíž už oko nezaostří
+  var GMAX = 6;               // největší zvětšení jednoduché lupy
   var ER = 32;                // poloměr nakresleného oka (px)
   var LUPA_HALF = 6;          // polovina výšky lupy (cm)
   var Y_MIN = 0.5, Y_MAX = 5, STEP = 0.5;
-  var L_MIN = 5, L_MAX = 50;  // vzdálenost předmětu od oka bez lupy (cm)
+  var L_MIN = NEAR, L_MAX = 50;  // vzdálenost předmětu od oka bez lupy (cm)
   var A_MIN = 2;              // nejmenší vzdálenost předmětu od lupy (cm)
-  var F_MIN = 4, F_MAX = 15;  // ohnisková vzdálenost lupy (cm)
+  var F_MIN = D0 / GMAX, F_MAX = 15;  // ohnisková vzdálenost lupy (cm); pro f < d/6 by zvětšení v ohnisku přesáhlo 6
   var EPS = 1e-9;
   var NB = ' ';
   var K = 1, LK = 1;          // zvětšení písma a čar na malém displeji (viz updateScale)
@@ -886,7 +888,7 @@ svg.optics .f-group.dragging .f-grip{ fill:var(--accent); stroke:var(--accent); 
     el('circle', { 'class':'obj-grip', cx:x, cy:AY, r:7 * LK }, objGroup);
     var hit = el('rect', { 'class':'obj-hit', x:x - 20, y:top - 28, width:40, height:AY - top + 42,
       tabindex:0, role:'slider', 'aria-label':'Předmět: ← → vzdálenost, ↑ ↓ výška y',
-      'aria-valuemin':state.lupa ? A_MIN : L_MIN, 'aria-valuemax':state.lupa ? state.f : L_MAX, 'aria-valuenow':dist(),
+      'aria-valuemin':state.lupa ? aLow() : L_MIN, 'aria-valuemax':state.lupa ? state.f : L_MAX, 'aria-valuenow':dist(),
       'aria-valuetext':(state.lupa ? 'a' : 'l') + ' = ' + fmt(dist(), 1) + ' cm, y = ' + fmt(state.y, 1) + ' cm' }, objGroup);
     attachObjEvents(hit);
     el('circle', { 'class':'tip-grip', cx:x, cy:top - 3 * LK, r:5 * LK, 'stroke-width':2.2 * LK }, objGroup);
@@ -947,9 +949,12 @@ svg.optics .f-group.dragging .f-grip{ fill:var(--accent); stroke:var(--accent); 
       if(rp) line(layerRays, vx, AY, rp.x, rp.y, 'var(--accent)', 2.2);
       retinaMark(layerRays, rp, 'var(--accent)');
       drawStandard(r.tauStd);
+      var nx = px(-NEAR);   // blízký bod oka — blíž předmět nejde posunout
+      line(layerRays, nx, AY - 105, nx, AY + 32, 'var(--danger)', 2, '5 4');
+      txt(layerLabels, nx, AY + 50 * K, ['blízký bod (10 cm)'], { 'font-size':13, 'font-weight':600, fill:'var(--danger)', 'text-anchor':'middle' });
       arcAt(layerBase, 70, r.tau, 'var(--accent)');
-      angleLabel(70, [I('τ'), SUB('l')], 'var(--accent)');
-      valueBlock([{ parts:[I('τ'), SUB('l'), ' = ' + fmt(deg(r.tau), 1) + '°'], color:'var(--accent)' },
+      angleLabel(70, [I('τ'), '′'], 'var(--accent)');
+      valueBlock([{ parts:[I('τ'), '′ = ' + fmt(deg(r.tau), 1) + '°'], color:'var(--accent)' },
                   { parts:[I('τ'), ' = ' + fmt(deg(r.tauStd), 1) + '°' + STD_TAG], color:'var(--ink-soft)' }]);
       dimension(layerObj, bx, vx, AY + 78, [I('l'), ' = ' + fmt(r.l, 1) + ' cm'], 'var(--accent)');
     } else {
@@ -1015,7 +1020,8 @@ svg.optics .f-group.dragging .f-grip{ fill:var(--accent); stroke:var(--accent); 
     var seg = function(c, dash, w){ return '<line x1="1" y1="5" x2="25" y2="5" stroke="' + c + '" stroke-width="' + (w || 2.4) + '"' + (dash ? ' stroke-dasharray="5 4"' : '') + '/>'; };
     var h = '';
     if(!state.lupa){
-      h += legendItem(seg('var(--accent)'), 'zorný úhel předmětu ve vzdálenosti <i>l</i>');
+      h += legendItem(seg('var(--accent)'), 'zorný úhel <i>τ′</i> předmětu ve vzdálenosti <i>l</i>');
+      h += legendItem(seg('var(--danger)', true), 'blízký bod oka (10&nbsp;cm)');
     } else {
       h += legendItem(seg('var(--ray1)'), 'paprsek středem lupy → zorný úhel <i>τ′</i>');
       h += legendItem(seg('var(--ray3)'), 'druhý paprsek do oka');
@@ -1039,9 +1045,10 @@ svg.optics .f-group.dragging .f-grip{ fill:var(--accent); stroke:var(--accent); 
   if(window.ResizeObserver) new ResizeObserver(function(){ if(updateScale()) render(); }).observe(svg);
 
   // ---- ovládání: tažení a klávesy ----
+  function aLow(){ return Math.max(A_MIN, D0 / GMAX); }   // nejblíž k lupě: zvětšení d/a nesmí přesáhnout GMAX
   function clampDist(v){
     v = Math.round(v / STEP) * STEP;
-    return state.lupa ? Math.max(A_MIN, Math.min(state.f, v)) : Math.max(L_MIN, Math.min(L_MAX, v));
+    return state.lupa ? Math.max(aLow(), Math.min(state.f, v)) : Math.max(L_MIN, Math.min(L_MAX, v));
   }
   function setDist(v){
     v = clampDist(v);
@@ -1152,7 +1159,7 @@ svg.optics .f-group.dragging .f-grip{ fill:var(--accent); stroke:var(--accent); 
     });
   });
 
-  // ---- přepínač lupy a tlačítko Spočítat zvětšení ----
+  // ---- přepínač lupy a tlačítko Zobrazit zvětšení lupy ----
   var lupaBtn = document.getElementById('lupa-toggle');
   var gammaRow = document.getElementById('gamma-row'), gammaBtn = document.getElementById('gamma-btn');
   function setLupa(on){
@@ -1194,15 +1201,15 @@ svg.optics .f-group.dragging .f-grip{ fill:var(--accent); stroke:var(--accent); 
     var lines = [], note, BR = ' = ';
     if(!state.lupa){
       distValues.innerHTML = eqHtml('l', r.l, 1, 'cm') + eqHtml('y', r.y, 1, 'cm') + '<span><i>d</i>&nbsp;=&nbsp;25&nbsp;cm</span>';
-      labTau1.innerHTML = '<i>τ</i><sub>l</sub>';
+      labTau1.innerHTML = '<i>τ′</i>';
       outTau1.textContent = fmt(deg(r.tau), 1) + '°';
       outTau0.textContent = fmt(deg(r.tauStd), 1) + '°';
       cellGamma.hidden = true;
       if(Math.abs(r.l - D0) < EPS){ prop('l = d: zorný úhel je standardní'); }
       else if(r.l < D0){ prop('větší než standardní zorný úhel'); }
       else { prop('menší než standardní zorný úhel'); }
-      note = 'Čím blíž je předmět, tím větší je zorný úhel a tím větší obraz vznikne na sítnici (<i>τ</i><sub>l</sub> ≈ <i>y</i>/<i>l</i>). Blíž než k blízkému bodu ale oko předmět zaostřit neumí, proto se k němu nedá přiblížit libovolně. Zkuste předmět přidržet ve vzdálenosti 25&nbsp;cm: oba úhly se shodují.';
-      lines.push('\\tan\\tau_l &= \\frac{y}{l} = \\frac{' + tex(r.y, 1) + '\\ \\mathrm{cm}}{' + tex(r.l, 1) + '\\ \\mathrm{cm}}' + (exact(Math.tan(r.tau), 3) ? ' = ' : ' \\doteq ') + tex(Math.tan(r.tau), 3) + ' \\ \\Rightarrow\\ \\tau_l \\doteq ' + tex(deg(r.tau), 1) + '^\\circ');
+      note = 'Čím blíž je předmět, tím větší je zorný úhel a tím větší obraz vznikne na sítnici (<i>τ′</i> ≈ <i>y</i>/<i>l</i>). Blíž než k blízkému bodu oka (10&nbsp;cm) ale předmět zaostřit neumíme, proto ho nejde přiblížit víc. Zkuste předmět přidržet ve vzdálenosti 25&nbsp;cm: oba úhly se shodují.';
+      lines.push('\\tan\\tau\' &= \\frac{y}{l} = \\frac{' + tex(r.y, 1) + '\\ \\mathrm{cm}}{' + tex(r.l, 1) + '\\ \\mathrm{cm}}' + (exact(Math.tan(r.tau), 3) ? ' = ' : ' \\doteq ') + tex(Math.tan(r.tau), 3) + ' \\ \\Rightarrow\\ \\tau\' \\doteq ' + tex(deg(r.tau), 1) + '^\\circ');
       lines.push('\\tan\\tau &= \\frac{y}{d} = \\frac{' + tex(r.y, 1) + '\\ \\mathrm{cm}}{25\\ \\mathrm{cm}}' + (exact(Math.tan(r.tauStd), 3) ? ' = ' : ' \\doteq ') + tex(Math.tan(r.tauStd), 3) + ' \\ \\Rightarrow\\ \\tau \\doteq ' + tex(deg(r.tauStd), 1) + '^\\circ');
     } else {
       distValues.innerHTML = eqHtml('a', r.a, 1, 'cm') + eqHtml('y', r.y, 1, 'cm') + eqHtml('f', r.f, 1, 'cm') + '<span><i>φ</i>&nbsp;=&nbsp;' + fmt(r.phi, 1) + '&nbsp;D</span>';
@@ -1226,7 +1233,9 @@ svg.optics .f-group.dragging .f-grip{ fill:var(--accent); stroke:var(--accent); 
         if(r.atF){
           lines.push('\\gamma &= \\frac{d}{f} = 0{,}25\\,\\varphi = 0{,}25 \\cdot ' + tex(r.phi, 1) + (exact(0.25 * r.phi, 1) ? ' = ' : ' \\doteq ') + tex(0.25 * r.phi, 1));
         }
-        if(r.gamma > 6.05) note += ' Takové zvětšení už jednoduchá lupa běžně nedává (kolem 6×), protože by se příliš projevily vady čočky.';
+      }
+      if(r.gamma > GMAX - 0.05){
+        note += ' Dosáhli jste největšího zvětšení jednoduché lupy (6×). Blíž k lupě už předmět posunout nejde, protože by se příliš projevily vady čočky.';
       }
     }
     posNote.innerHTML = note;   // jen pevné texty a čísla z fmt()
