@@ -45,7 +45,8 @@
     'prumerna-okamzita-rychlost.html': 'kvinta',
     'grafy-rovnomerne-zrychleneho-pohybu.html': 'kvinta',
     'kulova-zrcadla.html': 'oktava',
-    'cocky.html': 'oktava'
+    'cocky.html': 'oktava',
+    'zorny-uhel-a-lupa.html': 'oktava'
   };
 
   // auth.js vždy žije na <kořen webu>/spolecne/auth.js — z jeho vlastní (absolutní)
