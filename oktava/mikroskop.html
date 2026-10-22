@@ -785,7 +785,7 @@ svg.optics .eye-group.dragging .eye-lens{ stroke:var(--accent); }
   var DL_MIN = 100, DL_MAX = 220, DL_STEP = 0.1;
   var A_STEP = 0.001;
   var SNAP = 0.5;             // do této vzdálenosti od zaostření se tažený okulár „přichytí“ (mm)
-  var APER = 125;             // polovina výšky nakreslených čoček (px)
+  var APER_OBJ = 75, APER_EYE = 150;   // polovina výšky nakresleného objektivu a okuláru (px)
   var EPS = 1e-9;
   var TOL = 1e-6;             // |s − f2| menší než tohle = obraz v nekonečnu (mm)
   var DEF = { f1:8, f2:25 };
@@ -913,11 +913,11 @@ svg.optics .eye-group.dragging .eye-lens{ stroke:var(--accent); }
     return 'M' + X + ',' + top + ' Q' + (X + 2 * h) + ',' + mid + ' ' + X + ',' + bot +
       ' Q' + (X - 2 * h) + ',' + mid + ' ' + X + ',' + top + ' Z';
   }
-  function drawLens(X, h, name, parent, cls){
-    var a = { d:lensPath(X, AY - APER, AY + APER, h * LK), fill:'var(--lens)', stroke:'var(--ink)', 'stroke-width':2.2 * LK, 'stroke-linejoin':'round' };
+  function drawLens(X, h, ap, name, parent, cls){
+    var a = { d:lensPath(X, AY - ap, AY + ap, h * LK), fill:'var(--lens)', stroke:'var(--ink)', 'stroke-width':2.2 * LK, 'stroke-linejoin':'round' };
     if(cls) a['class'] = cls;
     el('path', a, parent || layerBase);
-    txt(layerLabels, X, AY - APER - 8 * K, [name], { 'font-size':13, 'font-weight':600, fill:'var(--ink-soft)', 'text-anchor':'middle' });
+    txt(layerLabels, X, AY - ap - 8 * K, [name], { 'font-size':13, 'font-weight':600, fill:'var(--ink-soft)', 'text-anchor':'middle' });
   }
   // below: popisek pod osou; anchor: 'start' / 'end' posune popisek ke straně (u blízkých ohnisek F1, F1′)
   function focusMark(x, parts, above, anchor){
@@ -939,7 +939,7 @@ svg.optics .eye-group.dragging .eye-lens{ stroke:var(--accent); }
 
     // osa, objektiv, ohniska
     line(layerBase, 14, AY, W - 14, AY, 'var(--ink-soft)', 1.2, '10 4 2 4');
-    drawLens(X0, 3 + 16 / f1, 'objektiv');
+    drawLens(X0, 3 + 16 / f1, APER_OBJ, 'objektiv');
     focusMark(px(-f1), [I('F'), SUB('1')], false, 'end');
     focusMark(px(f1), [I('F'), SUB('1'), '′'], false, 'start');
     focusMark(px(f1 + r.delta), [I('F'), SUB('2')], true);
@@ -1025,8 +1025,8 @@ svg.optics .eye-group.dragging .eye-lens{ stroke:var(--accent); }
   // Okulár s úchytem: tažením doleva a doprava se mění Δ (zaostřuje se).
   function drawEyepiece(XE, f2){
     eyeGroup = el('g', { 'class':'eye-group' + (dragging ? ' dragging' : '') + (eyeFocused ? ' focused' : '') }, layerObj);
-    drawLens(XE, 2 + 30 / f2, 'okulár', eyeGroup, 'eye-lens');
-    var hit = el('rect', { 'class':'eye-hit', x:XE - 22, y:AY - APER - 6, width:44, height:2 * APER + 12,
+    drawLens(XE, 2 + 30 / f2, APER_EYE, 'okulár', eyeGroup, 'eye-lens');
+    var hit = el('rect', { 'class':'eye-hit', x:XE - 22, y:AY - APER_EYE - 6, width:44, height:2 * APER_EYE + 12,
       tabindex:0, role:'slider', 'aria-label':'Okulár: ← → posun okuláru, tedy optický interval Δ',
       'aria-valuemin':DL_MIN, 'aria-valuemax':DL_MAX, 'aria-valuenow':roundTo(state.delta, 1),
       'aria-valuetext':'Δ = ' + fmt(state.delta, 1) + ' mm' }, eyeGroup);
