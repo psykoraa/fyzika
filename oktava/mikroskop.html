@@ -779,7 +779,7 @@ svg.optics .eye-group.dragging .eye-lens{ stroke:var(--accent); }
   var X0 = 140;               // střed objektivu (px)
   var D0 = 250;               // konvenční zraková vzdálenost (mm)
   var DELTA0 = 160;           // optický interval, pro který se běžně vyrábějí objektivy (mm)
-  var FN = 18;                // zorné číslo okuláru (mm)
+  var FIELD = 180000;         // zorné pole v preparátu (µm) = FIELD / γ; při γ = 200 je to 0,9 mm
   var F1_MIN = 2, F1_MAX = 16, F1_STEP = 0.1;      // objektivy 100× až 10×
   var F2_MIN = 10, F2_MAX = 50, F2_STEP = 0.5;     // okuláry 25× až 5×
   var DL_MIN = 100, DL_MAX = 220, DL_STEP = 0.1;
@@ -1060,7 +1060,7 @@ svg.optics .eye-group.dragging .eye-lens{ stroke:var(--accent); }
 
   // ---- pohled do okuláru ----
   // Preparát: buňky pokožky cibule (cihlový vzor 240 × 90 µm s jádry a zrníčky), dvě písmena F, podle kterých je vidět převrácení.
-  // Měřítko: zorné pole má průměr FN / |Z1|, obraz je otočený o 180°. Rozostření: Gaussovo rozmazání úměrné vergenci v dioptriích.
+  // Měřítko: zorné pole má v preparátu průměr FIELD / γ (větší zvětšení = menší výřez), obraz je otočený o 180°. Rozostření: Gaussovo rozmazání úměrné vergenci v dioptriích.
   var VR = 96;                                  // poloměr zorného pole v jednotkách obrázku
   var eyeContent = document.getElementById('eye-content');
   var eyeBlurFe = document.getElementById('eye-blur-fe');
@@ -1082,7 +1082,7 @@ svg.optics .eye-group.dragging .eye-lens{ stroke:var(--accent); }
     return '<path d="M' + x + ',' + y + ' v' + (-h) + ' h' + w + ' v' + t + ' h' + (-(w - t)) + ' v' + t + ' h' + (w * 0.7 - t) + ' v' + t + ' h' + (-(w * 0.7 - t)) + ' v' + (h - 3 * t) + ' Z" fill="#7a2f22" fill-opacity="0.8"/>';
   }
   function buildSpecimen(){
-    var rnd = mulberry(7), HALF = 1300, CW = 240, CH = 90, walls = '', nuc = '', gran = '';
+    var rnd = mulberry(7), HALF = 1800, CW = 240, CH = 90, walls = '', nuc = '', gran = '';
     var rows = Math.ceil(2 * HALF / CH) + 1, cols = Math.ceil(2 * HALF / CW) + 2;
     for(var j = 0; j < rows; j++){
       var y = -HALF + j * CH, off = (j % 2) * CW / 2;
@@ -1106,7 +1106,7 @@ svg.optics .eye-group.dragging .eye-lens{ stroke:var(--accent); }
   }
 
   function renderEye(r){
-    var field = FN * 1000 / r.Z;                          // průměr zorného pole v preparátu (µm)
+    var field = Math.min(3600, FIELD / (r.mode === 'real' ? r.gamma0 : r.gamma));   // průměr zorného pole v preparátu (µm)
     var k = 2 * VR / field;                               // jednotky obrázku na µm
     eyeContent.setAttribute('transform', 'rotate(180) scale(' + k.toFixed(5) + ')');
     var sigma = Math.min(9, Math.abs(r.dioptre));
