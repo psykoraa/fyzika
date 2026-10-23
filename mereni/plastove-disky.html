@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hustota plastových disků — laboratorní práce</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="../spolecne/config.js"></script>
+<script src="../spolecne/auth.js"></script>
+<script src="../spolecne/zalozky.js?v=3"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../spolecne/styl.css">
+<style>
+:root{
+  --paper:#eef5ee;
+  --surface:#fbfef9;
+  --surface-2:#dce8da;
+  --ink:#1f2e22;
+  --ink-soft:#5c705d;
+  --line:rgba(31,46,34,0.12);
+  --accent:#2f7a4f;
+  --accent-ink:#f2fbf5;
+  --success:#28794f;
+  --success-bg:#e3efe0;
+  --danger:#b3392b;
+  --danger-bg:#f5e4de;
+  --focus:#1e6f66;
+  --shadow: 0 1px 0 rgba(31,46,34,0.06);
+}
+
+.panel p{ margin:0 0 8px; font-size:0.92rem; line-height:1.55; }
+.panel p:last-child{ margin-bottom:0; }
+.panel b{ color:var(--ink); }
+.katex{ font-size:1.05em; }
+
+.panel ol, .panel ul{ margin:0 0 8px; padding-left:1.5rem; font-size:0.92rem; line-height:1.6; }
+.panel ol:last-child, .panel ul:last-child{ margin-bottom:0; }
+.panel li{ margin-bottom:3px; }
+
+.lab-title{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.5rem;
+  text-align:center;
+  margin:0 0 18px;
+}
+.task-id{ font-weight:700; color:var(--accent); margin-right:4px; }
+.task{ margin-bottom:10px; }
+.task > ol{ margin-top:4px; }
+.error-bar{ color:var(--ink-soft); font-style:italic; }
+
+.lab-table-wrap{ display:flex; justify-content:center; margin:6px 0 16px; overflow-x:auto; }
+.lab-table{
+  border-collapse:collapse;
+  font-size:0.92rem;
+  background:var(--surface);
+}
+.lab-table th, .lab-table td{
+  border:1px solid var(--ink);
+  padding:6px 4px;
+  text-align:center;
+  min-width:64px;
+  height:26px;
+}
+.lab-table thead th{ font-weight:400; line-height:1.3; }
+.lab-table tbody tr.sum-start td{ border-top:3px double var(--ink); }
+
+.attribution{
+  margin-top:24px;
+  font-size:0.78rem;
+  color:var(--ink-soft);
+  text-align:center;
+  line-height:1.5;
+}
+.attribution a{ color:var(--accent); }
+
+/* ---- Měření mikrometrem ---- */
+.scale-note{ font-size:0.86rem; color:var(--ink-soft); }
+.callout{
+  background:var(--success-bg);
+  border-left:4px solid var(--accent);
+  border-radius:6px;
+  padding:10px 14px;
+  margin:10px 0;
+  font-size:0.92rem;
+  line-height:1.55;
+}
+.callout.warn{ background:var(--danger-bg); border-left-color:var(--danger); }
+
+.part-list{ list-style:none; padding:0 !important; }
+.part-list li{ display:flex; gap:10px; align-items:baseline; }
+.part-num{
+  flex:0 0 auto;
+  width:24px; height:24px; border-radius:50%;
+  background:var(--accent); color:var(--accent-ink);
+  font-weight:700; font-size:0.8rem;
+  display:inline-flex; align-items:center; justify-content:center;
+}
+
+.vernier-wrap{ margin:10px 0; }
+.vernier-svg{
+  width:100%;
+  height:auto;
+  display:block;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:8px;
+}
+.vernier-svg text{ font-family:'IBM Plex Mono', monospace; fill:var(--ink); }
+.vernier-controls{
+  display:flex; flex-wrap:wrap; gap:10px 14px; align-items:center;
+  margin-top:12px;
+}
+.vernier-controls input[type=range]{ flex:1 1 220px; accent-color:var(--accent); }
+a.btn, button.vbtn{
+  font-family:'Work Sans', sans-serif;
+  font-weight:600; font-size:0.9rem;
+  padding:9px 16px; border-radius:8px;
+  border:1px solid var(--line);
+  background:var(--surface); color:var(--ink);
+  cursor:pointer;
+}
+button.vbtn.primary{ background:var(--accent); border-color:var(--accent); color:var(--accent-ink); }
+button.vbtn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+.readout-box{
+  margin-top:12px;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:0.95rem;
+  line-height:1.7;
+  background:var(--surface-2);
+  border-radius:8px;
+  padding:10px 14px;
+}
+.readout-box .res{ font-weight:700; color:var(--accent); font-size:1.1rem; }
+
+.chip.on{ background:var(--accent); border-color:var(--accent); color:var(--accent-ink); }
+.chip:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+.level-row{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:4px 0 12px; }
+.level-row .lbl{ font-size:0.86rem; color:var(--ink-soft); margin-right:4px; }
+.stat-row{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+.stat-row .readout{ flex-wrap:wrap; }
+.answer-row{
+  display:flex; flex-wrap:wrap; gap:10px; align-items:center;
+  margin-top:14px;
+  font-size:0.92rem;
+}
+.answer-row input{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:1rem;
+  width:110px;
+  padding:9px 10px;
+  border:1px solid var(--line);
+  border-radius:8px;
+  background:var(--surface);
+  color:var(--ink);
+}
+.answer-row input:focus{ outline:2px solid var(--focus); outline-offset:1px; }
+.task-hint{ font-size:0.92rem; margin-top:10px; }
+.fb{ margin-top:14px; border-radius:10px; padding:12px 14px; font-size:0.92rem; line-height:1.55; }
+.fb[hidden]{ display:none; }
+.fb.ok{ background:var(--success-bg); }
+.fb.bad{ background:var(--danger-bg); }
+.fb .headline{ font-weight:700; margin-bottom:4px; }
+.fb.ok .headline{ color:var(--success); }
+.fb.bad .headline{ color:var(--danger); }
+.fb p{ margin:4px 0 0; }
+
+.part-list li{ margin-bottom:6px; }
+@media (max-width:520px){
+  .lab-table th, .lab-table td{ min-width:44px; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <a class="back-link" href="../rozcestniky/mereni.html">← Zpět na Měření</a>
+
+  <div class="brand">
+    <div class="brand-lockup">
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <ellipse cx="20" cy="15" rx="14" ry="6" fill="none" stroke="var(--accent)" stroke-width="2"/>
+        <path d="M6 15 V23 A14 6 0 0 0 34 23 V15" fill="none" stroke="var(--accent)" stroke-width="2"/>
+      </svg>
+      <div class="brand-text">
+        <h1>1. Laboratorní práce</h1>
+        <p>hustota plastových disků</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="top-tabs">
+    <button class="toptab on" id="top-tab-zadani" data-tab="zadani">Zadání</button>
+    <button class="toptab" id="top-tab-mikrometr" data-tab="mikrometr">Měření mikrometrem</button>
+  </div>
+
+  <!-- ============ ZADÁNÍ ============ -->
+  <div id="zadani-section" class="tab-section">
+
+    <h2 class="lab-title">1. Měření hustoty plastových disků</h2>
+
+    <div class="panel">
+      <div class="panel-title">Úkoly</div>
+      <div class="task"><p><span class="task-id">Ú1.</span> Posuvným měřítkem změřte průměr \(d\) disků.</p></div>
+      <div class="task"><p><span class="task-id">Ú2.</span> Mikrometrem změřte tloušťku \(t\) disků.</p></div>
+      <div class="task"><p><span class="task-id">Ú3.</span> Na digitálních vahách určete hmotnost \(m\) disků.</p></div>
+      <div class="task"><p><span class="task-id">Ú4.</span> Z naměřených veličin určete hustotu \(\varrho\) disků.</p></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Pomůcky</div>
+      <p>mikrometr (<span class="error-bar">± doplň chybu měřidla</span>), posuvné měřítko (<span class="error-bar">± doplň chybu měřidla</span>), elektronické váhy (<span class="error-bar">± doplň chybu měřidla</span>), 4× plastový disk.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Teoretický úvod</div>
+      <p>V teoretickém úvodu zodpovězte následující úkoly:</p>
+      <div class="task"><p><span class="task-id">T1.</span> Vyhledejte vhodný obrázek mikrometru s otevřenými čelistmi (nebo ho nakreslete) a popište jeho hlavní části.</p></div>
+      <div class="task"><p><span class="task-id">T2.</span> Popište princip odečítání naměřených hodnot z mikrometru.</p></div>
+      <div class="task"><p><span class="task-id">T3.</span> Napište definici hustoty tělesa.</p></div>
+      <div class="task"><p><span class="task-id">T4.</span> Odvoďte vzorec pro výpočet hustoty z měřených veličin (výraz upravte, aby neobsahoval složený zlomek!).</p></div>
+      <div class="task"><p><span class="task-id">T5.</span> Napište vzorec pro výpočet relativní chyby hustoty, ve vzorci musí být pouze \(d\), \(t\), \(m\), \(\Delta d\), \(\Delta t\) a \(\Delta m\).</p></div>
+      <div class="task"><p><span class="task-id">T6.</span> Napište vzorec pro výpočet absolutní chyby hustoty.</p></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Postup práce</div>
+      <p>Při měření rozměrů postupujte podobným způsobem jako v prvním měření. Každý rozměr změří nejprve jeden z vás a pak i ten druhý na čtyřech různých místech každého disku. Získejte tímto střídáním 32 hodnot pro každý rozměr.</p>
+      <p>Hmotnost budete měřit pro každý disk zvlášť. Až změříte každý disk 1×, tak to ještě 7× zopakujete.</p>
+      <p>Výpočet hustoty předveďte ve zpracování dosazením do vzorce z teoretického úvodu. Vzorec znovu neopisujte, proveďte jen poslední 2 kroky výpočtu \(\{\varrho\} = \dots\) a \(\varrho = \dots\ \mathrm{g\cdot cm^{-3}}\). Stejným způsobem dosaďte do vzorce pro relativní odchylku a také absolutní odchylku měření. Po těchto výpočtech teprve hodnoty zapište v požadovaném tvaru. Oba tyto výpočty zapište ručně vedle nebo pod tabulku naměřených hodnot.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Návrh vzhledu tabulky</div>
+      <div class="lab-table-wrap">
+        <table class="lab-table">
+          <thead>
+            <tr>
+              <th>Č.&nbsp;M.<br>i</th>
+              <th>\(d_i\)<br>mm</th>
+              <th>\(t_i\)<br>mm</th>
+              <th>\(m_i\)<br>g</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><b>1</b></td><td></td><td></td><td></td></tr>
+            <tr><td><b>2</b></td><td></td><td></td><td></td></tr>
+            <tr><td>⋮</td><td></td><td></td><td></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <p class="attribution">
+      Zadání vytvořil Václav Skřivan, Gymnázium Jaroslava Vrchlického, Klatovy.<br>
+      Licence <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.cs" target="_blank" rel="noopener">Creative Commons Uveď původ–Nepoužívej komerčně–Zachovej licenci 4.0 Mezinárodní</a>.
+    </p>
+  </div>
+
+  <!-- ============ MĚŘENÍ MIKROMETREM ============ -->
+  <div id="mikrometr-section" class="tab-section" hidden>
+
+    <div class="panel">
+      <div class="panel-title">Z čeho se mikrometr skládá</div>
+      <ol class="part-list">
+        <li><span class="part-num">1</span><span><b>Rám</b> tvaru podkovy — pevně spojuje všechny ostatní části.</span></li>
+        <li><span class="part-num">2</span><span><b>Pevná kovadlinka</b> — nepohyblivá čelist na jednom konci rámu, na kterou se měřený předmět přikládá.</span></li>
+        <li><span class="part-num">3</span><span><b>Měřicí šroub (vřeteno)</b> — pohyblivá čelist, která se při otáčení bubínku šroubuje směrem ke kovadlince.</span></li>
+        <li><span class="part-num">4</span><span><b>Pouzdro s pevnou stupnicí</b> — nad podélnou čarou jsou čárky po 1&nbsp;mm, pod ní čárky uprostřed mezi nimi, tedy po 0,5&nbsp;mm.</span></li>
+        <li><span class="part-num">5</span><span><b>Bubínek s otáčivou stupnicí</b> — má po obvodu <b>50 dílků</b>. Jedna otáčka posune vřeteno o 0,5&nbsp;mm, a proto jeden dílek odpovídá <b>0,01&nbsp;mm</b>.</span></li>
+        <li><span class="part-num">6</span><span><b>Ráčna (třecí spojka)</b> — hlavice na konci bubínku. Při dotyku s předmětem začne „prokluzovat“ a zaručí stále stejný, malý přítlak.</span></li>
+        <li><span class="part-num">7</span><span><b>Aretace</b> — páčka nebo šroub, který vřeteno zajistí, aby se hodnota po vyjmutí předmětu nezměnila.</span></li>
+      </ol>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Princip odečítání</div>
+      <p>Mikrometr využívá <b>přesný závit</b> vřetena. Stoupání závitu je 0,5&nbsp;mm, takže jedna celá otáčka bubínku posune vřeteno o 0,5&nbsp;mm. Bubínek má 50 dílků, a proto se otočením o jediný dílek vřeteno posune o</p>
+      \[ \frac{0{,}5\ \mathrm{mm}}{50} = 0{,}01\ \mathrm{mm}. \]
+      <p>Naměřená hodnota je součtem tří částí:</p>
+      <ul>
+        <li>celé milimetry z pouzdra (poslední viditelná čárka <b>nad</b> osovou čarou),</li>
+        <li>půlmilimetr z pouzdra: je-li <b>za</b> touto čárkou viditelná ještě čárka <b>pod</b> osovou čarou, přičtete 0,5&nbsp;mm,</li>
+        <li>setiny milimetru z bubínku: číslo dílku, který leží <b>na osové čáře</b> pouzdra, vynásobené 0,01&nbsp;mm.</li>
+      </ul>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Postup odečtení hodnoty</div>
+      <ol>
+        <li><b>Celé milimetry.</b> Najděte poslední čárku pouzdra nad osovou čarou, kterou ještě <b>nezakrývá</b> bubínek.</li>
+        <li><b>Půlmilimetr.</b> Podívejte se, zda je mezi touto čárkou a okrajem bubínku ještě viditelná čárka <b>pod</b> osovou čarou. Pokud ano, přičtěte 0,5&nbsp;mm.</li>
+        <li><b>Setiny milimetru.</b> Odečtěte na bubínku číslo dílku, který je právě na osové čáře pouzdra. Je to počet setin milimetru (0 až 49).</li>
+        <li><b>Sečtěte.</b> Výsledek = celé mm + 0,5&nbsp;mm (pokud je viditelná čárka) + setiny z bubínku.</li>
+      </ol>
+      <div class="callout">
+        <b>Příklad.</b> Poslední viditelná čárka nad osou je 3, pod osou je za ní viditelná ještě půlmilimetrová čárka a na ose leží dílek <b>37</b> bubínku → 3 + 0,5 + 0,37 = <b>3,87&nbsp;mm</b>.
+      </div>
+      <p>Hodnotu zapisujte vždy <b>na setiny milimetru</b>, i když vyjde „kulaté“ číslo: např. <b>3,50&nbsp;mm</b>, ne 3,5&nbsp;mm.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Vyzkoušejte si odečítání</div>
+      <p class="scale-note">Odečtěte hodnotu, kterou ukazuje mikrometr. Po kontrole se zvýrazní poslední celá čárka (červeně), případná půlmilimetrová čárka (modře) a dílek bubínku na ose (zeleně).</p>
+      <div class="level-row" role="group" aria-label="Obtížnost">
+        <span class="lbl">Obtížnost:</span>
+        <button class="chip" type="button" data-level="lehka">Lehká</button>
+        <button class="chip on" type="button" data-level="stredni">Střední</button>
+      </div>
+      <p class="hint" id="trn-level-desc"></p>
+      <div class="stat-row">
+        <div class="readout">
+          <div class="cell"><span class="label">Série</span><span class="value" id="trn-streak">0</span></div>
+          <div class="cell"><span class="label">Nejlepší</span><span class="value" id="trn-best">0</span></div>
+          <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="trn-acc">—</span></div>
+        </div>
+      </div>
+      <div class="vernier-wrap">
+        <svg id="trn-svg" class="vernier-svg" viewBox="0 0 640 160" role="img" aria-label="Mikrometr s hodnotou k odečtení"></svg>
+      </div>
+      <div class="task-hint" id="trn-hint" hidden></div>
+      <div class="answer-row">
+        <label for="trn-input" id="trn-label">Naměřená hodnota:</label>
+        <input id="trn-input" type="text" inputmode="decimal" autocomplete="off">
+        <span id="trn-unit">mm</span>
+        <button class="vbtn primary" id="trn-check" type="button">Zkontrolovat</button>
+        <button class="vbtn primary" id="trn-next" type="button" hidden>Další →</button>
+      </div>
+      <div class="fb" id="trn-feedback" hidden></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Na co si dát pozor</div>
+      <ul>
+        <li><b>Nulová poloha.</b> Před měřením zavřete čelisti pomocí ráčny. Nula bubínku má ležet na osové čáře. Pokud ne, zapište si <b>nulovou chybu</b> a odečtěte ji od naměřených hodnot.</li>
+        <li><b>Používejte ráčnu.</b> Vřeteno dotahujte jen ráčnou, dokud neprokluzuje (cvakne). Bez ní předmět stlačíte a naměříte menší tloušťku.</li>
+        <li><b>Rovnoběžnost.</b> Disk musí mezi čelistmi ležet rovně, ne našikmo, jinak naměříte větší hodnotu.</li>
+        <li><b>Pohled kolmo.</b> Stupnice čtěte přímo, kolmo na ni, aby nevznikla chyba paralaxou.</li>
+        <li><b>Půlmilimetr.</b> Nejčastější chyba je zapomenutá (nebo naopak přidaná) hodnota 0,5&nbsp;mm. Kontrola: leží-li na ose dílek blízko 49, půlmilimetrová čárka je právě odkrytá; leží-li tam dílek blízko 0, je čárka ještě zakrytá (nebo je teprve těsně odkrytá).</li>
+        <li><b>Různá místa.</b> Disk měřte na čtyřech různých místech, tloušťka nemusí být všude stejná.</li>
+      </ul>
+    </div>
+
+  </div>
+
+</div>
+
+<script src="../spolecne/spolecne.js"></script>
+<script>
+  if(window.renderMathInElement){
+    renderMathInElement(document.body, {
+      delimiters: [{left:'\\(', right:'\\)', display:false}, {left:'\\[', right:'\\]', display:true}]
+    });
+  }
+
+  // ---- horní přepínač Zadání / Měření mikrometrem ----
+  (function(){
+    var tabs = {
+      zadani: { btn: document.getElementById('top-tab-zadani'), section: document.getElementById('zadani-section') },
+      mikrometr: { btn: document.getElementById('top-tab-mikrometr'), section: document.getElementById('mikrometr-section') }
+    };
+    function show(tab){
+      Object.keys(tabs).forEach(function(key){
+        var on = key === tab;
+        tabs[key].btn.classList.toggle('on', on);
+        tabs[key].section.hidden = !on;
+      });
+    }
+    Object.keys(tabs).forEach(function(key){
+      tabs[key].btn.addEventListener('click', function(){ show(key); });
+    });
+  })();
+
+  // ---- společné pomůcky ----
+  var SVG_NS = 'http://www.w3.org/2000/svg';
+  function svgAdd(svg, name, attrs, text){
+    var e = document.createElementNS(SVG_NS, name);
+    for(var k in attrs) e.setAttribute(k, attrs[k]);
+    if(text !== undefined) e.textContent = text;
+    svg.appendChild(e);
+    return e;
+  }
+  // hodnota v setinách mm → "3,87"
+  function fmtHund(h){ return (h / 100).toFixed(2).replace('.', ','); }
+  function rnd(a, b){ return a + Math.floor(Math.random() * (b - a + 1)); }
+  function lsGet(key){ try{ return localStorage.getItem(key); }catch(e){ return null; } }
+  function lsSet(key, v){ try{ localStorage.setItem(key, v); }catch(e){} }
+
+  // Detail stupnice mikrometru.
+  // o.hund — odečítaná hodnota v setinách mm (0 až 2499)
+  // o.highlight — zvýraznit čárky použité při odečtu
+  // Pouzdro: nad osovou čarou čárky po 1 mm, pod ní po 0,5 mm (uprostřed mezi nimi).
+  // Okraj bubínku leží na hodnotě o.hund; bubínek má 50 dílků po 0,01 mm, na osové čáře leží dílek
+  // (hund mod 50). Čísla na bubínku rostou směrem dolů.
+  function drawMicrometer(svg, o){
+    var PX = 40, X0 = 20, AX = 80, DY = 9;
+    var h = o.hund, whole = Math.floor(h / 100), half = (h % 100) >= 50, t = h % 50;
+    var W = Math.max(0, whole - 8);
+    var edge = X0 + (h / 100 - W) * PX;
+    svg.innerHTML = '';
+
+    // pouzdro
+    svgAdd(svg, 'rect', {x: 10, y: 40, width: edge - 10 + 6, height: 80, fill: 'rgba(47,122,79,0.08)', stroke: 'var(--ink)', 'stroke-width': 1.5});
+    svgAdd(svg, 'text', {x: 16, y: 114, 'font-size': 11, fill: 'var(--ink-soft)'}, 'pouzdro (mm)');
+    for(var i = 0; i <= 14; i++){
+      var mm = W + i, x = X0 + i * PX;
+      if(x <= edge){
+        var isWhole = o.highlight && mm === whole;
+        svgAdd(svg, 'line', {x1: x, x2: x, y1: AX, y2: AX - (mm % 5 === 0 ? 22 : 15), stroke: isWhole ? 'var(--danger)' : 'var(--ink)', 'stroke-width': isWhole ? 2.6 : 1.4});
+        if(mm % 5 === 0 || isWhole){
+          svgAdd(svg, 'text', {x: x, y: AX - 28, 'font-size': 11, 'text-anchor': 'middle', fill: isWhole ? 'var(--danger)' : 'var(--ink)', 'font-weight': isWhole ? 700 : 400}, mm);
+        }
+      }
+      var xh = x + PX / 2;
+      if(xh <= edge){
+        var isHalf = o.highlight && half && mm === whole;
+        svgAdd(svg, 'line', {x1: xh, x2: xh, y1: AX, y2: AX + 15, stroke: isHalf ? 'var(--focus)' : 'var(--ink)', 'stroke-width': isHalf ? 2.6 : 1.4});
+      }
+    }
+    // osová čára pouzdra
+    svgAdd(svg, 'line', {x1: 10, x2: edge + 6, y1: AX, y2: AX, stroke: 'var(--ink)', 'stroke-width': 1.6});
+
+    // bubínek
+    var BW = 190;
+    svgAdd(svg, 'rect', {x: edge, y: 22, width: BW, height: 116, rx: 6, fill: 'var(--surface-2)', stroke: 'var(--ink)', 'stroke-width': 1.5});
+    svgAdd(svg, 'line', {x1: edge + 8, x2: edge + 8, y1: 24, y2: 136, stroke: 'var(--ink)', 'stroke-width': 1});
+    svgAdd(svg, 'text', {x: edge + BW - 8, y: 38, 'font-size': 11, 'text-anchor': 'end', fill: 'var(--ink-soft)'}, 'bubínek (setiny mm)');
+    for(var k = -4; k <= 4; k++){
+      var val = ((t + k) % 50 + 50) % 50, y = AX + k * DY;
+      var hl = o.highlight && k === 0;
+      svgAdd(svg, 'line', {x1: edge, x2: edge + (val % 5 === 0 ? 22 : 13), y1: y, y2: y, stroke: hl ? 'var(--accent)' : 'var(--ink)', 'stroke-width': hl ? 2.6 : 1.3});
+      if(val % 5 === 0){
+        svgAdd(svg, 'text', {x: edge + 28, y: y + 4, 'font-size': 11, fill: hl ? 'var(--accent)' : 'var(--ink)', 'font-weight': hl ? 700 : 400}, val);
+      }
+    }
+    // značka okraje bubínku
+    svgAdd(svg, 'line', {x1: edge, x2: edge, y1: 22, y2: 138, stroke: 'var(--ink)', 'stroke-width': 2});
+  }
+
+  // Rozbor zápisu žáka: vrátí {hund} nebo {error}.
+  function parseReading(raw){
+    raw = raw.trim().replace(',', '.');
+    if(!/^\d+(\.\d+)?$/.test(raw)) return {error: 'Zapište číslo, např. 3,87.'};
+    var v = Number(raw) * 100, uh = Math.round(v);
+    if(Math.abs(v - uh) > 1e-6){
+      return {error: 'Mikrometr měří na setiny milimetru — zapište hodnotu s nejvýše dvěma desetinnými místy, např. 3,87.'};
+    }
+    var dot = raw.indexOf('.');
+    return {hund: uh, shortForm: dot < 0 || raw.length - dot - 1 < 2};
+  }
+
+  // Vysvětlení chyby v odečtu.
+  function readingHints(uh, h){
+    var msgs = [], whole = Math.floor(h / 100), half = (h % 100) >= 50, t = h % 50;
+    var uw = Math.floor(uh / 100), uhalf = (uh % 100) >= 50, ut = uh % 50;
+    if(uw !== whole){
+      msgs.push('Celé milimetry: poslední čárka nad osovou čarou, kterou bubínek nezakrývá, je <b>' + whole + '</b>.');
+    }
+    if(uhalf !== half){
+      msgs.push(half
+        ? 'Půlmilimetr: za čárkou ' + whole + ' je viditelná ještě čárka <b>pod</b> osovou čarou, proto se přičítá <b>0,5 mm</b>.'
+        : 'Půlmilimetr: za čárkou ' + whole + ' není viditelná žádná čárka pod osovou čarou, proto se <b>nepřičítá</b> nic.');
+    }
+    if(ut !== t){
+      msgs.push('Bubínek: na osové čáře leží dílek <b>' + t + '</b> → ' + t + ' · 0,01 mm = <b>' + fmtHund(t) + ' mm</b>.');
+    }
+    return msgs;
+  }
+
+  // ---- trénink odečítání ----
+  (function(){
+    var svg = document.getElementById('trn-svg');
+    var input = document.getElementById('trn-input');
+    var label = document.getElementById('trn-label');
+    var hint = document.getElementById('trn-hint');
+    var fb = document.getElementById('trn-feedback');
+    var checkBtn = document.getElementById('trn-check');
+    var nextBtn = document.getElementById('trn-next');
+    var levelDesc = document.getElementById('trn-level-desc');
+    var levelBtns = Array.prototype.slice.call(document.querySelectorAll('[data-level]'));
+    var STATS_KEY = 'fyzika:plastove-disky:stats';
+
+    var DESC = {
+      lehka: 'Hodnota z pouzdra (celé milimetry a případný půlmilimetr) je zadaná, odečítáte jen dílek bubínku na osové čáře.',
+      stredni: 'Odečítáte celou hodnotu: celé milimetry, půlmilimetr i setiny z bubínku, např. 3,87.'
+    };
+
+    function loadBest(){
+      try{ var raw = lsGet(STATS_KEY); return raw ? (JSON.parse(raw).bestStreak || 0) : 0; }catch(e){ return 0; }
+    }
+    // level = vybraná obtížnost; tLevel = obtížnost, se kterou byla vytvořena právě zobrazená úloha
+    var level = 'stredni', tLevel = 'stredni', hund = 0, answered = false, touched = false;
+    var streak = 0, best = loadBest(), total = 0, correct = 0;
+
+    function draw(highlight){ drawMicrometer(svg, {hund: hund, highlight: highlight}); }
+    function updateStats(){
+      document.getElementById('trn-streak').textContent = streak;
+      document.getElementById('trn-best').textContent = best;
+      document.getElementById('trn-acc').textContent = total ? Math.round(100 * correct / total) + ' %' : '—';
+    }
+    function newTask(focus){
+      // 0,01 až 24,99 mm — rozsah běžného mikrometru 0 až 25 mm
+      tLevel = level;
+      hund = rnd(1, 2499);
+      answered = false;
+      touched = false;
+      draw(false);
+      levelDesc.textContent = DESC[level];
+      if(level === 'lehka'){
+        var base = hund - hund % 50;
+        hint.hidden = false;
+        hint.innerHTML = 'Hodnota z pouzdra: <b>' + fmtHund(base) + ' mm</b>. Který dílek bubínku leží na osové čáře?';
+        label.textContent = 'Číslo dílku (0 až 49):';
+        document.getElementById('trn-unit').textContent = '';
+      } else {
+        hint.hidden = true;
+        label.textContent = 'Naměřená hodnota:';
+        document.getElementById('trn-unit').textContent = 'mm';
+      }
+      input.value = '';
+      input.disabled = false;
+      fb.hidden = true;
+      checkBtn.hidden = false;
+      nextBtn.hidden = true;
+      if(focus) input.focus({preventScroll: true});
+    }
+    function showFb(ok, headline, lines){
+      fb.className = 'fb ' + (ok ? 'ok' : 'bad');
+      fb.innerHTML = '<div class="headline">' + headline + '</div>' + lines.map(function(l){ return '<p>' + l + '</p>'; }).join('');
+      fb.hidden = false;
+    }
+    function check(){
+      if(answered) return;
+      var raw = input.value.trim();
+      var ok, msgs = [];
+      var t = hund % 50;
+
+      if(raw === ''){
+        ok = false;
+        msgs.push('Nezapsali jste žádnou hodnotu.');
+      } else if(tLevel === 'lehka'){
+        if(!/^\d{1,2}$/.test(raw) || parseInt(raw, 10) > 49){
+          showFb(false, 'Zapište celé číslo od 0 do 49.', ['Je to číslo dílku bubínku, který leží na osové čáře pouzdra.']);
+          return;
+        }
+        var d = parseInt(raw, 10);
+        ok = d === t;
+        if(!ok) msgs.push('Na osové čáře leží dílek <b>' + t + '</b> (ne ' + d + ').');
+      } else {
+        var r = parseReading(raw);
+        if(r.error){ showFb(false, r.error, []); return; }
+        ok = r.hund === hund;
+        msgs = readingHints(r.hund, hund);
+        if(ok && r.shortForm) msgs.push('Příště zapište hodnotu na setiny i s nulami na konci: <b>' + fmtHund(hund) + ' mm</b>.');
+      }
+
+      answered = true;
+      total++;
+      if(ok){
+        correct++; streak++;
+        if(streak > best){
+          best = streak;
+          lsSet(STATS_KEY, JSON.stringify({bestStreak: best}));
+          if(window.FyzikaScores) FyzikaScores.report('serie', best, false);
+        }
+      } else {
+        streak = 0;
+      }
+      updateStats();
+      draw(true);
+      var whole = Math.floor(hund / 100), half = (hund % 100) >= 50;
+      msgs.push('Správná hodnota: ' + whole + ' mm' + (half ? ' + 0,5 mm' : '') + ' + ' + fmtHund(t) + ' mm = <b>' + fmtHund(hund) + ' mm</b>.');
+      showFb(ok, ok ? 'Správně!' : 'Bohužel, není to správně.', msgs);
+      input.disabled = true;
+      checkBtn.hidden = true;
+      nextBtn.hidden = false;
+      nextBtn.focus({preventScroll: true});
+    }
+
+    function tryCheck(){
+      if(answered){ newTask(true); return; }
+      if(input.value.trim() === ''){
+        if(!confirm('Odpověď není vyplněná. Opravdu chcete zkontrolovat?')) return;
+      }
+      check();
+    }
+
+    checkBtn.addEventListener('click', tryCheck);
+    nextBtn.addEventListener('click', function(){ newTask(true); });
+    input.addEventListener('keydown', function(e){
+      if(e.key === 'Enter'){ e.preventDefault(); tryCheck(); }
+    });
+    input.addEventListener('input', function(){ touched = true; });
+    sanitizeNumericInput(input, true);
+    // Změna obtížnosti uprostřed rozepsané úlohy: úloha se nejdřív vyhodnotí, aby žák
+    // o rozepsanou odpověď nepřišel beze stopy.
+    levelBtns.forEach(function(b){
+      b.addEventListener('click', function(){
+        var key = b.getAttribute('data-level');
+        if(key === level) return;
+        var settle = !answered && touched;
+        if(settle && input.value.trim() === ''){
+          if(!confirm('Odpověď není vyplněná. Opravdu chcete změnit nastavení?')) return;
+        }
+        level = key;
+        levelBtns.forEach(function(x){ x.classList.toggle('on', x === b); });
+        levelDesc.textContent = DESC[level];
+        if(settle) check(); else newTask(false);
+      });
+    });
+    updateStats();
+    newTask(false);
+  })();
+
+  try{ makePanelsCollapsible(document); }catch(e){}
+</script>
+
+</body>
+</html>

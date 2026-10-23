@@ -36,6 +36,7 @@
     'zpracovani-mereni.html': 'mereni',
     'neprime-mereni.html': 'mereni',
     'krabicka-multivitaminu.html': 'mereni',
+    'plastove-disky.html': 'mereni',
     'pravidla-pro-vyuzivani-ai.html': 'mereni',
     'jak-psat-protokol.html': 'mereni',
     'kalkulacka-fx82cex.html': 'kvinta',
@@ -106,6 +107,9 @@
     ],
     'zaokrouhlovani-vysledku.html': [
       { d: 'serie', key: 'fyzika:zaokrouhlovani-vysledku:stats', field: 'bestStreak' }
+    ],
+    'plastove-disky.html': [
+      { d: 'serie', key: 'fyzika:plastove-disky:stats', field: 'bestStreak' }
     ],
     'zpracovani-mereni.html': [
       { d: 'serie', key: 'fyzika:zpracovani-mereni:stats', field: 'bestStreak' }
