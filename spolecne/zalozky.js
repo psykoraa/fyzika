@@ -58,7 +58,7 @@
       for(var i = 0; i < btns.length; i++){
         var b = btns[i];
         if(b.getAttribute('data-tab') !== saved) continue;
-        if(!b.classList.contains('on') && !b.disabled && !b.hidden) b.click();
+        if(!b.classList.contains('on') && !b.disabled && !b.hidden && !b.classList.contains('fz-hidden')) b.click();
         break;
       }
     }finally{ reveal(); }

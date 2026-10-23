@@ -573,7 +573,7 @@
   // Uloží konfiguraci z odpovědi serveru (getPageConfig i getMyResults ji obsahují).
   function storePageConfig(res) {
     if (!res || !Array.isArray(res.pages)) return null;
-    var cfg = { pages: res.pages, disciplines: res.disciplines || [] };
+    var cfg = { pages: res.pages, tabs: res.tabs || [], disciplines: res.disciplines || [] };
     lsSet(K.pages, JSON.stringify({ t: Date.now(), cfg: cfg }));
     return cfg;
   }
@@ -693,6 +693,45 @@
       cards[j].classList.toggle('fz-hidden', allHidden);
     }
   }
+
+  // Skryté záložky (.toptab[data-tab]) aktuální stránky. Student je nevidí, admin je vidí přeškrtnuté.
+  // Když je otevřená záložka, která se právě skryla, přepne se na první viditelnou.
+  var ADMIN_TAB_TITLE = 'Skryto pro studenty (vidíte jako admin)';
+
+  function tabEntry(cfg, tab) {
+    var list = cfg && Array.isArray(cfg.tabs) ? cfg.tabs : [];
+    var here = currentPage();
+    for (var i = 0; i < list.length; i++) if (list[i].page === here && list[i].tab === tab) return list[i];
+    return null;
+  }
+
+  function applyTabs(cfg) {
+    if (!cfg || !document.body) return;
+    var user = getUser();
+    var isAdmin = !!(user && user.role === 'admin');
+    var btns = document.querySelectorAll('.toptab[data-tab]');
+    var openHidden = false, firstVisible = null;
+    for (var i = 0; i < btns.length; i++) {
+      var b = btns[i];
+      var e = tabEntry(cfg, b.getAttribute('data-tab'));
+      var hidden = !!(e && !e.visible);
+      b.classList.toggle('fz-hidden', hidden && !isAdmin);
+      b.classList.toggle('fz-admin-hidden', hidden && isAdmin);
+      if (hidden && isAdmin) b.setAttribute('title', ADMIN_TAB_TITLE);
+      else if (b.getAttribute('title') === ADMIN_TAB_TITLE) b.removeAttribute('title');
+      if (hidden && !isAdmin) { if (b.classList.contains('on')) openHidden = true; }
+      else if (!firstVisible && !b.disabled) firstVisible = b;
+    }
+    if (openHidden && firstVisible) firstVisible.click();
+  }
+
+  // Skrytou záložku nejde otevřít ani programově (např. odkazem „přejít na Trénink“ uvnitř stránky).
+  document.addEventListener('click', function (ev) {
+    var b = ev.target && ev.target.closest ? ev.target.closest('.toptab.fz-hidden') : null;
+    if (!b) return;
+    ev.preventDefault();
+    ev.stopImmediatePropagation();
+  }, true);
 
   // ---------- hlavička "přihlášen jako…" ----------
 
@@ -847,7 +886,7 @@
       var cfg = cachedPageConfig();
       if (!cfg) return;
       blocked = gate(cfg);
-      if (!blocked) applyLinks(cfg);
+      if (!blocked) { applyLinks(cfg); applyTabs(cfg); }
     };
 
     if (blocked) {
@@ -855,6 +894,7 @@
       return;
     }
     applyLinks(cachedPageConfig());
+    applyTabs(cachedPageConfig());
 
     // Stránky s vlastním načítáním (účet, administrace) si dotazy řídí samy — zbytečně je nezdvojovat.
     if (document.body && document.body.hasAttribute('data-fz-manual')) return;
