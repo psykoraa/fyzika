@@ -83,6 +83,9 @@ table.grid tr.lvl-2 td.title-cell::before{
 table.grid tr.lvl-2 td.title-cell::before{ left:40px; }
 table.grid tr.lvl-1.hub-row td.title-cell::before{ content:none; }
 table.grid tr.root-row td.title-cell{ font-weight:700; }
+table.grid tr.tab-row td{ background:var(--surface-2, rgba(0,0,0,.03)); font-size:.92em; }
+table.grid tr.tab-row td.title-cell{ padding-left:calc(var(--tab-indent, 34px) + 26px); }
+table.grid tr.tab-row.page-off td.title-cell{ opacity:.6; }
 table.grid tr.other-row-sep td{ padding-top:16px; border-bottom:none; color:var(--ink-soft); font-size:0.7rem; text-transform:uppercase; letter-spacing:0.08em; }
 .tree-toggle{
   position:absolute; left:8px; top:50%; transform:translateY(-50%);
@@ -90,6 +93,9 @@ table.grid tr.other-row-sep td{ padding-top:16px; border-bottom:none; color:var(
   padding:0; border:0; border-radius:4px; background:none;
   color:var(--ink-soft); cursor:pointer;
 }
+.tab-toggle{ font:inherit; font-size:0.75rem; margin-left:6px; padding:1px 7px; border:1px solid var(--line, rgba(0,0,0,.15)); border-radius:999px; background:none; color:var(--ink-soft); cursor:pointer; }
+.tab-toggle:hover{ color:var(--accent); border-color:var(--accent); }
+.tab-toggle:focus-visible{ outline:2px solid var(--focus); outline-offset:1px; }
 .tree-toggle:hover{ color:var(--accent); background:var(--surface-2); }
 .tree-toggle:focus-visible{ outline:2px solid var(--focus); outline-offset:1px; }
 
@@ -259,6 +265,7 @@ footer{ margin-top:40px; }
         ale HTML je na GitHub Pages veřejné — kdo zná přesnou adresu a vypne JavaScript nebo si stáhne zdroj,
         obsah uvidí. Nepoužívejte to pro nic tajného (např. řešení písemek). Totéž platí pro „vyžaduje přihlášení“.
         Změna se u studentů projeví nejpozději do minuty.
+        U každé stránky lze po rozbalení „záložky“ vypnout i jednotlivé záložky (Teorie, Trénink, Hra…); skrytá stránka skrývá všechny své záložky.
         Stránky jsou seřazené podle toho, kam patří — zapnutí nebo vypnutí rozcestníku (např. Měření
         nebo Kvinta) automaticky zapne/vypne i všechny stránky, na které odkazuje. Šipka u rozcestníku
         sbalí nebo rozbalí jeho podstránky.</p>
@@ -277,7 +284,7 @@ footer{ margin-top:40px; }
 (function(){
   'use strict';
   var Auth = window.FyzikaAuth;
-  var users = [], results = [], pageCfg = { pages:[], disciplines:[] };
+  var users = [], results = [], pageCfg = { pages:[], tabs:[], disciplines:[] };
 
   function $(id){ return document.getElementById(id); }
   function el(tag, cls, text){
@@ -339,7 +346,7 @@ footer{ margin-top:40px; }
   function loadAll(){
     // Jeden souhrnný dotaz; se starší verzí backendu (bez adminOverview) záložně tři samostatné.
     var load = Auth.api('adminOverview').then(function(r){
-      return { users: r.users, results: r.results, cfg: { pages: r.pages || [], disciplines: r.disciplines || [] } };
+      return { users: r.users, results: r.results, cfg: { pages: r.pages || [], tabs: r.tabs || [], disciplines: r.disciplines || [] } };
     }, function(err){
       if(err.code!=='unknown_action') throw err;
       return Promise.all([Auth.api('listUsers'), Auth.api('listResults'), Auth.fetchPageConfig()]).then(function(r){
@@ -615,6 +622,35 @@ footer{ margin-top:40px; }
     inp.addEventListener('change', function(){ onChange(inp); });
     return lab;
   }
+  // Které stránky mají rozbalené záložky (podle souboru). Přetrvá přes renderPages().
+  var openTabs = {};
+  function tabsOf(file){
+    return (pageCfg.tabs || []).filter(function(t){ return t.page===file; });
+  }
+  function tabRow(tb, p, t, level){
+    var row = tb.insertRow();
+    row.className = 'tab-row' + (p.visible ? '' : ' page-off');
+    row.style.setProperty('--tab-indent', (level*26 + 8) + 'px');
+    row.appendChild(el('td', 'title-cell', 'Záložka: ' + t.title));
+    var f = row.insertCell(); f.className = 'mono'; f.textContent = t.tab;
+    row.insertCell().appendChild(makeSwitch(t.visible, t.visible ? 'viditelná' : 'skrytá', function(inp){
+      updateTab(p, t, inp.checked, inp);
+    }));
+    row.insertCell();
+  }
+  function updateTab(p, t, visible, inp){
+    inp.disabled = true;
+    Auth.api('setTabVisibility', { soubor:p.file, zalozka:t.tab, viditelna:visible }).then(function(res){
+      applyPageConfig(res);
+      renderPages();
+      message('ok', (visible ? 'Zapnuto: ' : 'Vypnuto: ') + p.title + ' – ' + t.title);
+    }, function(err){
+      inp.checked = !visible;
+      inp.disabled = false;
+      renderPages();
+      handleError(err);
+    });
+  }
   function pageRow(tb, p, level, isHub){
     var row = tb.insertRow();
     row.className = 'lvl-' + level + (isHub ? ' hub-row' : '');
@@ -642,6 +678,18 @@ footer{ margin-top:40px; }
     row.insertCell().appendChild(makeSwitch(p.requiresLogin, p.requiresLogin ? 'vyžaduje' : 'nevyžaduje', function(inp){
       update(p, { vyzadujePrihlaseni: inp.checked }, inp);
     }));
+    var tabs = tabsOf(p.file);
+    if(tabs.length){
+      var open = !!openTabs[p.file];
+      var hiddenCount = tabs.filter(function(t){ return !t.visible; }).length;
+      var tg = el('button', 'tab-toggle', (open ? '▾ ' : '▸ ') + 'záložky (' + tabs.length + (hiddenCount ? ', skryto ' + hiddenCount : '') + ')');
+      tg.type = 'button';
+      tg.setAttribute('aria-expanded', String(open));
+      tg.addEventListener('click', function(){ openTabs[p.file] = !openTabs[p.file]; renderPages(); });
+      titleCell.appendChild(document.createTextNode(' '));
+      titleCell.appendChild(tg);
+      if(open) tabs.forEach(function(t){ tabRow(tb, p, t, level + 1); });
+    }
   }
   function rootRow(tb, node){
     var row = tb.insertRow();
@@ -689,7 +737,7 @@ footer{ margin-top:40px; }
     box.appendChild(t);
   }
   function applyPageConfig(res){
-    pageCfg = { pages: res.pages || [], disciplines: res.disciplines || pageCfg.disciplines };
+    pageCfg = { pages: res.pages || [], tabs: res.tabs || [], disciplines: res.disciplines || pageCfg.disciplines };
     try{ localStorage.setItem('fyzika-page-config', JSON.stringify({ t: Date.now(), cfg: pageCfg })); }catch(e){}
   }
   function setVisibility(file, visible){
