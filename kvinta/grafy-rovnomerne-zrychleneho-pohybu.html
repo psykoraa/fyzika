@@ -1801,6 +1801,8 @@
     if(ax >= 0.1) return 2;
     return 3;
   }
+  // Mezivýsledek zaokrouhlený na tisíciny, jak se ukazuje v postupu.
+  function r3(x){ return roundTo(x, 3); }
   // alts: další uznávané hodnoty (výpočet s mezivýsledkem zaokrouhleným tak, jak ho ukazuje postup).
   function part(sym, unit, exact, dec, alts){
     if(dec === undefined) dec = autoDec(exact);
@@ -1987,7 +1989,7 @@
       parts:[ part(SX.s, 'm', s, undefined, [ altS ]) ],
       steps:['Průměrná rychlost rovnoměrně zrychleného pohybu: <i>v</i><sub>p</sub> = ½ · (<i>v</i><sub>0</sub> + <i>v</i>)',
              '<i>s</i> = <i>v</i><sub>p</sub> · <i>t</i> = ½ · (' + qx(v0, U_MS) + ' + ' + qx(v, U_MS) + ') · ' + qx(t, 's') + ' ' + rs(s, 'm'),
-             'Totéž dá výpočet přes zrychlení: <i>a</i> = (<i>v</i> − <i>v</i><sub>0</sub>) / <i>t</i> ' + rs(a, U_A) + ', <i>s</i> = <i>v</i><sub>0</sub> · <i>t</i> + ½ · <i>a</i> · <i>t</i>² ' + rs(s, 'm') + ' (s nezaokrouhlenou hodnotou <i>a</i>).'+(altS !== roundTo(s, autoDec(s)) ? ' Uznává se i výsledek s dosazeným <i>a</i> zaokrouhleným na tisíciny: ' + rs(altS, 'm', autoDec(s)) + '.' : '')]
+             'Totéž dá výpočet přes zrychlení: <i>a</i> = (<i>v</i> − <i>v</i><sub>0</sub>) / <i>t</i> ' + rs(a, U_A) + ', <i>s</i> = <i>v</i><sub>0</sub> · <i>t</i> + ½ · <i>a</i> · <i>t</i>² ' + rs(s, 'm') + ' (s nezaokrouhlenou hodnotou <i>a</i>).']
     };
   }
 
@@ -2000,7 +2002,7 @@
     return {
       title:'Zrychlení z klidu na zadanou rychlost', note:EX_NOTE_INTER,
       text: 'Osobní auto zrychlí z klidu na rychlost ' + qx(vk, U_KMH) + ' za ' + qx(t, 's') + '. Určete jeho zrychlení (stálé) a dráhu, kterou přitom ujede.',
-      parts:[ part(SX.a, U_A, a), part(SX.s, 'm', s) ],
+      parts:[ part(SX.a, U_A, a, undefined, [ r3(v)/t ]), part(SX.s, 'm', s, undefined, [ 0.5*r3(a)*t*t, 0.5*r3(r3(v)/t)*t*t ]) ],
       steps:['Převod: ' + qx(vk, U_KMH) + ' = ' + qx(vk, U_KMH) + ' / 3,6 ' + rs(v, U_MS),
              '<i>a</i> = <i>v</i> / <i>t</i> = ' + qx(v, U_MS) + ' / ' + qx(t, 's') + ' ' + rs(a, U_A),
              '<i>s</i> = ½ · <i>a</i> · <i>t</i>² = ½ · ' + qx(a, U_A) + ' · (' + qx(t, 's') + ')² ' + rs(s, 'm')]
@@ -2013,7 +2015,7 @@
     return {
       title:'Zastavovací dráha řidiče', note:EX_NOTE_INTER,
       text: 'Řidič jede rychlostí ' + qx(vk, U_KMH) + ' a v určitém okamžiku vidí překážku. Než začne brzdit, uplyne reakční doba ' + qx(tr, 's') + ' (auto jede stálou rychlostí). Potom brzdí stálým zrychlením o velikosti ' + qx(a, U_A) + ' až do zastavení. Určete dráhu ujetou během reakce, brzdnou dráhu a celkovou zastavovací dráhu.',
-      parts:[ part(SX.sr, 'm', sr), part(SX.sb, 'm', sb), part(SX.sc, 'm', sr + sb) ],
+      parts:[ part(SX.sr, 'm', sr, undefined, [ r3(v)*tr ]), part(SX.sb, 'm', sb, undefined, [ r3(v)*r3(v)/(2*a) ]), part(SX.sc, 'm', sr + sb, undefined, [ r3(sr) + r3(sb), r3(v)*tr + r3(v)*r3(v)/(2*a) ]) ],
       steps:['Převod: ' + qx(vk, U_KMH) + ' / 3,6 ' + rs(v, U_MS),
              'Reakce (rovnoměrný pohyb): <i>s</i><sub>r</sub> = <i>v</i> · <i>t</i><sub>r</sub> = ' + qx(v, U_MS) + ' · ' + qx(tr, 's') + ' ' + rs(sr, 'm'),
              'Brzdění: <i>s</i><sub>b</sub> = <i>v</i>² / (2<i>a</i>) = (' + qx(v, U_MS) + ')² / (2 · ' + qx(a, U_A) + ') ' + rs(sb, 'm'),
@@ -2029,7 +2031,7 @@
     return {
       title:'Zrychlení na dané dráze', note:EX_NOTE_INTER,
       text: 'Auto jede po dálnici rychlostí ' + qx(v0k, U_KMH) + ' a při předjíždění zvýší rychlost na ' + qx(vk, U_KMH) + ', přičemž při stálém zrychlení ujede dráhu ' + qx(s, 'm') + '. Určete zrychlení auta a dobu, za kterou rychlost zvýšilo.',
-      parts:[ part(SX.a, U_A, a), part(SX.t, 's', t) ],
+      parts:[ part(SX.a, U_A, a, undefined, [ (r3(v)*r3(v) - r3(v0)*r3(v0))/(2*s) ]), part(SX.t, 's', t, undefined, [ (v - v0)/r3(a), (r3(v) - r3(v0))/r3(a) ]) ],
       steps:['Převod: ' + qx(v0k, U_KMH) + ' ' + rs(v0, U_MS) + ', ' + qx(vk, U_KMH) + ' ' + rs(v, U_MS),
              'Z <i>v</i>² = <i>v</i><sub>0</sub>² + 2<i>as</i>: <i>a</i> = (<i>v</i>² − <i>v</i><sub>0</sub>²) / (2<i>s</i>)',
              '<i>a</i> = ((' + qx(v, U_MS) + ')² − (' + qx(v0, U_MS) + ')²) / (2 · ' + qx(s, 'm') + ') ' + rs(a, U_A),
@@ -2043,7 +2045,7 @@
     return {
       title:'Rozjezd letadla před vzletem', note:EX_NOTE_INTER,
       text: 'Dopravní letadlo musí před vzlétnutím dosáhnout rychlosti ' + qx(vk, U_KMH) + '. Rozjezdová dráha má délku ' + qx(s, 'm') + '. Jak velké musí být nejmenší (stálé) zrychlení letadla a jak dlouho rozjezd trvá?',
-      parts:[ part(SX.a, U_A, a), part(SX.t, 's', t) ],
+      parts:[ part(SX.a, U_A, a, undefined, [ r3(v)*r3(v)/(2*s) ]), part(SX.t, 's', t, undefined, [ v/r3(a), r3(v)/r3(a) ]) ],
       steps:['Převod: ' + qx(vk, U_KMH) + ' / 3,6 ' + rs(v, U_MS),
              '<i>a</i> = <i>v</i>² / (2<i>s</i>) = (' + qx(v, U_MS) + ')² / (2 · ' + qx(s, 'm') + ') ' + rs(a, U_A),
              '<i>t</i> = <i>v</i> / <i>a</i> = ' + qx(v, U_MS) + ' / ' + qx(a, U_A) + ' ' + rs(t, 's')]
@@ -2056,7 +2058,7 @@
     return {
       title:'Volný pád: doba a rychlost v km/h', note:EX_NOTE_G + ' ' + EX_NOTE_INTER,
       text: sc.w + ' z výšky ' + qx(h, 'm') + ' (volný pád z klidu). Za jak dlouho dopadne a jakou rychlostí? Rychlost uveďte v km·h⁻¹.',
-      parts:[ part(SX.t, 's', t), part(SX.v, U_KMH, kmh(v)) ],
+      parts:[ part(SX.t, 's', t), part(SX.v, U_KMH, kmh(v), undefined, [ kmh(G*r3(t)), kmh(r3(G*r3(t))) ]) ],
       steps:['<i>t</i> = √(2<i>h</i> / <i>g</i>) = √(2 · ' + qx(h, 'm') + ' / ' + qx(G, U_A, 2) + ') ' + rs(t, 's'),
              '<i>v</i> = <i>g</i> · <i>t</i> = ' + qx(G, U_A, 2) + ' · ' + qx(t, 's') + ' ' + rs(v, U_MS),
              'Převod: ' + qx(v, U_MS) + ' · 3,6 ' + rs(kmh(v), U_KMH)]
@@ -2070,7 +2072,7 @@
     return {
       title:'Pád z mostu a loďka', note:EX_NOTE_G + ' ' + EX_NOTE_INTER,
       text: 'Z mostu ve výšce ' + qx(h, 'm') + ' nad hladinou řeky se uvolní těleso a spadne přímo do loďky, která pluje pod mostem stálou rychlostí. V okamžiku uvolnění byla loďka vzdálena ' + qx(d, 'm') + ' od místa dopadu. Jak dlouho těleso padá a jaká je rychlost loďky?',
-      parts:[ part(SX.t, 's', t), part(SX.v, U_MS, v) ],
+      parts:[ part(SX.t, 's', t), part(SX.v, U_MS, v, undefined, [ d/r3(t) ]) ],
       steps:['Doba pádu: <i>t</i> = √(2<i>h</i> / <i>g</i>) = √(2 · ' + qx(h, 'm') + ' / ' + qx(G, U_A, 2) + ') ' + rs(t, 's'),
              'Loďka za tutéž dobu urazí ' + qx(d, 'm') + ' stálou rychlostí: <i>v</i> = <i>d</i> / <i>t</i>',
              '<i>v</i> = ' + qx(d, 'm') + ' / ' + qx(t, 's') + ' ' + rs(v, U_MS)]
@@ -2082,7 +2084,7 @@
     return {
       title:'Náraz při crash testu', note:'Uveďte velikost zrychlení. Tíhové zrychlení <i>g</i> = 9,81 m·s⁻². ' + EX_NOTE_INTER,
       text: 'Při nárazovém testu narazí auto rychlostí ' + qx(vk, U_KMH) + ' do pevné bariéry a zastaví se za ' + qx(t, 's') + '. Určete průměrné zrychlení (velikost) v m·s⁻² a v násobcích tíhového zrychlení <i>g</i>.',
-      parts:[ part(SX.a, U_A, a), part(SX.ag, U_G, a/G, 1) ],
+      parts:[ part(SX.a, U_A, a, undefined, [ r3(v)/t ]), part(SX.ag, U_G, a/G, 1, [ r3(a)/G, r3(v)/t/G, r3(r3(v)/t)/G ]) ],
       steps:['Převod: ' + qx(vk, U_KMH) + ' / 3,6 ' + rs(v, U_MS),
              '<i>a</i> = <i>v</i> / <i>t</i> = ' + qx(v, U_MS) + ' / ' + qx(t, 's', 2) + ' ' + rs(a, U_A),
              'V násobcích <i>g</i>: <i>a</i> / <i>g</i> = ' + qx(a, U_A) + ' / ' + qx(G, U_A, 2) + ' ' + rs(a/G, '<i>g</i>', 1)]
@@ -2097,7 +2099,7 @@
     return {
       title:'Výtah: rozjezd, jízda, brzdění', note:EX_NOTE_INTER,
       text: 'Kabina výtahu v mrakodrapu jede nahoru po dráze ' + qx(h, 'm') + '. Rozjíždí se se zrychlením ' + qx(a, U_A) + ' do nejvyšší rychlosti ' + qx(v, U_MS) + ', tou jede rovnoměrně a nakonec brzdí se stejně velkým zrychlením až do zastavení. Jakou dráhu urazí při rozjezdu a za jak dlouho vyjede celou dráhu?',
-      parts:[ part(SX.s, 'm', sr), part(SX.t, 's', T) ],
+      parts:[ part(SX.s, 'm', sr), part(SX.t, 's', T, undefined, [ 2*r3(v/a) + (h - 2*r3(sr))/v, 2*r3(v/a) + r3((h - 2*r3(sr))/v) ]) ],
       steps:['Rozjezd: <i>s</i><sub>r</sub> = <i>v</i>² / (2<i>a</i>) = (' + qx(v, U_MS) + ')² / (2 · ' + qx(a, U_A) + ') ' + rs(sr, 'm') + ' (stejně dlouhé je brzdění)',
              'Doba rozjezdu i brzdění: <i>t</i><sub>r</sub> = <i>v</i> / <i>a</i> = ' + qx(v, U_MS) + ' / ' + qx(a, U_A) + ' ' + rs(v/a, 's'),
              'Rovnoměrná část: <i>s</i><sub>m</sub> = ' + qx(h, 'm') + ' − 2 · ' + qx(sr, 'm') + ' ' + rs(sm, 'm') + ', <i>t</i><sub>m</sub> = <i>s</i><sub>m</sub> / <i>v</i> ' + rs(sm/v, 's'),
@@ -2113,7 +2115,7 @@
     return {
       title:'Běh na 100 m', note:EX_NOTE_INTER,
       text: 'Běžec na trati 100 m se prvních ' + qx(t1, 's') + ' rozbíhá z klidu se stálým zrychlením ' + qx(a, U_A) + ', potom běží zbytek trati stálou rychlostí, kterou dosáhl na konci rozbíhání. Jaké rychlosti dosáhl a jaký je jeho celkový čas na 100 m?',
-      parts:[ part(SX.v, U_MS, v), part(SX.t, 's', T) ],
+      parts:[ part(SX.v, U_MS, v), part(SX.t, 's', T, undefined, [ t1 + (100 - r3(s1))/v, t1 + r3((100 - r3(s1))/v) ]) ],
       steps:['<i>v</i> = <i>a</i> · <i>t</i><sub>1</sub> = ' + qx(a, U_A) + ' · ' + qx(t1, 's') + ' ' + rs(v, U_MS),
              'Dráha při rozbíhání: <i>s</i><sub>1</sub> = ½ · <i>a</i> · <i>t</i><sub>1</sub>² ' + rs(s1, 'm'),
              'Zbývá ' + qx(100 - s1, 'm') + ' rovnoměrně: <i>t</i><sub>2</sub> = (100 m − <i>s</i><sub>1</sub>) / <i>v</i> ' + rs(t2, 's'),
@@ -2129,7 +2131,7 @@
     return {
       title:'Rozjezd rychlíku', note:EX_NOTE_INTER,
       text: 'Rychlík stojí ve stanici a začne se rozjíždět se stálým zrychlením. V okamžiku <i>t</i><sub>1</sub> má rychlost ' + qx(v1, U_MS) + '. Poté urazí za dobu <i>t</i><sub>2</sub> dalších ' + qx(s2, 'm') + ' a jeho rychlost vzroste na ' + qx(v2, U_MS) + '. Určete zrychlení vlaku a doby <i>t</i><sub>1</sub> a <i>t</i><sub>2</sub>.',
-      parts:[ part(SX.a, U_A, a), part(SX.t1, 's', t1), part(SX.t2, 's', t2) ],
+      parts:[ part(SX.a, U_A, a), part(SX.t1, 's', t1, undefined, [ v1/r3(a) ]), part(SX.t2, 's', t2, undefined, [ (v2 - v1)/r3(a) ]) ],
       steps:['Na druhém úseku: <i>v</i>₂² = <i>v</i>₁² + 2<i>as</i><sub>2</sub> → <i>a</i> = (<i>v</i>₂² − <i>v</i>₁²) / (2<i>s</i><sub>2</sub>)',
              '<i>a</i> = ((' + qx(v2, U_MS) + ')² − (' + qx(v1, U_MS) + ')²) / (2 · ' + qx(s2, 'm') + ') ' + rs(a, U_A),
              '<i>t</i><sub>1</sub> = <i>v</i><sub>1</sub> / <i>a</i> = ' + qx(v1, U_MS) + ' / ' + qx(a, U_A) + ' ' + rs(t1, 's'),
@@ -2149,7 +2151,7 @@
     return {
       title:'Brzdění před překážkou (kvadratická rovnice)', note:EX_NOTE_INTER,
       text: 'Řidič jede rychlostí ' + qx(v0, U_MS) + ' a začne brzdit stálým zrychlením o velikosti ' + qx(a, U_A) + '. V místě vzdáleném ' + qx(s, 'm') + ' od začátku brzdění stojí překážka. Za jak dlouho od začátku brzdění k překážce dojede a jakou rychlostí (v km·h⁻¹) do ní narazí?',
-      parts:[ part(SX.t, 's', t), part(SX.v, U_KMH, kmh(v)) ],
+      parts:[ part(SX.t, 's', t), part(SX.v, U_KMH, kmh(v), undefined, [ kmh(v0 - a*r3(t)), kmh(r3(v0 - a*r3(t))) ]) ],
       steps:['Dráha při brzdění: <i>s</i> = <i>v</i><sub>0</sub> · <i>t</i> − ½ · <i>a</i> · <i>t</i>² → ½<i>a</i> · <i>t</i>² − <i>v</i><sub>0</sub> · <i>t</i> + <i>s</i> = 0',
              'Kvadratická rovnice: ' + fm(a/2) + ' · <i>t</i>² − ' + fm(v0) + ' · <i>t</i> + ' + fm(s) + ' = 0',
              '<i>t</i> = (<i>v</i><sub>0</sub> − √(<i>v</i><sub>0</sub>² − 2<i>as</i>)) / <i>a</i> = (' + fm(v0) + ' − √' + fm(disc) + ') / ' + fm(a) + ' ' + rs(t, 's') + ' (menší kořen: větší by odpovídal pohybu po zastavení, který neprobíhá)',
@@ -2171,7 +2173,7 @@
     return {
       title:'Doba pohybu na dané dráze (kvadratická rovnice)', note:EX_NOTE_INTER,
       text: sc.w + ': počáteční rychlost je ' + qx(v0, U_MS) + ' a zrychlení ' + qx(a, U_A) + ' (stálé). Za jak dlouho ujede dráhu ' + qx(s, 'm') + ' a jakou rychlost bude mít na jejím konci?',
-      parts:[ part(SX.t, 's', t), part(SX.v, U_MS, v) ],
+      parts:[ part(SX.t, 's', t), part(SX.v, U_MS, v, undefined, [ v0 + a*r3(t) ]) ],
       steps:['<i>s</i> = <i>v</i><sub>0</sub> · <i>t</i> + ½ · <i>a</i> · <i>t</i>² → ½<i>a</i> · <i>t</i>² + <i>v</i><sub>0</sub> · <i>t</i> − <i>s</i> = 0',
              'Kvadratická rovnice: ' + fm(a/2) + ' · <i>t</i>² + ' + fm(v0) + ' · <i>t</i> − ' + fm(s) + ' = 0',
              '<i>t</i> = (−<i>v</i><sub>0</sub> + √(<i>v</i><sub>0</sub>² + 2<i>as</i>)) / <i>a</i> = (−' + fm(v0) + ' + √' + fm(disc) + ') / ' + fm(a) + ' ' + rs(t, 's') + ' (záporný kořen nemá fyzikální smysl)',
@@ -2188,7 +2190,7 @@
     return {
       title:'Dva cyklisté proti sobě (kvadratická rovnice)', note:EX_NOTE_INTER,
       text: 'Dva cyklisté jedou po přímé silnici proti sobě. V okamžiku, kdy jsou od sebe vzdáleni ' + qx(d, 'm') + ', má první rychlost ' + qx(v1, U_MS) + ' a zrychluje se zrychlením ' + qx(a1, U_A) + ', druhý má rychlost ' + qx(v2, U_MS) + ' a zrychluje se zrychlením ' + qx(a2, U_A) + '. Za jak dlouho se potkají a jakou dráhu do té doby ujede první cyklista?',
-      parts:[ part(SX.t, 's', t), part(SX.sbr, 'm', s1) ],
+      parts:[ part(SX.t, 's', t), part(SX.sbr, 'm', s1, undefined, [ v1*r3(t) + 0.5*a1*r3(t)*r3(t) ]) ],
       steps:['Dráhy se sečtou na vzdálenost <i>d</i>: (<i>v</i><sub>1</sub><i>t</i> + ½<i>a</i><sub>1</sub><i>t</i>²) + (<i>v</i><sub>2</sub><i>t</i> + ½<i>a</i><sub>2</sub><i>t</i>²) = <i>d</i>',
              'Kvadratická rovnice: ' + fm((a1 + a2)/2) + ' · <i>t</i>² + ' + fm(B) + ' · <i>t</i> − ' + fm(d) + ' = 0',
              '<i>t</i> = (−' + fm(B) + ' + √' + fm(disc) + ') / (2 · ' + fm(A) + ') ' + rs(t, 's') + ' (kladný kořen)',
@@ -2204,7 +2206,7 @@
     return {
       title:'Cyklista dohání autobus (kvadratická rovnice)', note:EX_NOTE_INTER,
       text: 'Autobus stojí na zastávce a v okamžiku, kdy je cyklista ' + qx(d, 'm') + ' za ním, se rozjíždí se stálým zrychlením ' + qx(a, U_A) + '. Cyklista jede stálou rychlostí ' + qx(v, U_MS) + '. Za jak dlouho (od rozjezdu autobusu) cyklista autobus poprvé dožene a jakou dráhu do té doby ujede?',
-      parts:[ part(SX.t, 's', t), part(SX.s, 'm', s) ],
+      parts:[ part(SX.t, 's', t), part(SX.s, 'm', s, undefined, [ v*r3(t) ]) ],
       steps:['Cyklista: <i>s</i><sub>c</sub> = <i>v</i> · <i>t</i>; autobus: <i>s</i><sub>a</sub> = <i>d</i> + ½ · <i>a</i> · <i>t</i>². Setkání: <i>v</i> · <i>t</i> = <i>d</i> + ½<i>a</i> · <i>t</i>²',
              'Kvadratická rovnice: ' + fm(a/2) + ' · <i>t</i>² − ' + fm(v) + ' · <i>t</i> + ' + fm(d) + ' = 0',
              '<i>t</i> = (<i>v</i> − √(<i>v</i>² − 2<i>ad</i>)) / <i>a</i> = (' + fm(v) + ' − √' + fm(disc) + ') / ' + fm(a) + ' ' + rs(t, 's') + ' (menší kořen = první setkání; později autobus cyklistu zase předjede)',
@@ -2219,7 +2221,7 @@
     return {
       title:'Kámen padá do studny (kvadratická rovnice)', note:'Tíhové zrychlení <i>g</i> = 9,81 m·s⁻², rychlost zvuku <i>c</i> = 340 m·s⁻¹, odpor vzduchu zanedbejte. ' + EX_NOTE_INTER,
       text: 'Do hluboké studny spadne kámen. Šplouchnutí uslyšíme ' + qx(T, 's', 2) + ' po jeho uvolnění. Jak dlouho kámen padá a jak je studna hluboká?',
-      parts:[ part(SX.t, 's', t), part(SX.h, 'm', h) ],
+      parts:[ part(SX.t, 's', t), part(SX.h, 'm', h, undefined, [ 0.5*G*r3(t)*r3(t) ]) ],
       steps:['Celková doba: <i>T</i> = <i>t</i> + <i>h</i> / <i>c</i>, kde <i>h</i> = ½<i>g</i> · <i>t</i>², tedy <i>T</i> = <i>t</i> + <i>g</i> · <i>t</i>² / (2<i>c</i>)',
              'Kvadratická rovnice: ' + fm(G/(2*C_SOUND), 5) + ' · <i>t</i>² + <i>t</i> − ' + fm(T, 2) + ' = 0',
              '<i>t</i> = (−1 + √(1 + 2<i>gT</i> / <i>c</i>)) / (<i>g</i> / <i>c</i>) ' + rs(t, 's'),
@@ -2232,7 +2234,7 @@
     return {
       title:'Hod svisle dolů (kvadratická rovnice)', note:EX_NOTE_G + ' ' + EX_NOTE_INTER,
       text: 'Chlapec hodí z mostu vysokého ' + qx(h, 'm') + ' kámen svisle dolů počáteční rychlostí ' + qx(v0, U_MS) + '. Za jak dlouho kámen dopadne na hladinu a jakou rychlostí?',
-      parts:[ part(SX.t, 's', t), part(SX.v, U_MS, v) ],
+      parts:[ part(SX.t, 's', t), part(SX.v, U_MS, v, undefined, [ v0 + G*r3(t) ]) ],
       steps:['<i>h</i> = <i>v</i><sub>0</sub> · <i>t</i> + ½ · <i>g</i> · <i>t</i>² → ½<i>g</i> · <i>t</i>² + <i>v</i><sub>0</sub> · <i>t</i> − <i>h</i> = 0',
              'Kvadratická rovnice: ' + fm(G/2, 3) + ' · <i>t</i>² + ' + fm(v0) + ' · <i>t</i> − ' + fm(h) + ' = 0',
              '<i>t</i> = (−<i>v</i><sub>0</sub> + √(<i>v</i><sub>0</sub>² + 2<i>gh</i>)) / <i>g</i> = (−' + fm(v0) + ' + √' + fm(disc) + ') / ' + fm(G, 2) + ' ' + rs(t, 's'),
@@ -2253,7 +2255,7 @@
     return {
       title:'Zbrzdění po dopadu', note:'Zrychlení při brzdění je stálé, uveďte jeho velikost. ' + EX_NOTE_G + ' ' + EX_NOTE_INTER,
       text: sc.w + ': volně padá z výšky ' + qx(h, 'm') + ' a po dopadu se materiál stlačí o ' + qx(d, 'm') + ', než se člověk zastaví. Určete rychlost dopadu, velikost zrychlení při brzdění a vyjádřete ji také v násobcích <i>g</i>.',
-      parts:[ part(SX.v, U_MS, v), part(SX.a, U_A, a), part(SX.ag, U_G, a/G, 1) ],
+      parts:[ part(SX.v, U_MS, v), part(SX.a, U_A, a, undefined, [ r3(v)*r3(v)/(2*d) ]), part(SX.ag, U_G, a/G, 1, [ r3(a)/G, r3(v)*r3(v)/(2*d)/G, r3(r3(v)*r3(v)/(2*d))/G ]) ],
       steps:['Rychlost dopadu: <i>v</i> = √(2<i>gh</i>) = √(2 · ' + qx(G, U_A, 2) + ' · ' + qx(h, 'm') + ') ' + rs(v, U_MS),
              'Brzdění na dráze <i>d</i>: <i>a</i> = <i>v</i>² / (2<i>d</i>) = (' + qx(v, U_MS) + ')² / (2 · ' + qx(d, 'm') + ') ' + rs(a, U_A),
              'V násobcích <i>g</i>: <i>a</i> / <i>g</i> = ' + qx(a, U_A) + ' / ' + qx(G, U_A, 2) + ' ' + rs(a/G, '<i>g</i>', 1)]
@@ -2268,7 +2270,7 @@
     return {
       title:'Padající předmět kolem okna', note:EX_NOTE_G + ' ' + EX_NOTE_INTER,
       text: 'U okna vysokého ' + qx(ho, 'm') + ' sledujeme, jak kolem něj shora dolů padá květináč (volný pád z klidu). Okno proletí za ' + qx(dt, 's', 2) + '. Určete rychlost květináče u horního okraje okna a výšku, ze které padal (nad horním okrajem okna).',
-      parts:[ part(SX.v1, U_MS, v1), part(SX.h, 'm', Hn) ],
+      parts:[ part(SX.v1, U_MS, v1), part(SX.h, 'm', Hn, undefined, [ r3(v1)*r3(v1)/(2*G) ]) ],
       steps:['Okno projde za Δ<i>t</i> s počáteční rychlostí <i>v</i><sub>1</sub>: <i>h</i><sub>o</sub> = <i>v</i><sub>1</sub> · Δ<i>t</i> + ½ · <i>g</i> · Δ<i>t</i>²',
              '<i>v</i><sub>1</sub> = <i>h</i><sub>o</sub> / Δ<i>t</i> − ½ · <i>g</i> · Δ<i>t</i> = ' + qx(ho, 'm') + ' / ' + qx(dt, 's', 2) + ' − ½ · ' + qx(G, U_A, 2) + ' · ' + qx(dt, 's', 2) + ' ' + rs(v1, U_MS),
              'Výška pádu před oknem: <i>h</i> = <i>v</i><sub>1</sub>² / (2<i>g</i>) = (' + qx(v1, U_MS) + ')² / (2 · ' + qx(G, U_A, 2) + ') ' + rs(Hn, 'm')]
@@ -2283,7 +2285,7 @@
     return {
       title:'Jízda metra mezi stanicemi', note:EX_NOTE_INTER,
       text: 'Souprava metra jede mezi stanicemi vzdálenými ' + qx(d, 'm') + '. Rozjíždí se z klidu se zrychlením ' + qx(a1, U_A) + ' a hned poté brzdí se zrychlením o velikosti ' + qx(a2, U_A) + ' až do zastavení (bez jízdy stálou rychlostí). Jaké nejvyšší rychlosti (v km·h⁻¹) dosáhne a za jak dlouho ujede celou vzdálenost?',
-      parts:[ part(SX.vmax, U_KMH, kmh(v)), part(SX.t, 's', T) ],
+      parts:[ part(SX.vmax, U_KMH, kmh(v), undefined, [ r3(v)*3.6 ]), part(SX.t, 's', T, undefined, [ r3(v)/a1 + r3(v)/a2 ]) ],
       steps:['Dráha rozjezdu <i>s</i><sub>1</sub> = <i>v</i>² / (2<i>a</i><sub>1</sub>), dráha brzdění <i>s</i><sub>2</sub> = <i>v</i>² / (2<i>a</i><sub>2</sub>); <i>s</i><sub>1</sub> + <i>s</i><sub>2</sub> = <i>d</i>',
              '<i>v</i> = √(2<i>d</i> · <i>a</i><sub>1</sub><i>a</i><sub>2</sub> / (<i>a</i><sub>1</sub> + <i>a</i><sub>2</sub>)) = √(2 · ' + fm(d) + ' · ' + fm(a1) + ' · ' + fm(a2) + ' / ' + fm(a1 + a2) + ') ' + rs(v, U_MS),
              'Převod: ' + qx(v, U_MS) + ' · 3,6 ' + rs(kmh(v), U_KMH),
@@ -2362,6 +2364,10 @@
     document.getElementById('ex-headline').textContent = headline;
     var lines = qu.steps.slice();
     lines.push('Odpověď: ' + exSolutionLine());
+    var alt = qu.parts.filter(function(p){ return p.alts.length; }).map(function(p){
+      return p.sym + ' = ' + p.alts.map(function(x){ return fm(x, p.dec) + '\u00A0' + p.unit; }).join(' nebo ');
+    });
+    if(alt.length) lines.push('Uznává se i výsledek, když se dosazují mezivýsledky zaokrouhlené na tisíciny: ' + alt.join(';  ') + '.');
     document.getElementById('ex-steps').innerHTML = lines.join('\n');
     exInputs().forEach(function(el){ el.disabled = true; });
     ex.locked = true;
