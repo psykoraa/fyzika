@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Grafy rovnoměrně zrychleného pohybu</title>
+<title>Zrychlený pohyb</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
@@ -159,6 +159,11 @@
 .answer-row .eq{ color:var(--ink-soft); }
 .answer-row .unit{ color:var(--ink-soft); font-size:0.65em; }
 .answer-input{ width:5.2em; }
+.ex-part{ margin-bottom:10px; }
+.ex-part .answer-row{ margin-top:8px; }
+.ex-input{ width:6.5em; }
+.ex-round{ text-align:center; margin-top:2px; }
+#ex-text{ text-align:left; }
 
 .feedback .steps{
   font-family:'IBM Plex Mono', monospace;
@@ -200,8 +205,8 @@
         <path d="M6,34 Q22,34 34,8" stroke="var(--accent)" stroke-width="2.4" fill="none" stroke-linecap="round"/>
       </svg>
       <div class="brand-text">
-        <h1>Grafy rovnoměrně zrychleného pohybu</h1>
-        <p>zrychlení, rychlost a dráha z grafů</p>
+        <h1>Zrychlený pohyb</h1>
+        <p>zrychlení, rychlost a dráha: grafy a příklady</p>
       </div>
     </div>
     <div class="readout" id="header-readout" hidden>
@@ -213,7 +218,8 @@
 
   <div class="top-tabs">
     <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
-    <button class="toptab" id="top-tab-trenink" data-tab="trenink">Trénink</button>
+    <button class="toptab" id="top-tab-trenink" data-tab="trenink">Trénink grafů</button>
+    <button class="toptab" id="top-tab-priklady" data-tab="priklady">Příklady</button>
   </div>
 
   <div id="view-theory">
@@ -459,6 +465,33 @@
       <div class="feedback" id="feedback" hidden>
         <div class="headline" id="feedback-headline"></div>
         <div class="steps" id="feedback-steps"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="view-examples" hidden>
+    <div class="panel">
+      <div class="section-block">
+        <div class="panel-title">Obtížnost</div>
+        <div class="row" id="ex-level-row"></div>
+      </div>
+      <div class="settings-foot" style="justify-content:flex-end;">
+        <button class="linklike" id="ex-reset-stats">vynulovat statistiku</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="cat-tag" id="ex-tag"></span>
+      <p class="task" id="ex-text"></p>
+      <p class="task-note" id="ex-note" hidden></p>
+      <div id="ex-answers"></div>
+      <div class="actions">
+        <button class="btn primary" id="ex-btn-check">Zkontrolovat</button>
+        <button class="btn ghost" id="ex-btn-skip">Nevím / Další</button>
+      </div>
+      <div class="feedback" id="ex-feedback" hidden>
+        <div class="headline" id="ex-headline"></div>
+        <div class="steps" id="ex-steps"></div>
       </div>
     </div>
   </div>
@@ -1714,26 +1747,730 @@
     updateStats();
   });
 
-  // ---- horní přepínač Teorie / Trénink ----
+  // ---------- záložka Příklady: generátor slovních úloh ----------
+  // Každá šablona vrací { title, text, note, parts:[{sym, unit, exact, dec}], steps:[…] }
+  // nebo null (náhodné zadání nevyšlo reálné → generátor zkusí znovu). Správné odpovědi se
+  // počítají v kódu přímo z hodnot uvedených v zadání (včetně jejich zaokrouhlení).
+
+  var G = 9.81, C_SOUND = 340;
+  var EX_STATS_KEY = 'fyzika:grafy-rovnomerne-zrychleneho-pohybu:stats-priklady';
+  var EX_LEVELS = [
+    { key:'zakladni', name:'Základní — dosazení do vzorce' },
+    { key:'stredni', name:'Střední — více vzorců, převody jednotek' },
+    { key:'tezke', name:'Těžší — kvadratická rovnice, více těles' }
+  ];
+  var DEC_NAMES = { 0:'na celé číslo (jednotky)', 1:'na desetiny', 2:'na setiny', 3:'na tisíciny' };
+  var EX_NOTE_G = 'Tíhové zrychlení <i>g</i> = 9,81 m·s⁻², odpor vzduchu zanedbejte.';
+  var EX_NOTE_INTER = 'Počítejte s nezaokrouhlenými mezivýsledky, zaokrouhlete až konečný výsledek.';
+
+  var ex = { level:'zakladni', score:0, streak:0, bestStreak:0, answered:0, correct:0,
+             current:null, locked:false, touched:false, lastTpl:null };
+
+  function exLoadStats(){
+    try{ var raw = localStorage.getItem(EX_STATS_KEY); if(raw){ ex.bestStreak = JSON.parse(raw).bestStreak || 0; } }catch(e){}
+  }
+  function exSaveStats(){
+    try{ localStorage.setItem(EX_STATS_KEY, JSON.stringify({bestStreak: ex.bestStreak})); }catch(e){}
+  }
+
+  // Náhodná hodnota z intervalu s krokem (bez plovoucího šumu).
+  function rnd(min, max, step){
+    var n = Math.round((max - min)/step);
+    return roundTo(min + step*randInt(0, n), 6);
+  }
+  // Číslo pro zadání a postup: nejvýš 3 desetinná místa, desetinná čárka, pevná mezera v tisících.
+  function fm(x, d){
+    if(d === undefined) d = 3;
+    var v = roundTo(x, d);
+    if(v === 0) v = 0;
+    var neg = v < 0;
+    var p = Math.abs(v).toString().split('.');
+    p[0] = p[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    return (neg ? '−' : '') + p.join(',');
+  }
+  function qx(x, unit, d){ return fm(x, d) + ' ' + unit; }
+  function rs(x, unit, d){
+    if(d === undefined) d = 3;
+    return (near(roundTo(x, d), x) ? '= ' : '≈ ') + qx(x, unit, d);
+  }
+  // Řád zaokrouhlení podle velikosti výsledku (aby výsledek měl aspoň dvě platné číslice).
+  function autoDec(x){
+    var ax = Math.abs(x);
+    if(ax >= 100) return 0;
+    if(ax >= 10) return 1;
+    if(ax >= 0.1) return 2;
+    return 3;
+  }
+  function part(sym, unit, exact, dec){
+    if(dec === undefined) dec = autoDec(exact);
+    return { sym:sym, unit:unit, exact:exact, dec:dec, expected:roundTo(exact, dec) };
+  }
+  function inRange(x, lo, hi){ return x >= lo && x <= hi; }
+  function kmh(ms){ return ms*3.6; }
+  function ms(kmhv){ return kmhv/3.6; }
+
+  var SX = {
+    a:'<i>a</i>', v:'<i>v</i>', v0:'<i>v</i><sub>0</sub>', s:'<i>s</i>', t:'<i>t</i>', h:'<i>h</i>',
+    t1:'<i>t</i><sub>1</sub>', t2:'<i>t</i><sub>2</sub>', ag:'<i>a</i>',
+    vmax:'<i>v</i><sub>max</sub>', sr:'<i>s</i><sub>r</sub>', sb:'<i>s</i><sub>b</sub>',
+    sc:'<i>s</i><sub>c</sub>', v1:'<i>v</i><sub>1</sub>', sbr:'<i>s</i><sub>1</sub>'
+  };
+  var U_MS = 'm·s⁻¹', U_KMH = 'km·h⁻¹', U_G = '· <i>g</i>';
+
+  // ----- ZÁKLADNÍ -----
+
+  var ROZJEZD = [
+    { w:'Tramvaj se rozjíždí z klidu ze zastávky', a:[0.6,1.4,0.1], t:[5,15,1], vmax:20 },
+    { w:'Osobní auto se rozjíždí z klidu na křižovatce', a:[1.5,4,0.5], t:[4,12,1], vmax:35 },
+    { w:'Vlak vyjíždí z nádraží', a:[0.2,0.8,0.1], t:[20,90,5], vmax:40 },
+    { w:'Cyklista se rozjíždí z klidu na rovné cestě', a:[0.4,1.2,0.1], t:[3,10,1], vmax:10 },
+    { w:'Sprinter vybíhá z bloků', a:[3.5,5.5,0.5], t:[2,3,0.5], vmax:11 },
+    { w:'Dopravní letadlo se rozjíždí po ranveji', a:[2,4,0.5], t:[15,40,5], vmax:90 },
+    { w:'Autobus se rozjíždí ze zastávky', a:[0.6,1.5,0.1], t:[5,15,1], vmax:20 }
+  ];
+
+  function tplRozjezdV(){
+    var sc = pick(ROZJEZD), a = rnd(sc.a[0], sc.a[1], sc.a[2]), t = rnd(sc.t[0], sc.t[1], sc.t[2]), v = a*t;
+    if(v > sc.vmax || v < 2) return null;
+    var w = randInt(0, 2);
+    if(w === 0) return {
+      title:'Rychlost po rozjezdu',
+      text: sc.w + ' se zrychlením ' + qx(a, U_A) + '. Jakou rychlost bude mít za ' + qx(t, 's') + '?',
+      parts:[ part(SX.v, U_MS, v) ],
+      steps:['Pohyb z klidu: <i>v</i> = <i>a</i> · <i>t</i>', '<i>v</i> = ' + qx(a, U_A) + ' · ' + qx(t, 's') + ' ' + rs(v, U_MS)]
+    };
+    if(w === 1) return {
+      title:'Zrychlení při rozjezdu',
+      text: sc.w + ' a za ' + qx(t, 's') + ' dosáhne rychlosti ' + qx(v, U_MS) + '. Jaké je jeho zrychlení (předpokládejte, že je stálé)?',
+      parts:[ part(SX.a, U_A, a) ],
+      steps:['<i>a</i> = <i>v</i> / <i>t</i>', '<i>a</i> = ' + qx(v, U_MS) + ' / ' + qx(t, 's') + ' ' + rs(a, U_A)]
+    };
+    return {
+      title:'Doba rozjezdu',
+      text: sc.w + ' se stálým zrychlením ' + qx(a, U_A) + '. Za jak dlouho dosáhne rychlosti ' + qx(v, U_MS) + '?',
+      parts:[ part(SX.t, 's', t) ],
+      steps:['<i>t</i> = <i>v</i> / <i>a</i>', '<i>t</i> = ' + qx(v, U_MS) + ' / ' + qx(a, U_A) + ' ' + rs(t, 's')]
+    };
+  }
+
+  var BRZDENI = [
+    { w:'Osobní auto brzdí', v0:[10,25,1], a:[4,8,0.5] },
+    { w:'Nákladní vlak brzdí před návěstidlem', v0:[15,30,1], a:[0.4,1,0.1] },
+    { w:'Cyklista brzdí před křižovatkou', v0:[4,9,1], a:[1.5,3.5,0.5] },
+    { w:'Tramvaj brzdí před přechodem', v0:[8,15,1], a:[1,2,0.5] }
+  ];
+
+  function tplBrzdeni(){
+    var sc = pick(BRZDENI), v0 = rnd(sc.v0[0], sc.v0[1], sc.v0[2]), a = rnd(sc.a[0], sc.a[1], sc.a[2]);
+    var t = v0/a, s = v0*v0/(2*a);
+    var w = randInt(0, 2);
+    if(w === 0) return {
+      title:'Doba brzdění',
+      text: sc.w + ' z rychlosti ' + qx(v0, U_MS) + ' stálým zrychlením o velikosti ' + qx(a, U_A) + ' až do zastavení. Jak dlouho brzdění trvá?',
+      parts:[ part(SX.t, 's', t) ],
+      steps:['Zastavení: <i>v</i> = <i>v</i><sub>0</sub> − <i>a</i> · <i>t</i> = 0 → <i>t</i> = <i>v</i><sub>0</sub> / <i>a</i>', '<i>t</i> = ' + qx(v0, U_MS) + ' / ' + qx(a, U_A) + ' ' + rs(t, 's')]
+    };
+    if(w === 1) return {
+      title:'Brzdná dráha',
+      text: sc.w + ' z rychlosti ' + qx(v0, U_MS) + ' stálým zrychlením o velikosti ' + qx(a, U_A) + ' až do zastavení. Jakou brzdnou dráhu ujede?',
+      parts:[ part(SX.s, 'm', s) ],
+      steps:['Brzdná dráha: <i>s</i> = <i>v</i><sub>0</sub>² / (2<i>a</i>)', '<i>s</i> = (' + qx(v0, U_MS) + ')² / (2 · ' + qx(a, U_A) + ') ' + rs(s, 'm')]
+    };
+    if(!inRange(s, 3, 1500)) return null;
+    var sR = roundTo(s, 1);
+    var aR = v0*v0/(2*sR);
+    return {
+      title:'Zrychlení z brzdné dráhy',
+      text: sc.w + ' z rychlosti ' + qx(v0, U_MS) + ' a zastaví na dráze ' + qx(sR, 'm') + '. Jak velké je zrychlení (velikost)?',
+      parts:[ part(SX.a, U_A, aR) ],
+      steps:['Z <i>s</i> = <i>v</i><sub>0</sub>² / (2<i>a</i>) vyjádříme <i>a</i> = <i>v</i><sub>0</sub>² / (2<i>s</i>)', '<i>a</i> = (' + qx(v0, U_MS) + ')² / (2 · ' + qx(sR, 'm') + ') ' + rs(aR, U_A)]
+    };
+  }
+
+  function tplDrahaZKlidu(){
+    var sc = pick(ROZJEZD), a = rnd(sc.a[0], sc.a[1], sc.a[2]), t = rnd(sc.t[0], sc.t[1], sc.t[2]);
+    var s = 0.5*a*t*t;
+    if(a*t > sc.vmax || a*t < 2) return null;
+    var w = randInt(0, 2);
+    if(w === 0) return {
+      title:'Dráha při rozjezdu',
+      text: sc.w + ' se zrychlením ' + qx(a, U_A) + '. Jakou dráhu ujede za ' + qx(t, 's') + '?',
+      parts:[ part(SX.s, 'm', s) ],
+      steps:['Z klidu: <i>s</i> = ½ · <i>a</i> · <i>t</i>²', '<i>s</i> = ½ · ' + qx(a, U_A) + ' · (' + qx(t, 's') + ')² ' + rs(s, 'm')]
+    };
+    var sR = roundTo(s, 1);
+    if(w === 1){
+      var aR = 2*sR/(t*t);
+      return {
+        title:'Zrychlení z ujeté dráhy',
+        text: sc.w + ' a za ' + qx(t, 's') + ' ujede dráhu ' + qx(sR, 'm') + '. Jaké je jeho zrychlení (stálé)?',
+        parts:[ part(SX.a, U_A, aR) ],
+        steps:['Z <i>s</i> = ½ · <i>a</i> · <i>t</i>² vyjádříme <i>a</i> = 2<i>s</i> / <i>t</i>²', '<i>a</i> = 2 · ' + qx(sR, 'm') + ' / (' + qx(t, 's') + ')² ' + rs(aR, U_A)]
+      };
+    }
+    var tR = Math.sqrt(2*sR/a);
+    return {
+      title:'Doba rozjezdu na dané dráze',
+      text: sc.w + ' se zrychlením ' + qx(a, U_A) + '. Za jak dlouho ujede dráhu ' + qx(sR, 'm') + '?',
+      parts:[ part(SX.t, 's', tR) ],
+      steps:['Z <i>s</i> = ½ · <i>a</i> · <i>t</i>² vyjádříme <i>t</i> = √(2<i>s</i> / <i>a</i>)', '<i>t</i> = √(2 · ' + qx(sR, 'm') + ' / ' + qx(a, U_A) + ') ' + rs(tR, 's')]
+    };
+  }
+
+  var PAD = [
+    { w:'Plavec skáče do bazénu z věže', h:[3,5,7.5,10] },
+    { w:'Z balkonu v pátém patře spadne květináč', h:[12,13,14,15] },
+    { w:'Kámen padá z mostu do řeky', h:[10,15,20,25,30,40,50] },
+    { w:'Kámen spadne do propasti Macochy (hloubka asi 138 m)', h:[138] },
+    { w:'Z okna věže spadne cihla', h:[20,25,30,35,40] }
+  ];
+
+  function tplVolnyPad(){
+    var sc = pick(PAD), h = pick(sc.h), w = randInt(0, 3);
+    var t, v;
+    if(w <= 1){
+      t = Math.sqrt(2*h/G); v = G*t;
+      if(w === 0) return {
+        title:'Volný pád: doba pádu', note:EX_NOTE_G,
+        text: sc.w + ' z výšky ' + qx(h, 'm') + ' (volný pád z klidu). Jak dlouho padá?',
+        parts:[ part(SX.t, 's', t) ],
+        steps:['Z <i>h</i> = ½ · <i>g</i> · <i>t</i>² vyjádříme <i>t</i> = √(2<i>h</i> / <i>g</i>)', '<i>t</i> = √(2 · ' + qx(h, 'm') + ' / ' + qx(G, U_A, 2) + ') ' + rs(t, 's')]
+      };
+      return {
+        title:'Volný pád: rychlost dopadu', note:EX_NOTE_G,
+        text: sc.w + ' z výšky ' + qx(h, 'm') + ' (volný pád z klidu). Jakou rychlostí dopadne?',
+        parts:[ part(SX.v, U_MS, Math.sqrt(2*G*h)) ],
+        steps:['Z <i>v</i>² = 2 · <i>g</i> · <i>h</i> plyne <i>v</i> = √(2<i>gh</i>)', '<i>v</i> = √(2 · ' + qx(G, U_A, 2) + ' · ' + qx(h, 'm') + ') ' + rs(Math.sqrt(2*G*h), U_MS)]
+      };
+    }
+    var tt = pick([1, 1.5, 2, 2.5, 3, 3.5, 4]);
+    var s = 0.5*G*tt*tt, vv = G*tt;
+    return {
+      title:'Volný pád v čase', note:EX_NOTE_G,
+      text: 'Opravář upustil klíč do hluboké výtahové šachty. Kde (jak hluboko pod místem upuštění) bude klíč za ' + qx(tt, 's') + ' a jakou bude mít v tu chvíli rychlost?',
+      parts:[ part(SX.s, 'm', s), part(SX.v, U_MS, vv) ],
+      steps:['Poloha: <i>s</i> = ½ · <i>g</i> · <i>t</i>²', '<i>s</i> = ½ · ' + qx(G, U_A, 2) + ' · (' + qx(tt, 's') + ')² ' + rs(s, 'm'),
+             'Rychlost: <i>v</i> = <i>g</i> · <i>t</i>', '<i>v</i> = ' + qx(G, U_A, 2) + ' · ' + qx(tt, 's') + ' ' + rs(vv, U_MS)]
+    };
+  }
+
+  var ZMENA = [
+    { w:'Motorka', v0:[4,10,1], dv:[6,14,1], t:[5,12,1] },
+    { w:'Osobní auto při předjíždění', v0:[15,25,1], dv:[5,12,1], t:[4,10,1] },
+    { w:'Vlak vyjíždějící z oblouku', v0:[15,25,1], dv:[5,10,1], t:[20,60,5] },
+    { w:'Cyklista při sjezdu', v0:[3,6,1], dv:[3,7,1], t:[8,20,1] }
+  ];
+
+  function tplZmenaRychlosti(){
+    var sc = pick(ZMENA), v0 = rnd(sc.v0[0], sc.v0[1], sc.v0[2]), dv = rnd(sc.dv[0], sc.dv[1], sc.dv[2]), t = rnd(sc.t[0], sc.t[1], sc.t[2]);
+    var slow = randInt(0, 2) === 0, v;
+    if(slow){ v = v0 + dv; var tmp = v; v = v0; v0 = tmp; } else v = v0 + dv;
+    var a = (v - v0)/t, w = randInt(0, 1);
+    if(Math.abs(a) < 0.1 || Math.abs(a) > 5) return null;
+    var verb = slow ? 'zpomalí' : 'zrychlí';
+    if(w === 0) return {
+      title:'Průměrné zrychlení', note: slow ? 'Zrychlení zpomalujícího pohybu vyjde záporné.' : null,
+      text: sc.w + ' ' + verb + ' rovnoměrně z ' + qx(v0, U_MS) + ' na ' + qx(v, U_MS) + ' za ' + qx(t, 's') + '. Určete zrychlení.',
+      parts:[ part(SX.a, U_A, a) ],
+      steps:['<i>a</i> = Δ<i>v</i> / Δ<i>t</i> = (<i>v</i> − <i>v</i><sub>0</sub>) / <i>t</i>', '<i>a</i> = (' + qx(v, U_MS) + ' − ' + qx(v0, U_MS) + ') / ' + qx(t, 's') + ' ' + rs(a, U_A)]
+    };
+    var s = (v0 + v)/2*t;
+    return {
+      title:'Dráha při změně rychlosti',
+      text: sc.w + ' ' + verb + ' rovnoměrně z ' + qx(v0, U_MS) + ' na ' + qx(v, U_MS) + ' za ' + qx(t, 's') + '. Jakou dráhu přitom ujede?',
+      parts:[ part(SX.s, 'm', s) ],
+      steps:['Zrychlení: <i>a</i> = (<i>v</i> − <i>v</i><sub>0</sub>) / <i>t</i> = (' + qx(v, U_MS) + ' − ' + qx(v0, U_MS) + ') / ' + qx(t, 's') + ' ' + rs(a, U_A),
+             'Dráha: <i>s</i> = <i>v</i><sub>0</sub> · <i>t</i> + ½ · <i>a</i> · <i>t</i>²', '<i>s</i> = ' + qx(v0, U_MS) + ' · ' + qx(t, 's') + ' + ½ · ' + qx(a, U_A) + ' · (' + qx(t, 's') + ')² ' + rs(s, 'm'),
+             '(Totéž dá i průměrná rychlost: <i>s</i> = ½ · (<i>v</i><sub>0</sub> + <i>v</i>) · <i>t</i>.)']
+    };
+  }
+
+  // ----- STŘEDNÍ -----
+
+  function tplAuto0100(){
+    var vk = pick([80, 90, 100, 110, 120]), t = rnd(6, 14, 0.5), v = ms(vk), a = v/t;
+    if(a < 1.5 || a > 4.5) return null;
+    var s = 0.5*a*t*t;
+    return {
+      title:'Zrychlení z klidu na zadanou rychlost', note:EX_NOTE_INTER,
+      text: 'Osobní auto zrychlí z klidu na rychlost ' + qx(vk, U_KMH) + ' za ' + qx(t, 's') + '. Určete jeho zrychlení (stálé) a dráhu, kterou přitom ujede.',
+      parts:[ part(SX.a, U_A, a), part(SX.s, 'm', s) ],
+      steps:['Převod: ' + qx(vk, U_KMH) + ' = ' + qx(vk, U_KMH) + ' / 3,6 ' + rs(v, U_MS),
+             '<i>a</i> = <i>v</i> / <i>t</i> = ' + qx(v, U_MS) + ' / ' + qx(t, 's') + ' ' + rs(a, U_A),
+             '<i>s</i> = ½ · <i>a</i> · <i>t</i>² = ½ · ' + qx(a, U_A) + ' · (' + qx(t, 's') + ')² ' + rs(s, 'm')]
+    };
+  }
+
+  function tplZastavovaciDraha(){
+    var vk = pick([30, 40, 50, 60, 70, 80, 90, 100, 110, 130]), tr = rnd(0.5, 1.5, 0.1), a = rnd(5, 8, 0.5);
+    var v = ms(vk), sr = v*tr, sb = v*v/(2*a);
+    return {
+      title:'Zastavovací dráha řidiče', note:EX_NOTE_INTER,
+      text: 'Řidič jede rychlostí ' + qx(vk, U_KMH) + ' a v určitém okamžiku vidí překážku. Než začne brzdit, uplyne reakční doba ' + qx(tr, 's') + ' (auto jede stálou rychlostí). Potom brzdí stálým zrychlením o velikosti ' + qx(a, U_A) + ' až do zastavení. Určete dráhu ujetou během reakce, brzdnou dráhu a celkovou zastavovací dráhu.',
+      parts:[ part(SX.sr, 'm', sr), part(SX.sb, 'm', sb), part(SX.sc, 'm', sr + sb) ],
+      steps:['Převod: ' + qx(vk, U_KMH) + ' / 3,6 ' + rs(v, U_MS),
+             'Reakce (rovnoměrný pohyb): <i>s</i><sub>r</sub> = <i>v</i> · <i>t</i><sub>r</sub> = ' + qx(v, U_MS) + ' · ' + qx(tr, 's') + ' ' + rs(sr, 'm'),
+             'Brzdění: <i>s</i><sub>b</sub> = <i>v</i>² / (2<i>a</i>) = (' + qx(v, U_MS) + ')² / (2 · ' + qx(a, U_A) + ') ' + rs(sb, 'm'),
+             'Celkem: <i>s</i><sub>c</sub> = <i>s</i><sub>r</sub> + <i>s</i><sub>b</sub> = ' + qx(sr, 'm') + ' + ' + qx(sb, 'm') + ' ' + rs(sr + sb, 'm')]
+    };
+  }
+
+  function tplZrychleniNaDrazeAuto(){
+    var v0k = pick([36, 54, 72, 90]), vk = pick([72, 90, 108, 126]), s = rnd(100, 400, 20);
+    if(vk <= v0k + 18) return null;
+    var v0 = ms(v0k), v = ms(vk), a = (v*v - v0*v0)/(2*s), t = (v - v0)/a;
+    if(a < 0.3 || a > 3) return null;
+    return {
+      title:'Zrychlení na dané dráze', note:EX_NOTE_INTER,
+      text: 'Auto jede po dálnici rychlostí ' + qx(v0k, U_KMH) + ' a při předjíždění zvýší rychlost na ' + qx(vk, U_KMH) + ', přičemž při stálém zrychlení ujede dráhu ' + qx(s, 'm') + '. Určete zrychlení auta a dobu, za kterou rychlost zvýšilo.',
+      parts:[ part(SX.a, U_A, a), part(SX.t, 's', t) ],
+      steps:['Převod: ' + qx(v0k, U_KMH) + ' ' + rs(v0, U_MS) + ', ' + qx(vk, U_KMH) + ' ' + rs(v, U_MS),
+             'Z <i>v</i>² = <i>v</i><sub>0</sub>² + 2<i>as</i>: <i>a</i> = (<i>v</i>² − <i>v</i><sub>0</sub>²) / (2<i>s</i>)',
+             '<i>a</i> = ((' + qx(v, U_MS) + ')² − (' + qx(v0, U_MS) + ')²) / (2 · ' + qx(s, 'm') + ') ' + rs(a, U_A),
+             '<i>t</i> = (<i>v</i> − <i>v</i><sub>0</sub>) / <i>a</i> = (' + qx(v, U_MS) + ' − ' + qx(v0, U_MS) + ') / ' + qx(a, U_A) + ' ' + rs(t, 's')]
+    };
+  }
+
+  function tplVzletLetadla(){
+    var vk = pick([220, 240, 250, 260, 270, 280, 290, 300]), s = rnd(1200, 2500, 100), v = ms(vk), a = v*v/(2*s), t = v/a;
+    if(a < 1.2 || a > 3.5) return null;
+    return {
+      title:'Rozjezd letadla před vzletem', note:EX_NOTE_INTER,
+      text: 'Dopravní letadlo musí před vzlétnutím dosáhnout rychlosti ' + qx(vk, U_KMH) + '. Rozjezdová dráha má délku ' + qx(s, 'm') + '. Jak velké musí být nejmenší (stálé) zrychlení letadla a jak dlouho rozjezd trvá?',
+      parts:[ part(SX.a, U_A, a), part(SX.t, 's', t) ],
+      steps:['Převod: ' + qx(vk, U_KMH) + ' / 3,6 ' + rs(v, U_MS),
+             '<i>a</i> = <i>v</i>² / (2<i>s</i>) = (' + qx(v, U_MS) + ')² / (2 · ' + qx(s, 'm') + ') ' + rs(a, U_A),
+             '<i>t</i> = <i>v</i> / <i>a</i> = ' + qx(v, U_MS) + ' / ' + qx(a, U_A) + ' ' + rs(t, 's')]
+    };
+  }
+
+  function tplPadKmh(){
+    var sc = pick(PAD.slice(0, 3).concat([PAD[4]])), h = pick(sc.h), t = Math.sqrt(2*h/G), v = G*t;
+    if(kmh(v) > 120) return null;
+    return {
+      title:'Volný pád: doba a rychlost v km/h', note:EX_NOTE_G + ' ' + EX_NOTE_INTER,
+      text: sc.w + ' z výšky ' + qx(h, 'm') + ' (volný pád z klidu). Za jak dlouho dopadne a jakou rychlostí? Rychlost uveďte v km·h⁻¹.',
+      parts:[ part(SX.t, 's', t), part(SX.v, U_KMH, kmh(v)) ],
+      steps:['<i>t</i> = √(2<i>h</i> / <i>g</i>) = √(2 · ' + qx(h, 'm') + ' / ' + qx(G, U_A, 2) + ') ' + rs(t, 's'),
+             '<i>v</i> = <i>g</i> · <i>t</i> = ' + qx(G, U_A, 2) + ' · ' + qx(t, 's') + ' ' + rs(v, U_MS),
+             'Převod: ' + qx(v, U_MS) + ' · 3,6 ' + rs(kmh(v), U_KMH)]
+    };
+  }
+
+  function tplLodka(){
+    var h = pick([8, 10, 12, 15, 20, 25, 30, 45]), t = Math.sqrt(2*h/G), vb = rnd(1.5, 6, 0.5), d = Math.round(vb*t);
+    var v = d/t;
+    if(d < 4 || v < 1 || v > 7) return null;
+    return {
+      title:'Pád z mostu a loďka', note:EX_NOTE_G + ' ' + EX_NOTE_INTER,
+      text: 'Z mostu ve výšce ' + qx(h, 'm') + ' nad hladinou řeky se uvolní těleso a spadne přímo do loďky, která pluje pod mostem stálou rychlostí. V okamžiku uvolnění byla loďka vzdálena ' + qx(d, 'm') + ' od místa dopadu. Jak dlouho těleso padá a jaká je rychlost loďky?',
+      parts:[ part(SX.t, 's', t), part(SX.v, U_MS, v) ],
+      steps:['Doba pádu: <i>t</i> = √(2<i>h</i> / <i>g</i>) = √(2 · ' + qx(h, 'm') + ' / ' + qx(G, U_A, 2) + ') ' + rs(t, 's'),
+             'Loďka za tutéž dobu urazí ' + qx(d, 'm') + ' stálou rychlostí: <i>v</i> = <i>d</i> / <i>t</i>',
+             '<i>v</i> = ' + qx(d, 'm') + ' / ' + qx(t, 's') + ' ' + rs(v, U_MS)]
+    };
+  }
+
+  function tplCrashTest(){
+    var vk = rnd(40, 64, 4), t = rnd(0.06, 0.14, 0.01), v = ms(vk), a = v/t;
+    return {
+      title:'Náraz při crash testu', note:'Uveďte velikost zrychlení. Tíhové zrychlení <i>g</i> = 9,81 m·s⁻². ' + EX_NOTE_INTER,
+      text: 'Při nárazovém testu narazí auto rychlostí ' + qx(vk, U_KMH) + ' do pevné bariéry a zastaví se za ' + qx(t, 's') + '. Určete průměrné zrychlení (velikost) v m·s⁻² a v násobcích tíhového zrychlení <i>g</i>.',
+      parts:[ part(SX.a, U_A, a), part(SX.ag, U_G, a/G, 1) ],
+      steps:['Převod: ' + qx(vk, U_KMH) + ' / 3,6 ' + rs(v, U_MS),
+             '<i>a</i> = <i>v</i> / <i>t</i> = ' + qx(v, U_MS) + ' / ' + qx(t, 's', 2) + ' ' + rs(a, U_A),
+             'V násobcích <i>g</i>: <i>a</i> / <i>g</i> = ' + qx(a, U_A) + ' / ' + qx(G, U_A, 2) + ' ' + rs(a/G, '<i>g</i>', 1)]
+    };
+  }
+
+  function tplVytah(){
+    var a = rnd(0.8, 1.5, 0.1), v = rnd(2, 6, 0.5), h = rnd(30, 150, 10);
+    var sr = v*v/(2*a), sm = h - 2*sr;
+    if(sm < 5) return null;
+    var T = 2*v/a + sm/v;
+    return {
+      title:'Výtah: rozjezd, jízda, brzdění', note:EX_NOTE_INTER,
+      text: 'Kabina výtahu v mrakodrapu jede nahoru po dráze ' + qx(h, 'm') + '. Rozjíždí se se zrychlením ' + qx(a, U_A) + ' do nejvyšší rychlosti ' + qx(v, U_MS) + ', tou jede rovnoměrně a nakonec brzdí se stejně velkým zrychlením až do zastavení. Jakou dráhu urazí při rozjezdu a za jak dlouho vyjede celou dráhu?',
+      parts:[ part(SX.s, 'm', sr), part(SX.t, 's', T) ],
+      steps:['Rozjezd: <i>s</i><sub>r</sub> = <i>v</i>² / (2<i>a</i>) = (' + qx(v, U_MS) + ')² / (2 · ' + qx(a, U_A) + ') ' + rs(sr, 'm') + ' (stejně dlouhé je brzdění)',
+             'Doba rozjezdu i brzdění: <i>t</i><sub>r</sub> = <i>v</i> / <i>a</i> = ' + qx(v, U_MS) + ' / ' + qx(a, U_A) + ' ' + rs(v/a, 's'),
+             'Rovnoměrná část: <i>s</i><sub>m</sub> = ' + qx(h, 'm') + ' − 2 · ' + qx(sr, 'm') + ' ' + rs(sm, 'm') + ', <i>t</i><sub>m</sub> = <i>s</i><sub>m</sub> / <i>v</i> ' + rs(sm/v, 's'),
+             'Celkem: <i>t</i> = 2<i>t</i><sub>r</sub> + <i>t</i><sub>m</sub> ' + rs(T, 's')]
+    };
+  }
+
+  function tplSprinter(){
+    var a = rnd(3, 4.5, 0.5), t1 = rnd(2.5, 4, 0.5), v = a*t1, s1 = 0.5*a*t1*t1;
+    if(v > 11.5) return null;
+    var t2 = (100 - s1)/v, T = t1 + t2;
+    if(!inRange(T, 10.5, 15)) return null;
+    return {
+      title:'Běh na 100 m', note:EX_NOTE_INTER,
+      text: 'Běžec na trati 100 m se prvních ' + qx(t1, 's') + ' rozbíhá z klidu se stálým zrychlením ' + qx(a, U_A) + ', potom běží zbytek trati stálou rychlostí, kterou dosáhl na konci rozbíhání. Jaké rychlosti dosáhl a jaký je jeho celkový čas na 100 m?',
+      parts:[ part(SX.v, U_MS, v), part(SX.t, 's', T) ],
+      steps:['<i>v</i> = <i>a</i> · <i>t</i><sub>1</sub> = ' + qx(a, U_A) + ' · ' + qx(t1, 's') + ' ' + rs(v, U_MS),
+             'Dráha při rozbíhání: <i>s</i><sub>1</sub> = ½ · <i>a</i> · <i>t</i><sub>1</sub>² ' + rs(s1, 'm'),
+             'Zbývá ' + qx(100 - s1, 'm') + ' rovnoměrně: <i>t</i><sub>2</sub> = (100 m − <i>s</i><sub>1</sub>) / <i>v</i> ' + rs(t2, 's'),
+             'Celkem: <i>t</i> = <i>t</i><sub>1</sub> + <i>t</i><sub>2</sub> ' + rs(T, 's')]
+    };
+  }
+
+  function tplRychlik(){
+    var v1 = rnd(15, 25, 1), v2 = rnd(v1 + 5, 40, 1), s2 = rnd(300, 2000, 50);
+    var a = (v2*v2 - v1*v1)/(2*s2);
+    if(!inRange(a, 0.2, 1.0)) return null;
+    var t1 = v1/a, t2 = (v2 - v1)/a;
+    return {
+      title:'Rozjezd rychlíku', note:EX_NOTE_INTER,
+      text: 'Rychlík stojí ve stanici a začne se rozjíždět se stálým zrychlením. V okamžiku <i>t</i><sub>1</sub> má rychlost ' + qx(v1, U_MS) + '. Poté urazí za dobu <i>t</i><sub>2</sub> dalších ' + qx(s2, 'm') + ' a jeho rychlost vzroste na ' + qx(v2, U_MS) + '. Určete zrychlení vlaku a doby <i>t</i><sub>1</sub> a <i>t</i><sub>2</sub>.',
+      parts:[ part(SX.a, U_A, a), part(SX.t1, 's', t1), part(SX.t2, 's', t2) ],
+      steps:['Na druhém úseku: <i>v</i>₂² = <i>v</i>₁² + 2<i>as</i><sub>2</sub> → <i>a</i> = (<i>v</i>₂² − <i>v</i>₁²) / (2<i>s</i><sub>2</sub>)',
+             '<i>a</i> = ((' + qx(v2, U_MS) + ')² − (' + qx(v1, U_MS) + ')²) / (2 · ' + qx(s2, 'm') + ') ' + rs(a, U_A),
+             '<i>t</i><sub>1</sub> = <i>v</i><sub>1</sub> / <i>a</i> = ' + qx(v1, U_MS) + ' / ' + qx(a, U_A) + ' ' + rs(t1, 's'),
+             '<i>t</i><sub>2</sub> = (<i>v</i><sub>2</sub> − <i>v</i><sub>1</sub>) / <i>a</i> = ' + qx(v2 - v1, U_MS) + ' / ' + qx(a, U_A) + ' ' + rs(t2, 's')]
+    };
+  }
+
+  // ----- TĚŽŠÍ -----
+
+  function tplBrzdeniKPrekazce(){
+    var v0 = rnd(12, 28, 1), a = rnd(4, 8, 0.5), smax = v0*v0/(2*a);
+    var s = Math.round(smax*rnd(0.5, 0.9, 0.05));
+    var disc = v0*v0 - 2*a*s;
+    if(disc <= 0 || s < 10) return null;
+    var t = (v0 - Math.sqrt(disc))/a, v = v0 - a*t;
+    if(kmh(v) < 12) return null;
+    return {
+      title:'Brzdění před překážkou (kvadratická rovnice)', note:EX_NOTE_INTER,
+      text: 'Řidič jede rychlostí ' + qx(v0, U_MS) + ' a začne brzdit stálým zrychlením o velikosti ' + qx(a, U_A) + '. V místě vzdáleném ' + qx(s, 'm') + ' od začátku brzdění stojí překážka. Za jak dlouho od začátku brzdění k překážce dojede a jakou rychlostí (v km·h⁻¹) do ní narazí?',
+      parts:[ part(SX.t, 's', t), part(SX.v, U_KMH, kmh(v)) ],
+      steps:['Dráha při brzdění: <i>s</i> = <i>v</i><sub>0</sub> · <i>t</i> − ½ · <i>a</i> · <i>t</i>² → ½<i>a</i> · <i>t</i>² − <i>v</i><sub>0</sub> · <i>t</i> + <i>s</i> = 0',
+             'Kvadratická rovnice: ' + fm(a/2) + ' · <i>t</i>² − ' + fm(v0) + ' · <i>t</i> + ' + fm(s) + ' = 0',
+             '<i>t</i> = (<i>v</i><sub>0</sub> − √(<i>v</i><sub>0</sub>² − 2<i>as</i>)) / <i>a</i> = (' + fm(v0) + ' − √' + fm(disc) + ') / ' + fm(a) + ' ' + rs(t, 's') + ' (menší kořen: větší by odpovídal pohybu po zastavení, který neprobíhá)',
+             'Rychlost: <i>v</i> = <i>v</i><sub>0</sub> − <i>a</i> · <i>t</i> = ' + qx(v0, U_MS) + ' − ' + qx(a, U_A) + ' · ' + qx(t, 's') + ' ' + rs(v, U_MS),
+             'Převod: ' + qx(v, U_MS) + ' · 3,6 ' + rs(kmh(v), U_KMH)]
+    };
+  }
+
+  var SJEZD = [
+    { w:'Cyklista sjíždí z kopce', v0:[3,8,1], a:[0.2,0.8,0.1], s:[50,200,10], vmax:18 },
+    { w:'Lyžař sjíždí svah', v0:[2,6,1], a:[0.5,1.5,0.1], s:[50,300,10], vmax:25 },
+    { w:'Auto zrychluje při předjíždění', v0:[20,28,1], a:[0.5,1.5,0.1], s:[100,400,10], vmax:42 }
+  ];
+
+  function tplDobaNaDrazeZrychlujici(){
+    var sc = pick(SJEZD), v0 = rnd(sc.v0[0], sc.v0[1], sc.v0[2]), a = rnd(sc.a[0], sc.a[1], sc.a[2]), s = rnd(sc.s[0], sc.s[1], sc.s[2]);
+    var disc = v0*v0 + 2*a*s, t = (-v0 + Math.sqrt(disc))/a, v = v0 + a*t;
+    if(v > sc.vmax) return null;
+    return {
+      title:'Doba pohybu na dané dráze (kvadratická rovnice)', note:EX_NOTE_INTER,
+      text: sc.w + ': počáteční rychlost je ' + qx(v0, U_MS) + ' a zrychlení ' + qx(a, U_A) + ' (stálé). Za jak dlouho ujede dráhu ' + qx(s, 'm') + ' a jakou rychlost bude mít na jejím konci?',
+      parts:[ part(SX.t, 's', t), part(SX.v, U_MS, v) ],
+      steps:['<i>s</i> = <i>v</i><sub>0</sub> · <i>t</i> + ½ · <i>a</i> · <i>t</i>² → ½<i>a</i> · <i>t</i>² + <i>v</i><sub>0</sub> · <i>t</i> − <i>s</i> = 0',
+             'Kvadratická rovnice: ' + fm(a/2) + ' · <i>t</i>² + ' + fm(v0) + ' · <i>t</i> − ' + fm(s) + ' = 0',
+             '<i>t</i> = (−<i>v</i><sub>0</sub> + √(<i>v</i><sub>0</sub>² + 2<i>as</i>)) / <i>a</i> = (−' + fm(v0) + ' + √' + fm(disc) + ') / ' + fm(a) + ' ' + rs(t, 's') + ' (záporný kořen nemá fyzikální smysl)',
+             '<i>v</i> = <i>v</i><sub>0</sub> + <i>a</i> · <i>t</i> = ' + qx(v0, U_MS) + ' + ' + qx(a, U_A) + ' · ' + qx(t, 's') + ' ' + rs(v, U_MS)]
+    };
+  }
+
+  function tplCyklisteProti(){
+    var v1 = rnd(3, 6, 0.5), a1 = rnd(0.1, 0.4, 0.1), v2 = rnd(3, 6, 0.5), a2 = rnd(0.1, 0.4, 0.1), d = rnd(150, 500, 50);
+    var A = (a1 + a2)/2, B = v1 + v2, disc = B*B + 4*A*d, t = (-B + Math.sqrt(disc))/(2*A);
+    if(!inRange(t, 10, 45)) return null;
+    if(v1 + a1*t > 12 || v2 + a2*t > 12) return null;
+    var s1 = v1*t + 0.5*a1*t*t;
+    return {
+      title:'Dva cyklisté proti sobě (kvadratická rovnice)', note:EX_NOTE_INTER,
+      text: 'Dva cyklisté jedou po přímé silnici proti sobě. V okamžiku, kdy jsou od sebe vzdáleni ' + qx(d, 'm') + ', má první rychlost ' + qx(v1, U_MS) + ' a zrychluje se zrychlením ' + qx(a1, U_A) + ', druhý má rychlost ' + qx(v2, U_MS) + ' a zrychluje se zrychlením ' + qx(a2, U_A) + '. Za jak dlouho se potkají a jakou dráhu do té doby ujede první cyklista?',
+      parts:[ part(SX.t, 's', t), part(SX.sbr, 'm', s1) ],
+      steps:['Dráhy se sečtou na vzdálenost <i>d</i>: (<i>v</i><sub>1</sub><i>t</i> + ½<i>a</i><sub>1</sub><i>t</i>²) + (<i>v</i><sub>2</sub><i>t</i> + ½<i>a</i><sub>2</sub><i>t</i>²) = <i>d</i>',
+             'Kvadratická rovnice: ' + fm((a1 + a2)/2) + ' · <i>t</i>² + ' + fm(B) + ' · <i>t</i> − ' + fm(d) + ' = 0',
+             '<i>t</i> = (−' + fm(B) + ' + √' + fm(disc) + ') / (2 · ' + fm(A) + ') ' + rs(t, 's') + ' (kladný kořen)',
+             '<i>s</i><sub>1</sub> = <i>v</i><sub>1</sub> · <i>t</i> + ½ · <i>a</i><sub>1</sub> · <i>t</i>² = ' + qx(v1, U_MS) + ' · ' + qx(t, 's') + ' + ½ · ' + qx(a1, U_A) + ' · (' + qx(t, 's') + ')² ' + rs(s1, 'm')]
+    };
+  }
+
+  function tplCyklistaAutobus(){
+    var v = rnd(5, 10, 0.5), a = rnd(0.5, 1.5, 0.1), d = rnd(10, 40, 5);
+    var disc = v*v - 2*a*d;
+    if(disc < 0.1*v*v) return null;
+    var t = (v - Math.sqrt(disc))/a, s = v*t;
+    return {
+      title:'Cyklista dohání autobus (kvadratická rovnice)', note:EX_NOTE_INTER,
+      text: 'Autobus stojí na zastávce a v okamžiku, kdy je cyklista ' + qx(d, 'm') + ' za ním, se rozjíždí se stálým zrychlením ' + qx(a, U_A) + '. Cyklista jede stálou rychlostí ' + qx(v, U_MS) + '. Za jak dlouho (od rozjezdu autobusu) cyklista autobus poprvé dožene a jakou dráhu do té doby ujede?',
+      parts:[ part(SX.t, 's', t), part(SX.s, 'm', s) ],
+      steps:['Cyklista: <i>s</i><sub>c</sub> = <i>v</i> · <i>t</i>; autobus: <i>s</i><sub>a</sub> = <i>d</i> + ½ · <i>a</i> · <i>t</i>². Setkání: <i>v</i> · <i>t</i> = <i>d</i> + ½<i>a</i> · <i>t</i>²',
+             'Kvadratická rovnice: ' + fm(a/2) + ' · <i>t</i>² − ' + fm(v) + ' · <i>t</i> + ' + fm(d) + ' = 0',
+             '<i>t</i> = (<i>v</i> − √(<i>v</i>² − 2<i>ad</i>)) / <i>a</i> = (' + fm(v) + ' − √' + fm(disc) + ') / ' + fm(a) + ' ' + rs(t, 's') + ' (menší kořen = první setkání; později autobus cyklistu zase předjede)',
+             '<i>s</i> = <i>v</i> · <i>t</i> = ' + qx(v, U_MS) + ' · ' + qx(t, 's') + ' ' + rs(s, 'm')]
+    };
+  }
+
+  function tplStudna(){
+    var tf = rnd(1.5, 3.5, 0.1), T = roundTo(tf + 0.5*G*tf*tf/C_SOUND, 2);
+    var t = (-1 + Math.sqrt(1 + 2*G*T/C_SOUND))/(G/C_SOUND), h = 0.5*G*t*t;
+    if(!inRange(h, 10, 70)) return null;
+    return {
+      title:'Kámen padá do studny (kvadratická rovnice)', note:'Tíhové zrychlení <i>g</i> = 9,81 m·s⁻², rychlost zvuku <i>c</i> = 340 m·s⁻¹, odpor vzduchu zanedbejte. ' + EX_NOTE_INTER,
+      text: 'Do hluboké studny spadne kámen. Šplouchnutí uslyšíme ' + qx(T, 's', 2) + ' po jeho uvolnění. Jak dlouho kámen padá a jak je studna hluboká?',
+      parts:[ part(SX.t, 's', t), part(SX.h, 'm', h) ],
+      steps:['Celková doba: <i>T</i> = <i>t</i> + <i>h</i> / <i>c</i>, kde <i>h</i> = ½<i>g</i> · <i>t</i>², tedy <i>T</i> = <i>t</i> + <i>g</i> · <i>t</i>² / (2<i>c</i>)',
+             'Kvadratická rovnice: ' + fm(G/(2*C_SOUND), 5) + ' · <i>t</i>² + <i>t</i> − ' + fm(T, 2) + ' = 0',
+             '<i>t</i> = (−1 + √(1 + 2<i>gT</i> / <i>c</i>)) / (<i>g</i> / <i>c</i>) ' + rs(t, 's'),
+             '<i>h</i> = ½ · <i>g</i> · <i>t</i>² = ½ · ' + qx(G, U_A, 2) + ' · (' + qx(t, 's') + ')² ' + rs(h, 'm')]
+    };
+  }
+
+  function tplKamenDolu(){
+    var v0 = rnd(2, 10, 1), h = rnd(10, 50, 5), disc = v0*v0 + 2*G*h, t = (-v0 + Math.sqrt(disc))/G, v = v0 + G*t;
+    return {
+      title:'Hod svisle dolů (kvadratická rovnice)', note:EX_NOTE_G + ' ' + EX_NOTE_INTER,
+      text: 'Chlapec hodí z mostu vysokého ' + qx(h, 'm') + ' kámen svisle dolů počáteční rychlostí ' + qx(v0, U_MS) + '. Za jak dlouho kámen dopadne na hladinu a jakou rychlostí?',
+      parts:[ part(SX.t, 's', t), part(SX.v, U_MS, v) ],
+      steps:['<i>h</i> = <i>v</i><sub>0</sub> · <i>t</i> + ½ · <i>g</i> · <i>t</i>² → ½<i>g</i> · <i>t</i>² + <i>v</i><sub>0</sub> · <i>t</i> − <i>h</i> = 0',
+             'Kvadratická rovnice: ' + fm(G/2, 3) + ' · <i>t</i>² + ' + fm(v0) + ' · <i>t</i> − ' + fm(h) + ' = 0',
+             '<i>t</i> = (−<i>v</i><sub>0</sub> + √(<i>v</i><sub>0</sub>² + 2<i>gh</i>)) / <i>g</i> = (−' + fm(v0) + ' + √' + fm(disc) + ') / ' + fm(G, 2) + ' ' + rs(t, 's'),
+             '<i>v</i> = <i>v</i><sub>0</sub> + <i>g</i> · <i>t</i> = ' + qx(v0, U_MS) + ' + ' + qx(G, U_A, 2) + ' · ' + qx(t, 's') + ' ' + rs(v, U_MS)]
+    };
+  }
+
+  var POLSTAR = [
+    { w:'Kaskadér skočí z budovy na nafukovací matraci', h:[6,15,1], d:[1.2,3,0.2], max:15 },
+    { w:'Parkourista seskočí z výšky na tlustou žíněnku', h:[2,5,0.5], d:[0.2,0.5,0.05], max:20 },
+    { w:'Lyžař dopadne po skoku do hlubokého sněhu', h:[3,8,0.5], d:[0.5,1.2,0.1], max:20 }
+  ];
+
+  function tplDopadNaPolstar(){
+    var sc = pick(POLSTAR), h = rnd(sc.h[0], sc.h[1], sc.h[2]), d = rnd(sc.d[0], sc.d[1], sc.d[2]);
+    var v = Math.sqrt(2*G*h), a = v*v/(2*d);
+    if(a/G > sc.max) return null;
+    return {
+      title:'Zbrzdění po dopadu', note:'Zrychlení při brzdění je stálé, uveďte jeho velikost. ' + EX_NOTE_G + ' ' + EX_NOTE_INTER,
+      text: sc.w + ': volně padá z výšky ' + qx(h, 'm') + ' a po dopadu se materiál stlačí o ' + qx(d, 'm') + ', než se člověk zastaví. Určete rychlost dopadu, velikost zrychlení při brzdění a vyjádřete ji také v násobcích <i>g</i>.',
+      parts:[ part(SX.v, U_MS, v), part(SX.a, U_A, a), part(SX.ag, U_G, a/G, 1) ],
+      steps:['Rychlost dopadu: <i>v</i> = √(2<i>gh</i>) = √(2 · ' + qx(G, U_A, 2) + ' · ' + qx(h, 'm') + ') ' + rs(v, U_MS),
+             'Brzdění na dráze <i>d</i>: <i>a</i> = <i>v</i>² / (2<i>d</i>) = (' + qx(v, U_MS) + ')² / (2 · ' + qx(d, 'm') + ') ' + rs(a, U_A),
+             'V násobcích <i>g</i>: <i>a</i> / <i>g</i> = ' + qx(a, U_A) + ' / ' + qx(G, U_A, 2) + ' ' + rs(a/G, '<i>g</i>', 1)]
+    };
+  }
+
+  function tplOknoPadajiciPredmet(){
+    var H = rnd(2, 12, 0.5), ho = pick([1.2, 1.4, 1.5, 1.6, 1.8, 2]);
+    var dt = roundTo(Math.sqrt(2*(H + ho)/G) - Math.sqrt(2*H/G), 2);
+    var v1 = ho/dt - G*dt/2, Hn = v1*v1/(2*G);
+    if(!inRange(dt, 0.1, 0.5) || !inRange(Hn, 0.5, 15)) return null;
+    return {
+      title:'Padající předmět kolem okna', note:EX_NOTE_G + ' ' + EX_NOTE_INTER,
+      text: 'U okna vysokého ' + qx(ho, 'm') + ' sledujeme, jak kolem něj shora dolů padá květináč (volný pád z klidu). Okno proletí za ' + qx(dt, 's', 2) + '. Určete rychlost květináče u horního okraje okna a výšku, ze které padal (nad horním okrajem okna).',
+      parts:[ part(SX.v1, U_MS, v1), part(SX.h, 'm', Hn) ],
+      steps:['Okno projde za Δ<i>t</i> s počáteční rychlostí <i>v</i><sub>1</sub>: <i>h</i><sub>o</sub> = <i>v</i><sub>1</sub> · Δ<i>t</i> + ½ · <i>g</i> · Δ<i>t</i>²',
+             '<i>v</i><sub>1</sub> = <i>h</i><sub>o</sub> / Δ<i>t</i> − ½ · <i>g</i> · Δ<i>t</i> = ' + qx(ho, 'm') + ' / ' + qx(dt, 's', 2) + ' − ½ · ' + qx(G, U_A, 2) + ' · ' + qx(dt, 's', 2) + ' ' + rs(v1, U_MS),
+             'Výška pádu před oknem: <i>h</i> = <i>v</i><sub>1</sub>² / (2<i>g</i>) = (' + qx(v1, U_MS) + ')² / (2 · ' + qx(G, U_A, 2) + ') ' + rs(Hn, 'm')]
+    };
+  }
+
+  function tplMetro(){
+    var d = rnd(600, 1500, 100), a1 = rnd(0.8, 1.2, 0.1), a2 = rnd(1, 1.3, 0.1);
+    var v = Math.sqrt(2*d*a1*a2/(a1 + a2));
+    if(kmh(v) > 80) return null;
+    var T = v*(1/a1 + 1/a2);
+    return {
+      title:'Jízda metra mezi stanicemi', note:EX_NOTE_INTER,
+      text: 'Souprava metra jede mezi stanicemi vzdálenými ' + qx(d, 'm') + '. Rozjíždí se z klidu se zrychlením ' + qx(a1, U_A) + ' a hned poté brzdí se zrychlením o velikosti ' + qx(a2, U_A) + ' až do zastavení (bez jízdy stálou rychlostí). Jaké nejvyšší rychlosti (v km·h⁻¹) dosáhne a za jak dlouho ujede celou vzdálenost?',
+      parts:[ part(SX.vmax, U_KMH, kmh(v)), part(SX.t, 's', T) ],
+      steps:['Dráha rozjezdu <i>s</i><sub>1</sub> = <i>v</i>² / (2<i>a</i><sub>1</sub>), dráha brzdění <i>s</i><sub>2</sub> = <i>v</i>² / (2<i>a</i><sub>2</sub>); <i>s</i><sub>1</sub> + <i>s</i><sub>2</sub> = <i>d</i>',
+             '<i>v</i> = √(2<i>d</i> · <i>a</i><sub>1</sub><i>a</i><sub>2</sub> / (<i>a</i><sub>1</sub> + <i>a</i><sub>2</sub>)) = √(2 · ' + fm(d) + ' · ' + fm(a1) + ' · ' + fm(a2) + ' / ' + fm(a1 + a2) + ') ' + rs(v, U_MS),
+             'Převod: ' + qx(v, U_MS) + ' · 3,6 ' + rs(kmh(v), U_KMH),
+             '<i>t</i> = <i>v</i> / <i>a</i><sub>1</sub> + <i>v</i> / <i>a</i><sub>2</sub> = ' + qx(v, U_MS) + ' / ' + qx(a1, U_A) + ' + ' + qx(v, U_MS) + ' / ' + qx(a2, U_A) + ' ' + rs(T, 's')]
+    };
+  }
+
+  var EX_TEMPLATES = {
+    zakladni: [tplRozjezdV, tplBrzdeni, tplDrahaZKlidu, tplVolnyPad, tplZmenaRychlosti],
+    stredni: [tplAuto0100, tplZastavovaciDraha, tplZrychleniNaDrazeAuto, tplVzletLetadla, tplPadKmh, tplLodka, tplCrashTest, tplVytah, tplSprinter, tplRychlik],
+    tezke: [tplBrzdeniKPrekazce, tplDobaNaDrazeZrychlujici, tplCyklisteProti, tplCyklistaAutobus, tplStudna, tplKamenDolu, tplDopadNaPolstar, tplOknoPadajiciPredmet, tplMetro]
+  };
+
+  function exGenerate(){
+    var list = EX_TEMPLATES[ex.level], qu = null, tries = 0, tpl;
+    while(!qu && tries++ < 500){
+      tpl = pick(list);
+      if(tpl === ex.lastTpl && list.length > 1) continue;
+      qu = tpl();
+    }
+    if(!qu) return;
+    ex.lastTpl = tpl;
+    ex.current = qu;
+    exRender();
+  }
+
+  // ---------- průběh záložky Příklady ----------
+
+  function exRender(){
+    var qu = ex.current;
+    document.getElementById('ex-tag').textContent = qu.title;
+    document.getElementById('ex-text').innerHTML = qu.text;
+    var note = document.getElementById('ex-note');
+    note.hidden = !qu.note;
+    note.innerHTML = qu.note || '';
+    var box = document.getElementById('ex-answers');
+    box.innerHTML = '';
+    qu.parts.forEach(function(p, i){
+      var wrap = document.createElement('div');
+      wrap.className = 'ex-part';
+      wrap.innerHTML =
+        '<div class="answer-row"><span class="sym">' + p.sym + '</span><span class="eq">=</span>' +
+        '<input class="answer-input ex-input" id="ex-ans-' + i + '" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="?">' +
+        '<span class="unit">' + p.unit + '</span></div>' +
+        '<div class="hint ex-round">zaokrouhlete ' + DEC_NAMES[p.dec] + '</div>';
+      box.appendChild(wrap);
+      var inp = wrap.querySelector('input');
+      sanitizeNumericInput(inp, true);
+      inp.addEventListener('input', function(){ ex.touched = true; });
+      inp.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); exTryCheck(); } });
+    });
+    var fb = document.getElementById('ex-feedback');
+    fb.hidden = true; fb.classList.remove('ok','bad');
+    ex.locked = false; ex.touched = false;
+    document.getElementById('ex-btn-check').textContent = 'Zkontrolovat';
+    var first = document.getElementById('ex-ans-0');
+    if(first) first.focus({ preventScroll:true });
+  }
+
+  function exInputs(){ return ex.current.parts.map(function(p, i){ return document.getElementById('ex-ans-' + i); }); }
+  function exAllEmpty(){ return exInputs().every(function(el){ return isNaN(parseAnswer(el.value)); }); }
+  function exAnyEmpty(){ return exInputs().some(function(el){ return isNaN(parseAnswer(el.value)); }); }
+
+  function exSolutionLine(){
+    return ex.current.parts.map(function(p){
+      return p.sym + ' ' + (near(p.expected, p.exact) ? '= ' : '≈ ') + q2(p.expected, p.dec) + ' ' + p.unit;
+    }).join(';  ');
+  }
+  function q2(x, d){ return fm(x, d); }
+
+  function exFinish(headline, ok){
+    var qu = ex.current, fb = document.getElementById('ex-feedback');
+    fb.hidden = false;
+    fb.classList.toggle('ok', ok);
+    fb.classList.toggle('bad', !ok);
+    document.getElementById('ex-headline').textContent = headline;
+    var lines = qu.steps.slice();
+    lines.push('Odpověď: ' + exSolutionLine());
+    document.getElementById('ex-steps').innerHTML = lines.join('\n');
+    exInputs().forEach(function(el){ el.disabled = true; });
+    ex.locked = true;
+    var btn = document.getElementById('ex-btn-check');
+    btn.textContent = 'Další příklad →';
+    btn.focus({ preventScroll:true });
+    exUpdateStats();
+  }
+
+  function exCheck(){
+    if(ex.locked){ exGenerate(); return; }
+    var qu = ex.current, inputs = exInputs(), allOk = true, flipped = false;
+    qu.parts.forEach(function(p, i){
+      var val = parseAnswer(inputs[i].value);
+      var okp = !isNaN(val) && Math.abs(val - p.expected) <= 1e-9*Math.max(1, Math.abs(p.expected));
+      inputs[i].classList.add(okp ? 'correct' : 'wrong');
+      if(!okp) allOk = false;
+    });
+    ex.answered++;
+    if(allOk){
+      ex.score += 10; ex.streak++; ex.correct++;
+      if(ex.streak > ex.bestStreak){ ex.bestStreak = ex.streak; exSaveStats(); }
+      exFinish('Správně!', true);
+    } else {
+      ex.streak = 0;
+      exFinish(exAnyEmpty() ? 'Doplňte všechna políčka. Správné řešení je níže.' : 'Bohužel špatně. Správné řešení je níže.', false);
+    }
+  }
+
+  function exSkip(){
+    if(ex.locked){ exGenerate(); return; }
+    ex.streak = 0; ex.answered++;
+    exFinish('Správné řešení:', false);
+  }
+
+  function exTryCheck(){
+    if(ex.locked){ exGenerate(); return; }
+    if(exAnyEmpty()){
+      if(!confirm('Některé políčko není vyplněné. Opravdu chcete zkontrolovat?')) return;
+    }
+    exCheck();
+  }
+
+  function exUpdateStats(){
+    document.getElementById('stat-score').textContent = ex.score;
+    document.getElementById('stat-streak').textContent = ex.streak + (ex.bestStreak>0 ? ' / ' + ex.bestStreak : '');
+    document.getElementById('stat-accuracy').textContent = ex.answered===0 ? '—' : Math.round(100*ex.correct/ex.answered) + ' %';
+  }
+
+  // Rozepsaný příklad se při změně obtížnosti nejdřív vyhodnotí (stejně jako na ostatních trenažérech).
+  function exSettle(){
+    if(ex.locked) return 'locked';
+    if(!ex.touched) return 'untouched';
+    if(exAllEmpty()){
+      if(!confirm('Odpověď není vyplněná. Opravdu chcete změnit nastavení?')) return 'cancelled';
+    }
+    exCheck();
+    return 'settled';
+  }
+
+  function exBuildLevelRow(){
+    var row = document.getElementById('ex-level-row');
+    row.innerHTML = '';
+    EX_LEVELS.forEach(function(l){
+      var b = document.createElement('button');
+      b.className = 'chip accented' + (l.key===ex.level ? ' on' : '');
+      b.textContent = l.name;
+      b.addEventListener('click', function(){
+        if(l.key===ex.level) return;
+        var r = exSettle();
+        if(r==='cancelled') return;
+        ex.level = l.key;
+        Array.prototype.forEach.call(row.children, function(el,i){ el.classList.toggle('on', EX_LEVELS[i].key===ex.level); });
+        if(r==='locked' || r==='untouched') exGenerate();
+      });
+      row.appendChild(b);
+    });
+  }
+
+  document.getElementById('ex-btn-check').addEventListener('click', exTryCheck);
+  document.getElementById('ex-btn-skip').addEventListener('click', function(){ if(ex.locked){ exGenerate(); return; } exSkip(); });
+  document.getElementById('ex-reset-stats').addEventListener('click', function(){
+    ex.score=0; ex.streak=0; ex.answered=0; ex.correct=0; ex.bestStreak=0;
+    try{ localStorage.removeItem(EX_STATS_KEY); }catch(e){}
+    exUpdateStats();
+  });
+
+  // ---- horní přepínač Teorie / Trénink grafů / Příklady ----
   var tabTeorie = document.getElementById('top-tab-teorie');
   var tabTrenink = document.getElementById('top-tab-trenink');
+  var tabPriklady = document.getElementById('top-tab-priklady');
   function showTab(tab){
     tabTeorie.classList.toggle('on', tab==='teorie');
     tabTrenink.classList.toggle('on', tab==='trenink');
+    tabPriklady.classList.toggle('on', tab==='priklady');
     document.getElementById('view-theory').hidden = tab!=='teorie';
     document.getElementById('view-training').hidden = tab!=='trenink';
-    document.getElementById('header-readout').hidden = tab!=='trenink';
+    document.getElementById('view-examples').hidden = tab!=='priklady';
+    document.getElementById('header-readout').hidden = tab==='teorie';
     document.getElementById('keys-footer').hidden = tab==='teorie';
+    if(tab==='priklady') exUpdateStats(); else if(tab==='trenink') updateStats();
   }
   tabTeorie.addEventListener('click', function(){ showTab('teorie'); });
   tabTrenink.addEventListener('click', function(){ showTab('trenink'); });
+  tabPriklady.addEventListener('click', function(){ showTab('priklady'); });
 
   loadStats();
+  exLoadStats();
+  exBuildLevelRow();
   buildLevelRow();
   buildTypeRow();
   updateStats();
   showTab('teorie');
   generateQuestion();
+  exGenerate();
 
   renderTheoryGraphs();
   renderVectorFig();
@@ -1750,7 +2487,7 @@
 
   // Po synchronizaci s cloudem (auth.js) znovu načíst nejlepší sérii z localStorage.
   document.addEventListener('fyzika:scores-updated', function(){
-    state.bestStreak = 0; loadStats(); updateStats();
+    state.bestStreak = 0; loadStats(); if(!document.getElementById('view-training').hidden) updateStats();
   });
 })();
 </script>
