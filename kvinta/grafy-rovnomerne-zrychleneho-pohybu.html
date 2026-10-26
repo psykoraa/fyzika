@@ -1801,9 +1801,15 @@
     if(ax >= 0.1) return 2;
     return 3;
   }
-  function part(sym, unit, exact, dec){
+  // alts: další uznávané hodnoty (výpočet s mezivýsledkem zaokrouhleným tak, jak ho ukazuje postup).
+  function part(sym, unit, exact, dec, alts){
     if(dec === undefined) dec = autoDec(exact);
-    return { sym:sym, unit:unit, exact:exact, dec:dec, expected:roundTo(exact, dec) };
+    var p = { sym:sym, unit:unit, exact:exact, dec:dec, expected:roundTo(exact, dec), alts:[] };
+    (alts || []).forEach(function(x){
+      var r = roundTo(x, dec);
+      if(r !== p.expected && p.alts.indexOf(r) < 0) p.alts.push(r);
+    });
+    return p;
   }
   function inRange(x, lo, hi){ return x >= lo && x <= hi; }
   function kmh(ms){ return ms*3.6; }
@@ -1974,14 +1980,14 @@
       parts:[ part(SX.a, U_A, a) ],
       steps:['<i>a</i> = Δ<i>v</i> / Δ<i>t</i> = (<i>v</i> − <i>v</i><sub>0</sub>) / <i>t</i>', '<i>a</i> = (' + qx(v, U_MS) + ' − ' + qx(v0, U_MS) + ') / ' + qx(t, 's') + ' ' + rs(a, U_A)]
     };
-    var s = (v0 + v)/2*t;
+    var s = (v0 + v)/2*t, altS = v0*t + 0.5*roundTo(a, 3)*t*t;
     return {
       title:'Dráha při změně rychlosti', note:EX_NOTE_INTER,
       text: sc.w + ' ' + verb + ' rovnoměrně z ' + qx(v0, U_MS) + ' na ' + qx(v, U_MS) + ' za ' + qx(t, 's') + '. Jakou dráhu přitom ujede?',
-      parts:[ part(SX.s, 'm', s) ],
+      parts:[ part(SX.s, 'm', s, undefined, [ altS ]) ],
       steps:['Průměrná rychlost rovnoměrně zrychleného pohybu: <i>v</i><sub>p</sub> = ½ · (<i>v</i><sub>0</sub> + <i>v</i>)',
              '<i>s</i> = <i>v</i><sub>p</sub> · <i>t</i> = ½ · (' + qx(v0, U_MS) + ' + ' + qx(v, U_MS) + ') · ' + qx(t, 's') + ' ' + rs(s, 'm'),
-             'Totéž dá výpočet přes zrychlení: <i>a</i> = (<i>v</i> − <i>v</i><sub>0</sub>) / <i>t</i> ' + rs(a, U_A) + ', <i>s</i> = <i>v</i><sub>0</sub> · <i>t</i> + ½ · <i>a</i> · <i>t</i>² ' + rs(s, 'm') + ' (s nezaokrouhlenou hodnotou <i>a</i>; dosazení zaokrouhleného <i>a</i> by dalo mírně jiný výsledek).']
+             'Totéž dá výpočet přes zrychlení: <i>a</i> = (<i>v</i> − <i>v</i><sub>0</sub>) / <i>t</i> ' + rs(a, U_A) + ', <i>s</i> = <i>v</i><sub>0</sub> · <i>t</i> + ½ · <i>a</i> · <i>t</i>² ' + rs(s, 'm') + ' (s nezaokrouhlenou hodnotou <i>a</i>).'+(altS !== roundTo(s, autoDec(s)) ? ' Uznává se i výsledek s dosazeným <i>a</i> zaokrouhleným na tisíciny: ' + rs(altS, 'm', autoDec(s)) + '.' : '')]
     };
   }
 
@@ -2370,7 +2376,7 @@
     var qu = ex.current, inputs = exInputs(), allOk = true, flipped = false;
     qu.parts.forEach(function(p, i){
       var val = parseAnswer(inputs[i].value);
-      var okp = !isNaN(val) && Math.abs(val - p.expected) <= 1e-9*Math.max(1, Math.abs(p.expected));
+      var okp = !isNaN(val) && [p.expected].concat(p.alts || []).some(function(e){ return Math.abs(val - e) <= 1e-9*Math.max(1, Math.abs(e)); });
       inputs[i].classList.add(okp ? 'correct' : 'wrong');
       if(!okp) allOk = false;
     });
