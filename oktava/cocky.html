@@ -2070,22 +2070,22 @@ svg.bench-svg .mover.focused .mover-foot, svg.bench-svg .mover.dragging .mover-f
       sp.sort(function(u, v){ return Math.abs(u - cur) - Math.abs(v - cur); });
       if(sp.length) p[t.move] = sp[0];
       var nm = t.move === 'target' ? targetName() : NAMES[t.move];
-      lines.push('Ostrý obraz, když je ' + nm + ' na značce ' + p[t.move] + NB + 'cm' +
-        (sp.length > 1 ? ' (nebo ' + sp.slice(1).join(' cm, ') + NB + 'cm)' : '') + '.');
+      lines.push('Ostrý obraz, když je ' + nm + ' na značce ' + num(p[t.move]) + NB + 'cm' +
+        (sp.length > 1 ? ' (nebo ' + sp.slice(1).map(num).join(NB + 'cm, ') + NB + 'cm)' : '') + '.');
     }
     var A = p.lens - p.source, xi = imagePos(p), A2 = xi - p.lens;
-    lines.push('$a = x_{\\text{čočka}} - x_{\\text{zdroj}} = ' + p.lens + ' - ' + p.source + ' = ' + A + '\\ \\mathrm{cm}$');
-    if(!real) lines.push('$x_{\\text{obraz}} = x_{\\text{fotoaparát}} - d = ' + p.target + ' - ' + t.fd + ' = ' + tnum(xi) + '\\ \\mathrm{cm}$ (zdánlivý obraz je ' + t.fd + NB + 'cm před fotoaparátem)');
-    lines.push('$a\' = x_{\\text{' + (real ? 'stínítko' : 'obraz') + '}} - x_{\\text{čočka}} = ' + tnum(xi) + ' - ' + p.lens + ' = ' + tnum(A2) + '\\ \\mathrm{cm}$' +
+    lines.push('$a = x_{\\text{čočka}} - x_{\\text{zdroj}} = ' + tnum(p.lens) + ' - ' + tnum(p.source) + ' = ' + tnum(A) + '\\ \\mathrm{cm}$');
+    if(!real) lines.push('$x_{\\text{obraz}} = x_{\\text{fotoaparát}} - d = ' + tnum(p.target) + ' - ' + tnum(t.fd) + ' = ' + tnum(xi) + '\\ \\mathrm{cm}$ (zdánlivý obraz je ' + num(t.fd) + NB + 'cm před fotoaparátem)');
+    lines.push('$a\' = x_{\\text{' + (real ? 'stínítko' : 'obraz') + '}} - x_{\\text{čočka}} = ' + tnum(xi) + ' - ' + tnum(p.lens) + ' = ' + tnum(A2) + '\\ \\mathrm{cm}$' +
       (real ? '' : ' (obraz je před čočkou)'));
-    lines.push("$f = \\dfrac{a\\,a'}{a + a'} = \\dfrac{" + A + ' \\cdot ' + tnumP(A2) + '}{' + A + ' + ' + tnumP(A2) + '} = ' + tnum(t.f) + '\\ \\mathrm{cm}$');
+    lines.push("$f = \\dfrac{a\\,a'}{a + a'} = \\dfrac{" + tnum(A) + ' \\cdot ' + tnumP(A2) + '}{' + tnum(A) + ' + ' + tnumP(A2) + '} = ' + tnum(t.f) + '\\ \\mathrm{cm}$');
     if(!bySkip && !isNaN(inF) && !fOk) lines.push('Zadali jste $f = ' + tnum(inF) + '\\ \\mathrm{cm}$.');
     lines.push(t.f > 0 ? 'Čočka je spojka, proto $f > 0$.' : 'Čočka je rozptylka, proto $f < 0$.');
 
     inputs.a.className = 'answer-input ' + (aOk ? 'correct' : 'wrong');
     inputs.a2.className = 'answer-input ' + (a2Ok ? 'correct' : 'wrong');
     inputs.f.className = 'answer-input ' + (fOk ? 'correct' : 'wrong');
-    if(bySkip){ inputs.a.value = A; inputs.a2.value = num(A2); inputs.f.value = num(t.f); ['a', 'a2', 'f'].forEach(function(k){ inputs[k].className = 'answer-input'; }); }
+    if(bySkip){ inputs.a.value = num(A); inputs.a2.value = num(A2); inputs.f.value = num(t.f); ['a', 'a2', 'f'].forEach(function(k){ inputs[k].className = 'answer-input'; }); }
     ['a', 'a2', 'f'].forEach(function(k){ inputs[k].disabled = true; });
 
     fb.hidden = false;

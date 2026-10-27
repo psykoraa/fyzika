@@ -522,6 +522,7 @@ button.vbtn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
 
   </div>
 
+  <footer>Fyzika — Měření</footer>
 </div>
 
 <script src="../spolecne/spolecne.js"></script>
@@ -694,7 +695,21 @@ button.vbtn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
     var nextBtn = document.getElementById('trn-next');
     var levelDesc = document.getElementById('trn-level-desc');
     var levelBtns = Array.prototype.slice.call(document.querySelectorAll('[data-level]'));
-    var BEST_KEY = 'fyzika:krabicka-multivitaminu:best-streak';
+    // Nejlepší série je uložená stejně jako na ostatních stránkách ({bestStreak: …} pod klíčem …:stats),
+    // aby ji auth.js uměl synchronizovat s cloudem. Dřívější verze stránky ukládala holé číslo
+    // pod klíčem …:best-streak — ten se jednorázově převede na nový klíč (jako migrace v auth.js),
+    // aby ho při odhlášení na sdíleném počítači smazalo auth.js spolu s ostatními výsledky.
+    var STATS_KEY = 'fyzika:krabicka-multivitaminu:stats';
+    var OLD_BEST_KEY = 'fyzika:krabicka-multivitaminu:best-streak';
+    (function migrateBest(){
+      var old = lsGet(OLD_BEST_KEY);
+      if(old === null) return;
+      if(lsGet(STATS_KEY) === null) lsSet(STATS_KEY, JSON.stringify({bestStreak: parseInt(old, 10) || 0}));
+      try{ localStorage.removeItem(OLD_BEST_KEY); }catch(e){}
+    })();
+    function loadBest(){
+      try{ var raw = lsGet(STATS_KEY); return raw ? (JSON.parse(raw).bestStreak || 0) : 0; }catch(e){ return 0; }
+    }
 
     var DESC = {
       lehka: 'Šuplera s přesností 0,1\u00a0mm. Celé milimetry jsou zadané, odečítáte jen desetiny podle noniu.',
@@ -705,7 +720,7 @@ button.vbtn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
     // level = vybraná obtížnost; tLevel = obtížnost, se kterou byla vytvořena právě zobrazená úloha
     // (po změně obtížnosti uprostřed rozepsané úlohy se ta ještě vyhodnotí podle původní obtížnosti)
     var level = 'stredni', tLevel = 'stredni', hund = 0, answered = false, touched = false;
-    var streak = 0, best = parseInt(lsGet(BEST_KEY), 10) || 0, total = 0, correct = 0;
+    var streak = 0, best = loadBest(), total = 0, correct = 0;
 
     function decimals(){ return tLevel === 'tezka' ? 2 : 1; }
     function draw(highlight){
@@ -775,7 +790,11 @@ button.vbtn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
       total++;
       if(ok){
         correct++; streak++;
-        if(streak > best){ best = streak; lsSet(BEST_KEY, String(best)); }
+        if(streak > best){
+          best = streak;
+          lsSet(STATS_KEY, JSON.stringify({bestStreak: best}));
+          if(window.FyzikaScores) FyzikaScores.report('serie', best, false);
+        }
       } else {
         streak = 0;
       }
@@ -820,6 +839,10 @@ button.vbtn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
         levelDesc.textContent = DESC[level];
         if(settle) check(); else newTask(false);
       });
+    });
+    // Po synchronizaci s cloudem (auth.js) znovu načíst nejlepší sérii z localStorage.
+    document.addEventListener('fyzika:scores-updated', function(){
+      best = loadBest(); updateStats();
     });
     updateStats();
     newTask(false);
@@ -1161,6 +1184,7 @@ button.vbtn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
       timer = null;
       task = null;
       if(score > bestFor(dur)){ var b = bests(); b[dur] = score; lsSet(BESTS_KEY, JSON.stringify(b)); }
+      if(window.FyzikaScores) FyzikaScores.report('hra-' + dur + 's', score, true);
       document.getElementById('hra-play').hidden = true;
       // Po konci hry zůstane nabídka délky hry viditelná nad výsledkem; pravidla a tlačítko
       // „Začít hru“ se skryjí — hra se spouští tlačítkem „Hrát znovu“ (jako u ostatních her).
@@ -1211,12 +1235,23 @@ button.vbtn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
     });
     document.getElementById('hra-start-btn').addEventListener('click', startGame);
     document.getElementById('hra-again').addEventListener('click', startGame);
+    // Po synchronizaci s cloudem (auth.js) obnovit zobrazený rekord (rekordy se čtou přímo z localStorage).
+    document.addEventListener('fyzika:scores-updated', function(){ if(!running) updateStartBest(); });
     updateStartBest();
   })();
 
   // Sbalovací panely na celé stránce — až po zapojení všeho ostatního, aby případná
   // chyba nestrhla s sebou přepínání záložek ani hru (viz makePanelsCollapsible ve spolecne.js).
   try{ makePanelsCollapsible(document); }catch(e){}
+
+// Odkaz přímo na záložku (např. …/stranka.html#trenink) ji po načtení otevře — stejně jako na stránkách oktávy.
+// Záložka se otevře „kliknutím“, takže proběhne běžná obsluha stránky.
+(function(){
+  var hash = location.hash.replace('#', '');
+  if(!/^[a-z0-9-]+$/.test(hash)) return;
+  var btn = document.querySelector('.toptab[data-tab="' + hash + '"]');
+  if(btn && !btn.classList.contains('on') && !btn.disabled) btn.click();
+})();
 </script>
 
 </body>

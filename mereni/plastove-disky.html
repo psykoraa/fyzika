@@ -402,6 +402,7 @@ button.vbtn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
 
   </div>
 
+  <footer>Fyzika — Měření</footer>
 </div>
 
 <script src="../spolecne/spolecne.js"></script>
@@ -667,11 +668,25 @@ button.vbtn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
         if(settle) check(); else newTask(false);
       });
     });
+    // Po synchronizaci s cloudem (auth.js) znovu načíst nejlepší sérii z localStorage —
+    // jinak by se lepší výsledek ze serveru neukázal a nová série by ho lokálně přepsala.
+    document.addEventListener('fyzika:scores-updated', function(){
+      best = loadBest(); updateStats();
+    });
     updateStats();
     newTask(false);
   })();
 
   try{ makePanelsCollapsible(document); }catch(e){}
+
+// Odkaz přímo na záložku (např. …/stranka.html#trenink) ji po načtení otevře — stejně jako na stránkách oktávy.
+// Záložka se otevře „kliknutím“, takže proběhne běžná obsluha stránky.
+(function(){
+  var hash = location.hash.replace('#', '');
+  if(!/^[a-z0-9-]+$/.test(hash)) return;
+  var btn = document.querySelector('.toptab[data-tab="' + hash + '"]');
+  if(btn && !btn.classList.contains('on') && !btn.disabled) btn.click();
+})();
 </script>
 
 </body>
