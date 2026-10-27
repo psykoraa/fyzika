@@ -7,8 +7,9 @@
  * písmu); české věty zůstanou textem. Kdyby cokoli selhalo (KaTeX se nenačetl, neznámý
  * zápis), vrátí se původní HTML, takže se nikdy nic neztratí.
  *
- * FyzikaReseni.html({ given, find, steps, final, note }) složí celé řešení
- * (sloupce Dáno | Řešení); styl je ve spolecne/reseni.css.
+ * FyzikaReseni.html({ given, find, steps, final, note, plain }) složí celé řešení
+ * (sloupce Dáno | Řešení); styl je ve spolecne/reseni.css. plain:true = řádky vložit jako
+ * prostý text (bez převodu do TeXu).
  */
 (function(){
   var TX_UNIT = /^(?:km|kg|m|s|h|g|N|J|W)(?:⁻?[¹²³])?(?:·(?:km|kg|m|s|h|g|N|J|W)(?:⁻?[¹²³])?)*(?![A-Za-zÀ-ž])/;
@@ -165,20 +166,22 @@
   }
 
 
+  function escapeHtml(t){ return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
   // Složí řešení: vlevo Dáno/Hledáme (jen když je co ukázat), vpravo řádky postupu a orámovaná odpověď.
   function html(o){
-    var steps = [];
+    var steps = [], fmt = o.plain ? escapeHtml : texifySafe;
     (o.steps || []).forEach(function(l){ String(l).split('\n').forEach(function(x){ if(x.trim() !== '') steps.push(x); }); });
     var hasLeft = (o.given && o.given.length) || (o.find && o.find.length);
     var out = '<div class="sol-grid' + (hasLeft ? '' : ' sol-single') + '">';
     if(hasLeft){
       out += '<div class="sol-given">';
-      if(o.given && o.given.length) out += '<h4>Dáno</h4>' + o.given.map(function(g){ return '<div>' + texifySafe(g) + '</div>'; }).join('');
-      if(o.find && o.find.length) out += '<h4' + (o.given && o.given.length ? ' class="sol-find-title"' : '') + '>Hledáme</h4>' + o.find.map(function(g){ return '<div>' + texifySafe(g) + '</div>'; }).join('');
+      if(o.given && o.given.length) out += '<h4>Dáno</h4>' + o.given.map(function(g){ return '<div>' + fmt(g) + '</div>'; }).join('');
+      if(o.find && o.find.length) out += '<h4' + (o.given && o.given.length ? ' class="sol-find-title"' : '') + '>Hledáme</h4>' + o.find.map(function(g){ return '<div>' + fmt(g) + '</div>'; }).join('');
       out += '</div>';
     }
     out += '<div class="sol-work"><h4>Řešení</h4><div class="sol-steps">' +
-      steps.map(function(l){ return '<div class="eq">' + texifySafe(l) + '</div>'; }).join('') + '</div>';
+      steps.map(function(l){ return '<div class="eq">' + fmt(l) + '</div>'; }).join('') + '</div>';
     if(o.final) out += '<div class="sol-final">' + o.final + '</div>';
     if(o.note) out += '<div class="sol-note">' + o.note + '</div>';
     return out + '</div></div>';
