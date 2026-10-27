@@ -7,9 +7,10 @@
  * písmu); české věty zůstanou textem. Kdyby cokoli selhalo (KaTeX se nenačetl, neznámý
  * zápis), vrátí se původní HTML, takže se nikdy nic neztratí.
  *
- * FyzikaReseni.html({ given, find, steps, final, note, plain }) složí celé řešení
+ * FyzikaReseni.html({ given, find, steps, final, note, plain, raw, title }) složí celé řešení
  * (sloupce Dáno | Řešení); styl je ve spolecne/reseni.css. plain:true = řádky vložit jako
- * prostý text, raw:true = jako hotové HTML (obojí bez převodu do TeXu).
+ * prostý text, raw:true = jako hotové HTML (obojí bez převodu do TeXu);
+ * title = nadpis sloupce místo „Řešení“ (prázdný = bez nadpisu).
  */
 (function(){
   var TX_UNIT = /^(?:km|kg|m|s|h|g|N|J|W)(?:⁻?[¹²³])?(?:·(?:km|kg|m|s|h|g|N|J|W)(?:⁻?[¹²³])?)*(?![A-Za-zÀ-ž])/;
@@ -172,6 +173,7 @@
   function html(o){
     var steps = [], fmt = o.raw ? function(t){ return t; } : o.plain ? escapeHtml : texifySafe;
     (o.steps || []).forEach(function(l){ String(l).split('\n').forEach(function(x){ if(x.trim() !== '') steps.push(x); }); });
+    if(!steps.length && !o.final && !(o.given && o.given.length)) return '';
     var hasLeft = (o.given && o.given.length) || (o.find && o.find.length);
     var out = '<div class="sol-grid' + (hasLeft ? '' : ' sol-single') + '">';
     if(hasLeft){
@@ -180,7 +182,7 @@
       if(o.find && o.find.length) out += '<h4' + (o.given && o.given.length ? ' class="sol-find-title"' : '') + '>Hledáme</h4>' + o.find.map(function(g){ return '<div>' + fmt(g) + '</div>'; }).join('');
       out += '</div>';
     }
-    out += '<div class="sol-work"><h4>Řešení</h4><div class="sol-steps">' +
+    out += '<div class="sol-work">' + (o.title === undefined ? '<h4>Řešení</h4>' : o.title ? '<h4>' + o.title + '</h4>' : '') + '<div class="sol-steps">' +
       steps.map(function(l){ return '<div class="eq">' + fmt(l) + '</div>'; }).join('') + '</div>';
     if(o.final) out += '<div class="sol-final">' + o.final + '</div>';
     if(o.note) out += '<div class="sol-note">' + o.note + '</div>';

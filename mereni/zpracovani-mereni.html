@@ -14,6 +14,7 @@
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <link rel="stylesheet" href="../spolecne/styl.css">
+<link rel="stylesheet" href="../spolecne/reseni.css?v=1">
 <style>
 :root{
   --paper:#eef5ee;
@@ -517,6 +518,7 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
 
 <div class="autocomplete-dropdown" id="autocomplete-dropdown" hidden></div>
 
+<script src="../spolecne/reseni.js?v=1"></script>
 <script src="../spolecne/spolecne.js"></script>
 <script>
 (function(){
@@ -874,7 +876,7 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
       if(avgOk && devOk){
         fb.classList.add('ok'); fb.classList.remove('bad');
         head.textContent = 'Vzorce jsou správně.';
-        steps.textContent = '';
+        FyzikaReseni.show(fb, steps, {});
         avgInput.disabled = true; devInput.disabled = true;
         document.getElementById('btn-check-formulas').disabled = true;
         document.getElementById('btn-skip-formulas').disabled = true;
@@ -884,7 +886,7 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
       } else {
         fb.classList.add('bad'); fb.classList.remove('ok');
         head.textContent = 'Aspoň jeden vzorec nesedí.';
-        steps.textContent = 'Zkontrolujte název funkce (PRŮMĚR / PRŮMODCHYLKA) a rozsah — má zahrnovat všechny naměřené hodnoty B2:B' + (s.n+1) + '.';
+        FyzikaReseni.show(fb, steps, { steps:['Zkontrolujte název funkce (PRŮMĚR / PRŮMODCHYLKA) a rozsah — má zahrnovat všechny naměřené hodnoty B2:B' + (s.n+1) + '.'], plain:true });
       }
     }
   }
@@ -912,7 +914,7 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
       fb.hidden = false;
       fb.classList.add('bad'); fb.classList.remove('ok');
       document.getElementById('feedback-formulas-headline').textContent = 'Správné vzorce:';
-      document.getElementById('feedback-formulas-steps').textContent = '=PRŮMĚR(B2:B' + (s.n+1) + ') a =PRŮMODCHYLKA(B2:B' + (s.n+1) + ')';
+      FyzikaReseni.show(fb, document.getElementById('feedback-formulas-steps'), { steps:['=PRŮMĚR(B2:B' + (s.n+1) + ') a =PRŮMODCHYLKA(B2:B' + (s.n+1) + ')'], plain:true });
 
       document.getElementById('btn-check-formulas').disabled = true;
       document.getElementById('btn-skip-formulas').disabled = true;
@@ -1231,7 +1233,7 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
       fb.classList.add('bad'); fb.classList.remove('ok');
       head.textContent = allOk ? 'Zápis sedí, ale vzorce v tabulce nebyly správně.' : 'Bohužel, aspoň jedna hodnota nesedí.';
     }
-    steps.innerHTML = s.stepsText;
+    FyzikaReseni.show(fb, steps, { steps:[s.stepsText], raw:true });
     disableInputs();
     state.locked = true;
     var btnCheck = document.getElementById('btn-check');
@@ -1262,7 +1264,7 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
     var fb = document.getElementById('feedback');
     fb.hidden = false;
     document.getElementById('feedback-headline').textContent = 'Správné řešení:';
-    document.getElementById('feedback-steps').innerHTML = s.stepsText;
+    FyzikaReseni.show(fb, document.getElementById('feedback-steps'), { steps:[s.stepsText], raw:true });
     fb.classList.add('bad'); fb.classList.remove('ok');
     disableInputs();
     state.locked = true;
@@ -1627,10 +1629,10 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
         fb.classList.add('bad'); fb.classList.remove('ok');
         if(hasInvalid){
           head.textContent = 'Některá pole obsahují neplatný text.';
-          steps.textContent = 'Do všech buněk (naměřené hodnoty i výsledky Ø a Δ) zadávejte jen čísla.';
+          FyzikaReseni.show(fb, steps, { steps:['Do všech buněk (naměřené hodnoty i výsledky Ø a Δ) zadávejte jen čísla.'], plain:true, title:'' });
         } else {
           head.textContent = 'Nejsou vyplněná všechna pole.';
-          steps.textContent = 'Vyplňte všechny naměřené hodnoty (aspoň 2) a obě výsledné hodnoty Ø a Δ.';
+          FyzikaReseni.show(fb, steps, { steps:['Vyplňte všechny naměřené hodnoty (aspoň 2) a obě výsledné hodnoty Ø a Δ.'], plain:true, title:'' });
         }
         return;
       }
@@ -1697,10 +1699,11 @@ button.btn:disabled{ opacity:0.5; cursor:default; }
         }
       }
       var unitTex = unit ? texUnit(unit) : '';
-      steps.innerHTML =
+      FyzikaReseni.show(fb, steps, { steps:[
         'Ze zadaných hodnot vychází: průměr ≈ ' + tex(texNumCZ(mean,6) + (unitTex?('\\ '+unitTex):'')) + ', průměrná odchylka ≈ ' + tex(texNumCZ(dev,6) + (unitTex?('\\ '+unitTex):'')) + '\n' +
         'Správně zaokrouhleno: ' + tex('\\bar{x} = ' + texNum(roundedAvg, answerDecimals) + (unitTex?('\\ '+unitTex):'') + '\\qquad \\Delta x = ' + texNum(roundedDev, zeroDev ? 0 : answerDecimals) + (unitTex?('\\ '+unitTex):'')) +
-        (zeroDev ? '\n' + 'Všechny hodnoty jsou stejné, průměrná odchylka je proto nulová. Průměr se zapisuje se stejným počtem desetinných míst, s jakým byly hodnoty naměřeny.' : '');
+        (zeroDev ? '\n' + 'Všechny hodnoty jsou stejné, průměrná odchylka je proto nulová. Průměr se zapisuje se stejným počtem desetinných míst, s jakým byly hodnoty naměřeny.' : '')
+      ], raw:true });
     }
 
     var rowCountInput = document.getElementById('kontrola-row-count-input');
