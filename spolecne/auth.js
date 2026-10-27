@@ -109,6 +109,13 @@
     'zaokrouhlovani-vysledku.html': [
       { d: 'serie', key: 'fyzika:zaokrouhlovani-vysledku:stats', field: 'bestStreak' }
     ],
+    'krabicka-multivitaminu.html': [
+      { d: 'serie', key: 'fyzika:krabicka-multivitaminu:stats', field: 'bestStreak' },
+      { d: 'hra-60s', key: 'fyzika:krabicka-multivitaminu:game-bests', field: '60' },
+      { d: 'hra-120s', key: 'fyzika:krabicka-multivitaminu:game-bests', field: '120' },
+      { d: 'hra-180s', key: 'fyzika:krabicka-multivitaminu:game-bests', field: '180' },
+      { d: 'hra-300s', key: 'fyzika:krabicka-multivitaminu:game-bests', field: '300' }
+    ],
     'plastove-disky.html': [
       { d: 'serie', key: 'fyzika:plastove-disky:stats', field: 'bestStreak' }
     ],
@@ -123,7 +130,8 @@
       { d: 'hra-300s', key: 'fyzika:grafy-rovnomerneho-pohybu:game-bests', field: '300' }
     ],
     'grafy-rovnomerne-zrychleneho-pohybu.html': [
-      { d: 'serie', key: 'fyzika:grafy-rovnomerne-zrychleneho-pohybu:stats', field: 'bestStreak' }
+      { d: 'serie', key: 'fyzika:grafy-rovnomerne-zrychleneho-pohybu:stats', field: 'bestStreak' },
+      { d: 'serie-priklady', key: 'fyzika:grafy-rovnomerne-zrychleneho-pohybu:stats-priklady', field: 'bestStreak' }
     ],
     'kulova-zrcadla.html': [
       { d: 'serie', key: 'fyzika:kulova-zrcadla:stats', field: 'bestStreak' }
@@ -452,6 +460,20 @@
 
   var lastResults = null;
 
+  // Zná server tuto disciplínu? (seznam posílá spolu s konfigurací stránek). Výsledek neznámé
+  // disciplíny by server odmítl — a s ním celou dávku, tedy i výsledky ostatních stránek. Proto se
+  // takový výsledek zatím neposílá (zůstává jen v localStorage) a dorovná se při příští synchronizaci,
+  // jakmile ho vyučující přidá v Apps Scriptu (list Discipliny). Bez seznamu (starší backend) se posílá vše.
+  function knownDiscipline(page, d) {
+    var cfg = cachedPageConfig();
+    var list = cfg && Array.isArray(cfg.disciplines) ? cfg.disciplines : [];
+    if (!list.length) return true;
+    for (var i = 0; i < list.length; i++) {
+      if (list[i] && list[i].page === page && list[i].discipline === d) return true;
+    }
+    return false;
+  }
+
   // Sloučí lokální a serverové nejlepší výsledky (platí vyšší) pro zadané stránky.
   // preloaded = výsledky ze serveru, které už máme (z odpovědi na přihlášení nebo čerstvé z cache):
   // pak se nic nenačítá a lepší lokální výsledky jdou do fronty místo samostatného čekání na zápis.
@@ -482,7 +504,7 @@
           if (sb !== null && sb > 0 && (local === null || sb > local)) {
             writeLocal(e, sb);
             if (page === here) touchedHere = true;
-          } else if (local !== null && local > 0 && (sb === null || local > sb)) {
+          } else if (local !== null && local > 0 && (sb === null || local > sb) && knownDiscipline(page, e.d)) {
             push.push({ page: page, discipline: e.d, score: local, attempt: false });
           }
         });
@@ -527,6 +549,7 @@
       if (!user || user.mustChangePassword) return;
       var page = currentPage();
       if (!SCORE_MAP[page]) return;
+      if (!knownDiscipline(page, String(discipline))) return;
       score = Math.trunc(Number(score));
       if (!isFinite(score)) return;
       lsSet(K.owner, user.id);
