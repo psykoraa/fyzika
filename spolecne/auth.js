@@ -78,7 +78,8 @@
     user: 'fyzika-auth-user',
     pages: 'fyzika-page-config',
     owner: 'fyzika-scores-owner',
-    results: 'fyzika-my-results'
+    results: 'fyzika-my-results',
+    visitor: 'fyzika-stats-visitor'
   };
 
   // Kde si jednotlivé aplety drží nejlepší výsledky v localStorage.
@@ -519,6 +520,7 @@
   // Lokální uložení řeší aplet sám; sem jde jen kopie do cloudu. Chyby se tiše ignorují —
   // při příští synchronizaci se nejlepší lokální výsledek dorovná.
   function report(discipline, score, attempt) {
+    statsScore(discipline, score, attempt);
     try {
       if (!ENABLED) return;
       var user = getUser();
@@ -562,6 +564,151 @@
   document.addEventListener('visibilitychange', function () {
     if (document.visibilityState === 'hidden') flush(true);
   });
+
+  // ---------- statistiky provozu ----------
+  // Návštěva stránky se serveru hlásí jedním "beaconem" až při odchodu ze stránky (nebo při přepnutí
+  // karty/aplikace) — kvůli kvótám Apps Scriptu žádný dotaz při načtení. Hlásí se, kolik aktivního
+  // času strávil uživatel na jednotlivých záložkách, a události (dokončená hra, nový rekord, video…).
+  // Aktivní čas = stránka je vidět a v posledních STATS_IDLE_MS na ní uživatel něco dělal.
+  // Návštěvník je náhodné ID v localStorage (bez jména); u přihlášeného server doplní účet a třídu.
+  // Admin se neměří — jeho procházení webu by statistiky zkreslovalo.
+  var STATS_TICK_MS = 5000;
+  var STATS_IDLE_MS = 5 * 60000;
+  var STATS_MAX_EVENTS = 30;
+  var STATS_EVENT_RE = /^[a-z0-9-]{1,30}$/;
+
+  var stats = null; // stav aktuální návštěvy (nová po návratu stránky z bfcache)
+
+  function statsNewVisit() {
+    var now = Date.now();
+    stats = { id: newRid().slice(0, 16), start: now, lastTick: now, lastAct: now, sent: false,
+              tabs: {}, events: [], records: {}, busy: false };
+  }
+
+  function statsOn() {
+    if (!ENABLED || !stats) return false;
+    var user = getUser();
+    if (user && user.role === 'admin') return false;
+    if (document.documentElement.classList.contains('fz-blocked')) return false;
+    var page = currentPage();
+    return RE_LOCAL_PAGE.test(page) && page !== 'admin.html';
+  }
+
+  function statsVisitor() {
+    var v = lsGet(K.visitor);
+    if (!v || !/^[a-f0-9]{32}$/.test(v)) { v = newRid(); lsSet(K.visitor, v); }
+    return v;
+  }
+
+  function statsDevice() {
+    var coarse = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+    if (!coarse) return 'pc';
+    return Math.min(screen.width, screen.height) >= 600 ? 'tablet' : 'mobil';
+  }
+
+  function statsTab() {
+    var b = document.querySelector('.toptab.on[data-tab]');
+    var t = b ? b.getAttribute('data-tab') : '';
+    return /^[a-z0-9-]{1,30}$/.test(t) ? t : '';
+  }
+
+  // Připočte čas od minulého tiku záložce, která je právě otevřená.
+  function statsTick() {
+    if (!stats) return;
+    var now = Date.now();
+    var dt = Math.min(now - stats.lastTick, STATS_TICK_MS * 2);
+    stats.lastTick = now;
+    if (document.visibilityState !== 'visible') return;
+    if (!stats.busy && now - stats.lastAct > STATS_IDLE_MS) return;
+    var tab = statsTab();
+    stats.tabs[tab] = (stats.tabs[tab] || 0) + dt;
+  }
+
+  function statsEvent(name, detail, value) {
+    try {
+      if (!stats) return;
+      name = String(name || '');
+      if (!STATS_EVENT_RE.test(name) || stats.events.length >= STATS_MAX_EVENTS) return;
+      value = typeof value === 'number' && isFinite(value) ? Math.round(value) : null;
+      stats.events.push({ e: name, x: String(detail === undefined || detail === null ? '' : detail).slice(0, 60),
+                          h: value, z: statsTab(), t: Date.now() });
+      stats.lastAct = Date.now();
+    } catch (e) {}
+  }
+
+  // Z report(): dokončená hra je událost "hra"; nový rekord se hlásí jen jednou za návštěvu a disciplínu
+  // (série roste s každou správnou odpovědí), s nejlepší hodnotou.
+  function statsScore(discipline, score, attempt) {
+    try {
+      if (!stats) return;
+      score = Math.trunc(Number(score));
+      if (!isFinite(score)) return;
+      discipline = String(discipline);
+      if (attempt === true) { statsEvent('hra', discipline, score); return; }
+      var rec = stats.records[discipline];
+      if (rec) { rec.h = Math.max(rec.h, score); return; }
+      statsEvent('rekord', discipline, score);
+      rec = stats.events[stats.events.length - 1];
+      if (rec && rec.e === 'rekord' && rec.x === discipline) stats.records[discipline] = rec;
+    } catch (e) {}
+  }
+
+  function statsFlush() {
+    try {
+      if (!statsOn()) return;
+      statsTick();
+      var now = Date.now();
+      var rows = [];
+      Object.keys(stats.tabs).forEach(function (t) {
+        var s = Math.round(stats.tabs[t] / 1000);
+        if (s > 0) rows.push([t, s]);
+      });
+      // První hlášení návštěvy se pošle vždy (i s nulovým časem) — to je samotné zobrazení stránky.
+      if (!stats.sent && !rows.length) rows.push([statsTab(), 0]);
+      if (!rows.length && !stats.events.length) return;
+      var body = {
+        action: 'track', n: stats.id, v: statsVisitor(), d: statsDevice(), p: currentPage(),
+        a: now - stats.start, r: rows,
+        e: stats.events.map(function (ev) { return [ev.e, ev.x, ev.h, ev.z, now - ev.t]; })
+      };
+      var token = getToken();
+      if (token) body.token = token;
+      var payload = JSON.stringify(body);
+      var sent = false;
+      if (navigator.sendBeacon) {
+        try { sent = navigator.sendBeacon(API_URL, new Blob([payload], { type: 'text/plain;charset=utf-8' })); } catch (e) {}
+      }
+      if (!sent) {
+        fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: payload,
+                         credentials: 'omit', keepalive: true }).catch(function () {});
+      }
+      stats.sent = true;
+      stats.tabs = {};
+      stats.events = [];
+      stats.records = {};
+    } catch (e) {}
+  }
+
+  function statsInit() {
+    statsNewVisit();
+    setInterval(statsTick, STATS_TICK_MS);
+    var touch = function () { if (stats) stats.lastAct = Date.now(); };
+    ['pointerdown', 'pointermove', 'keydown', 'wheel', 'scroll', 'touchstart'].forEach(function (t) {
+      window.addEventListener(t, touch, { passive: true, capture: true });
+    });
+    // Před přepnutím záložky (capture = dřív než obsluha stránky) se dosavadní čas připíše staré záložce.
+    document.addEventListener('click', function (ev) {
+      if (ev.target && ev.target.closest && ev.target.closest('.toptab[data-tab]')) statsTick();
+    }, true);
+    document.addEventListener('visibilitychange', function () {
+      if (!stats) return;
+      if (document.visibilityState === 'hidden') statsFlush();
+      else { stats.lastTick = Date.now(); stats.lastAct = Date.now(); }
+    });
+    window.addEventListener('pagehide', statsFlush);
+    window.addEventListener('pageshow', function (ev) { if (ev.persisted) statsNewVisit(); });
+    window.addEventListener('beforeprint', function () { statsEvent('tisk'); });
+  }
 
   // ---------- konfigurace stránek ("soft" skrývání) ----------
 
@@ -868,10 +1015,18 @@
     pages: Object.keys(SCORE_MAP)
   };
 
+  // Pro stránky: FyzikaStats.event('video', 'prehrani') zaznamená událost; setBusy(true) počítá
+  // aktivní čas i bez pohybu myši (např. během přehrávání videa), setBusy(false) to vypne.
+  window.FyzikaStats = {
+    event: statsEvent,
+    setBusy: function (on) { if (stats) { statsTick(); stats.busy = !!on; stats.lastAct = Date.now(); } }
+  };
+
   // ---------- start ----------
 
   injectCss();
   if (!ENABLED) return;
+  statsInit();
 
   // Okamžitě podle uložené konfigurace (bez čekání na síť), pak znovu podle čerstvé.
   // Zablokovaná stránka se nesmí zastavit tady: uložená konfigurace může být stará

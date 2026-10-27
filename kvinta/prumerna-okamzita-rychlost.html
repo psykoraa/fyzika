@@ -538,12 +538,19 @@
   document.getElementById('hint-touch').hidden = !isTouch;
 
   var player = null;
+  var videoStarted = false;
   window.onYouTubeIframeAPIReady = function(){
     player = new YT.Player('yt-player', {
       videoId: 'nuBnP_GH_20',
       playerVars: { start: VIDEO_START, disablekb: 1 },
       events: {
         onStateChange: function(e){
+          // Statistiky provozu: spuštění videa jako událost; během přehrávání se čas počítá jako aktivní.
+          if(window.FyzikaStats){
+            var playing = e.data === YT.PlayerState.PLAYING;
+            if(playing && !videoStarted){ videoStarted = true; FyzikaStats.event('video', 'spusteni'); }
+            FyzikaStats.setBusy(playing);
+          }
           if(isTouch && e.data === YT.PlayerState.PAUSED){
             recordTime(e.target.getCurrentTime());
           }
