@@ -9,7 +9,7 @@
  *
  * FyzikaReseni.html({ given, find, steps, final, note, plain }) složí celé řešení
  * (sloupce Dáno | Řešení); styl je ve spolecne/reseni.css. plain:true = řádky vložit jako
- * prostý text (bez převodu do TeXu).
+ * prostý text, raw:true = jako hotové HTML (obojí bez převodu do TeXu).
  */
 (function(){
   var TX_UNIT = /^(?:km|kg|m|s|h|g|N|J|W)(?:⁻?[¹²³])?(?:·(?:km|kg|m|s|h|g|N|J|W)(?:⁻?[¹²³])?)*(?![A-Za-zÀ-ž])/;
@@ -170,7 +170,7 @@
 
   // Složí řešení: vlevo Dáno/Hledáme (jen když je co ukázat), vpravo řádky postupu a orámovaná odpověď.
   function html(o){
-    var steps = [], fmt = o.plain ? escapeHtml : texifySafe;
+    var steps = [], fmt = o.raw ? function(t){ return t; } : o.plain ? escapeHtml : texifySafe;
     (o.steps || []).forEach(function(l){ String(l).split('\n').forEach(function(x){ if(x.trim() !== '') steps.push(x); }); });
     var hasLeft = (o.given && o.given.length) || (o.find && o.find.length);
     var out = '<div class="sol-grid' + (hasLeft ? '' : ' sol-single') + '">';
