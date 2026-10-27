@@ -174,6 +174,43 @@ table.grid tr.other-row-sep td{ padding-top:16px; border-bottom:none; color:var(
 .card h2{ margin-bottom:10px; }
 .card p{ margin:0; color:var(--ink); font-size:0.95rem; }
 footer{ margin-top:40px; }
+
+/* ---- Provoz ---- */
+.tr-note{ margin:4px 0 0; font-size:0.8rem; line-height:1.5; color:var(--ink-soft); }
+.tr-kpis{ display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:10px; margin-bottom:18px; }
+.kpi{ background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:12px 14px; min-width:0; }
+.kpi .label{ display:block; font-size:0.66rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--ink-soft); font-weight:600; }
+.kpi .value{ display:block; font-family:'IBM Plex Mono', monospace; font-weight:600; font-size:clamp(1.1rem, 3.2vw, 1.4rem); white-space:nowrap; color:var(--ink); font-variant-numeric:tabular-nums; margin-top:2px; }
+.kpi .sub{ display:block; font-size:0.76rem; color:var(--ink-soft); margin-top:2px; }
+.tr-grid{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:0 18px; }
+.tr-grid .wide{ grid-column:1 / -1; }
+@media (max-width:820px){ .tr-grid{ grid-template-columns:minmax(0,1fr); } }
+.chart-svg{ display:block; overflow:visible; }
+.chart-svg text{ font-family:'Work Sans', sans-serif; font-size:11px; fill:var(--ink-soft); font-variant-numeric:tabular-nums; }
+.chart-svg .grid{ stroke:var(--line); stroke-width:1; }
+.chart-svg .base{ stroke:var(--ink-soft); stroke-opacity:.4; stroke-width:1; }
+.chart-svg .bar{ fill:var(--accent); pointer-events:none; }
+.chart-svg .hit{ fill:transparent; }
+.chart-svg .hit:hover + .bar{ opacity:.75; }
+.hbar{ display:grid; grid-template-columns:minmax(90px, 36%) minmax(0,1fr) auto; gap:10px; align-items:center; padding:5px 0; font-size:0.84rem; }
+.hbar-label{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.hbar-track{ height:10px; }
+.hbar-fill{ height:100%; min-width:2px; background:var(--accent); border-radius:0 4px 4px 0; }
+.hbar:hover .hbar-fill{ opacity:.75; }
+.hbar-val{ font-family:'IBM Plex Mono', monospace; font-size:0.76rem; color:var(--ink-soft); white-space:nowrap; text-align:right; }
+.heat{ display:grid; grid-template-columns:24px repeat(24, minmax(0,1fr)); gap:2px; font-size:0.64rem; color:var(--ink-soft); }
+.heat .hc{ height:18px; border-radius:3px; background:var(--surface-2); }
+.heat .hc.zero{ opacity:.5; }
+.heat .hc:hover{ outline:2px solid var(--ink); outline-offset:-1px; }
+.heat .hd{ display:flex; align-items:center; }
+.heat .hh{ white-space:nowrap; overflow:visible; }
+.tr-legend{ display:flex; align-items:center; gap:6px; margin-top:10px; font-size:0.72rem; color:var(--ink-soft); }
+.tr-legend .ramp{ width:90px; height:10px; border-radius:3px; background:linear-gradient(to right, rgba(30,95,168,.12), rgba(30,95,168,1)); }
+.tr-tip{
+  position:fixed; z-index:60; pointer-events:none; max-width:260px;
+  background:var(--ink); color:var(--paper); font-size:0.78rem; line-height:1.45;
+  padding:7px 10px; border-radius:7px; white-space:pre-line; box-shadow:0 4px 14px rgba(0,0,0,.18);
+}
 @media (max-width:640px){
   .top-tabs{ flex-direction:column; }
   table.grid td, table.grid th{ padding:6px 5px; }
@@ -196,7 +233,7 @@ footer{ margin-top:40px; }
       </svg>
       <div class="brand-text">
         <h1>Administrace</h1>
-        <p>uživatelé, výsledky a viditelnost stránek</p>
+        <p>uživatelé, výsledky, viditelnost stránek a provoz webu</p>
       </div>
     </div>
     <div class="readout" id="readout" hidden>
@@ -222,6 +259,7 @@ footer{ margin-top:40px; }
       <button class="toptab on" type="button" data-tab="users" role="tab">Uživatelé</button>
       <button class="toptab" type="button" data-tab="results" role="tab">Výsledky</button>
       <button class="toptab" type="button" data-tab="pages" role="tab">Stránky</button>
+      <button class="toptab" type="button" data-tab="traffic" role="tab">Provoz</button>
     </div>
 
     <div id="msg" class="feedback" role="status" hidden></div>
@@ -275,7 +313,89 @@ footer{ margin-top:40px; }
         <div class="table-scroll" id="pages-box"><div class="empty">Načítám…</div></div>
       </div>
     </section>
+
+    <!-- Provoz -->
+    <section id="tab-traffic" hidden>
+      <div class="panel">
+        <div class="panel-title">
+          <span>Provoz webu</span>
+          <div class="toolbar">
+            <select id="tr-period" aria-label="Období">
+              <option value="7">Posledních 7 dní</option>
+              <option value="30" selected>Posledních 30 dní</option>
+              <option value="90">Posledních 90 dní</option>
+              <option value="pololeti">Toto pololetí</option>
+              <option value="rok">Tento školní rok</option>
+              <option value="vlastni">Vlastní období…</option>
+            </select>
+            <span id="tr-custom" class="toolbar" hidden>
+              <input type="date" id="tr-from" aria-label="Od">
+              <input type="date" id="tr-to" aria-label="Do">
+            </span>
+            <select id="tr-class" aria-label="Třída">
+              <option value="">Všichni návštěvníci</option>
+              <option value="@in">Jen přihlášení</option>
+              <option value="@out">Jen nepřihlášení</option>
+            </select>
+            <select id="tr-page" aria-label="Stránka"><option value="">Celý web</option></select>
+            <select id="tr-device" aria-label="Zařízení">
+              <option value="">Všechna zařízení</option>
+              <option value="pc">Počítač</option>
+              <option value="mobil">Mobil</option>
+              <option value="tablet">Tablet</option>
+            </select>
+            <button class="btn" type="button" id="btn-reload-traffic">Obnovit</button>
+          </div>
+        </div>
+        <p class="tr-note">Počítá se jen <b>aktivní čas</b> — stránka je vidět a návštěvník na ní v posledních 5 minutách
+        něco dělal (u videa i během přehrávání). Návštěva se zapíše, až ze stránky odejde nebo přepne kartu, takže
+        právě probíhající hodina se tu objeví se zpožděním. „Návštěvník“ je jeden prohlížeč, ne člověk. Vaše
+        procházení jako admin se nepočítá.</p>
+      </div>
+      <div class="panel empty" id="tr-status">Načítám statistiky…</div>
+      <div id="tr-body" hidden>
+        <div class="tr-kpis" id="tr-kpis"></div>
+        <div class="tr-grid">
+          <div class="panel wide">
+            <div class="panel-title"><span id="tr-days-title">Zobrazení stránek po dnech</span></div>
+            <div id="tr-days"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-title"><span>Stránky podle zobrazení</span></div>
+            <div id="tr-pages"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-title"><span id="tr-tabs-title">Aktivní čas podle záložek</span></div>
+            <div id="tr-tabs"></div>
+          </div>
+          <div class="panel wide">
+            <div class="panel-title"><span>Kdy se web používá (zobrazení podle dne a hodiny)</span></div>
+            <div id="tr-heat"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-title"><span>Třídy</span></div>
+            <div id="tr-classes"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-title"><span>Zařízení</span></div>
+            <div id="tr-devices"></div>
+          </div>
+          <div class="panel wide">
+            <div class="panel-title"><span>Události</span></div>
+            <div class="table-scroll" id="tr-events"></div>
+          </div>
+          <div class="panel wide">
+            <div class="panel-title">
+              <span>Přihlášení žáci</span>
+              <div class="toolbar"><input type="search" id="tr-student-filter" placeholder="Hledat jméno…" aria-label="Hledat žáka"></div>
+            </div>
+            <div class="table-scroll" id="tr-students"></div>
+          </div>
+        </div>
+      </div>
+    </section>
   </div>
+  <div id="tr-tip" class="tr-tip" hidden></div>
 
   <footer>Fyzika — Administrace</footer>
 </div>
@@ -337,8 +457,9 @@ footer{ margin-top:40px; }
   Array.prototype.forEach.call(tabs, function(t){
     t.addEventListener('click', function(){
       Array.prototype.forEach.call(tabs, function(x){ x.classList.toggle('on', x===t); });
-      ['users','results','pages'].forEach(function(k){ $('tab-'+k).hidden = t.dataset.tab!==k; });
+      ['users','results','pages','traffic'].forEach(function(k){ $('tab-'+k).hidden = t.dataset.tab!==k; });
       if(t.dataset.tab==='results') renderResults();
+      if(t.dataset.tab==='traffic') loadTraffic(false);
     });
   });
 
@@ -781,6 +902,505 @@ footer{ margin-top:40px; }
       handleError(err);
     });
   }
+
+  // ---- provoz ----
+  // Server vrací surové řádky z listu Provoz za období (viz actAdminTraffic_ v Code.gs); třída, stránka
+  // a zařízení se filtrují a sčítají tady, takže změna těchto filtrů nic nenačítá. Jinou délku období
+  // je potřeba načíst, jen když už není celá v načtených datech.
+  var TR_EVENTS = { hra:'Dokončená hra', rekord:'Nový osobní rekord', video:'Spuštěné video', tisk:'Tisk stránky' };
+  var TR_DEVICES = { pc:'Počítač', mobil:'Mobil', tablet:'Tablet' };
+  var TR_EXTRA_PAGES = { 'index.html':'Rozcestník (úvodní stránka)', 'prihlaseni.html':'Přihlášení / můj účet' };
+  var TR_DAYS = ['Po','Út','St','Čt','Pá','So','Ne'];
+  var ACCENT_RGB = '30,95,168'; // = --accent
+  var DAY_MS = 86400000;
+  var trData = null, trReq = 0, trFiltersReady = false;
+
+  function fmtNum(n){ return Number(n).toLocaleString('cs-CZ'); }
+  function fmtDur(s){
+    s = Math.round(s);
+    if(s < 60) return s + ' s';
+    if(s < 3600) return Math.round(s/60) + ' min';
+    var h = Math.floor(s/3600), m = Math.round((s - h*3600)/60);
+    if(m===60){ h++; m = 0; }
+    return h + ' h' + (m ? ' ' + m + ' min' : '');
+  }
+  function dayStart(t){ var d = new Date(t); d.setHours(0,0,0,0); return d; }
+  function addDays(d, n){ var x = new Date(d.getTime()); x.setDate(x.getDate() + n); return x; }
+  function isoDay(d){ return d.getFullYear() + '-' + ('0'+(d.getMonth()+1)).slice(-2) + '-' + ('0'+d.getDate()).slice(-2); }
+  function shortDay(t){ var d = new Date(t); return d.getDate() + '. ' + (d.getMonth()+1) + '.'; }
+  function trPageTitle(file){ return TR_EXTRA_PAGES[file] || pageTitle(file); }
+
+  // Zvolené období jako { from, to } v ms (to = půlnoc po posledním dni).
+  function trPeriod(){
+    var v = $('tr-period').value, today = dayStart(Date.now()), tomorrow = addDays(today, 1);
+    if(v==='7' || v==='30' || v==='90') return { from: addDays(today, 1 - Number(v)).getTime(), to: tomorrow.getTime() };
+    var y = today.getFullYear(), m = today.getMonth(); // m: 0 = leden, 8 = září
+    var sy = m >= 8 ? y : y - 1;                        // školní rok začíná 1. září
+    if(v==='rok') return { from: new Date(sy, 8, 1).getTime(), to: tomorrow.getTime() };
+    if(v==='pololeti'){
+      // 1. pololetí: září–leden, 2. pololetí: únor–srpen (včetně prázdnin)
+      var start = (m >= 8 || m === 0) ? new Date(sy, 8, 1) : new Date(sy + 1, 1, 1);
+      return { from: start.getTime(), to: tomorrow.getTime() };
+    }
+    var f = $('tr-from').value, t = $('tr-to').value;
+    var from = f ? new Date(f + 'T00:00') : addDays(today, -29);
+    var to = t ? addDays(new Date(t + 'T00:00'), 1) : tomorrow;
+    return { from: from.getTime(), to: to.getTime() };
+  }
+
+  function trStatus(text){
+    $('tr-status').textContent = text;
+    $('tr-status').hidden = false;
+    $('tr-body').hidden = true;
+  }
+
+  function fillTrafficFilters(){
+    var sp = $('tr-page'), keep = sp.value;
+    while(sp.options.length > 1) sp.remove(1);
+    var g1 = document.createElement('optgroup'); g1.label = 'Sekce';
+    PAGE_TREE[0].children.forEach(function(node){
+      var o = el('option', null, trPageTitle(node.file).replace(/\s*\(rozcestník\)$/, '') + ' — celá sekce');
+      o.value = 'sec:' + node.file; g1.appendChild(o);
+    });
+    sp.appendChild(g1);
+    var g2 = document.createElement('optgroup'); g2.label = 'Stránky';
+    Object.keys(TR_EXTRA_PAGES).concat(pageCfg.pages.map(function(p){ return p.file; })).forEach(function(file){
+      var o = el('option', null, trPageTitle(file)); o.value = file; g2.appendChild(o);
+    });
+    sp.appendChild(g2);
+    sp.value = keep;
+    if(sp.value !== keep) sp.value = '';
+  }
+
+  function fillTrafficClasses(){
+    var sc = $('tr-class'), keep = sc.value, classes = {};
+    while(sc.options.length > 3) sc.remove(3);
+    users.forEach(function(u){ if(u.className) classes[u.className] = true; });
+    if(trData) trData.rows.forEach(function(r){ var c = trData.strings[r[10]]; if(c) classes[c] = true; });
+    Object.keys(classes).sort(function(a,b){ return a.localeCompare(b,'cs',{numeric:true}); }).forEach(function(c){
+      var o = el('option', null, 'Třída ' + c); o.value = c; sc.appendChild(o);
+    });
+    sc.value = keep;
+    if(sc.value !== keep) sc.value = '';
+  }
+
+  function loadTraffic(force){
+    if(!trFiltersReady){ fillTrafficFilters(); fillTrafficClasses(); trFiltersReady = true; }
+    var p = trPeriod();
+    if(!(p.from < p.to)){ trStatus('Začátek období musí být před jeho koncem.'); return; }
+    if(!force && trData && p.from >= trData.from && p.to <= trData.to){ renderTraffic(); return; }
+    var req = ++trReq;
+    trStatus('Načítám statistiky… Server Googlu občas odpovídá pomalu.');
+    Auth.api('adminTraffic', { od: new Date(p.from).toISOString(), do: new Date(p.to).toISOString() }).then(function(r){
+      if(req !== trReq) return;
+      var t = r.traffic || {};
+      trData = { from: p.from, to: p.to, strings: t.strings || [''], rows: t.rows || [] };
+      fillTrafficClasses();
+      renderTraffic();
+    }, function(err){
+      if(req !== trReq) return;
+      if(err.code==='unknown_action'){
+        trStatus('Backend zatím statistiky neumí — vložte do Apps Scriptu novou verzi Code.gs, spusťte setup() a nasaďte novou verzi.');
+        return;
+      }
+      if(err.code==='forbidden' || err.code==='auth_required' || err.code==='session_expired'){ handleError(err); return; }
+      trStatus('Statistiky se nepodařilo načíst: ' + err.message);
+    });
+  }
+
+  // Množina stránek podle filtru (null = celý web). "sec:soubor" = rozcestník a vše pod ním.
+  function trPageSet(v){
+    if(!v) return null;
+    var set = {};
+    if(v.indexOf('sec:')===0){
+      var file = v.slice(4), node = findTreeNode(PAGE_TREE, file);
+      set[file] = true;
+      if(node) treeDescendantFiles(node).forEach(function(f){ set[f] = true; });
+    } else set[v] = true;
+    return set;
+  }
+
+  // Projde filtrované řádky a sečte vše potřebné pro grafy.
+  function aggregateTraffic(){
+    var p = trPeriod(), S = trData.strings;
+    var fc = $('tr-class').value, fd = $('tr-device').value, pages = trPageSet($('tr-page').value);
+    var visits = {}, events = [];
+    trData.rows.forEach(function(r){
+      var t = r[0] * 60000;
+      if(t < p.from || t >= p.to) return;
+      var page = S[r[3]], user = S[r[9]], cls = S[r[10]], dev = S[r[11]];
+      if(pages && !pages[page]) return;
+      if(fd && dev !== fd) return;
+      if(fc==='@in' && !user) return;
+      if(fc==='@out' && user) return;
+      if(fc && fc.charAt(0)!=='@' && cls !== fc) return;
+      if(r[5] < 0){
+        events.push({ name: S[r[6]], detail: S[r[7]], value: r[8], page: page, user: user });
+        return;
+      }
+      var v = visits[r[1]];
+      if(!v) v = visits[r[1]] = { t: t, page: page, visitor: r[2], user: user, cls: cls, dev: dev, sec: 0, tabs: {} };
+      if(t < v.t) v.t = t;
+      v.sec += r[5];
+      var tab = S[r[4]];
+      v.tabs[tab] = (v.tabs[tab] || 0) + r[5];
+    });
+    return { p: p, visits: Object.keys(visits).map(function(k){ return visits[k]; }), events: events };
+  }
+
+  function renderTraffic(){
+    if(!trData || $('tab-traffic').hidden) return;
+    var a = aggregateTraffic();
+    if(!a.visits.length && !a.events.length){
+      trStatus(trData.rows.length ? 'Pro zvolené filtry tu nic není.' : 'V tomto období zatím žádný provoz.');
+      return;
+    }
+    $('tr-status').hidden = true;
+    $('tr-body').hidden = false;
+    renderKpis(a);
+    renderDays(a);
+    renderTrafficPages(a);
+    renderTrafficTabs(a);
+    renderHeat(a);
+    renderTrafficClasses(a);
+    renderDevices(a);
+    renderEvents(a);
+    renderStudents(a);
+  }
+
+  function countUnique(list, key){
+    var seen = {}, n = 0;
+    list.forEach(function(x){ var k = x[key]; if(k !== '' && k !== undefined && !seen[k]){ seen[k] = true; n++; } });
+    return n;
+  }
+  function sumSec(list){ return list.reduce(function(s, v){ return s + v.sec; }, 0); }
+
+  function renderKpis(a){
+    var box = $('tr-kpis'); box.innerHTML = '';
+    var views = a.visits.length, sec = sumSec(a.visits);
+    var games = a.events.filter(function(e){ return e.name==='hra'; }).length;
+    var days = Math.max(1, Math.round((Math.min(a.p.to, dayStart(Date.now()).getTime() + DAY_MS) - a.p.from) / DAY_MS));
+    [
+      ['Zobrazení stránek', fmtNum(views), 'Ø ' + fmtNum(Math.round(views / days * 10) / 10) + ' za den'],
+      ['Návštěvníci', fmtNum(countUnique(a.visits, 'visitor')), 'různé prohlížeče'],
+      ['Přihlášení žáci', fmtNum(countUnique(a.visits, 'user')), 'různé účty'],
+      ['Aktivní čas', fmtDur(sec), 'celkem'],
+      ['Ø čas na zobrazení', views ? fmtDur(sec / views) : '—', 'aktivní'],
+      ['Dokončené hry', fmtNum(games), 'hry na čas']
+    ].forEach(function(k){
+      var c = el('div','kpi');
+      c.appendChild(el('span','label',k[0]));
+      c.appendChild(el('span','value',k[1]));
+      c.appendChild(el('span','sub',k[2]));
+      box.appendChild(c);
+    });
+  }
+
+  // Hezké dělení osy: 0 … max po krocích 1/2/5 × 10^n (jen celá čísla).
+  function niceTicks(max){
+    if(max <= 0) return [0, 1];
+    var raw = max / 4, mag = Math.pow(10, Math.floor(Math.log(raw) / Math.LN10));
+    var f = raw / mag, step = (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * mag;
+    step = Math.max(1, Math.round(step));
+    var out = [];
+    for(var v = 0; v < max + step; v += step){ out.push(v); if(v >= max) break; }
+    return out;
+  }
+
+  var SVG_NS = 'http://www.w3.org/2000/svg';
+  function svgEl(tag, attrs, parent){
+    var n = document.createElementNS(SVG_NS, tag);
+    for(var k in attrs) n.setAttribute(k, attrs[k]);
+    if(parent) parent.appendChild(n);
+    return n;
+  }
+
+  function renderDays(a){
+    var box = $('tr-days'); box.innerHTML = '';
+    var end = Math.min(a.p.to, dayStart(Date.now()).getTime() + DAY_MS);
+    var weekly = (end - a.p.from) / DAY_MS > 92;
+    $('tr-days-title').textContent = weekly ? 'Zobrazení stránek po týdnech' : 'Zobrazení stránek po dnech';
+    var first = dayStart(a.p.from);
+    if(weekly) first = addDays(first, -((first.getDay() + 6) % 7)); // týden od pondělí
+    var buckets = [];
+    for(var d = first; d.getTime() < end; ){
+      var next = addDays(d, weekly ? 7 : 1);
+      buckets.push({ start: d.getTime(), views: 0, sec: 0, visitors: {}, nVisitors: 0 });
+      d = next;
+    }
+    if(!buckets.length) return;
+    a.visits.forEach(function(v){
+      var i = Math.round((dayStart(v.t).getTime() - first.getTime()) / DAY_MS); // round: přechod na letní čas
+      if(weekly) i = Math.floor(i / 7);
+      var b = buckets[i];
+      if(!b) return;
+      b.views++; b.sec += v.sec;
+      if(!b.visitors[v.visitor]){ b.visitors[v.visitor] = true; b.nVisitors++; }
+    });
+
+    var W = Math.max(box.clientWidth || 600, 260), H = 200, L = 36, R = 4, T = 10, B = 24;
+    var max = 0;
+    buckets.forEach(function(b){ if(b.views > max) max = b.views; });
+    var ticks = niceTicks(max), top = ticks[ticks.length - 1];
+    var y = function(v){ return T + (H - T - B) * (1 - v / top); };
+    var svg = svgEl('svg', { 'class':'chart-svg', width:W, height:H, viewBox:'0 0 ' + W + ' ' + H, role:'img',
+      'aria-label': (weekly ? 'Zobrazení po týdnech' : 'Zobrazení po dnech') + ', nejvíc ' + max });
+    ticks.forEach(function(v){
+      svgEl('line', { x1:L, x2:W - R, y1:y(v), y2:y(v), 'class': v === 0 ? 'base' : 'grid' }, svg);
+      svgEl('text', { x:L - 6, y:y(v) + 4, 'text-anchor':'end' }, svg).textContent = fmtNum(v);
+    });
+    var n = buckets.length, slot = (W - L - R) / n;
+    var bw = Math.max(1, Math.min(slot - 2, 36));
+    var every = Math.max(1, Math.ceil(n / Math.max(1, Math.floor((W - L - R) / 64))));
+    var y0 = y(0);
+    buckets.forEach(function(b, i){
+      var x0 = L + slot * i, x = x0 + (slot - bw) / 2;
+      var label = weekly ? 'týden od ' + shortDay(b.start) : TR_DAYS[(new Date(b.start).getDay() + 6) % 7] + ' ' + shortDay(b.start);
+      svgEl('rect', { x:x0, y:T, width:slot, height:H - T - B, 'class':'hit',
+        'data-tip': label + '\n' + fmtNum(b.views) + ' zobrazení · ' + fmtNum(b.nVisitors) + ' návštěvníků\naktivní čas ' + fmtDur(b.sec) }, svg);
+      if(b.views > 0){
+        var yt = y(b.views), r = Math.min(4, bw / 2, y0 - yt);
+        svgEl('path', { 'class':'bar', d: 'M' + x + ' ' + y0 + 'V' + (yt + r) + 'Q' + x + ' ' + yt + ' ' + (x + r) + ' ' + yt +
+          'H' + (x + bw - r) + 'Q' + (x + bw) + ' ' + yt + ' ' + (x + bw) + ' ' + (yt + r) + 'V' + y0 + 'Z' }, svg);
+      } else {
+        svgEl('rect', { 'class':'bar', x:x, y:y0, width:0, height:0 }, svg); // ať :hover + .bar sedí na každý sloupec
+      }
+      if(i % every === 0){
+        svgEl('text', { x:x + bw / 2, y:H - 7, 'text-anchor':'middle' }, svg).textContent = shortDay(b.start);
+      }
+    });
+    box.appendChild(svg);
+  }
+
+  // Vodorovné pruhy: items = [{ label, value, text, tip }] seřazené sestupně.
+  function barList(box, items, emptyText){
+    box.innerHTML = '';
+    if(!items.length){ box.appendChild(el('div','empty', emptyText || 'Nic.')); return; }
+    var max = items.reduce(function(m, it){ return Math.max(m, it.value); }, 0) || 1;
+    items.forEach(function(it){
+      var row = el('div','hbar');
+      row.setAttribute('data-tip', it.tip);
+      var lab = el('span','hbar-label', it.label); lab.title = it.label;
+      row.appendChild(lab);
+      var track = el('div','hbar-track'), fill = el('div','hbar-fill');
+      fill.style.width = (it.value / max * 100) + '%';
+      track.appendChild(fill);
+      row.appendChild(track);
+      row.appendChild(el('span','hbar-val', it.text));
+      box.appendChild(row);
+    });
+  }
+
+  function groupVisits(visits, keyFn){
+    var g = {};
+    visits.forEach(function(v){
+      var k = keyFn(v);
+      var x = g[k] || (g[k] = { key:k, views:0, sec:0, visitors:{}, nVisitors:0, users:{}, nUsers:0 });
+      x.views++; x.sec += v.sec;
+      if(!x.visitors[v.visitor]){ x.visitors[v.visitor] = true; x.nVisitors++; }
+      if(v.user && !x.users[v.user]){ x.users[v.user] = true; x.nUsers++; }
+    });
+    return Object.keys(g).map(function(k){ return g[k]; });
+  }
+
+  function renderTrafficPages(a){
+    var items = groupVisits(a.visits, function(v){ return v.page; }).sort(function(x, y){ return y.views - x.views; }).map(function(g){
+      var title = trPageTitle(g.key);
+      return { label: title, value: g.views, text: fmtNum(g.views) + '× · Ø ' + fmtDur(g.sec / g.views),
+        tip: title + '\n' + fmtNum(g.views) + ' zobrazení · ' + fmtNum(g.nVisitors) + ' návštěvníků' +
+             '\naktivní čas ' + fmtDur(g.sec) + ' (Ø ' + fmtDur(g.sec / g.views) + ')' };
+    });
+    barList($('tr-pages'), items, 'Žádná zobrazení.');
+  }
+
+  function renderTrafficTabs(a){
+    var pv = $('tr-page').value, single = pv && pv.indexOf('sec:') !== 0;
+    $('tr-tabs-title').textContent = single ? 'Aktivní čas podle záložek — ' + trPageTitle(pv) : 'Aktivní čas podle druhu záložky';
+    var titles = {};
+    (pageCfg.tabs || []).forEach(function(t){
+      if(single ? t.page === pv : !titles[t.tab]) titles[t.tab] = t.title;
+    });
+    var g = {}, total = 0;
+    a.visits.forEach(function(v){
+      Object.keys(v.tabs).forEach(function(tab){
+        var x = g[tab] || (g[tab] = { sec:0, opens:0 });
+        x.sec += v.tabs[tab]; total += v.tabs[tab];
+        if(v.tabs[tab] > 0) x.opens++;
+      });
+    });
+    var items = Object.keys(g).filter(function(k){ return g[k].sec > 0; }).sort(function(x, y){ return g[y].sec - g[x].sec; }).map(function(tab){
+      var label = tab ? (titles[tab] || tab) : 'Stránky bez záložek';
+      var share = total ? Math.round(g[tab].sec / total * 100) : 0;
+      return { label: label, value: g[tab].sec, text: fmtDur(g[tab].sec) + ' · ' + share + ' %',
+        tip: label + '\naktivní čas ' + fmtDur(g[tab].sec) + ' (' + share + ' %)\notevřeno při ' + fmtNum(g[tab].opens) + ' zobrazeních' };
+    });
+    barList($('tr-tabs'), items, 'Zatím žádný aktivní čas.');
+  }
+
+  function renderHeat(a){
+    var box = $('tr-heat'); box.innerHTML = '';
+    var m = [], max = 0;
+    for(var d = 0; d < 7; d++){ m.push([]); for(var h = 0; h < 24; h++) m[d].push(0); }
+    a.visits.forEach(function(v){
+      var t = new Date(v.t), d = (t.getDay() + 6) % 7, h = t.getHours();
+      m[d][h]++;
+      if(m[d][h] > max) max = m[d][h];
+    });
+    var grid = el('div','heat');
+    grid.setAttribute('role','img');
+    grid.setAttribute('aria-label','Zobrazení podle dne v týdnu a hodiny');
+    grid.appendChild(el('span'));
+    for(var hh = 0; hh < 24; hh++) grid.appendChild(el('span','hh', hh % 3 === 0 ? String(hh) : ''));
+    m.forEach(function(row, d){
+      grid.appendChild(el('span','hd', TR_DAYS[d]));
+      row.forEach(function(v, h){
+        var c = el('span','hc' + (v ? '' : ' zero'));
+        if(v) c.style.background = 'rgba(' + ACCENT_RGB + ',' + (0.12 + 0.88 * v / max).toFixed(3) + ')';
+        c.setAttribute('data-tip', TR_DAYS[d] + ' ' + h + ':00–' + (h + 1) + ':00\n' + fmtNum(v) + ' zobrazení');
+        grid.appendChild(c);
+      });
+    });
+    box.appendChild(grid);
+    var leg = el('div','tr-legend');
+    leg.appendChild(el('span', null, 'méně'));
+    leg.appendChild(el('span','ramp'));
+    leg.appendChild(el('span', null, 'více (nejvíc ' + fmtNum(max) + ' za hodinu)'));
+    box.appendChild(leg);
+  }
+
+  function renderTrafficClasses(a){
+    var items = groupVisits(a.visits, function(v){ return v.user ? (v.cls || '(bez třídy)') : ''; })
+      .sort(function(x, y){ return y.views - x.views; }).map(function(g){
+        var label = g.key === '' ? 'Nepřihlášení' : 'Třída ' + g.key;
+        return { label: label, value: g.views, text: fmtNum(g.views) + '× · ' + fmtDur(g.sec),
+          tip: label + '\n' + fmtNum(g.views) + ' zobrazení · aktivní čas ' + fmtDur(g.sec) +
+               (g.key === '' ? '\n' + fmtNum(g.nVisitors) + ' návštěvníků' : '\n' + fmtNum(g.nUsers) + ' žáků') };
+      });
+    barList($('tr-classes'), items, 'Žádná zobrazení.');
+  }
+
+  function renderDevices(a){
+    var total = a.visits.length || 1;
+    var items = groupVisits(a.visits, function(v){ return v.dev; }).sort(function(x, y){ return y.views - x.views; }).map(function(g){
+      var label = TR_DEVICES[g.key] || 'Neznámé';
+      var share = Math.round(g.views / total * 100);
+      return { label: label, value: g.views, text: share + ' %',
+        tip: label + '\n' + fmtNum(g.views) + ' zobrazení (' + share + ' %)\n' + fmtNum(g.nVisitors) + ' návštěvníků · Ø ' + fmtDur(g.sec / g.views) };
+    });
+    barList($('tr-devices'), items, 'Žádná zobrazení.');
+  }
+
+  function renderEvents(a){
+    var box = $('tr-events'); box.innerHTML = '';
+    var g = {};
+    a.events.forEach(function(e){
+      var k = e.name + '|' + e.page + '|' + e.detail;
+      var x = g[k] || (g[k] = { e:e, n:0, users:{}, nUsers:0, sum:0, nVal:0, best:null });
+      x.n++;
+      if(e.user && !x.users[e.user]){ x.users[e.user] = true; x.nUsers++; }
+      if(typeof e.value === 'number'){ x.sum += e.value; x.nVal++; if(x.best === null || e.value > x.best) x.best = e.value; }
+    });
+    var list = Object.keys(g).map(function(k){ return g[k]; }).sort(function(x, y){ return y.n - x.n; });
+    if(!list.length){ box.appendChild(el('div','empty','Žádné události — dokončené hry, nové rekordy, spuštěná videa a tisk stránek se objeví tady.')); return; }
+    var t = el('table','grid');
+    var hr = t.createTHead().insertRow();
+    [['Událost',''],['Stránka',''],['Podrobnost',''],['Počet','num'],['Přihlášených žáků','num'],['Ø skóre','num'],['Nejlepší','num']].forEach(function(h){
+      hr.appendChild(el('th', h[1] || null, h[0]));
+    });
+    var tb = t.createTBody();
+    list.forEach(function(x){
+      var row = tb.insertRow();
+      row.insertCell().textContent = TR_EVENTS[x.e.name] || x.e.name;
+      row.insertCell().textContent = trPageTitle(x.e.page);
+      var detail = x.e.name === 'hra' || x.e.name === 'rekord' ? discTitle(x.e.page, x.e.detail) : '';
+      row.insertCell().textContent = detail || '—';
+      [fmtNum(x.n), x.nUsers ? fmtNum(x.nUsers) : '—', x.nVal ? fmtNum(Math.round(x.sum / x.nVal)) : '—', x.best === null ? '—' : fmtNum(x.best)].forEach(function(v){
+        var c = row.insertCell(); c.className = 'num'; c.textContent = v;
+      });
+    });
+    box.appendChild(t);
+  }
+
+  function renderStudents(a){
+    var box = $('tr-students'); box.innerHTML = '';
+    var byId = {};
+    users.forEach(function(u){ byId[u.id] = u; });
+    var g = {};
+    a.visits.forEach(function(v){
+      if(!v.user) return;
+      var x = g[v.user] || (g[v.user] = { id:v.user, cls:v.cls, views:0, sec:0, games:0, last:0, pages:{}, nPages:0 });
+      x.views++; x.sec += v.sec;
+      if(v.t > x.last){ x.last = v.t; x.cls = v.cls; }
+      if(!x.pages[v.page]){ x.pages[v.page] = true; x.nPages++; }
+    });
+    a.events.forEach(function(e){ if(e.user && e.name === 'hra' && g[e.user]) g[e.user].games++; });
+    var q = $('tr-student-filter').value.trim().toLowerCase();
+    var list = Object.keys(g).map(function(k){
+      var x = g[k], u = byId[k];
+      x.name = u ? u.name : '(smazaný účet)';
+      x.className = u && u.className ? u.className : x.cls;
+      return x;
+    }).filter(function(x){
+      return !q || (x.name + ' ' + x.className).toLowerCase().indexOf(q) >= 0;
+    }).sort(function(x, y){ return y.sec - x.sec || y.views - x.views; });
+    if(!list.length){ box.appendChild(el('div','empty', $('tr-class').value === '@out' ? 'Filtr „Jen nepřihlášení“ žádné žáky nezobrazuje.' : 'Žádní přihlášení žáci.')); return; }
+    var t = el('table','grid');
+    var hr = t.createTHead().insertRow();
+    [['Žák',''],['Třída',''],['Zobrazení','num'],['Různých stránek','num'],['Aktivní čas','num'],['Dokončené hry','num'],['Poslední návštěva','']].forEach(function(h){
+      hr.appendChild(el('th', h[1] || null, h[0]));
+    });
+    var tb = t.createTBody();
+    list.forEach(function(x){
+      var row = tb.insertRow();
+      row.insertCell().textContent = x.name;
+      row.insertCell().textContent = x.className || '—';
+      [fmtNum(x.views), fmtNum(x.nPages), fmtDur(x.sec), x.games ? fmtNum(x.games) : '—'].forEach(function(v){
+        var c = row.insertCell(); c.className = 'num'; c.textContent = v;
+      });
+      row.insertCell().textContent = fmtDate(new Date(x.last).toISOString(), true);
+    });
+    box.appendChild(t);
+  }
+
+  // Tooltip pro všechno s atributem data-tip (sloupce, pruhy, buňky heatmapy).
+  var tip = $('tr-tip');
+  function placeTip(ev){
+    var pad = 14, w = tip.offsetWidth, h = tip.offsetHeight;
+    var x = ev.clientX + pad, y = ev.clientY + pad;
+    if(x + w > window.innerWidth - 8) x = Math.max(8, ev.clientX - pad - w);
+    if(y + h > window.innerHeight - 8) y = Math.max(8, ev.clientY - pad - h);
+    tip.style.left = x + 'px'; tip.style.top = y + 'px';
+  }
+  $('tab-traffic').addEventListener('pointerover', function(ev){
+    var t = ev.target.closest ? ev.target.closest('[data-tip]') : null;
+    if(!t){ tip.hidden = true; return; }
+    tip.textContent = t.getAttribute('data-tip');
+    tip.hidden = false;
+    placeTip(ev);
+  });
+  $('tab-traffic').addEventListener('pointermove', function(ev){ if(!tip.hidden) placeTip(ev); });
+  $('tab-traffic').addEventListener('pointerleave', function(){ tip.hidden = true; });
+  window.addEventListener('scroll', function(){ tip.hidden = true; }, { passive:true });
+
+  $('tr-period').addEventListener('change', function(){
+    var custom = $('tr-period').value === 'vlastni';
+    $('tr-custom').hidden = !custom;
+    if(custom && !$('tr-from').value){
+      var today = dayStart(Date.now());
+      $('tr-from').value = isoDay(addDays(today, -29));
+      $('tr-to').value = isoDay(today);
+    }
+    loadTraffic(false);
+  });
+  ['tr-from','tr-to'].forEach(function(id){ $(id).addEventListener('change', function(){ loadTraffic(false); }); });
+  ['tr-class','tr-page','tr-device'].forEach(function(id){ $(id).addEventListener('change', renderTraffic); });
+  $('tr-student-filter').addEventListener('input', function(){ if(trData) renderStudents(aggregateTraffic()); });
+  $('btn-reload-traffic').addEventListener('click', function(){ loadTraffic(true); });
+  var resizeTimer = null;
+  window.addEventListener('resize', function(){
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(renderTraffic, 150);
+  });
 
   loadAll();
 })();
