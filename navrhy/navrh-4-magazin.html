@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Návrh 4 — Magazín</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,800;1,9..144,400;1,9..144,600&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#f4f0e8;
+  --ink:#16140f;
+  --ink-soft:#6a6458;
+  --rule:#16140f;
+  --rule-soft:rgba(22,20,15,0.18);
+  --accent:#d2461f;
+}
+*{box-sizing:border-box;}
+body{ margin:0; background:var(--paper); color:var(--ink); font-family:'Instrument Sans', system-ui, sans-serif; line-height:1.6; }
+.wrap{ max-width:1240px; margin:0 auto; padding:0 32px; }
+.photo{ position:relative; overflow:hidden; background:linear-gradient(135deg, #3a3d4a, #15161c); }
+.photo img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; transition:transform 1s ease; }
+figure{ margin:0; }
+figcaption{ font-size:.75rem; color:var(--ink-soft); padding-top:8px; }
+figcaption b{ color:var(--ink); font-weight:600; }
+
+/* --- záhlaví --- */
+.topline{ display:flex; justify-content:space-between; font-size:.75rem; text-transform:uppercase; letter-spacing:.14em; padding:14px 0; border-bottom:1px solid var(--rule-soft); color:var(--ink-soft); }
+.masthead{ text-align:center; padding:22px 0 10px; border-bottom:3px double var(--rule); }
+.masthead h1{ font-family:'Fraunces'; font-weight:800; font-size:clamp(3.4rem, 12vw, 9rem); line-height:.9; letter-spacing:-.04em; margin:0; }
+.masthead h1 i{ font-weight:400; color:var(--accent); }
+nav{ display:flex; justify-content:center; gap:36px; padding:12px 0; border-bottom:1px solid var(--rule); flex-wrap:wrap; }
+nav a{ color:var(--ink); text-decoration:none; font-weight:500; font-size:.9rem; text-transform:uppercase; letter-spacing:.12em; }
+nav a:hover{ color:var(--accent); }
+
+/* --- titulní článek --- */
+.lead{ display:grid; grid-template-columns:1fr 1.5fr; gap:40px; padding:40px 0; border-bottom:1px solid var(--rule); }
+.kicker{ font-size:.75rem; text-transform:uppercase; letter-spacing:.18em; color:var(--accent); font-weight:600; }
+.lead h2{ font-family:'Fraunces'; font-weight:600; font-size:clamp(2.2rem, 4.6vw, 3.9rem); line-height:1.02; letter-spacing:-.02em; margin:12px 0 18px; }
+.lead h2 i{ font-weight:400; }
+.lead .dek{ font-family:'Fraunces'; font-size:1.2rem; line-height:1.45; color:var(--ink-soft); margin:0 0 24px; }
+.lead .dropcap::first-letter{ font-family:'Fraunces'; font-weight:800; float:left; font-size:4.2rem; line-height:.85; padding:4px 10px 0 0; color:var(--accent); }
+.lead .photo{ aspect-ratio:4/3; }
+.lead figure:hover img{ transform:scale(1.03); }
+
+/* --- sekce: tři sloupce --- */
+.sec-head{ display:flex; align-items:baseline; justify-content:space-between; padding:34px 0 18px; }
+.sec-head h3{ font-family:'Fraunces'; font-size:2rem; margin:0; font-weight:600; }
+.sec-head span{ font-size:.8rem; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.14em; }
+.columns{ display:grid; grid-template-columns:repeat(3, 1fr); border-top:1px solid var(--rule); }
+.col{ padding:22px 24px 30px; border-right:1px solid var(--rule-soft); }
+.col:first-child{ padding-left:0; } .col:last-child{ border-right:0; padding-right:0; }
+.col .photo{ aspect-ratio:3/2; margin-bottom:16px; }
+.col:hover .photo img{ transform:scale(1.05); }
+.col .no{ font-family:'Fraunces'; font-style:italic; color:var(--accent); font-size:1.1rem; }
+.col h4{ font-family:'Fraunces'; font-size:1.75rem; font-weight:600; margin:2px 0 8px; line-height:1.1; }
+.col p{ margin:0 0 14px; color:var(--ink-soft); font-size:.95rem; }
+.col ol{ margin:0; padding:0; list-style:none; counter-reset:c; }
+.col li{ counter-increment:c; border-top:1px solid var(--rule-soft); }
+.col li a{ display:flex; gap:12px; padding:9px 0; color:var(--ink); text-decoration:none; font-weight:500; }
+.col li a::before{ content:counter(c, decimal-leading-zero); font-family:'Fraunces'; font-style:italic; color:var(--ink-soft); }
+.col li a:hover{ color:var(--accent); }
+
+/* --- ukázka teorie: článek se dvěma sloupci a citátem --- */
+.feature{ display:grid; grid-template-columns:1fr 2fr; gap:40px; padding:46px 0; border-top:3px double var(--rule); margin-top:30px; }
+.feature .photo{ aspect-ratio:3/4; }
+.feature h3{ font-family:'Fraunces'; font-weight:600; font-size:clamp(1.9rem, 3.6vw, 2.8rem); line-height:1.05; margin:10px 0 18px; letter-spacing:-.01em; }
+.feature .text{ column-count:2; column-gap:34px; column-rule:1px solid var(--rule-soft); }
+.feature .text p{ margin:0 0 12px; }
+.pull{ break-inside:avoid; font-family:'Fraunces'; font-size:1.7rem; text-align:center; padding:18px 0; margin:6px 0 14px; border-top:2px solid var(--ink); border-bottom:2px solid var(--ink); }
+.var{ font-style:italic; }
+.box{ break-inside:avoid; background:#ebe5d8; padding:14px 16px; font-size:.93rem; }
+.box b{ display:block; font-size:.72rem; letter-spacing:.16em; text-transform:uppercase; color:var(--accent); margin-bottom:4px; }
+
+footer{ border-top:1px solid var(--rule); padding:20px 0 40px; font-size:.78rem; color:var(--ink-soft); display:flex; justify-content:space-between; gap:20px; flex-wrap:wrap; }
+footer a{ color:var(--ink-soft); }
+
+@media (max-width:900px){
+  .lead, .feature{ grid-template-columns:1fr; }
+  .lead figure{ order:-1; }
+  .columns{ grid-template-columns:1fr; }
+  .col, .col:first-child, .col:last-child{ padding:22px 0; border-right:0; border-bottom:1px solid var(--rule-soft); }
+  .feature .photo{ aspect-ratio:16/9; }
+}
+@media (max-width:620px){
+  .wrap{ padding:0 16px; }
+  .feature .text{ column-count:1; }
+  nav{ gap:18px; }
+  .topline span:last-child{ display:none; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topline"><span>Gymnázium J. Vrchlického</span><span>Výukový web · ročník 2026/27</span></div>
+  <header class="masthead"><h1>Fyzika<i>.</i></h1></header>
+  <nav><a href="#">Měření</a><a href="#">Kvinta</a><a href="#">Oktáva</a><a href="#">Aplety</a><a href="#">Přihlásit</a></nav>
+
+  <article class="lead">
+    <div>
+      <div class="kicker">Téma čísla · Elektrostatika</div>
+      <h2>Blesk: <i>sto milionů voltů</i> za zlomek sekundy</h2>
+      <p class="dek">Proč blesk nejčastěji udeří do nejvyššího bodu krajiny a co mají společného bouřková oblaka s nabitým kondenzátorem.</p>
+      <p class="dropcap">Mezi spodní částí bouřkového mraku a zemí vzniká obrovské elektrické napětí. Jakmile intenzita pole překročí elektrickou pevnost vzduchu, začne vzduch vést&nbsp;— a celý „kondenzátor“ se během desítek mikrosekund vybije. Na stránce najdeš teorii, aplet i trénink.</p>
+    </div>
+    <figure>
+      <div class="photo"><img src="https://unsplash.com/photos/R9L7ukhBSgs/download?force=true&amp;w=1800" alt="Blesk na noční obloze" onerror="this.remove()"></div>
+      <figcaption><b>Blesk.</b> Foto: Michał Mancewicz / Unsplash</figcaption>
+    </figure>
+  </article>
+
+  <div class="sec-head"><h3>Rubriky</h3><span>3 sekce · 15 stránek</span></div>
+  <section class="columns">
+    <div class="col">
+      <div class="photo"><img src="https://unsplash.com/photos/bI-UlCFcrf8/download?force=true&amp;w=1000" alt="Hodinový strojek s ozubenými koly" onerror="this.remove()"></div>
+      <div class="no">I.</div>
+      <h4>Měření</h4>
+      <p>Jak poctivě změřit, odhadnout nejistotu a zapsat výsledek.</p>
+      <ol>
+        <li><a href="#">Zpracování měření</a></li>
+        <li><a href="#">Zaokrouhlování výsledků</a></li>
+        <li><a href="#">Nepřímé měření</a></li>
+      </ol>
+    </div>
+    <div class="col">
+      <div class="photo"><img src="https://unsplash.com/photos/d7SxBxEAOfU/download?force=true&amp;w=1000" alt="Newtonova kolébka" onerror="this.remove()"></div>
+      <div class="no">II.</div>
+      <h4>Kvinta</h4>
+      <p>Mechanika: popis pohybu, vektory a pohyb po kružnici.</p>
+      <ol>
+        <li><a href="#">Převody jednotek</a></li>
+        <li><a href="#">Skládání vektorů</a></li>
+        <li><a href="#">Pohyb po kružnici</a></li>
+      </ol>
+    </div>
+    <div class="col">
+      <div class="photo"><img src="https://unsplash.com/photos/l16rjVtp11g/download?force=true&amp;w=1000" alt="Rozklad světla hranolem" onerror="this.remove()"></div>
+      <div class="no">III.</div>
+      <h4>Oktáva</h4>
+      <p>Optika: od lomu světla po mikroskop a dalekohled.</p>
+      <ol>
+        <li><a href="#">Čočky</a></li>
+        <li><a href="#">Kulová zrcadla</a></li>
+        <li><a href="#">Mikroskop</a></li>
+      </ol>
+    </div>
+  </section>
+
+  <article class="feature">
+    <figure>
+      <div class="photo"><img src="https://unsplash.com/photos/bI-UlCFcrf8/download?force=true&amp;w=1000" alt="Detail starých hodin" onerror="this.remove()"></div>
+      <figcaption><b>Čas v ozubených kolech.</b> Kyvadlové hodiny počítají kmity. Foto: Eric Prouzet / Unsplash</figcaption>
+    </figure>
+    <div>
+      <div class="kicker">Ukázka teorie</div>
+      <h3>Matematické kyvadlo: proč hodiny tikají stále stejně</h3>
+      <div class="text">
+        <p>Zavěsíme-li malé těleso na tenký nepružný závěs a vychýlíme ho o malý úhel, začne kmitat kolem rovnovážné polohy. Rozhodující je jen délka závěsu <span class="var">l</span> a tíhové zrychlení <span class="var">g</span>.</p>
+        <div class="pull"><span class="var">T</span> = 2π √(<span class="var">l</span> / <span class="var">g</span>)</div>
+        <p>Perioda nezávisí na hmotnosti závaží. Pro malé výchylky nezávisí ani na amplitudě&nbsp;— to je vlastnost, kterou ve&nbsp;17.&nbsp;století využil Christiaan Huygens při stavbě kyvadlových hodin.</p>
+        <div class="box"><b>Řešený příklad</b><span class="var">l</span> = 1,00&nbsp;m, <span class="var">g</span> = 9,81&nbsp;m·s<sup>−2</sup><br><span class="var">T</span> = 2π √(1,00 / 9,81)&nbsp;s ≐ 2,01&nbsp;s</div>
+      </div>
+    </div>
+  </article>
+
+  <footer>
+    <span>Návrh 4 · Magazín — tištěný časopis, velká typografie, fotografie s popisky.</span>
+    <span>Fotografie z <a href="https://unsplash.com/license">Unsplash</a> (Unsplash License).</span>
+  </footer>
+</div>
+</body>
+</html>
