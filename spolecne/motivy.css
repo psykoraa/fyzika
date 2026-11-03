@@ -1,0 +1,394 @@
+/*
+ * Fyzika — vzhledy (motivy) celého webu.
+ *
+ * Načítá se v <head> každé stránky AŽ ZA jejím vlastním <style>, spolu
+ * se spolecne/motiv.js, který nastaví <html data-motiv="…" data-sekce="…">.
+ *
+ *   data-motiv="instituce"  výchozí odborný vzhled: tlumené barvy, jediná
+ *                           tyrkysová barva pro zvýraznění, patkové nadpisy
+ *   data-motiv="denik"      laboratorní deník: čtverečkovaný papír, okraj
+ *                           sešitu, ručně psané nadpisy, zvýrazňovač
+ *
+ * Mění se jen vzhled, nikdy obsah. Pravidla mají předponu
+ * html[data-motiv=…], takže mají vyšší specificitu než :root{…} a třídy
+ * ve stylech stránek a přebijí je bez !important. Barvy v apletech
+ * (--ray1, --real, …) si stránky ponechávají.
+ */
+
+/* =====================================================================
+   Přepínač vzhledu (společný pro oba motivy)
+   ===================================================================== */
+.fz-motiv{
+  position:fixed; right:14px; bottom:14px; z-index:50;
+  display:flex; align-items:center; gap:2px;
+  padding:4px; border-radius:6px;
+  background:var(--surface, #fff);
+  border:1px solid var(--line, #ddd);
+  box-shadow:0 6px 18px -8px rgba(0,0,0,.35);
+  font-size:12.5px; line-height:1;
+}
+.fz-motiv-popis{ padding:0 8px 0 6px; color:var(--ink-soft, #666); }
+.fz-motiv button{
+  font:inherit; font-weight:500; cursor:pointer;
+  border:0; border-radius:4px; padding:8px 10px; min-height:32px;
+  background:transparent; color:var(--ink-soft, #666);
+}
+.fz-motiv button:hover{ color:var(--ink, #111); }
+.fz-motiv button[aria-pressed="true"]{ background:var(--accent, #333); color:var(--accent-ink, #fff); }
+.fz-motiv button:focus-visible{ outline:2px solid var(--focus, #333); outline-offset:1px; }
+@media print{ .fz-motiv{ display:none; } }
+/* Na užší obrazovce by pevný přepínač překrýval obsah: je pak na konci stránky. */
+@media (max-width:1099px){
+  .fz-motiv{ position:static; width:max-content; margin:0 auto 24px; box-shadow:none; }
+}
+
+/* =====================================================================
+   MOTIV 1: INSTITUCE (výchozí)
+   ===================================================================== */
+html[data-motiv="instituce"]{
+  --paper:#f7f7f5;
+  --surface:#ffffff;
+  --surface-2:#eef2f1;
+  --ink:#1d2327;
+  --ink-soft:#5c666d;
+  --line:#dfe2e4;
+  --accent:#0f6e6a;
+  --accent-ink:#ffffff;
+  --success:#2b7a4b;
+  --success-bg:#e5f1e9;
+  --danger:#b03a2e;
+  --danger-bg:#f8e6e3;
+  --focus:#0f6e6a;
+  --shadow:none;
+  --fz-tmava:#162026;
+  --fz-nadpis:'Newsreader', Georgia, 'Times New Roman', serif;
+  --fz-text:'Public Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+/* rozcestník: barvy karet sekcí sjednotit na jednu zvýrazňující */
+html[data-motiv="instituce"] .card.mereni,
+html[data-motiv="instituce"] .card.kvinta,
+html[data-motiv="instituce"] .card.oktava{ --accent:#0f6e6a; --accent-ink:#ffffff; }
+
+html[data-motiv="instituce"] body{
+  background:var(--paper);
+  font-family:var(--fz-text);
+}
+
+/* --- písmo nadpisů --- */
+html[data-motiv="instituce"] .brand-text h1,
+html[data-motiv="instituce"] .hero h1,
+html[data-motiv="instituce"] .card h2,
+html[data-motiv="instituce"] .panel h3,
+html[data-motiv="instituce"] .theory-block h3,
+html[data-motiv="instituce"] .lab-title,
+html[data-motiv="instituce"] .acct-name,
+html[data-motiv="instituce"] .game-end .big,
+html[data-motiv="instituce"] .game-final-score,
+html[data-motiv="instituce"] .fz-block-card h1{
+  font-family:var(--fz-nadpis);
+  font-weight:500;
+  letter-spacing:-0.01em;
+  text-transform:none;
+}
+html[data-motiv="instituce"] .choice-letter{ font-family:var(--fz-nadpis); }
+html[data-motiv="instituce"] .panel h3{ font-size:1.25rem; }
+html[data-motiv="instituce"] .card h2{ color:var(--ink); }
+
+/* --- písmo ovládacích prvků --- */
+html[data-motiv="instituce"] a.btn,
+html[data-motiv="instituce"] .btn,
+html[data-motiv="instituce"] button.btn,
+html[data-motiv="instituce"] .chip,
+html[data-motiv="instituce"] .toptab,
+html[data-motiv="instituce"] input,
+html[data-motiv="instituce"] select,
+html[data-motiv="instituce"] textarea{ font-family:var(--fz-text); }
+
+/* --- hlavička stránky --- */
+html[data-motiv="instituce"] .brand{
+  padding-bottom:18px;
+  border-bottom:1px solid var(--line);
+}
+html[data-motiv="instituce"] .brand-text h1{ font-size:2.6rem; line-height:1.05; }
+html[data-motiv="instituce"] .brand-text p{ font-size:0.9rem; margin-top:4px; }
+html[data-motiv="instituce"] .back-link{ font-size:0.85rem; }
+html[data-motiv="instituce"] .readout .cell{ background:var(--fz-tmava); color:#fff; border-radius:3px; }
+
+/* --- záložky: podtržení místo vyplněných tlačítek --- */
+html[data-motiv="instituce"] .top-tabs{
+  gap:0;
+  border-bottom:1px solid var(--line);
+  overflow-x:auto;
+  scrollbar-width:none;
+}
+html[data-motiv="instituce"] .toptab{
+  flex:0 0 auto;
+  font-weight:500;
+  font-size:0.98rem;
+  letter-spacing:0;
+  padding:13px 20px 12px;
+  border:0;
+  border-bottom:2px solid transparent;
+  border-radius:0;
+  background:transparent;
+  color:var(--ink-soft);
+}
+html[data-motiv="instituce"] .toptab:hover{ color:var(--ink); border-bottom-color:var(--line); }
+html[data-motiv="instituce"] .toptab.on{
+  background:transparent;
+  color:var(--accent);
+  border-bottom-color:var(--accent);
+}
+
+/* --- panely, karty, poznámky --- */
+html[data-motiv="instituce"] .panel,
+html[data-motiv="instituce"] .card{
+  border-radius:2px;
+  border-color:var(--line);
+  box-shadow:none;
+}
+html[data-motiv="instituce"] .panel-title{ color:var(--accent); letter-spacing:0.12em; }
+html[data-motiv="instituce"] .panel-title.collapsible:hover{ color:var(--ink); }
+html[data-motiv="instituce"] .note{ border-radius:2px; border-left-width:3px; border-left-color:var(--accent); }
+html[data-motiv="instituce"] .feedback{ border-radius:2px; }
+html[data-motiv="instituce"] .cat-tag,
+html[data-motiv="instituce"] .points-badge{ border-radius:2px; }
+html[data-motiv="instituce"] .game-timer{ background:var(--fz-tmava); border-radius:3px; }
+
+/* --- tlačítka a čipy --- */
+html[data-motiv="instituce"] a.btn,
+html[data-motiv="instituce"] button.btn,
+html[data-motiv="instituce"] .btn{ border-radius:2px; font-weight:500; }
+html[data-motiv="instituce"] .chip{ border-radius:3px; }
+html[data-motiv="instituce"] .chip.on{ background:var(--fz-tmava); border-color:var(--fz-tmava); color:#fff; }
+
+/* --- úvodní blok rozcestníků a textových stránek: tmavý pruh s fotografií --- */
+html[data-motiv="instituce"] .hero{
+  position:relative;
+  text-align:left;
+  padding:64px 40px 48px;
+  margin-bottom:28px;
+  color:#fff;
+  background-color:var(--fz-tmava);
+  background-image:linear-gradient(90deg, rgba(14,20,24,.86) 0%, rgba(14,20,24,.55) 60%, rgba(14,20,24,.25) 100%), var(--fz-foto, none);
+  background-size:cover;
+  background-position:center;
+}
+html[data-motiv="instituce"][data-sekce="uvod"] .hero{ --fz-foto:url("https://unsplash.com/photos/rTZW4f02zY8/download?force=true&w=1800"); }
+html[data-motiv="instituce"][data-sekce="mereni"] .hero{ --fz-foto:url("https://unsplash.com/photos/bI-UlCFcrf8/download?force=true&w=1800"); }
+html[data-motiv="instituce"][data-sekce="kvinta"] .hero{ --fz-foto:url("https://unsplash.com/photos/d7SxBxEAOfU/download?force=true&w=1800"); }
+html[data-motiv="instituce"][data-sekce="oktava"] .hero{ --fz-foto:url("https://unsplash.com/photos/l16rjVtp11g/download?force=true&w=1800"); }
+html[data-motiv="instituce"] .hero h1{ color:#fff; font-size:clamp(2.3rem, 7vw, 3.8rem); line-height:1.05; }
+html[data-motiv="instituce"] .hero .subtitle{
+  font-family:var(--fz-text); font-weight:400; letter-spacing:0;
+  font-size:clamp(1.05rem, 3vw, 1.25rem); color:#d9e2e4;
+}
+html[data-motiv="instituce"] .hero-tag{
+  background:none; padding:0; border-radius:0;
+  font-family:var(--fz-text); font-weight:500; letter-spacing:0.16em;
+  color:#cfe3e1;
+}
+
+/* --- karty v rozcestnících: zarovnání vlevo, odkazy jako seznam --- */
+html[data-motiv="instituce"] .hero ~ .card{ text-align:left; }
+html[data-motiv="instituce"] .hero ~ .card h2{ font-size:1.7rem; margin-bottom:6px; }
+html[data-motiv="instituce"] .hero ~ .card .section-tag{ color:var(--accent); letter-spacing:0.14em; }
+html[data-motiv="instituce"] .hero ~ .card .actions{ justify-content:flex-start; }
+html[data-motiv="instituce"] .hero ~ .card p{ margin-left:0; }
+
+/* --- tabulky --- */
+html[data-motiv="instituce"] table th{ letter-spacing:0.06em; }
+
+/* --- patička --- */
+html[data-motiv="instituce"] footer{ border-top:1px solid var(--line); padding-top:16px; }
+
+@media (max-width:520px){
+  html[data-motiv="instituce"] .hero{ padding:44px 20px 32px; }
+  html[data-motiv="instituce"] .brand-text h1{ font-size:2.1rem; }
+  html[data-motiv="instituce"] .toptab{ padding:12px 14px 11px; }
+}
+
+
+/* =====================================================================
+   MOTIV 2: LABORATORNÍ DENÍK
+   ===================================================================== */
+html[data-motiv="denik"]{
+  --paper:#fbf7ec;
+  --surface:#fffdf6;
+  --surface-2:#f3ecda;
+  --ink:#24303f;
+  --ink-soft:#5d6876;
+  --line:rgba(36,48,63,0.16);
+  --accent:#b8463c;
+  --accent-ink:#fffaf2;
+  --success:#2f7a4f;
+  --success-bg:#e4f1e3;
+  --danger:#b3392b;
+  --danger-bg:#f7e2dc;
+  --focus:#2f5f9e;
+  --shadow:0 1px 0 rgba(36,48,63,0.06);
+  --fz-mrizka:rgba(70,110,160,0.13);
+  --fz-mrizka-silna:rgba(70,110,160,0.22);
+  --fz-okraj:#d9645a;
+  --fz-zvyraz:rgba(255,224,90,0.65);
+  --fz-nadpis:'Caveat', 'Segoe Print', 'Comic Sans MS', cursive;
+  --fz-text:'Source Serif 4', Georgia, serif;
+}
+/* barva zvýrazňovače podle sekce */
+html[data-motiv="denik"][data-sekce="mereni"]{ --fz-zvyraz:rgba(140,220,150,0.55); }
+html[data-motiv="denik"][data-sekce="oktava"]{ --fz-zvyraz:rgba(255,150,180,0.45); }
+html[data-motiv="denik"] .card.mereni{ --fz-zvyraz:rgba(140,220,150,0.55); }
+html[data-motiv="denik"] .card.kvinta{ --fz-zvyraz:rgba(255,224,90,0.65); }
+html[data-motiv="denik"] .card.oktava{ --fz-zvyraz:rgba(255,150,180,0.45); }
+html[data-motiv="denik"] .card.mereni,
+html[data-motiv="denik"] .card.kvinta,
+html[data-motiv="denik"] .card.oktava{ --accent:#b8463c; --accent-ink:#fffaf2; }
+
+html[data-motiv="denik"] body{
+  font-family:var(--fz-text);
+  background:
+    linear-gradient(var(--fz-mrizka-silna) 1px, transparent 1px) 0 0/100% 100px,
+    linear-gradient(90deg, var(--fz-mrizka-silna) 1px, transparent 1px) 0 0/100px 100%,
+    linear-gradient(var(--fz-mrizka) 1px, transparent 1px) 0 0/100% 20px,
+    linear-gradient(90deg, var(--fz-mrizka) 1px, transparent 1px) 0 0/20px 100%,
+    var(--paper);
+}
+/* červený okraj sešitu vlevo od obsahu */
+html[data-motiv="denik"] .wrap{
+  background:linear-gradient(90deg, transparent 6px, var(--fz-okraj) 6px, var(--fz-okraj) 8px, transparent 8px) no-repeat;
+}
+
+/* --- ručně psané nadpisy --- */
+html[data-motiv="denik"] .brand-text h1,
+html[data-motiv="denik"] .hero h1,
+html[data-motiv="denik"] .hero .subtitle,
+html[data-motiv="denik"] .card h2,
+html[data-motiv="denik"] .panel h3,
+html[data-motiv="denik"] .theory-block h3,
+html[data-motiv="denik"] .lab-title,
+html[data-motiv="denik"] .acct-name,
+html[data-motiv="denik"] .game-end .big,
+html[data-motiv="denik"] .game-final-score,
+html[data-motiv="denik"] .fz-block-card h1,
+html[data-motiv="denik"] .toptab{
+  font-family:var(--fz-nadpis);
+  font-weight:700;
+  letter-spacing:0;
+  text-transform:none;
+}
+html[data-motiv="denik"] .choice-letter{ font-family:var(--fz-nadpis); }
+html[data-motiv="denik"] .brand-text h1{ font-size:3.1rem; line-height:0.95; }
+html[data-motiv="denik"] .brand-text h1,
+html[data-motiv="denik"] .hero h1{
+  background:linear-gradient(transparent 58%, var(--fz-zvyraz) 58%, var(--fz-zvyraz) 92%, transparent 92%);
+  display:inline-block;
+  padding:0 6px 0 2px;
+}
+html[data-motiv="denik"] .brand-text p{ font-style:italic; }
+html[data-motiv="denik"] .card h2{ font-size:2rem; color:var(--ink); }
+html[data-motiv="denik"] .panel h3{ font-size:1.6rem; }
+html[data-motiv="denik"] .panel-title{
+  font-family:var(--fz-nadpis);
+  font-size:1.45rem;
+  font-weight:700;
+  letter-spacing:0;
+  text-transform:none;
+  color:var(--accent);
+}
+html[data-motiv="denik"] .panel-title.collapsible:hover{ color:var(--ink); }
+html[data-motiv="denik"] .section-tag,
+html[data-motiv="denik"] .hero-tag{
+  font-family:var(--fz-nadpis);
+  font-size:1.3rem;
+  font-weight:600;
+  letter-spacing:0;
+  text-transform:none;
+  color:var(--fz-okraj);
+  background:none;
+  padding:0;
+  border-radius:0;
+}
+
+/* --- písmo ovládacích prvků --- */
+html[data-motiv="denik"] a.btn,
+html[data-motiv="denik"] .btn,
+html[data-motiv="denik"] button.btn,
+html[data-motiv="denik"] .chip,
+html[data-motiv="denik"] input,
+html[data-motiv="denik"] select,
+html[data-motiv="denik"] textarea{ font-family:var(--fz-text); }
+
+/* --- záložky: zvýrazňovač místo vyplněného tlačítka --- */
+html[data-motiv="denik"] .toptab{
+  font-size:1.6rem;
+  padding:8px 14px;
+  border:0;
+  border-bottom:2px dashed var(--line);
+  border-radius:0;
+  background:transparent;
+  color:var(--ink-soft);
+}
+html[data-motiv="denik"] .toptab:hover{ color:var(--ink); border-bottom-color:var(--ink-soft); }
+html[data-motiv="denik"] .toptab.on{
+  color:var(--ink);
+  border-bottom:2px solid var(--ink);
+  background:linear-gradient(transparent 50%, var(--fz-zvyraz) 50%, var(--fz-zvyraz) 88%, transparent 88%);
+}
+
+/* --- panely a karty jako listy papíru --- */
+html[data-motiv="denik"] .panel,
+html[data-motiv="denik"] .card{
+  border-radius:2px;
+  border-color:rgba(36,48,63,0.10);
+  box-shadow:0 1px 0 rgba(0,0,0,.04), 0 10px 22px -14px rgba(40,50,70,.35);
+}
+html[data-motiv="denik"] .note{
+  border-radius:0;
+  border-left:4px solid var(--fz-okraj);
+  background:rgba(255,255,255,0.6);
+}
+html[data-motiv="denik"] .feedback{ border-radius:2px; }
+
+/* --- tlačítka a čipy: ručně tažený obrys --- */
+html[data-motiv="denik"] a.btn,
+html[data-motiv="denik"] button.btn,
+html[data-motiv="denik"] .btn{
+  border:2px solid var(--ink);
+  border-radius:255px 15px 225px 15px/15px 225px 15px 255px;
+  background:var(--surface);
+  color:var(--ink);
+}
+html[data-motiv="denik"] a.btn.primary,
+html[data-motiv="denik"] button.btn.primary,
+html[data-motiv="denik"] .btn.primary{
+  background:var(--fz-zvyraz);
+  border-color:var(--ink);
+  color:var(--ink);
+}
+html[data-motiv="denik"] a.btn:hover,
+html[data-motiv="denik"] button.btn:hover{ filter:none; background:var(--surface-2); }
+html[data-motiv="denik"] .chip{
+  border-radius:255px 15px 225px 15px/15px 225px 15px 255px;
+  border-color:var(--ink-soft);
+}
+html[data-motiv="denik"] .chip.on{ background:var(--ink); color:var(--paper); border-color:var(--ink); }
+
+/* --- úvodní blok rozcestníků a textových stránek --- */
+html[data-motiv="denik"] .hero{ text-align:left; padding:48px 20px 34px; }
+html[data-motiv="denik"] .hero h1{ font-size:clamp(3rem, 10vw, 5rem); line-height:1.05; }
+html[data-motiv="denik"] .hero .subtitle{ font-size:clamp(1.6rem, 5vw, 2.2rem); color:var(--accent); }
+html[data-motiv="denik"] .hero-tag{ display:block; margin-bottom:6px; }
+html[data-motiv="denik"] .hero ~ .card{ text-align:left; }
+html[data-motiv="denik"] .hero ~ .card .actions{ justify-content:flex-start; }
+html[data-motiv="denik"] .hero ~ .card p{ margin-left:0; }
+
+/* --- přepínač vzhledu v duchu deníku --- */
+html[data-motiv="denik"] .fz-motiv{ border-radius:2px; font-family:var(--fz-text); }
+html[data-motiv="denik"] .fz-motiv button[aria-pressed="true"]{ background:var(--fz-zvyraz); color:var(--ink); }
+
+html[data-motiv="denik"] footer{ font-family:var(--fz-nadpis); font-size:1.15rem; }
+
+@media (max-width:520px){
+  html[data-motiv="denik"] .brand-text h1{ font-size:2.5rem; }
+  html[data-motiv="denik"] .toptab{ font-size:1.35rem; padding:6px 8px; }
+}
