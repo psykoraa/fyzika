@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Návrh 10 — Instituce</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f7f7f5;
+  --surface:#ffffff;
+  --ink:#1d2327;
+  --ink-soft:#5c666d;
+  --line:#dfe2e4;
+  --dark:#162026;
+  --accent:#0f6e6a;
+  --accent-soft:#e3efee;
+}
+*{box-sizing:border-box;}
+body{ margin:0; background:var(--bg); color:var(--ink); font-family:'Public Sans', system-ui, sans-serif; font-size:16px; line-height:1.6; }
+a{ color:inherit; text-decoration:none; }
+.serif{ font-family:'Newsreader', Georgia, serif; }
+.wrap{ max-width:1200px; margin:0 auto; padding:0 28px; }
+.photo{ position:relative; overflow:hidden; background:linear-gradient(135deg, #2b3a42, #121a1f); }
+.photo img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transition:transform .8s ease; }
+
+/* --- lišta + hlavička --- */
+.util{ background:var(--dark); color:#aab4ba; font-size:12.5px; }
+.util .wrap{ display:flex; justify-content:space-between; height:34px; align-items:center; }
+.util a:hover{ color:#fff; }
+header{ background:var(--surface); border-bottom:1px solid var(--line); }
+header .wrap{ display:flex; align-items:center; height:76px; gap:40px; }
+.brand{ display:flex; align-items:center; gap:14px; margin-right:auto; }
+.brand svg{ width:40px; height:40px; }
+.brand b{ display:block; font-family:'Newsreader'; font-weight:500; font-size:24px; line-height:1; }
+.brand small{ display:block; font-size:12px; color:var(--ink-soft); margin-top:3px; }
+header nav{ display:flex; gap:30px; font-size:15px; font-weight:500; }
+header nav a{ padding:26px 0; border-bottom:2px solid transparent; }
+header nav a:hover, header nav a.on{ border-bottom-color:var(--accent); color:var(--accent); }
+
+/* --- hero --- */
+.hero{ position:relative; height:520px; color:#fff; }
+.hero .photo{ position:absolute; inset:0; }
+.hero::after{ content:""; position:absolute; inset:0; background:linear-gradient(90deg, rgba(14,20,24,.82) 0%, rgba(14,20,24,.45) 55%, rgba(14,20,24,.15) 100%); }
+.hero .wrap{ position:relative; z-index:1; height:100%; display:flex; flex-direction:column; justify-content:flex-end; padding-bottom:60px; }
+.hero .over{ font-size:13px; letter-spacing:.14em; text-transform:uppercase; color:#cfe3e1; }
+.hero h1{ font-family:'Newsreader'; font-weight:400; font-size:clamp(2.6rem, 6vw, 4.6rem); line-height:1.04; letter-spacing:-.015em; margin:12px 0 16px; max-width:760px; }
+.hero p{ max-width:560px; color:#d9dee1; font-size:17px; margin:0 0 26px; }
+.hero .btn{ align-self:flex-start; display:inline-block; background:#fff; color:var(--ink); padding:12px 22px; font-weight:500; font-size:15px; }
+.hero .btn:hover{ background:var(--accent-soft); }
+.hero .credit{ position:absolute; right:28px; bottom:14px; font-size:11px; color:rgba(255,255,255,.6); }
+
+/* --- rychlé odkazy --- */
+.quick{ background:var(--surface); border-bottom:1px solid var(--line); }
+.quick .wrap{ display:grid; grid-template-columns:repeat(4, 1fr); }
+.quick a{ padding:22px 20px; border-right:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; font-weight:500; }
+.quick a:first-child{ border-left:1px solid var(--line); }
+.quick a small{ display:block; font-weight:400; color:var(--ink-soft); font-size:13px; }
+.quick a::after{ content:"→"; color:var(--accent); }
+.quick a:hover{ background:var(--accent-soft); }
+
+/* --- sekce --- */
+h2.h{ font-family:'Newsreader'; font-weight:400; font-size:38px; letter-spacing:-.01em; margin:80px 0 8px; }
+p.sub{ color:var(--ink-soft); margin:0 0 32px; max-width:620px; }
+.cards{ display:grid; grid-template-columns:repeat(3, 1fr); gap:24px; }
+.card{ background:var(--surface); border:1px solid var(--line); display:flex; flex-direction:column; }
+.card .photo{ aspect-ratio:16/10; }
+.card:hover .photo img{ transform:scale(1.04); }
+.card .body{ padding:22px 22px 8px; flex:1; }
+.card .tag{ font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); font-weight:600; }
+.card h3{ font-family:'Newsreader'; font-weight:500; font-size:27px; margin:4px 0 6px; }
+.card p{ color:var(--ink-soft); font-size:15px; margin:0 0 10px; }
+.card ul{ list-style:none; margin:0; padding:0 22px 14px; }
+.card li a{ display:block; padding:9px 0; border-top:1px solid var(--line); font-size:15px; }
+.card li a:hover{ color:var(--accent); }
+
+/* --- ukázka teorie --- */
+.theory{ display:grid; grid-template-columns:1.4fr 1fr; gap:0; margin-top:24px; background:var(--surface); border:1px solid var(--line); }
+.theory .l{ padding:36px 40px; }
+.theory .r{ padding:36px 40px; background:var(--accent-soft); border-left:1px solid var(--line); }
+.theory h3{ font-family:'Newsreader'; font-weight:500; font-size:30px; margin:0 0 12px; }
+.theory .tag{ font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); font-weight:600; }
+.formula{ font-family:'Newsreader'; font-size:30px; text-align:center; padding:20px 0; margin:20px 0 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+.var{ font-style:italic; }
+.r dl{ margin:14px 0 0; }
+.r dl div{ display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid rgba(15,110,106,.2); }
+.r dt{ color:var(--ink-soft); }
+.r dd{ margin:0; font-weight:500; }
+.r .res dd{ color:var(--accent); font-size:20px; }
+
+footer{ background:var(--dark); color:#aab4ba; margin-top:90px; font-size:13px; }
+footer .wrap{ display:grid; grid-template-columns:2fr 1fr 1fr; gap:30px; padding:40px 28px; }
+footer b{ display:block; color:#fff; font-weight:500; margin-bottom:8px; }
+footer a{ display:block; padding:2px 0; }
+footer a:hover{ color:#fff; }
+footer .bottom{ border-top:1px solid #2a363d; padding:14px 28px; max-width:1200px; margin:0 auto; font-size:12px; }
+
+@media (max-width:960px){
+  header nav{ display:none; }
+  .quick .wrap{ grid-template-columns:1fr 1fr; }
+  .quick a{ border-bottom:1px solid var(--line); }
+  .cards{ grid-template-columns:1fr; }
+  .theory{ grid-template-columns:1fr; }
+  .theory .r{ border-left:0; border-top:1px solid var(--line); }
+  footer .wrap{ grid-template-columns:1fr; }
+}
+@media (max-width:560px){
+  .wrap{ padding:0 16px; }
+  .util .wrap span:first-child{ display:none; }
+  .hero{ height:470px; }
+  .hero .wrap{ padding-bottom:40px; }
+  .hero .credit{ right:16px; }
+  .quick .wrap{ grid-template-columns:1fr; padding:0; }
+  .quick a, .quick a:first-child{ border-left:0; border-right:0; }
+  .theory .l, .theory .r{ padding:26px 20px; }
+  h2.h{ font-size:30px; margin-top:56px; }
+  footer .wrap{ padding:32px 16px; }
+}
+</style>
+</head>
+<body>
+
+<div class="util"><div class="wrap"><span>Výukový web předmětu fyzika · vyšší gymnázium</span><span><a href="#">Přihlásit</a></span></div></div>
+<header>
+  <div class="wrap">
+    <a class="brand" href="#">
+      <svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" fill="#0f6e6a"/><circle cx="20" cy="20" r="3.2" fill="#fff"/><ellipse cx="20" cy="20" rx="13" ry="5" fill="none" stroke="#fff" stroke-width="1.4"/><ellipse cx="20" cy="20" rx="13" ry="5" fill="none" stroke="#fff" stroke-width="1.4" transform="rotate(60 20 20)"/><ellipse cx="20" cy="20" rx="13" ry="5" fill="none" stroke="#fff" stroke-width="1.4" transform="rotate(-60 20 20)"/></svg>
+      <span><b>Fyzika</b><small>Gymnázium J. Vrchlického</small></span>
+    </a>
+    <nav><a href="#">Měření</a><a class="on" href="#">Kvinta</a><a href="#">Oktáva</a><a href="#">Aplety</a><a href="#">O webu</a></nav>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="photo"><img src="https://unsplash.com/photos/rTZW4f02zY8/download?force=true&amp;w=2400" alt="Mlhovina" onerror="this.remove()"></div>
+  <div class="wrap">
+    <div class="over">Výukové materiály · kvinta až oktáva</div>
+    <h1>Porozumět zákonům, které řídí svět kolem nás</h1>
+    <p>Výklad, řešené úlohy a interaktivní modely ke středoškolské fyzice, uspořádané podle ročníků.</p>
+    <a class="btn" href="#">Přehled témat</a>
+  </div>
+  <div class="credit">Foto: Unsplash</div>
+</section>
+
+<nav class="quick">
+  <div class="wrap">
+    <a href="#"><span>Teorie<small>výklad a odvození</small></span></a>
+    <a href="#"><span>Interaktivní modely<small>aplety k jevům</small></span></a>
+    <a href="#"><span>Trénink<small>úlohy s kontrolou</small></span></a>
+    <a href="#"><span>Laboratorní práce<small>protokoly a měření</small></span></a>
+  </div>
+</nav>
+
+<main class="wrap">
+  <h2 class="h">Sekce</h2>
+  <p class="sub">Materiály jsou rozdělené podle ročníků. Sekce Měření je společná pro všechny ročníky.</p>
+  <div class="cards">
+    <article class="card">
+      <div class="photo"><img src="https://unsplash.com/photos/bI-UlCFcrf8/download?force=true&amp;w=1200" alt="Hodinový strojek" onerror="this.remove()"></div>
+      <div class="body"><div class="tag">Všechny ročníky</div><h3>Měření</h3><p>Chyby a nejistoty měření, zaokrouhlení a zápis výsledku.</p></div>
+      <ul><li><a href="#">Zpracování měření</a></li><li><a href="#">Zaokrouhlování výsledků</a></li><li><a href="#">Nepřímé měření</a></li></ul>
+    </article>
+    <article class="card">
+      <div class="photo"><img src="https://unsplash.com/photos/d7SxBxEAOfU/download?force=true&amp;w=1200" alt="Newtonova kolébka" onerror="this.remove()"></div>
+      <div class="body"><div class="tag">Kvinta</div><h3>Mechanika</h3><p>Kinematika hmotného bodu, vektory a pohyb po kružnici.</p></div>
+      <ul><li><a href="#">Převody jednotek</a></li><li><a href="#">Skládání vektorů</a></li><li><a href="#">Pohyb po kružnici</a></li></ul>
+    </article>
+    <article class="card">
+      <div class="photo"><img src="https://unsplash.com/photos/l16rjVtp11g/download?force=true&amp;w=1200" alt="Rozklad světla hranolem" onerror="this.remove()"></div>
+      <div class="body"><div class="tag">Oktáva</div><h3>Optika</h3><p>Zobrazování čočkami a zrcadly, optické přístroje.</p></div>
+      <ul><li><a href="#">Čočky</a></li><li><a href="#">Kulová zrcadla</a></li><li><a href="#">Mikroskop</a></li></ul>
+    </article>
+  </div>
+
+  <h2 class="h">Ukázka teorie</h2>
+  <section class="theory">
+    <div class="l">
+      <div class="tag">Kmitání · kvinta</div>
+      <h3>Matematické kyvadlo</h3>
+      <p>Pro malé výchylky koná kyvadlo harmonický pohyb. Jeho perioda závisí pouze na délce závěsu <span class="var">l</span> a na tíhovém zrychlení <span class="var">g</span>; nezávisí na hmotnosti závaží ani na amplitudě.</p>
+      <div class="formula"><span class="var">T</span> = 2π √(<span class="var">l</span> / <span class="var">g</span>)</div>
+    </div>
+    <div class="r">
+      <div class="tag">Řešený příklad</div>
+      <dl>
+        <div><dt>Délka závěsu <span class="var">l</span></dt><dd>1,00&nbsp;m</dd></div>
+        <div><dt>Tíhové zrychlení <span class="var">g</span></dt><dd>9,81&nbsp;m·s<sup>−2</sup></dd></div>
+        <div><dt>Rozměrová kontrola</dt><dd>√(m / (m·s<sup>−2</sup>)) = s</dd></div>
+        <div class="res"><dt>Perioda <span class="var">T</span></dt><dd>≐ 2,01&nbsp;s</dd></div>
+      </dl>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div><b>Fyzika · Gymnázium J. Vrchlického</b>Výukový web předmětu fyzika pro vyšší gymnázium.<br>Návrh 10 · Instituce — styl webu vědecké instituce, tlumené barvy, jedna tyrkysová.</div>
+    <div><b>Sekce</b><a href="#">Měření</a><a href="#">Kvinta</a><a href="#">Oktáva</a></div>
+    <div><b>Obsah</b><a href="#">Teorie</a><a href="#">Aplety</a><a href="#">Trénink</a></div>
+  </div>
+  <div class="bottom">Fotografie: Unsplash (Unsplash License) · hodinový strojek Eric Prouzet, Newtonova kolébka Sunder Muthukumaran</div>
+</footer>
+</body>
+</html>

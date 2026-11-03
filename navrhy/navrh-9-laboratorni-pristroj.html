@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Návrh 9 — Laboratorní přístroj</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#141619;
+  --panel:#1b1e22;
+  --panel-2:#22262b;
+  --line:#2e3339;
+  --ink:#e6e8eb;
+  --ink-soft:#8b939c;
+  --accent:#e8a33d;
+  --accent-dim:rgba(232,163,61,0.14);
+}
+*{box-sizing:border-box;}
+body{ margin:0; background:var(--bg); color:var(--ink); font-family:'IBM Plex Sans', system-ui, sans-serif; font-size:15px; line-height:1.6; }
+a{ color:inherit; text-decoration:none; }
+.mono{ font-family:'IBM Plex Mono', ui-monospace, monospace; }
+.wrap{ max-width:1200px; margin:0 auto; padding:0 28px; }
+
+/* --- hlavička --- */
+header{ border-bottom:1px solid var(--line); background:var(--panel); }
+header .wrap{ display:flex; align-items:center; height:58px; gap:30px; }
+.logo{ display:flex; align-items:center; gap:10px; font-weight:600; margin-right:auto; letter-spacing:.01em; }
+.logo .led{ width:8px; height:8px; border-radius:50%; background:var(--accent); box-shadow:0 0 8px var(--accent); }
+.logo small{ font-family:'IBM Plex Mono'; font-weight:400; font-size:12px; color:var(--ink-soft); margin-left:6px; }
+header nav{ display:flex; gap:4px; }
+header nav a{ font-size:14px; padding:6px 12px; border-radius:4px; color:var(--ink-soft); }
+header nav a:hover{ color:var(--ink); background:var(--panel-2); }
+header nav a.on{ color:var(--ink); background:var(--panel-2); box-shadow:inset 0 -2px 0 var(--accent); }
+.login{ font-size:13px; border:1px solid var(--line); padding:6px 14px; border-radius:4px; color:var(--ink-soft); }
+.login:hover{ border-color:var(--ink-soft); color:var(--ink); }
+
+/* --- hero s osciloskopem --- */
+.hero{ display:grid; grid-template-columns:1fr 1.15fr; gap:48px; align-items:center; padding:64px 0 56px; }
+.over{ font-family:'IBM Plex Mono'; font-size:12px; color:var(--accent); letter-spacing:.06em; }
+.hero h1{ font-size:clamp(2.4rem, 5vw, 3.6rem); font-weight:500; line-height:1.08; letter-spacing:-.02em; margin:14px 0 18px; }
+.hero p{ color:var(--ink-soft); font-size:17px; max-width:470px; margin:0 0 28px; }
+.btns a{ display:inline-block; font-size:14px; font-weight:500; padding:10px 18px; border-radius:4px; margin-right:8px; }
+.btns .p{ background:var(--accent); color:#1a1205; }
+.btns .s{ border:1px solid var(--line); color:var(--ink); }
+.scope{ background:var(--panel); border:1px solid var(--line); border-radius:8px; overflow:hidden; }
+.scope .bar{ display:flex; justify-content:space-between; padding:8px 14px; font-family:'IBM Plex Mono'; font-size:11.5px; color:var(--ink-soft); border-bottom:1px solid var(--line); }
+.scope .bar b{ color:var(--accent); font-weight:500; }
+.scope svg{ display:block; width:100%; height:auto; background:#101214; }
+.grid-l{ stroke:#262b30; stroke-width:1; }
+.grid-c{ stroke:#353b42; stroke-width:1; }
+.trace{ fill:none; stroke:var(--accent); stroke-width:2; filter:drop-shadow(0 0 3px rgba(232,163,61,.6)); stroke-dasharray:2200; stroke-dashoffset:2200; animation:sweep 3s ease-out forwards; }
+@keyframes sweep{ to{ stroke-dashoffset:0; } }
+@media (prefers-reduced-motion:reduce){ .trace{ animation:none; stroke-dashoffset:0; } }
+.mk{ stroke:var(--ink-soft); stroke-width:1; stroke-dasharray:3 3; }
+.mt{ font-family:'IBM Plex Mono'; font-size:11px; fill:var(--ink-soft); }
+.scope .read{ display:grid; grid-template-columns:repeat(4, 1fr); border-top:1px solid var(--line); }
+.scope .read div{ padding:10px 14px; border-right:1px solid var(--line); }
+.scope .read div:last-child{ border-right:0; }
+.scope .read small{ display:block; font-size:11px; color:var(--ink-soft); }
+.scope .read b{ font-family:'IBM Plex Mono'; font-weight:500; font-size:15px; }
+.scope .read div.hl b{ color:var(--accent); }
+
+/* --- moduly --- */
+.mods{ display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; padding-bottom:56px; }
+.mod{ background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:22px 22px 18px; transition:border-color .15s; }
+.mod:hover{ border-color:#454c54; }
+.mod .top{ display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+.mod .top svg{ width:36px; height:36px; }
+.ic{ fill:none; stroke:var(--ink); stroke-width:1.5; }
+.ic-a{ fill:none; stroke:var(--accent); stroke-width:1.5; }
+.mod .code{ font-family:'IBM Plex Mono'; font-size:11px; color:var(--ink-soft); border:1px solid var(--line); border-radius:3px; padding:1px 7px; }
+.mod h2{ font-size:20px; font-weight:500; margin:0 0 4px; }
+.mod p{ color:var(--ink-soft); font-size:14px; margin:0 0 14px; }
+.mod li{ list-style:none; }
+.mod ul{ margin:0; padding:0; }
+.mod li a{ display:flex; justify-content:space-between; padding:8px 0; border-top:1px solid var(--line); font-size:14px; }
+.mod li a span{ font-family:'IBM Plex Mono'; font-size:11px; color:var(--ink-soft); }
+.mod li a:hover{ color:var(--accent); }
+
+/* --- ukázka teorie --- */
+.theory{ display:grid; grid-template-columns:1fr 380px; gap:16px; padding-bottom:70px; }
+.card{ background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:26px 28px; }
+.card h3{ font-size:22px; font-weight:500; margin:6px 0 12px; }
+.card p{ color:#c3c8ce; margin:0 0 12px; }
+.var{ font-style:italic; font-family:'IBM Plex Sans'; }
+.formula{ margin:18px 0 6px; padding:18px; background:#101214; border:1px solid var(--line); border-left:3px solid var(--accent); border-radius:4px; font-size:22px; text-align:center; }
+table{ width:100%; border-collapse:collapse; font-size:14px; }
+td{ padding:9px 0; border-bottom:1px solid var(--line); }
+td:last-child{ text-align:right; font-family:'IBM Plex Mono'; }
+tr:last-child td{ border-bottom:0; }
+tr.res td:last-child{ color:var(--accent); font-weight:500; font-size:16px; }
+td.k{ color:var(--ink-soft); }
+
+footer{ border-top:1px solid var(--line); background:var(--panel); }
+footer .wrap{ display:flex; justify-content:space-between; gap:20px; padding:16px 28px 30px; font-size:12px; color:var(--ink-soft); flex-wrap:wrap; }
+
+@media (max-width:960px){
+  .hero, .theory{ grid-template-columns:1fr; }
+  .mods{ grid-template-columns:1fr; }
+}
+@media (max-width:620px){
+  .wrap{ padding:0 16px; }
+  header .wrap{ gap:10px; }
+  .logo small, .login{ display:none; }
+  header nav a{ padding:6px 8px; font-size:13px; }
+  .scope .read{ grid-template-columns:1fr 1fr; }
+  .scope .read div:nth-child(2){ border-right:0; }
+  .scope .read div:nth-child(-n+2){ border-bottom:1px solid var(--line); }
+  .hero{ padding:40px 0; }
+  .card{ padding:22px 18px; }
+  footer .wrap{ padding:16px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <a class="logo" href="#"><span class="led"></span>Fyzika<small>GJV</small></a>
+    <nav><a href="#">Měření</a><a class="on" href="#">Kvinta</a><a href="#">Oktáva</a></nav>
+    <a class="login" href="#">Přihlásit</a>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <div>
+      <div class="over">// výukové materiály · kvinta–oktáva</div>
+      <h1>Fyzika jako měření, model a výpočet</h1>
+      <p>Teorie s odvozením, interaktivní modely jevů a trénink s okamžitou kontrolou. Každý výsledek doplněný rozměrovou analýzou.</p>
+      <div class="btns"><a class="p" href="#">Otevřít teorii</a><a class="s" href="#">Interaktivní modely</a></div>
+    </div>
+    <div class="scope">
+      <div class="bar"><span>CH1 · výchylka φ(<i>t</i>)</span><span>časová základna 0,5 s/díl · <b>RUN</b></span></div>
+      <svg viewBox="0 0 600 300" aria-hidden="true">
+        <g class="grid-l">
+          <line x1="60" y1="0" x2="60" y2="300"/><line x1="120" y1="0" x2="120" y2="300"/><line x1="180" y1="0" x2="180" y2="300"/><line x1="240" y1="0" x2="240" y2="300"/><line x1="360" y1="0" x2="360" y2="300"/><line x1="420" y1="0" x2="420" y2="300"/><line x1="480" y1="0" x2="480" y2="300"/><line x1="540" y1="0" x2="540" y2="300"/>
+          <line x1="0" y1="50" x2="600" y2="50"/><line x1="0" y1="100" x2="600" y2="100"/><line x1="0" y1="200" x2="600" y2="200"/><line x1="0" y1="250" x2="600" y2="250"/>
+        </g>
+        <g class="grid-c"><line x1="300" y1="0" x2="300" y2="300"/><line x1="0" y1="150" x2="600" y2="150"/></g>
+        <path class="trace" d="M0 50.0 L3 50.3 L6 51.2 L9 52.7 L12 54.9 L15 57.6 L18 60.8 L21 64.6 L24 69.0 L27 73.8 L30 79.1 L33 84.9 L36 91.0 L39 97.5 L42 104.3 L45 111.4 L48 118.7 L51 126.3 L54 133.9 L57 141.7 L60 149.5 L63 157.3 L66 165.1 L69 172.8 L72 180.4 L75 187.7 L78 194.8 L81 201.7 L84 208.2 L87 214.4 L90 220.2 L93 225.6 L96 230.5 L99 234.9 L102 238.7 L105 242.1 L108 244.8 L111 247.0 L114 248.6 L117 249.6 L120 250.0 L123 249.8 L126 248.9 L129 247.5 L132 245.4 L135 242.8 L138 239.6 L141 235.8 L144 231.6 L147 226.8 L150 221.5 L153 215.9 L156 209.8 L159 203.3 L162 196.5 L165 189.5 L168 182.2 L171 174.7 L174 167.0 L177 159.2 L180 151.4 L183 143.6 L186 135.8 L189 128.1 L192 120.5 L195 113.2 L198 106.0 L201 99.1 L204 92.5 L207 86.3 L210 80.5 L213 75.1 L216 70.1 L219 65.7 L222 61.7 L225 58.3 L228 55.5 L231 53.2 L234 51.5 L237 50.5 L240 50.0 L243 50.2 L246 50.9 L249 52.3 L252 54.3 L255 56.9 L258 60.0 L261 63.7 L264 67.9 L267 72.6 L270 77.8 L273 83.4 L276 89.5 L279 95.9 L282 102.6 L285 109.7 L288 116.9 L291 124.4 L294 132.1 L297 139.8 L300 147.6 L303 155.5 L306 163.2 L309 171.0 L312 178.5 L315 186.0 L318 193.1 L321 200.1 L324 206.7 L327 213.0 L330 218.8 L333 224.3 L336 229.3 L339 233.8 L342 237.8 L345 241.3 L348 244.2 L351 246.6 L354 248.3 L357 249.4 L360 250.0 L363 249.9 L366 249.2 L369 247.9 L372 246.0 L375 243.5 L378 240.4 L381 236.8 L384 232.7 L387 228.0 L390 222.9 L393 217.3 L396 211.3 L399 204.9 L402 198.2 L405 191.2 L408 184.0 L411 176.5 L414 168.9 L417 161.1 L420 153.3 L423 145.5 L426 137.7 L429 130.0 L432 122.4 L435 114.9 L438 107.7 L441 100.8 L444 94.1 L447 87.8 L450 81.9 L453 76.3 L456 71.3 L459 66.7 L462 62.6 L465 59.1 L468 56.1 L471 53.7 L474 51.9 L477 50.7 L480 50.1 L483 50.1 L486 50.7 L489 51.9 L492 53.8 L495 56.2 L498 59.2 L501 62.7 L504 66.8 L507 71.4 L510 76.5 L513 82.0 L516 88.0 L519 94.3 L522 101.0 L525 107.9 L528 115.2 L531 122.6 L534 130.2 L537 137.9 L540 145.7 L543 153.6 L546 161.4 L549 169.1 L552 176.7 L555 184.2 L558 191.4 L561 198.4 L564 205.1 L567 211.5 L570 217.4 L573 223.0 L576 228.1 L579 232.8 L582 236.9 L585 240.5 L588 243.6 L591 246.0 L594 247.9 L597 249.2 L600 249.9"/>
+        <line class="mk" x1="240.7" y1="30" x2="240.7" y2="290"/><line class="mk" x1="481.5" y1="30" x2="481.5" y2="290"/>
+        <path d="M240.7 22 H481.5" stroke="var(--ink-soft)" stroke-width="1"/>
+        <text class="mt" x="361.1" y="16" text-anchor="middle">Δt = 2,01 s</text>
+        <text class="mt" x="6" y="44">+8°</text><text class="mt" x="6" y="266">−8°</text>
+      </svg>
+      <div class="read">
+        <div class="hl"><small>Perioda <i>T</i></small><b>2,01 s</b></div>
+        <div><small>Frekvence <i>f</i></small><b>0,498 Hz</b></div>
+        <div><small>Délka <i>l</i></small><b>1,00 m</b></div>
+        <div><small>Amplituda</small><b>8,0°</b></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="mods">
+    <div class="mod">
+      <div class="top"><svg viewBox="0 0 36 36"><path class="ic" d="M3 24 H33 V31 H3 Z"/><path class="ic" d="M8 24 v4 M13 24 v3 M18 24 v4 M23 24 v3 M28 24 v4"/><path class="ic-a" d="M10 15 H26 M10 11 V19 M26 11 V19"/></svg><span class="code">MĚŘ</span></div>
+      <h2>Měření</h2>
+      <p>Nejistoty měření, zaokrouhlení a zápis výsledku.</p>
+      <ul>
+        <li><a href="#">Zpracování měření <span>teorie · trénink</span></a></li>
+        <li><a href="#">Zaokrouhlování výsledků <span>teorie</span></a></li>
+        <li><a href="#">Nepřímé měření <span>teorie</span></a></li>
+      </ul>
+    </div>
+    <div class="mod">
+      <div class="top"><svg viewBox="0 0 36 36"><circle class="ic" cx="18" cy="18" r="13"/><path class="ic-a" d="M18 18 L27 9"/><path class="ic-a" d="M27 9 l-5 1 M27 9 l-1 5"/></svg><span class="code">KVI</span></div>
+      <h2>Kvinta</h2>
+      <p>Kinematika hmotného bodu, vektory, pohyb po kružnici.</p>
+      <ul>
+        <li><a href="#">Převody jednotek <span>trénink</span></a></li>
+        <li><a href="#">Skládání vektorů <span>model</span></a></li>
+        <li><a href="#">Pohyb po kružnici <span>teorie</span></a></li>
+      </ul>
+    </div>
+    <div class="mod">
+      <div class="top"><svg viewBox="0 0 36 36"><path class="ic" d="M18 3 Q24 18 18 33 Q12 18 18 3 Z"/><path class="ic-a" d="M2 12 H18 L34 26"/></svg><span class="code">OKT</span></div>
+      <h2>Oktáva</h2>
+      <p>Geometrická optika a optické přístroje.</p>
+      <ul>
+        <li><a href="#">Čočky <span>model</span></a></li>
+        <li><a href="#">Kulová zrcadla <span>model</span></a></li>
+        <li><a href="#">Mikroskop <span>teorie</span></a></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="theory">
+    <div class="card">
+      <div class="over">ukázka teorie</div>
+      <h3>Matematické kyvadlo</h3>
+      <p>Pro malé výchylky je pohyb kyvadla harmonický. Perioda závisí pouze na délce závěsu <span class="var">l</span> a tíhovém zrychlení <span class="var">g</span>:</p>
+      <div class="formula"><span class="var">T</span> = 2π √(<span class="var">l</span> / <span class="var">g</span>)</div>
+      <p style="font-size:13px;color:var(--ink-soft);margin:10px 0 0">Platí přibližně do výchylky 10°; průběh na osciloskopu výše odpovídá výchylce 8°.</p>
+    </div>
+    <div class="card">
+      <div class="over">řešený příklad</div>
+      <table style="margin-top:10px">
+        <tr><td class="k">Délka závěsu <span class="var">l</span></td><td>1,00 m</td></tr>
+        <tr><td class="k">Tíhové zrychlení <span class="var">g</span></td><td>9,81 m·s⁻²</td></tr>
+        <tr><td class="k">Rozměr</td><td>√(m/(m·s⁻²)) = s</td></tr>
+        <tr class="res"><td class="k">Perioda <span class="var">T</span></td><td>≐ 2,01 s</td></tr>
+      </table>
+    </div>
+  </section>
+</main>
+
+<footer><div class="wrap"><span>Návrh 9 · Laboratorní přístroj — tmavé grafitové rozhraní měřicího přístroje, jediná jantarová barva pro signál a výsledky.</span><span>Gymnázium J. Vrchlického</span></div></footer>
+</body>
+</html>
