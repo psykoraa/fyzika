@@ -37,6 +37,7 @@
     'neprime-mereni.html': 'mereni',
     'krabicka-multivitaminu.html': 'mereni',
     'plastove-disky.html': 'mereni',
+    'va-charakteristika-diod.html': 'mereni',
     'pravidla-pro-vyuzivani-ai.html': 'mereni',
     'jak-psat-protokol.html': 'mereni',
     'kalkulacka-fx82cex.html': 'kvinta',
