@@ -934,45 +934,67 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
       var v = Math.pow(inten(xm), gamma);
       stops += '<stop offset="' + (i / N).toFixed(4) + '" stop-color="rgb(' + Math.round(rgb[0] * v * 255) + ',' + Math.round(rgb[1] * v * 255) + ',' + Math.round(rgb[2] * v * 255) + ')"/>';
     }
-    o += '<defs><linearGradient id="pat-grad" x1="0" y1="0" x2="1" y2="0">' + stops + '</linearGradient>' +
+    var sst = '', SN = 200;
+    for(i = 0; i <= SN; i++){
+      var xs2 = (X - 2 * X * i / SN) / 100;
+      var vs = Math.pow(inten(xs2), gamma);
+      sst += '<stop offset="' + (i / SN).toFixed(4) + '" stop-color="rgb(' + Math.round(rgb[0] * vs * 255) + ',' + Math.round(rgb[1] * vs * 255) + ',' + Math.round(rgb[2] * vs * 255) + ')"/>';
+    }
+    o += '<defs><linearGradient id="side-grad" x1="0" y1="0" x2="0" y2="1">' + sst + '</linearGradient>' +
+         '<marker id="arr-in" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink-soft)"/></marker>' +
+         '<linearGradient id="pat-grad" x1="0" y1="0" x2="1" y2="0">' + stops + '</linearGradient>' +
          '<clipPath id="side-clip"><rect x="20" y="14" width="920" height="156"/></clipPath>' +
          '<marker id="arr-L" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/></marker></defs>';
 
-    // ---------- A: schéma (boční pohled, svisle zvětšeno) ----------
+    // ---------- A: schéma (pohled shora, svisle zvětšeno) ----------
     var yc = 92, ky = 64 / X;          // px na cm
-    var xs = 120, xsc = xs + DD * 150; // štěrbina a stínítko
-    var gap = Math.max(4, dU * 1e-4 * ky);
+    var xs = 120, xsc = xs + DD * 130; // štěrbina a stínítko
+    var gap = Math.max(4, dU * 0.4);   // šířka štěrbiny v obrázku (zvětšená): 0,4 px na µm
+    var yA = yc - gap / 2, yB = yc + gap / 2;
     o += '<g font-family="Work Sans, sans-serif" font-size="' + (Math.round(13 * Math.min(K, 2) * 10) / 10) + '" fill="var(--ink)">';
-    o += '<rect x="26" y="' + (yc - 12) + '" width="36" height="24" rx="3" fill="var(--ink)"/>';
-    o += '<line x1="62" y1="' + yc + '" x2="' + (xs - 6) + '" y2="' + yc + '" stroke="' + col + '" stroke-width="3"/>';
-    o += '<text x="44" y="' + (yc - 18) + '" text-anchor="middle" fill="var(--ink-soft)">laser</text>';
+    // rovnoběžné paprsky zleva; ten ve středu vždy projde štěrbinou
+    var yr, yi;
+    for(yi = -8; yi <= 8; yi++){
+      yr = yc + yi * 10;
+      if(yr < 20 || yr > 164) continue;
+      var thr = yr > yA && yr < yB;
+      o += '<line x1="28" y1="' + yr + '" x2="' + (xs - 4) + '" y2="' + yr + '" stroke="' + col + '" stroke-width="1.6" stroke-opacity="0.8" marker-end="url(#arr-in)"/>';
+      if(thr){ o += '<line x1="' + xs + '" y1="' + yr + '" x2="' + (xs + 12) + '" y2="' + yr + '" stroke="' + col + '" stroke-width="1.6"/>'; }
+    }
     // světlo za štěrbinou (hlavní maximum)
     if(x1 > 0){
       var yy = Math.min(64, x1 * 100 * ky);
-      var xe = xsc;
       var tail = x1 * 100 * ky > 64 ? 64 / (x1 * 100 * ky) : 1;
-      xe = xs + (xsc - xs) * tail;
-      o += '<polygon clip-path="url(#side-clip)" points="' + xs + ',' + yc + ' ' + xe + ',' + (yc - yy) + ' ' + xe + ',' + (yc + yy) + '" fill="' + col + '" fill-opacity="0.28"/>';
-      o += '<g clip-path="url(#side-clip)" stroke="' + col + '" stroke-width="1.6" stroke-dasharray="5 4"><line x1="' + xs + '" y1="' + yc + '" x2="' + xsc + '" y2="' + (yc - x1 * 100 * ky * 1) + '"/><line x1="' + xs + '" y1="' + yc + '" x2="' + xsc + '" y2="' + (yc + x1 * 100 * ky) + '"/></g>';
+      var xe = xs + (xsc - xs) * tail;
+      o += '<polygon clip-path="url(#side-clip)" points="' + xs + ',' + yA + ' ' + xe + ',' + (yc - yy) + ' ' + xe + ',' + (yc + yy) + ' ' + xs + ',' + yB + '" fill="' + col + '" fill-opacity="0.28"/>';
+      o += '<g clip-path="url(#side-clip)" stroke="' + col + '" stroke-width="1.6" stroke-dasharray="5 4"><line x1="' + xs + '" y1="' + yc + '" x2="' + xsc + '" y2="' + (yc - x1 * 100 * ky) + '"/><line x1="' + xs + '" y1="' + yc + '" x2="' + xsc + '" y2="' + (yc + x1 * 100 * ky) + '"/></g>';
     }
     if(st.geom){
       o += '<line x1="' + xs + '" y1="' + yc + '" x2="' + xsc + '" y2="' + yc + '" stroke="var(--danger)" stroke-width="2.4"/>';
     }
     // překážka se štěrbinou
-    o += '<line x1="' + xs + '" y1="14" x2="' + xs + '" y2="' + (yc - gap / 2) + '" stroke="var(--ink)" stroke-width="7"/>';
-    o += '<line x1="' + xs + '" y1="' + (yc + gap / 2) + '" x2="' + xs + '" y2="170" stroke="var(--ink)" stroke-width="7"/>';
-    o += '<text x="' + (xs - 10) + '" y="26" text-anchor="end" fill="var(--ink-soft)">štěrbina</text>';
-    // stínítko
+    o += '<line x1="' + xs + '" y1="14" x2="' + xs + '" y2="' + yA + '" stroke="var(--ink)" stroke-width="7"/>';
+    o += '<line x1="' + xs + '" y1="' + yB + '" x2="' + xs + '" y2="170" stroke="var(--ink)" stroke-width="7"/>';
+    o += '<text x="' + (xs - 10) + '" y="12" text-anchor="end" fill="var(--ink-soft)">štěrbina</text>';
+    // stínítko: pásek s obrazcem (pohled shora) a graf intenzity
+    o += '<rect x="' + (xsc + 4) + '" y="' + (yc - 64) + '" width="14" height="128" fill="url(#side-grad)"/>';
+    var sp = [], SP = 192;
+    for(i = 0; i <= SP; i++){
+      var xcm = X - 2 * X * i / SP;
+      sp.push((xsc + 22 + inten(xcm / 100) * 62).toFixed(1) + ',' + (yc - xcm * ky).toFixed(1));
+    }
+    o += '<polygon points="' + (xsc + 22) + ',' + (yc - 64) + ' ' + sp.join(' ') + ' ' + (xsc + 22) + ',' + (yc + 64) + '" fill="' + col + '" fill-opacity="0.22"/>';
+    o += '<polyline points="' + sp.join(' ') + '" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linejoin="round"/>';
     o += '<line x1="' + xsc + '" y1="14" x2="' + xsc + '" y2="170" stroke="var(--ink)" stroke-width="4"/>';
-    o += '<text x="' + (xsc + 8) + '" y="26" fill="var(--ink-soft)">stínítko</text>';
+    o += '<text x="' + (xsc + 8) + '" y="12" fill="var(--ink-soft)">stínítko (shora)</text>';
     // vzdálenost D
     o += '<g stroke="var(--ink-soft)" stroke-width="1.4"><line x1="' + xs + '" y1="' + (yc + 66) + '" x2="' + xsc + '" y2="' + (yc + 66) + '" stroke-dasharray="none"/></g>';
-    o += '<text x="' + ((xs + xsc) / 2) + '" y="' + (yc + 62) + '" text-anchor="middle" font-style="italic" font-weight="700">D = ' + cz(DD, 1) + ' m</text>';
+    o += '<text x="' + ((xs + xsc) / 2) + '" y="' + (yc + 62) + '" text-anchor="middle" font-style="italic" font-weight="700">D = ' + cz(DD, 1) + ' m</text>';
     // šířka hlavního maxima L
     if(x1 > 0 && x1 * 100 <= X){
       var yl = x1 * 100 * ky;
-      o += '<line x1="' + (xsc + 18) + '" y1="' + (yc - yl) + '" x2="' + (xsc + 18) + '" y2="' + (yc + yl) + '" stroke="var(--accent)" stroke-width="1.8" marker-start="url(#arr-L)" marker-end="url(#arr-L)"/>';
-      o += '<text x="' + (xsc + 26) + '" y="' + (yc + 5) + '" font-style="italic" font-weight="700" fill="var(--accent)">L</text>';
+      o += '<line x1="' + (xsc + 94) + '" y1="' + (yc - yl) + '" x2="' + (xsc + 94) + '" y2="' + (yc + yl) + '" stroke="var(--accent)" stroke-width="1.8" marker-start="url(#arr-L)" marker-end="url(#arr-L)"/>';
+      o += '<text x="' + (xsc + 102) + '" y="' + (yc + 5) + '" font-style="italic" font-weight="700" fill="var(--accent)">L</text>';
     }
     o += '</g>';
 
