@@ -14,6 +14,7 @@
 <script src="../spolecne/auth.js"></script>
 <script src="../spolecne/zalozky.js?v=3"></script>
 <link rel="stylesheet" href="../spolecne/styl.css">
+<link rel="stylesheet" href="../spolecne/reseni.css?v=1">
 <style>
 :root{
   --paper:#f5f0e3;
@@ -188,6 +189,35 @@ a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
 @media (max-width:520px){
   .card{ padding:20px 16px 22px; }
 }
+
+/* ---- Trénink úhly ---- */
+.section-block{ margin-bottom:16px; }
+.section-block:last-child{ margin-bottom:0; }
+.chip.accented.on{ background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+.equation{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:600;
+  font-size:clamp(1.3rem, 4.4vw, 2.1rem);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:0.4em;
+  flex-wrap:wrap;
+  font-variant-numeric:tabular-nums;
+}
+.equation .unit{ color:var(--ink-soft); font-size:0.6em; margin-left:0.1em; }
+.equation .eq{ color:var(--ink-soft); margin:0 0.1em; }
+.equation .katex{ font-size:1em; }
+.equation .answer-input{ width:4.6em; }
+.frac-answer{ display:inline-flex; flex-direction:column; align-items:center; gap:0.15em; }
+.frac-answer .answer-input{ width:3em; }
+.frac-answer .frac-bar{ align-self:stretch; border-top:3px solid var(--ink-soft); }
+.feedback .tip{ font-size:0.78rem; color:var(--ink); opacity:0.75; margin-top:6px; font-style:italic; }
+.task-text{ font-size:0.86rem; color:var(--ink-soft); line-height:1.5; text-align:center; margin:0 0 16px; }
+@media (max-width:520px){
+  .card{ padding:26px 16px 24px; }
+  .readout .cell{ min-width:64px; padding:6px 8px; }
+}
 </style>
 </head>
 <body>
@@ -211,12 +241,16 @@ a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
         <p>kinematika — rovnoměrný pohyb po kružnici</p>
       </div>
     </div>
-    <!-- Hlavičkové skóre (.readout) se přidává jen u stránek se záložkou Trénink — viz references/zalozky-trenink-aplet.md -->
+    <div class="readout" id="header-readout" hidden>
+      <div class="cell"><span class="label">Skóre</span><span class="value" id="stat-score">0</span></div>
+      <div class="cell"><span class="label">Série</span><span class="value" id="stat-streak">0</span></div>
+      <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="stat-accuracy">—</span></div>
+    </div>
   </div>
 
   <div class="top-tabs">
     <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
-    <!-- další záložky: <button class="toptab" id="top-tab-trenink" data-tab="trenink">Trénink</button> -->
+    <button class="toptab" id="top-tab-trenink" data-tab="trenink">Trénink úhly</button>
   </div>
 
   <!-- ============ TEORIE ============ -->
@@ -643,11 +677,59 @@ a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
 
   </div>
 
+  <!-- ============ TRÉNINK ÚHLY ============ -->
+  <div id="trenink-section" class="tab-section" hidden>
+
+    <div class="panel">
+      <div class="section-block">
+        <div class="panel-title">Obtížnost</div>
+        <div class="row" id="difficulty-row"></div>
+      </div>
+      <div class="section-block">
+        <div class="panel-title">Směr převodu</div>
+        <div class="row" id="direction-row"></div>
+      </div>
+      <div class="settings-foot" style="justify-content:flex-end;">
+        <button class="linklike" id="reset-stats">vynulovat statistiku</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="cat-tag" id="cat-tag">Stupně → radiány</span>
+      <p class="task-text" id="task-text"></p>
+      <div class="equation" id="equation">
+        <span id="eq-given"></span>
+        <span class="eq">=</span>
+        <span class="answer-slot" id="slot-single">
+          <input class="answer-input" id="answer" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="?">
+        </span>
+        <span class="answer-slot frac-answer" id="slot-frac" hidden>
+          <input class="answer-input" id="answer-num" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="a" aria-label="čitatel">
+          <span class="frac-bar"></span>
+          <input class="answer-input" id="answer-den" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="b" aria-label="jmenovatel">
+        </span>
+        <span class="unit" id="eq-unit"></span>
+      </div>
+      <div class="actions">
+        <button class="btn primary" id="btn-check">Zkontrolovat</button>
+        <button class="btn ghost" id="btn-skip">Nevím / Další</button>
+      </div>
+      <div class="feedback" id="feedback" hidden>
+        <div class="headline" id="feedback-headline"></div>
+        <div class="steps" id="feedback-steps"></div>
+        <div class="tip" id="feedback-tip" hidden></div>
+      </div>
+      <p class="hint">Enter potvrdí odpověď i přejde na další příklad. Čárku i tečku lze zadat obojí.</p>
+    </div>
+
+  </div>
+
   <!-- ============ DALŠÍ ZÁLOŽKY (sekce s id "<data-tab>-section", atributem hidden) ============ -->
 
   <footer>Fyzika — Kvinta/1. ročník</footer>
 </div>
 
+<script src="../spolecne/reseni.js?v=1"></script>
 <script src="../spolecne/spolecne.js"></script>
 <script>
 (function(){
@@ -721,6 +803,273 @@ a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
 
     refreshLocks();
   });
+
+
+  // ================= TRÉNINK ÚHLY =================
+  var state = {
+    difficulty:'easy', direction:'both', score:0, streak:0, bestStreak:0,
+    answered:0, correct:0, current:null, last:null, locked:false, touched:false
+  };
+  var STATS_KEY = 'fyzika:pohyb-po-kruznici:stats';
+  var EASY_DEG = [30,45,60,90,120,135,150,180,210,225,240,270,300,315,330,360];
+  var DIFFICULTIES = [{key:'easy', name:'Jednodušší (násobky 30°, 45°, 60°, 90°)'}, {key:'hard', name:'Složitější (libovolné úhly)'}];
+  var DIRECTIONS = [{key:'both', name:'Obojí'}, {key:'toRad', name:'Stupně → radiány'}, {key:'toDeg', name:'Radiány → stupně'}];
+
+  function loadStats(){
+    try{ var raw = localStorage.getItem(STATS_KEY); if(raw){ state.bestStreak = JSON.parse(raw).bestStreak || 0; } }catch(e){}
+  }
+  function saveStats(){
+    try{ localStorage.setItem(STATS_KEY, JSON.stringify({bestStreak: state.bestStreak})); }catch(e){}
+  }
+
+  function randInt(a, b){ return a + Math.floor(Math.random()*(b-a+1)); }
+  function gcd(a, b){ a = Math.abs(a); b = Math.abs(b); while(b){ var t = a % b; a = b; b = t; } return a; }
+  function cz(n, dec){ return n.toFixed(dec).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ' '); }
+  function tex(t){
+    try{ return window.katex ? katex.renderToString(t, {throwOnError:false}) : t; }catch(e){ return t; }
+  }
+  // zlomek (n/m)·π v TeXu
+  function piTex(n, m){
+    var top = n === 1 ? '\\pi' : n + '\\pi';
+    return m === 1 ? top : '\\frac{' + top + '}{' + m + '}';
+  }
+  function parseNum(str){
+    if(!str) return NaN;
+    str = str.trim().replace(/[−–]/g, '-').replace(',', '.').replace(/\s+/g, '');
+    return /^-?\d*\.?\d+$|^-?\d+\.$/.test(str) ? parseFloat(str) : NaN;
+  }
+
+  function makeEasy(dir){
+    var deg, tries = 0;
+    do{ deg = EASY_DEG[randInt(0, EASY_DEG.length-1)]; tries++; }while(state.last && state.last.deg === deg && state.last.dir === dir && tries < 20);
+    var g = gcd(deg, 180), n = deg / g, m = 180 / g;
+    var q = { level:'easy', dir:dir, deg:deg, n:n, m:m };
+    if(dir === 'toRad'){
+      q.givenHtml = tex(deg + '^\\circ');
+      q.unitHtml = tex('\\pi\\ \\mathrm{rad}');
+      q.task = 'Převeďte úhel na radiány. Výsledek zapište jako zlomek násobku π v základním tvaru (je-li jmenovatel 1, nechte jej prázdný nebo napište 1).';
+      q.stepsTex = [
+        '\\varphi = ' + deg + '^\\circ \\cdot \\dfrac{\\pi}{180^\\circ} = \\dfrac{' + deg + '}{180}\\,\\pi',
+        '\\dfrac{' + deg + '}{180} = \\dfrac{' + n + '}{' + m + '}',
+        '\\varphi = ' + piTex(n, m) + '\\ \\mathrm{rad}'
+      ];
+    } else {
+      q.givenHtml = tex(piTex(n, m) + '\\ \\mathrm{rad}');
+      q.unitHtml = tex('^\\circ');
+      q.task = 'Převeďte úhel na stupně. Výsledek zapište jako celé číslo.';
+      q.stepsTex = [
+        '\\varphi = ' + piTex(n, m) + '\\ \\mathrm{rad} = ' + piTex(n, m) + '\\cdot\\dfrac{180^\\circ}{\\pi}',
+        '\\varphi = \\dfrac{' + n + '\\cdot 180^\\circ}{' + m + '} = ' + deg + '^\\circ'
+      ];
+    }
+    return q;
+  }
+
+  function makeHard(dir){
+    var q = { level:'hard', dir:dir }, tries = 0;
+    if(dir === 'toRad'){
+      var deg, dec;
+      do{
+        if(Math.random() < 0.25){ deg = randInt(10, 7200)/10; dec = 1; } else { deg = randInt(1, 720); dec = 0; }
+        if(dec === 1 && Math.round(deg*10) % 10 === 0){ dec = 0; }
+        tries++;
+      }while((deg % 30 === 0 || deg % 45 === 0 || (state.last && state.last.given === deg)) && tries < 50);
+      q.given = deg;
+      q.exact = deg * Math.PI / 180;
+      q.givenHtml = cz(deg, dec) + ' °';
+      q.unitHtml = 'rad';
+      q.task = 'Převeďte úhel na radiány (bez použití π ve výsledku). Výsledek zaokrouhlete na 3 platné číslice.';
+      q.stepsTex = [
+        '\\varphi = ' + cz(deg, dec).replace(/ /g, '\\,').replace(',', '{,}') + '^\\circ\\cdot\\dfrac{\\pi}{180^\\circ}',
+        '\\varphi \\doteq ' + fmtTex(roundSig(q.exact, 3)) + '\\ \\mathrm{rad}'
+      ];
+    } else {
+      var r, rdec;
+      do{
+        if(Math.random() < 0.4){ r = randInt(100, 999)/1000; rdec = 3; } else { r = randInt(100, 1256)/100; rdec = 2; }
+        tries++;
+      }while(state.last && state.last.given === r && tries < 50);
+      q.given = r;
+      q.exact = r * 180 / Math.PI;
+      q.givenHtml = cz(r, rdec) + ' rad';
+      q.unitHtml = '°';
+      q.task = 'Převeďte úhel na stupně. Výsledek zaokrouhlete na 3 platné číslice.';
+      q.stepsTex = [
+        '\\varphi = ' + fmtTex(r) + '\\ \\mathrm{rad}\\cdot\\dfrac{180^\\circ}{\\pi}',
+        '\\varphi \\doteq ' + fmtTex(roundSig(q.exact, 3)) + '^\\circ'
+      ];
+    }
+    var rs = roundSig(q.exact, 3);
+    q.rounded = rs;
+    q.tol = Math.pow(10, Math.floor(Math.log10(Math.abs(rs))) - 2);   // 1 jednotka poslední platné číslice
+    return q;
+  }
+  function fmtTex(x){
+    var dec = decimalsForSig(x, 3);
+    return cz(Math.abs(x), dec).replace(/ /g, '\\,').replace(',', '{,}');
+  }
+  function plainNum(x){ return cz(x, decimalsForSig(x, 3)); }
+
+  function generateQuestion(){
+    var dir = state.direction === 'both' ? (Math.random() < 0.5 ? 'toRad' : 'toDeg') : state.direction;
+    var q = state.difficulty === 'easy' ? makeEasy(dir) : makeHard(dir);
+    state.current = q;
+    state.last = { deg:q.deg, dir:dir, given:q.given };
+    state.locked = false; state.touched = false;
+    renderQuestion();
+  }
+
+  function renderQuestion(){
+    var q = state.current;
+    document.getElementById('cat-tag').textContent = q.dir === 'toRad' ? 'Stupně → radiány' : 'Radiány → stupně';
+    document.getElementById('task-text').textContent = q.task;
+    document.getElementById('eq-given').innerHTML = q.givenHtml;
+    var unit = document.getElementById('eq-unit');
+    if(q.level === 'easy' && q.dir === 'toRad'){ unit.innerHTML = q.unitHtml; } else if(q.level === 'easy'){ unit.innerHTML = q.unitHtml; } else { unit.textContent = q.unitHtml; }
+    var frac = q.level === 'easy' && q.dir === 'toRad';
+    document.getElementById('slot-frac').hidden = !frac;
+    document.getElementById('slot-single').hidden = frac;
+    ['answer','answer-num','answer-den'].forEach(function(id){
+      var el = document.getElementById(id);
+      el.value = ''; el.disabled = false; el.classList.remove('correct','wrong');
+    });
+    var fb = document.getElementById('feedback');
+    fb.hidden = true; fb.classList.remove('ok','bad','sol');
+    document.getElementById('feedback-tip').hidden = true;
+    document.getElementById('btn-check').textContent = 'Zkontrolovat';
+    (frac ? document.getElementById('answer-num') : document.getElementById('answer')).focus();
+  }
+
+  function isFrac(){ var q = state.current; return q.level === 'easy' && q.dir === 'toRad'; }
+  function isAnswerEmpty(){
+    if(isFrac()) return document.getElementById('answer-num').value.trim() === '';
+    return isNaN(parseNum(document.getElementById('answer').value));
+  }
+  function markInputs(cls){
+    (isFrac() ? ['answer-num','answer-den'] : ['answer']).forEach(function(id){ document.getElementById(id).classList.add(cls); });
+  }
+  function lockUI(){
+    ['answer','answer-num','answer-den'].forEach(function(id){ document.getElementById(id).disabled = true; });
+    state.locked = true;
+    var b = document.getElementById('btn-check');
+    b.textContent = 'Další příklad →';
+    b.focus();
+    updateStats();
+  }
+  function showSolution(){
+    var q = state.current;
+    FyzikaReseni.show(document.getElementById('feedback'), document.getElementById('feedback-steps'), {
+      raw:true, title:'', steps: q.stepsTex.map(tex)
+    });
+  }
+
+  function checkAnswer(){
+    if(state.locked){ generateQuestion(); return; }
+    var q = state.current, ok = false, tipText = '';
+    if(isFrac()){
+      var nu = parseNum(document.getElementById('answer-num').value);
+      var dsrc = document.getElementById('answer-den').value.trim();
+      var de = dsrc === '' ? 1 : parseNum(dsrc);
+      if(!isNaN(nu) && !isNaN(de) && de !== 0 && Math.abs(nu*q.m - q.n*de) < 1e-9){
+        ok = true;
+        if(nu % 1 !== 0 || de % 1 !== 0 || gcd(nu, de) !== 1) tipText = 'Číselně správně, zlomek ale ještě jde zkrátit.';
+      }
+    } else {
+      var v = parseNum(document.getElementById('answer').value);
+      if(q.level === 'easy'){ ok = !isNaN(v) && Math.abs(v - q.deg) < 0.5; }
+      else { ok = !isNaN(v) && Math.abs(v - q.exact) <= q.tol; }
+    }
+    state.answered++;
+    var fb = document.getElementById('feedback'), head = document.getElementById('feedback-headline'), tip = document.getElementById('feedback-tip');
+    fb.hidden = false; tip.hidden = !tipText; tip.textContent = tipText;
+    if(ok){
+      state.score += (q.level === 'easy' ? 10 : 15); state.streak++; state.correct++;
+      if(state.streak > state.bestStreak){
+        state.bestStreak = state.streak; saveStats();
+        if(window.FyzikaScores) FyzikaScores.report('serie', state.bestStreak, false);
+      }
+      markInputs('correct'); fb.classList.add('ok'); fb.classList.remove('bad');
+      head.textContent = 'Správně!';
+    } else {
+      state.streak = 0; markInputs('wrong'); fb.classList.add('bad'); fb.classList.remove('ok');
+      head.textContent = isAnswerEmpty() ? 'Doplňte odpověď.' : 'Bohužel špatně.';
+    }
+    showSolution(); lockUI();
+  }
+  function skip(){
+    if(state.locked){ generateQuestion(); return; }
+    state.streak = 0; state.answered++;
+    var fb = document.getElementById('feedback');
+    fb.hidden = false; fb.classList.add('bad'); fb.classList.remove('ok');
+    document.getElementById('feedback-tip').hidden = true;
+    document.getElementById('feedback-headline').textContent = 'Správný postup:';
+    showSolution(); lockUI();
+  }
+  function updateStats(){
+    document.getElementById('stat-score').textContent = state.score;
+    document.getElementById('stat-streak').textContent = state.streak + (state.bestStreak > 0 ? ' / ' + state.bestStreak : '');
+    document.getElementById('stat-accuracy').textContent = state.answered === 0 ? '—' : Math.round(100*state.correct/state.answered) + ' %';
+  }
+
+  // Vyhodnotí rozdělanou otázku před změnou nastavení (stejná logika jako v prevody-jednotek.html;
+  // musí být uvnitř IIFE, protože globální verze ze spolecne.js vidí jen globální `state`).
+  function settleCurrentQuestion(){
+    if(state.locked) return 'locked';
+    if(!state.touched) return 'untouched';
+    if(isAnswerEmpty() && !confirm('Odpověď není vyplněná. Opravdu chcete změnit nastavení?')) return 'cancelled';
+    checkAnswer();
+    return 'settled';
+  }
+
+  function buildRow(rowId, items, getCur, setCur){
+    var row = document.getElementById(rowId);
+    row.innerHTML = '';
+    items.forEach(function(d){
+      var b = document.createElement('button');
+      b.className = 'chip accented' + (d.key === getCur() ? ' on' : '');
+      b.textContent = d.name;
+      b.addEventListener('click', function(){
+        if(d.key === getCur()) return;
+        var res = settleCurrentQuestion();
+        if(res === 'cancelled') return;
+        setCur(d.key);
+        Array.prototype.forEach.call(row.children, function(el, i){ el.classList.toggle('on', items[i].key === getCur()); });
+        if(res === 'locked' || res === 'untouched'){ generateQuestion(); }
+      });
+      row.appendChild(b);
+    });
+  }
+  buildRow('difficulty-row', DIFFICULTIES, function(){ return state.difficulty; }, function(k){ state.difficulty = k; });
+  buildRow('direction-row', DIRECTIONS, function(){ return state.direction; }, function(k){ state.direction = k; });
+
+  function tryCheck(){
+    if(state.locked){ generateQuestion(); return; }
+    if(isAnswerEmpty() && !confirm('Odpověď není vyplněná. Opravdu chcete zkontrolovat?')) return;
+    checkAnswer();
+  }
+  function trySkip(){
+    if(state.locked){ generateQuestion(); return; }
+    if(isAnswerEmpty() && !confirm('Odpověď není vyplněná. Opravdu chcete přeskočit na další příklad?')) return;
+    skip();
+  }
+  document.getElementById('btn-check').addEventListener('click', tryCheck);
+  document.getElementById('btn-skip').addEventListener('click', trySkip);
+  ['answer','answer-num','answer-den'].forEach(function(id){
+    var el = document.getElementById(id);
+    sanitizeNumericInput(el, id === 'answer');
+    el.addEventListener('input', function(){ state.touched = true; });
+    el.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); tryCheck(); } });
+  });
+  document.getElementById('reset-stats').addEventListener('click', function(){
+    state.score = 0; state.streak = 0; state.answered = 0; state.correct = 0; state.bestStreak = 0;
+    try{ localStorage.removeItem(STATS_KEY); }catch(e){}
+    updateStats();
+  });
+  document.addEventListener('fyzika:scores-updated', function(){ state.bestStreak = 0; loadStats(); updateStats(); });
+
+  loadStats();
+  updateStats();
+  generateQuestion();
 
   // ---- vzorce (KaTeX) ----
   if(window.renderMathInElement){
