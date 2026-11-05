@@ -1067,28 +1067,57 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
         var xm = (-X + 2 * X * i / N) / 100;
         stops += '<stop offset="' + (i / N).toFixed(4) + '" stop-color="' + rgbStr(rgb, Math.max(0, Math.min(1, inten(xm, visPix)))) + '"/>';
       }
+      // boční pásek na stínítku (pohled shora): intenzita podél svislé osy schématu
+      var dxSide = 2 * X / 100 / 128 * 1.2;
+      var visSide = Math.abs(sinc(2 * Math.PI * b / (lam * D) * dxSide / 2));
+      var sst = '', SN = 200, xs2, vs;
+      for(i = 0; i <= SN; i++){
+        xs2 = (X - 2 * X * i / SN) / 100;
+        vs = Math.max(0, Math.min(1, inten(xs2, visSide)));
+        sst += '<stop offset="' + (i / SN).toFixed(4) + '" stop-color="' + rgbStr(rgb, vs) + '"/>';
+      }
       o += '<defs><linearGradient id="d-grad" x1="0" y1="0" x2="1" y2="0">' + stops + '</linearGradient>' +
+           '<linearGradient id="d-side" x1="0" y1="0" x2="0" y2="1">' + sst + '</linearGradient>' +
+           '<marker id="d-arr-in" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink-soft)"/></marker>' +
            '<clipPath id="d-clip"><rect x="20" y="14" width="920" height="156"/></clipPath></defs>';
 
-      // ---------- A: schéma ----------
-      var yc = 92, ky = 64 / X, xs = 120, xsc = xs + D * 150;
-      var y1 = yc - 12, y2 = yc + 12;
+      // ---------- A: schéma (pohled shora, svisle zvětšeno) ----------
+      var yc = 92, ky = 64 / X, xs = 120, xsc = xs + D * 130;
+      var bPx = st.b * 0.2, aPx = Math.max(3, st.a * 0.2);          // rozteč a šířka štěrbin v obrázku (zvětšené): 0,2 px na µm
+      var y1 = yc - bPx / 2, y2 = yc + bPx / 2;                     // středy štěrbin
       var yk = (st.mk === null) ? yc : yc - st.mk * ky;
       o += '<g font-family="Work Sans, sans-serif" font-size="' + fsl(13) + '" fill="var(--ink)">';
-      o += '<rect x="26" y="' + (yc - 12) + '" width="36" height="24" rx="3" fill="var(--ink)"/>';
-      o += '<line x1="62" y1="' + yc + '" x2="' + (xs - 4) + '" y2="' + yc + '" stroke="' + col + '" stroke-width="3"/>';
-      o += '<text x="44" y="' + (yc - 18) + '" text-anchor="middle" fill="var(--ink-soft)">laser</text>';
+      // rovnoběžné paprsky zleva; ty u štěrbin vždy projdou
+      var rays = [y1, y2], yi;
+      for(yi = -8; yi <= 8; yi++){ rays.push(yc + yi * 10); }
+      rays.forEach(function(yr){
+        if(yr < 20 || yr > 164) return;
+        var thr = (Math.abs(yr - y1) < aPx / 2) || (Math.abs(yr - y2) < aPx / 2);
+        var hit = !thr && (Math.abs(yr - y1) < aPx / 2 + 3.5 || Math.abs(yr - y2) < aPx / 2 + 3.5);
+        if(hit) return;                                               // paprsek by splynul se stěnou
+        o += '<line x1="28" y1="' + yr + '" x2="' + (xs - 4) + '" y2="' + yr + '" stroke="' + col + '" stroke-width="1.6" stroke-opacity="0.8" marker-end="url(#d-arr-in)"/>';
+        if(thr){ o += '<line x1="' + xs + '" y1="' + yr + '" x2="' + (xs + 12) + '" y2="' + yr + '" stroke="' + col + '" stroke-width="1.6"/>'; }
+      });
       o += '<g clip-path="url(#d-clip)" stroke="' + col + '" stroke-width="1.8">' +
            '<line x1="' + xs + '" y1="' + y1 + '" x2="' + xsc + '" y2="' + yk + '"' + (st.mk === null ? ' stroke-dasharray="5 4"' : '') + '/>' +
            '<line x1="' + xs + '" y1="' + y2 + '" x2="' + xsc + '" y2="' + yk + '"' + (st.mk === null ? ' stroke-dasharray="5 4"' : '') + '/></g>';
-      o += '<line x1="' + xs + '" y1="14" x2="' + xs + '" y2="' + (y1 - 3) + '" stroke="var(--ink)" stroke-width="7"/>';
-      o += '<line x1="' + xs + '" y1="' + (y1 + 3) + '" x2="' + xs + '" y2="' + (y2 - 3) + '" stroke="var(--ink)" stroke-width="7"/>';
-      o += '<line x1="' + xs + '" y1="' + (y2 + 3) + '" x2="' + xs + '" y2="170" stroke="var(--ink)" stroke-width="7"/>';
-      o += '<text x="' + (xs - 10) + '" y="26" text-anchor="end" fill="var(--ink-soft)">štěrbiny</text>';
+      o += '<line x1="' + xs + '" y1="14" x2="' + xs + '" y2="' + (y1 - aPx / 2) + '" stroke="var(--ink)" stroke-width="7"/>';
+      o += '<line x1="' + xs + '" y1="' + (y1 + aPx / 2) + '" x2="' + xs + '" y2="' + (y2 - aPx / 2) + '" stroke="var(--ink)" stroke-width="7"/>';
+      o += '<line x1="' + xs + '" y1="' + (y2 + aPx / 2) + '" x2="' + xs + '" y2="170" stroke="var(--ink)" stroke-width="7"/>';
+      o += '<text x="' + (xs - 10) + '" y="12" text-anchor="end" fill="var(--ink-soft)">štěrbiny</text>';
+      // stínítko: pásek s obrazcem (pohled shora) a graf intenzity
+      o += '<rect x="' + (xsc + 4) + '" y="' + (yc - 64) + '" width="14" height="128" fill="url(#d-side)"/>';
+      var sp = [], SP = 192, xcm;
+      for(i = 0; i <= SP; i++){
+        xcm = X - 2 * X * i / SP;
+        sp.push((xsc + 22 + inten(xcm / 100, visSide) * 62).toFixed(1) + ',' + (yc - xcm * ky).toFixed(1));
+      }
+      o += '<polygon points="' + (xsc + 22) + ',' + (yc - 64) + ' ' + sp.join(' ') + ' ' + (xsc + 22) + ',' + (yc + 64) + '" fill="' + col + '" fill-opacity="0.22"/>';
+      o += '<polyline points="' + sp.join(' ') + '" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linejoin="round"/>';
       o += '<line x1="' + xsc + '" y1="14" x2="' + xsc + '" y2="170" stroke="var(--ink)" stroke-width="4"/>';
-      o += '<text x="' + (xsc + 8) + '" y="26" fill="var(--ink-soft)">stínítko</text>';
+      o += '<text x="' + (xsc + 8) + '" y="12" fill="var(--ink-soft)">stínítko (shora)</text>';
       o += '<line x1="' + xs + '" y1="' + (yc + 66) + '" x2="' + xsc + '" y2="' + (yc + 66) + '" stroke="var(--ink-soft)" stroke-width="1.4"/>';
-      o += '<text x="' + ((xs + xsc) / 2) + '" y="' + (yc + 62) + '" text-anchor="middle" font-style="italic" font-weight="700">D = ' + cz(D, 1) + ' m</text>';
+      o += '<text x="' + ((xs + xsc) / 2) + '" y="' + (yc + 62) + '" text-anchor="middle" font-style="italic" font-weight="700">D = ' + cz(D, 1) + '\u00a0m</text>';
       if(st.mk !== null){ o += '<circle cx="' + xsc + '" cy="' + yk + '" r="4.5" fill="var(--accent)"/>'; }
       o += '</g>';
 
