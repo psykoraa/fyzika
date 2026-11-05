@@ -698,7 +698,7 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
           <svg class="optics" id="d-svg" viewBox="0 0 960 640" role="img" aria-label="Interference na dvojštěrbině: nahoře schéma s laserem, dvojštěrbinou a stínítkem, uprostřed interferenční obrazec na stínítku a dole graf intenzity světla v závislosti na poloze na stínítku."></svg>
           <div class="legend" id="d-legend" aria-hidden="true"></div>
         </div>
-        <p class="hint">Schéma nahoře je nakreslené svisle zvětšeně a štěrbiny jsou zvětšené, aby šly vidět. Poloha na stínítku <i>x</i> je ve schématu, v obrazci i v grafu stejná. Jas obrazce odpovídá intenzitě v grafu. Graf je vztažený k maximu při plné koherenci. Při nulové koherenci se intenzity obou štěrbin jen sčítají, takže zůstane rovnoměrné osvětlení s polovičním jasem (celkové množství světla se nemění, jen se jinak rozdělí). Kontrast proužků odpovídá hodnotě posuvníku Koherence.</p>
+        <p class="hint">Schéma nahoře je nakreslené svisle zvětšeně a štěrbiny jsou zvětšené (jejich rozteč a šířka v obrázku odpovídají posuvníkům), aby šly vidět. Barevný pásek u stínítka ukazuje obrazec shora. Poloha na stínítku <i>x</i> je ve schématu, v obrazci i v grafu stejná. Jas obrazce odpovídá intenzitě v grafu. Graf je vztažený k maximu při plné koherenci. Při nulové koherenci se intenzity obou štěrbin jen sčítají, takže zůstane rovnoměrné osvětlení s polovičním jasem (celkové množství světla se nemění, jen se jinak rozdělí). Kontrast proužků odpovídá hodnotě posuvníku Koherence.</p>
       </div>
 
       <div class="applet-results">
@@ -1083,37 +1083,29 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
 
       // ---------- A: schéma (pohled shora, svisle zvětšeno) ----------
       var yc = 92, ky = 64 / X, xs = 120, xsc = xs + D * 130;
-      var bPx = st.b * 0.2, aPx = Math.max(3, st.a * 0.2);          // rozteč a šířka štěrbin v obrázku (zvětšené): 0,2 px na µm
+      var bPx = st.b * 0.2, aPx = Math.max(3, st.a * 0.5);          // rozteč (0,2 px na µm) a šířka štěrbin (0,5 px na µm) v obrázku jsou zvětšené
       var y1 = yc - bPx / 2, y2 = yc + bPx / 2;                     // středy štěrbin
       var yk = (st.mk === null) ? yc : yc - st.mk * ky;
       o += '<g font-family="Work Sans, sans-serif" font-size="' + fsl(13) + '" fill="var(--ink)">';
       // rovnoběžné paprsky zleva; ty u štěrbin vždy projdou
-      var rays = [y1, y2], yi;
-      for(yi = -8; yi <= 8; yi++){ rays.push(yc + yi * 10); }
+      var rays = [], yi;
+      for(yi = -3; yi <= 3; yi++){ rays.push(yc + yi * 22); }        // pevné paprsky, nezávislé na nastavení
       rays.forEach(function(yr){
-        if(yr < 20 || yr > 164) return;
         var thr = (Math.abs(yr - y1) < aPx / 2) || (Math.abs(yr - y2) < aPx / 2);
-        var hit = !thr && (Math.abs(yr - y1) < aPx / 2 + 3.5 || Math.abs(yr - y2) < aPx / 2 + 3.5);
-        if(hit) return;                                               // paprsek by splynul se stěnou
         o += '<line x1="28" y1="' + yr + '" x2="' + (xs - 4) + '" y2="' + yr + '" stroke="' + col + '" stroke-width="1.6" stroke-opacity="0.8" marker-end="url(#d-arr-in)"/>';
         if(thr){ o += '<line x1="' + xs + '" y1="' + yr + '" x2="' + (xs + 12) + '" y2="' + yr + '" stroke="' + col + '" stroke-width="1.6"/>'; }
       });
-      o += '<g clip-path="url(#d-clip)" stroke="' + col + '" stroke-width="1.8">' +
-           '<line x1="' + xs + '" y1="' + y1 + '" x2="' + xsc + '" y2="' + yk + '"' + (st.mk === null ? ' stroke-dasharray="5 4"' : '') + '/>' +
-           '<line x1="' + xs + '" y1="' + y2 + '" x2="' + xsc + '" y2="' + yk + '"' + (st.mk === null ? ' stroke-dasharray="5 4"' : '') + '/></g>';
+      if(st.mk !== null){                                            // dráhy ke zvolenému bodu na stínítku
+        o += '<g clip-path="url(#d-clip)" stroke="' + col + '" stroke-width="1.8">' +
+             '<line x1="' + xs + '" y1="' + y1 + '" x2="' + xsc + '" y2="' + yk + '"/>' +
+             '<line x1="' + xs + '" y1="' + y2 + '" x2="' + xsc + '" y2="' + yk + '"/></g>';
+      }
       o += '<line x1="' + xs + '" y1="14" x2="' + xs + '" y2="' + (y1 - aPx / 2) + '" stroke="var(--ink)" stroke-width="7"/>';
       o += '<line x1="' + xs + '" y1="' + (y1 + aPx / 2) + '" x2="' + xs + '" y2="' + (y2 - aPx / 2) + '" stroke="var(--ink)" stroke-width="7"/>';
       o += '<line x1="' + xs + '" y1="' + (y2 + aPx / 2) + '" x2="' + xs + '" y2="170" stroke="var(--ink)" stroke-width="7"/>';
       o += '<text x="' + (xs - 10) + '" y="12" text-anchor="end" fill="var(--ink-soft)">štěrbiny</text>';
       // stínítko: pásek s obrazcem (pohled shora) a graf intenzity
       o += '<rect x="' + (xsc + 4) + '" y="' + (yc - 64) + '" width="14" height="128" fill="url(#d-side)"/>';
-      var sp = [], SP = 192, xcm;
-      for(i = 0; i <= SP; i++){
-        xcm = X - 2 * X * i / SP;
-        sp.push((xsc + 22 + inten(xcm / 100, visSide) * 62).toFixed(1) + ',' + (yc - xcm * ky).toFixed(1));
-      }
-      o += '<polygon points="' + (xsc + 22) + ',' + (yc - 64) + ' ' + sp.join(' ') + ' ' + (xsc + 22) + ',' + (yc + 64) + '" fill="' + col + '" fill-opacity="0.22"/>';
-      o += '<polyline points="' + sp.join(' ') + '" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linejoin="round"/>';
       o += '<line x1="' + xsc + '" y1="14" x2="' + xsc + '" y2="170" stroke="var(--ink)" stroke-width="4"/>';
       o += '<text x="' + (xsc + 8) + '" y="12" fill="var(--ink-soft)">stínítko (shora)</text>';
       o += '<line x1="' + xs + '" y1="' + (yc + 66) + '" x2="' + xsc + '" y2="' + (yc + 66) + '" stroke="var(--ink-soft)" stroke-width="1.4"/>';

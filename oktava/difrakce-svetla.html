@@ -741,7 +741,6 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
           <span class="mode-row-label">Zobrazení</span>
           <div class="seg">
             <button class="chip accented on" id="boost-btn" type="button" aria-pressed="true">zvýraznit slabá maxima</button>
-            <button class="chip accented" id="geom-btn" type="button" aria-pressed="false">ukázat geometrickou optiku</button>
             <button class="chip" id="reset-btn" type="button">Výchozí hodnoty</button>
           </div>
         </div>
@@ -752,7 +751,7 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
           <svg class="optics" id="optics-svg" viewBox="0 0 960 640" role="img" aria-label="Ohyb světla na jedné štěrbině: nahoře schéma s laserem, štěrbinou a stínítkem, uprostřed difrakční obrazec na stínítku a dole graf intenzity světla v závislosti na poloze na stínítku."></svg>
           <div class="legend" id="legend" aria-hidden="true"></div>
         </div>
-        <p class="hint">Schéma nahoře je nakreslené svisle zvětšeně a štěrbina je zvětšená, aby šla vidět. Poloha na stínítku <i>x</i> je ale ve schématu, v obrazci i v grafu stejná. Pokud je jas zvýrazněný, je obrazec zobrazen jasněji než ve skutečnosti, aby byla vidět slabá vedlejší maxima; graf ukazuje skutečnou intenzitu. Svislé tečkované čáry označují minima intenzity. Model počítá s ohybem na štěrbině nekonečné délky v rovnoběžném svazku (Fraunhoferův ohyb).</p>
+        <p class="hint">Schéma nahoře je nakreslené svisle zvětšeně a štěrbina je zvětšená (její šířka v obrázku odpovídá posuvníku), aby šla vidět. Barevný pásek u stínítka ukazuje obrazec shora. Poloha na stínítku <i>x</i> je ale ve schématu, v obrazci i v grafu stejná. Pokud je jas zvýrazněný, je obrazec zobrazen jasněji než ve skutečnosti, aby byla vidět slabá vedlejší maxima; graf ukazuje skutečnou intenzitu. Svislé tečkované čáry označují minima intenzity. Model počítá s ohybem na štěrbině nekonečné délky v rovnoběžném svazku (Fraunhoferův ohyb).</p>
       </div>
 
       <div class="applet-results">
@@ -865,11 +864,11 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
   var PL = 70, PW = 860;              // vodorovný rozsah obrazce a grafu (stejný pro oba)
   var K = 1;                          // zvětšení písma na malém displeji (viz updateScale)
   var DEF = { lam:650, d:100, D:3.0, X:10 };
-  var st = { lam:DEF.lam, d:DEF.d, D:DEF.D, X:DEF.X, boost:true, geom:false };
+  var st = { lam:DEF.lam, d:DEF.d, D:DEF.D, X:DEF.X, boost:true };
 
   var slLam = document.getElementById('sl-lam'), slD = document.getElementById('sl-d'), slDist = document.getElementById('sl-D');
   var outLam = document.getElementById('out-lam'), outD = document.getElementById('out-d'), outDist = document.getElementById('out-D');
-  var boostBtn = document.getElementById('boost-btn'), geomBtn = document.getElementById('geom-btn'), resetBtn = document.getElementById('reset-btn');
+  var boostBtn = document.getElementById('boost-btn'), resetBtn = document.getElementById('reset-btn');
   var rangeBtns = document.querySelectorAll('#range-seg .chip');
   var RANGES = [2, 5, 10, 20];
 
@@ -954,9 +953,8 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
     o += '<g font-family="Work Sans, sans-serif" font-size="' + (Math.round(13 * Math.min(K, 2) * 10) / 10) + '" fill="var(--ink)">';
     // rovnoběžné paprsky zleva; ten ve středu vždy projde štěrbinou
     var yr, yi;
-    for(yi = -8; yi <= 8; yi++){
-      yr = yc + yi * 10;
-      if(yr < 20 || yr > 164) continue;
+    for(yi = -3; yi <= 3; yi++){                    // pevné paprsky, nezávislé na nastavení
+      yr = yc + yi * 22;
       var thr = yr > yA && yr < yB;
       o += '<line x1="28" y1="' + yr + '" x2="' + (xs - 4) + '" y2="' + yr + '" stroke="' + col + '" stroke-width="1.6" stroke-opacity="0.8" marker-end="url(#arr-in)"/>';
       if(thr){ o += '<line x1="' + xs + '" y1="' + yr + '" x2="' + (xs + 12) + '" y2="' + yr + '" stroke="' + col + '" stroke-width="1.6"/>'; }
@@ -967,10 +965,6 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
       var tail = x1 * 100 * ky > 64 ? 64 / (x1 * 100 * ky) : 1;
       var xe = xs + (xsc - xs) * tail;
       o += '<polygon clip-path="url(#side-clip)" points="' + xs + ',' + yA + ' ' + xe + ',' + (yc - yy) + ' ' + xe + ',' + (yc + yy) + ' ' + xs + ',' + yB + '" fill="' + col + '" fill-opacity="0.28"/>';
-      o += '<g clip-path="url(#side-clip)" stroke="' + col + '" stroke-width="1.6" stroke-dasharray="5 4"><line x1="' + xs + '" y1="' + yc + '" x2="' + xsc + '" y2="' + (yc - x1 * 100 * ky) + '"/><line x1="' + xs + '" y1="' + yc + '" x2="' + xsc + '" y2="' + (yc + x1 * 100 * ky) + '"/></g>';
-    }
-    if(st.geom){
-      o += '<line x1="' + xs + '" y1="' + yc + '" x2="' + xsc + '" y2="' + yc + '" stroke="var(--danger)" stroke-width="2.4"/>';
     }
     // překážka se štěrbinou
     o += '<line x1="' + xs + '" y1="14" x2="' + xs + '" y2="' + yA + '" stroke="var(--ink)" stroke-width="7"/>';
@@ -978,13 +972,6 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
     o += '<text x="' + (xs - 10) + '" y="12" text-anchor="end" fill="var(--ink-soft)">štěrbina</text>';
     // stínítko: pásek s obrazcem (pohled shora) a graf intenzity
     o += '<rect x="' + (xsc + 4) + '" y="' + (yc - 64) + '" width="14" height="128" fill="url(#side-grad)"/>';
-    var sp = [], SP = 192;
-    for(i = 0; i <= SP; i++){
-      var xcm = X - 2 * X * i / SP;
-      sp.push((xsc + 22 + inten(xcm / 100) * 62).toFixed(1) + ',' + (yc - xcm * ky).toFixed(1));
-    }
-    o += '<polygon points="' + (xsc + 22) + ',' + (yc - 64) + ' ' + sp.join(' ') + ' ' + (xsc + 22) + ',' + (yc + 64) + '" fill="' + col + '" fill-opacity="0.22"/>';
-    o += '<polyline points="' + sp.join(' ') + '" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linejoin="round"/>';
     o += '<line x1="' + xsc + '" y1="14" x2="' + xsc + '" y2="170" stroke="var(--ink)" stroke-width="4"/>';
     o += '<text x="' + (xsc + 8) + '" y="12" fill="var(--ink-soft)">stínítko (shora)</text>';
     // vzdálenost D
@@ -993,8 +980,8 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
     // šířka hlavního maxima L
     if(x1 > 0 && x1 * 100 <= X){
       var yl = x1 * 100 * ky;
-      o += '<line x1="' + (xsc + 94) + '" y1="' + (yc - yl) + '" x2="' + (xsc + 94) + '" y2="' + (yc + yl) + '" stroke="var(--accent)" stroke-width="1.8" marker-start="url(#arr-L)" marker-end="url(#arr-L)"/>';
-      o += '<text x="' + (xsc + 102) + '" y="' + (yc + 5) + '" font-style="italic" font-weight="700" fill="var(--accent)">L</text>';
+      o += '<line x1="' + (xsc + 28) + '" y1="' + (yc - yl) + '" x2="' + (xsc + 28) + '" y2="' + (yc + yl) + '" stroke="var(--accent)" stroke-width="1.8" marker-start="url(#arr-L)" marker-end="url(#arr-L)"/>';
+      o += '<text x="' + (xsc + 36) + '" y="' + (yc + 5) + '" font-style="italic" font-weight="700" fill="var(--accent)">L</text>';
     }
     o += '</g>';
 
@@ -1003,10 +990,6 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
     o += '<rect x="' + PL + '" y="' + by + '" width="' + PW + '" height="' + bh + '" fill="#000"/>';
     o += '<rect x="' + PL + '" y="' + by + '" width="' + PW + '" height="' + bh + '" fill="url(#pat-grad)"/>';
     o += '<rect x="' + PL + '" y="' + by + '" width="' + PW + '" height="' + bh + '" fill="none" stroke="var(--ink)" stroke-width="1.5"/>';
-    if(st.geom){
-      var gw = Math.max(2, dU * 1e-4 / (2 * X) * PW);
-      o += '<rect x="' + (px(0) - gw / 2) + '" y="' + by + '" width="' + gw + '" height="' + bh + '" fill="none" stroke="var(--danger)" stroke-width="2"/>';
-    }
     o += '<text x="' + PL + '" y="' + (by - 8) + '" font-family="Work Sans, sans-serif" font-size="' + (Math.round(13 * Math.min(K, 2) * 10) / 10) + '" fill="var(--ink-soft)">obrazec</text>';
 
     // ---------- C: graf intenzity ----------
@@ -1043,10 +1026,6 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
     }
     o += '<polygon points="' + PL + ',' + gy0 + ' ' + pts.join(' ') + ' ' + (PL + PW) + ',' + gy0 + '" fill="var(--accent)" fill-opacity="0.16"/>';
     o += '<polyline points="' + pts.join(' ') + '" fill="none" stroke="var(--accent)" stroke-width="2.6" stroke-linejoin="round"/>';
-    if(st.geom){
-      var gw2 = Math.max(2.5, dU * 1e-4 / (2 * X) * PW);
-      o += '<rect x="' + (px(0) - gw2 / 2) + '" y="' + gy(1) + '" width="' + gw2 + '" height="' + (gy0 - gy(1)) + '" fill="var(--danger)" fill-opacity="0.85"/>';
-    }
     // osy
     o += '<line x1="' + PL + '" y1="' + gy0 + '" x2="' + (PL + PW) + '" y2="' + gy0 + '" stroke="var(--ink)" stroke-width="1.5"/>';
     o += '<line x1="' + PL + '" y1="' + gy(vmax) + '" x2="' + PL + '" y2="' + gy0 + '" stroke="var(--ink)" stroke-width="1.5"/>';
@@ -1077,9 +1056,6 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
       o += '<line x1="' + xa + '" y1="' + yb + '" x2="' + xb + '" y2="' + yb + '" stroke="var(--accent)" stroke-width="1.8" marker-start="url(#arr-L)" marker-end="url(#arr-L)"/>';
       o += '<text x="' + ((xa + xb) / 2) + '" y="' + (yb - 6) + '" text-anchor="middle" fill="var(--accent)" font-weight="700" font-style="italic">L</text>';
     }
-    if(st.geom){
-      o += '<text x="' + (px(0) + 14) + '" y="' + (gy(1) + 14) + '" fill="var(--danger)" font-weight="700">geometrická optika</text>';
-    }
     o += '</g>';
     svg.innerHTML = o;
 
@@ -1090,8 +1066,7 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
     var sw = document.getElementById('legend');
     sw.innerHTML = '<span><svg width="26" height="12"><rect x="1" y="1" width="24" height="10" rx="2" fill="' + col + '"/></svg>barva světla pro vlnovou délku ' + lamN + ' nm</span>' +
                    '<span><svg width="26" height="10"><line x1="1" y1="5" x2="25" y2="5" stroke="var(--accent)" stroke-width="2.6"/></svg>relativní intenzita</span>' +
-                   '<span><svg width="26" height="10"><line x1="1" y1="5" x2="25" y2="5" stroke="var(--ink-soft)" stroke-width="1.4" stroke-dasharray="2 4"/></svg>minima</span>' +
-                   (st.geom ? '<span><svg width="26" height="10"><line x1="1" y1="5" x2="25" y2="5" stroke="var(--danger)" stroke-width="2.4"/></svg>geometrická optika</span>' : '');
+                   '<span><svg width="26" height="10"><line x1="1" y1="5" x2="25" y2="5" stroke="var(--ink-soft)" stroke-width="1.4" stroke-dasharray="2 4"/></svg>minima</span>';
     var s1 = (st.lam * 1e-9) / (st.d * 1e-6);
     var note = document.getElementById('position-note');
     if(s1 >= 1){
@@ -1150,12 +1125,10 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
     });
   }
   toggle(boostBtn, 'boost');
-  toggle(geomBtn, 'geom');
   resetBtn.addEventListener('click', function(){
-    st.lam = DEF.lam; st.d = DEF.d; st.D = DEF.D; st.X = DEF.X; st.boost = true; st.geom = false;
+    st.lam = DEF.lam; st.d = DEF.d; st.D = DEF.D; st.X = DEF.X; st.boost = true;
     slLam.value = DEF.lam; slD.value = DEF.d; slDist.value = DEF.D;
     boostBtn.classList.add('on'); boostBtn.setAttribute('aria-pressed', 'true');
-    geomBtn.classList.remove('on'); geomBtn.setAttribute('aria-pressed', 'false');
     Array.prototype.forEach.call(rangeBtns, function(c, ci){
       var on = RANGES[ci] === DEF.X;
       c.classList.toggle('on', on); c.setAttribute('aria-pressed', on ? 'true' : 'false');
