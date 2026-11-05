@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VA charakteristika diod — laboratorní práce</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="../spolecne/config.js"></script>
+<script src="../spolecne/auth.js"></script>
+<script src="../spolecne/zalozky.js?v=3"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../spolecne/styl.css">
+<style>
+:root{
+  --paper:#eef5ee;
+  --surface:#fbfef9;
+  --surface-2:#dce8da;
+  --ink:#1f2e22;
+  --ink-soft:#5c705d;
+  --line:rgba(31,46,34,0.12);
+  --accent:#2f7a4f;
+  --accent-ink:#f2fbf5;
+  --success:#28794f;
+  --success-bg:#e3efe0;
+  --danger:#b3392b;
+  --danger-bg:#f5e4de;
+  --focus:#1e6f66;
+  --shadow: 0 1px 0 rgba(31,46,34,0.06);
+}
+
+.panel p{ margin:0 0 8px; font-size:0.92rem; line-height:1.55; }
+.panel p:last-child{ margin-bottom:0; }
+.panel b{ color:var(--ink); }
+.katex{ font-size:1.05em; }
+
+.panel ol, .panel ul{ margin:0 0 8px; padding-left:1.5rem; font-size:0.92rem; line-height:1.6; }
+.panel ol:last-child, .panel ul:last-child{ margin-bottom:0; }
+.panel li{ margin-bottom:3px; }
+
+.lab-title{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.5rem;
+  text-align:center;
+  margin:0 0 18px;
+}
+.task-id{ font-weight:700; color:var(--accent); margin-right:4px; }
+.task{ margin-bottom:10px; }
+.task > ol{ margin-top:4px; }
+.error-bar{ color:var(--ink-soft); font-style:italic; }
+
+.lab-table-wrap{ display:flex; justify-content:center; margin:6px 0 16px; overflow-x:auto; }
+.lab-table{
+  border-collapse:collapse;
+  font-size:0.92rem;
+  background:var(--surface);
+}
+.lab-table th, .lab-table td{
+  border:1px solid var(--ink);
+  padding:6px 4px;
+  text-align:center;
+  min-width:64px;
+  height:26px;
+}
+.lab-table thead th{ font-weight:400; line-height:1.3; }
+.lab-table .hd{ display:inline-block; }
+.lab-table .hd-top{ display:block; padding-bottom:2px; margin-bottom:2px; border-bottom:1px solid var(--ink); }
+.lab-table tbody tr.sum-start td{ border-top:3px double var(--ink); }
+
+.attribution{
+  margin-top:24px;
+  font-size:0.78rem;
+  color:var(--ink-soft);
+  text-align:center;
+  line-height:1.5;
+}
+.attribution a{ color:var(--accent); }
+
+.callout{
+  background:var(--success-bg);
+  border-left:4px solid var(--accent);
+  border-radius:6px;
+  padding:10px 14px;
+  margin:10px 0;
+  font-size:0.92rem;
+  line-height:1.55;
+}
+.callout.warn{ background:var(--danger-bg); border-left-color:var(--danger); }
+
+.theory-fig{
+  margin:12px 0 10px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:10px 12px 8px;
+}
+.theory-fig svg{ display:block; width:100%; max-width:460px; height:auto; margin:0 auto; }
+.theory-fig svg text{ font-family:'Work Sans', sans-serif; fill:var(--ink); }
+.theory-fig figcaption{
+  font-size:0.8rem;
+  color:var(--ink-soft);
+  line-height:1.45;
+  text-align:center;
+  margin-top:4px;
+}
+
+.table-caption{ text-align:center; font-weight:700; margin:12px 0 6px !important; }
+.panel a{ color:var(--accent); }
+
+@media (max-width:520px){
+  .lab-table th, .lab-table td{ min-width:44px; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <a class="back-link" href="../rozcestniky/mereni.html">← Zpět na Měření</a>
+
+  <div class="brand">
+    <div class="brand-lockup">
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M4 20 H12 M28 20 H36" stroke="var(--ink)" stroke-width="2"/>
+        <path d="M12 10 L28 20 L12 30 Z" fill="var(--accent)" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M28 10 V30" stroke="var(--accent)" stroke-width="2.6"/>
+      </svg>
+      <div class="brand-text">
+        <h1>3. Laboratorní práce</h1>
+        <p>VA charakteristika diod</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="top-tabs">
+    <button class="toptab on" id="top-tab-zadani" data-tab="zadani">Zadání</button>
+  </div>
+
+  <!-- ============ ZADÁNÍ ============ -->
+  <div id="zadani-section" class="tab-section">
+
+    <h2 class="lab-title">3. Měření voltampérové charakteristiky diod</h2>
+
+    <div class="panel">
+      <div class="panel-title">Úkoly</div>
+      <div class="task"><p><span class="task-id">Ú1.</span> Změřte závislost proudu na napětí u křemíkové diody v propustném směru.</p></div>
+      <div class="task"><p><span class="task-id">Ú2.</span> Změřte závislost proudu na napětí u zelené LEDky v propustném směru.</p></div>
+      <div class="task"><p><span class="task-id">Ú3.</span> Z naměřených závislostí vytvořte VA charakteristiky.</p></div>
+      <div class="task"><p><span class="task-id">Ú4.</span> Určete prahové napětí diod.</p></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Pomůcky</div>
+      <p>vodiče, spínač, potenciometr 470&nbsp;Ω, modul diod s ochrannými odpory, zdroj napětí (<span class="error-bar">doplňte hodnotu napětí použitého zdroje</span>), systém Vernier – přenosný datalogger LabQuest&nbsp;2, voltmetr VP-BTA, ampérmetr DCP-BTA.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Teoretický úvod</div>
+      <p>V teoretickém úvodu zodpovězte následující úkoly:</p>
+      <div class="task"><p><span class="task-id">T1.</span> Jaký průběh má VA charakteristika diod?</p></div>
+      <div class="task"><p><span class="task-id">T2.</span> Co je prahové napětí?</p></div>
+      <div class="task"><p><span class="task-id">T3.</span> Jaké je prahové napětí měřených diod podle katalogů? Použijte katalogové listy: <a href="soubory/datasheet-1n4007.pdf" target="_blank" rel="noopener">křemíková dioda 1N4007 (PDF)</a> a <a href="soubory/datasheet-led-bl-b2134-1.pdf" target="_blank" rel="noopener">zelená LED BL-B2134-1 (PDF)</a>.</p></div>
+      <div class="task">
+        <p><span class="task-id">T4.</span> Proložíte-li „propustnou částí“ VA charakteristiky diody přímku, určíte prahové napětí diody jako průsečík grafu této funkce s osou&nbsp;\(U\) (v tomto bodě je proud diodou nulový). Odvoďte z následující rovnice vztah pro výpočet prahového napětí. \(A\), \(B\) jsou parametry, \(I\) proud diodou a \(U\) napětí na diodě.</p>
+        \[ I = A\cdot U + B \]
+      </div>
+      <div class="task"><p><span class="task-id">T5.</span> Určení hodnoty prahového napětí je měření přímé, nebo nepřímé?</p></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Postup práce</div>
+
+      <p><b>Příprava na měření:</b> Obvod zapojte podle schématu na obr.&nbsp;1. Na panelu už máte předem vodivě spojený rezistor s diodou a červená zdířka musí být zapojena s kladným pólem zdroje. Při prvním měření použijete vývody u křemíkové diody, při druhém přepojíte „banánky“ k zelené diodě. Jako voltmetr a ampérmetr tentokrát využijete sondy systému Vernier. Pro záznam hodnot budete muset použít datalogger, k němuž obě sondy připojíte pomocí vstupů CH1 a CH2.</p>
+
+      <figure class="theory-fig">
+        <svg viewBox="0 20 420 190" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Schéma zapojení: zdroj 6 V a spínač napájí potenciometr. Z jeho jezdce vede proud přes ochranný rezistor do diody zapojené v propustném směru. Ampérmetr je zapojen v sérii s diodou, voltmetr paralelně k diodě.">
+          <defs>
+            <marker id="sch-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M0,0 L10,5 L0,10 z" fill="var(--ink)"/>
+            </marker>
+          </defs>
+          <g stroke="var(--ink)" stroke-width="2" fill="none">
+            <!-- vodiče -->
+            <path d="M40 100 V40 H150 V75"/>
+            <path d="M40 112 V190 H70"/>
+            <path d="M110 190 H380 V131"/>
+            <path d="M150 155 V190"/>
+            <path d="M200 115 V40 H380 V99"/>
+            <path d="M310 40 V100 M310 124 V190"/>
+            <!-- spínač -->
+            <circle cx="73" cy="190" r="3" fill="var(--surface)"/>
+            <circle cx="107" cy="190" r="3" fill="var(--surface)"/>
+            <path d="M75 188 L103 175"/>
+            <!-- zdroj -->
+            <path d="M24 100 H56" stroke-width="2.4"/>
+            <path d="M32 112 H48" stroke-width="5"/>
+            <!-- potenciometr s jezdcem -->
+            <rect x="142" y="75" width="16" height="80" fill="var(--surface)"/>
+            <path d="M200 115 H161" marker-end="url(#sch-arr)"/>
+            <!-- ochranný rezistor -->
+            <rect x="228" y="32" width="52" height="16" fill="var(--surface)"/>
+            <!-- dioda (propustný směr) -->
+            <path d="M296 100 H324 L310 124 Z" fill="var(--surface)" stroke-linejoin="round"/>
+            <path d="M296 124 H324"/>
+            <!-- měřicí přístroje -->
+            <circle cx="380" cy="115" r="16" fill="var(--surface)"/>
+            <circle cx="230" cy="190" r="16" fill="var(--surface)"/>
+          </g>
+          <g fill="var(--ink)">
+            <circle cx="310" cy="40" r="3.4"/>
+            <circle cx="310" cy="190" r="3.4"/>
+            <circle cx="150" cy="190" r="3.4"/>
+          </g>
+          <text x="380" y="121" text-anchor="middle" font-size="17">V</text>
+          <text x="230" y="196" text-anchor="middle" font-size="17">A</text>
+          <text x="14" y="98" text-anchor="middle" font-size="15">+</text>
+          <text x="14" y="120" text-anchor="middle" font-size="15">−</text>
+          <text x="62" y="111" font-size="13">6&#160;V</text>
+        </svg>
+        <figcaption>Obr. 1: Schéma zapojení obvodu</figcaption>
+      </figure>
+
+      <p>Spolu s vyučujícím projdete program LoggerPro a seznámíte se s jeho funkcemi. Následně si program nastavíte podle pokynů.</p>
+
+      <p><b>VA charakteristika křemíkové diody:</b> Vyučující nastaví na zdroji napětí 6&nbsp;V. Spusťte měření v LoggerPro a potenciometrem zvyšujte napětí na diodě. V patřičných okamžicích zaznamenejte do přístroje měřené hodnoty. Měření budete provádět ve dvou krocích, mezi kterými není nutné obvod vypínat:</p>
+      <ul>
+        <li><b>v 1. kroku</b> sledujte napětí a nastavte hodnoty přibližně na 0&nbsp;mV, 100&nbsp;mV, 200&nbsp;mV, 300&nbsp;mV, 400&nbsp;mV, 500&nbsp;mV,</li>
+        <li><b>ve 2. kroku</b> sledujte proud a nastavte přibližně 1&nbsp;mA, 2&nbsp;mA, 4&nbsp;mA, 6&nbsp;mA, 8&nbsp;mA, 10&nbsp;mA, 20&nbsp;mA a dále po 20&nbsp;mA až do maximální hodnoty.</li>
+      </ul>
+      <p>Po poslední hodnotě ukončete měření a zkopírujte si hodnoty do ztabulkového editoru.</p>
+      <p>Následně se přesuňte ke grafu, označte v něm oblast, kdy diodou prokazatelně procházel proud, a proložte jí příslušnou přímku. Získané parametry si zaokrouhlené zapište včetně odchylek.</p>
+
+      <p><b>VA charakteristika LEDky:</b> Po „přepíchnutí banánků“ opět spusťte měření (předchozí měření „vyřaďte“) a</p>
+      <ul>
+        <li><b>v 1. kroku</b> nastavujte napětí na cca 0&nbsp;V; 0,4&nbsp;V; 0,8&nbsp;V; 1,2&nbsp;V; 1,5&nbsp;V; 1,8&nbsp;V,</li>
+        <li><b>ve 2. kroku</b> nastavujte proud diodou 1&nbsp;mA, 2&nbsp;mA a pak po cca 2&nbsp;mA až do 30&nbsp;mA.</li>
+      </ul>
+      <div class="callout warn"><b>Pozor: dioda nesnese větší proud než 35&nbsp;mA!</b></div>
+      <p>Zastavte měření, zkopírujte si naměřené hodnoty a určete parametry regresní přímky.</p>
+
+      <p><b>Grafy:</b> Stejně jako u VA charakteristiky žárovky a rezistoru vytvořte dva bodové XY grafy, pro každou diodu zvlášť.</p>
+
+      <p><b>Prahová napětí:</b> Hodnoty parametrů získané z LoggerPro dosaďte do vztahů z teoretického úvodu a vypočítejte hodnoty prahového napětí, případně absolutní a relativní odchylky. Dosazení zapište, aby bylo možné ověřit správnost výsledku. Nezapomeňte výsledek také správně zapsat.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Návrh vzhledu tabulek</div>
+      <p class="table-caption">Dioda Si</p>
+      <div class="lab-table-wrap">
+        <table class="lab-table">
+          <thead>
+            <tr>
+              <th><span class="hd"><span class="hd-top">Č.&nbsp;M.</span>i</span></th>
+              <th><span class="hd"><span class="hd-top">\(U\)</span>V</span></th>
+              <th><span class="hd"><span class="hd-top">\(I\)</span>mA</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td></td><td></td></tr>
+            <tr><td>2</td><td></td><td></td></tr>
+            <tr><td>⋮</td><td></td><td></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="table-caption">LEDka</p>
+      <div class="lab-table-wrap">
+        <table class="lab-table">
+          <thead>
+            <tr>
+              <th><span class="hd"><span class="hd-top">Č.&nbsp;M.</span>i</span></th>
+              <th><span class="hd"><span class="hd-top">\(U\)</span>V</span></th>
+              <th><span class="hd"><span class="hd-top">\(I\)</span>mA</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td></td><td></td></tr>
+            <tr><td>2</td><td></td><td></td></tr>
+            <tr><td>⋮</td><td></td><td></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Závěr měření</div>
+      <p>Odpovězte na následující dotazy:</p>
+      <div class="task"><p><span class="task-id">Z1.</span> Zhodnoťte, zda předpovědi průběhu VA charakteristik z teoretického úvodu souhlasí s naměřenými daty.</p></div>
+      <div class="task"><p><span class="task-id">Z2.</span> Porovnejte teoretickou (katalogovou) a vypočítanou hodnotu prahového napětí.</p></div>
+    </div>
+
+    <p class="attribution">
+      Zadání vytvořil Václav Skřivan, Gymnázium Jaroslava Vrchlického, Klatovy.<br>
+      Licence <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.cs" target="_blank" rel="noopener">Creative Commons Uveď původ–Nepoužívej komerčně–Zachovej licenci 4.0 Mezinárodní</a>.
+    </p>
+  </div>
+
+  <footer>Fyzika — Měření</footer>
+</div>
+
+<script src="../spolecne/spolecne.js"></script>
+<script>
+  if(window.renderMathInElement){
+    renderMathInElement(document.body, {
+      delimiters: [{left:'\\(', right:'\\)', display:false}, {left:'\\[', right:'\\]', display:true}]
+    });
+  }
+
+  try{ makePanelsCollapsible(document); }catch(e){}
+</script>
+
+</body>
+</html>

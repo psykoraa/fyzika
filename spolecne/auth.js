@@ -37,6 +37,7 @@
     'neprime-mereni.html': 'mereni',
     'krabicka-multivitaminu.html': 'mereni',
     'plastove-disky.html': 'mereni',
+    'va-charakteristika-diod.html': 'mereni',
     'pravidla-pro-vyuzivani-ai.html': 'mereni',
     'jak-psat-protokol.html': 'mereni',
     'kalkulacka-fx82cex.html': 'kvinta',
@@ -50,7 +51,9 @@
     'cocky.html': 'oktava',
     'zorny-uhel-a-lupa.html': 'oktava',
     'mikroskop.html': 'oktava',
-    'dalekohled.html': 'oktava'
+    'dalekohled.html': 'oktava',
+    'difrakce-svetla.html': 'oktava',
+    'interference-svetla.html': 'oktava'
   };
 
   // auth.js vždy žije na <kořen webu>/spolecne/auth.js — z jeho vlastní (absolutní)
@@ -92,6 +95,9 @@
       { d: 'hra-120s', key: 'fyzika:prevody-jednotek:game-bests', field: '120' },
       { d: 'hra-180s', key: 'fyzika:prevody-jednotek:game-bests', field: '180' },
       { d: 'hra-300s', key: 'fyzika:prevody-jednotek:game-bests', field: '300' }
+    ],
+    'pohyb-po-kruznici.html': [
+      { d: 'serie', key: 'fyzika:pohyb-po-kruznici:stats', field: 'bestStreak' }
     ],
     'skladani-vektoru.html': [
       { d: 'serie', key: 'fyzika:skladani-vektoru:stats', field: 'bestStreak' },

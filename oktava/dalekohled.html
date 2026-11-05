@@ -174,7 +174,7 @@ button.btn.fs-btn svg{ flex:none; }
 .slider-row input[type=range]{ flex:1 1 220px; min-width:0; height:34px; margin:0; accent-color:var(--accent); cursor:pointer; }
 .slider-row input[type=range]:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
 .slider-val{
-  flex:0 0 112px;
+  flex:0 0 140px;
   font-weight:600;
   font-size:0.95rem;
   font-variant-numeric:tabular-nums;
@@ -210,6 +210,12 @@ svg.optics{
   -webkit-user-select:none;
 }
 svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke:var(--surface); stroke-width:4px; stroke-linejoin:round; }
+svg.optics .eye-hit{ cursor:grab; fill:transparent; }
+svg.optics .eye-hit:focus{ outline:none; }
+svg.optics .eye-group.dragging .eye-hit{ cursor:grabbing; }
+svg.optics .eye-group:hover .eye-lens,
+svg.optics .eye-group.focused .eye-lens,
+svg.optics .eye-group.dragging .eye-lens{ stroke:var(--accent); }
 
 .legend{
   display:flex;
@@ -308,11 +314,12 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
   display:flex; flex-direction:column;
 }
 .applet-card.is-full svg.optics{ flex:1 1 auto; min-height:0; width:100%; height:100%; max-height:none; }
+/* legenda je pod obrázkem (ne přes něj), aby při menší výšce obrazovky nezakrývala popisky */
 .applet-card.is-full .legend{
-  position:absolute; right:12px; bottom:12px; z-index:1;
-  max-width:min(520px, calc(100% - 24px));
-  background:rgba(253,252,255,0.9);
-  border:1px solid var(--line); border-radius:8px;
+  flex:none; position:static;
+  justify-content:center;
+  padding:6px 14px;
+  background:var(--surface);
 }
 /* telefon na výšku, který neumí zamknout orientaci (např. iPhone): karta se otočí o 90° */
 .applet-card.is-full.rotated{
@@ -569,7 +576,7 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
         <div class="applet-head-text">
           <span class="cat-tag">Aplet</span>
           <h2>Vyberte si dalekohled</h2>
-          <p class="desc">Přepínačem zvolíte <b>Keplerův</b>, <b>Galileův</b>, <b>Newtonův</b> nebo <b>Cassegrainův</b> dalekohled. Posuvníky měníte skutečné ohniskové vzdálenosti (v milimetrech) <b>objektivu</b> (u zrcadlových dalekohledů <b>hlavního zrcadla</b>) <i>f</i><sub>1</sub> a <b>okuláru</b> <i>f</i><sub>2</sub>; u Cassegrainova dalekohledu i zvětšení <i>m</i> vedlejšího zrcadla. Ze vzdáleného předmětu přicházejí dva svazky rovnoběžných paprsků: jeden ve směru osy a jeden šikmý, pod úhlem <i>τ</i>. Za okulárem vychází šikmý svazek pod větším úhlem <i>τ</i>′ a poměr obou úhlů je zvětšení <i>γ</i>. V dolním pásu uvidíte, jak by se Měsíc jevil pouhým okem a v dalekohledu; změňte okulár a obraz se zvětší nebo zmenší.</p>
+          <p class="desc">Přepínačem zvolíte <b>Keplerův</b>, <b>Galileův</b>, <b>Newtonův</b> nebo <b>Cassegrainův</b> dalekohled. Posuvníky měníte skutečné ohniskové vzdálenosti (v milimetrech) <b>objektivu</b> (u zrcadlových dalekohledů <b>hlavního zrcadla</b>) <i>f</i><sub>1</sub> a <b>okuláru</b> <i>f</i><sub>2</sub>; u Cassegrainova dalekohledu i zvětšení <i>m</i> vedlejšího zrcadla. Ze vzdáleného předmětu přicházejí dva svazky rovnoběžných paprsků: jeden ve směru osy a jeden šikmý, pod úhlem <i>τ</i>. Za okulárem vychází šikmý svazek pod větším úhlem <i>τ</i>′ a poměr obou úhlů je zvětšení <i>γ</i>. V dolním pásu uvidíte, jak by se Měsíc jevil pouhým okem a v dalekohledu; změňte okulár a obraz se zvětší nebo zmenší. Posuvníkem <b>Poloha okuláru</b> (nebo tažením okuláru v obrázku) měníte vzdálenost okuláru od objektivu, a tím dalekohled <b>zaostřujete</b>. Zaostřeno je, když obraz <i>y</i>′ z objektivu leží přesně v ohnisku okuláru.</p>
         </div>
         <button class="btn ghost fs-btn" id="fs-btn" type="button" aria-pressed="false">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path id="fs-icon" d="M1.5 5.5V1.5H5.5M10.5 1.5H14.5V5.5M14.5 10.5V14.5H10.5M5.5 14.5H1.5V10.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -606,9 +613,16 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
           <span class="slider-val" id="out-m" aria-live="polite"></span>
         </div>
 
+        <div class="mode-row slider-row">
+          <label class="mode-row-label" for="sl-dl" id="lab-dl">Poloha okuláru</label>
+          <input type="range" id="sl-dl" min="-8" max="8" step="0.1" value="0">
+          <span class="slider-val" id="out-dl" aria-live="polite"></span>
+        </div>
+
         <div class="mode-row">
           <span class="mode-row-label">Nastavení</span>
           <div class="seg">
+            <button class="chip accented" id="focus-btn" type="button" aria-pressed="false">Zaostřit (obraz z objektivu v ohnisku okuláru)</button>
             <button class="chip" id="reset-btn" type="button">Výchozí hodnoty</button>
           </div>
         </div>
@@ -624,7 +638,7 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
           <svg class="optics" id="optics-svg" viewBox="0 0 800 460" role="img" aria-label="Dalekohled: dva svazky rovnoběžných paprsků procházejí objektivem a okulárem; pod schématem je Měsíc viděný pouhým okem a dalekohledem."></svg>
           <div class="legend" id="legend" aria-hidden="true"></div>
         </div>
-        <p class="hint">Schéma není v měřítku: skutečný objektiv má ohniskovou vzdálenost stovky milimetrů a okulár jen desítky, takže by okulár ve skutečném poměru nebyl vidět. Ohniskové vzdálenosti jsou proto ve schématu převedené na vhodné rozměry, průměry čoček a zrcadel i úhel <i>τ</i> jsou zvětšené a pásmo se zvětšením pod schématem platí pro malé úhly. Hodnoty <i>γ</i>, <i>τ</i>′, <i>l</i> a <i>f</i> v číslech jsou skutečné. Stínění vedlejším zrcadlem se zanedbává.</p>
+        <p class="hint">Schéma není v měřítku: skutečný objektiv má ohniskovou vzdálenost stovky milimetrů a okulár jen desítky, takže by okulár ve skutečném poměru nebyl vidět. Ohniskové vzdálenosti jsou proto ve schématu převedené na vhodné rozměry, průměry čoček a zrcadel i úhel <i>τ</i> jsou zvětšené a pásmo se zvětšením pod schématem platí pro malé úhly. Hodnoty <i>γ</i>, <i>τ</i>′, <i>l</i> a <i>f</i> v číslech jsou skutečné. Stínění vedlejším zrcadlem se zanedbává. Okulár chytněte myší nebo prstem a táhněte ve směru osy; blízko správné polohy se posuv „přichytí“, takže zaostření trefíte přesně. Po označení okuláru jde poloha měnit klávesami ← → (jemně), Shift + ← → a PageUp, PageDown (hrubě); tlačítko <b>Zaostřit</b> nastaví přesnou polohu. Posun okuláru je ve schématu ve stejném poměru jako jeho ohnisková vzdálenost. Rozmazání Měsíce je jen názorné: odpovídá uvolněnému oku zaostřenému do nekonečna. Zvětšení <i>γ</i> je uvedeno pro zaostřený dalekohled.</p>
       </div>
 
       <div class="applet-results">
@@ -753,7 +767,11 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
   var Q = 5.5;                  // Newton: vzdálenost ohniska od osy tubusu (cm), ohnisko leží vně tubusu
   var D_FRAC = 0.7;             // Cassegrain: vedlejší zrcadlo je ve vzdálenosti d = 0,7 f1 od hlavního
   var EPS = 1e-9;
-  var NB = ' ';
+  // Poloha okuláru: δ = posun okuláru od zaostřené polohy (mm, kladný = dál od objektivu po dráze světla).
+  var DL_MIN = -8, DL_MAX = 8, DL_STEP = 0.1;
+  var SNAP = 0.3;               // do této vzdálenosti od zaostření se tažený okulár „přichytí“ (mm)
+  var TOL = 1e-6;               // |δ| menší než tohle = zaostřeno
+  var NB = '\u00a0';
   var K = 1, LK = 1;            // zvětšení písma a čar na malém displeji (viz updateScale)
 
   // T = tg úhlu τ ve schématu (zvětšený, aby byly úhly vidět; u zrcadlových dalekohledů menší, protože obraz je velký).
@@ -769,7 +787,7 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
   var state = { type:'kepler', p:{} };
   ORDER.forEach(function(t){
     var c = TYPES[t];
-    state.p[t] = { f1:c.f1.def, f2:c.f2.def, m:c.m ? c.m.def : 0 };   // skutečné hodnoty (mm)
+    state.p[t] = { f1:c.f1.def, f2:c.f2.def, m:c.m ? c.m.def : 0, dl:0 };   // skutečné hodnoty (mm)
   });
 
   var svg = document.getElementById('optics-svg');
@@ -848,14 +866,20 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
   function lerp(v, cfg){ return cfg.d0 + (v - cfg.min) / (cfg.max - cfg.min) * (cfg.d1 - cfg.d0); }
   // Skutečné hodnoty (mm) pro výpisy; schéma se počítá zvlášť z převedených rozměrů.
   function realResults(type, p){
-    var q = { f1:p.f1, f2:p.f2, m:p.m };
-    if(type === 'kepler'){ q.gamma = p.f1 / p.f2; q.l = p.f1 + p.f2; q.feff = p.f1; q.upright = false; }
-    else if(type === 'galileo'){ q.gamma = p.f1 / p.f2; q.l = p.f1 - p.f2; q.feff = p.f1; q.upright = true; }
+    var q = { f1:p.f1, f2:p.f2, m:p.m, dl:p.dl };
+    if(type === 'kepler'){ q.gamma = p.f1 / p.f2; q.l = p.f1 + p.f2 + p.dl; q.l0 = p.f1 + p.f2; q.feff = p.f1; q.upright = false; }
+    else if(type === 'galileo'){ q.gamma = p.f1 / p.f2; q.l = p.f1 - p.f2 + p.dl; q.l0 = p.f1 - p.f2; q.feff = p.f1; q.upright = true; }
     else if(type === 'newton'){ q.gamma = p.f1 / p.f2; q.l = p.f1; q.feff = p.f1; q.upright = false; }
     else {
       q.d = D_FRAC * p.f1; q.p = p.f1 - q.d; q.fs = p.m * q.p / (p.m - 1);
       q.feff = p.m * p.f1; q.gamma = q.feff / p.f2; q.l = q.d; q.back = p.m * q.p - q.d; q.upright = false;
     }
+    // s = vzdálenost obrazu y′ od okuláru (před spojkou, u rozptylky za ní);
+    // vergence světla za okulárem v dioptriích (kladná = rozbíhavé paprsky, zdánlivý obraz před okulárem)
+    q.focused = Math.abs(p.dl) < TOL;
+    if(type === 'galileo'){ q.s = p.f2 - p.dl; q.dioptre = q.focused ? 0 : 1000 * (1 / p.f2 - 1 / q.s); }
+    else { q.s = p.f2 + p.dl; q.dioptre = q.focused ? 0 : 1000 * (1 / q.s - 1 / p.f2); }
+    q.a2 = q.focused ? Infinity : 1000 / Math.abs(q.dioptre);       // vzdálenost výsledného obrazu od okuláru (mm)
     return q;
   }
   function compute(){
@@ -863,6 +887,8 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
     var S = c.S, R = c.R, T = c.T;
     var p = { f1:lerp(rp.f1, c.f1), f2:lerp(rp.f2, c.f2), m:rp.m };       // rozměry ve schématu (cm)
     var r = { type:type, f1:p.f1, f2:p.f2, m:p.m, c:c, real:realResults(type, rp) };
+    r.kd = p.f2 / rp.f2;                      // posun okuláru: cm ve schématu na 1 mm (ve stejném poměru jako f2)
+    r.dls = rp.dl * r.kd;                     // posun okuláru ve schématu (cm)
     var zm = (c.XM - X_START) / S;            // z první optické plochy (objektivu, hlavního zrcadla)
     var elems, D;
     if(type === 'kepler'){
@@ -888,14 +914,18 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
       elems = [{ z:zm, f:p.f1, role:'obj' }, { z:zm + r.d, f:-r.fs, role:'sec' },
                { z:zm + r.d + r.sp, f:Infinity, role:'focus' }, { z:zm + D, f:p.f2, role:'eye' }];
     }
-    r.zm = zm; r.D = D;
-    // výstupní pupila: tam, kde za okulárem protne osu paprsek ze středu objektivu (hlavního zrcadla);
-    // u Galileova dalekohledu je pupila zdánlivá, oko je proto kousek za ohniskem
+    r.zm = zm; r.D0 = D;
+    // výstupní pupila (pro zaostřený dalekohled): tam, kde za okulárem protne osu paprsek ze středu objektivu
+    // (hlavního zrcadla); u Galileova dalekohledu je pupila zdánlivá, oko je proto kousek za ohniskem
     var pe = at(trace(0, -T, elems, elems[elems.length - 1].z), 'eye');
     r.e = -pe.h / pe.u;
     if(type === 'galileo' || !(r.e > 0.5)) r.e = p.f2 + 1.8;
     r.pupilReal = type !== 'galileo';
-    var zEye = zm + D + r.e;
+    var zEye = zm + D + r.e;                  // konec paprsků zůstává na místě i při posunu okuláru
+    // posunutý okulár
+    D += r.dls; r.D = D;
+    elems[elems.length - 1].z = zm + D;
+    r.zF2 = zm + D + (type === 'galileo' ? p.f2 : -p.f2);   // ohnisko okuláru, které má splývat s obrazem y′
     // svazky: osový (A) a šikmý (B)
     var hs = (type === 'kepler' || type === 'galileo') ? [FRAC * R, 0, -FRAC * R] : [FRAC * R, -FRAC * R];
     r.rays = [];
@@ -1029,10 +1059,28 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
       ' L' + (X + w) + ',' + bot + ' Q' + X + ',' + mid + ' ' + (X + w) + ',' + top + ' Z';
   }
   // Čočka kolmá na osu v bodě (X, Y); rot = otočení o 90° pro svislou osu
-  function drawLens(X, Y, half, bulge, kind, rot){
-    var g = el('g', rot ? { transform:'rotate(90 ' + X + ' ' + Y + ')' } : {}, layerBase);
+  function drawLens(X, Y, half, bulge, kind, rot, parent, cls){
+    var g = el('g', rot ? { transform:'rotate(90 ' + X + ' ' + Y + ')' } : {}, parent || layerBase);
     var d = kind === 'neg' ? concavePath(X, Y - half, Y + half, 7 * LK) : lensPath(X, Y - half, Y + half, bulge * LK);
-    el('path', { d:d, fill:'var(--lens)', stroke:'var(--ink)', 'stroke-width':2.2 * LK, 'stroke-linejoin':'round' }, g);
+    var a = { d:d, fill:'var(--lens)', stroke:'var(--ink)', 'stroke-width':2.2 * LK, 'stroke-linejoin':'round' };
+    if(cls) a['class'] = cls;
+    el('path', a, g);
+    return g;
+  }
+  // Okulár s úchytem: tažením ve směru osy se mění jeho vzdálenost od objektivu (zaostřuje se).
+  var eyeGroup = null, dragging = false, eyeFocused = false, restoreFocus = false;
+  var eyeGeo = null;                         // poloha okuláru v obrázku, směr osy a px na 1 mm posunu (pro tažení)
+  function drawEyepiece(r, Pe, half, bulge, kind, rot, ux, uy){
+    eyeGroup = el('g', { 'class':'eye-group' + (dragging ? ' dragging' : '') + (eyeFocused ? ' focused' : '') }, layerObj);
+    drawLens(Pe.x, Pe.y, half, bulge, kind, rot, eyeGroup, 'eye-lens');
+    var hw = 22, hh = half + 6;
+    var ha = { 'class':'eye-hit', x:Pe.x - hw, y:Pe.y - hh, width:2 * hw, height:2 * hh,
+      tabindex:0, role:'slider', 'aria-label':'Okulár: ← → posun okuláru (zaostřování)',
+      'aria-valuemin':DL_MIN, 'aria-valuemax':DL_MAX, 'aria-valuenow':roundTo(state.p[r.type].dl, 1),
+      'aria-valuetext':dlText(r.type).replace(/<[^>]+>/g, '') };
+    if(rot) ha.transform = 'rotate(90 ' + Pe.x + ' ' + Pe.y + ')';
+    attachEyeEvents(el('rect', ha, eyeGroup));
+    eyeGeo = { x:Pe.x, y:Pe.y, ux:ux, uy:uy, half:half, k:r.kd * r.c.S };
   }
   function focusMark(x, y, parts, dx, dy, anchor){
     el('circle', { cx:x, cy:y, r:3.8 * LK, fill:'var(--ink)' }, layerBase);
@@ -1052,7 +1100,15 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
   function dirAng(p, q){ return Math.atan2(q.y - p.y, q.x - p.x); }
 
   // Pás pod schématem: Měsíc (τ = 0,5°) pouhým okem a v dalekohledu. Průměr obrazu odpovídá úhlu γτ
-  // při zorném poli 60°; orientace odpovídá typu dalekohledu.
+  // při zorném poli 60°; orientace odpovídá typu dalekohledu. Rozostření: Gaussovo rozmazání úměrné
+  // vergenci světla za okulárem v dioptriích (jako v apletu s mikroskopem, jen názorně).
+  function focusStatus(dioptre){
+    var a = Math.abs(dioptre);
+    if(a < 0.05) return { cls:'ok', label:'ostrý obraz', color:'var(--success)' };
+    if(a < 0.5) return { cls:'ok', label:'téměř ostrý obraz', color:'var(--success)' };
+    if(a < 3) return { cls:'mid', label:'mírně rozostřený obraz', color:'var(--ink)' };
+    return { cls:'bad', label:'silně rozostřený obraz', color:'var(--danger)' };
+  }
   function drawFov(r){
     var q = r.real, y0 = r.c.H, cy = y0 + 82, rf = 58, k = rf / (FIELD / 2);
     var ox = Math.round((W - 640) / 2), cx1 = ox + 110, cx2 = ox + 300, tx = ox + 410, i;
@@ -1067,7 +1123,13 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
     el('circle', { cx:cx1, cy:cy, r:Math.max(1.6, MOON / 2 * k), fill:'var(--ink)' }, layerFov);
     // dalekohledem: kotouč o poloměru (γ·0,5°/2), zbytek odřízne okraj zorného pole
     var rm = q.gamma * MOON / 2 * k, sg = q.upright ? 1 : -1;
+    var sigma = Math.min(4.5, 0.45 * Math.abs(q.dioptre));
     var g = el('g', { 'clip-path':'url(#clip-fov)' }, layerFov);
+    if(sigma >= 0.03){
+      var flt = el('filter', { id:'fov-blur', filterUnits:'userSpaceOnUse', x:cx2 - rf - 40, y:cy - rf - 40, width:2 * rf + 80, height:2 * rf + 80 }, defs);
+      el('feGaussianBlur', { stdDeviation:sigma.toFixed(2) }, flt);
+      g = el('g', { filter:'url(#fov-blur)' }, g);
+    }
     el('circle', { cx:cx2, cy:cy, r:rm, fill:'var(--surface)', stroke:'var(--ink)', 'stroke-width':1.6 * LK }, g);
     [[0.32, -0.38, 0.26], [-0.30, -0.12, 0.19], [0.12, 0.42, 0.15]].forEach(function(m){
       el('circle', { cx:cx2 + sg * m[0] * rm, cy:cy + sg * m[1] * rm, r:m[2] * rm, fill:'var(--ink-soft)', opacity:0.45 }, g);
@@ -1078,9 +1140,13 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
     arrowHead(layerFov, cx2 - rf - 8, cy, 1, 0, 'var(--accent)', 11 * LK);
     txt(layerFov, (cx1 + cx2) / 2, cy - 10 * K, [I('γ'), ' = ' + fmt(q.gamma, nd(q.gamma))], { 'font-size':15, 'font-weight':700, fill:'var(--accent)', 'text-anchor':'middle' });
     var tp = q.gamma * MOON;
-    txt(layerFov, tx, cy - 24 * K, ['Měsíc: ', I('τ'), ' = ' + fmt(MOON, 1) + '°'], { 'font-size':15, 'font-weight':700, fill:'var(--ink-soft)', 'text-anchor':'start' });
-    txt(layerFov, tx, cy + 2 * K, [I('τ'), '′ = ', I('γ'), I('τ'), ' = ' + fmt(tp, nd(tp)) + '°'], { 'font-size':15, 'font-weight':700, fill:'var(--ink)', 'text-anchor':'start' });
-    txt(layerFov, tx, cy + 28 * K, [q.upright ? 'obraz vzpřímený' : 'obraz převrácený' + (tp > FIELD ? ', Měsíc přesahuje zorné pole' : '')], { 'font-size':13, 'font-weight':600, fill:'var(--ink-soft)', 'text-anchor':'start' });
+    var Kf = Math.min(K, 1.9);                 // řádky textu vedle Měsíce
+    txt(layerFov, tx, cy - 33 * Kf, ['Měsíc: ', I('τ'), ' = ' + fmt(MOON, 1) + '°'], { 'font-size':15, 'font-weight':700, fill:'var(--ink-soft)', 'text-anchor':'start' });
+    txt(layerFov, tx, cy - 8 * Kf, [I('τ'), '′ = ', I('γ'), I('τ'), ' = ' + fmt(tp, nd(tp)) + '°'], { 'font-size':15, 'font-weight':700, fill:'var(--ink)', 'text-anchor':'start' });
+    txt(layerFov, tx, cy + 17 * Kf, [q.upright ? 'obraz vzpřímený' : 'obraz převrácený' + (tp > FIELD ? ', Měsíc přesahuje zorné pole' : '')], { 'font-size':13, 'font-weight':600, fill:'var(--ink-soft)', 'text-anchor':'start' });
+    var st = focusStatus(q.dioptre);
+    var stl = K > 1.3 ? st.label.replace(' obraz', '') : st.label;          // na malém displeji kratší text
+    txt(layerFov, tx, cy + 42 * Kf, [stl.charAt(0).toUpperCase() + stl.slice(1)], { 'font-size':14, 'font-weight':700, fill:st.color, 'text-anchor':'start' });
   }
 
   function render(){
@@ -1098,7 +1164,8 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
     var tubeR = 0;
     var paths = r.rays.map(function(ry){ return screenPath(r, ry.pts); });
     var axisPath = screenPath(r, r.axis);
-    var axisDir = dirAng(paths[0][paths[0].length - 2], paths[0][paths[0].length - 1]);   // směr osy za okulárem
+    var axisDir = dirAng(axisPath[axisPath.length - 2], axisPath[axisPath.length - 1]);   // směr osy za okulárem
+    var ux = Math.cos(axisDir), uy = Math.sin(axisDir);
     var P = function(role){
       for(var j = 0; j < axisPath.length; j++) if(axisPath[j].role === role) return axisPath[j];
       return null;
@@ -1111,7 +1178,7 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
     if(type === 'kepler' || type === 'galileo'){
       line(layerBase, 14, c.AY, W - 14, c.AY, 'var(--ink-soft)', 1.2, '10 4 2 4');
       drawLens(c.XM, c.AY, c.R * S, 3 + 8 / r.f1, 'pos', false);
-      drawLens(Pe.x, c.AY, eyeHalf * S, 2 + 9 / r.f2, type === 'kepler' ? 'pos' : 'neg', false);
+      drawEyepiece(r, { x:Pe.x, y:c.AY }, eyeHalf * S, 2 + 9 / r.f2, type === 'kepler' ? 'pos' : 'neg', false, ux, uy);
       txt(layerLabels, c.XM, c.AY - c.R * S - 8 * K, ['objektiv'], { 'font-size':13, 'font-weight':600, fill:'var(--ink-soft)', 'text-anchor':'middle' });
       txt(layerLabels, Pe.x, c.AY - eyeHalf * S - 8 * K, ['okulár'], { 'font-size':13, 'font-weight':600, fill:'var(--ink-soft)', 'text-anchor':'middle' });
     } else if(type === 'newton'){
@@ -1135,7 +1202,7 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
       var fl = (hFlatMax + 0.3) * S;
       line(layerBase, g.xd - fl, c.AY - fl, g.xd + fl, c.AY + fl, 'var(--ink)', 5);
       // okulár (nad tubusem)
-      drawLens(Pe.x, Pe.y, eyeHalf * S, 2 + 9 / r.f2, 'pos', true);
+      drawEyepiece(r, Pe, eyeHalf * S, 2 + 9 / r.f2, 'pos', true, ux, uy);
       var nm1 = txt(layerLabels, c.XM, yBot + Kd(22), ['hlavní zrcadlo'], { 'font-size':13, 'font-weight':600, fill:'var(--ink-soft)', 'text-anchor':'middle' });
       var nm2 = txt(layerLabels, g.xd, yBot + Kd(22), ['rovinné zrcadlo'], { 'font-size':13, 'font-weight':600, fill:'var(--ink-soft)', 'text-anchor':'middle' });
       avoidOverlap(nm1, nm2, Kd(18));
@@ -1170,7 +1237,7 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
       for(hh = -hsec; hh <= hsec + 1e-9; hh += hsec / 6) sp.push({ x:gc.xs - hh * hh / (4 * r.fs) * S, y:c.AY - hh * S });
       poly(layerBase, sp, 'var(--ink)', 3 * LK);
       el('path', { d:'M' + sp.map(function(q){ return q.x + ',' + q.y; }).join(' L') + ' L' + (gc.xs - 10) + ',' + sp[sp.length - 1].y + ' L' + (gc.xs - 10) + ',' + sp[0].y + ' Z', fill:'var(--lens)' }, layerBase);
-      drawLens(Pe.x, c.AY, eyeHalf * S, 2 + 9 / r.f2, 'pos', false);
+      drawEyepiece(r, { x:Pe.x, y:c.AY }, eyeHalf * S, 2 + 9 / r.f2, 'pos', false, ux, uy);
       var nc1 = txt(layerLabels, c.XM, yB + Kd(22), ['hlavní zrcadlo'], { 'font-size':13, 'font-weight':600, fill:'var(--ink-soft)', 'text-anchor':'middle' });
       var nc2 = txt(layerLabels, gc.xs, yB + Kd(22), ['vedlejší zrcadlo'], { 'font-size':13, 'font-weight':600, fill:'var(--ink-soft)', 'text-anchor':'middle' });
       avoidOverlap(nc1, nc2, Kd(18));
@@ -1184,15 +1251,22 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
     });
 
     // --- ohnisko, obraz y′ ---
-    var Pf, tip;
+    var Pf, tip, focused = r.real.focused;
+    // ohniska F1′ a F2: u zaostřeného dalekohledu splývají, jinak se kreslí zvlášť (popisky od sebe)
+    function focusPair(dy){
+      if(focused){ focusMark(Pf.x, Pf.y, [I('F'), SUB('1'), '′ = ', I('F'), SUB('2')], 0, dy, 'middle'); return; }
+      var x2 = px(r.zF2, c), right = x2 > Pf.x;
+      focusMark(Pf.x, Pf.y, [I('F'), SUB('1'), '′'], right ? 4 : -4, dy, right ? 'end' : 'start');
+      focusMark(x2, Pf.y, [I('F'), SUB('2')], right ? 4 : -4, dy, right ? 'start' : 'end');
+    }
     if(type === 'kepler'){
       Pf = { x:px(r.zm + r.f1, c), y:c.AY };
       tip = { x:Pf.x, y:pxy(r.hImg, c) };
-      focusMark(Pf.x, Pf.y, [I('F'), SUB('1'), '′ = ', I('F'), SUB('2')], 0, -11, 'middle');
+      focusPair(-11);
     } else if(type === 'galileo'){
       Pf = { x:px(r.zm + r.f1, c), y:c.AY };
       tip = { x:Pf.x, y:pxy(r.hImg, c) };
-      focusMark(Pf.x, Pf.y, [I('F'), SUB('1'), '′ = ', I('F'), SUB('2')], 0, 40, 'middle');
+      focusPair(40);
       // paprsky by se v obrazové rovině objektivu protly; okulár je zachytí dřív
       r.rays.forEach(function(ry){
         if(ry.bundle !== 'B') return;
@@ -1233,10 +1307,10 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
     // --- kóty ---
     if(type === 'kepler'){
       dimension(layerObj, c.XM, Pf.x, c.AY + 95, [I('f'), SUB('1')], 'var(--ink)');
-      dimension(layerObj, Pf.x, Pe.x, c.AY + 95, [I('f'), SUB('2')], 'var(--accent)');
+      dimension(layerObj, px(r.zF2, c), Pe.x, c.AY + (focused ? 95 : 70), [I('f'), SUB('2')], 'var(--accent)');
     } else if(type === 'galileo'){
       dimension(layerObj, c.XM, Pf.x, c.AY + 95, [I('f'), SUB('1')], 'var(--ink)');
-      dimension(layerObj, Pe.x, Pf.x, c.AY + 70, ['|', I('f'), SUB('2'), '|'], 'var(--accent)');
+      dimension(layerObj, Pe.x, px(r.zF2, c), c.AY + 70, ['|', I('f'), SUB('2'), '|'], 'var(--accent)');
     }
 
     var q = r.real, vals = [];
@@ -1282,7 +1356,8 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
   var outF1 = document.getElementById('out-f1'), outF2 = document.getElementById('out-f2'), outM = document.getElementById('out-m');
   var lab1 = document.getElementById('lab-f1'), lab2 = document.getElementById('lab-f2');
   var rowM = document.getElementById('row-m');
-  var resetBtn = document.getElementById('reset-btn');
+  var slDl = document.getElementById('sl-dl'), outDl = document.getElementById('out-dl');
+  var resetBtn = document.getElementById('reset-btn'), focusBtn = document.getElementById('focus-btn');
   var typeBtns = {};
   ORDER.forEach(function(t){
     var b = document.getElementById('type-' + t);
@@ -1305,8 +1380,86 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
   slM.addEventListener('input', function(){ setParam('m', parseFloat(slM.value)); });
   resetBtn.addEventListener('click', function(){
     var c = TYPES[state.type], p = state.p[state.type];
-    p.f1 = c.f1.def; p.f2 = c.f2.def; if(c.m) p.m = c.m.def;
+    p.f1 = c.f1.def; p.f2 = c.f2.def; if(c.m) p.m = c.m.def; p.dl = 0;
     render();
+  });
+
+  // Poloha okuláru: Keplerův a Galileův dalekohled ukazují vzdálenost čoček l, zrcadlové vzdálenost s okuláru od ohniska F.
+  function dlText(type){
+    var p = state.p[type], q = realResults(type, p);
+    if(type === 'kepler' || type === 'galileo') return '<i>l</i> = ' + fmtT(q.l, 1) + NB + 'mm';
+    return '<i>s</i> = ' + fmt(q.s, 1) + NB + 'mm';
+  }
+  // Posun okuláru: poblíž zaostření se přichytí na přesnou polohu (kromě ovládání klávesami).
+  function setDl(v, noSnap){
+    var p = state.p[state.type];
+    if(noSnap) v = Math.max(DL_MIN, Math.min(DL_MAX, Math.round(v * 1000) / 1000));
+    else{
+      v = snap(v, DL_STEP, DL_MIN, DL_MAX);
+      if(Math.abs(v) < SNAP) v = 0;
+    }
+    if(Math.abs(v) < TOL) v = 0;
+    if(v === p.dl) return;
+    p.dl = v; render();
+  }
+  var kbSlider = false;
+  slDl.addEventListener('keydown', function(){ kbSlider = true; });
+  slDl.addEventListener('pointerdown', function(){ kbSlider = false; });
+  slDl.addEventListener('input', function(){ setDl(parseFloat(slDl.value), kbSlider); });
+  focusBtn.addEventListener('click', function(){ state.p[state.type].dl = 0; render(); });
+
+  function svgPoint(e){
+    var pt = svg.createSVGPoint();
+    pt.x = e.clientX; pt.y = e.clientY;
+    return pt.matrixTransform(svg.getScreenCTM().inverse());
+  }
+  function attachEyeEvents(hit){
+    hit.addEventListener('keydown', function(e){
+      var step = 0, base = e.shiftKey ? 1 : 0.1;
+      if(e.key === 'ArrowRight' || e.key === 'ArrowUp') step = base;     // dál od objektivu
+      else if(e.key === 'ArrowLeft' || e.key === 'ArrowDown') step = -base;
+      else if(e.key === 'PageUp') step = 2;
+      else if(e.key === 'PageDown') step = -2;
+      if(!step) return;
+      e.preventDefault(); restoreFocus = true;
+      setDl(state.p[state.type].dl + step, true);
+      restoreFocus = false;
+    });
+    hit.addEventListener('focus', function(){ eyeFocused = true; if(eyeGroup) eyeGroup.classList.add('focused'); });
+    hit.addEventListener('blur', function(){ eyeFocused = false; if(eyeGroup) eyeGroup.classList.remove('focused'); });
+    if(restoreFocus){ restoreFocus = false; hit.focus(); }
+  }
+  // Okulár jde chytit v pásu kolem něj (prstem kousek širším); táhne se ve směru osy za okulárem.
+  var grab = null;
+  function grabAt(e, touch){
+    if(!eyeGeo) return false;
+    var loc = svgPoint(e), m = svg.getScreenCTM();
+    var scr = Math.hypot(m.a, m.b) || 1;
+    var dx = loc.x - eyeGeo.x, dy = loc.y - eyeGeo.y;
+    var along = dx * eyeGeo.ux + dy * eyeGeo.uy, across = -dx * eyeGeo.uy + dy * eyeGeo.ux;
+    if(Math.abs(along) * scr > (touch ? 30 : 22) || Math.abs(across) > eyeGeo.half + 12) return false;
+    grab = { x:loc.x, y:loc.y, dl:state.p[state.type].dl, ux:eyeGeo.ux, uy:eyeGeo.uy, k:eyeGeo.k };
+    return true;
+  }
+  svg.addEventListener('touchstart', function(e){
+    if(e.touches.length === 1 && grabAt(e.touches[0], true)) e.preventDefault();
+  }, { passive:false });
+  svg.addEventListener('pointerdown', function(e){
+    if(!grabAt(e, e.pointerType === 'touch')) return;
+    dragging = true; if(eyeGroup) eyeGroup.classList.add('dragging');
+    try{ svg.setPointerCapture(e.pointerId); }catch(err){}
+    e.preventDefault();
+  });
+  svg.addEventListener('pointermove', function(e){
+    if(!dragging || !grab) return;
+    e.preventDefault();
+    var loc = svgPoint(e);
+    setDl(grab.dl + ((loc.x - grab.x) * grab.ux + (loc.y - grab.y) * grab.uy) / grab.k, false);
+  });
+  ['pointerup', 'pointercancel'].forEach(function(ev){
+    svg.addEventListener(ev, function(){
+      if(dragging){ dragging = false; grab = null; if(eyeGroup) eyeGroup.classList.remove('dragging'); }
+    });
   });
 
   function setRange(sl, cfg, v){
@@ -1322,6 +1475,11 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
     setRange(slF1, c.f1, p.f1); setRange(slF2, c.f2, p.f2);
     outF1.innerHTML = '<i>f</i><sub>1</sub> = ' + fmtT(p.f1, 0) + '&nbsp;mm';
     outF2.innerHTML = (type === 'galileo' ? '|<i>f</i><sub>2</sub>|' : '<i>f</i><sub>2</sub>') + ' = ' + fmtT(p.f2, 0) + '&nbsp;mm';
+    slDl.min = DL_MIN; slDl.max = DL_MAX; slDl.step = DL_STEP; slDl.value = p.dl;
+    outDl.innerHTML = dlText(type);
+    var foc = Math.abs(p.dl) < TOL;
+    focusBtn.classList.toggle('on', foc);
+    focusBtn.setAttribute('aria-pressed', foc ? 'true' : 'false');
     rowM.hidden = !c.m;
     if(c.m){
       setRange(slM, c.m, p.m);
@@ -1348,17 +1506,30 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
     propsBox.appendChild(s);
   }
 
+  function fmtLen(mm){ return mm >= 1000 ? fmt(mm / 1000, 1) + NB + 'm' : fmt(mm, 0) + NB + 'mm'; }
+  // Věta o zaostření: kde leží obraz y′ vůči okuláru a jaké paprsky z okuláru vycházejí.
+  function focusNote(type, q){
+    var f2n = type === 'galileo' ? '|<i>f</i><sub>2</sub>|' : '<i>f</i><sub>2</sub>';
+    if(q.focused) return 'Dalekohled je zaostřený: obraz <i>y</i>′ leží v ohnisku okuláru, z okuláru vycházejí rovnoběžné paprsky a uvolněné oko vidí ostře.';
+    var t = 'Okulár je posunutý o ' + fmt(Math.abs(q.dl), 1) + NB + 'mm ' + (type === 'kepler' || type === 'galileo' ? (q.dl > 0 ? 'dál od objektivu' : 'blíž k objektivu') : (q.dl > 0 ? 'dál od ohniska <i>F</i>' : 'blíž k ohnisku <i>F</i>')) +
+      ', takže obraz <i>y</i>′ leží ' + fmt(q.s, 1) + NB + 'mm ' + (type === 'galileo' ? 'za okulárem' : 'před okulárem') +
+      ' (<i>s</i> ≠ ' + f2n + ' = ' + fmt(q.f2, 0) + NB + 'mm). ';
+    if(q.dioptre > 0) t += 'Z okuláru vycházejí rozbíhavé paprsky a vytvoří zdánlivý obraz ' + fmtLen(q.a2) + ' před okulárem; uvolněné oko ho vidí rozostřeně (oko by muselo akomodovat).';
+    else t += 'Z okuláru vycházejí sbíhavé paprsky a vytvoří skutečný obraz ' + fmtLen(q.a2) + ' za okulárem; oko je nedokáže zaostřit.';
+    return t;
+  }
+
   function renderResults(r){
     var type = r.type, q = r.real;
     propsBox.textContent = '';
     outG.textContent = fmt(q.gamma, nd(q.gamma));
     outFeff.textContent = fmtT(q.feff, nd(q.feff)) + ' mm';
-    outL.textContent = (type === 'newton' ? '≈ ' : '') + fmtT(q.l, nd(q.l)) + ' mm';
+    outL.textContent = (type === 'newton' ? '≈ ' : '') + fmtT(q.l, (type === 'kepler' || type === 'galileo') ? 1 : nd(q.l)) + ' mm';
     lblL.textContent = type === 'cassegrain' ? 'd' : 'l';
     function mm(v){ return fmtT(v, nd(v)); }
     var dv = '';
-    if(type === 'kepler') dv = eqHtml('<i>l</i>', q.l, nd(q.l), 'mm') + eqHtml('<i>f</i><sub>1</sub>', q.f1, 0, 'mm') + eqHtml('<i>f</i><sub>2</sub>', q.f2, 0, 'mm');
-    else if(type === 'galileo') dv = eqHtml('<i>l</i>', q.l, nd(q.l), 'mm') + eqHtml('<i>f</i><sub>1</sub>', q.f1, 0, 'mm') + eqHtml('|<i>f</i><sub>2</sub>|', q.f2, 0, 'mm');
+    if(type === 'kepler') dv = eqHtml('<i>l</i>', q.l, 1, 'mm') + eqHtml('<i>f</i><sub>1</sub>', q.f1, 0, 'mm') + eqHtml('<i>f</i><sub>2</sub>', q.f2, 0, 'mm');
+    else if(type === 'galileo') dv = eqHtml('<i>l</i>', q.l, 1, 'mm') + eqHtml('<i>f</i><sub>1</sub>', q.f1, 0, 'mm') + eqHtml('|<i>f</i><sub>2</sub>|', q.f2, 0, 'mm');
     else if(type === 'newton') dv = eqHtml('<i>f</i><sub>1</sub>', q.f1, 0, 'mm') + eqHtml('<i>f</i><sub>2</sub>', q.f2, 0, 'mm');
     else dv = eqHtml('<i>f</i><sub>1</sub>', q.f1, 0, 'mm') + eqHtml('<i>d</i>', q.d, nd(q.d), 'mm') + eqHtml('|<i>f</i><sub>s</sub>|', q.fs, nd(q.fs), 'mm') + eqHtml('<i>f</i>', q.feff, nd(q.feff), 'mm');
     distValues.innerHTML = dv;
@@ -1366,10 +1537,10 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
     var note;
     if(type === 'kepler'){
       prop('objektiv: spojka'); prop('okulár: spojka'); prop('obraz v ohnisku: skutečný'); prop('výsledný obraz: převrácený');
-      note = 'Ohniska splývají (<i>F</i><sub>1</sub>′ = <i>F</i><sub>2</sub>), takže z okuláru vycházejí rovnoběžné paprsky a oko se dívá uvolněně. Obraz je převrácený, což při pozorování hvězd nevadí. Vzdálenost čoček je <i>l</i> = <i>f</i><sub>1</sub> + <i>f</i><sub>2</sub>. Okulár s menší ohniskovou vzdáleností zvětšuje víc.';
+      note = 'Při zaostření ohniska splývají (<i>F</i><sub>1</sub>′ = <i>F</i><sub>2</sub>), takže z okuláru vycházejí rovnoběžné paprsky a oko se dívá uvolněně. Obraz je převrácený, což při pozorování hvězd nevadí. Vzdálenost čoček je pak <i>l</i> = <i>f</i><sub>1</sub> + <i>f</i><sub>2</sub>. Okulár s menší ohniskovou vzdáleností zvětšuje víc.';
     } else if(type === 'galileo'){
       prop('objektiv: spojka'); prop('okulár: rozptylka'); prop('výsledný obraz: vzpřímený');
-      note = 'Rozptylka stojí o |<i>f</i><sub>2</sub>| před ohniskem objektivu a změní sbíhavý svazek na rovnoběžný. Obraz <i>y</i>′ proto vůbec nevznikne a výsledný obraz je vzpřímený. Dalekohled je kratší než Keplerův: <i>l</i> = <i>f</i><sub>1</sub> − |<i>f</i><sub>2</sub>|.';
+      note = 'Při zaostření stojí rozptylka o |<i>f</i><sub>2</sub>| před ohniskem objektivu a změní sbíhavý svazek na rovnoběžný. Obraz <i>y</i>′ proto vůbec nevznikne a výsledný obraz je vzpřímený. Dalekohled je kratší než Keplerův: <i>l</i> = <i>f</i><sub>1</sub> − |<i>f</i><sub>2</sub>|.';
     } else if(type === 'newton'){
       prop('hlavní zrcadlo: dutý paraboloid'); prop('rovinné zrcadlo pod 45°'); prop('okulár: spojka'); prop('obraz v ohnisku: skutečný');
       note = 'Duté zrcadlo soustředí paprsky k ohnisku, rovinné zrcadlo je odkloní bokem z tubusu a okulár je pozoruje mimo tubus. Tubus je přibližně tak dlouhý, jako je ohnisková vzdálenost hlavního zrcadla (<i>l</i> ≈ <i>f</i><sub>1</sub>). Obraz je převrácený.';
@@ -1377,6 +1548,7 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
       prop('hlavní zrcadlo: dutý paraboloid'); prop('vedlejší zrcadlo: vypuklé'); prop('okulár: spojka'); prop('obraz v ohnisku: skutečný');
       note = 'Paprsky se odrazí od hlavního zrcadla, pak od vedlejšího vypuklého a projdou otvorem v hlavním zrcadle. Vedlejší zrcadlo zvětší ohniskovou vzdálenost <i>m</i>-krát, takže při tubusu dlouhém jen <i>d</i> = 0,7&nbsp;<i>f</i><sub>1</sub> má dalekohled ohniskovou vzdálenost <i>m</i>&nbsp;<i>f</i><sub>1</sub>. Ohnisko leží ' + mm(q.back) + '&nbsp;mm za hlavním zrcadlem.';
     }
+    note += ' ' + focusNote(type, q);
     posNote.innerHTML = note;   // jen pevné texty a čísla z fmt()
 
     var lines = [];
@@ -1384,10 +1556,10 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
     var G = eq(q.gamma, nd(q.gamma));
     if(type === 'kepler'){
       lines.push('\\gamma &= \\frac{f_1}{f_2} = \\frac{' + f1 + '}{' + f2 + '}' + G + g);
-      lines.push('l &= f_1 + f_2 = (' + f1 + ' + ' + f2 + ')\\ \\mathrm{mm} = ' + texT(q.l, nd(q.l)) + '\\ \\mathrm{mm}');
+      lines.push((q.focused ? 'l' : 'l_0') + ' &= f_1 + f_2 = (' + f1 + ' + ' + f2 + ')\\ \\mathrm{mm} = ' + texT(q.l0, nd(q.l0)) + '\\ \\mathrm{mm}');
     } else if(type === 'galileo'){
       lines.push('\\gamma &= \\frac{f_1}{|f_2|} = \\frac{' + f1 + '}{' + f2 + '}' + G + g);
-      lines.push('l &= f_1 - |f_2| = (' + f1 + ' - ' + f2 + ')\\ \\mathrm{mm} = ' + texT(q.l, nd(q.l)) + '\\ \\mathrm{mm}');
+      lines.push((q.focused ? 'l' : 'l_0') + ' &= f_1 - |f_2| = (' + f1 + ' - ' + f2 + ')\\ \\mathrm{mm} = ' + texT(q.l0, nd(q.l0)) + '\\ \\mathrm{mm}');
     } else if(type === 'newton'){
       lines.push('\\gamma &= \\frac{f_1}{f_2} = \\frac{' + f1 + '}{' + f2 + '}' + G + g);
       lines.push('l &\\approx f_1 = ' + f1 + '\\ \\mathrm{mm}');
@@ -1396,6 +1568,11 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
       lines.push('|f_\\mathrm{s}| &= \\frac{m\\,(f_1 - d)}{m - 1} = \\frac{' + tex(q.m, 1) + ' \\cdot ' + texT(q.p, nd(q.p)) + '}{' + tex(q.m - 1, 1) + '}\\ \\mathrm{mm}' + eq(q.fs, nd(q.fs)) + texT(q.fs, nd(q.fs)) + '\\ \\mathrm{mm}');
       lines.push('f &= m\\,f_1 = ' + tex(q.m, 1) + ' \\cdot ' + f1 + '\\ \\mathrm{mm} = ' + texT(q.feff, nd(q.feff)) + '\\ \\mathrm{mm}');
       lines.push('\\gamma &= \\frac{f}{f_2} = \\frac{' + texT(q.feff, nd(q.feff)) + '}{' + f2 + '}' + G + g);
+    }
+    if(!q.focused){
+      var dlT = (q.dl < 0 ? '-' : '+') + ' ' + tex(Math.abs(q.dl), 1);
+      if(type === 'kepler' || type === 'galileo') lines.push('l &= l_0 + \\delta = (' + texT(q.l0, nd(q.l0)) + ' ' + dlT + ')\\ \\mathrm{mm} = ' + texT(q.l, 1) + '\\ \\mathrm{mm}');
+      lines.push('s &= ' + (type === 'galileo' ? '|f_2| - \\delta' : 'f_2 + \\delta') + ' = (' + f2 + ' ' + (type === 'galileo' ? (q.dl < 0 ? '+' : '-') : (q.dl < 0 ? '-' : '+')) + ' ' + tex(Math.abs(q.dl), 1) + ')\\ \\mathrm{mm} = ' + tex(q.s, 1) + '\\ \\mathrm{mm} \\neq ' + (type === 'galileo' ? '|f_2|' : 'f_2'));
     }
     calcBox.textContent = '';
     lines.forEach(function(l){
