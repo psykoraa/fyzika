@@ -94,6 +94,9 @@
       { d: 'hra-180s', key: 'fyzika:prevody-jednotek:game-bests', field: '180' },
       { d: 'hra-300s', key: 'fyzika:prevody-jednotek:game-bests', field: '300' }
     ],
+    'pohyb-po-kruznici.html': [
+      { d: 'serie', key: 'fyzika:pohyb-po-kruznici:stats', field: 'bestStreak' }
+    ],
     'skladani-vektoru.html': [
       { d: 'serie', key: 'fyzika:skladani-vektoru:stats', field: 'bestStreak' },
       { d: 'hra-60s', key: 'fyzika:skladani-vektoru:game-bests', field: '60' },
