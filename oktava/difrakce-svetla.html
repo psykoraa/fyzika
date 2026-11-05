@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Difrakce světla</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../spolecne/config.js"></script>
+<script src="../spolecne/auth.js"></script>
+<script src="../spolecne/zalozky.js?v=3"></script>
+<link rel="stylesheet" href="../spolecne/styl.css">
+<style>
+:root{
+  --paper:#f2eff8;
+  --surface:#fdfcff;
+  --surface-2:#e6e0f1;
+  --ink:#241f36;
+  --ink-soft:#645d7a;
+  --line:rgba(36,31,54,0.12);
+  --accent:#6b3fb5;
+  --accent-ink:#faf7ff;
+  --success:#28794f;
+  --success-bg:#e3efe0;
+  --danger:#b3392b;
+  --danger-bg:#f5e4de;
+  --focus:#1e6f66;
+  --shadow:0 1px 0 rgba(36,31,54,0.06);
+}
+
+.panel{ margin-bottom:22px; }
+.panel-title{ margin-bottom:8px; }
+.panel p{
+  margin:0 0 8px;
+  font-size:0.9rem;
+  line-height:1.55;
+}
+.panel p:last-child{ margin-bottom:0; }
+.panel b{ color:var(--ink); }
+.panel ul, .panel ol{ margin:0 0 8px; padding-left:22px; font-size:0.9rem; line-height:1.55; }
+.panel li{ margin-bottom:4px; }
+.panel h3{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.05rem;
+  letter-spacing:0.01em;
+  margin:16px 0 6px;
+}
+.panel h3:first-child{ margin-top:0; }
+
+.card{ padding:26px 26px 28px; text-align:left; margin-bottom:24px; }
+.cat-tag{ margin-bottom:10px; }
+.card h2{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.6rem;
+  letter-spacing:0.02em;
+  color:var(--ink);
+  text-transform:none;
+  margin-bottom:6px;
+}
+.card .desc{
+  font-size:0.86rem;
+  color:var(--ink-soft);
+  line-height:1.5;
+  margin:0 0 14px;
+}
+
+.katex{ font-size:1.05em; }
+.formula-box{
+  background:var(--surface-2);
+  border-radius:8px;
+  padding:12px 16px;
+  margin:10px 0;
+  font-size:1.1rem;
+  text-align:center;
+}
+.formula-line{
+  text-align:center;
+  font-size:1.1rem;
+  color:var(--ink);
+  line-height:1.8;
+}
+.line-scroll{
+  position:relative;
+  white-space:nowrap;
+  overflow-x:auto;
+  overflow-y:hidden;
+  padding:2px 0 4px;
+}
+.given-data{
+  font-size:clamp(0.9rem, 2.4vw, 1.05rem);
+  color:var(--ink-soft);
+  margin-bottom:20px;
+}
+
+.theory-table-wrap{ overflow-x:auto; margin:6px 0 4px; }
+.theory-table{
+  border-collapse:collapse;
+  font-size:0.88rem;
+  width:100%;
+  min-width:320px;
+}
+.theory-table th, .theory-table td{
+  border:1px solid var(--line);
+  padding:8px 12px;
+  text-align:left;
+}
+.theory-table thead th{
+  background:var(--surface-2);
+  color:var(--ink-soft);
+  font-weight:600;
+  font-size:0.72rem;
+  text-transform:uppercase;
+  letter-spacing:0.05em;
+}
+.theory-table td.mono, .theory-table th.mono{
+  font-family:'IBM Plex Mono', monospace;
+  font-variant-numeric:tabular-nums;
+  text-align:center;
+}
+.theory-table tbody tr:nth-child(even) td{ background:rgba(0,0,0,0.02); }
+
+.theory-fig{
+  margin:12px 0 10px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:10px 12px 8px;
+}
+.theory-fig svg{ display:block; width:100%; max-width:560px; height:auto; margin:0 auto; }
+.theory-fig figcaption{
+  font-size:0.8rem;
+  color:var(--ink-soft);
+  line-height:1.45;
+  text-align:center;
+  margin-top:4px;
+}
+
+.example-grid{ display:flex; flex-direction:column; gap:12px; margin-top:6px; }
+.example-item{
+  background:var(--surface-2);
+  border-radius:10px;
+  padding:12px 14px;
+}
+.example-tag{
+  font-size:0.66rem;
+  text-transform:uppercase;
+  letter-spacing:0.06em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-bottom:6px;
+  display:block;
+}
+.example-eq{
+  font-size:1.05rem;
+  margin-bottom:4px;
+}
+.example-note{ font-size:0.82rem; color:var(--ink-soft); line-height:1.45; }
+
+.links{ margin-top:14px; display:flex; flex-wrap:wrap; gap:10px; justify-content:center; }
+a.btn-link{
+  display:inline-block;
+  font-weight:600;
+  font-size:0.95rem;
+  padding:10px 22px;
+  border-radius:8px;
+  background:var(--accent);
+  color:var(--accent-ink);
+  text-decoration:none;
+}
+a.btn-link:hover{ filter:brightness(1.06); }
+a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+
+.credit{
+  margin-top:24px;
+  font-size:0.8rem;
+  line-height:1.5;
+  color:var(--ink-soft);
+  text-align:center;
+}
+.credit a{ color:inherit; }
+
+/* ---- aplet: hlavička s tlačítkem na celou obrazovku ---- */
+.applet-head{ display:flex; gap:16px; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; }
+.applet-head-text{ flex:1 1 360px; }
+.applet-head .cat-tag{ margin-bottom:10px; }
+button.btn.fs-btn{ display:inline-flex; align-items:center; gap:8px; flex:none; padding:9px 16px; font-size:0.86rem; }
+button.btn.fs-btn svg{ flex:none; }
+
+.mode-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:16px;
+  padding-top:14px;
+  border-top:1px solid var(--line);
+}
+.mode-row[hidden]{ display:none; }
+.mode-row-label{
+  font-size:0.68rem;
+  text-transform:uppercase;
+  letter-spacing:0.1em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-right:2px;
+  flex:0 0 120px;   /* stejná šířka ve všech řádcích */
+}
+.seg{ display:flex; gap:6px; flex-wrap:wrap; }
+.chip{ font-size:0.82rem; gap:7px; }
+.chip.accented.on{
+  background:var(--accent);
+  color:var(--accent-ink);
+  border-color:var(--accent);
+}
+.chip:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+
+/* posuvníky: vlnová délka, šířka štěrbiny a vzdálenost stínítka */
+.slider-row input[type=range]{ flex:1 1 220px; min-width:0; height:34px; margin:0; accent-color:var(--accent); cursor:pointer; }
+.slider-row input[type=range]:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+.slider-val{
+  flex:0 0 140px;
+  font-weight:600;
+  font-size:0.95rem;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+}
+.slider-val i, .dist-values i{ font-family:'STIX Two Text', Georgia, serif; font-size:1.08em; }
+
+.dist-values{
+  display:flex;
+  flex-wrap:wrap;
+  gap:4px 22px;
+  font-weight:600;
+  font-variant-numeric:tabular-nums;
+  font-size:0.95rem;
+  white-space:nowrap;
+}
+
+.canvas-wrap{
+  position:relative;
+  margin-top:18px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:10px;
+  overflow:hidden;
+}
+svg.optics{
+  width:100%;
+  height:auto;
+  display:block;
+  background:var(--surface);
+  touch-action:pan-y pinch-zoom;   /* stránku jde posouvat i přes obrázek */
+  user-select:none;
+  -webkit-user-select:none;
+}
+svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke:var(--surface); stroke-width:4px; stroke-linejoin:round; }
+
+.legend{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 18px;
+  padding:10px 14px;
+  border-top:1px solid var(--line);
+  font-size:0.78rem;
+  color:var(--ink-soft);
+}
+.legend > span{ display:inline-flex; align-items:center; gap:7px; }
+.legend svg{ flex:none; }
+
+.hint{ margin:10px 0 0; line-height:1.5; }
+
+.results{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  gap:18px;
+  margin-top:20px;
+}
+#readout{ flex-wrap:wrap; }
+#readout .cell{ min-width:0; flex:1 1 80px; padding:6px 8px; }
+#readout .cell .label{ text-transform:none; font-family:'STIX Two Text', Georgia, serif; font-size:0.9rem; letter-spacing:0; opacity:0.8; }
+#readout .cell .value{ font-size:1rem; white-space:nowrap; }
+
+
+.calc{
+  background:var(--surface-2);
+  border-radius:10px;
+  padding:10px 14px;
+  font-size:1rem;
+  overflow-x:auto;
+}
+.calc .katex-display{ margin:0.3em 0; }
+.calc-title{
+  font-size:0.68rem;
+  text-transform:uppercase;
+  letter-spacing:0.1em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-bottom:2px;
+}
+
+/* ---- celá obrazovka: nahoře pruh s ovládáním, pod ním obrázek přes zbytek plochy ---- */
+.applet-card.is-full{
+  position:fixed;
+  inset:0;
+  z-index:1000;
+  margin:0;
+  border-radius:0;
+  border:0;
+  overflow:hidden;
+  padding:0;
+  background:var(--surface);
+  display:flex;
+  flex-direction:column;
+}
+.applet-card:fullscreen{ width:100%; height:100%; }
+.applet-card.is-full .applet-head{
+  flex:none; flex-wrap:nowrap; align-items:center;
+  padding:8px 14px 0; background:var(--surface);
+}
+.applet-card.is-full .applet-head-text{ flex:1 1 auto; }
+.applet-card.is-full .applet-head{ justify-content:space-between; }
+.applet-card.is-full .applet-controls{
+  flex:none; display:flex; flex-wrap:wrap; align-items:center; gap:0 26px;
+  padding:0 14px 8px; background:var(--surface); border-bottom:1px solid var(--line);
+}
+.applet-card.is-full .mode-row{ margin:0; padding:4px 0 0; border-top:0; flex-wrap:nowrap; }
+.applet-card.is-full .mode-row-label{ flex:none; }
+.applet-card.is-full .slider-row{ flex:1 1 380px; }
+.applet-card.is-full .slider-row input[type=range]{ height:28px; }
+.applet-card.is-full .applet-results,
+.applet-card.is-full .hint{ display:none; }
+.applet-card.is-full .desc,
+.applet-card.is-full .cat-tag{ display:none; }
+.applet-card.is-full h2{ font-size:1.25rem; margin:0; }
+.applet-card.is-full .applet-stage{ flex:1 1 auto; min-height:0; position:relative; margin:0; }
+.applet-card.is-full .canvas-wrap{
+  position:absolute; inset:0; margin:0; border:0; border-radius:0;
+  display:flex; flex-direction:column;
+}
+.applet-card.is-full svg.optics{ flex:1 1 auto; min-height:0; width:100%; height:100%; max-height:none; }
+/* legenda je pod obrázkem (ne přes něj), aby při menší výšce obrazovky nezakrývala popisky */
+.applet-card.is-full .legend{
+  flex:none; position:static;
+  justify-content:center;
+  padding:6px 14px;
+  background:var(--surface);
+}
+/* telefon na výšku, který neumí zamknout orientaci (např. iPhone): karta se otočí o 90° */
+.applet-card.is-full.rotated{
+  inset:auto; top:0; left:0;
+  width:100vh; height:100vw;
+  width:100dvh; height:100dvw;
+  transform-origin:top left;
+  transform:translateX(100vw) rotate(90deg);
+}
+/* telefon na šířku (zamčený i otočený): kompaktní pruh a bez legendy, ať je obrázek co největší */
+.applet-card.is-full.rotated .legend{ display:none; }
+.applet-card.is-full.rotated .applet-head-text{ display:none; }
+@media (max-height:500px) and (orientation:landscape){
+  .applet-card.is-full .legend{ display:none; }
+  .applet-card.is-full .applet-head-text{ display:none; }
+}
+
+@media (max-width:720px){
+  .results{ grid-template-columns:1fr; }
+  .mode-row-label{ flex-basis:100%; }
+  .slider-val{ flex-basis:auto; }
+}
+@media (max-width:520px){
+  .card{ padding:20px 16px 22px; }
+}
+
+.position-note{ font-size:0.84rem; color:var(--ink-soft); margin:10px 0 0; line-height:1.5; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <a class="back-link" href="../rozcestniky/oktava.html">← Zpět na Oktáva/4. ročník</a>
+
+  <div class="brand">
+    <div class="brand-lockup">
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <line x1="5" y1="6" x2="5" y2="16" stroke="var(--ink)" stroke-width="3"/>
+        <line x1="5" y1="24" x2="5" y2="34" stroke="var(--ink)" stroke-width="3"/>
+        <path d="M5,20 Q16,20 34,20" stroke="var(--ink-soft)" stroke-width="1.2" fill="none" stroke-dasharray="3 3"/>
+        <path d="M5,20 Q18,8 35,6" stroke="var(--accent)" stroke-width="2" fill="none"/>
+        <path d="M5,20 Q18,32 35,34" stroke="var(--accent)" stroke-width="2" fill="none"/>
+        <path d="M5,20 L35,20" stroke="var(--accent)" stroke-width="2.4" fill="none"/>
+      </svg>
+      <div class="brand-text">
+        <h1>Difrakce světla</h1>
+        <p>vlnová optika — ohyb světla na štěrbině</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="top-tabs">
+    <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+    <button class="toptab" id="top-tab-aplet" data-tab="aplet">Aplet</button>
+  </div>
+
+  <!-- ============ TEORIE ============ -->
+  <div id="theory-section" class="tab-section">
+
+    <div class="panel">
+      <div class="panel-title">Světlo za štěrbinou</div>
+      <p>Podle geometrické optiky se světlo šíří přímočaře. Osvětlíme-li úzkou štěrbinu rovnoběžným svazkem, měla by za ní vzniknout jen stopa stejně široká jako štěrbina a vedle ní tma.</p>
+      <p>Pokus to nepotvrdí. Posvítíme-li laserem na štěrbinu širokou asi 0,1&nbsp;mm a stínítko dáme do vzdálenosti několika metrů, objeví se široký světlý pruh široký několik centimetrů, který je po stranách doplněn dalšími slabšími pruhy. Světlo se tedy za štěrbinou <b>ohýbá</b> do stran. Tomuto jevu říkáme <b>ohyb</b> neboli <b>difrakce</b> světla a geometrickou optikou ho vysvětlit nelze.</p>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="9" cy="9" r="7.5" stroke="var(--focus)" stroke-width="1.6"/>
+          <line x1="9" y1="8" x2="9" y2="13" stroke="var(--focus)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="5.2" r="1" fill="var(--focus)"/>
+        </svg>
+        <p>Ohyb je tím výraznější, čím je překážka nebo štěrbina menší ve srovnání s vlnovou délkou. Zvuk má vlnovou délku v řádu decimetrů až metrů, proto ho slyšíme i za rohem. Viditelné světlo má vlnovou délku jen asi 400 až 700&nbsp;nm, a proto je jeho ohyb patrný až u překážek velkých zlomky milimetru.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Vlnoplocha a paprsek</div>
+      <p><b>Vlnoplocha</b> je plocha, jejíž body kmitají se stejnou fází. <b>Paprsek</b> je přímka kolmá na vlnoplochu a ukazuje směr, kterým se vlnění šíří.</p>
+      <p>Rovinnou vlnoplochu, která dopadá na štěrbinu, si můžeme představit jako velké množství bodových zdrojů vedle sebe. Každý z nich vysílá do prostoru za štěrbinou vlastní kulové vlnění. Vlnění ze všech bodů štěrbiny se v každém místě stínítka skládají, tedy <b>interferují</b>. Výsledkem je střídání světlých a tmavých míst.</p>
+
+      <figure class="theory-fig">
+        <svg viewBox="0 0 560 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Rovinné vlnoplochy dopadají zleva na úzkou štěrbinu v překážce. Za štěrbinou se šíří kruhové vlnoplochy do všech stran, zatímco geometrická optika by předpovídala jen úzký pás vymezený okraji štěrbiny.">
+          <defs>
+            <marker id="arr-fa" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="var(--ink-soft)"/>
+            </marker>
+          </defs>
+          <!-- překážka se štěrbinou -->
+          <rect x="196" y="8" width="12" height="102" fill="var(--ink)"/>
+          <rect x="196" y="150" width="12" height="102" fill="var(--ink)"/>
+          <!-- dopadající rovinné vlnoplochy -->
+          <g stroke="var(--focus)" stroke-width="2" fill="none">
+            <line x1="44" y1="20" x2="44" y2="240"/>
+            <line x1="94" y1="20" x2="94" y2="240"/>
+            <line x1="144" y1="20" x2="144" y2="240"/>
+          </g>
+          <g stroke="var(--ink-soft)" stroke-width="1.4" marker-end="url(#arr-fa)">
+            <line x1="30" y1="60" x2="178" y2="60"/>
+            <line x1="30" y1="130" x2="178" y2="130"/>
+            <line x1="30" y1="200" x2="178" y2="200"/>
+          </g>
+          <!-- šířka štěrbiny a vlnová délka -->
+          <g fill="none" stroke="var(--accent)" stroke-width="1.6">
+            <line x1="228" y1="110" x2="228" y2="150"/>
+            <line x1="222" y1="110" x2="234" y2="110"/>
+            <line x1="222" y1="150" x2="234" y2="150"/>
+          </g>
+          <!-- vlnoplochy za štěrbinou -->
+          <clipPath id="clip-fa"><rect x="212" y="0" width="348" height="260"/></clipPath>
+          <g clip-path="url(#clip-fa)" fill="none" stroke="var(--focus)" stroke-width="2">
+            <path d="M223.1,83 A50,50 0 0 1 223.1,177" stroke-opacity="1.00"/>
+            <path d="M240.2,36 A100,100 0 0 1 240.2,224" stroke-opacity="0.87"/>
+            <path d="M257.3,-11 A150,150 0 0 1 257.3,271" stroke-opacity="0.74"/>
+            <path d="M274.4,-57.9 A200,200 0 0 1 274.4,317.9" stroke-opacity="0.61"/>
+            <path d="M291.5,-104.9 A250,250 0 0 1 291.5,364.9" stroke-opacity="0.48"/>
+            <path d="M308.6,-151.9 A300,300 0 0 1 308.6,411.9" stroke-opacity="0.35"/>
+          </g>
+          <!-- geometrická předpověď -->
+          <g stroke="var(--ink-soft)" stroke-width="1.2" stroke-dasharray="6 5">
+            <line x1="208" y1="110" x2="545" y2="110"/>
+            <line x1="208" y1="150" x2="545" y2="150"/>
+          </g>
+          <g font-family="Work Sans, sans-serif" font-size="13" fill="var(--ink)">
+            <text x="236" y="134" font-style="italic" font-weight="700" fill="var(--accent)">d</text>
+            <text x="44" y="14" text-anchor="middle" fill="var(--focus)">vlnoplocha</text>
+            <text x="548" y="105" text-anchor="end" fill="var(--ink-soft)">hranice podle geometrické optiky</text>
+          </g>
+        </svg>
+        <figcaption>Rovinná vlnoplocha dopadá na štěrbinu. Za ní se vlnění šíří i do oblasti, kam by podle geometrické optiky nemělo proniknout. Aby byl ohyb na obrázku dobře vidět, je štěrbina nakreslená jen o něco užší než vlnová délka. U laseru a štěrbiny široké desetiny milimetru je štěrbina mnohem širší než vlnová délka, ohyb je slabší a světlo se odchyluje jen o malé úhly.</figcaption>
+      </figure>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Ohyb na hraně</div>
+      <p>Ohyb pozorujeme i na jediné hraně. Za okrajem neprůhledné překážky nenajdeme ostrý přechod mezi světlem a stínem: světlo zasahuje i do oblasti geometrického stínu a na rozhraní se střídají světlé a tmavé proužky různé šířky. Vznikají interferencí vlnění z různých bodů vlnoplochy, která není překážkou zastíněna.</p>
+      <p>Jednoduše to vyzkoušíme tak, že laserovým ukazovátkem posvítíme na hranu papíru. Skvrna na zdi se rozmaže a objeví se v ní proužky.</p>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="9" cy="9" r="7.5" stroke="var(--focus)" stroke-width="1.6"/>
+          <line x1="9" y1="8" x2="9" y2="13" stroke="var(--focus)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="5.2" r="1" fill="var(--focus)"/>
+        </svg>
+        <p>Pokus bez pomůcek: dva prsty k sobě přitiskněte tak, aby mezi nimi zbyla co nejužší štěrbina, a dívejte se jí proti světlému oknu. Uvidíte tmavé proužky rovnoběžné se štěrbinou.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Ohyb na jedné štěrbině</div>
+      <p>Obrazec za jednou štěrbinou má uprostřed nejjasnější, široké <b>hlavní (centrální) maximum</b>. Po obou stranách po něm následují tmavá místa (<b>minima</b>) a mezi nimi <b>vedlejší maxima</b>, která jsou podstatně slabší. První vedlejší maximum má jen asi 4,7&nbsp;% intenzity hlavního maxima.</p>
+      <p>Polohu minim lze odvodit s pomocí interference. Šířku štěrbiny označíme <i>d</i> a sledujeme světlo šířící se pod úhlem <i>θ</i> od původního směru. Štěrbinu rozdělíme na dvě poloviny. Vlnění z bodu u okraje a z odpovídajícího bodu uprostřed štěrbiny jsou od sebe vzdálené o <i>d</i>/2 a jejich dráhový rozdíl je (<i>d</i>/2)&nbsp;sin&nbsp;<i>θ</i>. Je-li tento rozdíl roven polovině vlnové délky, mají vlnění opačnou fázi a navzájem se zruší. Totéž platí pro každou takovou dvojici bodů, a proto se v tomto směru vyruší světlo z celé štěrbiny.</p>
+
+      <figure class="theory-fig">
+        <svg viewBox="0 0 560 270" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Štěrbina šířky d je rozdělena na dvě poloviny. Dva paprsky, jeden z okraje a druhý ze středu štěrbiny, se šíří pod úhlem theta. Paprsek z okraje urazí o úsek d/2 krát sinus theta delší dráhu.">
+          <rect x="114" y="6" width="12" height="34" fill="var(--ink)"/>
+          <rect x="114" y="220" width="12" height="44" fill="var(--ink)"/>
+          <!-- paprsky -->
+          <g stroke="var(--ink-soft)" stroke-width="1.6" fill="none">
+            <line x1="126" y1="40" x2="404" y2="152"/>
+            <line x1="126" y1="130" x2="404" y2="242"/>
+          </g>
+          <!-- kolmice na paprsky (ekvifázová rovina) -->
+          <line x1="126" y1="130" x2="157.3" y2="52.6" stroke="var(--focus)" stroke-width="1.6" stroke-dasharray="5 4"/>
+          <!-- dráhový rozdíl -->
+          <line x1="126" y1="40" x2="157.3" y2="52.6" stroke="var(--accent)" stroke-width="4.2" stroke-linecap="round"/>
+          <!-- šířka štěrbiny -->
+          <g fill="none" stroke="var(--ink)" stroke-width="1.4">
+            <line x1="96" y1="40" x2="96" y2="220"/>
+            <line x1="90" y1="40" x2="102" y2="40"/>
+            <line x1="90" y1="220" x2="102" y2="220"/>
+            <line x1="90" y1="130" x2="102" y2="130"/>
+          </g>
+          <!-- vodorovná osa a úhel -->
+          <line x1="126" y1="130" x2="330" y2="130" stroke="var(--ink-soft)" stroke-width="1" stroke-dasharray="3 4"/>
+          <path d="M186,130 A60,60 0 0 1 181.6,152.5" fill="none" stroke="var(--ink)" stroke-width="1.4"/>
+          <circle cx="126" cy="40" r="3.6" fill="var(--accent)"/>
+          <circle cx="126" cy="130" r="3.6" fill="var(--accent)"/>
+          <g font-family="Work Sans, sans-serif" font-size="14" fill="var(--ink)">
+            <text x="72" y="134" text-anchor="end" font-style="italic" font-weight="700">d</text>
+            <text x="76" y="86" text-anchor="end" font-style="italic" font-weight="700">d/2</text>
+            <text x="198" y="150" font-style="italic" font-weight="700">θ</text>
+            <text x="418" y="150" fill="var(--ink-soft)">paprsek z okraje</text>
+            <text x="418" y="240" fill="var(--ink-soft)">paprsek ze středu</text>
+            <text x="146" y="28" fill="var(--accent)" font-weight="700">Δ<tspan font-style="italic">l</tspan> = (<tspan font-style="italic">d</tspan>/2) sin <tspan font-style="italic">θ</tspan></text>
+          </g>
+        </svg>
+        <figcaption>Dvojice bodů vzdálených o <i>d</i>/2. Paprsek z okraje štěrbiny (nahoře) urazí delší dráhu o úsek Δ<i>l</i> = (<i>d</i>/2)&nbsp;sin&nbsp;<i>θ</i> (silná fialová úsečka); přerušovaná čára je kolmice k paprskům.</figcaption>
+      </figure>
+
+      <p>Podmínku Δ<i>l</i> = <i>λ</i>/2 lze zapsat jako <i>d</i>&nbsp;sin&nbsp;<i>θ</i> = <i>λ</i>. Obdobně dostaneme další minima, když štěrbinu rozdělíme na čtyři, šest a více částí. Pro všechna minima tak platí:</p>
+      <div class="formula-box">\[ d\sin\theta = m\lambda \qquad m = 1,\,2,\,3,\,\dots \]</div>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M9 2.5 L16 15.5 H2 Z" stroke="var(--danger)" stroke-width="1.4" stroke-linejoin="round"/>
+          <line x1="9" y1="7" x2="9" y2="11.5" stroke="var(--danger)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="13.6" r="1" fill="var(--danger)"/>
+        </svg>
+        <p>Pozor na záměnu: vztah <i>d</i>&nbsp;sin&nbsp;<i>θ</i> = <i>mλ</i> určuje u jedné štěrbiny polohy <b>minim</b>, ne maxim. Hlavní maximum je ve směru <i>θ</i> = 0 a vedlejší maxima leží přibližně uprostřed mezi minimy.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Šířka hlavního maxima</div>
+      <p>Hlavní maximum je ohraničeno prvními minimy, tedy <i>m</i>&nbsp;=&nbsp;1. Pro úhel <i>θ</i><sub>1</sub> prvního minima platí</p>
+      <div class="formula-box">\[ \sin\theta_1 = \frac{\lambda}{d} \]</div>
+      <p>Úhly jsou při pokusu malé, a proto je možné psát sin&nbsp;<i>θ</i><sub>1</sub> ≈ tg&nbsp;<i>θ</i><sub>1</sub> ≈ <i>θ</i><sub>1</sub>. Stínítko je ve vzdálenosti <i>D</i> od štěrbiny, takže první minimum leží ve vzdálenosti <i>x</i><sub>1</sub> = <i>D</i>&nbsp;tg&nbsp;<i>θ</i><sub>1</sub> ≈ <i>Dλ</i>/<i>d</i> od středu obrazce. Šířka hlavního maxima <i>L</i> je dvojnásobkem této vzdálenosti:</p>
+      <div class="formula-box">\[ L = 2x_1 \approx \frac{2D\lambda}{d} \]</div>
+      <p>Z tohoto vztahu plynou tři jednoduchá pravidla:</p>
+      <ul>
+        <li>čím je štěrbina <b>užší</b> (menší <i>d</i>), tím je hlavní maximum <b>širší</b>,</li>
+        <li>čím je <b>větší vlnová délka</b> (červené světlo oproti modrému), tím je maximum širší,</li>
+        <li>čím je stínítko <b>dál</b>, tím je obrazec větší, a to přímo úměrně vzdálenosti <i>D</i>.</li>
+      </ul>
+      <p>Rozměrová kontrola: podíl <i>λ</i>/<i>d</i> je podíl dvou délek, tedy bezrozměrné číslo (úhel v radiánech). Po vynásobení vzdáleností <i>D</i> dostaneme délku, jak má šířka <i>L</i> být.</p>
+
+      <figure class="theory-fig">
+        <svg viewBox="0 0 560 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Graf závislosti intenzity světla na poloze na stínítku při ohybu na jedné štěrbině. Uprostřed je vysoké hlavní maximum ohraničené minimy v polohách plus a minus D lambda lomeno d, dále následují slabá vedlejší maxima.">
+          <defs>
+            <marker id="arr-fb" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/>
+            </marker>
+          </defs>
+          <g stroke="var(--line)" stroke-width="1">
+            <line x1="40" y1="30" x2="40" y2="200"/><line x1="102.5" y1="30" x2="102.5" y2="200"/><line x1="165" y1="30" x2="165" y2="200"/><line x1="227.5" y1="30" x2="227.5" y2="200"/><line x1="352.5" y1="30" x2="352.5" y2="200"/><line x1="415" y1="30" x2="415" y2="200"/><line x1="477.5" y1="30" x2="477.5" y2="200"/><line x1="540" y1="30" x2="540" y2="200"/>
+          </g>
+          <path d="M40,200 L41.2,200 L42.5,200 L43.8,200 L45,199.9 L46.2,199.9 L47.5,199.9 L48.8,199.8 L50,199.7 L51.2,199.7 L52.5,199.6 L53.8,199.5 L55,199.5 L56.3,199.4 L57.5,199.3 L58.8,199.2 L60,199.1 L61.3,199.1 L62.5,199 L63.8,198.9 L65,198.9 L66.3,198.8 L67.5,198.8 L68.8,198.7 L70,198.7 L71.3,198.7 L72.5,198.7 L73.8,198.7 L75,198.7 L76.3,198.7 L77.5,198.7 L78.8,198.8 L80,198.8 L81.3,198.9 L82.5,199 L83.8,199 L85,199.1 L86.3,199.2 L87.5,199.3 L88.8,199.4 L90,199.5 L91.3,199.5 L92.5,199.6 L93.8,199.7 L95,199.8 L96.3,199.8 L97.5,199.9 L98.8,199.9 L100,200 L101.3,200 L102.5,200 L103.8,200 L105,200 L106.3,199.9 L107.5,199.9 L108.8,199.8 L110,199.7 L111.3,199.6 L112.5,199.5 L113.8,199.4 L115,199.3 L116.3,199.1 L117.5,199 L118.8,198.9 L120,198.7 L121.3,198.5 L122.5,198.4 L123.8,198.2 L125,198.1 L126.3,198 L127.5,197.8 L128.8,197.7 L130,197.6 L131.3,197.5 L132.5,197.5 L133.8,197.4 L135,197.4 L136.3,197.4 L137.5,197.4 L138.8,197.4 L140,197.5 L141.3,197.5 L142.5,197.6 L143.8,197.7 L145,197.9 L146.3,198 L147.5,198.1 L148.8,198.3 L150,198.5 L151.3,198.7 L152.5,198.8 L153.8,199 L155,199.2 L156.3,199.4 L157.5,199.5 L158.8,199.6 L160,199.8 L161.3,199.9 L162.5,199.9 L163.8,200 L165,200 L166.3,200 L167.5,199.9 L168.8,199.8 L170,199.7 L171.3,199.6 L172.5,199.4 L173.8,199.2 L175,198.9 L176.3,198.6 L177.5,198.3 L178.8,197.9 L180,197.5 L181.3,197.2 L182.5,196.7 L183.8,196.3 L185,195.9 L186.3,195.5 L187.5,195.1 L188.8,194.7 L190,194.3 L191.3,193.9 L192.5,193.6 L193.8,193.3 L195,193 L196.3,192.8 L197.5,192.6 L198.8,192.5 L200,192.5 L201.3,192.5 L202.5,192.5 L203.8,192.6 L205,192.8 L206.3,193.1 L207.5,193.4 L208.8,193.7 L210,194.1 L211.3,194.6 L212.5,195.1 L213.8,195.6 L215,196.1 L216.3,196.7 L217.5,197.2 L218.8,197.7 L220,198.2 L221.3,198.7 L222.5,199.1 L223.8,199.5 L225,199.8 L226.3,199.9 L227.5,200 L228.8,199.9 L230,199.7 L231.3,199.4 L232.5,198.8 L233.8,198.1 L235,197.2 L236.3,196 L237.5,194.7 L238.8,193.1 L240,191.2 L241.3,189.2 L242.5,186.8 L243.8,184.3 L245,181.4 L246.3,178.3 L247.5,175 L248.8,171.4 L250,167.6 L251.3,163.5 L252.5,159.3 L253.8,154.8 L255,150.1 L256.3,145.3 L257.5,140.3 L258.8,135.2 L260,129.9 L261.3,124.6 L262.5,119.2 L263.8,113.8 L265,108.4 L266.3,102.9 L267.5,97.6 L268.8,92.3 L270,87.1 L271.3,82.1 L272.5,77.2 L273.8,72.6 L275,68.1 L276.3,63.9 L277.5,60 L278.8,56.3 L280,53 L281.3,50.1 L282.5,47.4 L283.8,45.2 L285,43.3 L286.3,41.9 L287.5,40.8 L288.8,40.2 L290,40 L291.3,40.2 L292.5,40.8 L293.8,41.9 L295,43.3 L296.3,45.2 L297.5,47.4 L298.8,50.1 L300,53 L301.3,56.3 L302.5,60 L303.8,63.9 L305,68.1 L306.3,72.6 L307.5,77.2 L308.8,82.1 L310,87.1 L311.3,92.3 L312.5,97.6 L313.8,102.9 L315,108.4 L316.3,113.8 L317.5,119.2 L318.8,124.6 L320,129.9 L321.3,135.2 L322.5,140.3 L323.8,145.3 L325,150.1 L326.3,154.8 L327.5,159.3 L328.8,163.5 L330,167.6 L331.3,171.4 L332.5,175 L333.8,178.3 L335,181.4 L336.3,184.3 L337.5,186.8 L338.8,189.2 L340,191.2 L341.3,193.1 L342.5,194.7 L343.8,196 L345,197.2 L346.3,198.1 L347.5,198.8 L348.8,199.4 L350,199.7 L351.3,199.9 L352.5,200 L353.8,199.9 L355,199.8 L356.3,199.5 L357.5,199.1 L358.8,198.7 L360,198.2 L361.3,197.7 L362.5,197.2 L363.8,196.7 L365,196.1 L366.3,195.6 L367.5,195.1 L368.8,194.6 L370,194.1 L371.3,193.7 L372.5,193.4 L373.8,193.1 L375,192.8 L376.3,192.6 L377.5,192.5 L378.8,192.5 L380,192.5 L381.3,192.5 L382.5,192.6 L383.8,192.8 L385,193 L386.3,193.3 L387.5,193.6 L388.8,193.9 L390,194.3 L391.3,194.7 L392.5,195.1 L393.8,195.5 L395,195.9 L396.3,196.3 L397.5,196.7 L398.8,197.2 L400,197.5 L401.3,197.9 L402.5,198.3 L403.8,198.6 L405,198.9 L406.3,199.2 L407.5,199.4 L408.8,199.6 L410,199.7 L411.3,199.8 L412.5,199.9 L413.8,200 L415,200 L416.3,200 L417.5,199.9 L418.8,199.9 L420,199.8 L421.3,199.6 L422.5,199.5 L423.8,199.4 L425,199.2 L426.3,199 L427.5,198.8 L428.8,198.7 L430,198.5 L431.3,198.3 L432.5,198.1 L433.8,198 L435,197.9 L436.3,197.7 L437.5,197.6 L438.8,197.5 L440,197.5 L441.3,197.4 L442.5,197.4 L443.8,197.4 L445,197.4 L446.3,197.4 L447.5,197.5 L448.8,197.5 L450,197.6 L451.3,197.7 L452.5,197.8 L453.8,198 L455,198.1 L456.3,198.2 L457.5,198.4 L458.8,198.5 L460,198.7 L461.3,198.9 L462.5,199 L463.8,199.1 L465,199.3 L466.3,199.4 L467.5,199.5 L468.8,199.6 L470,199.7 L471.3,199.8 L472.5,199.9 L473.8,199.9 L475,200 L476.3,200 L477.5,200 L478.8,200 L480,200 L481.3,199.9 L482.5,199.9 L483.8,199.8 L485,199.8 L486.3,199.7 L487.5,199.6 L488.8,199.5 L490,199.5 L491.3,199.4 L492.5,199.3 L493.8,199.2 L495,199.1 L496.3,199 L497.5,199 L498.8,198.9 L500,198.8 L501.3,198.8 L502.5,198.7 L503.8,198.7 L505,198.7 L506.3,198.7 L507.5,198.7 L508.8,198.7 L510,198.7 L511.3,198.7 L512.5,198.8 L513.8,198.8 L515,198.9 L516.3,198.9 L517.5,199 L518.8,199.1 L520,199.1 L521.3,199.2 L522.5,199.3 L523.8,199.4 L525,199.5 L526.3,199.5 L527.5,199.6 L528.8,199.7 L530,199.7 L531.3,199.8 L532.5,199.9 L533.8,199.9 L535,199.9 L536.3,200 L537.5,200 L538.8,200 L540,200 L540,200 L40,200 Z" fill="var(--accent)" fill-opacity="0.14" stroke="none"/>
+          <path d="M40,200 L41.2,200 L42.5,200 L43.8,200 L45,199.9 L46.2,199.9 L47.5,199.9 L48.8,199.8 L50,199.7 L51.2,199.7 L52.5,199.6 L53.8,199.5 L55,199.5 L56.3,199.4 L57.5,199.3 L58.8,199.2 L60,199.1 L61.3,199.1 L62.5,199 L63.8,198.9 L65,198.9 L66.3,198.8 L67.5,198.8 L68.8,198.7 L70,198.7 L71.3,198.7 L72.5,198.7 L73.8,198.7 L75,198.7 L76.3,198.7 L77.5,198.7 L78.8,198.8 L80,198.8 L81.3,198.9 L82.5,199 L83.8,199 L85,199.1 L86.3,199.2 L87.5,199.3 L88.8,199.4 L90,199.5 L91.3,199.5 L92.5,199.6 L93.8,199.7 L95,199.8 L96.3,199.8 L97.5,199.9 L98.8,199.9 L100,200 L101.3,200 L102.5,200 L103.8,200 L105,200 L106.3,199.9 L107.5,199.9 L108.8,199.8 L110,199.7 L111.3,199.6 L112.5,199.5 L113.8,199.4 L115,199.3 L116.3,199.1 L117.5,199 L118.8,198.9 L120,198.7 L121.3,198.5 L122.5,198.4 L123.8,198.2 L125,198.1 L126.3,198 L127.5,197.8 L128.8,197.7 L130,197.6 L131.3,197.5 L132.5,197.5 L133.8,197.4 L135,197.4 L136.3,197.4 L137.5,197.4 L138.8,197.4 L140,197.5 L141.3,197.5 L142.5,197.6 L143.8,197.7 L145,197.9 L146.3,198 L147.5,198.1 L148.8,198.3 L150,198.5 L151.3,198.7 L152.5,198.8 L153.8,199 L155,199.2 L156.3,199.4 L157.5,199.5 L158.8,199.6 L160,199.8 L161.3,199.9 L162.5,199.9 L163.8,200 L165,200 L166.3,200 L167.5,199.9 L168.8,199.8 L170,199.7 L171.3,199.6 L172.5,199.4 L173.8,199.2 L175,198.9 L176.3,198.6 L177.5,198.3 L178.8,197.9 L180,197.5 L181.3,197.2 L182.5,196.7 L183.8,196.3 L185,195.9 L186.3,195.5 L187.5,195.1 L188.8,194.7 L190,194.3 L191.3,193.9 L192.5,193.6 L193.8,193.3 L195,193 L196.3,192.8 L197.5,192.6 L198.8,192.5 L200,192.5 L201.3,192.5 L202.5,192.5 L203.8,192.6 L205,192.8 L206.3,193.1 L207.5,193.4 L208.8,193.7 L210,194.1 L211.3,194.6 L212.5,195.1 L213.8,195.6 L215,196.1 L216.3,196.7 L217.5,197.2 L218.8,197.7 L220,198.2 L221.3,198.7 L222.5,199.1 L223.8,199.5 L225,199.8 L226.3,199.9 L227.5,200 L228.8,199.9 L230,199.7 L231.3,199.4 L232.5,198.8 L233.8,198.1 L235,197.2 L236.3,196 L237.5,194.7 L238.8,193.1 L240,191.2 L241.3,189.2 L242.5,186.8 L243.8,184.3 L245,181.4 L246.3,178.3 L247.5,175 L248.8,171.4 L250,167.6 L251.3,163.5 L252.5,159.3 L253.8,154.8 L255,150.1 L256.3,145.3 L257.5,140.3 L258.8,135.2 L260,129.9 L261.3,124.6 L262.5,119.2 L263.8,113.8 L265,108.4 L266.3,102.9 L267.5,97.6 L268.8,92.3 L270,87.1 L271.3,82.1 L272.5,77.2 L273.8,72.6 L275,68.1 L276.3,63.9 L277.5,60 L278.8,56.3 L280,53 L281.3,50.1 L282.5,47.4 L283.8,45.2 L285,43.3 L286.3,41.9 L287.5,40.8 L288.8,40.2 L290,40 L291.3,40.2 L292.5,40.8 L293.8,41.9 L295,43.3 L296.3,45.2 L297.5,47.4 L298.8,50.1 L300,53 L301.3,56.3 L302.5,60 L303.8,63.9 L305,68.1 L306.3,72.6 L307.5,77.2 L308.8,82.1 L310,87.1 L311.3,92.3 L312.5,97.6 L313.8,102.9 L315,108.4 L316.3,113.8 L317.5,119.2 L318.8,124.6 L320,129.9 L321.3,135.2 L322.5,140.3 L323.8,145.3 L325,150.1 L326.3,154.8 L327.5,159.3 L328.8,163.5 L330,167.6 L331.3,171.4 L332.5,175 L333.8,178.3 L335,181.4 L336.3,184.3 L337.5,186.8 L338.8,189.2 L340,191.2 L341.3,193.1 L342.5,194.7 L343.8,196 L345,197.2 L346.3,198.1 L347.5,198.8 L348.8,199.4 L350,199.7 L351.3,199.9 L352.5,200 L353.8,199.9 L355,199.8 L356.3,199.5 L357.5,199.1 L358.8,198.7 L360,198.2 L361.3,197.7 L362.5,197.2 L363.8,196.7 L365,196.1 L366.3,195.6 L367.5,195.1 L368.8,194.6 L370,194.1 L371.3,193.7 L372.5,193.4 L373.8,193.1 L375,192.8 L376.3,192.6 L377.5,192.5 L378.8,192.5 L380,192.5 L381.3,192.5 L382.5,192.6 L383.8,192.8 L385,193 L386.3,193.3 L387.5,193.6 L388.8,193.9 L390,194.3 L391.3,194.7 L392.5,195.1 L393.8,195.5 L395,195.9 L396.3,196.3 L397.5,196.7 L398.8,197.2 L400,197.5 L401.3,197.9 L402.5,198.3 L403.8,198.6 L405,198.9 L406.3,199.2 L407.5,199.4 L408.8,199.6 L410,199.7 L411.3,199.8 L412.5,199.9 L413.8,200 L415,200 L416.3,200 L417.5,199.9 L418.8,199.9 L420,199.8 L421.3,199.6 L422.5,199.5 L423.8,199.4 L425,199.2 L426.3,199 L427.5,198.8 L428.8,198.7 L430,198.5 L431.3,198.3 L432.5,198.1 L433.8,198 L435,197.9 L436.3,197.7 L437.5,197.6 L438.8,197.5 L440,197.5 L441.3,197.4 L442.5,197.4 L443.8,197.4 L445,197.4 L446.3,197.4 L447.5,197.5 L448.8,197.5 L450,197.6 L451.3,197.7 L452.5,197.8 L453.8,198 L455,198.1 L456.3,198.2 L457.5,198.4 L458.8,198.5 L460,198.7 L461.3,198.9 L462.5,199 L463.8,199.1 L465,199.3 L466.3,199.4 L467.5,199.5 L468.8,199.6 L470,199.7 L471.3,199.8 L472.5,199.9 L473.8,199.9 L475,200 L476.3,200 L477.5,200 L478.8,200 L480,200 L481.3,199.9 L482.5,199.9 L483.8,199.8 L485,199.8 L486.3,199.7 L487.5,199.6 L488.8,199.5 L490,199.5 L491.3,199.4 L492.5,199.3 L493.8,199.2 L495,199.1 L496.3,199 L497.5,199 L498.8,198.9 L500,198.8 L501.3,198.8 L502.5,198.7 L503.8,198.7 L505,198.7 L506.3,198.7 L507.5,198.7 L508.8,198.7 L510,198.7 L511.3,198.7 L512.5,198.8 L513.8,198.8 L515,198.9 L516.3,198.9 L517.5,199 L518.8,199.1 L520,199.1 L521.3,199.2 L522.5,199.3 L523.8,199.4 L525,199.5 L526.3,199.5 L527.5,199.6 L528.8,199.7 L530,199.7 L531.3,199.8 L532.5,199.9 L533.8,199.9 L535,199.9 L536.3,200 L537.5,200 L538.8,200 L540,200" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linejoin="round"/>
+          <line x1="40" y1="200" x2="540" y2="200" stroke="var(--ink)" stroke-width="1.5"/>
+          <line x1="290" y1="30" x2="290" y2="200" stroke="var(--ink)" stroke-width="1.5"/>
+          <g stroke="var(--ink)" stroke-width="1.4">
+            <line x1="40" y1="200" x2="40" y2="206"/><line x1="102.5" y1="200" x2="102.5" y2="206"/><line x1="165" y1="200" x2="165" y2="206"/><line x1="227.5" y1="200" x2="227.5" y2="206"/><line x1="290" y1="200" x2="290" y2="206"/><line x1="352.5" y1="200" x2="352.5" y2="206"/><line x1="415" y1="200" x2="415" y2="206"/><line x1="477.5" y1="200" x2="477.5" y2="206"/><line x1="540" y1="200" x2="540" y2="206"/>
+          </g>
+          <line x1="227.5" y1="24" x2="352.5" y2="24" stroke="var(--accent)" stroke-width="1.8" marker-start="url(#arr-fb)" marker-end="url(#arr-fb)"/>
+          <g font-family="Work Sans, sans-serif" font-size="13" fill="var(--ink)">
+            <text x="40" y="221" text-anchor="middle">−4</text><text x="102.5" y="221" text-anchor="middle">−3</text><text x="165" y="221" text-anchor="middle">−2</text><text x="227.5" y="221" text-anchor="middle">−1</text><text x="290" y="221" text-anchor="middle">0</text><text x="352.5" y="221" text-anchor="middle">1</text><text x="415" y="221" text-anchor="middle">2</text><text x="477.5" y="221" text-anchor="middle">3</text><text x="540" y="221" text-anchor="middle">4</text>
+            <text x="290" y="16" text-anchor="middle" fill="var(--accent)" font-weight="700"><tspan font-style="italic">L</tspan> = 2<tspan font-style="italic">D λ</tspan>/<tspan font-style="italic">d</tspan></text>
+            <text x="379.4" y="186.4" text-anchor="middle" fill="var(--ink-soft)">≈ 4,7 %</text>
+            <text x="282" y="44" text-anchor="end" fill="var(--ink-soft)" font-style="italic">I / I<tspan dy="3" font-size="10" font-style="normal">0</tspan></text>
+            <text x="540" y="238" text-anchor="end" fill="var(--ink-soft)">poloha na stínítku <tspan font-style="italic">x</tspan> v jednotkách <tspan font-style="italic">D λ</tspan>/<tspan font-style="italic">d</tspan></text>
+          </g>
+        </svg>
+        <figcaption>Intenzita světla na stínítku při ohybu na jedné štěrbině. Vodorovná osa je v jednotkách <i>Dλ</i>/<i>d</i>, takže minima leží v celých číslech. Šířka hlavního maxima je rozdíl poloh prvních minim.</figcaption>
+      </figure>
+
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="9" cy="9" r="7.5" stroke="var(--focus)" stroke-width="1.6"/>
+          <line x1="9" y1="8" x2="9" y2="13" stroke="var(--focus)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="5.2" r="1" fill="var(--focus)"/>
+        </svg>
+        <p>Při osvětlení bílým světlem má každá barva jinou šířku maxima, a proto jsou okraje obrazce barevné. Přesný průběh intenzity popisuje vztah \(I = I_0\left(\dfrac{\sin\beta}{\beta}\right)^2\), kde \(\beta = \dfrac{\pi d \sin\theta}{\lambda}\). Je nad rámec učiva, ale vykresluje ho záložka Aplet.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="cat-tag">Příklad z praxe</span>
+      <h2>Zelený laser a žiletky</h2>
+      <p class="desc">Rozklikejte si postup krok po kroku — další krok se odemkne, jakmile otevřete ten předchozí.</p>
+      <div class="given-data">
+        <div class="given-line">Zadáno: štěrbina mezi dvěma břity žiletek \(d = 0{,}050\ \mathrm{mm}\), zelený laser \(\lambda = 532\ \mathrm{nm}\), stěna ve vzdálenosti \(D = 4{,}0\ \mathrm{m}\)</div>
+        <div class="given-line">Hledáme: úhel prvního minima \(\theta_1\) a šířku hlavního maxima \(L\) na stěně</div>
+      </div>
+      <div class="stepper" data-reset="reset-difrakce-1">
+        <div class="step" data-step="1">
+          <div class="step-connector"></div>
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">1</span>
+            <span class="step-title">Převeďte údaje na stejnou jednotku</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <p>Podíl <i>λ</i>/<i>d</i> je podílem dvou délek. Obě proto vyjádříme v metrech.</p>
+            <div class="step-result">\(\lambda = 532\ \mathrm{nm} = 5{,}32\cdot10^{-7}\ \mathrm{m}\), \(\quad d = 0{,}050\ \mathrm{mm} = 5{,}0\cdot10^{-5}\ \mathrm{m}\)</div>
+          </div>
+        </div>
+        <div class="step" data-step="2">
+          <div class="step-connector"></div>
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">2</span>
+            <span class="step-title">Určete úhel prvního minima \(\theta_1\)</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <div class="step-result">\(\sin\theta_1 = \dfrac{\lambda}{d} = \dfrac{5{,}32\cdot10^{-7}}{5{,}0\cdot10^{-5}} = 0{,}01064\ \Rightarrow\ \theta_1 \doteq 0{,}61^\circ\)</div>
+          </div>
+        </div>
+        <div class="step" data-step="3">
+          <div class="step-connector"></div>
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">3</span>
+            <span class="step-title">Spočtěte polohu prvního minima \(x_1\)</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <p>Úhel je velmi malý, proto stačí použít přiblížení tg&nbsp;<i>θ</i><sub>1</sub> ≈ sin&nbsp;<i>θ</i><sub>1</sub>.</p>
+            <div class="step-result">\(x_1 \approx D\,\dfrac{\lambda}{d} = 4{,}0\ \mathrm{m}\cdot 0{,}01064 \doteq 4{,}26\ \mathrm{cm}\)</div>
+          </div>
+        </div>
+        <div class="step" data-step="4">
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">4</span>
+            <span class="step-title">Zapište šířku hlavního maxima</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <div class="result-box"><div class="line-scroll">\(L = 2x_1 \doteq 8{,}5\ \mathrm{cm}\)</div></div>
+            <p>Světlý pruh na stěně je tedy široký asi 8,5&nbsp;cm, i když štěrbina měří jen pět setin milimetru. Zúžíme-li ji na polovinu (0,025&nbsp;mm), zdvojnásobí se i šířka maxima na přibližně 17&nbsp;cm.</p>
+          </div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn ghost" id="reset-difrakce-1">Zopakovat postup od začátku</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Ohyb a rozlišovací schopnost</div>
+      <p>Ohyb nastává nejen na štěrbině, ale na každém otvoru. Objektivem dalekohledu nebo mikroskopu prochází světlo kruhovým otvorem, a proto obrazem svítícího bodu není opět bod, ale malý <b>ohybový kotouček</b>: jasné hlavní maximum, které je obklopené slabými kroužky.</p>
+      <p>Obrazy dvou blízkých zdrojů (např. dvou hvězd) se překrývají. Rozlišíme je jen tehdy, jsou-li jejich hlavní maxima od sebe dostatečně daleko. Čím je maximum užší, tím blíže u sebe mohou zdroje být. Stejně jako u štěrbiny je maximum užší, je-li otvor větší. Proto potřebujeme dalekohled s <b>větším průměrem objektivu</b>, chceme-li rozlišit dva blízké objekty na obloze.</p>
+
+      <figure class="theory-fig">
+        <svg viewBox="0 0 560 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Dvě dvojice překrývajících se ohybových maxim. Vlevo jsou maxima od sebe dostatečně daleko a součet intenzit má dvě oddělené špičky, vpravo jsou blízko sebe a součet je jedna společná špička.">
+          <line x1="15" y1="150" x2="275" y2="150" stroke="var(--ink)" stroke-width="1.5"/><path d="M15,148.7 L16,148.5 L17.1,148.3 L18.1,148.1 L19.2,147.8 L20.2,147.6 L21.2,147.4 L22.3,147.2 L23.3,147 L24.4,146.9 L25.4,146.7 L26.4,146.6 L27.5,146.4 L28.5,146.4 L29.6,146.3 L30.6,146.2 L31.6,146.2 L32.7,146.2 L33.7,146.3 L34.8,146.4 L35.8,146.5 L36.8,146.6 L37.9,146.8 L38.9,147 L40,147.2 L41,147.4 L42,147.7 L43.1,147.9 L44.1,148.2 L45.2,148.5 L46.2,148.7 L47.2,149 L48.3,149.2 L49.3,149.5 L50.4,149.7 L51.4,149.8 L52.4,149.9 L53.5,150 L54.5,150 L55.6,149.9 L56.6,149.8 L57.6,149.6 L58.7,149.2 L59.7,148.8 L60.8,148.3 L61.8,147.7 L62.8,147 L63.9,146.1 L64.9,145.1 L66,144 L67,142.8 L68,141.4 L69.1,140 L70.1,138.4 L71.2,136.6 L72.2,134.8 L73.2,132.8 L74.3,130.7 L75.3,128.5 L76.4,126.2 L77.4,123.9 L78.4,121.4 L79.5,118.9 L80.5,116.3 L81.6,113.6 L82.6,111 L83.6,108.2 L84.7,105.5 L85.7,102.8 L86.8,100.1 L87.8,97.5 L88.8,94.9 L89.9,92.3 L90.9,89.8 L92,87.4 L93,85.2 L94,83 L95.1,81 L96.1,79.1 L97.2,77.3 L98.2,75.7 L99.2,74.4 L100.3,73.1 L101.3,72.1 L102.4,71.3 L103.4,70.7 L104.4,70.2 L105.5,70 L106.5,70 L107.6,70.2 L108.6,70.7 L109.6,71.3 L110.7,72.1 L111.7,73.1 L112.8,74.4 L113.8,75.7 L114.8,77.3 L115.9,79.1 L116.9,81 L118,83 L119,85.2 L120,87.4 L121.1,89.8 L122.1,92.3 L123.2,94.9 L124.2,97.5 L125.2,100.1 L126.3,102.8 L127.3,105.5 L128.4,108.2 L129.4,111 L130.4,113.6 L131.5,116.3 L132.5,118.9 L133.6,121.4 L134.6,123.9 L135.6,126.2 L136.7,128.5 L137.7,130.7 L138.8,132.8 L139.8,134.8 L140.8,136.6 L141.9,138.4 L142.9,140 L144,141.4 L145,142.8 L146,144 L147.1,145.1 L148.1,146.1 L149.2,147 L150.2,147.7 L151.2,148.3 L152.3,148.8 L153.3,149.2 L154.4,149.6 L155.4,149.8 L156.4,149.9 L157.5,150 L158.5,150 L159.6,149.9 L160.6,149.8 L161.6,149.7 L162.7,149.5 L163.7,149.2 L164.8,149 L165.8,148.7 L166.8,148.5 L167.9,148.2 L168.9,147.9 L170,147.7 L171,147.4 L172,147.2 L173.1,147 L174.1,146.8 L175.2,146.6 L176.2,146.5 L177.2,146.4 L178.3,146.3 L179.3,146.2 L180.4,146.2 L181.4,146.2 L182.4,146.3 L183.5,146.4 L184.5,146.4 L185.6,146.6 L186.6,146.7 L187.6,146.9 L188.7,147 L189.7,147.2 L190.8,147.4 L191.8,147.6 L192.8,147.8 L193.9,148.1 L194.9,148.3 L196,148.5 L197,148.7 L198,148.9 L199.1,149 L200.1,149.2 L201.2,149.4 L202.2,149.5 L203.2,149.6 L204.3,149.7 L205.3,149.8 L206.4,149.9 L207.4,149.9 L208.4,150 L209.5,150 L210.5,150 L211.6,150 L212.6,150 L213.6,149.9 L214.7,149.9 L215.7,149.8 L216.8,149.7 L217.8,149.6 L218.8,149.6 L219.9,149.5 L220.9,149.4 L222,149.3 L223,149.2 L224,149.1 L225.1,149 L226.1,149 L227.2,148.9 L228.2,148.8 L229.2,148.8 L230.3,148.7 L231.3,148.7 L232.4,148.7 L233.4,148.7 L234.4,148.7 L235.5,148.7 L236.5,148.7 L237.6,148.7 L238.6,148.8 L239.6,148.8 L240.7,148.9 L241.7,148.9 L242.8,149 L243.8,149.1 L244.8,149.2 L245.9,149.2 L246.9,149.3 L248,149.4 L249,149.5 L250,149.5 L251.1,149.6 L252.1,149.7 L253.2,149.7 L254.2,149.8 L255.2,149.8 L256.3,149.9 L257.3,149.9 L258.4,150 L259.4,150 L260.4,150 L261.5,150 L262.5,150 L263.6,150 L264.6,150 L265.6,150 L266.7,149.9 L267.7,149.9 L268.8,149.9 L269.8,149.8 L270.8,149.8 L271.9,149.7 L272.9,149.7 L274,149.7 L275,149.6" fill="none" stroke="var(--focus)" stroke-width="1.6" stroke-dasharray="5 4"/><path d="M15,149.6 L16,149.7 L17.1,149.7 L18.1,149.7 L19.2,149.8 L20.2,149.8 L21.2,149.9 L22.3,149.9 L23.3,149.9 L24.4,150 L25.4,150 L26.4,150 L27.5,150 L28.5,150 L29.6,150 L30.6,150 L31.6,150 L32.7,149.9 L33.7,149.9 L34.8,149.8 L35.8,149.8 L36.8,149.7 L37.9,149.7 L38.9,149.6 L40,149.5 L41,149.5 L42,149.4 L43.1,149.3 L44.1,149.2 L45.2,149.2 L46.2,149.1 L47.2,149 L48.3,148.9 L49.3,148.9 L50.4,148.8 L51.4,148.8 L52.4,148.7 L53.5,148.7 L54.5,148.7 L55.6,148.7 L56.6,148.7 L57.6,148.7 L58.7,148.7 L59.7,148.7 L60.8,148.8 L61.8,148.8 L62.8,148.9 L63.9,149 L64.9,149 L66,149.1 L67,149.2 L68,149.3 L69.1,149.4 L70.1,149.5 L71.2,149.6 L72.2,149.6 L73.2,149.7 L74.3,149.8 L75.3,149.9 L76.4,149.9 L77.4,150 L78.4,150 L79.5,150 L80.5,150 L81.6,150 L82.6,149.9 L83.6,149.9 L84.7,149.8 L85.7,149.7 L86.8,149.6 L87.8,149.5 L88.8,149.4 L89.9,149.2 L90.9,149 L92,148.9 L93,148.7 L94,148.5 L95.1,148.3 L96.1,148.1 L97.2,147.8 L98.2,147.6 L99.2,147.4 L100.3,147.2 L101.3,147 L102.4,146.9 L103.4,146.7 L104.4,146.6 L105.5,146.4 L106.5,146.4 L107.6,146.3 L108.6,146.2 L109.6,146.2 L110.7,146.2 L111.7,146.3 L112.8,146.4 L113.8,146.5 L114.8,146.6 L115.9,146.8 L116.9,147 L118,147.2 L119,147.4 L120,147.7 L121.1,147.9 L122.1,148.2 L123.2,148.5 L124.2,148.7 L125.2,149 L126.3,149.2 L127.3,149.5 L128.4,149.7 L129.4,149.8 L130.4,149.9 L131.5,150 L132.5,150 L133.6,149.9 L134.6,149.8 L135.6,149.6 L136.7,149.2 L137.7,148.8 L138.8,148.3 L139.8,147.7 L140.8,147 L141.9,146.1 L142.9,145.1 L144,144 L145,142.8 L146,141.4 L147.1,140 L148.1,138.4 L149.2,136.6 L150.2,134.8 L151.2,132.8 L152.3,130.7 L153.3,128.5 L154.4,126.2 L155.4,123.9 L156.4,121.4 L157.5,118.9 L158.5,116.3 L159.6,113.6 L160.6,111 L161.6,108.2 L162.7,105.5 L163.7,102.8 L164.8,100.1 L165.8,97.5 L166.8,94.9 L167.9,92.3 L168.9,89.8 L170,87.4 L171,85.2 L172,83 L173.1,81 L174.1,79.1 L175.2,77.3 L176.2,75.7 L177.2,74.4 L178.3,73.1 L179.3,72.1 L180.4,71.3 L181.4,70.7 L182.4,70.2 L183.5,70 L184.5,70 L185.6,70.2 L186.6,70.7 L187.6,71.3 L188.7,72.1 L189.7,73.1 L190.8,74.4 L191.8,75.7 L192.8,77.3 L193.9,79.1 L194.9,81 L196,83 L197,85.2 L198,87.4 L199.1,89.8 L200.1,92.3 L201.2,94.9 L202.2,97.5 L203.2,100.1 L204.3,102.8 L205.3,105.5 L206.4,108.2 L207.4,111 L208.4,113.6 L209.5,116.3 L210.5,118.9 L211.6,121.4 L212.6,123.9 L213.6,126.2 L214.7,128.5 L215.7,130.7 L216.8,132.8 L217.8,134.8 L218.8,136.6 L219.9,138.4 L220.9,140 L222,141.4 L223,142.8 L224,144 L225.1,145.1 L226.1,146.1 L227.2,147 L228.2,147.7 L229.2,148.3 L230.3,148.8 L231.3,149.2 L232.4,149.6 L233.4,149.8 L234.4,149.9 L235.5,150 L236.5,150 L237.6,149.9 L238.6,149.8 L239.6,149.7 L240.7,149.5 L241.7,149.2 L242.8,149 L243.8,148.7 L244.8,148.5 L245.9,148.2 L246.9,147.9 L248,147.7 L249,147.4 L250,147.2 L251.1,147 L252.1,146.8 L253.2,146.6 L254.2,146.5 L255.2,146.4 L256.3,146.3 L257.3,146.2 L258.4,146.2 L259.4,146.2 L260.4,146.3 L261.5,146.4 L262.5,146.4 L263.6,146.6 L264.6,146.7 L265.6,146.9 L266.7,147 L267.7,147.2 L268.8,147.4 L269.8,147.6 L270.8,147.8 L271.9,148.1 L272.9,148.3 L274,148.5 L275,148.7" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-dasharray="5 4"/><path d="M15,148.3 L16,148.1 L17.1,148 L18.1,147.8 L19.2,147.6 L20.2,147.5 L21.2,147.3 L22.3,147.1 L23.3,147 L24.4,146.8 L25.4,146.7 L26.4,146.6 L27.5,146.4 L28.5,146.4 L29.6,146.3 L30.6,146.2 L31.6,146.2 L32.7,146.2 L33.7,146.2 L34.8,146.2 L35.8,146.3 L36.8,146.3 L37.9,146.4 L38.9,146.6 L40,146.7 L41,146.9 L42,147 L43.1,147.2 L44.1,147.4 L45.2,147.6 L46.2,147.8 L47.2,148 L48.3,148.2 L49.3,148.4 L50.4,148.5 L51.4,148.6 L52.4,148.7 L53.5,148.7 L54.5,148.7 L55.6,148.6 L56.6,148.5 L57.6,148.2 L58.7,148 L59.7,147.6 L60.8,147.1 L61.8,146.5 L62.8,145.8 L63.9,145.1 L64.9,144.2 L66,143.1 L67,142 L68,140.7 L69.1,139.3 L70.1,137.8 L71.2,136.2 L72.2,134.4 L73.2,132.5 L74.3,130.5 L75.3,128.4 L76.4,126.1 L77.4,123.8 L78.4,121.4 L79.5,118.9 L80.5,116.3 L81.6,113.6 L82.6,110.9 L83.6,108.1 L84.7,105.4 L85.7,102.6 L86.8,99.8 L87.8,97 L88.8,94.2 L89.9,91.5 L90.9,88.9 L92,86.3 L93,83.8 L94,81.5 L95.1,79.2 L96.1,77.1 L97.2,75.2 L98.2,73.4 L99.2,71.8 L100.3,70.4 L101.3,69.2 L102.4,68.1 L103.4,67.4 L104.4,66.8 L105.5,66.5 L106.5,66.4 L107.6,66.5 L108.6,66.9 L109.6,67.5 L110.7,68.3 L111.7,69.4 L112.8,70.7 L113.8,72.2 L114.8,73.9 L115.9,75.8 L116.9,77.9 L118,80.2 L119,82.6 L120,85.1 L121.1,87.7 L122.1,90.5 L123.2,93.3 L124.2,96.2 L125.2,99.1 L126.3,102.1 L127.3,105 L128.4,107.9 L129.4,110.8 L130.4,113.6 L131.5,116.3 L132.5,118.9 L133.6,121.3 L134.6,123.6 L135.6,125.8 L136.7,127.8 L137.7,129.5 L138.8,131.1 L139.8,132.5 L140.8,133.6 L141.9,134.5 L142.9,135.1 L144,135.5 L145,135.6 L146,135.5 L147.1,135.1 L148.1,134.5 L149.2,133.6 L150.2,132.5 L151.2,131.1 L152.3,129.5 L153.3,127.8 L154.4,125.8 L155.4,123.6 L156.4,121.3 L157.5,118.9 L158.5,116.3 L159.6,113.6 L160.6,110.8 L161.6,107.9 L162.7,105 L163.7,102.1 L164.8,99.1 L165.8,96.2 L166.8,93.3 L167.9,90.5 L168.9,87.7 L170,85.1 L171,82.6 L172,80.2 L173.1,77.9 L174.1,75.8 L175.2,73.9 L176.2,72.2 L177.2,70.7 L178.3,69.4 L179.3,68.3 L180.4,67.5 L181.4,66.9 L182.4,66.5 L183.5,66.4 L184.5,66.5 L185.6,66.8 L186.6,67.4 L187.6,68.1 L188.7,69.2 L189.7,70.4 L190.8,71.8 L191.8,73.4 L192.8,75.2 L193.9,77.1 L194.9,79.2 L196,81.5 L197,83.8 L198,86.3 L199.1,88.9 L200.1,91.5 L201.2,94.2 L202.2,97 L203.2,99.8 L204.3,102.6 L205.3,105.4 L206.4,108.1 L207.4,110.9 L208.4,113.6 L209.5,116.3 L210.5,118.9 L211.6,121.4 L212.6,123.8 L213.6,126.1 L214.7,128.4 L215.7,130.5 L216.8,132.5 L217.8,134.4 L218.8,136.2 L219.9,137.8 L220.9,139.3 L222,140.7 L223,142 L224,143.1 L225.1,144.2 L226.1,145.1 L227.2,145.8 L228.2,146.5 L229.2,147.1 L230.3,147.6 L231.3,148 L232.4,148.2 L233.4,148.5 L234.4,148.6 L235.5,148.7 L236.5,148.7 L237.6,148.7 L238.6,148.6 L239.6,148.5 L240.7,148.4 L241.7,148.2 L242.8,148 L243.8,147.8 L244.8,147.6 L245.9,147.4 L246.9,147.2 L248,147 L249,146.9 L250,146.7 L251.1,146.6 L252.1,146.4 L253.2,146.3 L254.2,146.3 L255.2,146.2 L256.3,146.2 L257.3,146.2 L258.4,146.2 L259.4,146.2 L260.4,146.3 L261.5,146.4 L262.5,146.4 L263.6,146.6 L264.6,146.7 L265.6,146.8 L266.7,147 L267.7,147.1 L268.8,147.3 L269.8,147.5 L270.8,147.6 L271.9,147.8 L272.9,148 L274,148.1 L275,148.3" fill="none" stroke="var(--ink)" stroke-width="2.6" stroke-linejoin="round"/><text x="145" y="172" text-anchor="middle" font-family="Work Sans, sans-serif" font-size="14" font-weight="700" fill="var(--ink)">zdroje rozlišíme</text><text x="145" y="190" text-anchor="middle" font-family="Work Sans, sans-serif" font-size="12" fill="var(--ink-soft)">maxima jsou daleko od sebe</text><line x1="285" y1="150" x2="545" y2="150" stroke="var(--ink)" stroke-width="1.5"/><path d="M285,149 L286,149.1 L287.1,149.2 L288.1,149.2 L289.2,149.3 L290.2,149.4 L291.2,149.5 L292.3,149.6 L293.3,149.7 L294.4,149.8 L295.4,149.8 L296.4,149.9 L297.5,149.9 L298.5,150 L299.6,150 L300.6,150 L301.6,150 L302.7,150 L303.7,149.9 L304.8,149.9 L305.8,149.8 L306.8,149.7 L307.9,149.6 L308.9,149.4 L310,149.3 L311,149.1 L312,149 L313.1,148.8 L314.1,148.6 L315.2,148.4 L316.2,148.2 L317.2,148 L318.3,147.7 L319.3,147.5 L320.4,147.3 L321.4,147.1 L322.4,147 L323.5,146.8 L324.5,146.6 L325.6,146.5 L326.6,146.4 L327.6,146.3 L328.7,146.3 L329.7,146.2 L330.8,146.2 L331.8,146.3 L332.8,146.3 L333.9,146.4 L334.9,146.5 L336,146.7 L337,146.9 L338,147.1 L339.1,147.3 L340.1,147.5 L341.2,147.8 L342.2,148.1 L343.2,148.3 L344.3,148.6 L345.3,148.9 L346.4,149.1 L347.4,149.4 L348.4,149.6 L349.5,149.7 L350.5,149.9 L351.6,150 L352.6,150 L353.6,150 L354.7,149.9 L355.7,149.7 L356.8,149.4 L357.8,149 L358.8,148.6 L359.9,148 L360.9,147.3 L362,146.5 L363,145.6 L364,144.6 L365.1,143.4 L366.1,142.1 L367.2,140.7 L368.2,139.2 L369.2,137.5 L370.3,135.7 L371.3,133.8 L372.4,131.8 L373.4,129.6 L374.4,127.4 L375.5,125.1 L376.5,122.6 L377.6,120.1 L378.6,117.6 L379.6,115 L380.7,112.3 L381.7,109.6 L382.8,106.9 L383.8,104.2 L384.8,101.5 L385.9,98.8 L386.9,96.2 L388,93.6 L389,91.1 L390,88.6 L391.1,86.3 L392.1,84.1 L393.2,82 L394.2,80 L395.2,78.2 L396.3,76.5 L397.3,75 L398.4,73.7 L399.4,72.6 L400.4,71.7 L401.5,70.9 L402.5,70.4 L403.6,70.1 L404.6,70 L405.6,70.1 L406.7,70.4 L407.7,70.9 L408.8,71.7 L409.8,72.6 L410.8,73.7 L411.9,75 L412.9,76.5 L414,78.2 L415,80 L416,82 L417.1,84.1 L418.1,86.3 L419.2,88.6 L420.2,91.1 L421.2,93.6 L422.3,96.2 L423.3,98.8 L424.4,101.5 L425.4,104.2 L426.4,106.9 L427.5,109.6 L428.5,112.3 L429.6,115 L430.6,117.6 L431.6,120.1 L432.7,122.6 L433.7,125.1 L434.8,127.4 L435.8,129.6 L436.8,131.8 L437.9,133.8 L438.9,135.7 L440,137.5 L441,139.2 L442,140.7 L443.1,142.1 L444.1,143.4 L445.2,144.6 L446.2,145.6 L447.2,146.5 L448.3,147.3 L449.3,148 L450.4,148.6 L451.4,149 L452.4,149.4 L453.5,149.7 L454.5,149.9 L455.6,150 L456.6,150 L457.6,150 L458.7,149.9 L459.7,149.7 L460.8,149.6 L461.8,149.4 L462.8,149.1 L463.9,148.9 L464.9,148.6 L466,148.3 L467,148.1 L468,147.8 L469.1,147.5 L470.1,147.3 L471.2,147.1 L472.2,146.9 L473.2,146.7 L474.3,146.5 L475.3,146.4 L476.4,146.3 L477.4,146.3 L478.4,146.2 L479.5,146.2 L480.5,146.3 L481.6,146.3 L482.6,146.4 L483.6,146.5 L484.7,146.6 L485.7,146.8 L486.8,147 L487.8,147.1 L488.8,147.3 L489.9,147.5 L490.9,147.7 L492,148 L493,148.2 L494,148.4 L495.1,148.6 L496.1,148.8 L497.2,149 L498.2,149.1 L499.2,149.3 L500.3,149.4 L501.3,149.6 L502.4,149.7 L503.4,149.8 L504.4,149.9 L505.5,149.9 L506.5,150 L507.6,150 L508.6,150 L509.6,150 L510.7,150 L511.7,149.9 L512.8,149.9 L513.8,149.8 L514.8,149.8 L515.9,149.7 L516.9,149.6 L518,149.5 L519,149.4 L520,149.3 L521.1,149.2 L522.1,149.2 L523.2,149.1 L524.2,149 L525.2,148.9 L526.3,148.9 L527.3,148.8 L528.4,148.8 L529.4,148.7 L530.4,148.7 L531.5,148.7 L532.5,148.7 L533.6,148.7 L534.6,148.7 L535.6,148.7 L536.7,148.8 L537.7,148.8 L538.8,148.9 L539.8,148.9 L540.8,149 L541.9,149 L542.9,149.1 L544,149.2 L545,149.3" fill="none" stroke="var(--focus)" stroke-width="1.6" stroke-dasharray="5 4"/><path d="M285,149.3 L286,149.2 L287.1,149.1 L288.1,149 L289.2,149 L290.2,148.9 L291.2,148.9 L292.3,148.8 L293.3,148.8 L294.4,148.7 L295.4,148.7 L296.4,148.7 L297.5,148.7 L298.5,148.7 L299.6,148.7 L300.6,148.7 L301.6,148.8 L302.7,148.8 L303.7,148.9 L304.8,148.9 L305.8,149 L306.8,149.1 L307.9,149.2 L308.9,149.2 L310,149.3 L311,149.4 L312,149.5 L313.1,149.6 L314.1,149.7 L315.2,149.8 L316.2,149.8 L317.2,149.9 L318.3,149.9 L319.3,150 L320.4,150 L321.4,150 L322.4,150 L323.5,150 L324.5,149.9 L325.6,149.9 L326.6,149.8 L327.6,149.7 L328.7,149.6 L329.7,149.4 L330.8,149.3 L331.8,149.1 L332.8,149 L333.9,148.8 L334.9,148.6 L336,148.4 L337,148.2 L338,148 L339.1,147.7 L340.1,147.5 L341.2,147.3 L342.2,147.1 L343.2,147 L344.3,146.8 L345.3,146.6 L346.4,146.5 L347.4,146.4 L348.4,146.3 L349.5,146.3 L350.5,146.2 L351.6,146.2 L352.6,146.3 L353.6,146.3 L354.7,146.4 L355.7,146.5 L356.8,146.7 L357.8,146.9 L358.8,147.1 L359.9,147.3 L360.9,147.5 L362,147.8 L363,148.1 L364,148.3 L365.1,148.6 L366.1,148.9 L367.2,149.1 L368.2,149.4 L369.2,149.6 L370.3,149.7 L371.3,149.9 L372.4,150 L373.4,150 L374.4,150 L375.5,149.9 L376.5,149.7 L377.6,149.4 L378.6,149 L379.6,148.6 L380.7,148 L381.7,147.3 L382.8,146.5 L383.8,145.6 L384.8,144.6 L385.9,143.4 L386.9,142.1 L388,140.7 L389,139.2 L390,137.5 L391.1,135.7 L392.1,133.8 L393.2,131.8 L394.2,129.6 L395.2,127.4 L396.3,125.1 L397.3,122.6 L398.4,120.1 L399.4,117.6 L400.4,115 L401.5,112.3 L402.5,109.6 L403.6,106.9 L404.6,104.2 L405.6,101.5 L406.7,98.8 L407.7,96.2 L408.8,93.6 L409.8,91.1 L410.8,88.6 L411.9,86.3 L412.9,84.1 L414,82 L415,80 L416,78.2 L417.1,76.5 L418.1,75 L419.2,73.7 L420.2,72.6 L421.2,71.7 L422.3,70.9 L423.3,70.4 L424.4,70.1 L425.4,70 L426.4,70.1 L427.5,70.4 L428.5,70.9 L429.6,71.7 L430.6,72.6 L431.6,73.7 L432.7,75 L433.7,76.5 L434.8,78.2 L435.8,80 L436.8,82 L437.9,84.1 L438.9,86.3 L440,88.6 L441,91.1 L442,93.6 L443.1,96.2 L444.1,98.8 L445.2,101.5 L446.2,104.2 L447.2,106.9 L448.3,109.6 L449.3,112.3 L450.4,115 L451.4,117.6 L452.4,120.1 L453.5,122.6 L454.5,125.1 L455.6,127.4 L456.6,129.6 L457.6,131.8 L458.7,133.8 L459.7,135.7 L460.8,137.5 L461.8,139.2 L462.8,140.7 L463.9,142.1 L464.9,143.4 L466,144.6 L467,145.6 L468,146.5 L469.1,147.3 L470.1,148 L471.2,148.6 L472.2,149 L473.2,149.4 L474.3,149.7 L475.3,149.9 L476.4,150 L477.4,150 L478.4,150 L479.5,149.9 L480.5,149.7 L481.6,149.6 L482.6,149.4 L483.6,149.1 L484.7,148.9 L485.7,148.6 L486.8,148.3 L487.8,148.1 L488.8,147.8 L489.9,147.5 L490.9,147.3 L492,147.1 L493,146.9 L494,146.7 L495.1,146.5 L496.1,146.4 L497.2,146.3 L498.2,146.3 L499.2,146.2 L500.3,146.2 L501.3,146.3 L502.4,146.3 L503.4,146.4 L504.4,146.5 L505.5,146.6 L506.5,146.8 L507.6,147 L508.6,147.1 L509.6,147.3 L510.7,147.5 L511.7,147.7 L512.8,148 L513.8,148.2 L514.8,148.4 L515.9,148.6 L516.9,148.8 L518,149 L519,149.1 L520,149.3 L521.1,149.4 L522.1,149.6 L523.2,149.7 L524.2,149.8 L525.2,149.9 L526.3,149.9 L527.3,150 L528.4,150 L529.4,150 L530.4,150 L531.5,150 L532.5,149.9 L533.6,149.9 L534.6,149.8 L535.6,149.8 L536.7,149.7 L537.7,149.6 L538.8,149.5 L539.8,149.4 L540.8,149.3 L541.9,149.2 L542.9,149.2 L544,149.1 L545,149" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-dasharray="5 4"/><path d="M285,148.3 L286,148.3 L287.1,148.3 L288.1,148.3 L289.2,148.3 L290.2,148.3 L291.2,148.4 L292.3,148.4 L293.3,148.4 L294.4,148.5 L295.4,148.5 L296.4,148.6 L297.5,148.6 L298.5,148.7 L299.6,148.7 L300.6,148.7 L301.6,148.8 L302.7,148.8 L303.7,148.8 L304.8,148.8 L305.8,148.8 L306.8,148.8 L307.9,148.7 L308.9,148.7 L310,148.6 L311,148.6 L312,148.5 L313.1,148.4 L314.1,148.3 L315.2,148.1 L316.2,148 L317.2,147.8 L318.3,147.7 L319.3,147.5 L320.4,147.3 L321.4,147.1 L322.4,146.9 L323.5,146.8 L324.5,146.6 L325.6,146.4 L326.6,146.2 L327.6,146 L328.7,145.8 L329.7,145.7 L330.8,145.5 L331.8,145.4 L332.8,145.3 L333.9,145.2 L334.9,145.1 L336,145.1 L337,145 L338,145 L339.1,145 L340.1,145.1 L341.2,145.1 L342.2,145.2 L343.2,145.3 L344.3,145.4 L345.3,145.5 L346.4,145.6 L347.4,145.8 L348.4,145.9 L349.5,146 L350.5,146.1 L351.6,146.2 L352.6,146.3 L353.6,146.3 L354.7,146.3 L355.7,146.2 L356.8,146.1 L357.8,145.9 L358.8,145.6 L359.9,145.3 L360.9,144.9 L362,144.3 L363,143.7 L364,142.9 L365.1,142 L366.1,141 L367.2,139.8 L368.2,138.5 L369.2,137.1 L370.3,135.5 L371.3,133.7 L372.4,131.7 L373.4,129.6 L374.4,127.4 L375.5,124.9 L376.5,122.3 L377.6,119.5 L378.6,116.6 L379.6,113.5 L380.7,110.3 L381.7,106.9 L382.8,103.4 L383.8,99.8 L384.8,96.1 L385.9,92.2 L386.9,88.3 L388,84.3 L389,80.2 L390,76.1 L391.1,72 L392.1,67.9 L393.2,63.7 L394.2,59.6 L395.2,55.6 L396.3,51.6 L397.3,47.7 L398.4,43.9 L399.4,40.2 L400.4,36.6 L401.5,33.2 L402.5,30 L403.6,27 L404.6,24.2 L405.6,21.6 L406.7,19.2 L407.7,17.1 L408.8,15.2 L409.8,13.7 L410.8,12.3 L411.9,11.3 L412.9,10.6 L414,10.1 L415,10 L416,10.1 L417.1,10.6 L418.1,11.3 L419.2,12.3 L420.2,13.7 L421.2,15.2 L422.3,17.1 L423.3,19.2 L424.4,21.6 L425.4,24.2 L426.4,27 L427.5,30 L428.5,33.2 L429.6,36.6 L430.6,40.2 L431.6,43.9 L432.7,47.7 L433.7,51.6 L434.8,55.6 L435.8,59.6 L436.8,63.7 L437.9,67.9 L438.9,72 L440,76.1 L441,80.2 L442,84.3 L443.1,88.3 L444.1,92.2 L445.2,96.1 L446.2,99.8 L447.2,103.4 L448.3,106.9 L449.3,110.3 L450.4,113.5 L451.4,116.6 L452.4,119.5 L453.5,122.3 L454.5,124.9 L455.6,127.4 L456.6,129.6 L457.6,131.7 L458.7,133.7 L459.7,135.5 L460.8,137.1 L461.8,138.5 L462.8,139.8 L463.9,141 L464.9,142 L466,142.9 L467,143.7 L468,144.3 L469.1,144.9 L470.1,145.3 L471.2,145.6 L472.2,145.9 L473.2,146.1 L474.3,146.2 L475.3,146.3 L476.4,146.3 L477.4,146.3 L478.4,146.2 L479.5,146.1 L480.5,146 L481.6,145.9 L482.6,145.8 L483.6,145.6 L484.7,145.5 L485.7,145.4 L486.8,145.3 L487.8,145.2 L488.8,145.1 L489.9,145.1 L490.9,145 L492,145 L493,145 L494,145.1 L495.1,145.1 L496.1,145.2 L497.2,145.3 L498.2,145.4 L499.2,145.5 L500.3,145.7 L501.3,145.8 L502.4,146 L503.4,146.2 L504.4,146.4 L505.5,146.6 L506.5,146.8 L507.6,146.9 L508.6,147.1 L509.6,147.3 L510.7,147.5 L511.7,147.7 L512.8,147.8 L513.8,148 L514.8,148.1 L515.9,148.3 L516.9,148.4 L518,148.5 L519,148.6 L520,148.6 L521.1,148.7 L522.1,148.7 L523.2,148.8 L524.2,148.8 L525.2,148.8 L526.3,148.8 L527.3,148.8 L528.4,148.8 L529.4,148.7 L530.4,148.7 L531.5,148.7 L532.5,148.6 L533.6,148.6 L534.6,148.5 L535.6,148.5 L536.7,148.4 L537.7,148.4 L538.8,148.4 L539.8,148.3 L540.8,148.3 L541.9,148.3 L542.9,148.3 L544,148.3 L545,148.3" fill="none" stroke="var(--ink)" stroke-width="2.6" stroke-linejoin="round"/><text x="415" y="172" text-anchor="middle" font-family="Work Sans, sans-serif" font-size="14" font-weight="700" fill="var(--ink)">zdroje nerozlišíme</text><text x="415" y="190" text-anchor="middle" font-family="Work Sans, sans-serif" font-size="12" fill="var(--ink-soft)">maxima splývají</text>
+        </svg>
+        <figcaption>Součet intenzit dvou nezávislých zdrojů. Vlevo jsou maxima daleko od sebe a oba zdroje rozlišíme, vpravo splývají v jedno maximum.</figcaption>
+      </figure>
+
+      <div class="links">
+        <a class="btn-link" href="dalekohled.html">Dalekohled →</a>
+        <a class="btn-link" href="mikroskop.html">Mikroskop →</a>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Shrnutí</div>
+      <p>• Ohyb (difrakce) světla je odchylka od přímočarého šíření, kterou geometrická optika nevysvětlí. Světlo se chová jako vlnění a paprsky jsou vždy kolmé na vlnoplochy.</p>
+      <p>• Za překážkou nebo štěrbinou vzniká interferencí světlé a tmavé proužky.</p>
+      <p>• Ohyb na jedné štěrbině: minima jsou pod úhly daných vztahem \(d\sin\theta = m\lambda\), \(m = 1, 2, 3, \dots\)</p>
+      <p>• Šířka hlavního maxima je \(L \approx 2D\lambda/d\): čím užší štěrbina, čím větší vlnová délka a čím vzdálenější stínítko, tím širší maximum.</p>
+      <p>• Ohyb omezuje rozlišovací schopnost mikroskopů a dalekohledů, proto potřebujeme objektiv s větším průměrem.</p>
+    </div>
+
+  </div>
+
+  <!-- ============ APLET ============ -->
+  <div id="aplet-section" class="tab-section" hidden>
+    <div class="card applet-card" id="applet-card">
+
+      <div class="applet-head">
+        <div class="applet-head-text">
+          <span class="cat-tag">Aplet</span>
+          <h2>Ohyb světla na jedné štěrbině</h2>
+          <p class="desc">Posuvníky měňte <b>vlnovou délku</b> světla, <b>šířku štěrbiny</b> a <b>vzdálenost stínítka</b>. Aplet vykreslí difrakční obrazec na stínítku a pod ním graf závislosti intenzity světla na poloze na stínítku.</p>
+        </div>
+        <button class="btn ghost fs-btn" id="fs-btn" type="button" aria-pressed="false">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path id="fs-icon" d="M1.5 5.5V1.5H5.5M10.5 1.5H14.5V5.5M14.5 10.5V14.5H10.5M5.5 14.5H1.5V10.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="fs-label">Celá obrazovka</span>
+        </button>
+      </div>
+
+      <div class="applet-controls">
+        <div class="mode-row slider-row">
+          <label class="mode-row-label" for="sl-lam">Vlnová délka</label>
+          <input type="range" id="sl-lam" min="400" max="700" step="5" value="650">
+          <span class="slider-val" id="out-lam" aria-live="polite"></span>
+        </div>
+
+        <div class="mode-row slider-row">
+          <label class="mode-row-label" for="sl-d">Šířka štěrbiny</label>
+          <input type="range" id="sl-d" min="20" max="200" step="5" value="100">
+          <span class="slider-val" id="out-d" aria-live="polite"></span>
+        </div>
+
+        <div class="mode-row slider-row">
+          <label class="mode-row-label" for="sl-D">Vzdálenost stínítka</label>
+          <input type="range" id="sl-D" min="0.5" max="5" step="0.1" value="3">
+          <span class="slider-val" id="out-D" aria-live="polite"></span>
+        </div>
+
+        <div class="mode-row">
+          <span class="mode-row-label">Zobrazená část stínítka</span>
+          <div class="seg" id="range-seg" role="group" aria-label="Zobrazená část stínítka">
+            <button class="chip accented" type="button" aria-pressed="false">±2&nbsp;cm</button>
+            <button class="chip accented" type="button" aria-pressed="false">±5&nbsp;cm</button>
+            <button class="chip accented on" type="button" aria-pressed="true">±10&nbsp;cm</button>
+            <button class="chip accented" type="button" aria-pressed="false">±20&nbsp;cm</button>
+          </div>
+        </div>
+
+        <div class="mode-row">
+          <span class="mode-row-label">Zobrazení</span>
+          <div class="seg">
+            <button class="chip accented on" id="boost-btn" type="button" aria-pressed="true">zvýraznit slabá maxima</button>
+            <button class="chip accented" id="geom-btn" type="button" aria-pressed="false">ukázat geometrickou optiku</button>
+            <button class="chip" id="reset-btn" type="button">Výchozí hodnoty</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="applet-stage">
+        <div class="canvas-wrap">
+          <svg class="optics" id="optics-svg" viewBox="0 0 960 640" role="img" aria-label="Ohyb světla na jedné štěrbině: nahoře schéma s laserem, štěrbinou a stínítkem, uprostřed difrakční obrazec na stínítku a dole graf intenzity světla v závislosti na poloze na stínítku."></svg>
+          <div class="legend" id="legend" aria-hidden="true"></div>
+        </div>
+        <p class="hint">Schéma nahoře je nakreslené svisle zvětšeně a štěrbina je zvětšená, aby šla vidět. Poloha na stínítku <i>x</i> je ale ve schématu, v obrazci i v grafu stejná. Pokud je jas zvýrazněný, je obrazec zobrazen jasněji než ve skutečnosti, aby byla vidět slabá vedlejší maxima; graf ukazuje skutečnou intenzitu. Svislé tečkované čáry označují minima intenzity. Model počítá s ohybem na štěrbině nekonečné délky v rovnoběžném svazku (Fraunhoferův ohyb).</p>
+      </div>
+
+      <div class="applet-results">
+        <div class="results">
+          <div>
+            <div class="readout" id="readout">
+              <div class="cell"><span class="label">θ<sub>1</sub></span><span class="value" id="out-th">—</span></div>
+              <div class="cell"><span class="label"><i>x</i><sub>1</sub></span><span class="value" id="out-x1">—</span></div>
+              <div class="cell"><span class="label"><i>L</i></span><span class="value" id="out-L">—</span></div>
+            </div>
+            <p class="position-note" id="position-note"></p>
+          </div>
+          <div class="calc">
+            <div class="calc-title">Výpočet</div>
+            <div id="calc-math"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>Fyzika — Oktáva/4. ročník</footer>
+</div>
+
+<script src="../spolecne/spolecne.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  // ---- záložky: tlačítko .toptab[data-tab="x"] ↔ sekce #x-section (Teorie = #theory-section) ----
+  var tabs = {}, sections = {};
+  Array.prototype.forEach.call(document.querySelectorAll('.toptab[data-tab]'), function(btn){
+    var name = btn.getAttribute('data-tab');
+    tabs[name] = btn;
+    sections[name] = document.getElementById(name === 'teorie' ? 'theory-section' : name + '-section');
+  });
+  function showTab(name){
+    for(var k in tabs){
+      tabs[k].classList.toggle('on', k === name);
+      if(sections[k]) sections[k].hidden = k !== name;
+    }
+    // skóre, série a úspěšnost v hlavičce jen u tréninku
+    var readout = document.getElementById('header-readout');
+    if(readout) readout.hidden = name !== 'trenink';
+  }
+  Object.keys(tabs).forEach(function(k){ tabs[k].addEventListener('click', function(){ showTab(k); }); });
+  var hash = location.hash.replace('#', '');
+  if(hash && tabs[hash]) showTab(hash);
+
+  // ---- příklady: postupně odemykané steppery ----
+  Array.prototype.forEach.call(document.querySelectorAll('.stepper'), function(wrap){
+    var steps = Array.prototype.slice.call(wrap.querySelectorAll('.step'));
+    var unlockedUpTo = 1;
+
+    function refreshLocks(){
+      steps.forEach(function(st){
+        var idx = parseInt(st.getAttribute('data-step'), 10);
+        var locked = idx > unlockedUpTo;
+        st.classList.toggle('locked', locked);
+        st.classList.toggle('unlocked', !locked && !st.classList.contains('done'));
+        st.querySelector('.step-head').setAttribute('aria-disabled', locked ? 'true' : 'false');
+      });
+    }
+
+    steps.forEach(function(st){
+      var idx = parseInt(st.getAttribute('data-step'), 10);
+      var head = st.querySelector('.step-head');
+      var body = st.querySelector('.step-body');
+      head.addEventListener('click', function(){
+        if(idx > unlockedUpTo) return;
+        var wasOpen = st.classList.contains('open');
+        st.classList.toggle('open', !wasOpen);
+        body.hidden = wasOpen;
+        head.setAttribute('aria-expanded', (!wasOpen).toString());
+        if(!wasOpen){
+          st.classList.add('done');
+          if(idx === unlockedUpTo && unlockedUpTo < steps.length){ unlockedUpTo++; }
+          refreshLocks();
+        }
+      });
+    });
+
+    var resetBtn = document.getElementById(wrap.getAttribute('data-reset'));
+    if(resetBtn){
+      resetBtn.addEventListener('click', function(){
+        unlockedUpTo = 1;
+        steps.forEach(function(st){
+          st.classList.remove('open', 'done');
+          st.querySelector('.step-body').hidden = true;
+          st.querySelector('.step-head').setAttribute('aria-expanded', 'false');
+        });
+        refreshLocks();
+      });
+    }
+
+    refreshLocks();
+  });
+})();
+</script>
+
+<script>
+// Aplet — dalekohledy
+(function(){
+  "use strict";
+
+  // ================= APLET: ohyb na jedné štěrbině =================
+  var NS = 'http://www.w3.org/2000/svg';
+  var svg = document.getElementById('optics-svg');
+  var W = 960, H = 640;
+  var PL = 70, PW = 860;              // vodorovný rozsah obrazce a grafu (stejný pro oba)
+  var K = 1;                          // zvětšení písma na malém displeji (viz updateScale)
+  var DEF = { lam:650, d:100, D:3.0, X:10 };
+  var st = { lam:DEF.lam, d:DEF.d, D:DEF.D, X:DEF.X, boost:true, geom:false };
+
+  var slLam = document.getElementById('sl-lam'), slD = document.getElementById('sl-d'), slDist = document.getElementById('sl-D');
+  var outLam = document.getElementById('out-lam'), outD = document.getElementById('out-d'), outDist = document.getElementById('out-D');
+  var boostBtn = document.getElementById('boost-btn'), geomBtn = document.getElementById('geom-btn'), resetBtn = document.getElementById('reset-btn');
+  var rangeBtns = document.querySelectorAll('#range-seg .chip');
+  var RANGES = [2, 5, 10, 20];
+
+  function cz(n, dec){ return n.toFixed(dec).replace('.', ','); }
+  function sig3(v){ return cz(roundSig(v, 3), decimalsForSig(roundSig(v, 3), 3)); }
+  function fmtLen(m){                  // délka v mm nebo cm (3 platné číslice)
+    if(m < 0.01) return sig3(m * 1000) + ' mm';
+    return sig3(m * 100) + ' cm';
+  }
+  function fmtLenTex(m){
+    if(m < 0.01) return sig3(m * 1000).replace(',', '{,}') + '\\ \\mathrm{mm}';
+    return sig3(m * 100).replace(',', '{,}') + '\\ \\mathrm{cm}';
+  }
+
+  // barva světla podle vlnové délky (přibližný převod, 400 až 700 nm)
+  function lamRGB(w){
+    var r = 0, g = 0, b = 0;
+    if(w < 440){ r = (440 - w) / 40; b = 1; }
+    else if(w < 490){ g = (w - 440) / 50; b = 1; }
+    else if(w < 510){ g = 1; b = (510 - w) / 20; }
+    else if(w < 580){ r = (w - 510) / 70; g = 1; }
+    else if(w < 645){ r = 1; g = (645 - w) / 65; }
+    else { r = 1; }
+    return [r, g, b];
+  }
+
+  // intenzita na stínítku: I/I0 = (sin β / β)^2, β = π d sinθ / λ, sinθ = x / sqrt(x² + D²)
+  function inten(x){
+    var s = x / Math.sqrt(x * x + st.D * st.D);
+    var b = Math.PI * (st.d * 1e-6) * s / (st.lam * 1e-9);
+    if(Math.abs(b) < 1e-9) return 1;
+    var q = Math.sin(b) / b;
+    return q * q;
+  }
+  function minPos(m){                  // poloha m-tého minima na stínítku (m), nebo -1 když neexistuje
+    var s = m * (st.lam * 1e-9) / (st.d * 1e-6);
+    if(s >= 1) return -1;
+    return st.D * Math.tan(Math.asin(s));
+  }
+
+  function px(xcm){ return PL + (xcm + st.X) / (2 * st.X) * PW; }
+
+  function niceStep(X){                // krok popisků osy x [cm]
+    var steps = [0.5, 1, 2, 5, 10];
+    for(var i = 0; i < steps.length; i++){ if(2 * X / steps[i] <= 10) return steps[i]; }
+    return 10;
+  }
+
+  function render(){
+    var lamN = st.lam, dU = st.d, DD = st.D, X = st.X;
+    var rgb = lamRGB(lamN);
+    var col = 'rgb(' + Math.round(rgb[0] * 255) + ',' + Math.round(rgb[1] * 255) + ',' + Math.round(rgb[2] * 255) + ')';
+    var gamma = st.boost ? 0.4 : 1;
+    var x1 = minPos(1);                // m
+    var fs = function(n){ return Math.round(n * K * 10) / 10; };
+    var o = '';
+
+    // ---------- definice: přechod barvy obrazce ----------
+    var N = 430, stops = '';
+    for(var i = 0; i <= N; i++){
+      var xm = (-X + 2 * X * i / N) / 100;
+      var v = Math.pow(inten(xm), gamma);
+      stops += '<stop offset="' + (i / N).toFixed(4) + '" stop-color="rgb(' + Math.round(rgb[0] * v * 255) + ',' + Math.round(rgb[1] * v * 255) + ',' + Math.round(rgb[2] * v * 255) + ')"/>';
+    }
+    o += '<defs><linearGradient id="pat-grad" x1="0" y1="0" x2="1" y2="0">' + stops + '</linearGradient>' +
+         '<clipPath id="side-clip"><rect x="20" y="14" width="920" height="156"/></clipPath>' +
+         '<marker id="arr-L" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/></marker></defs>';
+
+    // ---------- A: schéma (boční pohled, svisle zvětšeno) ----------
+    var yc = 92, ky = 64 / X;          // px na cm
+    var xs = 120, xsc = xs + DD * 150; // štěrbina a stínítko
+    var gap = Math.max(4, dU * 1e-4 * ky);
+    o += '<g font-family="Work Sans, sans-serif" font-size="' + (Math.round(13 * Math.min(K, 2) * 10) / 10) + '" fill="var(--ink)">';
+    o += '<rect x="26" y="' + (yc - 12) + '" width="36" height="24" rx="3" fill="var(--ink)"/>';
+    o += '<line x1="62" y1="' + yc + '" x2="' + (xs - 6) + '" y2="' + yc + '" stroke="' + col + '" stroke-width="3"/>';
+    o += '<text x="44" y="' + (yc - 18) + '" text-anchor="middle" fill="var(--ink-soft)">laser</text>';
+    // světlo za štěrbinou (hlavní maximum)
+    if(x1 > 0){
+      var yy = Math.min(64, x1 * 100 * ky);
+      var xe = xsc;
+      var tail = x1 * 100 * ky > 64 ? 64 / (x1 * 100 * ky) : 1;
+      xe = xs + (xsc - xs) * tail;
+      o += '<polygon clip-path="url(#side-clip)" points="' + xs + ',' + yc + ' ' + xe + ',' + (yc - yy) + ' ' + xe + ',' + (yc + yy) + '" fill="' + col + '" fill-opacity="0.28"/>';
+      o += '<g clip-path="url(#side-clip)" stroke="' + col + '" stroke-width="1.6" stroke-dasharray="5 4"><line x1="' + xs + '" y1="' + yc + '" x2="' + xsc + '" y2="' + (yc - x1 * 100 * ky * 1) + '"/><line x1="' + xs + '" y1="' + yc + '" x2="' + xsc + '" y2="' + (yc + x1 * 100 * ky) + '"/></g>';
+    }
+    if(st.geom){
+      o += '<line x1="' + xs + '" y1="' + yc + '" x2="' + xsc + '" y2="' + yc + '" stroke="var(--danger)" stroke-width="2.4"/>';
+    }
+    // překážka se štěrbinou
+    o += '<line x1="' + xs + '" y1="14" x2="' + xs + '" y2="' + (yc - gap / 2) + '" stroke="var(--ink)" stroke-width="7"/>';
+    o += '<line x1="' + xs + '" y1="' + (yc + gap / 2) + '" x2="' + xs + '" y2="170" stroke="var(--ink)" stroke-width="7"/>';
+    o += '<text x="' + (xs - 10) + '" y="26" text-anchor="end" fill="var(--ink-soft)">štěrbina</text>';
+    // stínítko
+    o += '<line x1="' + xsc + '" y1="14" x2="' + xsc + '" y2="170" stroke="var(--ink)" stroke-width="4"/>';
+    o += '<text x="' + (xsc + 8) + '" y="26" fill="var(--ink-soft)">stínítko</text>';
+    // vzdálenost D
+    o += '<g stroke="var(--ink-soft)" stroke-width="1.4"><line x1="' + xs + '" y1="' + (yc + 66) + '" x2="' + xsc + '" y2="' + (yc + 66) + '" stroke-dasharray="none"/></g>';
+    o += '<text x="' + ((xs + xsc) / 2) + '" y="' + (yc + 62) + '" text-anchor="middle" font-style="italic" font-weight="700">D = ' + cz(DD, 1) + ' m</text>';
+    // šířka hlavního maxima L
+    if(x1 > 0 && x1 * 100 <= X){
+      var yl = x1 * 100 * ky;
+      o += '<line x1="' + (xsc + 18) + '" y1="' + (yc - yl) + '" x2="' + (xsc + 18) + '" y2="' + (yc + yl) + '" stroke="var(--accent)" stroke-width="1.8" marker-start="url(#arr-L)" marker-end="url(#arr-L)"/>';
+      o += '<text x="' + (xsc + 26) + '" y="' + (yc + 5) + '" font-style="italic" font-weight="700" fill="var(--accent)">L</text>';
+    }
+    o += '</g>';
+
+    // ---------- B: obrazec na stínítku ----------
+    var by = 196, bh = 72;
+    o += '<rect x="' + PL + '" y="' + by + '" width="' + PW + '" height="' + bh + '" fill="#000"/>';
+    o += '<rect x="' + PL + '" y="' + by + '" width="' + PW + '" height="' + bh + '" fill="url(#pat-grad)"/>';
+    o += '<rect x="' + PL + '" y="' + by + '" width="' + PW + '" height="' + bh + '" fill="none" stroke="var(--ink)" stroke-width="1.5"/>';
+    if(st.geom){
+      var gw = Math.max(2, dU * 1e-4 / (2 * X) * PW);
+      o += '<rect x="' + (px(0) - gw / 2) + '" y="' + by + '" width="' + gw + '" height="' + bh + '" fill="none" stroke="var(--danger)" stroke-width="2"/>';
+    }
+    o += '<text x="' + PL + '" y="' + (by - 8) + '" font-family="Work Sans, sans-serif" font-size="' + (Math.round(13 * Math.min(K, 2) * 10) / 10) + '" fill="var(--ink-soft)">obrazec</text>';
+
+    // ---------- C: graf intenzity ----------
+    var gy0 = 580, gh = 230, vmax = 1.15;
+    var gy = function(v){ return gy0 - v / vmax * gh; };
+    var step = niceStep(X);
+    o += '<g stroke="var(--line)" stroke-width="1">';
+    for(var t = -Math.floor(X / step) * step; t <= X + 1e-9; t += step){ o += '<line x1="' + px(t) + '" y1="' + gy(vmax) + '" x2="' + px(t) + '" y2="' + gy0 + '"/>'; }
+    [0.5, 1].forEach(function(v){ o += '<line x1="' + PL + '" y1="' + gy(v) + '" x2="' + (PL + PW) + '" y2="' + gy(v) + '"/>'; });
+    o += '</g>';
+    // minima: svislé tečkované čáry přes obrazec i graf
+    var mk = '', mlab = '', cnt = 0;
+    for(var m = 1; m <= 60; m++){
+      var xm1 = minPos(m);
+      if(xm1 < 0 || xm1 * 100 > X) break;
+      cnt++;
+    }
+    var shown = Math.min(cnt, 60);
+    if(shown > 0 && PW / (2 * shown) >= 5){
+      for(var m2 = 1; m2 <= shown; m2++){
+        var xmm = minPos(m2) * 100;
+        [-1, 1].forEach(function(sg){
+          var xp = px(sg * xmm);
+          mk += '<line x1="' + xp + '" y1="' + by + '" x2="' + xp + '" y2="' + gy0 + '"/>';
+        });
+      }
+    }
+    o += '<g stroke="var(--ink-soft)" stroke-width="1" stroke-opacity="0.55" stroke-dasharray="2 4">' + mk + '</g>';
+    // křivka
+    var pts = [], P = 860;
+    for(var j = 0; j <= P; j++){
+      var xv = (-X + 2 * X * j / P);
+      pts.push((PL + PW * j / P).toFixed(1) + ',' + gy(inten(xv / 100)).toFixed(1));
+    }
+    o += '<polygon points="' + PL + ',' + gy0 + ' ' + pts.join(' ') + ' ' + (PL + PW) + ',' + gy0 + '" fill="var(--accent)" fill-opacity="0.16"/>';
+    o += '<polyline points="' + pts.join(' ') + '" fill="none" stroke="var(--accent)" stroke-width="2.6" stroke-linejoin="round"/>';
+    if(st.geom){
+      var gw2 = Math.max(2.5, dU * 1e-4 / (2 * X) * PW);
+      o += '<rect x="' + (px(0) - gw2 / 2) + '" y="' + gy(1) + '" width="' + gw2 + '" height="' + (gy0 - gy(1)) + '" fill="var(--danger)" fill-opacity="0.85"/>';
+    }
+    // osy
+    o += '<line x1="' + PL + '" y1="' + gy0 + '" x2="' + (PL + PW) + '" y2="' + gy0 + '" stroke="var(--ink)" stroke-width="1.5"/>';
+    o += '<line x1="' + PL + '" y1="' + gy(vmax) + '" x2="' + PL + '" y2="' + gy0 + '" stroke="var(--ink)" stroke-width="1.5"/>';
+    o += '<g font-family="Work Sans, sans-serif" font-size="' + fs(13) + '" fill="var(--ink)">';
+    for(var t2 = -Math.floor(X / step) * step; t2 <= X + 1e-9; t2 += step){
+      var lab = (Math.abs(t2) < 1e-9 ? '0' : cz(Math.round(t2 * 10) / 10, step < 1 ? 1 : 0).replace('-', '−'));
+      o += '<line x1="' + px(t2) + '" y1="' + gy0 + '" x2="' + px(t2) + '" y2="' + (gy0 + 6) + '" stroke="var(--ink)" stroke-width="1.4"/>';
+      o += '<text x="' + px(t2) + '" y="' + (gy0 + 22 * Math.min(K, 1.6)) + '" text-anchor="middle">' + lab + '</text>';
+    }
+    o += '<text x="' + (PL + PW) + '" y="' + (gy0 + 44 * Math.min(K, 1.6)) + '" text-anchor="end" fill="var(--ink-soft)">poloha na stínítku <tspan font-style="italic">x</tspan> (cm)</text>';
+    [0, 0.5, 1].forEach(function(v){
+      o += '<text x="' + (PL - 8) + '" y="' + (gy(v) + 4) + '" text-anchor="end">' + cz(v, v === 0.5 ? 1 : 0) + '</text>';
+    });
+    o += '<text x="' + (PL + 10) + '" y="' + (gy(vmax) + 12) + '" fill="var(--ink-soft)" font-style="italic">I / I<tspan font-size="' + fs(10) + '" dy="3" font-style="normal">0</tspan></text>';
+    // popisky minim v grafu
+    if(shown > 0){
+      var every = Math.max(1, Math.ceil(26 / (PW / (2 * X) * (minPos(2) > 0 ? (minPos(2) - minPos(1)) * 100 : minPos(1) * 100))));
+      for(var m3 = 1; m3 <= shown; m3 += every){
+        var xq = minPos(m3) * 100;
+        [-1, 1].forEach(function(sg2){
+          o += '<text x="' + px(sg2 * xq) + '" y="' + (gy0 - 8) + '" text-anchor="middle" font-size="' + fs(11) + '" fill="var(--ink-soft)">' + (sg2 < 0 ? '−' : '') + m3 + '</text>';
+        });
+      }
+    }
+    // šířka hlavního maxima v grafu
+    if(x1 > 0 && x1 * 100 <= X){
+      var xa = px(-x1 * 100), xb = px(x1 * 100), yb = gy(1.1);
+      o += '<line x1="' + xa + '" y1="' + yb + '" x2="' + xb + '" y2="' + yb + '" stroke="var(--accent)" stroke-width="1.8" marker-start="url(#arr-L)" marker-end="url(#arr-L)"/>';
+      o += '<text x="' + ((xa + xb) / 2) + '" y="' + (yb - 6) + '" text-anchor="middle" fill="var(--accent)" font-weight="700" font-style="italic">L</text>';
+    }
+    if(st.geom){
+      o += '<text x="' + (px(0) + 14) + '" y="' + (gy(1) + 14) + '" fill="var(--danger)" font-weight="700">geometrická optika</text>';
+    }
+    o += '</g>';
+    svg.innerHTML = o;
+
+    // ---------- údaje ----------
+    outLam.textContent = lamN + ' nm';
+    outD.textContent = dU + ' µm';
+    outDist.textContent = cz(DD, 1) + ' m';
+    var sw = document.getElementById('legend');
+    sw.innerHTML = '<span><svg width="26" height="12"><rect x="1" y="1" width="24" height="10" rx="2" fill="' + col + '"/></svg>barva světla pro vlnovou délku ' + lamN + ' nm</span>' +
+                   '<span><svg width="26" height="10"><line x1="1" y1="5" x2="25" y2="5" stroke="var(--accent)" stroke-width="2.6"/></svg>relativní intenzita</span>' +
+                   '<span><svg width="26" height="10"><line x1="1" y1="5" x2="25" y2="5" stroke="var(--ink-soft)" stroke-width="1.4" stroke-dasharray="2 4"/></svg>minima</span>' +
+                   (st.geom ? '<span><svg width="26" height="10"><line x1="1" y1="5" x2="25" y2="5" stroke="var(--danger)" stroke-width="2.4"/></svg>geometrická optika</span>' : '');
+    var s1 = (st.lam * 1e-9) / (st.d * 1e-6);
+    var note = document.getElementById('position-note');
+    if(s1 >= 1){
+      document.getElementById('out-th').textContent = '—';
+      document.getElementById('out-x1').textContent = '—';
+      document.getElementById('out-L').textContent = '—';
+      note.textContent = 'Štěrbina je užší než vlnová délka, žádné minimum nevznikne.';
+    } else {
+      var th = Math.asin(s1);
+      var L = 2 * DD * Math.tan(th);
+      document.getElementById('out-th').innerHTML = sig3(th * 180 / Math.PI) + '°';
+      document.getElementById('out-x1').textContent = fmtLen(x1);
+      document.getElementById('out-L').textContent = fmtLen(L);
+      note.innerHTML = x1 * 100 > X ? 'První minimum leží mimo zobrazenou část stínítka. Zvolte větší zobrazenou část.' :
+        'Maxima vlevo a vpravo od středu jsou symetrická. V zobrazené části stínítka je vidět ' + (2 * cnt) + (cnt === 1 ? ' minima.' : ' minim.');
+      if(window.katex){
+        var tex = '\\sin\\theta_1=\\frac{\\lambda}{d}=\\frac{' + lamN + '\\ \\mathrm{nm}}{' + dU + '\\ \\mu\\mathrm{m}}=' + sig3(s1).replace(',', '{,}') + '\\quad\\Rightarrow\\quad\\theta_1\\doteq' + sig3(th * 180 / Math.PI).replace(',', '{,}') + '^\\circ' +
+                  '\\\\[4pt] L=2D\\tan\\theta_1\\approx\\frac{2D\\lambda}{d}=' + fmtLenTex(L);
+        try{ document.getElementById('calc-math').innerHTML = katex.renderToString(tex, { displayMode:true, throwOnError:false }); }catch(e){}
+      }
+    }
+  }
+
+  function updateScale(){
+    var b = svg.getBoundingClientRect();
+    if(!b.width || !b.height) return false;
+    var rot = svg.closest('.applet-card').classList.contains('rotated');
+    var sc = Math.min((rot ? b.height : b.width) / W, (rot ? b.width : b.height) / H);
+    var k = Math.round(Math.max(1, Math.min(2.3, 0.8 / sc)) * 20) / 20;
+    if(k === K) return false;
+    K = k;
+    return true;
+  }
+  if(window.ResizeObserver) new ResizeObserver(function(){ if(updateScale()) render(); }).observe(svg);
+
+  slLam.addEventListener('input', function(){ st.lam = parseFloat(slLam.value); render(); });
+  slD.addEventListener('input', function(){ st.d = parseFloat(slD.value); render(); });
+  slDist.addEventListener('input', function(){ st.D = parseFloat(slDist.value); render(); });
+  Array.prototype.forEach.call(rangeBtns, function(b, bi){
+    b.addEventListener('click', function(){
+      st.X = RANGES[bi];
+      Array.prototype.forEach.call(rangeBtns, function(c){
+        var on = c === b;
+        c.classList.toggle('on', on);
+        c.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+      render();
+    });
+  });
+  function toggle(btn, key){
+    btn.addEventListener('click', function(){
+      st[key] = !st[key];
+      btn.classList.toggle('on', st[key]);
+      btn.setAttribute('aria-pressed', st[key] ? 'true' : 'false');
+      render();
+    });
+  }
+  toggle(boostBtn, 'boost');
+  toggle(geomBtn, 'geom');
+  resetBtn.addEventListener('click', function(){
+    st.lam = DEF.lam; st.d = DEF.d; st.D = DEF.D; st.X = DEF.X; st.boost = true; st.geom = false;
+    slLam.value = DEF.lam; slD.value = DEF.d; slDist.value = DEF.D;
+    boostBtn.classList.add('on'); boostBtn.setAttribute('aria-pressed', 'true');
+    geomBtn.classList.remove('on'); geomBtn.setAttribute('aria-pressed', 'false');
+    Array.prototype.forEach.call(rangeBtns, function(c, ci){
+      var on = RANGES[ci] === DEF.X;
+      c.classList.toggle('on', on); c.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+    render();
+  });
+
+  // ---- celá obrazovka ----
+  var card = document.getElementById('applet-card');
+  var fsBtn = document.getElementById('fs-btn'), fsLabel = document.getElementById('fs-label'), fsIcon = document.getElementById('fs-icon');
+  var ICON_ENTER = 'M1.5 5.5V1.5H5.5M10.5 1.5H14.5V5.5M14.5 10.5V14.5H10.5M5.5 14.5H1.5V10.5';
+  var ICON_EXIT = 'M5.5 1.5V5.5H1.5M14.5 5.5H10.5V1.5M10.5 14.5V10.5H14.5M1.5 10.5H5.5V14.5';
+  var isPhone = window.matchMedia && matchMedia('(pointer:coarse)').matches && Math.min(screen.width, screen.height) < 600;
+  var portraitMq = window.matchMedia ? matchMedia('(orientation:portrait)') : null;
+  var orientLocked = false;
+  function updateRotated(){
+    var on = card.classList.contains('is-full') && isPhone && !orientLocked && !!portraitMq && portraitMq.matches;
+    if(on === card.classList.contains('rotated')) return;
+    card.classList.toggle('rotated', on);
+    updateScale(); render();
+  }
+  if(portraitMq){
+    if(portraitMq.addEventListener) portraitMq.addEventListener('change', updateRotated);
+    else if(portraitMq.addListener) portraitMq.addListener(updateRotated);
+  }
+  var keepFull = false;
+  function lockFailed(){
+    if(isPhone && portraitMq && portraitMq.matches && fsElement()){
+      keepFull = true;
+      try{ (document.exitFullscreen || document.webkitExitFullscreen).call(document); }catch(e){ keepFull = false; }
+    }
+    updateRotated();
+  }
+  function lockLandscape(){
+    var so = screen.orientation;
+    if(!isPhone){ updateRotated(); return; }
+    if(!so || !so.lock){ lockFailed(); return; }
+    try{
+      so.lock('landscape').then(function(){ orientLocked = true; updateRotated(); }, lockFailed);
+    }catch(e){ lockFailed(); }
+  }
+  function setFullClass(on){
+    card.classList.toggle('is-full', on);
+    if(!on){
+      if(orientLocked){ try{ screen.orientation.unlock(); }catch(e){} }
+      orientLocked = false;
+    }
+    updateRotated();
+    document.documentElement.style.overflow = on ? 'hidden' : '';
+    fsLabel.textContent = on ? 'Zavřít celou obrazovku' : 'Celá obrazovka';
+    fsIcon.setAttribute('d', on ? ICON_EXIT : ICON_ENTER);
+    fsBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+  }
+  function fsElement(){ return document.fullscreenElement || document.webkitFullscreenElement || null; }
+  fsBtn.addEventListener('click', function(){
+    if(card.classList.contains('is-full')){
+      if(fsElement()){
+        (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+      } else setFullClass(false);
+      return;
+    }
+    var req = card.requestFullscreen || card.webkitRequestFullscreen;
+    setFullClass(true);
+    if(req){
+      try{
+        var p = req.call(card);
+        if(p && p.then) p.then(lockLandscape, lockLandscape);
+        else lockLandscape();
+      }catch(e){ lockLandscape(); }
+    } else lockLandscape();
+  });
+  function onFsChange(){
+    if(fsElement()) return;
+    if(keepFull){ keepFull = false; return; }
+    if(card.classList.contains('is-full')) setFullClass(false);
+  }
+  document.addEventListener('fullscreenchange', onFsChange);
+  document.addEventListener('webkitfullscreenchange', onFsChange);
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape' && card.classList.contains('is-full') && !fsElement()) setFullClass(false);
+  });
+
+  // Skrytý SVG nemá rozměry — po zobrazení záložky se přepočítá měřítko popisků.
+  var tabBtn = document.getElementById('top-tab-aplet');
+  if(tabBtn) tabBtn.addEventListener('click', function(){ setTimeout(function(){ updateScale(); render(); }, 0); });
+  updateScale();
+  render();
+
+  // ---- vzorce (KaTeX) ----
+  if(window.renderMathInElement){
+    try{
+      renderMathInElement(document.getElementById('theory-section'), {
+        delimiters: [{left:'\\(', right:'\\)', display:false}, {left:'\\[', right:'\\]', display:true}]
+      });
+    }catch(e){}
+  }
+
+  // ---- sbalovací panely v teorii ----
+  try{ makePanelsCollapsible(document.getElementById('theory-section')); }catch(e){}
+})();
+</script>
+</body>
+</html>

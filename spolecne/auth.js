@@ -51,7 +51,8 @@
     'cocky.html': 'oktava',
     'zorny-uhel-a-lupa.html': 'oktava',
     'mikroskop.html': 'oktava',
-    'dalekohled.html': 'oktava'
+    'dalekohled.html': 'oktava',
+    'difrakce-svetla.html': 'oktava'
   };
 
   // auth.js vždy žije na <kořen webu>/spolecne/auth.js — z jeho vlastní (absolutní)
