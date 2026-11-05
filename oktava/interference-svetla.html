@@ -1,0 +1,1487 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interference světla</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../spolecne/config.js"></script>
+<script src="../spolecne/auth.js"></script>
+<script src="../spolecne/zalozky.js?v=3"></script>
+<link rel="stylesheet" href="../spolecne/styl.css">
+<style>
+:root{
+  --paper:#f2eff8;
+  --surface:#fdfcff;
+  --surface-2:#e6e0f1;
+  --ink:#241f36;
+  --ink-soft:#645d7a;
+  --line:rgba(36,31,54,0.12);
+  --accent:#6b3fb5;
+  --accent-ink:#faf7ff;
+  --success:#28794f;
+  --success-bg:#e3efe0;
+  --danger:#b3392b;
+  --danger-bg:#f5e4de;
+  --focus:#1e6f66;
+  --shadow:0 1px 0 rgba(36,31,54,0.06);
+}
+
+.panel{ margin-bottom:22px; }
+.panel-title{ margin-bottom:8px; }
+.panel p{
+  margin:0 0 8px;
+  font-size:0.9rem;
+  line-height:1.55;
+}
+.panel p:last-child{ margin-bottom:0; }
+.panel b{ color:var(--ink); }
+.panel ul, .panel ol{ margin:0 0 8px; padding-left:22px; font-size:0.9rem; line-height:1.55; }
+.panel li{ margin-bottom:4px; }
+.panel h3{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.05rem;
+  letter-spacing:0.01em;
+  margin:16px 0 6px;
+}
+.panel h3:first-child{ margin-top:0; }
+
+.card{ padding:26px 26px 28px; text-align:left; margin-bottom:24px; }
+.cat-tag{ margin-bottom:10px; }
+.card h2{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.6rem;
+  letter-spacing:0.02em;
+  color:var(--ink);
+  text-transform:none;
+  margin-bottom:6px;
+}
+.card .desc{
+  font-size:0.86rem;
+  color:var(--ink-soft);
+  line-height:1.5;
+  margin:0 0 14px;
+}
+
+.katex{ font-size:1.05em; }
+.formula-box{
+  background:var(--surface-2);
+  border-radius:8px;
+  padding:12px 16px;
+  margin:10px 0;
+  font-size:1.1rem;
+  text-align:center;
+}
+.formula-line{
+  text-align:center;
+  font-size:1.1rem;
+  color:var(--ink);
+  line-height:1.8;
+}
+.line-scroll{
+  position:relative;
+  white-space:nowrap;
+  overflow-x:auto;
+  overflow-y:hidden;
+  padding:2px 0 4px;
+}
+.given-data{
+  font-size:clamp(0.9rem, 2.4vw, 1.05rem);
+  color:var(--ink-soft);
+  margin-bottom:20px;
+}
+
+.theory-table-wrap{ overflow-x:auto; margin:6px 0 4px; }
+.theory-table{
+  border-collapse:collapse;
+  font-size:0.88rem;
+  width:100%;
+  min-width:320px;
+}
+.theory-table th, .theory-table td{
+  border:1px solid var(--line);
+  padding:8px 12px;
+  text-align:left;
+}
+.theory-table thead th{
+  background:var(--surface-2);
+  color:var(--ink-soft);
+  font-weight:600;
+  font-size:0.72rem;
+  text-transform:uppercase;
+  letter-spacing:0.05em;
+}
+.theory-table td.mono, .theory-table th.mono{
+  font-family:'IBM Plex Mono', monospace;
+  font-variant-numeric:tabular-nums;
+  text-align:center;
+}
+.theory-table tbody tr:nth-child(even) td{ background:rgba(0,0,0,0.02); }
+
+.theory-fig{
+  margin:12px 0 10px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:10px 12px 8px;
+}
+.theory-fig svg{ display:block; width:100%; max-width:560px; height:auto; margin:0 auto; }
+.theory-fig figcaption{
+  font-size:0.8rem;
+  color:var(--ink-soft);
+  line-height:1.45;
+  text-align:center;
+  margin-top:4px;
+}
+
+.example-grid{ display:flex; flex-direction:column; gap:12px; margin-top:6px; }
+.example-item{
+  background:var(--surface-2);
+  border-radius:10px;
+  padding:12px 14px;
+}
+.example-tag{
+  font-size:0.66rem;
+  text-transform:uppercase;
+  letter-spacing:0.06em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-bottom:6px;
+  display:block;
+}
+.example-eq{
+  font-size:1.05rem;
+  margin-bottom:4px;
+}
+.example-note{ font-size:0.82rem; color:var(--ink-soft); line-height:1.45; }
+
+.links{ margin-top:14px; display:flex; flex-wrap:wrap; gap:10px; justify-content:center; }
+a.btn-link{
+  display:inline-block;
+  font-weight:600;
+  font-size:0.95rem;
+  padding:10px 22px;
+  border-radius:8px;
+  background:var(--accent);
+  color:var(--accent-ink);
+  text-decoration:none;
+}
+a.btn-link:hover{ filter:brightness(1.06); }
+a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+
+.credit{
+  margin-top:24px;
+  font-size:0.8rem;
+  line-height:1.5;
+  color:var(--ink-soft);
+  text-align:center;
+}
+.credit a{ color:inherit; }
+
+/* ---- aplet: hlavička s tlačítkem na celou obrazovku ---- */
+.applet-head{ display:flex; gap:16px; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; }
+.applet-head-text{ flex:1 1 360px; }
+.applet-head .cat-tag{ margin-bottom:10px; }
+button.btn.fs-btn{ display:inline-flex; align-items:center; gap:8px; flex:none; padding:9px 16px; font-size:0.86rem; }
+button.btn.fs-btn svg{ flex:none; }
+
+.mode-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:16px;
+  padding-top:14px;
+  border-top:1px solid var(--line);
+}
+.mode-row[hidden]{ display:none; }
+.mode-row-label{
+  font-size:0.68rem;
+  text-transform:uppercase;
+  letter-spacing:0.1em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-right:2px;
+  flex:0 0 120px;   /* stejná šířka ve všech řádcích */
+}
+.seg{ display:flex; gap:6px; flex-wrap:wrap; }
+.chip{ font-size:0.82rem; gap:7px; }
+.chip.accented.on{
+  background:var(--accent);
+  color:var(--accent-ink);
+  border-color:var(--accent);
+}
+.chip:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+
+/* posuvníky: vlnová délka, rozteč štěrbin, vzdálenost stínítka apod. */
+.slider-row input[type=range]{ flex:1 1 220px; min-width:0; height:34px; margin:0; accent-color:var(--accent); cursor:pointer; }
+.slider-row input[type=range]:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+.slider-val{
+  flex:0 0 140px;
+  font-weight:600;
+  font-size:0.95rem;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+}
+.slider-val i, .dist-values i{ font-family:'STIX Two Text', Georgia, serif; font-size:1.08em; }
+
+.dist-values{
+  display:flex;
+  flex-wrap:wrap;
+  gap:4px 22px;
+  font-weight:600;
+  font-variant-numeric:tabular-nums;
+  font-size:0.95rem;
+  white-space:nowrap;
+}
+
+.canvas-wrap{
+  position:relative;
+  margin-top:18px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:10px;
+  overflow:hidden;
+}
+svg.optics{
+  width:100%;
+  height:auto;
+  display:block;
+  background:var(--surface);
+  touch-action:pan-y pinch-zoom;   /* stránku jde posouvat i přes obrázek */
+  user-select:none;
+  -webkit-user-select:none;
+}
+svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke:var(--surface); stroke-width:4px; stroke-linejoin:round; }
+
+.legend{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 18px;
+  padding:10px 14px;
+  border-top:1px solid var(--line);
+  font-size:0.78rem;
+  color:var(--ink-soft);
+}
+.legend > span{ display:inline-flex; align-items:center; gap:7px; }
+.legend svg{ flex:none; }
+
+.hint{ margin:10px 0 0; line-height:1.5; }
+
+.results{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  gap:18px;
+  margin-top:20px;
+}
+#readout{ flex-wrap:wrap; }
+#readout .cell{ min-width:0; flex:1 1 80px; padding:6px 8px; }
+#readout .cell .label{ text-transform:none; font-family:'STIX Two Text', Georgia, serif; font-size:0.9rem; letter-spacing:0; opacity:0.8; }
+#readout .cell .value{ font-size:1rem; white-space:nowrap; }
+
+
+.calc{
+  background:var(--surface-2);
+  border-radius:10px;
+  padding:10px 14px;
+  font-size:1rem;
+  overflow-x:auto;
+}
+.calc .katex-display{ margin:0.3em 0; }
+.calc-title{
+  font-size:0.68rem;
+  text-transform:uppercase;
+  letter-spacing:0.1em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-bottom:2px;
+}
+
+/* ---- celá obrazovka: nahoře pruh s ovládáním, pod ním obrázek přes zbytek plochy ---- */
+.applet-card.is-full{
+  position:fixed;
+  inset:0;
+  z-index:1000;
+  margin:0;
+  border-radius:0;
+  border:0;
+  overflow:hidden;
+  padding:0;
+  background:var(--surface);
+  display:flex;
+  flex-direction:column;
+}
+.applet-card:fullscreen{ width:100%; height:100%; }
+.applet-card.is-full .applet-head{
+  flex:none; flex-wrap:nowrap; align-items:center;
+  padding:8px 14px 0; background:var(--surface);
+}
+.applet-card.is-full .applet-head-text{ flex:1 1 auto; }
+.applet-card.is-full .applet-head{ justify-content:space-between; }
+.applet-card.is-full .applet-controls{
+  flex:none; display:flex; flex-wrap:wrap; align-items:center; gap:0 26px;
+  padding:0 14px 8px; background:var(--surface); border-bottom:1px solid var(--line);
+}
+.applet-card.is-full .mode-row{ margin:0; padding:4px 0 0; border-top:0; flex-wrap:nowrap; }
+.applet-card.is-full .mode-row-label{ flex:none; }
+.applet-card.is-full .slider-row{ flex:1 1 380px; }
+.applet-card.is-full .slider-row input[type=range]{ height:28px; }
+.applet-card.is-full .applet-results,
+.applet-card.is-full .hint{ display:none; }
+.applet-card.is-full .desc,
+.applet-card.is-full .cat-tag{ display:none; }
+.applet-card.is-full h2{ font-size:1.25rem; margin:0; }
+.applet-card.is-full .applet-stage{ flex:1 1 auto; min-height:0; position:relative; margin:0; }
+.applet-card.is-full .canvas-wrap{
+  position:absolute; inset:0; margin:0; border:0; border-radius:0;
+  display:flex; flex-direction:column;
+}
+.applet-card.is-full svg.optics{ flex:1 1 auto; min-height:0; width:100%; height:100%; max-height:none; }
+/* legenda je pod obrázkem (ne přes něj), aby při menší výšce obrazovky nezakrývala popisky */
+.applet-card.is-full .legend{
+  flex:none; position:static;
+  justify-content:center;
+  padding:6px 14px;
+  background:var(--surface);
+}
+/* telefon na výšku, který neumí zamknout orientaci (např. iPhone): karta se otočí o 90° */
+.applet-card.is-full.rotated{
+  inset:auto; top:0; left:0;
+  width:100vh; height:100vw;
+  width:100dvh; height:100dvw;
+  transform-origin:top left;
+  transform:translateX(100vw) rotate(90deg);
+}
+/* telefon na šířku (zamčený i otočený): kompaktní pruh a bez legendy, ať je obrázek co největší */
+.applet-card.is-full.rotated .legend{ display:none; }
+.applet-card.is-full.rotated .applet-head-text{ display:none; }
+@media (max-height:500px) and (orientation:landscape){
+  .applet-card.is-full .legend{ display:none; }
+  .applet-card.is-full .applet-head-text{ display:none; }
+}
+
+@media (max-width:720px){
+  .results{ grid-template-columns:1fr; }
+  .mode-row-label{ flex-basis:100%; }
+  .slider-val{ flex-basis:auto; }
+}
+@media (max-width:520px){
+  .card{ padding:20px 16px 22px; }
+}
+
+.position-note{ font-size:0.84rem; color:var(--ink-soft); margin:10px 0 0; line-height:1.5; }
+.position-note i{ font-family:'STIX Two Text', Georgia, serif; font-size:1.08em; }
+.chip[hidden]{ display:none; }
+#d-readout, #g-readout{ flex-wrap:wrap; }
+#d-readout .cell, #g-readout .cell{ min-width:0; flex:1 1 80px; padding:6px 8px; }
+#d-readout .cell .label, #g-readout .cell .label{ text-transform:none; font-family:'STIX Two Text', Georgia, serif; font-size:0.9rem; letter-spacing:0; opacity:0.8; }
+#d-readout .cell .value, #g-readout .cell .value{ font-size:1rem; white-space:nowrap; }
+.calc .theory-table thead th{ text-transform:none; letter-spacing:0; font-size:0.8rem; }
+.calc .theory-table{ font-size:0.82rem; min-width:0; }
+.calc .theory-table th, .calc .theory-table td{ padding:5px 8px; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <a class="back-link" href="../rozcestniky/oktava.html">← Zpět na Oktáva/4. ročník</a>
+
+  <div class="brand">
+    <div class="brand-lockup">
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <circle cx="6" cy="14" r="2.6" fill="var(--ink)"/>
+        <circle cx="6" cy="26" r="2.6" fill="var(--ink)"/>
+        <path d="M6,14 Q20,14 35,8" stroke="var(--accent)" stroke-width="1.8" fill="none"/>
+        <path d="M6,26 Q20,26 35,8" stroke="var(--accent)" stroke-width="1.8" fill="none"/>
+        <path d="M6,14 Q20,14 35,32" stroke="var(--focus)" stroke-width="1.8" fill="none"/>
+        <path d="M6,26 Q20,26 35,32" stroke="var(--focus)" stroke-width="1.8" fill="none"/>
+      </svg>
+      <div class="brand-text">
+        <h1>Interference světla</h1>
+        <p>vlnová optika — koherence, dvojštěrbina a optická mřížka</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="top-tabs">
+    <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+    <button class="toptab" id="top-tab-dvojsterbina" data-tab="dvojsterbina">Dvojštěrbina</button>
+    <button class="toptab" id="top-tab-mrizka" data-tab="mrizka">Mřížka</button>
+  </div>
+
+  <!-- ============ TEORIE ============ -->
+  <div id="theory-section" class="tab-section">
+
+    <div class="panel">
+      <div class="panel-title">Skládání světelných vln</div>
+      <p>Světlo je vlnění, a proto se světelné vlny, které přicházejí do téhož místa, skládají stejně jako vlny na vodě nebo zvuk: výchylky se sčítají. Tomuto skládání říkáme <b>interference</b>. Podle toho, v jaké fázi se vlny potkají, může být výsledné světlo zesílené, nebo úplně zrušené.</p>
+      <p>Zkusíme-li ale posvítit na stínítko dvěma žárovkami vedle sebe, žádné světlé a tmavé proužky se neobjeví, stínítko je osvětlené rovnoměrně. Důvodem je, že žárovky nejsou <b>koherentní</b> zdroje.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Koherence</div>
+      <p><b>Koherentní</b> jsou vlnění téže frekvence, jejichž fázový rozdíl se v daném místě s časem nemění. Jen takové vlny dávají stálý, pozorovatelný interferenční obrazec.</p>
+      <p>Běžné zdroje (žárovka, plamen, Slunce) vysílají světlo ze spousty atomů, které září nezávisle na sobě a v náhodných okamžicích. Každý atom vyšle jen krátké „klubko“ vlnění o omezené délce a fáze jednotlivých klubek jsou náhodné. Fázový rozdíl dvou takových zdrojů se proto neustále a chaoticky mění. Žádné maxima ani minima nevidíme, oko zaznamená jen průměrnou intenzitu.</p>
+      <p>Koherence se dá vyrobit tak, že světlo z <b>jediného zdroje rozdělíme na dva svazky</b>, které pak urazí různou dráhu a znovu se setkají. Každé klubko se tak setká samo se sebou a fázový rozdíl je stálý. Dráhový rozdíl ale nesmí být větší než délka klubka, jinak by se potkaly dvě různá klubka s náhodnou fází. U žárovky je tento rozdíl velmi malý, laser vysílá mnohem delší klubka (u běžných laserů řádově desítky centimetrů), a proto se s ním interferenční jevy pozorují mnohem snáze.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Podmínky pro maximum a minimum</div>
+      <p>Vlny, které vyšly z koherentních zdrojů do stejného bodu různě dlouhými cestami, se setkají s <b>dráhovým rozdílem</b> Δ<i>l</i>. Sečtou se podle toho, jak se vzájemně posunuly.</p>
+      <ul>
+        <li>Jsou-li v bodě <b>ve fázi</b> (vlny jsou posunuté o celý počet vlnových délek), světlo se zesílí. Jde o <b>konstruktivní interferenci</b> a v tom místě je <b>interferenční maximum</b>.</li>
+        <li>Jsou-li v <b>opačné fázi</b> (posun o lichý počet půlvln), světlo se vyruší. Jde o <b>destruktivní interferenci</b> a vzniká <b>interferenční minimum</b>.</li>
+      </ul>
+      <div class="formula-box">\[ \text{maximum:}\quad \Delta l = k\lambda,\quad k = 0,\,1,\,2,\,\dots \]</div>
+      <div class="formula-box">\[ \text{minimum:}\quad \Delta l = (2k-1)\,\frac{\lambda}{2},\quad k = 1,\,2,\,3,\,\dots \]</div>
+      <p>Číslo <i>k</i> je <b>řád</b> interferenčního maxima, popřípadě minima. Maximum nultého řádu (<i>k</i>&nbsp;=&nbsp;0) je přesně uprostřed, kde je dráhový rozdíl nulový.</p>
+
+      <figure class="theory-fig">
+        <svg viewBox="0 0 560 265" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Dvě stejné vlny ve fázi dají vlnu s dvojnásobnou amplitudou. Dvě vlny posunuté o půl vlnové délky se vyruší.">
+          <g fill="none" stroke-linejoin="round"><line x1="40" y1="45" x2="260" y2="45" stroke="var(--line)"/><line x1="40" y1="100" x2="260" y2="100" stroke="var(--line)"/><line x1="40" y1="168" x2="260" y2="168" stroke="var(--line)"/><path d="M40,45 L42,42.2 L44,39.5 L46,36.9 L48,34.4 L50,32.1 L52,29.9 L54,28 L56,26.4 L58,25.1 L60,24.1 L62,23.4 L64,23 L66,23 L68,23.4 L70,24.1 L72,25.1 L74,26.4 L76,28 L78,29.9 L80,32.1 L82,34.4 L84,36.9 L86,39.5 L88,42.2 L90,45 L92,47.8 L94,50.5 L96,53.1 L98,55.6 L100,57.9 L102,60.1 L104,62 L106,63.6 L108,64.9 L110,65.9 L112,66.6 L114,67 L116,67 L118,66.6 L120,65.9 L122,64.9 L124,63.6 L126,62 L128,60.1 L130,57.9 L132,55.6 L134,53.1 L136,50.5 L138,47.8 L140,45 L142,42.2 L144,39.5 L146,36.9 L148,34.4 L150,32.1 L152,29.9 L154,28 L156,26.4 L158,25.1 L160,24.1 L162,23.4 L164,23 L166,23 L168,23.4 L170,24.1 L172,25.1 L174,26.4 L176,28 L178,29.9 L180,32.1 L182,34.4 L184,36.9 L186,39.5 L188,42.2 L190,45 L192,47.8 L194,50.5 L196,53.1 L198,55.6 L200,57.9 L202,60.1 L204,62 L206,63.6 L208,64.9 L210,65.9 L212,66.6 L214,67 L216,67 L218,66.6 L220,65.9 L222,64.9 L224,63.6 L226,62 L228,60.1 L230,57.9 L232,55.6 L234,53.1 L236,50.5 L238,47.8 L240,45 L242,42.2 L244,39.5 L246,36.9 L248,34.4 L250,32.1 L252,29.9 L254,28 L256,26.4 L258,25.1 L260,24.1" stroke="var(--focus)" stroke-width="1.8"/><path d="M40,100 L42,97.2 L44,94.5 L46,91.9 L48,89.4 L50,87.1 L52,84.9 L54,83 L56,81.4 L58,80.1 L60,79.1 L62,78.4 L64,78 L66,78 L68,78.4 L70,79.1 L72,80.1 L74,81.4 L76,83 L78,84.9 L80,87.1 L82,89.4 L84,91.9 L86,94.5 L88,97.2 L90,100 L92,102.8 L94,105.5 L96,108.1 L98,110.6 L100,112.9 L102,115.1 L104,117 L106,118.6 L108,119.9 L110,120.9 L112,121.6 L114,122 L116,122 L118,121.6 L120,120.9 L122,119.9 L124,118.6 L126,117 L128,115.1 L130,112.9 L132,110.6 L134,108.1 L136,105.5 L138,102.8 L140,100 L142,97.2 L144,94.5 L146,91.9 L148,89.4 L150,87.1 L152,84.9 L154,83 L156,81.4 L158,80.1 L160,79.1 L162,78.4 L164,78 L166,78 L168,78.4 L170,79.1 L172,80.1 L174,81.4 L176,83 L178,84.9 L180,87.1 L182,89.4 L184,91.9 L186,94.5 L188,97.2 L190,100 L192,102.8 L194,105.5 L196,108.1 L198,110.6 L200,112.9 L202,115.1 L204,117 L206,118.6 L208,119.9 L210,120.9 L212,121.6 L214,122 L216,122 L218,121.6 L220,120.9 L222,119.9 L224,118.6 L226,117 L228,115.1 L230,112.9 L232,110.6 L234,108.1 L236,105.5 L238,102.8 L240,100 L242,97.2 L244,94.5 L246,91.9 L248,89.4 L250,87.1 L252,84.9 L254,83 L256,81.4 L258,80.1 L260,79.1" stroke="var(--accent)" stroke-width="1.8"/><path d="M40,168 L42,162.5 L44,157.1 L46,151.8 L48,146.8 L50,142.1 L52,137.9 L54,134.1 L56,130.8 L58,128.2 L60,126.2 L62,124.8 L64,124.1 L66,124.1 L68,124.8 L70,126.2 L72,128.2 L74,130.8 L76,134.1 L78,137.9 L80,142.1 L82,146.8 L84,151.8 L86,157.1 L88,162.5 L90,168 L92,173.5 L94,178.9 L96,184.2 L98,189.2 L100,193.9 L102,198.1 L104,201.9 L106,205.2 L108,207.8 L110,209.8 L112,211.2 L114,211.9 L116,211.9 L118,211.2 L120,209.8 L122,207.8 L124,205.2 L126,201.9 L128,198.1 L130,193.9 L132,189.2 L134,184.2 L136,178.9 L138,173.5 L140,168 L142,162.5 L144,157.1 L146,151.8 L148,146.8 L150,142.1 L152,137.9 L154,134.1 L156,130.8 L158,128.2 L160,126.2 L162,124.8 L164,124.1 L166,124.1 L168,124.8 L170,126.2 L172,128.2 L174,130.8 L176,134.1 L178,137.9 L180,142.1 L182,146.8 L184,151.8 L186,157.1 L188,162.5 L190,168 L192,173.5 L194,178.9 L196,184.2 L198,189.2 L200,193.9 L202,198.1 L204,201.9 L206,205.2 L208,207.8 L210,209.8 L212,211.2 L214,211.9 L216,211.9 L218,211.2 L220,209.8 L222,207.8 L224,205.2 L226,201.9 L228,198.1 L230,193.9 L232,189.2 L234,184.2 L236,178.9 L238,173.5 L240,168 L242,162.5 L244,157.1 L246,151.8 L248,146.8 L250,142.1 L252,137.9 L254,134.1 L256,130.8 L258,128.2 L260,126.2" stroke="var(--ink)" stroke-width="3"/></g><text x="150" y="238" text-anchor="middle" font-family="Work Sans, sans-serif" font-size="15" font-weight="700" fill="var(--ink)">maximum</text><text x="150" y="256" text-anchor="middle" font-family="Work Sans, sans-serif" font-size="13" fill="var(--ink-soft)">Δl = λ</text><g fill="none" stroke-linejoin="round"><line x1="320" y1="45" x2="540" y2="45" stroke="var(--line)"/><line x1="320" y1="100" x2="540" y2="100" stroke="var(--line)"/><line x1="320" y1="168" x2="540" y2="168" stroke="var(--line)"/><path d="M320,45 L322,42.2 L324,39.5 L326,36.9 L328,34.4 L330,32.1 L332,29.9 L334,28 L336,26.4 L338,25.1 L340,24.1 L342,23.4 L344,23 L346,23 L348,23.4 L350,24.1 L352,25.1 L354,26.4 L356,28 L358,29.9 L360,32.1 L362,34.4 L364,36.9 L366,39.5 L368,42.2 L370,45 L372,47.8 L374,50.5 L376,53.1 L378,55.6 L380,57.9 L382,60.1 L384,62 L386,63.6 L388,64.9 L390,65.9 L392,66.6 L394,67 L396,67 L398,66.6 L400,65.9 L402,64.9 L404,63.6 L406,62 L408,60.1 L410,57.9 L412,55.6 L414,53.1 L416,50.5 L418,47.8 L420,45 L422,42.2 L424,39.5 L426,36.9 L428,34.4 L430,32.1 L432,29.9 L434,28 L436,26.4 L438,25.1 L440,24.1 L442,23.4 L444,23 L446,23 L448,23.4 L450,24.1 L452,25.1 L454,26.4 L456,28 L458,29.9 L460,32.1 L462,34.4 L464,36.9 L466,39.5 L468,42.2 L470,45 L472,47.8 L474,50.5 L476,53.1 L478,55.6 L480,57.9 L482,60.1 L484,62 L486,63.6 L488,64.9 L490,65.9 L492,66.6 L494,67 L496,67 L498,66.6 L500,65.9 L502,64.9 L504,63.6 L506,62 L508,60.1 L510,57.9 L512,55.6 L514,53.1 L516,50.5 L518,47.8 L520,45 L522,42.2 L524,39.5 L526,36.9 L528,34.4 L530,32.1 L532,29.9 L534,28 L536,26.4 L538,25.1 L540,24.1" stroke="var(--focus)" stroke-width="1.8"/><path d="M320,100 L322,102.8 L324,105.5 L326,108.1 L328,110.6 L330,112.9 L332,115.1 L334,117 L336,118.6 L338,119.9 L340,120.9 L342,121.6 L344,122 L346,122 L348,121.6 L350,120.9 L352,119.9 L354,118.6 L356,117 L358,115.1 L360,112.9 L362,110.6 L364,108.1 L366,105.5 L368,102.8 L370,100 L372,97.2 L374,94.5 L376,91.9 L378,89.4 L380,87.1 L382,84.9 L384,83 L386,81.4 L388,80.1 L390,79.1 L392,78.4 L394,78 L396,78 L398,78.4 L400,79.1 L402,80.1 L404,81.4 L406,83 L408,84.9 L410,87.1 L412,89.4 L414,91.9 L416,94.5 L418,97.2 L420,100 L422,102.8 L424,105.5 L426,108.1 L428,110.6 L430,112.9 L432,115.1 L434,117 L436,118.6 L438,119.9 L440,120.9 L442,121.6 L444,122 L446,122 L448,121.6 L450,120.9 L452,119.9 L454,118.6 L456,117 L458,115.1 L460,112.9 L462,110.6 L464,108.1 L466,105.5 L468,102.8 L470,100 L472,97.2 L474,94.5 L476,91.9 L478,89.4 L480,87.1 L482,84.9 L484,83 L486,81.4 L488,80.1 L490,79.1 L492,78.4 L494,78 L496,78 L498,78.4 L500,79.1 L502,80.1 L504,81.4 L506,83 L508,84.9 L510,87.1 L512,89.4 L514,91.9 L516,94.5 L518,97.2 L520,100 L522,102.8 L524,105.5 L526,108.1 L528,110.6 L530,112.9 L532,115.1 L534,117 L536,118.6 L538,119.9 L540,120.9" stroke="var(--accent)" stroke-width="1.8"/><path d="M320,168 L322,168 L324,168 L326,168 L328,168 L330,168 L332,168 L334,168 L336,168 L338,168 L340,168 L342,168 L344,168 L346,168 L348,168 L350,168 L352,168 L354,168 L356,168 L358,168 L360,168 L362,168 L364,168 L366,168 L368,168 L370,168 L372,168 L374,168 L376,168 L378,168 L380,168 L382,168 L384,168 L386,168 L388,168 L390,168 L392,168 L394,168 L396,168 L398,168 L400,168 L402,168 L404,168 L406,168 L408,168 L410,168 L412,168 L414,168 L416,168 L418,168 L420,168 L422,168 L424,168 L426,168 L428,168 L430,168 L432,168 L434,168 L436,168 L438,168 L440,168 L442,168 L444,168 L446,168 L448,168 L450,168 L452,168 L454,168 L456,168 L458,168 L460,168 L462,168 L464,168 L466,168 L468,168 L470,168 L472,168 L474,168 L476,168 L478,168 L480,168 L482,168 L484,168 L486,168 L488,168 L490,168 L492,168 L494,168 L496,168 L498,168 L500,168 L502,168 L504,168 L506,168 L508,168 L510,168 L512,168 L514,168 L516,168 L518,168 L520,168 L522,168 L524,168 L526,168 L528,168 L530,168 L532,168 L534,168 L536,168 L538,168 L540,168" stroke="var(--ink)" stroke-width="3"/></g><text x="430" y="238" text-anchor="middle" font-family="Work Sans, sans-serif" font-size="15" font-weight="700" fill="var(--ink)">minimum</text><text x="430" y="256" text-anchor="middle" font-family="Work Sans, sans-serif" font-size="13" fill="var(--ink-soft)">Δl = λ/2</text><g font-family="Work Sans, sans-serif" font-size="12" fill="var(--ink-soft)"><text x="2" y="30">vlna 1</text><text x="2" y="85">vlna 2</text><text x="2" y="153">součet</text><text x="282" y="30">vlna 1</text><text x="282" y="85">vlna 2</text><text x="282" y="153">součet</text></g>
+        </svg>
+        <figcaption>Vlevo: vlny ve fázi (Δ<i>l</i> = <i>λ</i>) dávají dvojnásobnou amplitudu, tedy maximum. Vpravo: vlny v opačné fázi (Δ<i>l</i> = <i>λ</i>/2) se vyruší, tedy minimum. Tenké čáry jsou obě skládané vlny, silná čára je jejich součet.</figcaption>
+      </figure>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Youngův pokus s dvojštěrbinou</div>
+      <p>Anglický fyzik Thomas Young (1801) jako první interferenci světla pozoroval. Světlo z jediné úzké štěrbiny nechal dopadnout na dvě štěrbiny těsně vedle sebe. Každá z nich se chová jako samostatný zdroj kulových vln a oba zdroje jsou koherentní, protože světlo vzniklo v jednom zdroji. Za dvojštěrbinou se vlny z obou štěrbin překrývají. Na stínítku vzniká soustava rovnoběžných světlých a tmavých proužků, která se nazývá <b>interferenční obrazec</b> (<b>interferogram</b>).</p>
+      <p>Zdroje jsou od sebe vzdáleny <i>b</i> a stínítko je ve vzdálenosti <i>D</i> (mnohem větší než <i>b</i>). Pro místo ve vzdálenosti <i>x</i> od středu stínítka je dráhový rozdíl</p>
+      <div class="formula-box">\[ \Delta l \approx b\sin\theta \approx \frac{b\,x}{D} \]</div>
+
+      <figure class="theory-fig">
+        <svg viewBox="0 0 560 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Dvě štěrbiny Z1 a Z2 ve vzdálenosti b vysílají paprsky do bodu A na stínítku ve vzdálenosti x od osy. Paprsek ze štěrbiny Z2 je delší o dráhový rozdíl delta l.">
+          <rect x="94" y="8" width="12" height="76" fill="var(--ink)"/><rect x="94" y="92" width="12" height="36" fill="var(--ink)"/><rect x="94" y="136" width="12" height="96" fill="var(--ink)"/><line x1="470" y1="12" x2="470" y2="208" stroke="var(--ink)" stroke-width="4"/><line x1="100" y1="110" x2="470" y2="110" stroke="var(--ink-soft)" stroke-width="1" stroke-dasharray="3 4"/><g stroke="var(--ink-soft)" stroke-width="1.6"><line x1="100" y1="88" x2="470" y2="44"/><line x1="100" y1="132" x2="470" y2="44"/></g><line x1="100" y1="88" x2="109.9" y2="129.6" stroke="var(--focus)" stroke-width="1.6" stroke-dasharray="4 3"/><line x1="100" y1="132" x2="109.9" y2="129.6" stroke="var(--accent)" stroke-width="4.4" stroke-linecap="round"/><circle cx="470" cy="44" r="4.5" fill="var(--accent)"/><circle cx="100" cy="88" r="3.6" fill="var(--ink)"/><circle cx="100" cy="132" r="3.6" fill="var(--ink)"/><g fill="none" stroke="var(--ink)" stroke-width="1.4"><line x1="76" y1="88" x2="76" y2="132"/><line x1="70" y1="88" x2="82" y2="88"/><line x1="70" y1="132" x2="82" y2="132"/></g><g fill="none" stroke="var(--ink)" stroke-width="1.4"><line x1="494" y1="44" x2="494" y2="110"/><line x1="488" y1="44" x2="500" y2="44"/><line x1="488" y1="110" x2="500" y2="110"/></g><g fill="none" stroke="var(--ink)" stroke-width="1.4"><line x1="100" y1="226" x2="470" y2="226"/><line x1="100" y1="220" x2="100" y2="232"/><line x1="470" y1="220" x2="470" y2="232"/></g><path d="M170,110 A70,70 0 0 0 168.9,97.7" fill="none" stroke="var(--ink)" stroke-width="1.4"/><g font-family="Work Sans, sans-serif" font-size="14" fill="var(--ink)"><text x="64" y="115" text-anchor="end" font-style="italic" font-weight="700">b</text><text x="88" y="80" text-anchor="end" font-style="italic" font-weight="700">Z<tspan font-size="10" dy="3">1</tspan></text><text x="88" y="154" text-anchor="end" font-style="italic" font-weight="700">Z<tspan font-size="10" dy="3">2</tspan></text><text x="452" y="38" font-style="italic" font-weight="700">A</text><text x="506" y="82" font-style="italic" font-weight="700">x</text><text x="285" y="218" text-anchor="middle" font-style="italic" font-weight="700">D</text><text x="178" y="102" font-style="italic" font-weight="700">θ</text><text x="130" y="148" fill="var(--accent)" font-weight="700">Δ<tspan font-style="italic">l</tspan></text></g>
+        </svg>
+        <figcaption>Dvě štěrbiny <i>Z</i><sub>1</sub> a <i>Z</i><sub>2</sub> jsou zdroje koherentního světla. Paprsek ze štěrbiny <i>Z</i><sub>2</sub> urazí do bodu <i>A</i> delší dráhu o Δ<i>l</i> (silná úsečka). Obrázek není v měřítku: ve skutečnosti je <i>D</i> tisíckrát větší než <i>b</i>.</figcaption>
+      </figure>
+
+      <p>Maximum nastane pro Δ<i>l</i> = <i>kλ</i>, tedy pro <i>x</i><sub><i>k</i></sub> = <i>k</i>&nbsp;<i>Dλ</i>/<i>b</i>. Proužky jsou rozmístěné rovnoměrně a vzdálenost sousedních maxim (stejně jako sousedních minim) je</p>
+      <div class="formula-box">\[ \Delta x = \frac{D\lambda}{b} \]</div>
+      <p>Proužky jsou tedy tím širší, čím je větší vlnová délka, čím je stínítko dál od štěrbin a čím jsou štěrbiny blíž u sebe. Naopak z naměřeného rozestupu proužků lze zjistit vlnovou délku: \(\lambda = b\,\Delta x/D\).</p>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="9" cy="9" r="7.5" stroke="var(--focus)" stroke-width="1.6"/>
+          <line x1="9" y1="8" x2="9" y2="13" stroke="var(--focus)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="5.2" r="1" fill="var(--focus)"/>
+        </svg>
+        <p>Zkušenost se školním laserem: pro <i>λ</i> = 650&nbsp;nm, <i>b</i> = 0,25&nbsp;mm a <i>D</i> = 3&nbsp;m vychází Δ<i>x</i> = 7,8&nbsp;mm, proužky lze tedy změřit pravítkem. Rozestup je navíc stejný pro všechna maxima, na rozdíl od ohybu na jedné štěrbině. Tam je jedno široké maximum a vedle něj slabá vedlejší maxima.</p>
+      </div>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M9 2.5 L16 15.5 H2 Z" stroke="var(--danger)" stroke-width="1.4" stroke-linejoin="round"/>
+          <line x1="9" y1="7" x2="9" y2="11.5" stroke="var(--danger)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="13.6" r="1" fill="var(--danger)"/>
+        </svg>
+        <p>Každá štěrbina má i konečnou šířku, a proto dochází i k ohybu na každé z nich. Intenzita proužků proto směrem od středu slábne, jak uvidíte v apletu. Rozestup proužků ale určuje jen vzdálenost štěrbin <i>b</i>.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="cat-tag">Příklad z praxe</span>
+      <h2>Zelený laser a dvojštěrbina</h2>
+      <p class="desc">Rozklikejte si postup krok po kroku — další krok se odemkne, jakmile otevřete ten předchozí.</p>
+      <div class="given-data">
+        <div class="given-line">Zadáno: dvojštěrbina s roztečí \(b = 0{,}40\ \mathrm{mm}\), zelený laser \(\lambda = 532\ \mathrm{nm}\), stínítko ve vzdálenosti \(D = 2{,}5\ \mathrm{m}\)</div>
+        <div class="given-line">Hledáme: rozestup proužků \(\Delta x\) a řád maxima ve vzdálenosti \(x = 1{,}0\ \mathrm{cm}\) od středu</div>
+      </div>
+      <div class="stepper" data-reset="reset-interference-1">
+        <div class="step" data-step="1">
+          <div class="step-connector"></div>
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">1</span>
+            <span class="step-title">Určete rozestup proužků \(\Delta x\)</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <div class="step-result">\(\Delta x = \dfrac{D\lambda}{b} = \dfrac{2{,}5\ \mathrm{m}\cdot 532\cdot10^{-9}\ \mathrm{m}}{4{,}0\cdot10^{-4}\ \mathrm{m}} = 3{,}3\cdot10^{-3}\ \mathrm{m} \doteq 3{,}3\ \mathrm{mm}\)</div>
+          </div>
+        </div>
+        <div class="step" data-step="2">
+          <div class="step-connector"></div>
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">2</span>
+            <span class="step-title">Spočtěte dráhový rozdíl v bodě \(x = 1{,}0\ \mathrm{cm}\)</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <div class="step-result">\(\Delta l \approx \dfrac{b\,x}{D} = \dfrac{4{,}0\cdot10^{-4}\ \mathrm{m}\cdot 1{,}0\cdot10^{-2}\ \mathrm{m}}{2{,}5\ \mathrm{m}} = 1{,}6\cdot10^{-6}\ \mathrm{m} = 1{,}6\ \mu\mathrm{m}\)</div>
+          </div>
+        </div>
+        <div class="step" data-step="3">
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">3</span>
+            <span class="step-title">Porovnejte dráhový rozdíl s vlnovou délkou</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <p>Podíl Δ<i>l</i>/<i>λ</i> určí, kolik vlnových délek se na dráhovém rozdílu „vejde“.</p>
+            <div class="result-box"><div class="line-scroll">\(\dfrac{\Delta l}{\lambda} = \dfrac{1{,}6\ \mu\mathrm{m}}{0{,}532\ \mu\mathrm{m}} \doteq 3{,}0\ \Rightarrow\ \Delta l = 3\lambda\)</div></div>
+            <p>Dráhový rozdíl je (téměř přesně) celistvým násobkem vlnové délky, takže ve vzdálenosti 1,0&nbsp;cm od středu leží <b>maximum třetího řádu</b> (<i>k</i> = 3). Souhlasí to s rozestupem: 3 · 3,3&nbsp;mm ≐ 1,0&nbsp;cm.</p>
+          </div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn ghost" id="reset-interference-1">Zopakovat postup od začátku</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Optická mřížka</div>
+      <p><b>Optická mřížka</b> je soustava velkého počtu stejných rovnoběžných štěrbin, které jsou od sebe stejně daleko. Vzdálenost sousedních štěrbin se nazývá <b>mřížková konstanta</b> <i>b</i>. Má-li mřížka <i>N</i> vrypů na jednotku délky, platí</p>
+      <div class="formula-box">\[ b = \frac{1}{N} \]</div>
+      <p>Světlo se na každé štěrbině ohýbá a svazky ze všech štěrbin spolu interferují. Maximum <i>k</i>-tého řádu vzniká ve směru, ve kterém je dráhový rozdíl světla ze sousedních štěrbin celistvým násobkem vlnové délky:</p>
+      <div class="formula-box">\[ b\sin\alpha = k\lambda \quad\Rightarrow\quad \sin\alpha = \frac{k\lambda}{b},\quad k = 0,\,1,\,2,\,\dots \]</div>
+
+      <figure class="theory-fig">
+        <svg viewBox="0 0 560 262" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Svazek světla dopadá kolmo na optickou mřížku. Za mřížkou vznikají maxima nultého řádu ve směru svazku a maxima prvního a druhého řádu pod úhly alfa 1 a alfa 2 na obě strany.">
+          <line x1="100" y1="34" x2="100" y2="46" stroke="var(--ink)" stroke-width="3"/><line x1="100" y1="52" x2="100" y2="64" stroke="var(--ink)" stroke-width="3"/><line x1="100" y1="70" x2="100" y2="82" stroke="var(--ink)" stroke-width="3"/><line x1="100" y1="88" x2="100" y2="100" stroke="var(--ink)" stroke-width="3"/><line x1="100" y1="106" x2="100" y2="118" stroke="var(--ink)" stroke-width="3"/><line x1="100" y1="124" x2="100" y2="136" stroke="var(--ink)" stroke-width="3"/><line x1="100" y1="142" x2="100" y2="154" stroke="var(--ink)" stroke-width="3"/><line x1="100" y1="160" x2="100" y2="172" stroke="var(--ink)" stroke-width="3"/><line x1="100" y1="178" x2="100" y2="190" stroke="var(--ink)" stroke-width="3"/><line x1="100" y1="196" x2="100" y2="208" stroke="var(--ink)" stroke-width="3"/><line x1="100" y1="214" x2="100" y2="226" stroke="var(--ink)" stroke-width="3"/><line x1="20" y1="130" x2="94" y2="130" stroke="var(--ink-soft)" stroke-width="1.6"/><path d="M90,130 l-12,-5 v10 z" fill="var(--ink-soft)"/><line x1="106" y1="130" x2="229.2" y2="240.5" stroke="var(--accent)" stroke-width="2"/><text x="239.8" y="254.6" font-family="Work Sans, sans-serif" font-size="14" font-weight="700" fill="var(--ink)">k = −2</text><line x1="106" y1="130" x2="260.8" y2="185.2" stroke="var(--accent)" stroke-width="2"/><text x="274" y="194.8" font-family="Work Sans, sans-serif" font-size="14" font-weight="700" fill="var(--ink)">k = −1</text><line x1="106" y1="130" x2="270" y2="130" stroke="var(--ink)" stroke-width="2"/><text x="284" y="135" font-family="Work Sans, sans-serif" font-size="14" font-weight="700" fill="var(--ink)">k = 0</text><line x1="106" y1="130" x2="260.8" y2="74.8" stroke="var(--accent)" stroke-width="2"/><text x="274" y="75.2" font-family="Work Sans, sans-serif" font-size="14" font-weight="700" fill="var(--ink)">k = 1</text><line x1="106" y1="130" x2="229.2" y2="19.5" stroke="var(--accent)" stroke-width="2"/><text x="239.8" y="15.4" font-family="Work Sans, sans-serif" font-size="14" font-weight="700" fill="var(--ink)">k = 2</text><path d="M196,130 A90,90 0 0 0 191.1,100.8" fill="none" stroke="var(--ink)" stroke-width="1.4"/><text x="202" y="122" font-family="Work Sans, sans-serif" font-size="14" font-style="italic" font-weight="700" fill="var(--ink)">α<tspan font-size="10" dy="3">1</tspan></text><text x="100" y="248" text-anchor="middle" font-family="Work Sans, sans-serif" font-size="13" fill="var(--ink-soft)">mřížka</text>
+        </svg>
+        <figcaption>Světlo dopadá kolmo na mřížku. Za mřížkou vzniká maximum nultého řádu ve směru svazku a symetricky po obou stranách maxima vyšších řádů pod úhly <i>α</i><sub><i>k</i></sub>. Úhly na obrázku odpovídají poměru <i>λ</i>/<i>b</i> = 0,325.</figcaption>
+      </figure>
+
+      <p>Protože sin&nbsp;<i>α</i> nemůže být větší než 1, existuje jen <b>konečný počet řádů</b>: největší řád <i>k</i> splňuje <i>kλ</i>/<i>b</i> ≤ 1. Je-li mřížka hustší (větší <i>N</i>, menší <i>b</i>), jsou maxima od sebe dál a řádů je méně. Mřížka je také <b>měřicí přístroj</b>: ze změřeného úhlu vypočteme vlnovou délku z \(\lambda = b\sin\alpha/k\).</p>
+      <p>Čím více štěrbin se na interferenci podílí, tím jsou maxima užší a jasnější, a proto lze na stínítku s mřížkou úhly měřit mnohem přesněji než u dvojštěrbiny. Při osvětlení bílým světlem má každá vlnová délka maximum v jiném úhlu, a proto za mřížkou vzniká spektrum: fialová je blíž středu a červená dál.</p>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="9" cy="9" r="7.5" stroke="var(--focus)" stroke-width="1.6"/>
+          <line x1="9" y1="8" x2="9" y2="13" stroke="var(--focus)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="5.2" r="1" fill="var(--focus)"/>
+        </svg>
+        <p>Mřížku zastoupí i disk CD nebo DVD. Stopy na disku jsou od sebe vzdálené 1,6&nbsp;µm (CD) a 0,74&nbsp;µm (DVD). Pro laser 650&nbsp;nm je první řád u CD pod úhlem asi 24° a u DVD asi 61°. Hustší stopy tedy světlo rozptýlí do větších úhlů.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="cat-tag">Příklad z praxe</span>
+      <h2>Červený laser a hustá mřížka</h2>
+      <p class="desc">Rozklikejte si postup krok po kroku — další krok se odemkne, jakmile otevřete ten předchozí.</p>
+      <div class="given-data">
+        <div class="given-line">Zadáno: mřížka s \(N = 300\) vrypy na milimetr, helium-neonový laser \(\lambda = 633\ \mathrm{nm}\), světlo dopadá kolmo</div>
+        <div class="given-line">Hledáme: kolik maxim vznikne na každé straně od středu a pod jakými úhly</div>
+      </div>
+      <div class="stepper" data-reset="reset-interference-2">
+        <div class="step" data-step="1">
+          <div class="step-connector"></div>
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">1</span>
+            <span class="step-title">Určete mřížkovou konstantu \(b\)</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <div class="step-result">\(b = \dfrac{1}{N} = \dfrac{1\ \mathrm{mm}}{300} = 3{,}33\cdot10^{-3}\ \mathrm{mm} = 3{,}33\ \mu\mathrm{m}\)</div>
+          </div>
+        </div>
+        <div class="step" data-step="2">
+          <div class="step-connector"></div>
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">2</span>
+            <span class="step-title">Určete největší možný řád</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <p>Podmínka sin&nbsp;<i>α</i> ≤ 1 dává <i>k</i> ≤ <i>b</i>/<i>λ</i>.</p>
+            <div class="step-result">\(k \le \dfrac{b}{\lambda} = \dfrac{3{,}33\ \mu\mathrm{m}}{0{,}633\ \mu\mathrm{m}} = 5{,}27\ \Rightarrow\ k_\mathrm{max} = 5\)</div>
+          </div>
+        </div>
+        <div class="step" data-step="3">
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">3</span>
+            <span class="step-title">Vypočtěte úhly pro jednotlivé řády</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <div class="theory-table-wrap">
+              <table class="theory-table">
+                <thead><tr><th><i>k</i></th><th class="mono">sin <i>α</i><sub><i>k</i></sub> = <i>kλ</i>/<i>b</i></th><th class="mono"><i>α</i><sub><i>k</i></sub></th></tr></thead>
+                <tbody>
+                  <tr><td class="mono">1</td><td class="mono">0,190</td><td class="mono">10,9°</td></tr>
+                  <tr><td class="mono">2</td><td class="mono">0,380</td><td class="mono">22,3°</td></tr>
+                  <tr><td class="mono">3</td><td class="mono">0,570</td><td class="mono">34,7°</td></tr>
+                  <tr><td class="mono">4</td><td class="mono">0,760</td><td class="mono">49,4°</td></tr>
+                  <tr><td class="mono">5</td><td class="mono">0,949</td><td class="mono">71,7°</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="result-box"><div class="line-scroll">pět řádů na každou stranu a nultý uprostřed, tedy \(2\cdot 5 + 1 = 11\) maxim</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn ghost" id="reset-interference-2">Zopakovat postup od začátku</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Shrnutí</div>
+      <p>• Interference je skládání vln. Pozorovatelná je jen u <b>koherentního</b> světla (stejná frekvence, stálý fázový rozdíl). Koherenci získáme rozdělením světla z jednoho zdroje na dva svazky.</p>
+      <p>• Maximum: \(\Delta l = k\lambda\), \(k = 0, 1, 2, \dots\) Minimum: \(\Delta l = (2k-1)\lambda/2\), \(k = 1, 2, \dots\)</p>
+      <p>• Dvojštěrbina: \(\Delta l \approx bx/D\), rozestup proužků \(\Delta x = D\lambda/b\).</p>
+      <p>• Optická mřížka: \(b = 1/N\), maxima pod úhly \(\sin\alpha = k\lambda/b\); počet řádů omezuje podmínka \(\sin\alpha \le 1\). V bílém světle vzniká spektrum.</p>
+      <p>• Nekoherentní světlo (např. dvě žárovky) interferenční obrazec nevytvoří, jen rovnoměrné osvětlení.</p>
+    </div>
+
+  </div>
+
+  <!-- ============ APLET: DVOJŠTĚRBINA ============ -->
+  <div id="dvojsterbina-section" class="tab-section" hidden>
+    <div class="card applet-card" id="d-card">
+
+      <div class="applet-head">
+        <div class="applet-head-text">
+          <span class="cat-tag">Aplet</span>
+          <h2>Interference na dvojštěrbině</h2>
+          <p class="desc">Měňte vlnovou délku, rozteč a šířku štěrbin a vzdálenost stínítka. Posuvníkem <b>Koherence</b> přejdete od koherentního světla (laser) k nekoherentnímu (dvě nezávislé žárovky) a uvidíte, jak se změní obrazec na stínítku. Kliknutím nebo tažením v obrazci nebo v grafu vyberete bod na stínítku a aplet vypíše jeho dráhový rozdíl.</p>
+        </div>
+        <button class="btn ghost fs-btn" id="d-fs-btn" type="button" aria-pressed="false">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path id="d-fs-icon" d="M1.5 5.5V1.5H5.5M10.5 1.5H14.5V5.5M14.5 10.5V14.5H10.5M5.5 14.5H1.5V10.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="d-fs-label">Celá obrazovka</span>
+        </button>
+      </div>
+
+      <div class="applet-controls">
+        <div class="mode-row slider-row">
+          <label class="mode-row-label" for="d-sl-lam">Vlnová délka</label>
+          <input type="range" id="d-sl-lam" min="400" max="700" step="5" value="650">
+          <span class="slider-val" id="d-out-lam" aria-live="polite"></span>
+        </div>
+        <div class="mode-row slider-row">
+          <label class="mode-row-label" for="d-sl-b">Rozteč štěrbin</label>
+          <input type="range" id="d-sl-b" min="100" max="500" step="10" value="250">
+          <span class="slider-val" id="d-out-b" aria-live="polite"></span>
+        </div>
+        <div class="mode-row slider-row">
+          <label class="mode-row-label" for="d-sl-a">Šířka štěrbin</label>
+          <input type="range" id="d-sl-a" min="5" max="50" step="5" value="20">
+          <span class="slider-val" id="d-out-a" aria-live="polite"></span>
+        </div>
+        <div class="mode-row slider-row">
+          <label class="mode-row-label" for="d-sl-D">Vzdálenost stínítka</label>
+          <input type="range" id="d-sl-D" min="0.5" max="5" step="0.1" value="3">
+          <span class="slider-val" id="d-out-D" aria-live="polite"></span>
+        </div>
+        <div class="mode-row slider-row">
+          <label class="mode-row-label" for="d-sl-g">Koherence</label>
+          <input type="range" id="d-sl-g" min="0" max="100" step="5" value="100">
+          <span class="slider-val" id="d-out-g" aria-live="polite"></span>
+        </div>
+        <div class="mode-row">
+          <span class="mode-row-label">Zobrazená část stínítka</span>
+          <div class="seg" id="d-range-seg" role="group" aria-label="Zobrazená část stínítka">
+            <button class="chip accented" type="button" aria-pressed="false">±1&nbsp;cm</button>
+            <button class="chip accented" type="button" aria-pressed="false">±2&nbsp;cm</button>
+            <button class="chip accented on" type="button" aria-pressed="true">±5&nbsp;cm</button>
+            <button class="chip accented" type="button" aria-pressed="false">±10&nbsp;cm</button>
+          </div>
+        </div>
+        <div class="mode-row">
+          <span class="mode-row-label">Zobrazení</span>
+          <div class="seg">
+            <button class="chip accented on" id="d-env-btn" type="button" aria-pressed="true">ukázat obálku (ohyb na štěrbině)</button>
+            <button class="chip" id="d-clear-btn" type="button" hidden>zrušit výběr bodu</button>
+            <button class="chip" id="d-reset-btn" type="button">Výchozí hodnoty</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="applet-stage">
+        <div class="canvas-wrap">
+          <svg class="optics" id="d-svg" viewBox="0 0 960 640" role="img" aria-label="Interference na dvojštěrbině: nahoře schéma s laserem, dvojštěrbinou a stínítkem, uprostřed interferenční obrazec na stínítku a dole graf intenzity světla v závislosti na poloze na stínítku."></svg>
+          <div class="legend" id="d-legend" aria-hidden="true"></div>
+        </div>
+        <p class="hint">Schéma nahoře je nakreslené svisle zvětšeně a štěrbiny jsou zvětšené, aby šly vidět. Poloha na stínítku <i>x</i> je ve schématu, v obrazci i v grafu stejná. Jas obrazce odpovídá intenzitě v grafu. Graf je vztažený k maximu při plné koherenci. Při nulové koherenci se intenzity obou štěrbin jen sčítají, takže zůstane rovnoměrné osvětlení s polovičním jasem (celkové množství světla se nemění, jen se jinak rozdělí). Kontrast proužků odpovídá hodnotě posuvníku Koherence.</p>
+      </div>
+
+      <div class="applet-results">
+        <div class="results">
+          <div>
+            <div class="readout" id="d-readout">
+              <div class="cell"><span class="label">Δ<i>x</i></span><span class="value" id="d-out-dx">—</span></div>
+              <div class="cell"><span class="label">kontrast</span><span class="value" id="d-out-v">—</span></div>
+              <div class="cell"><span class="label">Δ<i>l</i></span><span class="value" id="d-out-dl">—</span></div>
+              <div class="cell"><span class="label">Δ<i>l</i>/<i>λ</i></span><span class="value" id="d-out-dll">—</span></div>
+            </div>
+            <p class="position-note" id="d-note"></p>
+          </div>
+          <div class="calc">
+            <div class="calc-title">Výpočet</div>
+            <div id="d-calc"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ APLET: MŘÍŽKA ============ -->
+  <div id="mrizka-section" class="tab-section" hidden>
+    <div class="card applet-card" id="g-card">
+
+      <div class="applet-head">
+        <div class="applet-head-text">
+          <span class="cat-tag">Aplet</span>
+          <h2>Optická mřížka</h2>
+          <p class="desc">Světlo dopadá kolmo na optickou mřížku. Měňte hustotu vrypů, vlnovou délku světla a vzdálenost stínítka. Aplet vykreslí maxima jednotlivých řádů a vypíše úhly <i>α</i> podle vztahu sin <i>α</i> = <i>kλ</i>/<i>b</i>. Řád, pro který by vyšlo sin <i>α</i> větší než 1, nevznikne. Přepnutím na bílé světlo uvidíte místo bodů spektra.</p>
+        </div>
+        <button class="btn ghost fs-btn" id="g-fs-btn" type="button" aria-pressed="false">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path id="g-fs-icon" d="M1.5 5.5V1.5H5.5M10.5 1.5H14.5V5.5M14.5 10.5V14.5H10.5M5.5 14.5H1.5V10.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="g-fs-label">Celá obrazovka</span>
+        </button>
+      </div>
+
+      <div class="applet-controls">
+        <div class="mode-row">
+          <span class="mode-row-label">Světlo</span>
+          <div class="seg" id="g-light-seg" role="group" aria-label="Druh světla">
+            <button class="chip accented on" type="button" aria-pressed="true">laser (jedna vlnová délka)</button>
+            <button class="chip accented" type="button" aria-pressed="false">bílé světlo (400 až 700&nbsp;nm)</button>
+          </div>
+        </div>
+        <div class="mode-row slider-row" id="g-row-lam">
+          <label class="mode-row-label" for="g-sl-lam">Vlnová délka</label>
+          <input type="range" id="g-sl-lam" min="400" max="700" step="5" value="650">
+          <span class="slider-val" id="g-out-lam" aria-live="polite"></span>
+        </div>
+        <div class="mode-row slider-row">
+          <label class="mode-row-label" for="g-sl-N">Hustota vrypů</label>
+          <input type="range" id="g-sl-N" min="100" max="1400" step="5" value="500">
+          <span class="slider-val" id="g-out-N" aria-live="polite"></span>
+        </div>
+        <div class="mode-row">
+          <span class="mode-row-label">Předvolby</span>
+          <div class="seg" id="g-preset-seg">
+            <button class="chip" type="button">mřížka 500&nbsp;vrypů/mm</button>
+            <button class="chip" type="button">CD (stopy 1,6&nbsp;µm)</button>
+            <button class="chip" type="button">DVD (stopy 0,74&nbsp;µm)</button>
+          </div>
+        </div>
+        <div class="mode-row slider-row">
+          <label class="mode-row-label" for="g-sl-D">Vzdálenost stínítka</label>
+          <input type="range" id="g-sl-D" min="0.3" max="3" step="0.1" value="1">
+          <span class="slider-val" id="g-out-D" aria-live="polite"></span>
+        </div>
+        <div class="mode-row">
+          <span class="mode-row-label">Zobrazená část stínítka</span>
+          <div class="seg" id="g-range-seg" role="group" aria-label="Zobrazená část stínítka">
+            <button class="chip accented" type="button" aria-pressed="false">±0,5&nbsp;m</button>
+            <button class="chip accented on" type="button" aria-pressed="true">±1&nbsp;m</button>
+            <button class="chip accented" type="button" aria-pressed="false">±2&nbsp;m</button>
+            <button class="chip accented" type="button" aria-pressed="false">±5&nbsp;m</button>
+            <button class="chip" id="g-reset-btn" type="button">Výchozí hodnoty</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="applet-stage">
+        <div class="canvas-wrap">
+          <svg class="optics" id="g-svg" viewBox="0 0 960 520" role="img" aria-label="Optická mřížka: nahoře schéma s laserem, mřížkou a stínítkem, dole maxima jednotlivých řádů na stínítku a jejich poloha."></svg>
+          <div class="legend" id="g-legend" aria-hidden="true"></div>
+        </div>
+        <p class="hint">Schéma nahoře je nakreslené svisle zvětšeně (úhly v něm nejsou skutečné); polohy na stínítku odpovídají hodnotám v tabulce. Intenzity maxim jsou pro přehlednost stejné (mřížka s velmi úzkými štěrbinami). U CD a DVD jde o odraz, úhly ale vycházejí stejně jako u mřížky se stejnou roztečí stop.</p>
+      </div>
+
+      <div class="applet-results">
+        <div class="results">
+          <div>
+            <div class="readout" id="g-readout">
+              <div class="cell"><span class="label"><i>b</i></span><span class="value" id="g-out-b">—</span></div>
+              <div class="cell"><span class="label"><i>k</i><sub>max</sub></span><span class="value" id="g-out-kmax">—</span></div>
+              <div class="cell"><span class="label">počet maxim</span><span class="value" id="g-out-cnt">—</span></div>
+            </div>
+            <p class="position-note" id="g-note"></p>
+          </div>
+          <div class="calc">
+            <div class="calc-title">Řády maxim</div>
+            <div class="theory-table-wrap"><table class="theory-table" id="g-table"></table></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>Fyzika — Oktáva/4. ročník</footer>
+</div>
+
+<script src="../spolecne/spolecne.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  // ---- záložky: tlačítko .toptab[data-tab="x"] ↔ sekce #x-section (Teorie = #theory-section) ----
+  var tabs = {}, sections = {};
+  Array.prototype.forEach.call(document.querySelectorAll('.toptab[data-tab]'), function(btn){
+    var name = btn.getAttribute('data-tab');
+    tabs[name] = btn;
+    sections[name] = document.getElementById(name === 'teorie' ? 'theory-section' : name + '-section');
+  });
+  function showTab(name){
+    for(var k in tabs){
+      tabs[k].classList.toggle('on', k === name);
+      if(sections[k]) sections[k].hidden = k !== name;
+    }
+    // skóre, série a úspěšnost v hlavičce jen u tréninku
+    var readout = document.getElementById('header-readout');
+    if(readout) readout.hidden = name !== 'trenink';
+  }
+  Object.keys(tabs).forEach(function(k){ tabs[k].addEventListener('click', function(){ showTab(k); }); });
+  var hash = location.hash.replace('#', '');
+  if(hash && tabs[hash]) showTab(hash);
+
+  // ---- příklady: postupně odemykané steppery ----
+  Array.prototype.forEach.call(document.querySelectorAll('.stepper'), function(wrap){
+    var steps = Array.prototype.slice.call(wrap.querySelectorAll('.step'));
+    var unlockedUpTo = 1;
+
+    function refreshLocks(){
+      steps.forEach(function(st){
+        var idx = parseInt(st.getAttribute('data-step'), 10);
+        var locked = idx > unlockedUpTo;
+        st.classList.toggle('locked', locked);
+        st.classList.toggle('unlocked', !locked && !st.classList.contains('done'));
+        st.querySelector('.step-head').setAttribute('aria-disabled', locked ? 'true' : 'false');
+      });
+    }
+
+    steps.forEach(function(st){
+      var idx = parseInt(st.getAttribute('data-step'), 10);
+      var head = st.querySelector('.step-head');
+      var body = st.querySelector('.step-body');
+      head.addEventListener('click', function(){
+        if(idx > unlockedUpTo) return;
+        var wasOpen = st.classList.contains('open');
+        st.classList.toggle('open', !wasOpen);
+        body.hidden = wasOpen;
+        head.setAttribute('aria-expanded', (!wasOpen).toString());
+        if(!wasOpen){
+          st.classList.add('done');
+          if(idx === unlockedUpTo && unlockedUpTo < steps.length){ unlockedUpTo++; }
+          refreshLocks();
+        }
+      });
+    });
+
+    var resetBtn = document.getElementById(wrap.getAttribute('data-reset'));
+    if(resetBtn){
+      resetBtn.addEventListener('click', function(){
+        unlockedUpTo = 1;
+        steps.forEach(function(st){
+          st.classList.remove('open', 'done');
+          st.querySelector('.step-body').hidden = true;
+          st.querySelector('.step-head').setAttribute('aria-expanded', 'false');
+        });
+        refreshLocks();
+      });
+    }
+
+    refreshLocks();
+  });
+})();
+</script>
+
+<script>
+// Aplet — dalekohledy
+(function(){
+  "use strict";
+
+  // ================= SPOLEČNÉ POMŮCKY APLETŮ =================
+  var NS = 'http://www.w3.org/2000/svg';
+  var PL = 70, PW = 860;              // vodorovný rozsah obrazce a grafu (stejný pro oba)
+
+  function cz(n, dec){ return n.toFixed(dec).replace('.', ','); }
+  function sig3(v){ var r = roundSig(v, 3); return cz(r, decimalsForSig(r, 3)); }
+  function texNum(s){ return s.replace(',', '{,}'); }
+  function fmtLen(m){                  // délka v mm nebo cm (3 platné číslice)
+    if(m < 0.01) return sig3(m * 1000) + ' mm';
+    return sig3(m * 100) + ' cm';
+  }
+  function fmtLenTex(m){
+    if(m < 0.01) return texNum(sig3(m * 1000)) + '\\ \\mathrm{mm}';
+    return texNum(sig3(m * 100)) + '\\ \\mathrm{cm}';
+  }
+  // barva světla podle vlnové délky (přibližný převod, 400 až 700 nm), složky 0 až 1
+  function lamRGB(w){
+    var r = 0, g = 0, b = 0;
+    if(w < 440){ r = (440 - w) / 40; b = 1; }
+    else if(w < 490){ g = (w - 440) / 50; b = 1; }
+    else if(w < 510){ g = 1; b = (510 - w) / 20; }
+    else if(w < 580){ r = (w - 510) / 70; g = 1; }
+    else if(w < 645){ r = 1; g = (645 - w) / 65; }
+    else { r = 1; }
+    return [r, g, b];
+  }
+  function rgbStr(c, k){
+    k = (k === undefined ? 1 : k);
+    return 'rgb(' + Math.round(c[0] * k * 255) + ',' + Math.round(c[1] * k * 255) + ',' + Math.round(c[2] * k * 255) + ')';
+  }
+  function sinc(u){ return Math.abs(u) < 1e-9 ? 1 : Math.sin(u) / u; }
+  function niceStep(X, list){          // krok popisků osy x
+    for(var i = 0; i < list.length; i++){ if(2 * X / list[i] <= 10) return list[i]; }
+    return list[list.length - 1];
+  }
+  function sizer(svg, W, H, onChange){  // zvětšení písma v SVG na malém displeji
+    var obj = { K: 1 };
+    function update(){
+      var b = svg.getBoundingClientRect();
+      if(!b.width || !b.height) return false;
+      var rot = svg.closest('.applet-card').classList.contains('rotated');
+      var sc = Math.min((rot ? b.height : b.width) / W, (rot ? b.width : b.height) / H);
+      var k = Math.round(Math.max(1, Math.min(2.3, 0.8 / sc)) * 20) / 20;
+      if(k === obj.K) return false;
+      obj.K = k;
+      return true;
+    }
+    obj.update = update;
+    if(window.ResizeObserver) new ResizeObserver(function(){ if(update()) onChange(); }).observe(svg);
+    return obj;
+  }
+
+  // ---- celá obrazovka (Fullscreen API; jinak karta vyplní okno; viz oktava/dalekohled.html) ----
+  function setupFullscreen(card, fsBtn, fsLabel, fsIcon, redraw){
+    var ICON_ENTER = 'M1.5 5.5V1.5H5.5M10.5 1.5H14.5V5.5M14.5 10.5V14.5H10.5M5.5 14.5H1.5V10.5';
+    var ICON_EXIT = 'M5.5 1.5V5.5H1.5M14.5 5.5H10.5V1.5M10.5 14.5V10.5H14.5M1.5 10.5H5.5V14.5';
+    var isPhone = window.matchMedia && matchMedia('(pointer:coarse)').matches && Math.min(screen.width, screen.height) < 600;
+    var portraitMq = window.matchMedia ? matchMedia('(orientation:portrait)') : null;
+    var orientLocked = false, keepFull = false;
+    function fsElement(){ return document.fullscreenElement || document.webkitFullscreenElement || null; }
+    function updateRotated(){
+      var on = card.classList.contains('is-full') && isPhone && !orientLocked && !!portraitMq && portraitMq.matches;
+      if(on === card.classList.contains('rotated')) return;
+      card.classList.toggle('rotated', on);
+      redraw();
+    }
+    if(portraitMq){
+      if(portraitMq.addEventListener) portraitMq.addEventListener('change', updateRotated);
+      else if(portraitMq.addListener) portraitMq.addListener(updateRotated);
+    }
+    function lockFailed(){
+      if(isPhone && portraitMq && portraitMq.matches && fsElement()){
+        keepFull = true;
+        try{ (document.exitFullscreen || document.webkitExitFullscreen).call(document); }catch(e){ keepFull = false; }
+      }
+      updateRotated();
+    }
+    function lockLandscape(){
+      var so = screen.orientation;
+      if(!isPhone){ updateRotated(); return; }
+      if(!so || !so.lock){ lockFailed(); return; }
+      try{ so.lock('landscape').then(function(){ orientLocked = true; updateRotated(); }, lockFailed); }catch(e){ lockFailed(); }
+    }
+    function setFullClass(on){
+      card.classList.toggle('is-full', on);
+      if(!on){
+        if(orientLocked){ try{ screen.orientation.unlock(); }catch(e){} }
+        orientLocked = false;
+      }
+      updateRotated();
+      document.documentElement.style.overflow = on ? 'hidden' : '';
+      fsLabel.textContent = on ? 'Zavřít celou obrazovku' : 'Celá obrazovka';
+      fsIcon.setAttribute('d', on ? ICON_EXIT : ICON_ENTER);
+      fsBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      redraw();
+    }
+    fsBtn.addEventListener('click', function(){
+      if(card.classList.contains('is-full')){
+        if(fsElement()){ (document.exitFullscreen || document.webkitExitFullscreen).call(document); }
+        else setFullClass(false);
+        return;
+      }
+      var req = card.requestFullscreen || card.webkitRequestFullscreen;
+      setFullClass(true);
+      if(req){
+        try{
+          var p = req.call(card);
+          if(p && p.then) p.then(lockLandscape, lockLandscape);
+          else lockLandscape();
+        }catch(e){ lockLandscape(); }
+      } else lockLandscape();
+    });
+    function onFsChange(){
+      if(fsElement()) return;
+      if(keepFull){ keepFull = false; return; }
+      if(card.classList.contains('is-full')) setFullClass(false);
+    }
+    document.addEventListener('fullscreenchange', onFsChange);
+    document.addEventListener('webkitfullscreenchange', onFsChange);
+    document.addEventListener('keydown', function(e){
+      if(e.key === 'Escape' && card.classList.contains('is-full') && !fsElement()) setFullClass(false);
+    });
+  }
+
+  function setChips(btns, on){
+    Array.prototype.forEach.call(btns, function(c, i){
+      c.classList.toggle('on', i === on);
+      c.setAttribute('aria-pressed', i === on ? 'true' : 'false');
+    });
+  }
+
+  // ================= APLET 1: INTERFERENCE NA DVOJŠTĚRBINĚ =================
+  (function(){
+    var svg = document.getElementById('d-svg');
+    var W = 960, H = 640;
+    var DEF = { lam:650, b:250, a:20, D:3.0, g:100, X:5 };
+    var RANGES = [1, 2, 5, 10];
+    var st = { lam:DEF.lam, b:DEF.b, a:DEF.a, D:DEF.D, g:DEF.g, X:DEF.X, env:true, mk:null };
+    var sz = sizer(svg, W, H, function(){ render(); });
+
+    var sl = { lam:document.getElementById('d-sl-lam'), b:document.getElementById('d-sl-b'), a:document.getElementById('d-sl-a'), D:document.getElementById('d-sl-D'), g:document.getElementById('d-sl-g') };
+    var out = { lam:document.getElementById('d-out-lam'), b:document.getElementById('d-out-b'), a:document.getElementById('d-out-a'), D:document.getElementById('d-out-D'), g:document.getElementById('d-out-g') };
+    var rangeBtns = document.querySelectorAll('#d-range-seg .chip');
+    var envBtn = document.getElementById('d-env-btn'), clearBtn = document.getElementById('d-clear-btn'), resetBtn = document.getElementById('d-reset-btn');
+
+    // normovaná intenzita I / I_max (při plné koherenci): obálka (ohyb na štěrbině) krát interferenční člen
+    function sinT(x){ return x / Math.sqrt(x * x + st.D * st.D); }
+    function inten(x, vis){
+      var s = sinT(x), lam = st.lam * 1e-9;
+      var e = sinc(Math.PI * (st.a * 1e-6) * s / lam); e = e * e;
+      var delta = 2 * Math.PI * (st.b * 1e-6) * s / lam;
+      return e * (1 + (st.g / 100) * vis * Math.cos(delta)) / 2;
+    }
+    function envelope(x){ var s = sinT(x), e = sinc(Math.PI * (st.a * 1e-6) * s / (st.lam * 1e-9)); return e * e; }
+    function pathDiff(x){                // přesný dráhový rozdíl r2 − r1 pro štěrbiny v ±b/2 (m)
+      var h = st.b * 1e-6 / 2;
+      return Math.sqrt(st.D * st.D + (x + h) * (x + h)) - Math.sqrt(st.D * st.D + (x - h) * (x - h));
+    }
+    function px(xcm){ return PL + (xcm + st.X) / (2 * st.X) * PW; }
+
+    function render(){
+      var X = st.X, K = sz.K, D = st.D;
+      var lam = st.lam * 1e-9, b = st.b * 1e-6, g = st.g / 100;
+      var rgb = lamRGB(st.lam), col = rgbStr(rgb);
+      var fsz = function(n){ return Math.round(n * K * 10) / 10; };
+      var fsl = function(n){ return Math.round(n * Math.min(K, 2) * 10) / 10; };
+      // zprůměrování přes pixel: bez toho by příliš jemné proužky vytvořily falešný vzor
+      var dxPix = 2 * X / 100 / PW * 1.2;                      // m na 1,2 px
+      var visPix = Math.abs(sinc(2 * Math.PI * b / (lam * D) * dxPix / 2));
+      var o = '', i;
+
+      var N = 860, stops = '';
+      for(i = 0; i <= N; i++){
+        var xm = (-X + 2 * X * i / N) / 100;
+        stops += '<stop offset="' + (i / N).toFixed(4) + '" stop-color="' + rgbStr(rgb, Math.max(0, Math.min(1, inten(xm, visPix)))) + '"/>';
+      }
+      o += '<defs><linearGradient id="d-grad" x1="0" y1="0" x2="1" y2="0">' + stops + '</linearGradient>' +
+           '<clipPath id="d-clip"><rect x="20" y="14" width="920" height="156"/></clipPath></defs>';
+
+      // ---------- A: schéma ----------
+      var yc = 92, ky = 64 / X, xs = 120, xsc = xs + D * 150;
+      var y1 = yc - 12, y2 = yc + 12;
+      var yk = (st.mk === null) ? yc : yc - st.mk * ky;
+      o += '<g font-family="Work Sans, sans-serif" font-size="' + fsl(13) + '" fill="var(--ink)">';
+      o += '<rect x="26" y="' + (yc - 12) + '" width="36" height="24" rx="3" fill="var(--ink)"/>';
+      o += '<line x1="62" y1="' + yc + '" x2="' + (xs - 4) + '" y2="' + yc + '" stroke="' + col + '" stroke-width="3"/>';
+      o += '<text x="44" y="' + (yc - 18) + '" text-anchor="middle" fill="var(--ink-soft)">laser</text>';
+      o += '<g clip-path="url(#d-clip)" stroke="' + col + '" stroke-width="1.8">' +
+           '<line x1="' + xs + '" y1="' + y1 + '" x2="' + xsc + '" y2="' + yk + '"' + (st.mk === null ? ' stroke-dasharray="5 4"' : '') + '/>' +
+           '<line x1="' + xs + '" y1="' + y2 + '" x2="' + xsc + '" y2="' + yk + '"' + (st.mk === null ? ' stroke-dasharray="5 4"' : '') + '/></g>';
+      o += '<line x1="' + xs + '" y1="14" x2="' + xs + '" y2="' + (y1 - 3) + '" stroke="var(--ink)" stroke-width="7"/>';
+      o += '<line x1="' + xs + '" y1="' + (y1 + 3) + '" x2="' + xs + '" y2="' + (y2 - 3) + '" stroke="var(--ink)" stroke-width="7"/>';
+      o += '<line x1="' + xs + '" y1="' + (y2 + 3) + '" x2="' + xs + '" y2="170" stroke="var(--ink)" stroke-width="7"/>';
+      o += '<text x="' + (xs - 10) + '" y="26" text-anchor="end" fill="var(--ink-soft)">štěrbiny</text>';
+      o += '<line x1="' + xsc + '" y1="14" x2="' + xsc + '" y2="170" stroke="var(--ink)" stroke-width="4"/>';
+      o += '<text x="' + (xsc + 8) + '" y="26" fill="var(--ink-soft)">stínítko</text>';
+      o += '<line x1="' + xs + '" y1="' + (yc + 66) + '" x2="' + xsc + '" y2="' + (yc + 66) + '" stroke="var(--ink-soft)" stroke-width="1.4"/>';
+      o += '<text x="' + ((xs + xsc) / 2) + '" y="' + (yc + 62) + '" text-anchor="middle" font-style="italic" font-weight="700">D = ' + cz(D, 1) + ' m</text>';
+      if(st.mk !== null){ o += '<circle cx="' + xsc + '" cy="' + yk + '" r="4.5" fill="var(--accent)"/>'; }
+      o += '</g>';
+
+      // ---------- B: obrazec ----------
+      var by = 196, bh = 72, gy0 = 580, gh = 230, vmax = 1.15;
+      var gy = function(v){ return gy0 - v / vmax * gh; };
+      o += '<rect x="' + PL + '" y="' + by + '" width="' + PW + '" height="' + bh + '" fill="#000"/>';
+      o += '<rect x="' + PL + '" y="' + by + '" width="' + PW + '" height="' + bh + '" fill="url(#d-grad)"/>';
+      o += '<rect x="' + PL + '" y="' + by + '" width="' + PW + '" height="' + bh + '" fill="none" stroke="var(--ink)" stroke-width="1.5"/>';
+      o += '<text x="' + PL + '" y="' + (by - 8) + '" font-family="Work Sans, sans-serif" font-size="' + fsl(13) + '" fill="var(--ink-soft)">obrazec</text>';
+
+      // ---------- C: graf intenzity ----------
+      var step = niceStep(X, [0.5, 1, 2, 5, 10]);
+      o += '<g stroke="var(--line)" stroke-width="1">';
+      var t;
+      for(t = -Math.floor(X / step) * step; t <= X + 1e-9; t += step){ o += '<line x1="' + px(t) + '" y1="' + gy(vmax) + '" x2="' + px(t) + '" y2="' + gy0 + '"/>'; }
+      [0.5, 1].forEach(function(v){ o += '<line x1="' + PL + '" y1="' + gy(v) + '" x2="' + (PL + PW) + '" y2="' + gy(v) + '"/>'; });
+      o += '</g>';
+      var pts = [], ep = [], P = 860, j;
+      for(j = 0; j <= P; j++){
+        var xv = (-X + 2 * X * j / P);
+        var xpx = (PL + PW * j / P).toFixed(1);
+        pts.push(xpx + ',' + gy(inten(xv / 100, visPix)).toFixed(1));
+        ep.push(xpx + ',' + gy(envelope(xv / 100)).toFixed(1));
+      }
+      o += '<polygon points="' + PL + ',' + gy0 + ' ' + pts.join(' ') + ' ' + (PL + PW) + ',' + gy0 + '" fill="var(--accent)" fill-opacity="0.16"/>';
+      if(st.env){ o += '<polyline points="' + ep.join(' ') + '" fill="none" stroke="var(--ink-soft)" stroke-width="1.6" stroke-dasharray="6 5"/>'; }
+      o += '<polyline points="' + pts.join(' ') + '" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linejoin="round"/>';
+      o += '<line x1="' + PL + '" y1="' + gy0 + '" x2="' + (PL + PW) + '" y2="' + gy0 + '" stroke="var(--ink)" stroke-width="1.5"/>';
+      o += '<line x1="' + PL + '" y1="' + gy(vmax) + '" x2="' + PL + '" y2="' + gy0 + '" stroke="var(--ink)" stroke-width="1.5"/>';
+      o += '<g font-family="Work Sans, sans-serif" font-size="' + fsz(13) + '" fill="var(--ink)">';
+      for(t = -Math.floor(X / step) * step; t <= X + 1e-9; t += step){
+        var lab = (Math.abs(t) < 1e-9 ? '0' : cz(Math.round(t * 10) / 10, step < 1 ? 1 : 0).replace('-', '−'));
+        o += '<line x1="' + px(t) + '" y1="' + gy0 + '" x2="' + px(t) + '" y2="' + (gy0 + 6) + '" stroke="var(--ink)" stroke-width="1.4"/>';
+        o += '<text x="' + px(t) + '" y="' + (gy0 + 22 * Math.min(K, 1.6)) + '" text-anchor="middle">' + lab + '</text>';
+      }
+      o += '<text x="' + (PL + PW) + '" y="' + (gy0 + 44 * Math.min(K, 1.6)) + '" text-anchor="end" fill="var(--ink-soft)">poloha na stínítku <tspan font-style="italic">x</tspan> (cm)</text>';
+      [0, 0.5, 1].forEach(function(v){ o += '<text x="' + (PL - 8) + '" y="' + (gy(v) + 4) + '" text-anchor="end">' + cz(v, v === 0.5 ? 1 : 0) + '</text>'; });
+      o += '<text x="' + (PL + 10) + '" y="' + (gy(vmax) + 12) + '" fill="var(--ink-soft)" font-style="italic">I / I<tspan font-size="' + fsz(10) + '" dy="3" font-style="normal">max</tspan></text>';
+      // řády maxim (jen při dobré koherenci a když se vejdou)
+      var dxk = D * lam / b * 100;                           // rozestup maxim v cm
+      if(g >= 0.3 && PW * dxk / (2 * X) >= 26){
+        var kk;
+        for(kk = -Math.floor(X / dxk); kk <= Math.floor(X / dxk); kk++){
+          var xk = (kk >= 0 ? 1 : -1) * D * Math.tan(Math.asin(Math.abs(kk) * lam / b)) * 100;
+          o += '<text x="' + px(xk) + '" y="' + (gy0 - 8) + '" text-anchor="middle" font-size="' + fsz(11) + '" fill="var(--ink-soft)">' + (kk < 0 ? '−' + (-kk) : kk) + '</text>';
+        }
+      }
+      if(st.mk !== null){
+        o += '<text x="' + (px(st.mk) + 6) + '" y="' + (gy(vmax) + 12) + '" fill="var(--accent)" font-weight="700" font-style="italic">x</text>';
+      }
+      o += '</g>';
+      if(st.mk !== null){
+        o += '<line x1="' + px(st.mk) + '" y1="' + by + '" x2="' + px(st.mk) + '" y2="' + gy0 + '" stroke="var(--accent)" stroke-width="2" stroke-dasharray="6 4"/>';
+      }
+      svg.innerHTML = o;
+      updateTexts(lam, b, rgb, col);
+    }
+
+    function updateTexts(lam, b, rgb, col){
+      out.lam.innerHTML = '<i>λ</i> = ' + st.lam + ' nm';
+      out.b.innerHTML = '<i>b</i> = ' + st.b + ' µm';
+      out.a.innerHTML = '<i>a</i> = ' + st.a + ' µm';
+      out.D.innerHTML = '<i>D</i> = ' + cz(st.D, 1) + ' m';
+      out.g.textContent = st.g + ' %' + (st.g === 100 ? ' (laser)' : st.g === 0 ? ' (žárovky)' : '');
+      document.getElementById('d-legend').innerHTML =
+        '<span><svg width="26" height="12"><rect x="1" y="1" width="24" height="10" rx="2" fill="' + col + '"/></svg>barva světla pro vlnovou délku ' + st.lam + ' nm</span>' +
+        '<span><svg width="26" height="10"><line x1="1" y1="5" x2="25" y2="5" stroke="var(--accent)" stroke-width="2.6"/></svg>relativní intenzita</span>' +
+        (st.env ? '<span><svg width="26" height="10"><line x1="1" y1="5" x2="25" y2="5" stroke="var(--ink-soft)" stroke-width="1.6" stroke-dasharray="6 5"/></svg>obálka (ohyb na jedné štěrbině)</span>' : '') +
+        (st.mk !== null ? '<span><svg width="26" height="10"><line x1="1" y1="5" x2="25" y2="5" stroke="var(--accent)" stroke-width="2" stroke-dasharray="6 4"/></svg>vybraný bod</span>' : '');
+      var dx = st.D * lam / b;
+      document.getElementById('d-out-dx').textContent = fmtLen(dx);
+      document.getElementById('d-out-v').textContent = st.g + ' %';
+      var note = document.getElementById('d-note');
+      var tex = '\\Delta x=\\frac{D\\lambda}{b}=\\frac{' + texNum(cz(st.D, 1)) + '\\ \\mathrm{m}\\cdot' + st.lam + '\\ \\mathrm{nm}}{' + st.b + '\\ \\mu\\mathrm{m}}=' + fmtLenTex(dx);
+      if(st.mk === null){
+        document.getElementById('d-out-dl').textContent = '—';
+        document.getElementById('d-out-dll').textContent = '—';
+        note.textContent = st.g < 20 ? 'Při téměř nulové koherenci proužky zmizely, na stínítku zbylo rovnoměrné osvětlení.' : 'Vyberte bod kliknutím nebo tažením v obrazci či v grafu a aplet vypíše jeho dráhový rozdíl.';
+      } else {
+        var x = st.mk / 100, dl = pathDiff(x), n = dl / lam;
+        document.getElementById('d-out-dl').textContent = sig3(dl * 1e6) + ' µm';
+        document.getElementById('d-out-dll').textContent = sig3(n);
+        var kmax = Math.round(n), kmin = Math.round(n + 0.5);
+        var msg;
+        if(Math.abs(n - kmax) < 0.08) msg = 'maximum ' + kmax + '. řádu (Δ<i>l</i> = ' + kmax + '<i>λ</i>)';
+        else if(n > 0.3 && Math.abs(n - (kmin - 0.5)) < 0.08) msg = 'minimum ' + kmin + '. řádu (Δ<i>l</i> = (2·' + kmin + ' − 1)<i>λ</i>/2)';
+        else msg = 'mezi maximem a minimem';
+        note.innerHTML = 'Poloha <i>x</i> = ' + cz(st.mk, 2) + ' cm: ' + msg + '.' + (st.g < 20 ? ' Při této koherenci ale interferenci nepozorujeme.' : '');
+        tex += '\\\\[4pt]\\Delta l\\approx\\frac{b\\,x}{D}=' + texNum(sig3(dl * 1e6)) + '\\ \\mu\\mathrm{m}\\ \\Rightarrow\\ \\frac{\\Delta l}{\\lambda}=' + texNum(sig3(n));
+      }
+      if(window.katex){ try{ document.getElementById('d-calc').innerHTML = katex.renderToString(tex, { displayMode:true, throwOnError:false }); }catch(e){} }
+      clearBtn.hidden = st.mk === null;
+    }
+
+    function bind(key, parse){
+      sl[key].addEventListener('input', function(){ st[key] = parse(sl[key].value); render(); });
+    }
+    bind('lam', parseFloat); bind('b', parseFloat); bind('a', parseFloat); bind('D', parseFloat); bind('g', parseFloat);
+    Array.prototype.forEach.call(rangeBtns, function(btn, bi){
+      btn.addEventListener('click', function(){
+        st.X = RANGES[bi];
+        if(st.mk !== null && Math.abs(st.mk) > st.X) st.mk = null;
+        setChips(rangeBtns, bi); render();
+      });
+    });
+    envBtn.addEventListener('click', function(){
+      st.env = !st.env;
+      envBtn.classList.toggle('on', st.env); envBtn.setAttribute('aria-pressed', st.env ? 'true' : 'false');
+      render();
+    });
+    clearBtn.addEventListener('click', function(){ st.mk = null; render(); });
+    resetBtn.addEventListener('click', function(){
+      st.lam = DEF.lam; st.b = DEF.b; st.a = DEF.a; st.D = DEF.D; st.g = DEF.g; st.X = DEF.X; st.env = true; st.mk = null;
+      sl.lam.value = DEF.lam; sl.b.value = DEF.b; sl.a.value = DEF.a; sl.D.value = DEF.D; sl.g.value = DEF.g;
+      envBtn.classList.add('on'); envBtn.setAttribute('aria-pressed', 'true');
+      setChips(rangeBtns, RANGES.indexOf(DEF.X));
+      render();
+    });
+
+    // výběr bodu na stínítku (kliknutí nebo tažení v obrazci a v grafu)
+    var dragging = false;
+    function pick(e){
+      var pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+      var m = svg.getScreenCTM(); if(!m) return;
+      var p = pt.matrixTransform(m.inverse());
+      if(p.y < 185) return;
+      var xcm = (p.x - PL) / PW * 2 * st.X - st.X;
+      st.mk = Math.max(-st.X, Math.min(st.X, xcm));
+      render();
+    }
+    svg.addEventListener('pointerdown', function(e){
+      var pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+      var m = svg.getScreenCTM(); if(!m) return;
+      var p = pt.matrixTransform(m.inverse());
+      if(p.y < 185) return;
+      dragging = true;
+      try{ svg.setPointerCapture(e.pointerId); }catch(err){}
+      pick(e);
+    });
+    svg.addEventListener('pointermove', function(e){ if(dragging) pick(e); });
+    ['pointerup', 'pointercancel'].forEach(function(ev){ svg.addEventListener(ev, function(){ dragging = false; }); });
+
+    setupFullscreen(document.getElementById('d-card'), document.getElementById('d-fs-btn'), document.getElementById('d-fs-label'), document.getElementById('d-fs-icon'), function(){ sz.update(); render(); });
+    var tabBtn = document.getElementById('top-tab-dvojsterbina');
+    if(tabBtn) tabBtn.addEventListener('click', function(){ setTimeout(function(){ sz.update(); render(); }, 0); });
+    sz.update();
+    render();
+  })();
+
+  // ================= APLET 2: OPTICKÁ MŘÍŽKA =================
+  (function(){
+    var svg = document.getElementById('g-svg');
+    var W = 960, H = 520;
+    var DEF = { lam:650, N:500, D:1.0, X:1 };
+    var RANGES = [0.5, 1, 2, 5];
+    var st = { lam:DEF.lam, N:DEF.N, D:DEF.D, X:DEF.X, white:false };
+    var sz = sizer(svg, W, H, function(){ render(); });
+
+    var slLam = document.getElementById('g-sl-lam'), slN = document.getElementById('g-sl-N'), slD = document.getElementById('g-sl-D');
+    var outLam = document.getElementById('g-out-lam'), outN = document.getElementById('g-out-N'), outD = document.getElementById('g-out-D');
+    var rangeBtns = document.querySelectorAll('#g-range-seg .chip.accented');
+    var lightBtns = document.querySelectorAll('#g-light-seg .chip');
+    var presetBtns = document.querySelectorAll('#g-preset-seg .chip');
+    var PRESETS = [500, 625, 1351];
+    var resetBtn = document.getElementById('g-reset-btn');
+
+    function pxm(x){ return PL + (x + st.X) / (2 * st.X) * PW; }     // x v metrech
+    function clampPx(p){ return Math.max(PL, Math.min(PL + PW, p)); }
+    function ang(k, lam, b){ var s = k * lam / b; return s < 1 - 1e-12 ? Math.asin(s) : -1; }
+    function xpos(k, lam, b){ var a = ang(k, lam, b); return a < 0 ? Infinity : st.D * Math.tan(a); }
+
+    function render(){
+      var X = st.X, K = sz.K, D = st.D;
+      var lam = st.lam * 1e-9, b = 1e-3 / st.N;
+      var fsz = function(n){ return Math.round(n * K * 10) / 10; };
+      var fsl = function(n){ return Math.round(n * Math.min(K, 2) * 10) / 10; };
+      var o = '', k, i, sg;
+      var col = rgbStr(lamRGB(st.lam));
+      var kmaxMono = Math.floor(b / lam + 1e-9);
+      var kmaxWhite = Math.floor(b / 400e-9 + 1e-9);
+      var by = 196, bh = 72, yBase = 450, yTop = 318;
+
+      o += '<defs><clipPath id="g-clip"><rect x="20" y="14" width="920" height="156"/></clipPath>' +
+           '<clipPath id="g-strip"><rect x="' + PL + '" y="' + by + '" width="' + PW + '" height="' + bh + '"/></clipPath>' +
+           '<radialGradient id="g-blob"><stop offset="0" stop-color="' + col + '" stop-opacity="1"/><stop offset="0.45" stop-color="' + col + '" stop-opacity="0.65"/><stop offset="1" stop-color="' + col + '" stop-opacity="0"/></radialGradient>' +
+           '<radialGradient id="g-blobw"><stop offset="0" stop-color="#fff" stop-opacity="1"/><stop offset="0.45" stop-color="#fff" stop-opacity="0.65"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>';
+      // spektra bílého světla: jeden přechod pro každý řád
+      var bands = [];
+      if(st.white){
+        for(k = 1; k <= kmaxWhite; k++){
+          var lamHi = Math.min(700e-9, b / k * (1 - 1e-6));
+          if(lamHi <= 400e-9) continue;
+          var xa = xpos(k, 400e-9, b), xb = xpos(k, lamHi, b);
+          var stops = '';
+          for(var w = 400; w <= 700; w += 5){
+            if(w * 1e-9 > lamHi) break;
+            var xw = xpos(k, w * 1e-9, b);
+            stops += '<stop offset="' + ((xw - xa) / Math.max(1e-9, (xb - xa))).toFixed(4) + '" stop-color="' + rgbStr(lamRGB(w)) + '"/>';
+          }
+          bands.push({ k:k, xa:xa, xb:xb, lamHi:lamHi });
+          o += '<linearGradient id="g-sp' + k + '" gradientUnits="userSpaceOnUse" x1="' + pxm(xa) + '" y1="0" x2="' + pxm(xb) + '" y2="0">' + stops + '</linearGradient>' +
+               '<linearGradient id="g-sn' + k + '" gradientUnits="userSpaceOnUse" x1="' + pxm(-xa) + '" y1="0" x2="' + pxm(-xb) + '" y2="0">' + stops + '</linearGradient>';
+        }
+      }
+      o += '</defs>';
+
+      // ---------- A: schéma ----------
+      var yc = 92, ky = 64 / X, xs = 120, xsc = xs + D * 240;
+      o += '<g font-family="Work Sans, sans-serif" font-size="' + fsl(13) + '" fill="var(--ink)">';
+      o += '<rect x="26" y="' + (yc - 12) + '" width="36" height="24" rx="3" fill="var(--ink)"/>';
+      o += '<line x1="62" y1="' + yc + '" x2="' + (xs - 4) + '" y2="' + yc + '" stroke="' + (st.white ? '#ccc' : col) + '" stroke-width="3"/>';
+      o += '<text x="44" y="' + (yc - 18) + '" text-anchor="middle" fill="var(--ink-soft)">laser</text>';
+      o += '<g clip-path="url(#g-clip)">';
+      function ray(kk, lamK, c, wdt, dash){
+        var xx = xpos(kk, lamK, b); if(!isFinite(xx) || Math.abs(xx * ky) > 110) return;
+        [1, -1].forEach(function(s){
+          if(kk === 0 && s === -1) return;
+          o += '<line x1="' + xs + '" y1="' + yc + '" x2="' + xsc + '" y2="' + (yc - s * xx * ky) + '" stroke="' + c + '" stroke-width="' + wdt + '"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+        });
+      }
+      if(!st.white){
+        for(k = 0; k <= kmaxMono; k++){ ray(k, lam, col, 1.8, ''); }
+      } else {
+        ray(0, 400e-9, '#999', 1.8, '');
+        bands.forEach(function(bd){
+          for(var w2 = 400; w2 <= 700; w2 += 25){
+            if(w2 * 1e-9 > bd.lamHi) break;
+            ray(bd.k, w2 * 1e-9, rgbStr(lamRGB(w2)), 1.4, '');
+          }
+        });
+      }
+      o += '</g>';
+      // mřížka (hřeben)
+      o += '<line x1="' + xs + '" y1="14" x2="' + xs + '" y2="170" stroke="var(--ink)" stroke-width="3" stroke-dasharray="2 3"/>';
+      o += '<text x="' + (xs - 10) + '" y="26" text-anchor="end" fill="var(--ink-soft)">mřížka</text>';
+      o += '<line x1="' + xsc + '" y1="14" x2="' + xsc + '" y2="170" stroke="var(--ink)" stroke-width="4"/>';
+      o += '<text x="' + (xsc + 8) + '" y="26" fill="var(--ink-soft)">stínítko</text>';
+      o += '<line x1="' + xs + '" y1="' + (yc + 66) + '" x2="' + xsc + '" y2="' + (yc + 66) + '" stroke="var(--ink-soft)" stroke-width="1.4"/>';
+      o += '<text x="' + ((xs + xsc) / 2) + '" y="' + (yc + 62) + '" text-anchor="middle" font-style="italic" font-weight="700">D = ' + cz(D, 1) + ' m</text>';
+      o += '</g>';
+
+      // ---------- B: stopy na stínítku ----------
+      o += '<rect x="' + PL + '" y="' + by + '" width="' + PW + '" height="' + bh + '" fill="#000"/>';
+      o += '<g clip-path="url(#g-strip)">';
+      o += '<ellipse cx="' + pxm(0) + '" cy="' + (by + bh / 2) + '" rx="16" ry="' + (bh / 2) + '" fill="url(#' + (st.white ? 'g-blobw' : 'g-blob') + ')"/>';
+      if(!st.white){
+        for(k = 1; k <= kmaxMono; k++){
+          var xk = xpos(k, lam, b);
+          [1, -1].forEach(function(s){ o += '<ellipse cx="' + pxm(s * xk) + '" cy="' + (by + bh / 2) + '" rx="16" ry="' + (bh / 2) + '" fill="url(#g-blob)"/>'; });
+        }
+      } else {
+        bands.forEach(function(bd){
+          [1, -1].forEach(function(s){
+            var c0 = clampPx(Math.min(pxm(s * bd.xa), pxm(s * bd.xb))), c1 = clampPx(Math.max(pxm(s * bd.xa), pxm(s * bd.xb)));
+            if(c1 - c0 < 0.5) return;
+            o += '<rect x="' + c0 + '" y="' + by + '" width="' + Math.max(5, c1 - c0) + '" height="' + bh + '" fill="url(#g-s' + (s > 0 ? 'p' : 'n') + bd.k + ')"/>';
+          });
+        });
+      }
+      o += '</g>';
+      o += '<rect x="' + PL + '" y="' + by + '" width="' + PW + '" height="' + bh + '" fill="none" stroke="var(--ink)" stroke-width="1.5"/>';
+      o += '<text x="' + PL + '" y="' + (by - 8) + '" font-family="Work Sans, sans-serif" font-size="' + fsl(13) + '" fill="var(--ink-soft)">stopy na stínítku</text>';
+
+      // ---------- C: poloha maxim ----------
+      var step = niceStep(X, [0.1, 0.2, 0.5, 1]);
+      o += '<g stroke="var(--line)" stroke-width="1">';
+      var t;
+      for(t = -Math.floor(X / step + 1e-9) * step; t <= X + 1e-9; t += step){ o += '<line x1="' + pxm(t) + '" y1="' + yTop + '" x2="' + pxm(t) + '" y2="' + yBase + '"/>'; }
+      o += '</g>';
+      o += '<line x1="' + PL + '" y1="' + yBase + '" x2="' + (PL + PW) + '" y2="' + yBase + '" stroke="var(--ink)" stroke-width="1.5"/>';
+      o += '<g font-family="Work Sans, sans-serif" font-size="' + fsz(13) + '" fill="var(--ink)">';
+      for(t = -Math.floor(X / step + 1e-9) * step; t <= X + 1e-9; t += step){
+        var lab = (Math.abs(t) < 1e-9 ? '0' : cz(Math.round(t * 100) / 100, step < 1 ? 1 : 0).replace('-', '−'));
+        o += '<line x1="' + pxm(t) + '" y1="' + yBase + '" x2="' + pxm(t) + '" y2="' + (yBase + 6) + '" stroke="var(--ink)" stroke-width="1.4"/>';
+        o += '<text x="' + pxm(t) + '" y="' + (yBase + 22 * Math.min(K, 1.6)) + '" text-anchor="middle">' + lab + '</text>';
+      }
+      o += '<text x="' + (PL + PW) + '" y="' + (yBase + 44 * Math.min(K, 1.6)) + '" text-anchor="end" fill="var(--ink-soft)">poloha na stínítku <tspan font-style="italic">x</tspan> (m)</text>';
+      function stem(kk, xx, c){
+        [1, -1].forEach(function(s){
+          if(kk === 0 && s === -1) return;
+          var xp = pxm(s * xx);
+          if(xp < PL - 1 || xp > PL + PW + 1) return;
+          o += '<line x1="' + xp + '" y1="' + yBase + '" x2="' + xp + '" y2="' + yTop + '" stroke="' + c + '" stroke-width="3.2"/>';
+          o += '<text x="' + xp + '" y="' + (yTop - 8) + '" text-anchor="middle" font-weight="700" fill="var(--ink)">' + (s * kk < 0 ? '−' : '') + kk + '</text>';
+        });
+      }
+      if(!st.white){
+        for(k = 0; k <= kmaxMono; k++){ stem(k, k === 0 ? 0 : xpos(k, lam, b), 'var(--accent)'); }
+      } else {
+        stem(0, 0, 'var(--ink-soft)');
+        bands.forEach(function(bd){
+          [1, -1].forEach(function(s){
+            var x0 = Math.min(pxm(s * bd.xa), pxm(s * bd.xb)), x1 = Math.max(pxm(s * bd.xa), pxm(s * bd.xb));
+            if(x1 < PL || x0 > PL + PW) return;
+            x0 = clampPx(x0); x1 = clampPx(x1);
+            o += '<rect x="' + x0 + '" y="' + (yBase - 90) + '" width="' + Math.max(4, x1 - x0) + '" height="90" fill="url(#g-s' + (s > 0 ? 'p' : 'n') + bd.k + ')"/>';
+            o += '<text x="' + ((x0 + x1) / 2) + '" y="' + (yBase - 98) + '" text-anchor="middle" font-weight="700" fill="var(--ink)">' + (s < 0 ? '−' : '') + bd.k + '</text>';
+          });
+        });
+      }
+      o += '</g>';
+      svg.innerHTML = o;
+      updateTexts(lam, b, kmaxMono, kmaxWhite, bands);
+    }
+
+    function updateTexts(lam, b, kmaxMono, kmaxWhite, bands){
+      var X = st.X;
+      outLam.innerHTML = '<i>λ</i> = ' + st.lam + ' nm';
+      outN.innerHTML = '<i>N</i> = ' + st.N + ' /mm';
+      outD.innerHTML = '<i>D</i> = ' + cz(st.D, 1) + ' m';
+      document.getElementById('g-row-lam').hidden = st.white;
+      var col = rgbStr(lamRGB(st.lam));
+      document.getElementById('g-legend').innerHTML = st.white ?
+        '<span><svg width="40" height="10"><defs><linearGradient id="g-lg"><stop offset="0" stop-color="#8a00ff"/><stop offset="0.3" stop-color="#00a0ff"/><stop offset="0.5" stop-color="#00ff40"/><stop offset="0.75" stop-color="#ffd000"/><stop offset="1" stop-color="#ff0000"/></linearGradient></defs><rect x="0" y="1" width="40" height="8" rx="2" fill="url(#g-lg)"/></svg>spektrum (fialová blíž středu, červená dál)</span>' :
+        '<span><svg width="26" height="12"><rect x="1" y="1" width="24" height="10" rx="2" fill="' + col + '"/></svg>barva světla pro vlnovou délku ' + st.lam + ' nm</span>';
+      var kmax = st.white ? kmaxWhite : kmaxMono;
+      document.getElementById('g-out-b').textContent = sig3(b * 1e6) + ' µm';
+      document.getElementById('g-out-kmax').textContent = kmax;
+      document.getElementById('g-out-cnt').textContent = (2 * kmax + 1);
+      var tbl = document.getElementById('g-table'), h = '', s, a, xx;
+      function xs_(x){ return (!isFinite(x) || x > X) ? 'mimo stínítko' : cz(x, 2) + ' m'; }
+      if(!st.white){
+        h += '<thead><tr><th><i>k</i></th><th class="mono">sin <i>α</i></th><th class="mono"><i>α</i></th><th class="mono"><i>x</i></th></tr></thead><tbody>';
+        for(var k = 0; k <= kmaxMono; k++){
+          s = k * lam / b; a = Math.asin(s) * 180 / Math.PI; xx = D_x(k, lam, b);
+          h += '<tr><td class="mono">' + k + '</td><td class="mono">' + cz(s, 3) + '</td><td class="mono">' + cz(a, 1) + '°</td><td class="mono">' + xs_(xx) + '</td></tr>';
+        }
+        s = (kmaxMono + 1) * lam / b;
+        h += '<tr><td class="mono">' + (kmaxMono + 1) + '</td><td class="mono">' + cz(s, 3) + '</td><td class="mono" colspan="2">neexistuje (sin <i>α</i> &gt; 1)</td></tr></tbody>';
+      } else {
+        h += '<thead><tr><th><i>k</i></th><th class="mono"><i>α</i> (fialová → červená)</th><th class="mono"><i>x</i></th></tr></thead><tbody>';
+        h += '<tr><td class="mono">0</td><td class="mono">0°</td><td class="mono">0,00 m (bílé)</td></tr>';
+        bands.forEach(function(bd){
+          var a1 = Math.asin(bd.k * 400e-9 / b) * 180 / Math.PI, a2 = Math.asin(Math.min(1, bd.k * bd.lamHi / b)) * 180 / Math.PI;
+          var x1 = D_x(bd.k, 400e-9, b), x2 = D_x(bd.k, bd.lamHi, b);
+          var xr = (!isFinite(x1) || x1 > X) ? 'mimo stínítko' : (x2 > X || !isFinite(x2)) ? cz(x1, 2) + '\u00a0m až za okraj' : cz(x1, 2) + '\u00a0m až ' + cz(x2, 2) + '\u00a0m';
+          h += '<tr><td class="mono">' + bd.k + '</td><td class="mono">' + cz(a1, 1) + '° až ' + cz(a2, 1) + '°' + (bd.lamHi < 700e-9 ? ' (zkráceno)' : '') + '</td><td class="mono">' + xr + '</td></tr>';
+        });
+        h += '</tbody>';
+      }
+      tbl.innerHTML = h;
+      var note = document.getElementById('g-note');
+      if(!st.white){
+        note.innerHTML = 'Největší řád: <i>k</i><sub>max</sub> = ⌊<i>b</i>/<i>λ</i>⌋ = ' + kmaxMono + ' (poměr <i>b</i>/<i>λ</i> = ' + cz(b / lam, 2) + '). Na každé straně od středu je ' + kmaxMono + (kmaxMono === 1 ? ' maximum' : kmaxMono >= 2 && kmaxMono <= 4 ? ' maxima' : ' maxim') + ', celkem ' + (2 * kmaxMono + 1) + ' (včetně nultého).' + overflowNote(lam, b, kmaxMono);
+      } else {
+        var ov = 0;
+        bands.forEach(function(bd){
+          var nxt = bd.k + 1;
+          if(!ov && nxt * 400e-9 < b * (1 - 1e-9) && nxt * 400e-9 < bd.k * bd.lamHi) ov = bd.k;
+        });
+        note.innerHTML = 'V bílém světle vznikne u nultého řádu bílá stopa a v každém dalším řádu spektrum. Ve 2. a vyšších řádech' + (ov ? ' se spektra sousedních řádů překrývají (od ' + ov + '. a ' + (ov + 1) + '. řádu).' : ' se spektra sousedních řádů u této mřížky nepřekrývají.');
+      }
+    }
+    function D_x(k, lamK, b){ return xpos(k, lamK, b); }
+    function overflowNote(lam, b, kmax){
+      var out = 0, k;
+      for(k = 1; k <= kmax; k++){ if(xpos(k, lam, b) > st.X) out++; }
+      return out ? ' Z toho ' + (out === 1 ? 'jeden řád leží' : out + ' řády leží') + ' mimo zobrazenou část stínítka (zvolte větší část).' : '';
+    }
+
+    slLam.addEventListener('input', function(){ st.lam = parseFloat(slLam.value); render(); });
+    slN.addEventListener('input', function(){ st.N = parseFloat(slN.value); render(); });
+    slD.addEventListener('input', function(){ st.D = parseFloat(slD.value); render(); });
+    Array.prototype.forEach.call(rangeBtns, function(btn, bi){ btn.addEventListener('click', function(){ st.X = RANGES[bi]; setChips(rangeBtns, bi); render(); }); });
+    Array.prototype.forEach.call(lightBtns, function(btn, bi){ btn.addEventListener('click', function(){ st.white = bi === 1; setChips(lightBtns, bi); render(); }); });
+    Array.prototype.forEach.call(presetBtns, function(btn, bi){ btn.addEventListener('click', function(){ st.N = PRESETS[bi]; slN.value = st.N; render(); }); });
+    resetBtn.addEventListener('click', function(){
+      st.lam = DEF.lam; st.N = DEF.N; st.D = DEF.D; st.X = DEF.X; st.white = false;
+      slLam.value = DEF.lam; slN.value = DEF.N; slD.value = DEF.D;
+      setChips(rangeBtns, RANGES.indexOf(DEF.X)); setChips(lightBtns, 0);
+      render();
+    });
+
+    setupFullscreen(document.getElementById('g-card'), document.getElementById('g-fs-btn'), document.getElementById('g-fs-label'), document.getElementById('g-fs-icon'), function(){ sz.update(); render(); });
+    var tabBtn = document.getElementById('top-tab-mrizka');
+    if(tabBtn) tabBtn.addEventListener('click', function(){ setTimeout(function(){ sz.update(); render(); }, 0); });
+    sz.update();
+    render();
+  })();
+
+  // ---- vzorce (KaTeX) ----
+  if(window.renderMathInElement){
+    try{
+      renderMathInElement(document.getElementById('theory-section'), {
+        delimiters: [{left:'\\(', right:'\\)', display:false}, {left:'\\[', right:'\\]', display:true}]
+      });
+    }catch(e){}
+  }
+
+  // ---- sbalovací panely v teorii ----
+  try{ makePanelsCollapsible(document.getElementById('theory-section')); }catch(e){}
+})();
+</script>
+</body>
+</html>

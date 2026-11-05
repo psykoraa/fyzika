@@ -52,7 +52,8 @@
     'zorny-uhel-a-lupa.html': 'oktava',
     'mikroskop.html': 'oktava',
     'dalekohled.html': 'oktava',
-    'difrakce-svetla.html': 'oktava'
+    'difrakce-svetla.html': 'oktava',
+    'interference-svetla.html': 'oktava'
   };
 
   // auth.js vždy žije na <kořen webu>/spolecne/auth.js — z jeho vlastní (absolutní)
