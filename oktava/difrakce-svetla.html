@@ -979,7 +979,7 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
     o += '<text x="' + (xsc + 24) + '" y="' + (yc - 52) + '" fill="var(--ink-soft)" font-size="' + (Math.round(11 * Math.min(K, 2) * 10) / 10) + '">±' + sig2(XS) + '\u00a0cm</text>';
     // vzdálenost D
     o += '<g stroke="var(--ink-soft)" stroke-width="1.4"><line x1="' + xs + '" y1="' + (yc + 66) + '" x2="' + xsc + '" y2="' + (yc + 66) + '" stroke-dasharray="none"/></g>';
-    o += '<text x="' + ((xs + xsc) / 2) + '" y="' + (yc + 62) + '" text-anchor="middle" font-style="italic" font-weight="700">D = ' + cz(DD, 1) + ' m</text>';
+    o += '<text x="' + ((xs + xsc) / 2) + '" y="' + (yc + 62) + '" text-anchor="middle" font-weight="700"><tspan font-style="italic">D</tspan> = ' + cz(DD, 1) + '\u00a0m</text>';
     // šířka hlavního maxima L
     if(x1 > 0 && H1raw >= gapPx / 2 + 1 && H1raw <= 64){
       var yl = H1;
@@ -1004,14 +1004,12 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
     [0.5, 1].forEach(function(v){ o += '<line x1="' + PL + '" y1="' + gy(v) + '" x2="' + (PL + PW) + '" y2="' + gy(v) + '"/>'; });
     o += '</g>';
     // minima: svislé tečkované čáry přes obrazec i graf
-    var mk = '', mlab = '', cnt = 0;
-    for(var m = 1; m <= 60; m++){
-      var xm1 = minPos(m);
-      if(xm1 < 0 || xm1 * 100 > X) break;
-      cnt++;
-    }
-    var shown = Math.min(cnt, 60);
-    if(shown > 0 && PW / (2 * shown) >= 5){
+    var mk = '', cnt = 0;
+    // počet minim na jedné straně: největší m, pro které minimum leží v zobrazené části stínítka
+    var sMax = Math.sin(Math.atan((X / 100) / DD));
+    cnt = Math.floor(sMax * (dU * 1e-6) / (lamN * 1e-9) + 1e-9);
+    var shown = cnt;
+    if(shown > 0 && PW / (2 * shown) >= 1){
       for(var m2 = 1; m2 <= shown; m2++){
         var xmm = minPos(m2) * 100;
         [-1, 1].forEach(function(sg){
@@ -1086,9 +1084,9 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
       note.innerHTML = x1 * 100 > X ? 'První minimum leží mimo zobrazenou část stínítka. Zvolte větší zobrazenou část.' :
         'Maxima vlevo a vpravo od středu jsou symetrická. V zobrazené části stínítka je vidět ' + (2 * cnt) + (cnt === 1 ? ' minima.' : ' minim.');
       if(window.katex){
-        var tex = '\\sin\\theta_1=\\frac{\\lambda}{d}=\\frac{' + lamN + '\\ \\mathrm{nm}}{' + dU + '\\ \\mu\\mathrm{m}}=' + sig3(s1).replace(',', '{,}') + '\\quad\\Rightarrow\\quad\\theta_1\\doteq' + sig3(th * 180 / Math.PI).replace(',', '{,}') + '^\\circ' +
+        var tex = '\\sin\\theta_1=\\frac{\\lambda}{d}=\\frac{' + lamN + '\\ \\mathrm{nm}}{' + dU + '\\ \\text{\u00b5m}}=' + sig3(s1).replace(',', '{,}') + '\\quad\\Rightarrow\\quad\\theta_1\\doteq' + sig3(th * 180 / Math.PI).replace(',', '{,}') + '^\\circ' +
                   '\\\\[4pt] L=2D\\tan\\theta_1\\approx\\frac{2D\\lambda}{d}=' + fmtLenTex(L);
-        try{ document.getElementById('calc-math').innerHTML = katex.renderToString(tex, { displayMode:true, throwOnError:false }); }catch(e){}
+        try{ document.getElementById('calc-math').innerHTML = katex.renderToString(tex, { displayMode:true, throwOnError:false, strict:false }); }catch(e){}
       }
     }
   }
