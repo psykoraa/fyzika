@@ -134,6 +134,9 @@
   padding:10px 12px 8px;
 }
 .theory-fig svg{ display:block; width:100%; max-width:560px; height:auto; margin:0 auto; }
+.k-pair{ display:flex; flex-wrap:wrap; gap:6px 14px; align-items:flex-start; }
+.k-pair svg{ flex:1 1 300px; width:auto; min-width:0; max-width:none; margin:0; }
+#k-svg-a:focus-visible{ outline:2px solid var(--focus); outline-offset:3px; border-radius:6px; }
 .theory-fig figcaption{
   font-size:0.8rem;
   color:var(--ink-soft);
@@ -434,11 +437,9 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
       <p>Koherence se dá vyrobit tak, že světlo z <b>jediného zdroje rozdělíme na dva svazky</b>, které pak urazí různou dráhu a znovu se setkají. Každé klubko se tak setká samo se sebou a fázový rozdíl je stálý. Dráhový rozdíl ale nesmí být větší než délka klubka, jinak by se potkaly dvě různá klubka s náhodnou fází. U žárovky je tento rozdíl velmi malý, laser vysílá mnohem delší klubka (u běžných laserů řádově desítky centimetrů), a proto se s ním interferenční jevy pozorují mnohem snáze.</p>
 
       <figure class="theory-fig" id="k-fig">
-        <svg id="k-svg" viewBox="0 0 560 384" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Zdroj světla vysílá dva svazky. Jeden jde přímo do místa setkání, druhý se odráží od posuvného zrcadla a urazí delší dráhu o dráhový rozdíl delta l. Pod schématem jsou klubka vln obou svazků u místa setkání: druhé klubko je zpožděné o delta l. Pokud je delta l menší než délka klubka L, klubka se překrývají a interferují, pokud je větší, nepotkají se."></svg>
-        <div class="mode-row slider-row">
-          <label class="mode-row-label" for="k-sl">Poloha zrcadla</label>
-          <input type="range" id="k-sl" min="0" max="100" step="1" value="35">
-          <span class="slider-val" id="k-out" aria-live="polite"></span>
+        <div class="k-pair">
+          <svg id="k-svg-a" viewBox="0 0 380 270" xmlns="http://www.w3.org/2000/svg" tabindex="0" role="slider" aria-orientation="vertical" aria-valuemin="0" aria-valuemax="100" aria-valuenow="35" aria-label="Poloha zrcadla. Posouvá se tažením nebo šipkami nahoru a dolů. Zdroj světla vysílá dva svazky: jeden přímo do místa setkání, druhý přes zrcadlo, takže urazí delší dráhu o dráhový rozdíl delta l."></svg>
+          <svg id="k-svg-b" viewBox="0 0 380 270" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Klubka vln obou svazků u místa setkání. Klubko druhého svazku je zpožděné o dráhový rozdíl delta l. Pokud je delta l menší než délka klubka L, klubka se překrývají a interferují, pokud je větší, nepotkají se."></svg>
         </div>
         <div class="mode-row">
           <span class="mode-row-label">Zdroj</span>
@@ -447,7 +448,7 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
             <button class="chip accented" type="button" aria-pressed="false">laser (dlouhá klubka)</button>
           </div>
         </div>
-        <figcaption>Světlo z jednoho zdroje se dělí na dva svazky: jeden jde přímo (modrozelený), druhý se odráží od zrcadla a urazí delší dráhu o Δ<i>l</i> (fialový). Posuňte zrcadlo posuvníkem nebo tažením a sledujte klubka obou svazků u místa setkání (snímek v jednom okamžiku, svazky se šíří doprava). Fialové klubko je o Δ<i>l</i> zpožděné. Dokud je Δ<i>l</i> menší než délka klubka <i>L</i>, klubka se překrývají (podbarvená část), mají stálý fázový rozdíl a interferují. Pro Δ<i>l</i> větší než <i>L</i> se každé klubko potkává s jiným a interference zmizí. Zkuste přepnout na laser: jeho klubka jsou mnohem delší. Obrázek není v měřítku (klubko má ve skutečnosti mnohem víc kmitů, u žárovky desítky, u laseru statisíce).</figcaption>
+        <figcaption>Světlo z jednoho zdroje se dělí na dva svazky: jeden jde přímo (modrozelený), druhý se odráží od zrcadla a urazí delší dráhu o Δ<i>l</i> (fialový). <b>Posouvejte zrcadlo tažením</b> (nebo šipkami nahoru a dolů po kliknutí do schématu) a sledujte klubka obou svazků u místa setkání (snímek v jednom okamžiku, svazky se šíří doprava). Fialové klubko je o Δ<i>l</i> zpožděné. Dokud je Δ<i>l</i> menší než délka klubka <i>L</i>, klubka se překrývají (podbarvená část), mají stálý fázový rozdíl a interferují. Pro Δ<i>l</i> větší než <i>L</i> se každé klubko potkává s jiným a interference zmizí. Zkuste přepnout na laser: jeho klubka jsou mnohem delší. Obrázek není v měřítku (klubko má ve skutečnosti mnohem víc kmitů, u žárovky desítky, u laseru statisíce).</figcaption>
       </figure>
     </div>
 
@@ -1654,13 +1655,12 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
 
   // ================= OBRÁZEK KE KOHERENCI: ZRCADLO A KLUBKA =================
   (function(){
-    var svg = document.getElementById('k-svg');
-    if(!svg) return;
-    var sl = document.getElementById('k-sl'), outv = document.getElementById('k-out');
+    var svgA = document.getElementById('k-svg-a'), svgB = document.getElementById('k-svg-b');
+    if(!svgA || !svgB) return;
     var btns = document.querySelectorAll('#k-src .chip');
     var SRC = [{ L:40 }, { L:130 }];
     var st = { src:0, s:35 };
-    var ZX = 46, PX = 326, Y0 = 120, HMIN = 14, HMAX = 104, PER = 10, EX = 230;   // EX: začátek klubka přímého svazku
+    var ZX = 40, PX = 320, Y0 = 130, HMIN = 14, HMAX = 104, PER = 10, EX = 170;   // EX: začátek klubka přímého svazku
     function hOf(s){ return HMIN + (HMAX - HMIN) * s / 100; }
     function dlOf(h){ var half = (PX - ZX) / 2; return 2 * Math.sqrt(half * half + h * h) - (PX - ZX); }
     function wave(x0, y, len){
@@ -1673,71 +1673,81 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
              '<line x1="' + x1 + '" y1="' + (y - 5) + '" x2="' + x1 + '" y2="' + (y + 5) + '"/><line x1="' + x2 + '" y1="' + (y - 5) + '" x2="' + x2 + '" y2="' + (y + 5) + '"/></g>';
     }
     function render(){
-      var L = SRC[st.src].L, h = hOf(st.s), dl = dlOf(h), ym = Y0 - h, mx = (ZX + PX) / 2;
-      var y1 = 236, y2 = 292, x2s = EX - dl, o = '', i;
-      o += '<defs><marker id="k-arr1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--focus)"/></marker>' +
-           '<marker id="k-arr2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/></marker></defs>';
-      o += '<g font-family="Work Sans, sans-serif" font-size="12.5" fill="var(--ink)">';
-      // ---------- schéma: zdroj, dva svazky, zrcadlo, místo setkání ----------
-      o += '<line x1="' + ZX + '" y1="' + Y0 + '" x2="' + (PX - 4) + '" y2="' + Y0 + '" stroke="var(--focus)" stroke-width="2.2" marker-end="url(#k-arr1)"/>';
-      o += '<polyline points="' + ZX + ',' + Y0 + ' ' + mx + ',' + ym + ' ' + (PX - 4) + ',' + (Y0 - 0.8) + '" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#k-arr2)"/>';
-      o += '<line x1="' + (mx - 42) + '" y1="' + ym + '" x2="' + (mx + 42) + '" y2="' + ym + '" stroke="var(--ink)" stroke-width="6" stroke-linecap="round"/>';
-      for(i = -3; i <= 3; i++){ o += '<line x1="' + (mx + i * 12) + '" y1="' + (ym - 3) + '" x2="' + (mx + i * 12 - 5) + '" y2="' + (ym - 10) + '" stroke="var(--ink)" stroke-width="1.6"/>'; }
-      o += '<rect x="' + (mx - 56) + '" y="' + (ym - 16) + '" width="112" height="28" fill="transparent" data-grab="1" style="cursor:ns-resize;touch-action:none"/>';
-      o += '<g stroke="var(--ink-soft)" stroke-width="1.4" fill="var(--ink-soft)"><line x1="' + (mx + 62) + '" y1="' + (ym - 9) + '" x2="' + (mx + 62) + '" y2="' + (ym + 9) + '"/>' +
+      var L = SRC[st.src].L, h = hOf(st.s), dl = dlOf(h), ym = Y0 - h, mx = (ZX + PX) / 2, i;
+      var FONT = '<g font-family="Work Sans, sans-serif" font-size="12.5" fill="var(--ink)">';
+      var dlTxt = 'Δ<tspan font-style="italic">l</tspan> = ' + cz(dl / L, 2) + ' <tspan font-style="italic">L</tspan>';
+      // ---------- A: schéma ----------
+      var a = '<defs><marker id="k-arr1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--focus)"/></marker>' +
+              '<marker id="k-arr2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/></marker></defs>' + FONT;
+      a += '<line x1="' + ZX + '" y1="' + Y0 + '" x2="' + (PX - 4) + '" y2="' + Y0 + '" stroke="var(--focus)" stroke-width="2.2" marker-end="url(#k-arr1)"/>';
+      a += '<polyline points="' + ZX + ',' + Y0 + ' ' + mx + ',' + ym + ' ' + (PX - 4) + ',' + (Y0 - 0.8) + '" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#k-arr2)"/>';
+      a += '<line x1="' + (mx - 42) + '" y1="' + ym + '" x2="' + (mx + 42) + '" y2="' + ym + '" stroke="var(--ink)" stroke-width="6" stroke-linecap="round"/>';
+      for(i = -3; i <= 3; i++){ a += '<line x1="' + (mx + i * 12) + '" y1="' + (ym - 3) + '" x2="' + (mx + i * 12 - 5) + '" y2="' + (ym - 10) + '" stroke="var(--ink)" stroke-width="1.6"/>'; }
+      a += '<g stroke="var(--ink-soft)" stroke-width="1.4" fill="var(--ink-soft)"><line x1="' + (mx + 62) + '" y1="' + (ym - 9) + '" x2="' + (mx + 62) + '" y2="' + (ym + 9) + '"/>' +
            '<path d="M' + (mx + 58) + ',' + (ym - 5) + ' L' + (mx + 62) + ',' + (ym - 11) + ' L' + (mx + 66) + ',' + (ym - 5) + ' z"/><path d="M' + (mx + 58) + ',' + (ym + 5) + ' L' + (mx + 62) + ',' + (ym + 11) + ' L' + (mx + 66) + ',' + (ym + 5) + ' z"/></g>';
-      o += '<text x="' + (mx - 52) + '" y="' + (ym + 4) + '" text-anchor="end" fill="var(--ink-soft)">zrcadlo</text>';
-      o += '<circle cx="' + ZX + '" cy="' + Y0 + '" r="8" fill="var(--surface)" stroke="var(--ink)" stroke-width="2"/><circle cx="' + ZX + '" cy="' + Y0 + '" r="3" fill="var(--ink)"/>';
-      o += '<text x="' + ZX + '" y="' + (Y0 + 26) + '" text-anchor="middle" fill="var(--ink-soft)">zdroj</text>';
-      o += '<line x1="' + PX + '" y1="' + (Y0 - 34) + '" x2="' + PX + '" y2="' + (Y0 + 34) + '" stroke="var(--ink)" stroke-width="4"/>';
-      o += '<text x="' + PX + '" y="' + (Y0 + 50) + '" text-anchor="middle" fill="var(--ink-soft)">místo setkání</text>';
-      // legenda a hodnota
-      o += '<line x1="372" y1="60" x2="398" y2="60" stroke="var(--focus)" stroke-width="2.4"/><text x="406" y="64">svazek 1: přímo</text>';
-      o += '<line x1="372" y1="84" x2="398" y2="84" stroke="var(--accent)" stroke-width="2.4"/><text x="406" y="88">svazek 2: přes zrcadlo</text>';
-      o += '<text x="372" y="124" font-weight="700">Δ<tspan font-style="italic">l</tspan> = ' + cz(dl / L, 2) + ' <tspan font-style="italic">L</tspan></text>';
-      // ---------- klubka u místa setkání ----------
-      o += '<line x1="20" y1="176" x2="540" y2="176" stroke="var(--line)"/>';
-      o += '<text x="20" y="196" fill="var(--ink-soft)">klubka vln u místa setkání</text>';
-      o += '<text x="540" y="196" text-anchor="end" fill="var(--ink-soft)">šíření →</text>';
-      if(dl < L){ o += '<rect x="' + EX + '" y="' + (y1 - 24) + '" width="' + (L - dl) + '" height="' + (y2 - y1 + 48) + '" rx="4" fill="var(--accent)" fill-opacity="0.13"/>'; }
-      o += '<line x1="20" y1="' + y1 + '" x2="540" y2="' + y1 + '" stroke="var(--line)"/><line x1="20" y1="' + y2 + '" x2="540" y2="' + y2 + '" stroke="var(--line)"/>';
-      o += '<path d="' + wave(EX, y1, L) + '" fill="none" stroke="var(--focus)" stroke-width="2" stroke-linejoin="round"/>';
-      o += '<path d="' + wave(x2s, y2, L) + '" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/>';
-      o += '<text x="20" y="' + (y1 - 20) + '" fill="var(--focus)" font-weight="700">svazek 1</text><text x="20" y="' + (y2 - 20) + '" fill="var(--accent)" font-weight="700">svazek 2</text>';
-      o += bracket(EX, EX + L, 210);
-      o += '<text x="' + (EX + L / 2) + '" y="206" text-anchor="middle" font-style="italic" font-weight="700">L</text>';
-      o += '<line x1="' + EX + '" y1="' + (y1 + 22) + '" x2="' + EX + '" y2="' + (y2 + 34) + '" stroke="var(--ink-soft)" stroke-width="1" stroke-dasharray="3 3"/>';
-      o += '<line x1="' + x2s + '" y1="' + (y2 + 22) + '" x2="' + x2s + '" y2="' + (y2 + 34) + '" stroke="var(--ink-soft)" stroke-width="1" stroke-dasharray="3 3"/>';
-      o += bracket(x2s, EX, y2 + 34);
-      o += '<text x="' + (dl > 34 ? (x2s + EX) / 2 : EX + 10) + '" y="' + (y2 + 52) + '" text-anchor="' + (dl > 34 ? 'middle' : 'start') + '" font-weight="700">Δ<tspan font-style="italic">l</tspan></text>';
-      o += '<text x="280" y="' + (y2 + 82) + '" text-anchor="middle" font-weight="700" fill="' + (dl < L ? 'var(--success)' : 'var(--danger)') + '">' +
-           (dl < L ? 'Δl &lt; L: klubka se překrývají, interference je možná' : 'Δl &gt; L: klubka se nepotkají, interference není').replace('Δl', 'Δ<tspan font-style="italic">l</tspan>').replace(/ L:/, ' <tspan font-style="italic">L</tspan>:') + '</text>';
-      o += '</g>';
-      svg.innerHTML = o;
-      outv.innerHTML = 'Δ<i>l</i> = ' + cz(dl / L, 2) + ' <i>L</i>';
+      a += '<text x="' + (mx - 52) + '" y="' + (ym + 4) + '" text-anchor="end" fill="var(--ink-soft)">zrcadlo (táhněte)</text>';
+      a += '<rect x="' + (mx - 56) + '" y="' + (ym - 18) + '" width="130" height="32" fill="transparent" data-grab="1" style="cursor:ns-resize;touch-action:none"/>';
+      a += '<circle cx="' + ZX + '" cy="' + Y0 + '" r="8" fill="var(--surface)" stroke="var(--ink)" stroke-width="2"/><circle cx="' + ZX + '" cy="' + Y0 + '" r="3" fill="var(--ink)"/>';
+      a += '<text x="' + ZX + '" y="' + (Y0 + 26) + '" text-anchor="middle" fill="var(--ink-soft)">zdroj</text>';
+      a += '<line x1="' + PX + '" y1="' + (Y0 - 34) + '" x2="' + PX + '" y2="' + (Y0 + 34) + '" stroke="var(--ink)" stroke-width="4"/>';
+      a += '<text x="' + PX + '" y="' + (Y0 + 50) + '" text-anchor="middle" fill="var(--ink-soft)">místo setkání</text>';
+      a += '<line x1="20" y1="214" x2="44" y2="214" stroke="var(--focus)" stroke-width="2.4"/><text x="50" y="218">svazek 1: přímo</text>';
+      a += '<line x1="20" y1="236" x2="44" y2="236" stroke="var(--accent)" stroke-width="2.4"/><text x="50" y="240">svazek 2: přes zrcadlo</text>';
+      a += '<text x="360" y="232" text-anchor="end" font-weight="700" font-size="15">' + dlTxt + '</text></g>';
+      svgA.innerHTML = a;
+      svgA.setAttribute('aria-valuenow', String(Math.round(st.s)));
+      svgA.setAttribute('aria-valuetext', 'Δl = ' + cz(dl / L, 2) + ' L');
+
+      // ---------- B: klubka u místa setkání ----------
+      var y1 = 92, y2 = 152, x2s = EX - dl;
+      var b = FONT;
+      b += '<text x="10" y="18" fill="var(--ink-soft)">klubka vln u místa setkání</text><text x="370" y="18" text-anchor="end" fill="var(--ink-soft)">šíření →</text>';
+      if(dl < L){ b += '<rect x="' + EX + '" y="' + (y1 - 26) + '" width="' + (L - dl) + '" height="' + (y2 - y1 + 52) + '" rx="4" fill="var(--accent)" fill-opacity="0.13"/>'; }
+      b += '<line x1="10" y1="' + y1 + '" x2="370" y2="' + y1 + '" stroke="var(--line)"/><line x1="10" y1="' + y2 + '" x2="370" y2="' + y2 + '" stroke="var(--line)"/>';
+      b += '<path d="' + wave(EX, y1, L) + '" fill="none" stroke="var(--focus)" stroke-width="2" stroke-linejoin="round"/>';
+      b += '<path d="' + wave(x2s, y2, L) + '" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/>';
+      b += '<text x="10" y="' + (y1 - 22) + '" fill="var(--focus)" font-weight="700">svazek 1</text><text x="10" y="' + (y2 - 22) + '" fill="var(--accent)" font-weight="700">svazek 2</text>';
+      b += bracket(EX, EX + L, 62);
+      b += '<text x="' + (EX + L / 2) + '" y="56" text-anchor="middle" font-style="italic" font-weight="700">L</text>';
+      b += '<line x1="' + EX + '" y1="' + (y1 + 22) + '" x2="' + EX + '" y2="' + (y2 + 38) + '" stroke="var(--ink-soft)" stroke-width="1" stroke-dasharray="3 3"/>';
+      b += '<line x1="' + x2s + '" y1="' + (y2 + 22) + '" x2="' + x2s + '" y2="' + (y2 + 38) + '" stroke="var(--ink-soft)" stroke-width="1" stroke-dasharray="3 3"/>';
+      b += bracket(x2s, EX, y2 + 38);
+      b += '<text x="' + (dl > 34 ? (x2s + EX) / 2 : EX + 10) + '" y="' + (y2 + 58) + '" text-anchor="' + (dl > 34 ? 'middle' : 'start') + '" font-weight="700">Δ<tspan font-style="italic">l</tspan></text>';
+      b += '<text x="190" y="248" text-anchor="middle" font-weight="700" fill="' + (dl < L ? 'var(--success)' : 'var(--danger)') + '">' +
+           (dl < L ? 'Δ<tspan font-style="italic">l</tspan> &lt; <tspan font-style="italic">L</tspan>: klubka se překrývají, interference je možná' : 'Δ<tspan font-style="italic">l</tspan> &gt; <tspan font-style="italic">L</tspan>: klubka se nepotkají, interference není') + '</text></g>';
+      svgB.innerHTML = b;
     }
-    sl.addEventListener('input', function(){ st.s = parseFloat(sl.value); render(); });
     Array.prototype.forEach.call(btns, function(btn, bi){
       btn.addEventListener('click', function(){ st.src = bi; setChips(btns, bi); render(); });
     });
-    // tažení zrcadla v obrázku
+    // tažení zrcadla ve schématu (a šipky z klávesnice)
     var dragging = false;
     function setFrom(e){
-      var pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
-      var m = svg.getScreenCTM(); if(!m) return;
-      var y = pt.matrixTransform(m.inverse()).y, h = Y0 - y;
-      st.s = Math.max(0, Math.min(100, (h - HMIN) / (HMAX - HMIN) * 100));
-      sl.value = Math.round(st.s);
+      var pt = svgA.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+      var m = svgA.getScreenCTM(); if(!m) return;
+      var y = pt.matrixTransform(m.inverse()).y;
+      st.s = Math.max(0, Math.min(100, (Y0 - y - HMIN) / (HMAX - HMIN) * 100));
       render();
     }
-    svg.addEventListener('pointerdown', function(e){
+    svgA.addEventListener('pointerdown', function(e){
       if(!e.target.getAttribute || e.target.getAttribute('data-grab') !== '1') return;
       dragging = true;
-      try{ svg.setPointerCapture(e.pointerId); }catch(err){}
+      try{ svgA.setPointerCapture(e.pointerId); }catch(err){}
       setFrom(e);
     });
-    svg.addEventListener('pointermove', function(e){ if(dragging) setFrom(e); });
-    ['pointerup', 'pointercancel'].forEach(function(ev){ svg.addEventListener(ev, function(){ dragging = false; }); });
+    svgA.addEventListener('pointermove', function(e){ if(dragging) setFrom(e); });
+    ['pointerup', 'pointercancel'].forEach(function(ev){ svgA.addEventListener(ev, function(){ dragging = false; }); });
+    svgA.addEventListener('keydown', function(e){
+      var k = e.key, d = 0;
+      if(k === 'ArrowUp' || k === 'ArrowRight') d = 2;
+      else if(k === 'ArrowDown' || k === 'ArrowLeft') d = -2;
+      else if(k === 'PageUp') d = 10;
+      else if(k === 'PageDown') d = -10;
+      else if(k === 'Home'){ st.s = 0; render(); e.preventDefault(); return; }
+      else if(k === 'End'){ st.s = 100; render(); e.preventDefault(); return; }
+      if(!d) return;
+      st.s = Math.max(0, Math.min(100, st.s + d)); render(); e.preventDefault();
+    });
     render();
   })();
 
