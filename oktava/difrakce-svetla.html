@@ -751,7 +751,7 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
           <svg class="optics" id="optics-svg" viewBox="0 0 960 640" role="img" aria-label="Ohyb světla na jedné štěrbině: nahoře schéma s laserem, štěrbinou a stínítkem, uprostřed difrakční obrazec na stínítku a dole graf intenzity světla v závislosti na poloze na stínítku."></svg>
           <div class="legend" id="legend" aria-hidden="true"></div>
         </div>
-        <p class="hint">Schéma nahoře je nakreslené svisle zvětšeně a není v měřítku: štěrbina je zvětšená (její šířka v obrázku odpovídá posuvníku) a svazek světla je vždy ohraničen prvními minimy. Barevný pásek u stínítka ukazuje obrazec shora v oblasti ±1,6 <i>x</i><sub>1</sub>, takže se jeho měřítko mění s nastavením. Obrazec a graf pod schématem mají měřítko dané volbou zobrazené části stínítka. Pokud je jas zvýrazněný, je obrazec zobrazen jasněji než ve skutečnosti, aby byla vidět slabá vedlejší maxima; graf ukazuje skutečnou intenzitu. Svislé tečkované čáry označují minima intenzity. Model počítá s ohybem na štěrbině nekonečné délky v rovnoběžném svazku (Fraunhoferův ohyb).</p>
+        <p class="hint">Schéma nahoře je nakreslené svisle zvětšeně a není v měřítku: štěrbina je zvětšená (její šířka v obrázku odpovídá posuvníku) a svazek světla je vždy ohraničen prvními minimy. Barevný pásek u stínítka ukazuje obrazec shora; rozsah, který zobrazuje (je u něj napsaný), se mění po skocích tak, aby svazek vždy ohraničoval první minima. Mezi skoky se obrazec s nastavením spojitě mění. Obrazec a graf pod schématem mají měřítko dané volbou zobrazené části stínítka. Pokud je jas zvýrazněný, je obrazec zobrazen jasněji než ve skutečnosti, aby byla vidět slabá vedlejší maxima; graf ukazuje skutečnou intenzitu. Svislé tečkované čáry označují minima intenzity. Model počítá s ohybem na štěrbině nekonečné délky v rovnoběžném svazku (Fraunhoferův ohyb).</p>
       </div>
 
       <div class="applet-results">
@@ -923,8 +923,14 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
     var col = 'rgb(' + Math.round(rgb[0] * 255) + ',' + Math.round(rgb[1] * 255) + ',' + Math.round(rgb[2] * 255) + ')';
     var gamma = st.boost ? 0.4 : 1;
     var x1 = minPos(1);                // m
-    var H1 = 40;                       // v schématu leží první minimum vždy ±40 px od osy
-    var XS = x1 > 0 ? 64 / H1 * x1 * 100 : X;   // rozsah pásku shora (cm): ±1,6 · x1
+    // pásek shora: rozsah (cm) je nejbližší vyšší hodnota z řady ≥ 1,6 · x1, takže první minimum
+    // leží vždy mezi 16 a 40 px od osy a svazek je vždy širší než štěrbina; uvnitř jednoho rozsahu
+    // se obrazec s nastavením spojitě mění
+    var XSTEPS = [0.2, 0.5, 1, 2, 5, 10, 20, 50], XS = X, H1 = 40, si;
+    if(x1 > 0){
+      for(si = 0; si < XSTEPS.length; si++){ if(XSTEPS[si] >= 1.6 * x1 * 100 - 1e-9){ XS = XSTEPS[si]; break; } }
+      H1 = 64 * x1 * 100 / XS;
+    }
     var fs = function(n){ return Math.round(n * K * 10) / 10; };
     var o = '';
 
@@ -972,6 +978,7 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
     o += '<rect x="' + (xsc + 4) + '" y="' + (yc - 64) + '" width="14" height="128" fill="url(#side-grad)"/>';
     o += '<line x1="' + xsc + '" y1="14" x2="' + xsc + '" y2="170" stroke="var(--ink)" stroke-width="4"/>';
     o += '<text x="' + (xsc + 8) + '" y="12" fill="var(--ink-soft)">stínítko (shora)</text>';
+    o += '<text x="' + (xsc + 24) + '" y="' + (yc - 52) + '" fill="var(--ink-soft)" font-size="' + (Math.round(11 * Math.min(K, 2) * 10) / 10) + '">±' + cz(XS, XS < 1 ? 1 : 0) + '\u00a0cm</text>';
     // vzdálenost D
     o += '<g stroke="var(--ink-soft)" stroke-width="1.4"><line x1="' + xs + '" y1="' + (yc + 66) + '" x2="' + xsc + '" y2="' + (yc + 66) + '" stroke-dasharray="none"/></g>';
     o += '<text x="' + ((xs + xsc) / 2) + '" y="' + (yc + 62) + '" text-anchor="middle" font-style="italic" font-weight="700">D = ' + cz(DD, 1) + ' m</text>';
