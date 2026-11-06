@@ -1,7 +1,8 @@
 /*
  * Fyzika — sdílené pomocné funkce pro cvičné/herní stránky
  * (kalkulacka-fx82cex.html, prevody-jednotek.html, skladani-vektoru.html,
- *  zaokrouhlovani-vysledku.html, zpracovani-mereni.html).
+ *  zaokrouhlovani-vysledku.html, zpracovani-mereni.html) a pro rozcestníky
+ * (initTopicTracks: posouvání karet témat šipkami).
  *
  * Čistě pomocné funkce beze stavu — každá stránka si dál drží vlastní
  * `state`/`gameState` objekt a volá je jako dřív, jen definice je tu
@@ -154,4 +155,35 @@ function settleCurrentQuestion(){
     checkAnswer();
   }
   return 'settled';
+}
+
+// Rozcestníky (index.html, rozcestniky/*.html): v každém oddílu .chapter je řada
+// karet .topic-track posuvná do stran a šipky .car-btn (data-dir = -1 / 1).
+// Šipka posune řadu o 80 % její šířky; na krajích se zakáže a když se všechny
+// karty vejdou, schovají se obě. Styl je ve styl.css (blok „Rozcestníky“).
+// Volá se jednou po načtení stránky: initTopicTracks(document).
+function initTopicTracks(root){
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var chapters = (root || document).querySelectorAll(".chapter");
+  function setup(ch){
+    var track = ch.querySelector(".topic-track");
+    var prev = ch.querySelector('.car-btn[data-dir="-1"]');
+    var next = ch.querySelector('.car-btn[data-dir="1"]');
+    if(!track || !prev || !next) return;
+    function update(){
+      var more = track.scrollWidth > track.clientWidth + 2;
+      prev.parentNode.style.visibility = more ? "visible" : "hidden";
+      prev.disabled = track.scrollLeft <= 2;
+      next.disabled = track.scrollLeft >= track.scrollWidth - track.clientWidth - 2;
+    }
+    function go(dir){
+      track.scrollBy({ left: dir * track.clientWidth * 0.8, behavior: reduce ? "auto" : "smooth" });
+    }
+    prev.addEventListener("click", function(){ go(-1); });
+    next.addEventListener("click", function(){ go(1); });
+    track.addEventListener("scroll", update);
+    window.addEventListener("resize", update);
+    update();
+  }
+  for(var i = 0; i < chapters.length; i++) setup(chapters[i]);
 }
