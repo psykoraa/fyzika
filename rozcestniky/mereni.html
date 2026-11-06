@@ -27,45 +27,73 @@
   --focus:#1e6f66;
   --shadow: 0 1px 0 rgba(31,46,34,0.06);
 }
-.card{ padding:36px 30px; }
-.card p{
-  max-width:520px;
-  margin:0 auto;
-  font-size:0.95rem;
-  line-height:1.55;
-  color:var(--ink);
+/* Rozcestník: oddíl = kapitola, karty témat posuvné do stran.
+   Obrázky v kartách používají jen barvy palety. */
+.hero{ padding:40px 16px 20px; }
+.chapter{ margin-top:34px; }
+.chapter-head{
+  display:flex; align-items:flex-end; justify-content:space-between; gap:16px;
+  margin-bottom:14px; padding:0 2px;
 }
-.card + .card{ margin-top:20px; }
+.chapter-head h2{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:800; font-size:1.9rem; letter-spacing:0.02em;
+  text-transform:uppercase; color:var(--ink); line-height:1;
+}
+.chapter-head h2::after{
+  content:""; display:block; width:44px; height:4px; border-radius:2px;
+  background:var(--accent); margin-top:8px;
+}
+.chapter-head p{ margin:10px 0 0; font-size:0.92rem; line-height:1.5; color:var(--ink-soft); max-width:520px; }
+.car-nav{ display:flex; gap:8px; flex-shrink:0; }
+.car-btn{
+  width:44px; height:44px; border-radius:50%;
+  border:1px solid var(--line); background:var(--surface); color:var(--ink);
+  font-size:1.15rem; cursor:pointer; transition:background .12s, color .12s, opacity .12s;
+}
+.car-btn:hover:not(:disabled){ background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+.car-btn:disabled{ opacity:.35; cursor:default; }
+.car-btn:focus-visible, .track:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
 
-.actions{ margin-top:28px; display:flex; flex-wrap:wrap; gap:12px; justify-content:center; }
+.track{
+  display:flex; gap:16px; overflow-x:auto; padding:4px 20px 18px;
+  margin:0 -20px; scroll-snap-type:x mandatory; scroll-padding:0 20px;
+  -webkit-overflow-scrolling:touch; scrollbar-width:thin;
+  scrollbar-color:var(--accent) transparent;
+}
+.topic-card{
+  flex:0 0 250px; scroll-snap-align:start;
+  background:var(--surface); border:1px solid var(--line); border-radius:14px;
+  overflow:hidden; display:flex; flex-direction:column;
+  box-shadow:var(--shadow); transition:transform .15s ease, box-shadow .15s ease;
+}
+.topic-card:hover{ transform:translateY(-3px); box-shadow:0 8px 20px rgba(36,31,54,0.12); }
+.topic-img{ background:var(--surface-2); border-bottom:1px solid var(--line); }
+.topic-img svg{ display:block; width:100%; height:auto; }
+.topic-body{ padding:16px 16px 18px; display:flex; flex-direction:column; flex:1; text-align:left; }
+.topic-body h3{
+  font-family:'Big Shoulders Display', sans-serif; font-weight:700;
+  font-size:1.35rem; letter-spacing:0.02em; color:var(--ink);
+}
+.topic-body p{ margin:8px 0 16px; font-size:0.88rem; line-height:1.5; color:var(--ink-soft); flex:1; }
+.topic-body .btn{ align-self:flex-start; padding:10px 18px; min-height:44px; }
+
 a.btn{
-  font-family:'Work Sans', sans-serif;
-  font-weight:600;
-  font-size:0.95rem;
-  padding:12px 24px;
-  border-radius:8px;
-  border:1px solid var(--line);
-  background:var(--surface);
-  color:var(--ink);
-  cursor:pointer;
-  text-decoration:none;
-  display:inline-block;
-  transition:transform .05s ease, background .12s, filter .12s;
+  font-family:'Work Sans', sans-serif; font-weight:600; font-size:0.92rem;
+  border-radius:8px; border:1px solid var(--line); background:var(--surface);
+  color:var(--ink); text-decoration:none; display:inline-flex; align-items:center;
+  transition:transform .05s ease, filter .12s;
 }
 a.btn:active{ transform:translateY(1px); }
-a.btn.primary{
-  background:var(--accent);
-  border-color:var(--accent);
-  color:var(--accent-ink);
-}
+a.btn.primary{ background:var(--accent); border-color:var(--accent); color:var(--accent-ink); }
 a.btn.primary:hover{ filter:brightness(1.06); }
 a.btn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
-
 footer{ margin-top:40px; }
-
+@media (prefers-reduced-motion:reduce){ .topic-card{ transition:none; } }
 @media (max-width:520px){
-  .hero{ padding:44px 16px 32px; }
-  .card{ padding:28px 18px; }
+  .chapter-head{ flex-direction:column; align-items:flex-start; }
+  .car-nav{ display:none; }
+  .topic-card{ flex-basis:78vw; }
 }
 </style>
 </head>
@@ -80,48 +108,164 @@ footer{ margin-top:40px; }
     <h1>Měření</h1>
   </div>
 
-  <div class="card">
-    <div class="section-tag">Měření</div>
-    <h2>Pravidla</h2>
-    <p>Jak správně napsat protokol z laboratorní práce a jak při tom smíte využívat umělou inteligenci.</p>
-    <div class="actions">
-      <a class="btn primary" href="../mereni/pravidla-pro-vyuzivani-ai.html">Pravidla pro využívání AI →</a>
-      <a class="btn primary" href="../mereni/jak-psat-protokol.html">Jak psát protokol →</a>
+  <section class="chapter">
+    <div class="chapter-head">
+      <div>
+        <div class="section-tag">Měření</div>
+        <h2>Pravidla</h2>
+        <p>Jak správně napsat protokol z laboratorní práce a jak při tom smíte využívat umělou inteligenci.</p>
+      </div>
+      <div class="car-nav" aria-label="Posun karet">
+        <button type="button" class="car-btn" data-dir="-1" aria-label="Předchozí karty">←</button>
+        <button type="button" class="car-btn" data-dir="1" aria-label="Další karty">→</button>
+      </div>
     </div>
-  </div>
+    <div class="track" tabindex="0" role="region" aria-label="Pravidla – témata">
+      <article class="topic-card">
+        <div class="topic-img"><svg viewBox="0 0 320 180" role="img" aria-label="Pravidla pro využívání AI: dokument se seznamem povoleného a zakázaného." xmlns="http://www.w3.org/2000/svg"><path d="M120,14 L222,14 L236,28 L236,166 L120,166 Z" fill="var(--surface)" stroke="var(--ink)" stroke-width="1.8" stroke-linejoin="round"/><path d="M222,14 L222,28 L236,28" fill="none" stroke="var(--ink)" stroke-width="1.4" stroke-linejoin="round"/><rect x="132" y="28" width="60" height="8" rx="3" fill="var(--ink)"/><path d="M136,52 l5,5 l9,-10" fill="none" stroke="var(--success)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><rect x="158" y="49" width="62" height="5" rx="2.5" fill="var(--ink-soft)" opacity="0.55"/><rect x="158" y="57" width="40" height="5" rx="2.5" fill="var(--ink-soft)" opacity="0.35"/><path d="M136,78 l5,5 l9,-10" fill="none" stroke="var(--success)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><rect x="158" y="75" width="62" height="5" rx="2.5" fill="var(--ink-soft)" opacity="0.55"/><rect x="158" y="83" width="40" height="5" rx="2.5" fill="var(--ink-soft)" opacity="0.35"/><path d="M137,99 l10,10 M147,99 l-10,10" stroke="var(--danger)" stroke-width="2.6" stroke-linecap="round"/><rect x="158" y="101" width="62" height="5" rx="2.5" fill="var(--ink-soft)" opacity="0.55"/><rect x="158" y="109" width="40" height="5" rx="2.5" fill="var(--ink-soft)" opacity="0.35"/><path d="M136,130 l5,5 l9,-10" fill="none" stroke="var(--success)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><rect x="158" y="127" width="62" height="5" rx="2.5" fill="var(--ink-soft)" opacity="0.55"/><rect x="158" y="135" width="40" height="5" rx="2.5" fill="var(--ink-soft)" opacity="0.35"/><path d="M30,40 h66 a10,10 0 0 1 10,10 v32 a10,10 0 0 1 -10,10 h-40 l-12,12 v-12 h-14 a10,10 0 0 1 -10,-10 v-32 a10,10 0 0 1 10,-10 Z" fill="var(--accent)"/><text x="63" y="74" text-anchor="middle" font-size="22" font-weight="800" font-family="'Big Shoulders Display', sans-serif" fill="var(--accent-ink)">AI</text><circle cx="268" cy="66" r="24" fill="none" stroke="var(--accent)" stroke-width="2.4"/><path d="M256,66 l8,8 l16,-16" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="topic-body">
+          <h3>Pravidla pro využívání AI</h3>
+          <p>Co smíte, co nesmíte a co vždy děláte sami.</p>
+          <a class="btn primary" href="../mereni/pravidla-pro-vyuzivani-ai.html">Otevřít →</a>
+        </div>
+      </article>
+      <article class="topic-card">
+        <div class="topic-img"><svg viewBox="0 0 320 180" role="img" aria-label="Jak psát protokol: list s hlavičkou v tabulce a očíslovanými částmi, vedle tužka." xmlns="http://www.w3.org/2000/svg"><path d="M70,12 L206,12 L220,26 L220,170 L70,170 Z" fill="var(--surface)" stroke="var(--ink)" stroke-width="1.8" stroke-linejoin="round"/><path d="M206,12 L206,26 L220,26" fill="none" stroke="var(--ink)" stroke-width="1.4" stroke-linejoin="round"/><rect x="82" y="26" width="42" height="13" fill="var(--surface-2)" stroke="var(--ink-soft)" stroke-width="1"/><rect x="124" y="26" width="42" height="13" fill="var(--surface-2)" stroke="var(--ink-soft)" stroke-width="1"/><rect x="166" y="26" width="42" height="13" fill="var(--surface-2)" stroke="var(--ink-soft)" stroke-width="1"/><rect x="82" y="39" width="42" height="13" fill="none" stroke="var(--ink-soft)" stroke-width="1"/><rect x="124" y="39" width="42" height="13" fill="none" stroke="var(--ink-soft)" stroke-width="1"/><rect x="166" y="39" width="42" height="13" fill="none" stroke="var(--ink-soft)" stroke-width="1"/><text x="86" y="71" text-anchor="middle" font-size="10.5" font-weight="700" fill="var(--accent)">1.</text><rect x="98" y="64" width="60" height="6" rx="3" fill="var(--ink)" opacity="0.75"/><rect x="98" y="74" width="104" height="4" rx="2" fill="var(--ink-soft)" opacity="0.35"/><rect x="98" y="81" width="84" height="4" rx="2" fill="var(--ink-soft)" opacity="0.35"/><text x="86" y="97" text-anchor="middle" font-size="10.5" font-weight="700" fill="var(--accent)">2.</text><rect x="98" y="90" width="74" height="6" rx="3" fill="var(--ink)" opacity="0.75"/><rect x="98" y="100" width="104" height="4" rx="2" fill="var(--ink-soft)" opacity="0.35"/><rect x="98" y="107" width="84" height="4" rx="2" fill="var(--ink-soft)" opacity="0.35"/><text x="86" y="123" text-anchor="middle" font-size="10.5" font-weight="700" fill="var(--accent)">3.</text><rect x="98" y="116" width="60" height="6" rx="3" fill="var(--ink)" opacity="0.75"/><rect x="98" y="126" width="104" height="4" rx="2" fill="var(--ink-soft)" opacity="0.35"/><rect x="98" y="133" width="84" height="4" rx="2" fill="var(--ink-soft)" opacity="0.35"/><text x="86" y="149" text-anchor="middle" font-size="10.5" font-weight="700" fill="var(--accent)">4.</text><rect x="98" y="142" width="74" height="6" rx="3" fill="var(--ink)" opacity="0.75"/><rect x="98" y="152" width="104" height="4" rx="2" fill="var(--ink-soft)" opacity="0.35"/><rect x="98" y="159" width="84" height="4" rx="2" fill="var(--ink-soft)" opacity="0.35"/><g transform="translate(250,40) rotate(35)"><rect x="-7" y="0" width="14" height="96" rx="2" fill="var(--accent)"/><rect x="-7" y="0" width="14" height="12" fill="var(--ink-soft)"/><path d="M-7,96 L7,96 L0,116 Z" fill="#e8d7b0"/><path d="M-2.5,109 L2.5,109 L0,116 Z" fill="var(--ink)"/></g></svg></div>
+        <div class="topic-body">
+          <h3>Jak psát protokol</h3>
+          <p>Struktura protokolu od hlavičky po závěr.</p>
+          <a class="btn primary" href="../mereni/jak-psat-protokol.html">Otevřít →</a>
+        </div>
+      </article>
+    </div>
+  </section>
 
-  <div class="card">
-    <div class="section-tag">Měření</div>
-    <h2>Návody</h2>
-    <p>Procvičte si zpracování naměřených hodnot: výpočty průměru a odchylek a jejich správné zaokrouhlení.</p>
-    <div class="actions">
-      <a class="btn primary" href="../mereni/zaokrouhlovani-vysledku.html">Zaokrouhlování měření →</a>
-      <a class="btn primary" href="../mereni/zpracovani-mereni.html">Přímé měření →</a>
-      <a class="btn primary" href="../mereni/neprime-mereni.html">Nepřímé měření →</a>
+  <section class="chapter">
+    <div class="chapter-head">
+      <div>
+        <div class="section-tag">Měření</div>
+        <h2>Návody</h2>
+        <p>Zpracování naměřených hodnot: průměr, odchylky a jejich správné zaokrouhlení.</p>
+      </div>
+      <div class="car-nav" aria-label="Posun karet">
+        <button type="button" class="car-btn" data-dir="-1" aria-label="Předchozí karty">←</button>
+        <button type="button" class="car-btn" data-dir="1" aria-label="Další karty">→</button>
+      </div>
     </div>
-  </div>
+    <div class="track" tabindex="0" role="region" aria-label="Návody – témata">
+      <article class="topic-card">
+        <div class="topic-img"><svg viewBox="0 0 320 180" role="img" aria-label="Zaokrouhlení výsledku měření: odchylka na první nenulovou číslici, průměr na stejný řád, výsledek x = (12,46 ± 0,03) mm." xmlns="http://www.w3.org/2000/svg"><text x="24" y="44" font-size="15" font-weight="600" fill="var(--ink)">Δ<tspan font-style="italic">x</tspan> = <tspan font-family="'IBM Plex Mono', monospace">0,0<tspan fill="var(--accent)" font-weight="700">3</tspan><tspan opacity="0.4">27</tspan></tspan> mm</text><line x1="196" y1="39" x2="217" y2="39" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round"/><path d="M222,39 L216,41.7 L216,36.3 Z" fill="var(--accent)"/><text x="230" y="44" font-size="15" font-weight="700" fill="var(--accent)" font-family="'IBM Plex Mono', monospace">0,03<tspan font-family="Work Sans, sans-serif" font-weight="600"> mm</tspan></text><text x="24" y="86" font-size="15" font-weight="600" fill="var(--ink)"><tspan font-style="italic">x</tspan> = <tspan font-family="'IBM Plex Mono', monospace">12,4<tspan fill="var(--accent)" font-weight="700">5</tspan><tspan opacity="0.4">83</tspan></tspan> mm</text><line x1="25" y1="73" x2="33" y2="73" stroke="var(--ink)" stroke-width="1.3"/><line x1="196" y1="81" x2="217" y2="81" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round"/><path d="M222,81 L216,83.7 L216,78.3 Z" fill="var(--accent)"/><text x="230" y="86" font-size="15" font-weight="700" fill="var(--accent)" font-family="'IBM Plex Mono', monospace">12,46<tspan font-family="Work Sans, sans-serif" font-weight="600"> mm</tspan></text><rect x="20" y="112" width="280" height="48" rx="10" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/><text x="160" y="143" text-anchor="middle" font-size="18" font-weight="700" fill="var(--ink)"><tspan font-style="italic">x</tspan> = (12,46 ± 0,03) mm</text></svg></div>
+        <div class="topic-body">
+          <h3>Zaokrouhlování měření</h3>
+          <p>Zaokrouhlení průměru, odchylky a relativní odchylky.</p>
+          <a class="btn primary" href="../mereni/zaokrouhlovani-vysledku.html">Otevřít →</a>
+        </div>
+      </article>
+      <article class="topic-card">
+        <div class="topic-img"><svg viewBox="0 0 320 180" role="img" aria-label="Přímé měření: deset naměřených hodnot průměru šroubu, jejich aritmetický průměr a pás průměrné odchylky." xmlns="http://www.w3.org/2000/svg"><line x1="56" y1="160" x2="300" y2="160" stroke="var(--ink)" stroke-width="1.4" stroke-linecap="round"/><path d="M306,160 L299,163.2 L299,156.8 Z" fill="var(--ink)"/><line x1="56" y1="160" x2="56" y2="16" stroke="var(--ink)" stroke-width="1.4" stroke-linecap="round"/><path d="M56,10 L59.1,17 L52.9,17 Z" fill="var(--ink)"/><rect x="56" y="40.2" width="240" height="57.6" fill="var(--accent)" opacity="0.15"/><line x1="56" y1="69" x2="296" y2="69" stroke="var(--accent)" stroke-width="2"/><line x1="52" y1="123" x2="56" y2="123" stroke="var(--ink)" stroke-width="1.2"/><text x="49" y="127" text-anchor="end" font-size="10.5" font-weight="500" font-family="'IBM Plex Mono', monospace" fill="var(--ink-soft)">5,97</text><line x1="52" y1="69" x2="56" y2="69" stroke="var(--ink)" stroke-width="1.2"/><text x="49" y="73" text-anchor="end" font-size="10.5" font-weight="500" font-family="'IBM Plex Mono', monospace" fill="var(--ink-soft)">6,00</text><line x1="52" y1="15" x2="56" y2="15" stroke="var(--ink)" stroke-width="1.2"/><text x="49" y="19" text-anchor="end" font-size="10.5" font-weight="500" font-family="'IBM Plex Mono', monospace" fill="var(--ink-soft)">6,03</text><line x1="74" y1="69" x2="74" y2="105" stroke="var(--ink-soft)" stroke-width="1" stroke-dasharray="2 2"/><circle cx="74" cy="105" r="4.2" fill="var(--ink)"/><line x1="97" y1="69" x2="97" y2="33" stroke="var(--ink-soft)" stroke-width="1" stroke-dasharray="2 2"/><circle cx="97" cy="33" r="4.2" fill="var(--ink)"/><line x1="120" y1="69" x2="120" y2="51" stroke="var(--ink-soft)" stroke-width="1" stroke-dasharray="2 2"/><circle cx="120" cy="51" r="4.2" fill="var(--ink)"/><line x1="143" y1="69" x2="143" y2="123" stroke="var(--ink-soft)" stroke-width="1" stroke-dasharray="2 2"/><circle cx="143" cy="123" r="4.2" fill="var(--ink)"/><line x1="166" y1="69" x2="166" y2="15" stroke="var(--ink-soft)" stroke-width="1" stroke-dasharray="2 2"/><circle cx="166" cy="15" r="4.2" fill="var(--ink)"/><line x1="189" y1="69" x2="189" y2="69" stroke="var(--ink-soft)" stroke-width="1" stroke-dasharray="2 2"/><circle cx="189" cy="69" r="4.2" fill="var(--ink)"/><line x1="212" y1="69" x2="212" y2="87" stroke="var(--ink-soft)" stroke-width="1" stroke-dasharray="2 2"/><circle cx="212" cy="87" r="4.2" fill="var(--ink)"/><line x1="235" y1="69" x2="235" y2="33" stroke="var(--ink-soft)" stroke-width="1" stroke-dasharray="2 2"/><circle cx="235" cy="33" r="4.2" fill="var(--ink)"/><line x1="258" y1="69" x2="258" y2="69" stroke="var(--ink-soft)" stroke-width="1" stroke-dasharray="2 2"/><circle cx="258" cy="69" r="4.2" fill="var(--ink)"/><line x1="281" y1="69" x2="281" y2="105" stroke="var(--ink-soft)" stroke-width="1" stroke-dasharray="2 2"/><circle cx="281" cy="105" r="4.2" fill="var(--ink)"/><text x="300" y="63" text-anchor="end" font-size="14" font-weight="700" fill="var(--accent)"><tspan font-style="italic">d</tspan></text><line x1="292" y1="50" x2="300" y2="50" stroke="var(--accent)" stroke-width="1.3"/><text x="300" y="35.2" text-anchor="end" font-size="11.5" font-weight="700" fill="var(--accent)">±Δ<tspan font-style="italic">d</tspan></text><text x="66" y="16" text-anchor="start" font-size="11" font-weight="600" fill="var(--ink-soft)"><tspan font-style="italic">d</tspan>/mm</text><text x="304" y="175" text-anchor="end" font-size="11" font-weight="600" fill="var(--ink-soft)">měření</text></svg></div>
+        <div class="topic-body">
+          <h3>Přímé měření</h3>
+          <p>Aritmetický průměr a odchylka z opakovaného měření.</p>
+          <a class="btn primary" href="../mereni/zpracovani-mereni.html">Otevřít →</a>
+        </div>
+      </article>
+      <article class="topic-card">
+        <div class="topic-img"><svg viewBox="0 0 320 180" role="img" aria-label="Nepřímé měření: hustota válečku vypočtená z hmotnosti, průměru a výšky." xmlns="http://www.w3.org/2000/svg"><path d="M48,50 L48,140 A44,12 0 0 0 136,140 L136,50" fill="var(--surface-2)" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round"/><ellipse cx="92" cy="50" rx="44" ry="12" fill="var(--surface-2)" stroke="var(--ink)" stroke-width="2"/><line x1="92" y1="50" x2="136" y2="50" stroke="var(--ink-soft)" stroke-width="1" stroke-dasharray="3 3"/><line x1="92" y1="26" x2="131" y2="26" stroke="var(--ink-soft)" stroke-width="1.2" stroke-linecap="round"/><path d="M136,26 L130,28.7 L130,23.3 Z" fill="var(--ink-soft)"/><line x1="92" y1="26" x2="53" y2="26" stroke="var(--ink-soft)" stroke-width="1.2" stroke-linecap="round"/><path d="M48,26 L54,23.3 L54,28.7 Z" fill="var(--ink-soft)"/><text x="92" y="20" text-anchor="middle" font-size="13" font-weight="700" font-style="italic" fill="var(--ink)"><tspan font-style="italic">d</tspan></text><line x1="48" y1="20" x2="48" y2="46" stroke="var(--ink-soft)" stroke-width="0.9"/><line x1="136" y1="20" x2="136" y2="46" stroke="var(--ink-soft)" stroke-width="0.9"/><line x1="154" y1="95" x2="154" y2="135" stroke="var(--ink-soft)" stroke-width="1.2" stroke-linecap="round"/><path d="M154,140 L151.3,134 L156.7,134 Z" fill="var(--ink-soft)"/><line x1="154" y1="95" x2="154" y2="55" stroke="var(--ink-soft)" stroke-width="1.2" stroke-linecap="round"/><path d="M154,50 L156.7,56 L151.3,56 Z" fill="var(--ink-soft)"/><text x="166" y="99" text-anchor="middle" font-size="13" font-weight="700" font-style="italic" fill="var(--ink)"><tspan font-style="italic">h</tspan></text><line x1="140" y1="50" x2="160" y2="50" stroke="var(--ink-soft)" stroke-width="0.9"/><line x1="140" y1="140" x2="160" y2="140" stroke="var(--ink-soft)" stroke-width="0.9"/><text x="186" y="74" font-size="17" font-weight="600" fill="var(--ink)"><tspan font-style="italic">ϱ</tspan> = <tspan font-style="italic">m</tspan> / <tspan font-style="italic">V</tspan></text><text x="186" y="112" font-size="17" font-weight="600" fill="var(--ink)"><tspan font-style="italic">V</tspan> = π<tspan font-style="italic">d</tspan><tspan dy="-6" dx="1" font-size="11">2</tspan><tspan dy="6" dx="2"><tspan font-style="italic">h</tspan> / 4</tspan></text><line x1="186" y1="128" x2="298" y2="128" stroke="var(--accent)" stroke-width="2"/><text x="242" y="148" text-anchor="middle" font-size="11.5" font-weight="500" fill="var(--ink-soft)">hustota z <tspan font-style="italic">m</tspan>, <tspan font-style="italic">d</tspan>, <tspan font-style="italic">h</tspan></text></svg></div>
+        <div class="topic-body">
+          <h3>Nepřímé měření</h3>
+          <p>Veličina vypočtená z jiných změřených veličin a její odchylka.</p>
+          <a class="btn primary" href="../mereni/neprime-mereni.html">Otevřít →</a>
+        </div>
+      </article>
+    </div>
+  </section>
 
-  <div class="card">
-    <div class="section-tag">Měření</div>
-    <h2>Kvinta/1. ročník</h2>
-    <p>Zde najdete zadání jednotlivých laboratorních prací pro kvintu/1. ročník.</p>
-    <div class="actions">
-      <a class="btn primary" href="../mereni/krabicka-multivitaminu.html">1. Krabička od multivitamínů →</a>
-      <a class="btn primary" href="../mereni/plastove-disky.html">2. Hustota plastových disků →</a>
+  <section class="chapter">
+    <div class="chapter-head">
+      <div>
+        <div class="section-tag">Laboratorní práce</div>
+        <h2>Kvinta/1. ročník</h2>
+        <p>Zadání laboratorních prací pro kvintu/1. ročník.</p>
+      </div>
+      <div class="car-nav" aria-label="Posun karet">
+        <button type="button" class="car-btn" data-dir="-1" aria-label="Předchozí karty">←</button>
+        <button type="button" class="car-btn" data-dir="1" aria-label="Další karty">→</button>
+      </div>
     </div>
-  </div>
+    <div class="track" tabindex="0" role="region" aria-label="Kvinta/1. ročník – témata">
+      <article class="topic-card">
+        <div class="topic-img"><svg viewBox="0 0 320 180" role="img" aria-label="Osový řez krabičkou od multivitamínů s kótami vnější výšky v, hloubky h, vnějších průměrů D a D′ a vnitřního průměru d; vedle přehled, co se měří šuplerou a co pravítkem." xmlns="http://www.w3.org/2000/svg"><defs><pattern id="srafa" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="5" stroke="var(--ink)" stroke-width="1"/></pattern></defs><path d="M92,34 L92,156 L172,156 L172,34 L165.5,34 L165.5,146 L98.5,146 L98.5,34 Z" fill="url(#srafa)" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round"/><rect x="98.5" y="34" width="67" height="112" fill="var(--surface)" opacity="0.6"/><line x1="132" y1="22" x2="132" y2="164" stroke="var(--ink-soft)" stroke-width="0.9" stroke-dasharray="10 3 2 3"/><line x1="92" y1="31" x2="92" y2="13" stroke="var(--ink-soft)" stroke-width="0.9"/><line x1="172" y1="31" x2="172" y2="13" stroke="var(--ink-soft)" stroke-width="0.9"/><line x1="132" y1="18" x2="167" y2="18" stroke="var(--ink-soft)" stroke-width="1.2" stroke-linecap="round"/><path d="M172,18 L166,20.7 L166,15.3 Z" fill="var(--ink-soft)"/><line x1="132" y1="18" x2="97" y2="18" stroke="var(--ink-soft)" stroke-width="1.2" stroke-linecap="round"/><path d="M92,18 L98,15.3 L98,20.7 Z" fill="var(--ink-soft)"/><text x="132" y="18" text-anchor="middle" font-size="13" font-weight="700" font-style="italic" fill="var(--ink)"></text><text x="80" y="23" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)"><tspan font-style="italic">D</tspan></text><line x1="132" y1="50" x2="160.5" y2="50" stroke="var(--accent)" stroke-width="1.2" stroke-linecap="round"/><path d="M165.5,50 L159.5,52.7 L159.5,47.3 Z" fill="var(--accent)"/><line x1="132" y1="50" x2="103.5" y2="50" stroke="var(--accent)" stroke-width="1.2" stroke-linecap="round"/><path d="M98.5,50 L104.5,47.3 L104.5,52.7 Z" fill="var(--accent)"/><text x="146" y="45" text-anchor="middle" font-size="13" font-weight="700" font-style="italic" fill="var(--ink)"><tspan font-style="italic">d</tspan></text><line x1="92" y1="159" x2="92" y2="175" stroke="var(--ink-soft)" stroke-width="0.9"/><line x1="172" y1="159" x2="172" y2="175" stroke="var(--ink-soft)" stroke-width="0.9"/><line x1="132" y1="170" x2="167" y2="170" stroke="var(--ink-soft)" stroke-width="1.2" stroke-linecap="round"/><path d="M172,170 L166,172.7 L166,167.3 Z" fill="var(--ink-soft)"/><line x1="132" y1="170" x2="97" y2="170" stroke="var(--ink-soft)" stroke-width="1.2" stroke-linecap="round"/><path d="M92,170 L98,167.3 L98,172.7 Z" fill="var(--ink-soft)"/><text x="132" y="170" text-anchor="middle" font-size="13" font-weight="700" font-style="italic" fill="var(--ink)"></text><text x="78" y="175" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)"><tspan font-style="italic">D′</tspan></text><line x1="89" y1="34" x2="65" y2="34" stroke="var(--ink-soft)" stroke-width="0.9"/><line x1="89" y1="156" x2="65" y2="156" stroke="var(--ink-soft)" stroke-width="0.9"/><line x1="70" y1="95" x2="70" y2="151" stroke="var(--ink-soft)" stroke-width="1.2" stroke-linecap="round"/><path d="M70,156 L67.3,150 L72.7,150 Z" fill="var(--ink-soft)"/><line x1="70" y1="95" x2="70" y2="39" stroke="var(--ink-soft)" stroke-width="1.2" stroke-linecap="round"/><path d="M70,34 L72.7,40 L67.3,40 Z" fill="var(--ink-soft)"/><text x="60" y="99" text-anchor="middle" font-size="13" font-weight="700" font-style="italic" fill="var(--ink)"><tspan font-style="italic">v</tspan></text><line x1="175" y1="34" x2="199" y2="34" stroke="var(--ink-soft)" stroke-width="0.9"/><line x1="165.5" y1="146" x2="199" y2="146" stroke="var(--ink-soft)" stroke-width="0.9"/><line x1="194" y1="90" x2="194" y2="141" stroke="var(--ink-soft)" stroke-width="1.2" stroke-linecap="round"/><path d="M194,146 L191.3,140 L196.7,140 Z" fill="var(--ink-soft)"/><line x1="194" y1="90" x2="194" y2="39" stroke="var(--ink-soft)" stroke-width="1.2" stroke-linecap="round"/><path d="M194,34 L196.7,40 L191.3,40 Z" fill="var(--ink-soft)"/><text x="204" y="94" text-anchor="middle" font-size="13" font-weight="700" font-style="italic" fill="var(--ink)"><tspan font-style="italic">h</tspan></text><text x="222" y="70" text-anchor="start" font-size="11.5" font-weight="600" fill="var(--ink-soft)">šuplera</text><text x="222" y="88" text-anchor="start" font-size="14" font-weight="700" fill="var(--ink)"><tspan font-style="italic">v</tspan>, <tspan font-style="italic">h</tspan>, <tspan font-style="italic">D</tspan>, <tspan font-style="italic">D′</tspan>, <tspan font-style="italic">d</tspan></text><text x="222" y="116" text-anchor="start" font-size="11.5" font-weight="600" fill="var(--ink-soft)">pravítko</text><text x="222" y="134" text-anchor="start" font-size="14" font-weight="700" fill="var(--ink)"><tspan font-style="italic">v′</tspan>, <tspan font-style="italic">d′</tspan></text></svg></div>
+        <div class="topic-body">
+          <h3>1. Krabička od multivitamínů</h3>
+          <p>Měření rozměrů krabičky posuvným měřítkem a pravítkem.</p>
+          <a class="btn primary" href="../mereni/krabicka-multivitaminu.html">Otevřít →</a>
+        </div>
+      </article>
+      <article class="topic-card">
+        <div class="topic-img"><svg viewBox="0 0 320 180" role="img" aria-label="Plastový disk s kótou průměru d a tloušťky t, vedle sloupek čtyř disků." xmlns="http://www.w3.org/2000/svg"><path d="M32,74 L32,90 A78,22 0 0 0 188,90 L188,74" fill="var(--accent)" opacity="0.35" stroke="var(--ink)" stroke-width="2"/><ellipse cx="110" cy="74" rx="78" ry="22" fill="var(--surface-2)" stroke="var(--ink)" stroke-width="2"/><path d="M32,74 L32,90 A78,22 0 0 0 188,90 L188,74" fill="none" stroke="var(--ink)" stroke-width="2"/><line x1="32" y1="74" x2="188" y2="74" stroke="var(--ink-soft)" stroke-width="1" stroke-dasharray="3 3"/><line x1="32" y1="94" x2="32" y2="144" stroke="var(--ink-soft)" stroke-width="0.9"/><line x1="188" y1="94" x2="188" y2="144" stroke="var(--ink-soft)" stroke-width="0.9"/><line x1="110" y1="138" x2="183" y2="138" stroke="var(--ink-soft)" stroke-width="1.2" stroke-linecap="round"/><path d="M188,138 L182,140.7 L182,135.3 Z" fill="var(--ink-soft)"/><line x1="110" y1="138" x2="37" y2="138" stroke="var(--ink-soft)" stroke-width="1.2" stroke-linecap="round"/><path d="M32,138 L38,135.3 L38,140.7 Z" fill="var(--ink-soft)"/><text x="110" y="156" text-anchor="middle" font-size="13" font-weight="700" font-style="italic" fill="var(--ink)"><tspan font-style="italic">d</tspan></text><line x1="191" y1="74" x2="210" y2="74" stroke="var(--ink-soft)" stroke-width="0.9"/><line x1="191" y1="90" x2="210" y2="90" stroke="var(--ink-soft)" stroke-width="0.9"/><line x1="202" y1="58" x2="202" y2="69" stroke="var(--ink-soft)" stroke-width="1.2" stroke-linecap="round"/><path d="M202,74 L199.3,68 L204.7,68 Z" fill="var(--ink-soft)"/><line x1="202" y1="106" x2="202" y2="95" stroke="var(--ink-soft)" stroke-width="1.2" stroke-linecap="round"/><path d="M202,90 L204.7,96 L199.3,96 Z" fill="var(--ink-soft)"/><text x="212" y="87" text-anchor="start" font-size="13" font-weight="700" fill="var(--ink)"><tspan font-style="italic">t</tspan></text><path d="M236,128 L236,138 A30,8 0 0 0 296,138 L296,128" fill="var(--accent)" opacity="0.35" stroke="var(--ink)" stroke-width="1.4"/><ellipse cx="266" cy="128" rx="30" ry="8" fill="var(--surface-2)" stroke="var(--ink)" stroke-width="1.4"/><path d="M236,112 L236,122 A30,8 0 0 0 296,122 L296,112" fill="var(--accent)" opacity="0.35" stroke="var(--ink)" stroke-width="1.4"/><ellipse cx="266" cy="112" rx="30" ry="8" fill="var(--surface-2)" stroke="var(--ink)" stroke-width="1.4"/><path d="M236,96 L236,106 A30,8 0 0 0 296,106 L296,96" fill="var(--accent)" opacity="0.35" stroke="var(--ink)" stroke-width="1.4"/><ellipse cx="266" cy="96" rx="30" ry="8" fill="var(--surface-2)" stroke="var(--ink)" stroke-width="1.4"/><path d="M236,80 L236,90 A30,8 0 0 0 296,90 L296,80" fill="var(--accent)" opacity="0.35" stroke="var(--ink)" stroke-width="1.4"/><ellipse cx="266" cy="80" rx="30" ry="8" fill="var(--surface-2)" stroke="var(--ink)" stroke-width="1.4"/><text x="266" y="168" text-anchor="middle" font-size="11.5" font-weight="600" fill="var(--ink-soft)">4 disky</text></svg></div>
+        <div class="topic-body">
+          <h3>2. Hustota plastových disků</h3>
+          <p>Posuvné měřítko, mikrometr a váhy; hustota disků.</p>
+          <a class="btn primary" href="../mereni/plastove-disky.html">Otevřít →</a>
+        </div>
+      </article>
+    </div>
+  </section>
 
-  <div class="card">
-    <div class="section-tag">Měření</div>
-    <h2>Septima/3. ročník</h2>
-    <p>Zde najdete zadání jednotlivých laboratorních prací pro septimu/3. ročník.</p>
-    <div class="actions">
-      <a class="btn primary" href="../mereni/va-charakteristika-diod.html">3. VA charakteristika diod →</a>
+  <section class="chapter">
+    <div class="chapter-head">
+      <div>
+        <div class="section-tag">Laboratorní práce</div>
+        <h2>Septima/3. ročník</h2>
+        <p>Zadání laboratorních prací pro septimu/3. ročník.</p>
+      </div>
+      <div class="car-nav" aria-label="Posun karet">
+        <button type="button" class="car-btn" data-dir="-1" aria-label="Předchozí karty">←</button>
+        <button type="button" class="car-btn" data-dir="1" aria-label="Další karty">→</button>
+      </div>
     </div>
-  </div>
+    <div class="track" tabindex="0" role="region" aria-label="Septima/3. ročník – témata">
+      <article class="topic-card">
+        <div class="topic-img"><svg viewBox="0 0 320 180" role="img" aria-label="Voltampérové charakteristiky křemíkové diody a zelené LED v propustném směru; LED začíná vést až kolem 2 V." xmlns="http://www.w3.org/2000/svg"><line x1="126" y1="156" x2="126" y2="160" stroke="var(--ink)" stroke-width="1.2"/><text x="126" y="172" text-anchor="middle" font-size="10.5" font-weight="500" fill="var(--ink-soft)">1</text><line x1="208" y1="156" x2="208" y2="160" stroke="var(--ink)" stroke-width="1.2"/><text x="208" y="172" text-anchor="middle" font-size="10.5" font-weight="500" fill="var(--ink-soft)">2</text><line x1="290" y1="156" x2="290" y2="160" stroke="var(--ink)" stroke-width="1.2"/><text x="290" y="172" text-anchor="middle" font-size="10.5" font-weight="500" fill="var(--ink-soft)">3</text><line x1="40" y1="113" x2="44" y2="113" stroke="var(--ink)" stroke-width="1.2"/><text x="37" y="117" text-anchor="end" font-size="10.5" font-weight="500" fill="var(--ink-soft)">10</text><line x1="44" y1="113" x2="298" y2="113" stroke="var(--line)" stroke-width="1"/><line x1="40" y1="70" x2="44" y2="70" stroke="var(--ink)" stroke-width="1.2"/><text x="37" y="74" text-anchor="end" font-size="10.5" font-weight="500" fill="var(--ink-soft)">20</text><line x1="44" y1="70" x2="298" y2="70" stroke="var(--line)" stroke-width="1"/><line x1="40" y1="27" x2="44" y2="27" stroke="var(--ink)" stroke-width="1.2"/><text x="37" y="31" text-anchor="end" font-size="10.5" font-weight="500" fill="var(--ink-soft)">30</text><line x1="44" y1="27" x2="298" y2="27" stroke="var(--line)" stroke-width="1"/><line x1="44" y1="156" x2="300" y2="156" stroke="var(--ink)" stroke-width="1.4" stroke-linecap="round"/><path d="M306,156 L299,159.2 L299,152.8 Z" fill="var(--ink)"/><line x1="44" y1="156" x2="44" y2="14" stroke="var(--ink)" stroke-width="1.4" stroke-linecap="round"/><path d="M44,8 L47.1,15 L40.9,15 Z" fill="var(--ink)"/><text x="304" y="148" text-anchor="end" font-size="11.5" font-weight="700" fill="var(--ink-soft)"><tspan font-style="italic">U</tspan>/V</text><text x="50" y="16" text-anchor="start" font-size="11.5" font-weight="700" fill="var(--ink-soft)"><tspan font-style="italic">I</tspan>/mA</text><path d="M44,156 L44.4,156 L44.8,156 L45.2,156 L45.6,156 L46,156 L46.5,156 L46.9,156 L47.3,156 L47.7,156 L48.1,156 L48.5,156 L48.9,156 L49.3,156 L49.7,156 L50.1,156 L50.6,156 L51,156 L51.4,156 L51.8,156 L52.2,156 L52.6,156 L53,156 L53.4,156 L53.8,156 L54.2,156 L54.7,156 L55.1,156 L55.5,156 L55.9,156 L56.3,156 L56.7,156 L57.1,156 L57.5,156 L57.9,156 L58.4,156 L58.8,156 L59.2,156 L59.6,156 L60,156 L60.4,156 L60.8,156 L61.2,156 L61.6,156 L62,156 L62.5,156 L62.9,156 L63.3,156 L63.7,156 L64.1,156 L64.5,156 L64.9,156 L65.3,156 L65.7,156 L66.1,156 L66.6,156 L67,156 L67.4,156 L67.8,156 L68.2,156 L68.6,156 L69,156 L69.4,156 L69.8,156 L70.2,156 L70.7,156 L71.1,156 L71.5,155.9 L71.9,155.9 L72.3,155.9 L72.7,155.9 L73.1,155.9 L73.5,155.9 L73.9,155.9 L74.3,155.9 L74.8,155.9 L75.2,155.9 L75.6,155.9 L76,155.8 L76.4,155.8 L76.8,155.8 L77.2,155.8 L77.6,155.8 L78,155.7 L78.4,155.7 L78.9,155.7 L79.3,155.6 L79.7,155.6 L80.1,155.6 L80.5,155.5 L80.9,155.5 L81.3,155.4 L81.7,155.4 L82.1,155.3 L82.5,155.2 L83,155.1 L83.4,155 L83.8,154.9 L84.2,154.8 L84.6,154.7 L85,154.5 L85.4,154.4 L85.8,154.2 L86.2,154 L86.6,153.8 L87.1,153.6 L87.5,153.3 L87.9,153 L88.3,152.7 L88.7,152.3 L89.1,151.9 L89.5,151.5 L89.9,151 L90.3,150.5 L90.7,149.9 L91.2,149.3 L91.6,148.5 L92,147.7 L92.4,146.8 L92.8,145.9 L93.2,144.8 L93.6,143.6 L94,142.2 L94.4,140.8 L94.8,139.1 L95.3,137.3 L95.7,135.3 L96.1,133.1 L96.5,130.7 L96.9,127.9 L97.3,124.9 L97.7,121.6 L98.1,117.9 L98.5,113.8 L98.9,109.3 L99.4,104.3 L99.8,98.8 L100.2,92.6 L100.6,85.8 L101,78.3 L101.4,70 L101.8,60.8 L102.2,50.6 L102.6,39.3 L103,26.8" fill="none" stroke="var(--ink)" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/><text x="109" y="38.8" text-anchor="start" font-size="12" font-weight="700" fill="var(--ink)">Si</text><path d="M44,156 L44.4,156 L44.8,156 L45.2,156 L45.6,156 L46,156 L46.5,156 L46.9,156 L47.3,156 L47.7,156 L48.1,156 L48.5,156 L48.9,156 L49.3,156 L49.7,156 L50.1,156 L50.6,156 L51,156 L51.4,156 L51.8,156 L52.2,156 L52.6,156 L53,156 L53.4,156 L53.8,156 L54.2,156 L54.7,156 L55.1,156 L55.5,156 L55.9,156 L56.3,156 L56.7,156 L57.1,156 L57.5,156 L57.9,156 L58.4,156 L58.8,156 L59.2,156 L59.6,156 L60,156 L60.4,156 L60.8,156 L61.2,156 L61.6,156 L62,156 L62.5,156 L62.9,156 L63.3,156 L63.7,156 L64.1,156 L64.5,156 L64.9,156 L65.3,156 L65.7,156 L66.1,156 L66.6,156 L67,156 L67.4,156 L67.8,156 L68.2,156 L68.6,156 L69,156 L69.4,156 L69.8,156 L70.2,156 L70.7,156 L71.1,156 L71.5,156 L71.9,156 L72.3,156 L72.7,156 L73.1,156 L73.5,156 L73.9,156 L74.3,156 L74.8,156 L75.2,156 L75.6,156 L76,156 L76.4,156 L76.8,156 L77.2,156 L77.6,156 L78,156 L78.4,156 L78.9,156 L79.3,156 L79.7,156 L80.1,156 L80.5,156 L80.9,156 L81.3,156 L81.7,156 L82.1,156 L82.5,156 L83,156 L83.4,156 L83.8,156 L84.2,156 L84.6,156 L85,156 L85.4,156 L85.8,156 L86.2,156 L86.6,156 L87.1,156 L87.5,156 L87.9,156 L88.3,156 L88.7,156 L89.1,156 L89.5,156 L89.9,156 L90.3,156 L90.7,156 L91.2,156 L91.6,156 L92,156 L92.4,156 L92.8,156 L93.2,156 L93.6,156 L94,156 L94.4,156 L94.8,156 L95.3,156 L95.7,156 L96.1,156 L96.5,156 L96.9,156 L97.3,156 L97.7,156 L98.1,156 L98.5,156 L98.9,156 L99.4,156 L99.8,156 L100.2,156 L100.6,156 L101,156 L101.4,156 L101.8,156 L102.2,156 L102.6,156 L103,156 L103.5,156 L103.9,156 L104.3,156 L104.7,156 L105.1,156 L105.5,156 L105.9,156 L106.3,156 L106.7,156 L107.1,156 L107.6,156 L108,156 L108.4,156 L108.8,156 L109.2,156 L109.6,156 L110,156 L110.4,156 L110.8,156 L111.2,156 L111.7,156 L112.1,156 L112.5,156 L112.9,156 L113.3,156 L113.7,156 L114.1,156 L114.5,156 L114.9,156 L115.3,156 L115.8,156 L116.2,156 L116.6,156 L117,156 L117.4,156 L117.8,156 L118.2,156 L118.6,156 L119,156 L119.4,156 L119.9,156 L120.3,156 L120.7,156 L121.1,156 L121.5,156 L121.9,156 L122.3,156 L122.7,156 L123.1,156 L123.5,156 L124,156 L124.4,156 L124.8,156 L125.2,156 L125.6,156 L126,156 L126.4,156 L126.8,156 L127.2,156 L127.6,156 L128.1,156 L128.5,156 L128.9,156 L129.3,156 L129.7,156 L130.1,156 L130.5,156 L130.9,156 L131.3,156 L131.7,156 L132.1,156 L132.6,156 L133,156 L133.4,156 L133.8,156 L134.2,156 L134.6,156 L135,156 L135.4,156 L135.8,156 L136.2,156 L136.7,156 L137.1,156 L137.5,156 L137.9,156 L138.3,156 L138.7,156 L139.1,156 L139.5,156 L139.9,156 L140.3,156 L140.8,156 L141.2,156 L141.6,156 L142,156 L142.4,156 L142.8,156 L143.2,156 L143.6,156 L144,156 L144.4,156 L144.9,156 L145.3,156 L145.7,156 L146.1,156 L146.5,156 L146.9,156 L147.3,156 L147.7,156 L148.1,156 L148.5,156 L149,156 L149.4,156 L149.8,156 L150.2,156 L150.6,156 L151,156 L151.4,156 L151.8,156 L152.2,156 L152.6,156 L153.1,156 L153.5,156 L153.9,156 L154.3,156 L154.7,156 L155.1,156 L155.5,156 L155.9,156 L156.3,156 L156.7,156 L157.2,156 L157.6,156 L158,156 L158.4,156 L158.8,156 L159.2,156 L159.6,156 L160,156 L160.4,156 L160.8,156 L161.3,156 L161.7,156 L162.1,156 L162.5,156 L162.9,156 L163.3,156 L163.7,156 L164.1,156 L164.5,156 L164.9,156 L165.4,156 L165.8,156 L166.2,156 L166.6,156 L167,156 L167.4,156 L167.8,156 L168.2,156 L168.6,156 L169,156 L169.5,156 L169.9,156 L170.3,156 L170.7,156 L171.1,156 L171.5,156 L171.9,156 L172.3,156 L172.7,156 L173.1,156 L173.6,156 L174,156 L174.4,156 L174.8,156 L175.2,155.9 L175.6,155.9 L176,155.9 L176.4,155.9 L176.8,155.9 L177.2,155.9 L177.7,155.9 L178.1,155.9 L178.5,155.9 L178.9,155.9 L179.3,155.9 L179.7,155.9 L180.1,155.9 L180.5,155.9 L180.9,155.9 L181.3,155.8 L181.8,155.8 L182.2,155.8 L182.6,155.8 L183,155.8 L183.4,155.8 L183.8,155.8 L184.2,155.7 L184.6,155.7 L185,155.7 L185.4,155.7 L185.9,155.7 L186.3,155.6 L186.7,155.6 L187.1,155.6 L187.5,155.5 L187.9,155.5 L188.3,155.5 L188.7,155.4 L189.1,155.4 L189.5,155.3 L190,155.3 L190.4,155.2 L190.8,155.1 L191.2,155.1 L191.6,155 L192,154.9 L192.4,154.9 L192.8,154.8 L193.2,154.7 L193.6,154.6 L194.1,154.5 L194.5,154.3 L194.9,154.2 L195.3,154.1 L195.7,153.9 L196.1,153.8 L196.5,153.6 L196.9,153.4 L197.3,153.2 L197.7,153 L198.2,152.7 L198.6,152.5 L199,152.2 L199.4,151.9 L199.8,151.6 L200.2,151.3 L200.6,150.9 L201,150.5 L201.4,150.1 L201.8,149.6 L202.3,149.1 L202.7,148.6 L203.1,148 L203.5,147.4 L203.9,146.8 L204.3,146.1 L204.7,145.3 L205.1,144.5 L205.5,143.6 L205.9,142.6 L206.4,141.6 L206.8,140.5 L207.2,139.3 L207.6,138 L208,136.6 L208.4,135.1 L208.8,133.5 L209.2,131.7 L209.6,129.8 L210,127.8 L210.5,125.6 L210.9,123.3 L211.3,120.8 L211.7,118.1 L212.1,115.1 L212.5,112 L212.9,108.6 L213.3,104.9 L213.7,101 L214.1,96.7 L214.6,92.1 L215,87.2 L215.4,81.9 L215.8,76.2 L216.2,70 L216.6,63.4 L217,56.2 L217.4,48.5 L217.8,40.2 L218.2,31.2" fill="none" stroke="var(--accent)" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/><text x="224.2" y="43.2" text-anchor="start" font-size="12" font-weight="700" fill="var(--accent)">LED</text></svg></div>
+        <div class="topic-body">
+          <h3>3. VA charakteristika diod</h3>
+          <p>Závislost proudu na napětí u křemíkové diody a LED, prahové napětí.</p>
+          <a class="btn primary" href="../mereni/va-charakteristika-diod.html">Otevřít →</a>
+        </div>
+      </article>
+    </div>
+  </section>
 
   <footer>Fyzika — Měření</footer>
 </div>
+
+<script>
+(function(){
+  "use strict";
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var chapters = document.querySelectorAll(".chapter");
+  function setup(ch){
+    var track = ch.querySelector(".track");
+    var prev = ch.querySelector('.car-btn[data-dir="-1"]');
+    var next = ch.querySelector('.car-btn[data-dir="1"]');
+    function update(){
+      var more = track.scrollWidth > track.clientWidth + 2;
+      prev.parentNode.style.visibility = more ? "visible" : "hidden";
+      prev.disabled = track.scrollLeft <= 2;
+      next.disabled = track.scrollLeft >= track.scrollWidth - track.clientWidth - 2;
+    }
+    function go(dir){
+      track.scrollBy({ left: dir * track.clientWidth * 0.8, behavior: reduce ? "auto" : "smooth" });
+    }
+    prev.addEventListener("click", function(){ go(-1); });
+    next.addEventListener("click", function(){ go(1); });
+    track.addEventListener("scroll", update);
+    window.addEventListener("resize", update);
+    update();
+  }
+  for (var i = 0; i < chapters.length; i++) setup(chapters[i]);
+})();
+</script>
 
 </body>
 </html>

@@ -27,45 +27,83 @@
   --focus:#1e6f66;
   --shadow: 0 1px 0 rgba(36,31,54,0.06);
 }
-.card{ padding:36px 30px; }
-.card p{
-  max-width:520px;
-  margin:0 auto;
-  font-size:0.95rem;
-  line-height:1.55;
-  color:var(--ink);
+/* Rozcestník: oddíl = kapitola, karty témat posuvné do stran.
+   Barvy obrázků v kartách (stejné jako na stránkách optiky). */
+:root{
+  --ray1:#c77c0e;
+  --ray2:#c2378f;
+  --ray3:#2f6fd0;
+  --ray4:#7b5ea7;
+  --real:#d23f24;
+  --virtual:#0f8a84;
+  --lens:rgba(107,63,181,0.13);
+  --mirror-back:#cbc4da;
 }
-.card + .card{ margin-top:20px; }
+.hero{ padding:40px 16px 20px; }
+.chapter{ margin-top:34px; }
+.chapter-head{
+  display:flex; align-items:flex-end; justify-content:space-between; gap:16px;
+  margin-bottom:14px; padding:0 2px;
+}
+.chapter-head h2{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:800; font-size:1.9rem; letter-spacing:0.02em;
+  text-transform:uppercase; color:var(--ink); line-height:1;
+}
+.chapter-head h2::after{
+  content:""; display:block; width:44px; height:4px; border-radius:2px;
+  background:var(--accent); margin-top:8px;
+}
+.chapter-head p{ margin:10px 0 0; font-size:0.92rem; line-height:1.5; color:var(--ink-soft); max-width:520px; }
+.car-nav{ display:flex; gap:8px; flex-shrink:0; }
+.car-btn{
+  width:44px; height:44px; border-radius:50%;
+  border:1px solid var(--line); background:var(--surface); color:var(--ink);
+  font-size:1.15rem; cursor:pointer; transition:background .12s, color .12s, opacity .12s;
+}
+.car-btn:hover:not(:disabled){ background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+.car-btn:disabled{ opacity:.35; cursor:default; }
+.car-btn:focus-visible, .track:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
 
-.actions{ margin-top:28px; }
+.track{
+  display:flex; gap:16px; overflow-x:auto; padding:4px 20px 18px;
+  margin:0 -20px; scroll-snap-type:x mandatory; scroll-padding:0 20px;
+  -webkit-overflow-scrolling:touch; scrollbar-width:thin;
+  scrollbar-color:var(--accent) transparent;
+}
+.topic-card{
+  flex:0 0 250px; scroll-snap-align:start;
+  background:var(--surface); border:1px solid var(--line); border-radius:14px;
+  overflow:hidden; display:flex; flex-direction:column;
+  box-shadow:var(--shadow); transition:transform .15s ease, box-shadow .15s ease;
+}
+.topic-card:hover{ transform:translateY(-3px); box-shadow:0 8px 20px rgba(36,31,54,0.12); }
+.topic-img{ background:var(--surface-2); border-bottom:1px solid var(--line); }
+.topic-img svg{ display:block; width:100%; height:auto; }
+.topic-body{ padding:16px 16px 18px; display:flex; flex-direction:column; flex:1; text-align:left; }
+.topic-body h3{
+  font-family:'Big Shoulders Display', sans-serif; font-weight:700;
+  font-size:1.35rem; letter-spacing:0.02em; color:var(--ink);
+}
+.topic-body p{ margin:8px 0 16px; font-size:0.88rem; line-height:1.5; color:var(--ink-soft); flex:1; }
+.topic-body .btn{ align-self:flex-start; padding:10px 18px; min-height:44px; }
+
 a.btn{
-  font-family:'Work Sans', sans-serif;
-  font-weight:600;
-  font-size:0.95rem;
-  padding:12px 24px;
-  border-radius:8px;
-  border:1px solid var(--line);
-  background:var(--surface);
-  color:var(--ink);
-  cursor:pointer;
-  text-decoration:none;
-  display:inline-block;
-  transition:transform .05s ease, background .12s, filter .12s;
+  font-family:'Work Sans', sans-serif; font-weight:600; font-size:0.92rem;
+  border-radius:8px; border:1px solid var(--line); background:var(--surface);
+  color:var(--ink); text-decoration:none; display:inline-flex; align-items:center;
+  transition:transform .05s ease, filter .12s;
 }
 a.btn:active{ transform:translateY(1px); }
-a.btn.primary{
-  background:var(--accent);
-  border-color:var(--accent);
-  color:var(--accent-ink);
-}
+a.btn.primary{ background:var(--accent); border-color:var(--accent); color:var(--accent-ink); }
 a.btn.primary:hover{ filter:brightness(1.06); }
 a.btn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
-
 footer{ margin-top:40px; }
-
+@media (prefers-reduced-motion:reduce){ .topic-card{ transition:none; } }
 @media (max-width:520px){
-  .hero{ padding:44px 16px 32px; }
-  .card{ padding:28px 18px; }
+  .chapter-head{ flex-direction:column; align-items:flex-start; }
+  .car-nav{ display:none; }
+  .topic-card{ flex-basis:78vw; }
 }
 </style>
 </head>
@@ -80,29 +118,122 @@ footer{ margin-top:40px; }
     <h1>Oktáva/4. ročník</h1>
   </div>
 
-  <div class="card">
-    <h2>Optika</h2>
-    <p>Pomůcky a materiály ke kapitole Optika — zobrazování optickými soustavami.</p>
-    <div class="actions">
-      <a class="btn primary" href="../oktava/kulova-zrcadla.html">Kulová zrcadla →</a>
-      <a class="btn primary" href="../oktava/cocky.html">Čočky →</a>
-      <a class="btn primary" href="../oktava/zorny-uhel-a-lupa.html">Zorný úhel a lupa →</a>
-      <a class="btn primary" href="../oktava/mikroskop.html">Mikroskop →</a>
-      <a class="btn primary" href="../oktava/dalekohled.html">Dalekohled →</a>
+  <section class="chapter">
+    <div class="chapter-head">
+      <div>
+        <h2>Optika</h2>
+        <p>Zobrazování optickými soustavami: zrcadla, čočky a optické přístroje.</p>
+      </div>
+      <div class="car-nav" aria-label="Posun karet">
+        <button type="button" class="car-btn" data-dir="-1" aria-label="Předchozí karty">←</button>
+        <button type="button" class="car-btn" data-dir="1" aria-label="Další karty">→</button>
+      </div>
     </div>
-  </div>
+    <div class="track" tabindex="0" role="region" aria-label="Optika – témata">
+      <article class="topic-card">
+        <div class="topic-img"><svg viewBox="0 0 320 180" role="img" aria-label="Dopravní vypuklé zrcadlo ukazuje zmenšený vzpřímený obraz, kosmetické duté zrcadlo zblízka zvětšený vzpřímený obraz." xmlns="http://www.w3.org/2000/svg"><defs><clipPath id="zr-l"><circle cx="82" cy="70" r="44"/></clipPath><clipPath id="zr-p"><circle cx="230" cy="70" r="44"/></clipPath></defs><rect x="78" y="112" width="8" height="64" fill="var(--ink-soft)"/><circle cx="82" cy="70" r="50" fill="#d23f24"/><circle cx="82" cy="70" r="46" fill="#fff"/><circle cx="82" cy="70" r="44" fill="#dfe8f0"/><g clip-path="url(#zr-l)"><path d="M38,98 Q82,80 126,98 L126,114 L38,114 Z" fill="#b9c3cc"/><circle cx="82" cy="72" r="12" fill="#f4d58d" stroke="var(--ink)" stroke-width="1.2"/><circle cx="77.8" cy="69" r="1.3" fill="var(--ink)"/><circle cx="86.2" cy="69" r="1.3" fill="var(--ink)"/><path d="M76.6,74.4 Q82,79.4 87.4,74.4" fill="none" stroke="var(--ink)" stroke-width="1.2" stroke-linecap="round"/></g><path d="M54,44 A36,36 0 0 1 98,36" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity="0.9"/><path d="M230,120 L230,160 M206,170 L254,170" stroke="var(--ink-soft)" stroke-width="6" stroke-linecap="round"/><circle cx="230" cy="70" r="50" fill="var(--ink-soft)"/><circle cx="230" cy="70" r="44" fill="#e9eef3"/><g clip-path="url(#zr-p)"><circle cx="230" cy="78" r="46" fill="#f4d58d" stroke="var(--ink)" stroke-width="4.1"/><circle cx="213.9" cy="66.5" r="5.1" fill="var(--ink)"/><circle cx="246.1" cy="66.5" r="5.1" fill="var(--ink)"/><path d="M209.3,87.2 Q230,106.5 250.7,87.2" fill="none" stroke="var(--ink)" stroke-width="4.1" stroke-linecap="round"/></g><path d="M200,46 A36,36 0 0 1 216,36" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity="0.8"/><text x="72" y="150" text-anchor="end" font-size="11.5" font-weight="600" fill="var(--ink)">vypuklé</text><text x="262" y="150" text-anchor="start" font-size="11.5" font-weight="600" fill="var(--ink)">duté</text></svg></div>
+        <div class="topic-body">
+          <h3>Kulová zrcadla</h3>
+          <p>Zobrazování dutým a vypuklým zrcadlem, konstrukce obrazu, zobrazovací rovnice.</p>
+          <a class="btn primary" href="../oktava/kulova-zrcadla.html">Otevřít →</a>
+        </div>
+      </article>
+      <article class="topic-card">
+        <div class="topic-img"><svg viewBox="0 0 320 180" role="img" aria-label="Tři spojky (dvojvypuklá, ploskovypuklá, dutovypuklá) jsou uprostřed tlustší, tři rozptylky (dvojdutá, ploskodutá, vypuklodutá) tenčí; nahoře jejich schematické značky." xmlns="http://www.w3.org/2000/svg"><path d="M31,46 L37,46 Q55,86 37,126 L31,126 Q13,86 31,46 Z" fill="var(--lens)" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round"/><path d="M76,46 L83,46 Q107,86 83,126 L76,126 Q76,86 76,46 Z" fill="var(--lens)" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round"/><path d="M124,46 L132,46 Q158,86 132,126 L124,126 Q142,86 124,46 Z" fill="var(--lens)" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round"/><path d="M179,46 L201,46 Q185,86 201,126 L179,126 Q195,86 179,46 Z" fill="var(--lens)" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round"/><path d="M230,46 L248,46 Q230,86 248,126 L230,126 Q230,86 230,46 Z" fill="var(--lens)" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round"/><path d="M280,46 L294,46 Q302,86 294,126 L280,126 Q306,86 280,46 Z" fill="var(--lens)" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round"/><line x1="6" y1="86" x2="314" y2="86" stroke="var(--ink-soft)" stroke-width="1" stroke-dasharray="12 4 2 4"/><line x1="160" y1="20" x2="160" y2="166" stroke="var(--line)" stroke-width="1.4"/><line x1="82" y1="14" x2="82" y2="40" stroke="var(--ink)" stroke-width="1.8"/><path d="M78,20 L82,14 L86,20 M78,34 L82,40 L86,34" fill="none" stroke="var(--ink)" stroke-width="1.8" stroke-linejoin="round"/><line x1="238" y1="18" x2="238" y2="36" stroke="var(--ink)" stroke-width="1.8"/><path d="M234,12 L238,18 L242,12 M234,42 L238,36 L242,42" fill="none" stroke="var(--ink)" stroke-width="1.8" stroke-linejoin="round"/><text x="82" y="168" text-anchor="middle" font-size="12" font-weight="700" fill="var(--accent)">spojky</text><text x="238" y="168" text-anchor="middle" font-size="12" font-weight="700" fill="var(--accent)">rozptylky</text></svg></div>
+        <div class="topic-body">
+          <h3>Čočky</h3>
+          <p>Spojky a rozptylky, ohnisko, zobrazení tenkou čočkou.</p>
+          <a class="btn primary" href="../oktava/cocky.html">Otevřít →</a>
+        </div>
+      </article>
+      <article class="topic-card">
+        <div class="topic-img"><svg viewBox="0 0 320 180" role="img" aria-label="Lupa nad textem: pod lupou je text vzpřímený a zvětšený." xmlns="http://www.w3.org/2000/svg"><defs><clipPath id="lupa-c"><circle cx="142" cy="78" r="40"/></clipPath></defs><rect x="0" y="30" width="320" height="96" fill="var(--surface)"/><g font-size="12" font-weight="500" fill="var(--ink)"><text x="14" y="52">Lupa je spojka s krátkou ohniskovou</text><text x="14" y="70">vzdáleností. Předmět leží blíž než</text><text x="14" y="88">ohnisko, takže oko vidí zdánlivý,</text><text x="14" y="106">vzpřímený a zvětšený obraz.</text></g><circle cx="142" cy="78" r="40" fill="var(--surface)"/><g clip-path="url(#lupa-c)"><g transform="translate(142 78) scale(2.2) translate(-142 -78)"><g font-size="12" font-weight="500" fill="var(--ink)"><text x="14" y="52">Lupa je spojka s krátkou ohniskovou</text><text x="14" y="70">vzdáleností. Předmět leží blíž než</text><text x="14" y="88">ohnisko, takže oko vidí zdánlivý,</text><text x="14" y="106">vzpřímený a zvětšený obraz.</text></g></g></g><circle cx="142" cy="78" r="40" fill="var(--lens)" opacity="0.35"/><circle cx="142" cy="78" r="43" fill="none" stroke="var(--ink)" stroke-width="6"/><line x1="176.5" y1="106.9" x2="216.3" y2="140.4" stroke="var(--accent)" stroke-width="13" stroke-linecap="round"/><path d="M120,50 A34.0,34.0 0 0 1 148,43.6" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity="0.8"/></svg></div>
+        <div class="topic-body">
+          <h3>Zorný úhel a lupa</h3>
+          <p>Jak velký se předmět jeví oku a čím ho lupa zvětší.</p>
+          <a class="btn primary" href="../oktava/zorny-uhel-a-lupa.html">Otevřít →</a>
+        </div>
+      </article>
+      <article class="topic-card">
+        <div class="topic-img"><svg viewBox="0 0 320 180" role="img" aria-label="Školní mikroskop: okulár, tubus, revolverová hlavice s objektivy, stolek se sklíčkem, zaostřovací šrouby a osvětlení." xmlns="http://www.w3.org/2000/svg"><path d="M78,170 L86,156 L196,156 L204,170 Z" fill="var(--ink-soft)" stroke="var(--ink)" stroke-width="1.6" stroke-linejoin="round"/><path d="M178,156 L186,128 Q192,92 176,58 L162,46 L150,58 Q168,92 166,128 L162,156 Z" fill="var(--ink-soft)" stroke="var(--ink)" stroke-width="1.6" stroke-linejoin="round"/><rect x="120" y="140" width="20" height="16" rx="3" fill="var(--surface-2)" stroke="var(--ink)" stroke-width="1.6" stroke-linejoin="round"/><circle cx="130" cy="140" r="6" fill="#f4d58d" stroke="var(--ink)" stroke-width="1.2"/><path d="M130,133 L130,124" stroke="#e0b84a" stroke-width="3" opacity="0.8"/><rect x="88" y="118" width="88" height="7" rx="2" fill="var(--ink)" /><rect x="104" y="114" width="52" height="4" fill="#cfe4f2" stroke="var(--ink)" stroke-width="1"/><rect x="126" y="114.6" width="8" height="2.8" fill="var(--accent)" opacity="0.7"/><path d="M98,114 L110,112 M162,114 L150,112" stroke="var(--ink)" stroke-width="1.6" stroke-linecap="round"/><circle cx="178" cy="112" r="11" fill="var(--surface-2)" stroke="var(--ink)" stroke-width="1.6" stroke-linejoin="round"/><circle cx="178" cy="112" r="5" fill="var(--ink-soft)" stroke="var(--ink)" stroke-width="1.6" stroke-linejoin="round"/><path d="M120,92 L140,92 L146,100 L114,100 Z" fill="var(--ink-soft)" stroke="var(--ink)" stroke-width="1.6" stroke-linejoin="round"/><rect x="126" y="100" width="8" height="10" fill="var(--surface-2)" stroke="var(--ink)" stroke-width="1.6" stroke-linejoin="round"/><path d="M116,99 L111,108 L117,110 L121,100 Z M144,99 L149,108 L143,110 L139,100 Z" fill="var(--surface-2)" stroke="var(--ink)" stroke-width="1.6" stroke-linejoin="round"/><rect x="122" y="30" width="16" height="62" fill="var(--surface)" stroke="var(--ink)" stroke-width="1.6" stroke-linejoin="round"/><path d="M156,52 L138,52" stroke="var(--ink)" stroke-width="5"/><rect x="125" y="14" width="10" height="16" fill="var(--surface-2)" stroke="var(--ink)" stroke-width="1.6" stroke-linejoin="round"/><rect x="123" y="10" width="14" height="5" rx="2" fill="var(--ink)"/><line x1="84" y1="18" x2="124" y2="20" stroke="var(--ink-soft)" stroke-width="0.9"/><circle cx="124" cy="20" r="1.8" fill="var(--ink-soft)"/><text x="80" y="22" text-anchor="end" font-size="10.5" font-weight="600" fill="var(--ink)">okulár</text><line x1="84" y1="60" x2="122" y2="60" stroke="var(--ink-soft)" stroke-width="0.9"/><circle cx="122" cy="60" r="1.8" fill="var(--ink-soft)"/><text x="80" y="64" text-anchor="end" font-size="10.5" font-weight="600" fill="var(--ink)">tubus</text><line x1="84" y1="92" x2="126" y2="104" stroke="var(--ink-soft)" stroke-width="0.9"/><circle cx="126" cy="104" r="1.8" fill="var(--ink-soft)"/><text x="80" y="96" text-anchor="end" font-size="10.5" font-weight="600" fill="var(--ink)">objektiv</text><line x1="84" y1="132" x2="104" y2="121" stroke="var(--ink-soft)" stroke-width="0.9"/><circle cx="104" cy="121" r="1.8" fill="var(--ink-soft)"/><text x="80" y="136" text-anchor="end" font-size="10.5" font-weight="600" fill="var(--ink)">stolek</text><line x1="236" y1="112" x2="189" y2="112" stroke="var(--ink-soft)" stroke-width="0.9"/><circle cx="189" cy="112" r="1.8" fill="var(--ink-soft)"/><text x="240" y="116" text-anchor="start" font-size="10.5" font-weight="600" fill="var(--ink)">šrouby</text><line x1="236" y1="146" x2="140" y2="146" stroke="var(--ink-soft)" stroke-width="0.9"/><circle cx="140" cy="146" r="1.8" fill="var(--ink-soft)"/><text x="240" y="150" text-anchor="start" font-size="10.5" font-weight="600" fill="var(--ink)">osvětlení</text></svg></div>
+        <div class="topic-body">
+          <h3>Mikroskop</h3>
+          <p>Objektiv a okulár, zvětšení složené optické soustavy.</p>
+          <a class="btn primary" href="../oktava/mikroskop.html">Otevřít →</a>
+        </div>
+      </article>
+      <article class="topic-card">
+        <div class="topic-img"><svg viewBox="0 0 320 180" role="img" aria-label="Čočkový dalekohled na stativu míří na Měsíc na noční obloze." xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="320" height="180" fill="#1f1a33"/><circle cx="20" cy="22" r="1.2" fill="#fff" opacity="0.85"/><circle cx="52" cy="48" r="0.9" fill="#fff" opacity="0.85"/><circle cx="96" cy="16" r="1.4" fill="#fff" opacity="0.85"/><circle cx="140" cy="34" r="0.9" fill="#fff" opacity="0.85"/><circle cx="182" cy="12" r="1.2" fill="#fff" opacity="0.85"/><circle cx="208" cy="52" r="0.8" fill="#fff" opacity="0.85"/><circle cx="232" cy="88" r="1.1" fill="#fff" opacity="0.85"/><circle cx="300" cy="96" r="1.3" fill="#fff" opacity="0.85"/><circle cx="300" cy="18" r="0.9" fill="#fff" opacity="0.85"/><circle cx="24" cy="90" r="1.0" fill="#fff" opacity="0.85"/><circle cx="70" cy="110" r="0.8" fill="#fff" opacity="0.85"/><circle cx="160" cy="70" r="0.8" fill="#fff" opacity="0.85"/><defs><mask id="srpek"><circle cx="270" cy="40" r="19" fill="#fff"/><circle cx="261" cy="35" r="17" fill="#000"/></mask></defs><circle cx="270" cy="40" r="19" fill="#f3e6b5" mask="url(#srpek)"/><line x1="128.8" y1="111" x2="94.8" y2="174" stroke="#c9c2dc" stroke-width="3.2" stroke-linecap="round"/><line x1="128.8" y1="111" x2="130.8" y2="174" stroke="#c9c2dc" stroke-width="3.2" stroke-linecap="round"/><line x1="128.8" y1="111" x2="166.8" y2="174" stroke="#c9c2dc" stroke-width="3.2" stroke-linecap="round"/><line x1="128.8" y1="97" x2="128.8" y2="111" stroke="#c9c2dc" stroke-width="6"/><circle cx="128.8" cy="111" r="5" fill="#c9c2dc"/><path d="M45.7,126.3 L60.5,120.3 L63.5,127.7 L48.7,133.7 Z" fill="#c9c2dc" stroke="#0e0b18" stroke-width="1.4" stroke-linejoin="round"/><path d="M58.8,116.1 L175.3,68 L182.4,85.6 L65.2,131.9 Z" fill="#f4f1fa" stroke="#0e0b18" stroke-width="1.4" stroke-linejoin="round"/><path d="M174.3,65.7 L205.7,52.5 L215,75.7 L183.3,87.9 Z" fill="var(--accent)" stroke="#0e0b18" stroke-width="1.4" stroke-linejoin="round"/><line x1="100.1" y1="90.3" x2="129.8" y2="78.3" stroke="#c9c2dc" stroke-width="7" stroke-linecap="round"/><line x1="109.1" y1="95.3" x2="107.2" y2="90.6" stroke="#c9c2dc" stroke-width="2.4"/><line x1="126.9" y1="88.1" x2="125" y2="83.5" stroke="#c9c2dc" stroke-width="2.4"/></svg></div>
+        <div class="topic-body">
+          <h3>Dalekohled</h3>
+          <p>Čočkový a zrcadlový dalekohled, úhlové zvětšení.</p>
+          <a class="btn primary" href="../oktava/dalekohled.html">Otevřít →</a>
+        </div>
+      </article>
+    </div>
+  </section>
 
-  <div class="card">
-    <h2>Vlnová optika</h2>
-    <p>Pomůcky a materiály ke kapitole Vlnová optika — vlnové vlastnosti světla.</p>
-    <div class="actions">
-      <a class="btn primary" href="../oktava/difrakce-svetla.html">Difrakce světla →</a>
-      <a class="btn primary" href="../oktava/interference-svetla.html">Interference světla →</a>
+  <section class="chapter">
+    <div class="chapter-head">
+      <div>
+        <h2>Vlnová optika</h2>
+        <p>Vlnové vlastnosti světla: ohyb a skládání vlnění.</p>
+      </div>
+      <div class="car-nav" aria-label="Posun karet">
+        <button type="button" class="car-btn" data-dir="-1" aria-label="Předchozí karty">←</button>
+        <button type="button" class="car-btn" data-dir="1" aria-label="Další karty">→</button>
+      </div>
     </div>
-  </div>
+    <div class="track" tabindex="0" role="region" aria-label="Vlnová optika – témata">
+      <article class="topic-card">
+        <div class="topic-img"><svg viewBox="0 0 320 180" role="img" aria-label="Ohyb světla na štěrbině: za štěrbinou se vlnoplochy ohýbají, na stínítku vzniká široké hlavní maximum a slabší vedlejší maxima." xmlns="http://www.w3.org/2000/svg"><line x1="108" y1="16" x2="108" y2="174" stroke="var(--accent)" stroke-width="1.4" opacity="0.55"/><line x1="100" y1="16" x2="100" y2="174" stroke="var(--accent)" stroke-width="1.4" opacity="0.55"/><line x1="92" y1="16" x2="92" y2="174" stroke="var(--accent)" stroke-width="1.4" opacity="0.55"/><line x1="84" y1="16" x2="84" y2="174" stroke="var(--accent)" stroke-width="1.4" opacity="0.55"/><line x1="76" y1="16" x2="76" y2="174" stroke="var(--accent)" stroke-width="1.4" opacity="0.55"/><line x1="68" y1="16" x2="68" y2="174" stroke="var(--accent)" stroke-width="1.4" opacity="0.55"/><line x1="60" y1="16" x2="60" y2="174" stroke="var(--accent)" stroke-width="1.4" opacity="0.55"/><line x1="52" y1="16" x2="52" y2="174" stroke="var(--accent)" stroke-width="1.4" opacity="0.55"/><line x1="44" y1="16" x2="44" y2="174" stroke="var(--accent)" stroke-width="1.4" opacity="0.55"/><line x1="36" y1="16" x2="36" y2="174" stroke="var(--accent)" stroke-width="1.4" opacity="0.55"/><line x1="28" y1="16" x2="28" y2="174" stroke="var(--accent)" stroke-width="1.4" opacity="0.55"/><line x1="20" y1="16" x2="20" y2="174" stroke="var(--accent)" stroke-width="1.4" opacity="0.55"/><line x1="12" y1="16" x2="12" y2="174" stroke="var(--accent)" stroke-width="1.4" opacity="0.55"/><defs><clipPath id="clip-dif"><rect x="112.0" y="0" width="144.0" height="180"/></clipPath></defs><g clip-path="url(#clip-dif)"><path d="M112,73 A8,8 0 0 1 120,81 L120,109 A8,8 0 0 1 112,117" fill="none" stroke="var(--accent)" stroke-width="1.4" opacity="0.9"/><path d="M112,65 A16,16 0 0 1 128,81 L128,109 A16,16 0 0 1 112,125" fill="none" stroke="var(--accent)" stroke-width="1.4" opacity="0.8"/><path d="M112,57 A24,24 0 0 1 136,81 L136,109 A24,24 0 0 1 112,133" fill="none" stroke="var(--accent)" stroke-width="1.4" opacity="0.8"/><path d="M112,49 A32,32 0 0 1 144,81 L144,109 A32,32 0 0 1 112,141" fill="none" stroke="var(--accent)" stroke-width="1.4" opacity="0.7"/><path d="M112,41 A40,40 0 0 1 152,81 L152,109 A40,40 0 0 1 112,149" fill="none" stroke="var(--accent)" stroke-width="1.4" opacity="0.7"/><path d="M112,33 A48,48 0 0 1 160,81 L160,109 A48,48 0 0 1 112,157" fill="none" stroke="var(--accent)" stroke-width="1.4" opacity="0.7"/><path d="M112,25 A56,56 0 0 1 168,81 L168,109 A56,56 0 0 1 112,165" fill="none" stroke="var(--accent)" stroke-width="1.4" opacity="0.6"/><path d="M112,17 A64,64 0 0 1 176,81 L176,109 A64,64 0 0 1 112,173" fill="none" stroke="var(--accent)" stroke-width="1.4" opacity="0.6"/><path d="M112,9 A72,72 0 0 1 184,81 L184,109 A72,72 0 0 1 112,181" fill="none" stroke="var(--accent)" stroke-width="1.4" opacity="0.5"/><path d="M112,1 A80,80 0 0 1 192,81 L192,109 A80,80 0 0 1 112,189" fill="none" stroke="var(--accent)" stroke-width="1.4" opacity="0.5"/><path d="M112,-7 A88,88 0 0 1 200,81 L200,109 A88,88 0 0 1 112,197" fill="none" stroke="var(--accent)" stroke-width="1.4" opacity="0.5"/><path d="M112,-15 A96,96 0 0 1 208,81 L208,109 A96,96 0 0 1 112,205" fill="none" stroke="var(--accent)" stroke-width="1.4" opacity="0.4"/><path d="M112,-23 A104,104 0 0 1 216,81 L216,109 A104,104 0 0 1 112,213" fill="none" stroke="var(--accent)" stroke-width="1.4" opacity="0.4"/><path d="M112,-31 A112,112 0 0 1 224,81 L224,109 A112,112 0 0 1 112,221" fill="none" stroke="var(--accent)" stroke-width="1.4" opacity="0.3"/><path d="M112,-39 A120,120 0 0 1 232,81 L232,109 A120,120 0 0 1 112,229" fill="none" stroke="var(--accent)" stroke-width="1.4" opacity="0.3"/><path d="M112,-47 A128,128 0 0 1 240,81 L240,109 A128,128 0 0 1 112,237" fill="none" stroke="var(--accent)" stroke-width="1.4" opacity="0.3"/><path d="M112,-55 A136,136 0 0 1 248,81 L248,109 A136,136 0 0 1 112,245" fill="none" stroke="var(--accent)" stroke-width="1.4" opacity="0.2"/><path d="M112,-63 A144,144 0 0 1 256,81 L256,109 A144,144 0 0 1 112,253" fill="none" stroke="var(--accent)" stroke-width="1.4" opacity="0.2"/><path d="M112,-71 A152,152 0 0 1 264,81 L264,109 A152,152 0 0 1 112,261" fill="none" stroke="var(--accent)" stroke-width="1.4" opacity="0.1"/></g><line x1="112" y1="6" x2="112" y2="81" stroke="var(--ink)" stroke-width="5"/><line x1="112" y1="109" x2="112" y2="174" stroke="var(--ink)" stroke-width="5"/><line x1="268" y1="8" x2="268" y2="172" stroke="var(--ink)" stroke-width="2"/><rect x="259" y="10" width="7" height="2" fill="var(--accent)" opacity="0.2"/><rect x="259" y="12" width="7" height="2" fill="var(--accent)" opacity="0.2"/><rect x="259" y="14" width="7" height="2" fill="var(--accent)" opacity="0.2"/><rect x="259" y="16" width="7" height="2" fill="var(--accent)" opacity="0.2"/><rect x="259" y="18" width="7" height="2" fill="var(--accent)" opacity="0.2"/><rect x="259" y="20" width="7" height="2" fill="var(--accent)" opacity="0.2"/><rect x="259" y="22" width="7" height="2" fill="var(--accent)" opacity="0.2"/><rect x="259" y="24" width="7" height="2" fill="var(--accent)" opacity="0.2"/><rect x="259" y="26" width="7" height="2" fill="var(--accent)" opacity="0.2"/><rect x="259" y="28" width="7" height="2" fill="var(--accent)" opacity="0.2"/><rect x="259" y="30" width="7" height="2" fill="var(--accent)" opacity="0.2"/><rect x="259" y="32" width="7" height="2" fill="var(--accent)" opacity="0.2"/><rect x="259" y="34" width="7" height="2" fill="var(--accent)" opacity="0.2"/><rect x="259" y="36" width="7" height="2" fill="var(--accent)" opacity="0.2"/><rect x="259" y="38" width="7" height="2" fill="var(--accent)" opacity="0.1"/><rect x="259" y="40" width="7" height="2" fill="var(--accent)" opacity="0.1"/><rect x="259" y="54" width="7" height="2" fill="var(--accent)" opacity="0.1"/><rect x="259" y="56" width="7" height="2" fill="var(--accent)" opacity="0.2"/><rect x="259" y="58" width="7" height="2" fill="var(--accent)" opacity="0.3"/><rect x="259" y="60" width="7" height="2" fill="var(--accent)" opacity="0.3"/><rect x="259" y="62" width="7" height="2" fill="var(--accent)" opacity="0.4"/><rect x="259" y="64" width="7" height="2" fill="var(--accent)" opacity="0.4"/><rect x="259" y="66" width="7" height="2" fill="var(--accent)" opacity="0.5"/><rect x="259" y="68" width="7" height="2" fill="var(--accent)" opacity="0.5"/><rect x="259" y="70" width="7" height="2" fill="var(--accent)" opacity="0.6"/><rect x="259" y="72" width="7" height="2" fill="var(--accent)" opacity="0.7"/><rect x="259" y="74" width="7" height="2" fill="var(--accent)" opacity="0.7"/><rect x="259" y="76" width="7" height="2" fill="var(--accent)" opacity="0.8"/><rect x="259" y="78" width="7" height="2" fill="var(--accent)" opacity="0.8"/><rect x="259" y="80" width="7" height="2" fill="var(--accent)" opacity="0.8"/><rect x="259" y="82" width="7" height="2" fill="var(--accent)" opacity="0.9"/><rect x="259" y="84" width="7" height="2" fill="var(--accent)" opacity="0.9"/><rect x="259" y="86" width="7" height="2" fill="var(--accent)" opacity="0.9"/><rect x="259" y="88" width="7" height="2" fill="var(--accent)" opacity="1"/><rect x="259" y="90" width="7" height="2" fill="var(--accent)" opacity="1"/><rect x="259" y="92" width="7" height="2" fill="var(--accent)" opacity="1"/><rect x="259" y="94" width="7" height="2" fill="var(--accent)" opacity="1"/><rect x="259" y="96" width="7" height="2" fill="var(--accent)" opacity="1"/><rect x="259" y="98" width="7" height="2" fill="var(--accent)" opacity="1"/><rect x="259" y="100" width="7" height="2" fill="var(--accent)" opacity="1"/><rect x="259" y="102" width="7" height="2" fill="var(--accent)" opacity="0.9"/><rect x="259" y="104" width="7" height="2" fill="var(--accent)" opacity="0.9"/><rect x="259" y="106" width="7" height="2" fill="var(--accent)" opacity="0.9"/><rect x="259" y="108" width="7" height="2" fill="var(--accent)" opacity="0.8"/><rect x="259" y="110" width="7" height="2" fill="var(--accent)" opacity="0.8"/><rect x="259" y="112" width="7" height="2" fill="var(--accent)" opacity="0.8"/><rect x="259" y="114" width="7" height="2" fill="var(--accent)" opacity="0.7"/><rect x="259" y="116" width="7" height="2" fill="var(--accent)" opacity="0.7"/><rect x="259" y="118" width="7" height="2" fill="var(--accent)" opacity="0.6"/><rect x="259" y="120" width="7" height="2" fill="var(--accent)" opacity="0.5"/><rect x="259" y="122" width="7" height="2" fill="var(--accent)" opacity="0.5"/><rect x="259" y="124" width="7" height="2" fill="var(--accent)" opacity="0.4"/><rect x="259" y="126" width="7" height="2" fill="var(--accent)" opacity="0.4"/><rect x="259" y="128" width="7" height="2" fill="var(--accent)" opacity="0.3"/><rect x="259" y="130" width="7" height="2" fill="var(--accent)" opacity="0.3"/><rect x="259" y="132" width="7" height="2" fill="var(--accent)" opacity="0.2"/><rect x="259" y="134" width="7" height="2" fill="var(--accent)" opacity="0.1"/><rect x="259" y="148" width="7" height="2" fill="var(--accent)" opacity="0.1"/><rect x="259" y="150" width="7" height="2" fill="var(--accent)" opacity="0.1"/><rect x="259" y="152" width="7" height="2" fill="var(--accent)" opacity="0.2"/><rect x="259" y="154" width="7" height="2" fill="var(--accent)" opacity="0.2"/><rect x="259" y="156" width="7" height="2" fill="var(--accent)" opacity="0.2"/><rect x="259" y="158" width="7" height="2" fill="var(--accent)" opacity="0.2"/><rect x="259" y="160" width="7" height="2" fill="var(--accent)" opacity="0.2"/><rect x="259" y="162" width="7" height="2" fill="var(--accent)" opacity="0.2"/><rect x="259" y="164" width="7" height="2" fill="var(--accent)" opacity="0.2"/><rect x="259" y="166" width="7" height="2" fill="var(--accent)" opacity="0.2"/><rect x="259" y="168" width="7" height="2" fill="var(--accent)" opacity="0.2"/><rect x="259" y="170" width="7" height="2" fill="var(--accent)" opacity="0.2"/><path d="M271.9,8 L272,9 L272.1,10 L272.1,11 L272.2,12 L272.3,13 L272.4,14 L272.4,15 L272.5,16 L272.6,17 L272.6,18 L272.7,19 L272.8,20 L272.8,21 L272.8,22 L272.9,23 L272.9,24 L272.9,25 L272.9,26 L272.9,27 L272.8,28 L272.8,29 L272.8,30 L272.7,31 L272.6,32 L272.5,33 L272.4,34 L272.3,35 L272.2,36 L272.1,37 L272,38 L271.9,39 L271.7,40 L271.6,41 L271.5,42 L271.4,43 L271.3,44 L271.2,45 L271.1,46 L271,47 L271,48 L271,49 L271,50 L271.1,51 L271.2,52 L271.4,53 L271.6,54 L271.9,55 L272.2,56 L272.6,57 L273,58 L273.5,59 L274.1,60 L274.8,61 L275.5,62 L276.3,63 L277.2,64 L278.1,65 L279.1,66 L280.2,67 L281.4,68 L282.6,69 L283.8,70 L285.2,71 L286.5,72 L287.9,73 L289.4,74 L290.9,75 L292.3,76 L293.8,77 L295.3,78 L296.8,79 L298.2,80 L299.7,81 L301,82 L302.4,83 L303.6,84 L304.8,85 L305.9,86 L306.9,87 L307.9,88 L308.7,89 L309.4,90 L310,91 L310.4,92 L310.7,93 L310.9,94 L311,95 L310.9,96 L310.7,97 L310.4,98 L310,99 L309.4,100 L308.7,101 L307.9,102 L306.9,103 L305.9,104 L304.8,105 L303.6,106 L302.4,107 L301,108 L299.7,109 L298.2,110 L296.8,111 L295.3,112 L293.8,113 L292.3,114 L290.9,115 L289.4,116 L287.9,117 L286.5,118 L285.2,119 L283.8,120 L282.6,121 L281.4,122 L280.2,123 L279.1,124 L278.1,125 L277.2,126 L276.3,127 L275.5,128 L274.8,129 L274.1,130 L273.5,131 L273,132 L272.6,133 L272.2,134 L271.9,135 L271.6,136 L271.4,137 L271.2,138 L271.1,139 L271,140 L271,141 L271,142 L271,143 L271.1,144 L271.2,145 L271.3,146 L271.4,147 L271.5,148 L271.6,149 L271.7,150 L271.9,151 L272,152 L272.1,153 L272.2,154 L272.3,155 L272.4,156 L272.5,157 L272.6,158 L272.7,159 L272.8,160 L272.8,161 L272.8,162 L272.9,163 L272.9,164 L272.9,165 L272.9,166 L272.9,167 L272.8,168 L272.8,169 L272.8,170 L272.7,171 L272.6,172" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linejoin="round"/></svg></div>
+        <div class="topic-body">
+          <h3>Difrakce světla</h3>
+          <p>Ohyb světla na štěrbině a mřížce, první maximum.</p>
+          <a class="btn primary" href="../oktava/difrakce-svetla.html">Otevřít →</a>
+        </div>
+      </article>
+      <article class="topic-card">
+        <div class="topic-img"><svg viewBox="0 0 320 180" role="img" aria-label="Interference světla ze dvou štěrbin: vlnění z obou zdrojů se skládá a na stínítku vznikají střídavě světlé a tmavé proužky." xmlns="http://www.w3.org/2000/svg"><line x1="52" y1="16" x2="52" y2="174" stroke="var(--accent)" stroke-width="1.4" opacity="0.55"/><line x1="43" y1="16" x2="43" y2="174" stroke="var(--accent)" stroke-width="1.4" opacity="0.55"/><line x1="34" y1="16" x2="34" y2="174" stroke="var(--accent)" stroke-width="1.4" opacity="0.55"/><line x1="25" y1="16" x2="25" y2="174" stroke="var(--accent)" stroke-width="1.4" opacity="0.55"/><line x1="16" y1="16" x2="16" y2="174" stroke="var(--accent)" stroke-width="1.4" opacity="0.55"/><defs><clipPath id="clip-int"><rect x="58.0" y="0" width="198.0" height="180"/></clipPath></defs><g clip-path="url(#clip-int)" fill="none" stroke-width="1.3"><circle cx="58" cy="77" r="9" stroke="var(--accent)" opacity="0.8"/><circle cx="58" cy="113" r="9" stroke="var(--virtual)" opacity="0.8"/><circle cx="58" cy="77" r="18" stroke="var(--accent)" opacity="0.8"/><circle cx="58" cy="113" r="18" stroke="var(--virtual)" opacity="0.8"/><circle cx="58" cy="77" r="27" stroke="var(--accent)" opacity="0.8"/><circle cx="58" cy="113" r="27" stroke="var(--virtual)" opacity="0.8"/><circle cx="58" cy="77" r="36" stroke="var(--accent)" opacity="0.7"/><circle cx="58" cy="113" r="36" stroke="var(--virtual)" opacity="0.7"/><circle cx="58" cy="77" r="45" stroke="var(--accent)" opacity="0.7"/><circle cx="58" cy="113" r="45" stroke="var(--virtual)" opacity="0.7"/><circle cx="58" cy="77" r="54" stroke="var(--accent)" opacity="0.7"/><circle cx="58" cy="113" r="54" stroke="var(--virtual)" opacity="0.7"/><circle cx="58" cy="77" r="63" stroke="var(--accent)" opacity="0.7"/><circle cx="58" cy="113" r="63" stroke="var(--virtual)" opacity="0.7"/><circle cx="58" cy="77" r="72" stroke="var(--accent)" opacity="0.6"/><circle cx="58" cy="113" r="72" stroke="var(--virtual)" opacity="0.6"/><circle cx="58" cy="77" r="81" stroke="var(--accent)" opacity="0.6"/><circle cx="58" cy="113" r="81" stroke="var(--virtual)" opacity="0.6"/><circle cx="58" cy="77" r="90" stroke="var(--accent)" opacity="0.6"/><circle cx="58" cy="113" r="90" stroke="var(--virtual)" opacity="0.6"/><circle cx="58" cy="77" r="99" stroke="var(--accent)" opacity="0.5"/><circle cx="58" cy="113" r="99" stroke="var(--virtual)" opacity="0.5"/><circle cx="58" cy="77" r="108" stroke="var(--accent)" opacity="0.5"/><circle cx="58" cy="113" r="108" stroke="var(--virtual)" opacity="0.5"/><circle cx="58" cy="77" r="117" stroke="var(--accent)" opacity="0.5"/><circle cx="58" cy="113" r="117" stroke="var(--virtual)" opacity="0.5"/><circle cx="58" cy="77" r="126" stroke="var(--accent)" opacity="0.5"/><circle cx="58" cy="113" r="126" stroke="var(--virtual)" opacity="0.5"/><circle cx="58" cy="77" r="135" stroke="var(--accent)" opacity="0.4"/><circle cx="58" cy="113" r="135" stroke="var(--virtual)" opacity="0.4"/><circle cx="58" cy="77" r="144" stroke="var(--accent)" opacity="0.4"/><circle cx="58" cy="113" r="144" stroke="var(--virtual)" opacity="0.4"/><circle cx="58" cy="77" r="153" stroke="var(--accent)" opacity="0.4"/><circle cx="58" cy="113" r="153" stroke="var(--virtual)" opacity="0.4"/><circle cx="58" cy="77" r="162" stroke="var(--accent)" opacity="0.3"/><circle cx="58" cy="113" r="162" stroke="var(--virtual)" opacity="0.3"/><circle cx="58" cy="77" r="171" stroke="var(--accent)" opacity="0.3"/><circle cx="58" cy="113" r="171" stroke="var(--virtual)" opacity="0.3"/><circle cx="58" cy="77" r="180" stroke="var(--accent)" opacity="0.3"/><circle cx="58" cy="113" r="180" stroke="var(--virtual)" opacity="0.3"/><circle cx="58" cy="77" r="189" stroke="var(--accent)" opacity="0.3"/><circle cx="58" cy="113" r="189" stroke="var(--virtual)" opacity="0.3"/><circle cx="58" cy="77" r="198" stroke="var(--accent)" opacity="0.2"/><circle cx="58" cy="113" r="198" stroke="var(--virtual)" opacity="0.2"/><circle cx="58" cy="77" r="207" stroke="var(--accent)" opacity="0.2"/><circle cx="58" cy="113" r="207" stroke="var(--virtual)" opacity="0.2"/><circle cx="58" cy="77" r="216" stroke="var(--accent)" opacity="0.2"/><circle cx="58" cy="113" r="216" stroke="var(--virtual)" opacity="0.2"/></g><line x1="58" y1="6" x2="58" y2="74" stroke="var(--ink)" stroke-width="5"/><line x1="58" y1="80" x2="58" y2="110" stroke="var(--ink)" stroke-width="5"/><line x1="58" y1="116" x2="58" y2="174" stroke="var(--ink)" stroke-width="5"/><line x1="268" y1="8" x2="268" y2="172" stroke="var(--ink)" stroke-width="2"/><rect x="259" y="12" width="7" height="2" fill="var(--accent)" opacity="0.2"/><rect x="259" y="14" width="7" height="2" fill="var(--accent)" opacity="0.2"/><rect x="259" y="16" width="7" height="2" fill="var(--accent)" opacity="0.3"/><rect x="259" y="18" width="7" height="2" fill="var(--accent)" opacity="0.4"/><rect x="259" y="20" width="7" height="2" fill="var(--accent)" opacity="0.5"/><rect x="259" y="22" width="7" height="2" fill="var(--accent)" opacity="0.6"/><rect x="259" y="24" width="7" height="2" fill="var(--accent)" opacity="0.7"/><rect x="259" y="26" width="7" height="2" fill="var(--accent)" opacity="0.8"/><rect x="259" y="28" width="7" height="2" fill="var(--accent)" opacity="0.8"/><rect x="259" y="30" width="7" height="2" fill="var(--accent)" opacity="0.9"/><rect x="259" y="32" width="7" height="2" fill="var(--accent)" opacity="0.9"/><rect x="259" y="34" width="7" height="2" fill="var(--accent)" opacity="1"/><rect x="259" y="36" width="7" height="2" fill="var(--accent)" opacity="1"/><rect x="259" y="38" width="7" height="2" fill="var(--accent)" opacity="1"/><rect x="259" y="40" width="7" height="2" fill="var(--accent)" opacity="1"/><rect x="259" y="42" width="7" height="2" fill="var(--accent)" opacity="1"/><rect x="259" y="44" width="7" height="2" fill="var(--accent)" opacity="1"/><rect x="259" y="46" width="7" height="2" fill="var(--accent)" opacity="0.9"/><rect x="259" y="48" width="7" height="2" fill="var(--accent)" opacity="0.9"/><rect x="259" y="50" width="7" height="2" fill="var(--accent)" opacity="0.8"/><rect x="259" y="52" width="7" height="2" fill="var(--accent)" opacity="0.8"/><rect x="259" y="54" width="7" height="2" fill="var(--accent)" opacity="0.7"/><rect x="259" y="56" width="7" height="2" fill="var(--accent)" opacity="0.6"/><rect x="259" y="58" width="7" height="2" fill="var(--accent)" opacity="0.5"/><rect x="259" y="60" width="7" height="2" fill="var(--accent)" opacity="0.4"/><rect x="259" y="62" width="7" height="2" fill="var(--accent)" opacity="0.3"/><rect x="259" y="64" width="7" height="2" fill="var(--accent)" opacity="0.2"/><rect x="259" y="70" width="7" height="2" fill="var(--accent)" opacity="0.1"/><rect x="259" y="72" width="7" height="2" fill="var(--accent)" opacity="0.3"/><rect x="259" y="74" width="7" height="2" fill="var(--accent)" opacity="0.4"/><rect x="259" y="76" width="7" height="2" fill="var(--accent)" opacity="0.5"/><rect x="259" y="78" width="7" height="2" fill="var(--accent)" opacity="0.6"/><rect x="259" y="80" width="7" height="2" fill="var(--accent)" opacity="0.7"/><rect x="259" y="82" width="7" height="2" fill="var(--accent)" opacity="0.8"/><rect x="259" y="84" width="7" height="2" fill="var(--accent)" opacity="0.8"/><rect x="259" y="86" width="7" height="2" fill="var(--accent)" opacity="0.9"/><rect x="259" y="88" width="7" height="2" fill="var(--accent)" opacity="0.9"/><rect x="259" y="90" width="7" height="2" fill="var(--accent)" opacity="1"/><rect x="259" y="92" width="7" height="2" fill="var(--accent)" opacity="1"/><rect x="259" y="94" width="7" height="2" fill="var(--accent)" opacity="1"/><rect x="259" y="96" width="7" height="2" fill="var(--accent)" opacity="1"/><rect x="259" y="98" width="7" height="2" fill="var(--accent)" opacity="1"/><rect x="259" y="100" width="7" height="2" fill="var(--accent)" opacity="0.9"/><rect x="259" y="102" width="7" height="2" fill="var(--accent)" opacity="0.9"/><rect x="259" y="104" width="7" height="2" fill="var(--accent)" opacity="0.8"/><rect x="259" y="106" width="7" height="2" fill="var(--accent)" opacity="0.8"/><rect x="259" y="108" width="7" height="2" fill="var(--accent)" opacity="0.7"/><rect x="259" y="110" width="7" height="2" fill="var(--accent)" opacity="0.6"/><rect x="259" y="112" width="7" height="2" fill="var(--accent)" opacity="0.5"/><rect x="259" y="114" width="7" height="2" fill="var(--accent)" opacity="0.4"/><rect x="259" y="116" width="7" height="2" fill="var(--accent)" opacity="0.3"/><rect x="259" y="118" width="7" height="2" fill="var(--accent)" opacity="0.1"/><rect x="259" y="124" width="7" height="2" fill="var(--accent)" opacity="0.2"/><rect x="259" y="126" width="7" height="2" fill="var(--accent)" opacity="0.3"/><rect x="259" y="128" width="7" height="2" fill="var(--accent)" opacity="0.4"/><rect x="259" y="130" width="7" height="2" fill="var(--accent)" opacity="0.5"/><rect x="259" y="132" width="7" height="2" fill="var(--accent)" opacity="0.6"/><rect x="259" y="134" width="7" height="2" fill="var(--accent)" opacity="0.7"/><rect x="259" y="136" width="7" height="2" fill="var(--accent)" opacity="0.8"/><rect x="259" y="138" width="7" height="2" fill="var(--accent)" opacity="0.8"/><rect x="259" y="140" width="7" height="2" fill="var(--accent)" opacity="0.9"/><rect x="259" y="142" width="7" height="2" fill="var(--accent)" opacity="0.9"/><rect x="259" y="144" width="7" height="2" fill="var(--accent)" opacity="1"/><rect x="259" y="146" width="7" height="2" fill="var(--accent)" opacity="1"/><rect x="259" y="148" width="7" height="2" fill="var(--accent)" opacity="1"/><rect x="259" y="150" width="7" height="2" fill="var(--accent)" opacity="1"/><rect x="259" y="152" width="7" height="2" fill="var(--accent)" opacity="1"/><rect x="259" y="154" width="7" height="2" fill="var(--accent)" opacity="1"/><rect x="259" y="156" width="7" height="2" fill="var(--accent)" opacity="0.9"/><rect x="259" y="158" width="7" height="2" fill="var(--accent)" opacity="0.9"/><rect x="259" y="160" width="7" height="2" fill="var(--accent)" opacity="0.8"/><rect x="259" y="162" width="7" height="2" fill="var(--accent)" opacity="0.8"/><rect x="259" y="164" width="7" height="2" fill="var(--accent)" opacity="0.7"/><rect x="259" y="166" width="7" height="2" fill="var(--accent)" opacity="0.6"/><rect x="259" y="168" width="7" height="2" fill="var(--accent)" opacity="0.5"/><rect x="259" y="170" width="7" height="2" fill="var(--accent)" opacity="0.4"/><path d="M271.3,8 L271.1,9 L271,10 L271.1,11 L271.4,12 L271.9,13 L272.6,14 L273.5,15 L274.5,16 L275.7,17 L277,18 L278.5,19 L280.1,20 L281.9,21 L283.7,22 L285.6,23 L287.6,24 L289.6,25 L291.6,26 L293.7,27 L295.7,28 L297.7,29 L299.6,30 L301.4,31 L303.2,32 L304.8,33 L306.2,34 L307.5,35 L308.6,36 L309.5,37 L310.2,38 L310.7,39 L311,40 L311,41 L310.8,42 L310.3,43 L309.6,44 L308.7,45 L307.6,46 L306.3,47 L304.8,48 L303.1,49 L301.2,50 L299.2,51 L297.1,52 L295,53 L292.7,54 L290.5,55 L288.2,56 L286,57 L283.8,58 L281.8,59 L279.8,60 L278,61 L276.3,62 L274.9,63 L273.6,64 L272.6,65 L271.8,66 L271.3,67 L271,68 L271,69 L271.3,70 L271.9,71 L272.7,72 L273.8,73 L275.1,74 L276.6,75 L278.3,76 L280.2,77 L282.3,78 L284.5,79 L286.8,80 L289.1,81 L291.5,82 L293.8,83 L296.2,84 L298.4,85 L300.6,86 L302.6,87 L304.4,88 L306.1,89 L307.6,90 L308.8,91 L309.7,92 L310.4,93 L310.9,94 L311,95 L310.9,96 L310.4,97 L309.7,98 L308.8,99 L307.6,100 L306.1,101 L304.4,102 L302.6,103 L300.6,104 L298.4,105 L296.2,106 L293.8,107 L291.5,108 L289.1,109 L286.8,110 L284.5,111 L282.3,112 L280.2,113 L278.3,114 L276.6,115 L275.1,116 L273.8,117 L272.7,118 L271.9,119 L271.3,120 L271,121 L271,122 L271.3,123 L271.8,124 L272.6,125 L273.6,126 L274.9,127 L276.3,128 L278,129 L279.8,130 L281.8,131 L283.8,132 L286,133 L288.2,134 L290.5,135 L292.7,136 L295,137 L297.1,138 L299.2,139 L301.2,140 L303.1,141 L304.8,142 L306.3,143 L307.6,144 L308.7,145 L309.6,146 L310.3,147 L310.8,148 L311,149 L311,150 L310.7,151 L310.2,152 L309.5,153 L308.6,154 L307.5,155 L306.2,156 L304.8,157 L303.2,158 L301.4,159 L299.6,160 L297.7,161 L295.7,162 L293.7,163 L291.6,164 L289.6,165 L287.6,166 L285.6,167 L283.7,168 L281.9,169 L280.1,170 L278.5,171 L277,172" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linejoin="round"/></svg></div>
+        <div class="topic-body">
+          <h3>Interference světla</h3>
+          <p>Skládání vlnění ze dvou zdrojů, maxima a minima.</p>
+          <a class="btn primary" href="../oktava/interference-svetla.html">Otevřít →</a>
+        </div>
+      </article>
+    </div>
+  </section>
 
   <footer>Fyzika — Oktáva/4. ročník</footer>
 </div>
+
+<script>
+(function(){
+  "use strict";
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var chapters = document.querySelectorAll(".chapter");
+  function setup(ch){
+    var track = ch.querySelector(".track");
+    var prev = ch.querySelector('.car-btn[data-dir="-1"]');
+    var next = ch.querySelector('.car-btn[data-dir="1"]');
+    function update(){
+      var more = track.scrollWidth > track.clientWidth + 2;
+      prev.parentNode.style.visibility = more ? "visible" : "hidden";
+      prev.disabled = track.scrollLeft <= 2;
+      next.disabled = track.scrollLeft >= track.scrollWidth - track.clientWidth - 2;
+    }
+    function go(dir){
+      track.scrollBy({ left: dir * track.clientWidth * 0.8, behavior: reduce ? "auto" : "smooth" });
+    }
+    prev.addEventListener("click", function(){ go(-1); });
+    next.addEventListener("click", function(){ go(1); });
+    track.addEventListener("scroll", update);
+    window.addEventListener("resize", update);
+    update();
+  }
+  for (var i = 0; i < chapters.length; i++) setup(chapters[i]);
+})();
+</script>
 
 </body>
 </html>
