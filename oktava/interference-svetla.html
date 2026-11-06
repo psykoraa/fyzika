@@ -730,7 +730,7 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
         <div class="applet-head-text">
           <span class="cat-tag">Aplet</span>
           <h2>Optická mřížka</h2>
-          <p class="desc">Světlo dopadá kolmo na optickou mřížku. Měňte hustotu vrypů, vlnovou délku světla a vzdálenost stínítka. Aplet vykreslí maxima jednotlivých řádů a vypíše úhly <i>α</i> podle vztahu sin <i>α</i> = <i>kλ</i>/<i>b</i>. Řád, pro který by vyšlo sin <i>α</i> větší než 1, nevznikne. Přepnutím na bílé světlo uvidíte místo bodů spektra.</p>
+          <p class="desc">Světlo dopadá kolmo na optickou mřížku. Měňte hustotu vrypů, počet osvětlených štěrbin, šířku štěrbin, vlnovou délku a vzdálenost stínítka. Aplet vykreslí interferenční obrazec a graf intenzity: maxima jsou pod úhly <i>α</i>, pro které platí sin <i>α</i> = <i>kλ</i>/<i>b</i>. Řád, pro který by vyšlo sin <i>α</i> větší než 1, nevznikne. Kliknutím nebo tažením v obrazci nebo v grafu vyberete bod na stínítku a aplet vypíše dráhový rozdíl paprsků ze sousedních štěrbin. Přepnutím na bílé světlo uvidíte místo čar spektra.</p>
         </div>
         <button class="btn ghost fs-btn" id="g-fs-btn" type="button" aria-pressed="false">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path id="g-fs-icon" d="M1.5 5.5V1.5H5.5M10.5 1.5H14.5V5.5M14.5 10.5V14.5H10.5M5.5 14.5H1.5V10.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -756,6 +756,16 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
           <input type="range" id="g-sl-N" min="100" max="1400" step="5" value="500">
           <span class="slider-val" id="g-out-N" aria-live="polite"></span>
         </div>
+        <div class="mode-row slider-row" id="g-row-M">
+          <label class="mode-row-label" for="g-sl-M">Počet osvětlených štěrbin</label>
+          <input type="range" id="g-sl-M" min="2" max="16" step="1" value="8">
+          <span class="slider-val" id="g-out-M" aria-live="polite"></span>
+        </div>
+        <div class="mode-row slider-row" id="g-row-a">
+          <label class="mode-row-label" for="g-sl-a">Šířka štěrbin</label>
+          <input type="range" id="g-sl-a" min="10" max="50" step="5" value="25">
+          <span class="slider-val" id="g-out-a" aria-live="polite"></span>
+        </div>
         <div class="mode-row">
           <span class="mode-row-label">Předvolby</span>
           <div class="seg" id="g-preset-seg">
@@ -776,6 +786,13 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
             <button class="chip accented on" type="button" aria-pressed="true">±1&nbsp;m</button>
             <button class="chip accented" type="button" aria-pressed="false">±2&nbsp;m</button>
             <button class="chip accented" type="button" aria-pressed="false">±5&nbsp;m</button>
+          </div>
+        </div>
+        <div class="mode-row">
+          <span class="mode-row-label">Zobrazení</span>
+          <div class="seg">
+            <button class="chip accented on" id="g-env-btn" type="button" aria-pressed="true">ukázat obálku (ohyb na štěrbině)</button>
+            <button class="chip" id="g-clear-btn" type="button" hidden>zrušit výběr bodu</button>
             <button class="chip" id="g-reset-btn" type="button">Výchozí hodnoty</button>
           </div>
         </div>
@@ -783,10 +800,10 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
 
       <div class="applet-stage">
         <div class="canvas-wrap">
-          <svg class="optics" id="g-svg" viewBox="0 0 960 520" role="img" aria-label="Optická mřížka: nahoře schéma s laserem, mřížkou a stínítkem, dole maxima jednotlivých řádů na stínítku a jejich poloha."></svg>
+          <svg class="optics" id="g-svg" viewBox="0 0 960 640" role="img" aria-label="Optická mřížka: nahoře schéma s mřížkou a stínítkem, uprostřed interferenční obrazec na stínítku a dole graf intenzity světla v závislosti na poloze na stínítku (u bílého světla poloha spekter jednotlivých řádů)."></svg>
           <div class="legend" id="g-legend" aria-hidden="true"></div>
         </div>
-        <p class="hint">Schéma nahoře je nakreslené svisle zvětšeně (úhly v něm nejsou skutečné); polohy na stínítku odpovídají hodnotám v tabulce. Intenzity maxim jsou pro přehlednost stejné (mřížka s velmi úzkými štěrbinami). U CD a DVD jde o odraz, úhly ale vycházejí stejně jako u mřížky se stejnou roztečí stop.</p>
+        <p class="hint">Schéma nahoře je nakreslené svisle zvětšeně (úhly v něm nejsou skutečné) a rozteč štěrbin je zvětšená, aby šla vidět; polohy na stínítku odpovídají obrazci, grafu i tabulce. Jas obrazce odpovídá intenzitě v grafu, graf je vztažený k hlavnímu maximu bez vlivu obálky. Hlavní maxima zůstávají na stejných místech, ať je štěrbin osvětleno kolik chce; s jejich počtem <i>M</i> se ale zužují a mezi nimi vzniká <i>M</i>&nbsp;−&nbsp;1 minim a <i>M</i>&nbsp;−&nbsp;2 slabých vedlejších maxim. Skutečná mřížka má osvětlených štěrbin tisíce, takže maxima jsou tenké čáry. Obálka (čárkovaně) je rozložení intenzity po ohybu na jedné štěrbině: čím užší štěrbina, tím je plošší. Výběr bodu funguje jen v jednobarevném světle. U CD a DVD jde o odraz, úhly ale vycházejí stejně jako u mřížky se stejnou roztečí stop.</p>
       </div>
 
       <div class="applet-results">
@@ -794,13 +811,15 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
           <div>
             <div class="readout" id="g-readout">
               <div class="cell"><span class="label"><i>b</i></span><span class="value" id="g-out-b">—</span></div>
+              <div class="cell"><span class="label">Δ<i>l</i></span><span class="value" id="g-out-dl">—</span></div>
+              <div class="cell"><span class="label">Δ<i>l</i>/<i>λ</i></span><span class="value" id="g-out-dll">—</span></div>
               <div class="cell"><span class="label"><i>k</i><sub>max</sub></span><span class="value" id="g-out-kmax">—</span></div>
-              <div class="cell"><span class="label">počet maxim</span><span class="value" id="g-out-cnt">—</span></div>
             </div>
             <p class="position-note" id="g-note"></p>
           </div>
           <div class="calc">
-            <div class="calc-title">Řády maxim</div>
+            <div class="calc-title">Výpočet a řády maxim</div>
+            <div id="g-calc"></div>
             <div class="theory-table-wrap"><table class="theory-table" id="g-table"></table></div>
           </div>
         </div>
@@ -1262,24 +1281,44 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
   // ================= APLET 2: OPTICKÁ MŘÍŽKA =================
   (function(){
     var svg = document.getElementById('g-svg');
-    var W = 960, H = 520;
-    var DEF = { lam:650, N:500, D:1.0, X:1 };
+    var W = 960, H = 640;
+    var DEF = { lam:650, N:500, D:1.0, X:1, M:8, af:25 };
     var RANGES = [0.5, 1, 2, 5];
-    var st = { lam:DEF.lam, N:DEF.N, D:DEF.D, X:DEF.X, white:false };
+    var st = { lam:DEF.lam, N:DEF.N, D:DEF.D, X:DEF.X, M:DEF.M, af:DEF.af, white:false, env:true, mk:null };
     var sz = sizer(svg, W, H, function(){ render(); });
 
     var slLam = document.getElementById('g-sl-lam'), slN = document.getElementById('g-sl-N'), slD = document.getElementById('g-sl-D');
+    var slM = document.getElementById('g-sl-M'), slA = document.getElementById('g-sl-a');
     var outLam = document.getElementById('g-out-lam'), outN = document.getElementById('g-out-N'), outD = document.getElementById('g-out-D');
-    var rangeBtns = document.querySelectorAll('#g-range-seg .chip.accented');
+    var outM = document.getElementById('g-out-M'), outA = document.getElementById('g-out-a');
+    var rangeBtns = document.querySelectorAll('#g-range-seg .chip');
     var lightBtns = document.querySelectorAll('#g-light-seg .chip');
     var presetBtns = document.querySelectorAll('#g-preset-seg .chip');
     var PRESETS = [500, 625, 1351];
-    var resetBtn = document.getElementById('g-reset-btn');
+    var envBtn = document.getElementById('g-env-btn'), clearBtn = document.getElementById('g-clear-btn'), resetBtn = document.getElementById('g-reset-btn');
 
     function pxm(x){ return PL + (x + st.X) / (2 * st.X) * PW; }     // x v metrech
     function clampPx(p){ return Math.max(PL, Math.min(PL + PW, p)); }
     function ang(k, lam, b){ var s = k * lam / b; return s < 1 - 1e-12 ? Math.asin(s) : -1; }
     function xpos(k, lam, b){ var a = ang(k, lam, b); return a < 0 ? Infinity : st.D * Math.tan(a); }
+    function sinT(x){ return x / Math.sqrt(x * x + st.D * st.D); }
+
+    // normovaná intenzita I / I_max (hlavní maximum bez obálky = 1):
+    // obálka (ohyb na jedné štěrbině) krát interferenční člen M štěrbin [sin(Mφ) / (M sin φ)]²
+    function envelope(x){
+      var b = 1e-3 / st.N, a = b * st.af / 100;
+      var e = sinc(Math.PI * a * sinT(x) / (st.lam * 1e-9)); return e * e;
+    }
+    function inten(x){
+      var b = 1e-3 / st.N, h = Math.PI * b * sinT(x) / (st.lam * 1e-9), sh = Math.sin(h), f;
+      if(Math.abs(sh) < 1e-9){ f = 1; } else { f = Math.sin(st.M * h) / (st.M * sh); f = f * f; }
+      return envelope(x) * f;
+    }
+    function intenAvg(x, w){             // průměr přes šířku pixelu: jinak by úzká maxima vytvořila falešný vzor
+      var s = 0, j;
+      for(j = 0; j < 5; j++){ s += inten(x + (j - 2) * w / 4); }
+      return s / 5;
+    }
 
     function render(){
       var X = st.X, K = sz.K, D = st.D;
@@ -1287,15 +1326,16 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
       var fsz = function(n){ return Math.round(n * K * 10) / 10; };
       var fsl = function(n){ return Math.round(n * Math.min(K, 2) * 10) / 10; };
       var o = '', k, i, sg;
-      var col = rgbStr(lamRGB(st.lam));
+      var rgb = lamRGB(st.lam), col = rgbStr(rgb);
       var kmaxMono = Math.floor(b / lam + 1e-9);
       var kmaxWhite = Math.floor(b / 400e-9 + 1e-9);
-      var by = 196, bh = 72, yBase = 450, yTop = 318;
+      var by = 196, bh = 72, gy0 = 580, gh = 230, vmax = 1.15;
+      var gy = function(v){ return gy0 - v / vmax * gh; };
+      var wPix = 2 * X / PW * 1.2;                                   // m na 1,2 px
 
       o += '<defs><clipPath id="g-clip"><rect x="20" y="14" width="920" height="156"/></clipPath>' +
            '<clipPath id="g-strip"><rect x="' + PL + '" y="' + by + '" width="' + PW + '" height="' + bh + '"/></clipPath>' +
-           '<radialGradient id="g-blob"><stop offset="0" stop-color="' + col + '" stop-opacity="1"/><stop offset="0.45" stop-color="' + col + '" stop-opacity="0.65"/><stop offset="1" stop-color="' + col + '" stop-opacity="0"/></radialGradient>' +
-           '<radialGradient id="g-blobw"><stop offset="0" stop-color="#fff" stop-opacity="1"/><stop offset="0.45" stop-color="#fff" stop-opacity="0.65"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>';
+           '<marker id="g-arr-in" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink-soft)"/></marker>';
       // spektra bílého světla: jeden přechod pro každý řád
       var bands = [];
       if(st.white){
@@ -1313,54 +1353,78 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
           o += '<linearGradient id="g-sp' + k + '" gradientUnits="userSpaceOnUse" x1="' + pxm(xa) + '" y1="0" x2="' + pxm(xb) + '" y2="0">' + stops + '</linearGradient>' +
                '<linearGradient id="g-sn' + k + '" gradientUnits="userSpaceOnUse" x1="' + pxm(-xa) + '" y1="0" x2="' + pxm(-xb) + '" y2="0">' + stops + '</linearGradient>';
         }
+      } else {
+        // obrazec na stínítku (vodorovně) a boční pásek (pohled shora ve schématu)
+        var N1 = 860, st1 = '', SN = 200, st2 = '', xm, vv;
+        for(i = 0; i <= N1; i++){
+          xm = -X + 2 * X * i / N1;
+          st1 += '<stop offset="' + (i / N1).toFixed(4) + '" stop-color="' + rgbStr(rgb, Math.max(0, Math.min(1, intenAvg(xm, wPix)))) + '"/>';
+        }
+        for(i = 0; i <= SN; i++){
+          xm = X - 2 * X * i / SN;
+          vv = Math.max(0, Math.min(1, intenAvg(xm, 2 * X / 128 * 1.2)));
+          st2 += '<stop offset="' + (i / SN).toFixed(4) + '" stop-color="' + rgbStr(rgb, vv) + '"/>';
+        }
+        o += '<linearGradient id="g-grad" x1="0" y1="0" x2="1" y2="0">' + st1 + '</linearGradient>' +
+             '<linearGradient id="g-side" x1="0" y1="0" x2="0" y2="1">' + st2 + '</linearGradient>';
       }
       o += '</defs>';
 
-      // ---------- A: schéma ----------
+      // ---------- A: schéma (pohled shora, svisle zvětšeno) ----------
       var yc = 92, ky = 64 / X, xs = 120, xsc = xs + D * 240;
+      var sp = 8, M = st.M;                                          // rozteč štěrbin ve schématu je zvětšená
+      var yTopS = yc - (M - 1) / 2 * sp, yk = (st.mk === null) ? yc : yc - st.mk * ky;
       o += '<g font-family="Work Sans, sans-serif" font-size="' + fsl(13) + '" fill="var(--ink)">';
-      o += '<rect x="26" y="' + (yc - 12) + '" width="36" height="24" rx="3" fill="var(--ink)"/>';
-      o += '<line x1="62" y1="' + yc + '" x2="' + (xs - 4) + '" y2="' + yc + '" stroke="' + (st.white ? '#ccc' : col) + '" stroke-width="3"/>';
-      o += '<text x="44" y="' + (yc - 18) + '" text-anchor="middle" fill="var(--ink-soft)">laser</text>';
+      var yi;
+      for(yi = -3; yi <= 3; yi++){
+        o += '<line x1="28" y1="' + (yc + yi * 22) + '" x2="' + (xs - 4) + '" y2="' + (yc + yi * 22) + '" stroke="' + (st.white ? '#999' : col) + '" stroke-width="1.6" stroke-opacity="0.8" marker-end="url(#g-arr-in)"/>';
+      }
       o += '<g clip-path="url(#g-clip)">';
-      function ray(kk, lamK, c, wdt, dash){
+      function ray(kk, lamK, c, wdt){
         var xx = xpos(kk, lamK, b); if(!isFinite(xx) || Math.abs(xx * ky) > 110) return;
         [1, -1].forEach(function(s){
           if(kk === 0 && s === -1) return;
-          o += '<line x1="' + xs + '" y1="' + yc + '" x2="' + xsc + '" y2="' + (yc - s * xx * ky) + '" stroke="' + c + '" stroke-width="' + wdt + '"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+          o += '<line x1="' + xs + '" y1="' + yc + '" x2="' + xsc + '" y2="' + (yc - s * xx * ky) + '" stroke="' + c + '" stroke-width="' + wdt + '" stroke-opacity="0.55"/>';
         });
       }
       if(!st.white){
-        for(k = 0; k <= kmaxMono; k++){ ray(k, lam, col, 1.8, ''); }
+        for(k = 0; k <= kmaxMono; k++){ ray(k, lam, col, 1.8); }
+        if(st.mk !== null){                                          // dráhy ke zvolenému bodu ze dvou sousedních štěrbin
+          var ya = yc - sp / 2, yb = yc + sp / 2;
+          o += '<g stroke="' + col + '" stroke-width="2"><line x1="' + xs + '" y1="' + ya + '" x2="' + xsc + '" y2="' + yk + '"/><line x1="' + xs + '" y1="' + yb + '" x2="' + xsc + '" y2="' + yk + '"/></g>';
+        }
       } else {
-        ray(0, 400e-9, '#999', 1.8, '');
+        ray(0, 400e-9, '#999', 1.8);
         bands.forEach(function(bd){
           for(var w2 = 400; w2 <= 700; w2 += 25){
             if(w2 * 1e-9 > bd.lamHi) break;
-            ray(bd.k, w2 * 1e-9, rgbStr(lamRGB(w2)), 1.4, '');
+            ray(bd.k, w2 * 1e-9, rgbStr(lamRGB(w2)), 1.4);
           }
         });
       }
       o += '</g>';
-      // mřížka (hřeben)
-      o += '<line x1="' + xs + '" y1="14" x2="' + xs + '" y2="170" stroke="var(--ink)" stroke-width="3" stroke-dasharray="2 3"/>';
-      o += '<text x="' + (xs - 10) + '" y="26" text-anchor="end" fill="var(--ink-soft)">mřížka</text>';
+      // mřížka: M štěrbin, mezi nimi neprůhledné části
+      o += '<line x1="' + xs + '" y1="14" x2="' + xs + '" y2="' + (yTopS - 2) + '" stroke="var(--ink)" stroke-width="7"/>';
+      for(i = 0; i < M - 1; i++){
+        o += '<line x1="' + xs + '" y1="' + (yTopS + i * sp + 2) + '" x2="' + xs + '" y2="' + (yTopS + (i + 1) * sp - 2) + '" stroke="var(--ink)" stroke-width="7"/>';
+      }
+      o += '<line x1="' + xs + '" y1="' + (yTopS + (M - 1) * sp + 2) + '" x2="' + xs + '" y2="170" stroke="var(--ink)" stroke-width="7"/>';
+      o += '<text x="' + (xs - 10) + '" y="12" text-anchor="end" fill="var(--ink-soft)">mřížka</text>';
+      if(!st.white){ o += '<rect x="' + (xsc + 4) + '" y="' + (yc - 64) + '" width="14" height="128" fill="url(#g-side)"/>'; }
       o += '<line x1="' + xsc + '" y1="14" x2="' + xsc + '" y2="170" stroke="var(--ink)" stroke-width="4"/>';
-      o += '<text x="' + (xsc + 8) + '" y="26" fill="var(--ink-soft)">stínítko</text>';
+      o += '<text x="' + (xsc + 8) + '" y="12" fill="var(--ink-soft)">stínítko (shora)</text>';
       o += '<line x1="' + xs + '" y1="' + (yc + 66) + '" x2="' + xsc + '" y2="' + (yc + 66) + '" stroke="var(--ink-soft)" stroke-width="1.4"/>';
       o += '<text x="' + ((xs + xsc) / 2) + '" y="' + (yc + 62) + '" text-anchor="middle" font-style="italic" font-weight="700">D = ' + cz(D, 1) + ' m</text>';
+      if(st.mk !== null){ o += '<circle cx="' + xsc + '" cy="' + yk + '" r="4.5" fill="var(--accent)"/>'; }
       o += '</g>';
 
-      // ---------- B: stopy na stínítku ----------
+      // ---------- B: obrazec na stínítku ----------
       o += '<rect x="' + PL + '" y="' + by + '" width="' + PW + '" height="' + bh + '" fill="#000"/>';
-      o += '<g clip-path="url(#g-strip)">';
-      o += '<ellipse cx="' + pxm(0) + '" cy="' + (by + bh / 2) + '" rx="16" ry="' + (bh / 2) + '" fill="url(#' + (st.white ? 'g-blobw' : 'g-blob') + ')"/>';
       if(!st.white){
-        for(k = 1; k <= kmaxMono; k++){
-          var xk = xpos(k, lam, b);
-          [1, -1].forEach(function(s){ o += '<ellipse cx="' + pxm(s * xk) + '" cy="' + (by + bh / 2) + '" rx="16" ry="' + (bh / 2) + '" fill="url(#g-blob)"/>'; });
-        }
+        o += '<rect x="' + PL + '" y="' + by + '" width="' + PW + '" height="' + bh + '" fill="url(#g-grad)"/>';
       } else {
+        o += '<g clip-path="url(#g-strip)">';
+        o += '<rect x="' + clampPx(pxm(0) - 4) + '" y="' + by + '" width="8" height="' + bh + '" fill="#fff"/>';
         bands.forEach(function(bd){
           [1, -1].forEach(function(s){
             var c0 = clampPx(Math.min(pxm(s * bd.xa), pxm(s * bd.xb))), c1 = clampPx(Math.max(pxm(s * bd.xa), pxm(s * bd.xb)));
@@ -1368,69 +1432,92 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
             o += '<rect x="' + c0 + '" y="' + by + '" width="' + Math.max(5, c1 - c0) + '" height="' + bh + '" fill="url(#g-s' + (s > 0 ? 'p' : 'n') + bd.k + ')"/>';
           });
         });
+        o += '</g>';
       }
-      o += '</g>';
       o += '<rect x="' + PL + '" y="' + by + '" width="' + PW + '" height="' + bh + '" fill="none" stroke="var(--ink)" stroke-width="1.5"/>';
-      o += '<text x="' + PL + '" y="' + (by - 8) + '" font-family="Work Sans, sans-serif" font-size="' + fsl(13) + '" fill="var(--ink-soft)">stopy na stínítku</text>';
+      o += '<text x="' + PL + '" y="' + (by - 8) + '" font-family="Work Sans, sans-serif" font-size="' + fsl(13) + '" fill="var(--ink-soft)">' + (st.white ? 'spektra na stínítku' : 'obrazec') + '</text>';
 
-      // ---------- C: poloha maxim ----------
+      // ---------- C: graf intenzity (laser) nebo poloha spekter (bílé světlo) ----------
       var step = niceStep(X, [0.1, 0.2, 0.5, 1]);
-      o += '<g stroke="var(--line)" stroke-width="1">';
       var t;
-      for(t = -Math.floor(X / step + 1e-9) * step; t <= X + 1e-9; t += step){ o += '<line x1="' + pxm(t) + '" y1="' + yTop + '" x2="' + pxm(t) + '" y2="' + yBase + '"/>'; }
+      o += '<g stroke="var(--line)" stroke-width="1">';
+      for(t = -Math.floor(X / step + 1e-9) * step; t <= X + 1e-9; t += step){ o += '<line x1="' + pxm(t) + '" y1="' + gy(vmax) + '" x2="' + pxm(t) + '" y2="' + gy0 + '"/>'; }
+      if(!st.white){ [0.5, 1].forEach(function(v){ o += '<line x1="' + PL + '" y1="' + gy(v) + '" x2="' + (PL + PW) + '" y2="' + gy(v) + '"/>'; }); }
       o += '</g>';
-      o += '<line x1="' + PL + '" y1="' + yBase + '" x2="' + (PL + PW) + '" y2="' + yBase + '" stroke="var(--ink)" stroke-width="1.5"/>';
+      if(!st.white){
+        var pts = [], ep = [], P = 860, j;
+        for(j = 0; j <= P; j++){
+          var xv = -X + 2 * X * j / P, xpx = (PL + PW * j / P).toFixed(1);
+          pts.push(xpx + ',' + gy(intenAvg(xv, 2 * X / P)).toFixed(1));
+          ep.push(xpx + ',' + gy(envelope(xv)).toFixed(1));
+        }
+        o += '<polygon points="' + PL + ',' + gy0 + ' ' + pts.join(' ') + ' ' + (PL + PW) + ',' + gy0 + '" fill="var(--accent)" fill-opacity="0.16"/>';
+        if(st.env){ o += '<polyline points="' + ep.join(' ') + '" fill="none" stroke="var(--ink-soft)" stroke-width="1.6" stroke-dasharray="6 5"/>'; }
+        o += '<polyline points="' + pts.join(' ') + '" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linejoin="round"/>';
+      }
+      o += '<line x1="' + PL + '" y1="' + gy0 + '" x2="' + (PL + PW) + '" y2="' + gy0 + '" stroke="var(--ink)" stroke-width="1.5"/>';
+      o += '<line x1="' + PL + '" y1="' + gy(vmax) + '" x2="' + PL + '" y2="' + gy0 + '" stroke="var(--ink)" stroke-width="1.5"/>';
       o += '<g font-family="Work Sans, sans-serif" font-size="' + fsz(13) + '" fill="var(--ink)">';
       for(t = -Math.floor(X / step + 1e-9) * step; t <= X + 1e-9; t += step){
         var lab = (Math.abs(t) < 1e-9 ? '0' : cz(Math.round(t * 100) / 100, step < 1 ? 1 : 0).replace('-', '−'));
-        o += '<line x1="' + pxm(t) + '" y1="' + yBase + '" x2="' + pxm(t) + '" y2="' + (yBase + 6) + '" stroke="var(--ink)" stroke-width="1.4"/>';
-        o += '<text x="' + pxm(t) + '" y="' + (yBase + 22 * Math.min(K, 1.6)) + '" text-anchor="middle">' + lab + '</text>';
+        o += '<line x1="' + pxm(t) + '" y1="' + gy0 + '" x2="' + pxm(t) + '" y2="' + (gy0 + 6) + '" stroke="var(--ink)" stroke-width="1.4"/>';
+        o += '<text x="' + pxm(t) + '" y="' + (gy0 + 22 * Math.min(K, 1.6)) + '" text-anchor="middle">' + lab + '</text>';
       }
-      o += '<text x="' + (PL + PW) + '" y="' + (yBase + 44 * Math.min(K, 1.6)) + '" text-anchor="end" fill="var(--ink-soft)">poloha na stínítku <tspan font-style="italic">x</tspan> (m)</text>';
-      function stem(kk, xx, c){
-        [1, -1].forEach(function(s){
-          if(kk === 0 && s === -1) return;
-          var xp = pxm(s * xx);
-          if(xp < PL - 1 || xp > PL + PW + 1) return;
-          o += '<line x1="' + xp + '" y1="' + yBase + '" x2="' + xp + '" y2="' + yTop + '" stroke="' + c + '" stroke-width="3.2"/>';
-          o += '<text x="' + xp + '" y="' + (yTop - 8) + '" text-anchor="middle" font-weight="700" fill="var(--ink)">' + (s * kk < 0 ? '−' : '') + kk + '</text>';
-        });
-      }
+      o += '<text x="' + (PL + PW) + '" y="' + (gy0 + 44 * Math.min(K, 1.6)) + '" text-anchor="end" fill="var(--ink-soft)">poloha na stínítku <tspan font-style="italic">x</tspan> (m)</text>';
       if(!st.white){
-        for(k = 0; k <= kmaxMono; k++){ stem(k, k === 0 ? 0 : xpos(k, lam, b), 'var(--accent)'); }
+        [0, 0.5, 1].forEach(function(v){ o += '<text x="' + (PL - 8) + '" y="' + (gy(v) + 4) + '" text-anchor="end">' + cz(v, v === 0.5 ? 1 : 0) + '</text>'; });
+        o += '<text x="' + (PL + 10) + '" y="' + (gy(vmax) + 12) + '" fill="var(--ink-soft)" font-style="italic">I / I<tspan font-size="' + fsz(10) + '" dy="3" font-style="normal">max</tspan></text>';
+        // řády hlavních maxim
+        for(k = -kmaxMono; k <= kmaxMono; k++){
+          var xk = (k >= 0 ? 1 : -1) * xpos(Math.abs(k), lam, b);
+          if(Math.abs(xk) > X) continue;
+          o += '<text x="' + pxm(xk) + '" y="' + (gy0 - 8) + '" text-anchor="middle" font-size="' + fsz(11) + '" fill="var(--ink-soft)">' + (k < 0 ? '−' + (-k) : k) + '</text>';
+        }
+        if(st.mk !== null){ o += '<text x="' + (pxm(st.mk) + 6) + '" y="' + (gy(vmax) + 12) + '" fill="var(--accent)" font-weight="700" font-style="italic">x</text>'; }
       } else {
-        stem(0, 0, 'var(--ink-soft)');
         bands.forEach(function(bd){
           [1, -1].forEach(function(s){
             var x0 = Math.min(pxm(s * bd.xa), pxm(s * bd.xb)), x1 = Math.max(pxm(s * bd.xa), pxm(s * bd.xb));
             if(x1 < PL || x0 > PL + PW) return;
             x0 = clampPx(x0); x1 = clampPx(x1);
-            o += '<rect x="' + x0 + '" y="' + (yBase - 90) + '" width="' + Math.max(4, x1 - x0) + '" height="90" fill="url(#g-s' + (s > 0 ? 'p' : 'n') + bd.k + ')"/>';
-            o += '<text x="' + ((x0 + x1) / 2) + '" y="' + (yBase - 98) + '" text-anchor="middle" font-weight="700" fill="var(--ink)">' + (s < 0 ? '−' : '') + bd.k + '</text>';
+            o += '<rect x="' + x0 + '" y="' + (gy0 - 90) + '" width="' + Math.max(4, x1 - x0) + '" height="90" fill="url(#g-s' + (s > 0 ? 'p' : 'n') + bd.k + ')"/>';
+            o += '<text x="' + ((x0 + x1) / 2) + '" y="' + (gy0 - 98) + '" text-anchor="middle" font-weight="700" fill="var(--ink)">' + (s < 0 ? '−' : '') + bd.k + '</text>';
           });
         });
+        o += '<line x1="' + pxm(0) + '" y1="' + gy0 + '" x2="' + pxm(0) + '" y2="' + (gy0 - 90) + '" stroke="var(--ink-soft)" stroke-width="3.2"/>';
+        o += '<text x="' + pxm(0) + '" y="' + (gy0 - 98) + '" text-anchor="middle" font-weight="700">0</text>';
       }
       o += '</g>';
+      if(st.mk !== null && !st.white){
+        o += '<line x1="' + pxm(st.mk) + '" y1="' + by + '" x2="' + pxm(st.mk) + '" y2="' + gy0 + '" stroke="var(--accent)" stroke-width="2" stroke-dasharray="6 4"/>';
+      }
       svg.innerHTML = o;
       updateTexts(lam, b, kmaxMono, kmaxWhite, bands);
     }
 
     function updateTexts(lam, b, kmaxMono, kmaxWhite, bands){
       var X = st.X;
-      outLam.innerHTML = '<i>λ</i> = ' + st.lam + ' nm';
-      outN.innerHTML = '<i>N</i> = ' + st.N + ' /mm';
-      outD.innerHTML = '<i>D</i> = ' + cz(st.D, 1) + ' m';
+      outLam.innerHTML = '<i>λ</i> = ' + st.lam + ' nm';
+      outN.innerHTML = '<i>N</i> = ' + st.N + ' /mm';
+      outD.innerHTML = '<i>D</i> = ' + cz(st.D, 1) + ' m';
+      outM.innerHTML = '<i>M</i> = ' + st.M;
+      outA.innerHTML = '<i>a</i> = ' + sig3(b * st.af / 100 * 1e6) + ' µm (' + st.af + ' % z <i>b</i>)';
       document.getElementById('g-row-lam').hidden = st.white;
+      document.getElementById('g-row-M').hidden = st.white;
+      document.getElementById('g-row-a').hidden = st.white;
+      envBtn.hidden = st.white;
       var col = rgbStr(lamRGB(st.lam));
       document.getElementById('g-legend').innerHTML = st.white ?
         '<span><svg width="40" height="10"><defs><linearGradient id="g-lg"><stop offset="0" stop-color="#8a00ff"/><stop offset="0.3" stop-color="#00a0ff"/><stop offset="0.5" stop-color="#00ff40"/><stop offset="0.75" stop-color="#ffd000"/><stop offset="1" stop-color="#ff0000"/></linearGradient></defs><rect x="0" y="1" width="40" height="8" rx="2" fill="url(#g-lg)"/></svg>spektrum (fialová blíž středu, červená dál)</span>' :
-        '<span><svg width="26" height="12"><rect x="1" y="1" width="24" height="10" rx="2" fill="' + col + '"/></svg>barva světla pro vlnovou délku ' + st.lam + ' nm</span>';
+        '<span><svg width="26" height="12"><rect x="1" y="1" width="24" height="10" rx="2" fill="' + col + '"/></svg>barva světla pro vlnovou délku ' + st.lam + ' nm</span>' +
+        '<span><svg width="26" height="10"><line x1="1" y1="5" x2="25" y2="5" stroke="var(--accent)" stroke-width="2.6"/></svg>relativní intenzita</span>' +
+        (st.env ? '<span><svg width="26" height="10"><line x1="1" y1="5" x2="25" y2="5" stroke="var(--ink-soft)" stroke-width="1.6" stroke-dasharray="6 5"/></svg>obálka (ohyb na jedné štěrbině)</span>' : '') +
+        (st.mk !== null ? '<span><svg width="26" height="10"><line x1="1" y1="5" x2="25" y2="5" stroke="var(--accent)" stroke-width="2" stroke-dasharray="6 4"/></svg>vybraný bod</span>' : '');
       var kmax = st.white ? kmaxWhite : kmaxMono;
-      document.getElementById('g-out-b').textContent = sig3(b * 1e6) + ' µm';
+      document.getElementById('g-out-b').textContent = sig3(b * 1e6) + ' µm';
       document.getElementById('g-out-kmax').textContent = kmax;
-      document.getElementById('g-out-cnt').textContent = (2 * kmax + 1);
       var tbl = document.getElementById('g-table'), h = '', s, a, xx;
-      function xs_(x){ return (!isFinite(x) || x > X) ? 'mimo stínítko' : cz(x, 2) + ' m'; }
+      function xs_(x){ return (!isFinite(x) || x > X) ? 'mimo stínítko' : cz(x, 2) + ' m'; }
       if(!st.white){
         h += '<thead><tr><th><i>k</i></th><th class="mono">sin <i>α</i></th><th class="mono"><i>α</i></th><th class="mono"><i>x</i></th></tr></thead><tbody>';
         for(var k = 0; k <= kmaxMono; k++){
@@ -1441,27 +1528,47 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
         h += '<tr><td class="mono">' + (kmaxMono + 1) + '</td><td class="mono">' + cz(s, 3) + '</td><td class="mono" colspan="2">neexistuje (sin <i>α</i> &gt; 1)</td></tr></tbody>';
       } else {
         h += '<thead><tr><th><i>k</i></th><th class="mono"><i>α</i> (fialová → červená)</th><th class="mono"><i>x</i></th></tr></thead><tbody>';
-        h += '<tr><td class="mono">0</td><td class="mono">0°</td><td class="mono">0,00 m (bílé)</td></tr>';
+        h += '<tr><td class="mono">0</td><td class="mono">0°</td><td class="mono">0,00 m (bílé)</td></tr>';
         bands.forEach(function(bd){
           var a1 = Math.asin(bd.k * 400e-9 / b) * 180 / Math.PI, a2 = Math.asin(Math.min(1, bd.k * bd.lamHi / b)) * 180 / Math.PI;
           var x1 = D_x(bd.k, 400e-9, b), x2 = D_x(bd.k, bd.lamHi, b);
-          var xr = (!isFinite(x1) || x1 > X) ? 'mimo stínítko' : (x2 > X || !isFinite(x2)) ? cz(x1, 2) + '\u00a0m až za okraj' : cz(x1, 2) + '\u00a0m až ' + cz(x2, 2) + '\u00a0m';
+          var xr = (!isFinite(x1) || x1 > X) ? 'mimo stínítko' : (x2 > X || !isFinite(x2)) ? cz(x1, 2) + ' m až za okraj' : cz(x1, 2) + ' m až ' + cz(x2, 2) + ' m';
           h += '<tr><td class="mono">' + bd.k + '</td><td class="mono">' + cz(a1, 1) + '° až ' + cz(a2, 1) + '°' + (bd.lamHi < 700e-9 ? ' (zkráceno)' : '') + '</td><td class="mono">' + xr + '</td></tr>';
         });
         h += '</tbody>';
       }
       tbl.innerHTML = h;
       var note = document.getElementById('g-note');
-      if(!st.white){
-        note.innerHTML = 'Největší řád: <i>k</i><sub>max</sub> = ⌊<i>b</i>/<i>λ</i>⌋ = ' + kmaxMono + ' (poměr <i>b</i>/<i>λ</i> = ' + cz(b / lam, 2) + '). Na každé straně od středu je ' + kmaxMono + (kmaxMono === 1 ? ' maximum' : kmaxMono >= 2 && kmaxMono <= 4 ? ' maxima' : ' maxim') + ', celkem ' + (2 * kmaxMono + 1) + ' (včetně nultého).' + overflowNote(lam, b, kmaxMono);
-      } else {
+      var tex = '';
+      if(st.white){
         var ov = 0;
         bands.forEach(function(bd){
           var nxt = bd.k + 1;
           if(!ov && nxt * 400e-9 < b * (1 - 1e-9) && nxt * 400e-9 < bd.k * bd.lamHi) ov = bd.k;
         });
         note.innerHTML = 'V bílém světle vznikne u nultého řádu bílá stopa a v každém dalším řádu spektrum. Ve 2. a vyšších řádech' + (ov ? ' se spektra sousedních řádů překrývají (od ' + ov + '. a ' + (ov + 1) + '. řádu).' : ' se spektra sousedních řádů u této mřížky nepřekrývají.');
+        document.getElementById('g-out-dl').textContent = '—';
+        document.getElementById('g-out-dll').textContent = '—';
+      } else {
+        if(st.mk === null){
+          document.getElementById('g-out-dl').textContent = '—';
+          document.getElementById('g-out-dll').textContent = '—';
+          note.innerHTML = 'Vyberte bod kliknutím nebo tažením v obrazci či v grafu a aplet vypíše dráhový rozdíl paprsků ze dvou sousedních štěrbin. Největší řád: <i>k</i><sub>max</sub> = ⌊<i>b</i>/<i>λ</i>⌋ = ' + kmaxMono + ' (<i>b</i>/<i>λ</i> = ' + cz(b / lam, 2) + '), celkem ' + (2 * kmaxMono + 1) + ' hlavních maxim.' + overflowNote(lam, b, kmaxMono);
+        } else {
+          var sa = sinT(Math.abs(st.mk)), dl = b * sa, n = dl / lam;
+          document.getElementById('g-out-dl').textContent = sig3(dl * 1e6) + ' µm';
+          document.getElementById('g-out-dll').textContent = sig3(n);
+          var kk = Math.round(n), mm = n * st.M, msg;
+          if(Math.abs(n - kk) < 0.04) msg = 'hlavní maximum ' + kk + '. řádu (Δ<i>l</i> = ' + kk + '<i>λ</i>)';
+          else if(Math.abs(mm - Math.round(mm)) < 0.12 * st.M / 4 + 0.03) msg = 'minimum mezi hlavními maximy (světlo ze všech ' + st.M + ' štěrbin se vyruší)';
+          else msg = 'mezi maximy (slabé vedlejší maximum nebo téměř tma)';
+          note.innerHTML = 'Poloha <i>x</i> = ' + cz(st.mk, 2) + ' m: ' + msg + '.';
+          tex = '\\sin\\alpha=\\frac{x}{\\sqrt{x^2+D^2}}=' + texNum(cz(sa, 3)) + '\\ \\Rightarrow\\ \\Delta l=b\\sin\\alpha=' + texNum(sig3(dl * 1e6)) + '\\ \\mu\\mathrm{m}\\ \\Rightarrow\\ \\frac{\\Delta l}{\\lambda}=' + texNum(sig3(n));
+        }
       }
+      var calc = document.getElementById('g-calc');
+      if(window.katex && tex){ try{ calc.innerHTML = katex.renderToString(tex, { displayMode:true, throwOnError:false }); }catch(e){} } else { calc.innerHTML = ''; }
+      clearBtn.hidden = st.mk === null;
     }
     function D_x(k, lamK, b){ return xpos(k, lamK, b); }
     function overflowNote(lam, b, kmax){
@@ -1473,15 +1580,53 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
     slLam.addEventListener('input', function(){ st.lam = parseFloat(slLam.value); render(); });
     slN.addEventListener('input', function(){ st.N = parseFloat(slN.value); render(); });
     slD.addEventListener('input', function(){ st.D = parseFloat(slD.value); render(); });
-    Array.prototype.forEach.call(rangeBtns, function(btn, bi){ btn.addEventListener('click', function(){ st.X = RANGES[bi]; setChips(rangeBtns, bi); render(); }); });
-    Array.prototype.forEach.call(lightBtns, function(btn, bi){ btn.addEventListener('click', function(){ st.white = bi === 1; setChips(lightBtns, bi); render(); }); });
+    slM.addEventListener('input', function(){ st.M = parseInt(slM.value, 10); render(); });
+    slA.addEventListener('input', function(){ st.af = parseFloat(slA.value); render(); });
+    Array.prototype.forEach.call(rangeBtns, function(btn, bi){
+      btn.addEventListener('click', function(){
+        st.X = RANGES[bi];
+        if(st.mk !== null && Math.abs(st.mk) > st.X) st.mk = null;
+        setChips(rangeBtns, bi); render();
+      });
+    });
+    Array.prototype.forEach.call(lightBtns, function(btn, bi){ btn.addEventListener('click', function(){ st.white = bi === 1; if(st.white) st.mk = null; setChips(lightBtns, bi); render(); }); });
     Array.prototype.forEach.call(presetBtns, function(btn, bi){ btn.addEventListener('click', function(){ st.N = PRESETS[bi]; slN.value = st.N; render(); }); });
+    envBtn.addEventListener('click', function(){
+      st.env = !st.env;
+      envBtn.classList.toggle('on', st.env); envBtn.setAttribute('aria-pressed', st.env ? 'true' : 'false');
+      render();
+    });
+    clearBtn.addEventListener('click', function(){ st.mk = null; render(); });
     resetBtn.addEventListener('click', function(){
-      st.lam = DEF.lam; st.N = DEF.N; st.D = DEF.D; st.X = DEF.X; st.white = false;
-      slLam.value = DEF.lam; slN.value = DEF.N; slD.value = DEF.D;
+      st.lam = DEF.lam; st.N = DEF.N; st.D = DEF.D; st.X = DEF.X; st.M = DEF.M; st.af = DEF.af; st.white = false; st.env = true; st.mk = null;
+      slLam.value = DEF.lam; slN.value = DEF.N; slD.value = DEF.D; slM.value = DEF.M; slA.value = DEF.af;
+      envBtn.classList.add('on'); envBtn.setAttribute('aria-pressed', 'true');
       setChips(rangeBtns, RANGES.indexOf(DEF.X)); setChips(lightBtns, 0);
       render();
     });
+
+    // výběr bodu na stínítku (kliknutí nebo tažení v obrazci a v grafu; jen pro jednobarevné světlo)
+    var dragging = false;
+    function svgPoint(e){
+      var pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+      var m = svg.getScreenCTM(); if(!m) return null;
+      return pt.matrixTransform(m.inverse());
+    }
+    function pick(e){
+      var p = svgPoint(e); if(!p || p.y < 185) return;
+      var xm = (p.x - PL) / PW * 2 * st.X - st.X;
+      st.mk = Math.max(-st.X, Math.min(st.X, xm));
+      render();
+    }
+    svg.addEventListener('pointerdown', function(e){
+      if(st.white) return;
+      var p = svgPoint(e); if(!p || p.y < 185) return;
+      dragging = true;
+      try{ svg.setPointerCapture(e.pointerId); }catch(err){}
+      pick(e);
+    });
+    svg.addEventListener('pointermove', function(e){ if(dragging) pick(e); });
+    ['pointerup', 'pointercancel'].forEach(function(ev){ svg.addEventListener(ev, function(){ dragging = false; }); });
 
     setupFullscreen(document.getElementById('g-card'), document.getElementById('g-fs-btn'), document.getElementById('g-fs-label'), document.getElementById('g-fs-icon'), function(){ sz.update(); render(); });
     var tabBtn = document.getElementById('top-tab-mrizka');
