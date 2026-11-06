@@ -433,6 +433,19 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
     <div class="panel">
       <div class="panel-title">Koherence</div>
       <p><b>Koherentní</b> jsou vlnění téže frekvence, jejichž fázový rozdíl se v daném místě s časem nemění. Jen takové vlny dávají stálý, pozorovatelný interferenční obrazec.</p>
+
+      <figure class="theory-fig" id="kw-fig">
+        <svg id="kw-svg" viewBox="0 0 560 232" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Dvě vlny pod sebou v závislosti na čase. U koherentních vln je jejich vzájemný posun stále stejný. U nekoherentních vln se fáze obou vln v náhodných okamžicích skokem mění, a proto se mění i jejich vzájemný posun."></svg>
+        <div class="mode-row">
+          <span class="mode-row-label">Vlny</span>
+          <div class="seg" id="kw-mode" role="group" aria-label="Druh vln">
+            <button class="chip accented on" type="button" aria-pressed="true">koherentní</button>
+            <button class="chip accented" type="button" aria-pressed="false">nekoherentní</button>
+            <button class="chip" id="kw-new" type="button" hidden>jiná náhoda</button>
+          </div>
+        </div>
+        <figcaption>Dvě vlny stejné frekvence v závislosti na čase. Čárkované čáry jsou vedené maximy první vlny. U <b>koherentních</b> vln leží maxima druhé vlny vůči nim pořád stejně, takže fázový rozdíl je stálý. U <b>nekoherentních</b> vln se fáze každé vlny v náhodných okamžicích skokem změní (začíná nové klubko), a proto se vzájemný posun maxim neustále mění.</figcaption>
+      </figure>
       <p>Běžné zdroje (žárovka, plamen, Slunce) vysílají světlo ze spousty atomů, které září nezávisle na sobě a v náhodných okamžicích. Každý atom vyšle jen krátké „klubko“ vlnění o omezené délce a fáze jednotlivých klubek jsou náhodné. Fázový rozdíl dvou takových zdrojů se proto neustále a chaoticky mění. Žádná maxima ani minima nevidíme, oko zaznamená jen průměrnou intenzitu.</p>
       <p>Koherence se dá vyrobit tak, že světlo z <b>jediného zdroje rozdělíme na dva svazky</b>, které pak urazí různou dráhu a znovu se setkají. Každé klubko se tak setká samo se sebou a fázový rozdíl je stálý. Dráhový rozdíl ale nesmí být větší než délka klubka, jinak by se potkaly dvě různá klubka s náhodnou fází. U žárovky je tento rozdíl velmi malý, laser vysílá mnohem delší klubka (u běžných laserů řádově desítky centimetrů), a proto se s ním interferenční jevy pozorují mnohem snáze.</p>
 
@@ -1650,6 +1663,69 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
     var tabBtn = document.getElementById('top-tab-mrizka');
     if(tabBtn) tabBtn.addEventListener('click', function(){ setTimeout(function(){ sz.update(); render(); }, 0); });
     sz.update();
+    render();
+  })();
+
+  // ================= OBRÁZEK KE KOHERENCI: KOHERENTNÍ A NEKOHERENTNÍ VLNY =================
+  (function(){
+    var svg = document.getElementById('kw-svg');
+    if(!svg) return;
+    var btns = document.querySelectorAll('#kw-mode .chip.accented'), newBtn = document.getElementById('kw-new');
+    var X0 = 64, X1 = 546, P = 38, A = 24, Y1 = 66, Y2 = 146;
+    var st = { coh:true, seed:7 };
+    function rnd(){ st.rs = (st.rs * 1664525 + 1013904223) >>> 0; return st.rs / 4294967296; }
+    function segs(){                    // úseky s konstantní fází; v koherentním případě jediný úsek
+      var out = [], x = X0, len;
+      if(st.coh){ return [[{ x0:X0, x1:X1, phi:0 }], [{ x0:X0, x1:X1, phi:-0.3 * 2 * Math.PI }]]; }
+      st.rs = st.seed * 2654435761 >>> 0;
+      [0, 1].forEach(function(w){
+        var list = []; x = X0;
+        while(x < X1){
+          len = P * (1.2 + 2 * rnd());
+          list.push({ x0:x, x1:Math.min(X1, x + len), phi:rnd() * 2 * Math.PI });
+          x += len;
+        }
+        out.push(list);
+      });
+      return out;
+    }
+    function path(list, y){
+      var d = '';
+      list.forEach(function(sg){
+        var x;
+        for(x = sg.x0; x <= sg.x1 + 0.01; x += 1){
+          var xx = Math.min(x, sg.x1);
+          d += (x === sg.x0 ? 'M' : 'L') + xx.toFixed(1) + ',' + (y - A * Math.sin(2 * Math.PI * (xx - sg.x0) / P + sg.phi)).toFixed(1);
+        }
+      });
+      return d;
+    }
+    function render(){
+      var s2 = segs(), o = '', n;
+      o += '<g font-family="Work Sans, sans-serif" font-size="12.5" fill="var(--ink)">';
+      // čárkované čáry v maximech první vlny
+      s2[0].forEach(function(sg){
+        for(n = -2; n < 40; n++){
+          var x = sg.x0 + P * (Math.PI / 2 - sg.phi + 2 * Math.PI * n) / (2 * Math.PI);
+          if(x >= sg.x0 && x <= sg.x1){ o += '<line x1="' + x.toFixed(1) + '" y1="' + (Y1 - A - 10) + '" x2="' + x.toFixed(1) + '" y2="' + (Y2 + A + 8) + '" stroke="var(--ink-soft)" stroke-width="1" stroke-dasharray="3 4"/>'; }
+        }
+      });
+      o += '<line x1="' + X0 + '" y1="' + Y1 + '" x2="' + X1 + '" y2="' + Y1 + '" stroke="var(--line)"/><line x1="' + X0 + '" y1="' + Y2 + '" x2="' + X1 + '" y2="' + Y2 + '" stroke="var(--line)"/>';
+      o += '<path d="' + path(s2[0], Y1) + '" fill="none" stroke="var(--focus)" stroke-width="2" stroke-linejoin="round"/>';
+      o += '<path d="' + path(s2[1], Y2) + '" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/>';
+      o += '<text x="8" y="' + (Y1 + 4) + '" fill="var(--focus)" font-weight="700">vlna 1</text><text x="8" y="' + (Y2 + 4) + '" fill="var(--accent)" font-weight="700">vlna 2</text>';
+      o += '<g stroke="var(--ink)" stroke-width="1.4" fill="var(--ink)"><line x1="' + X0 + '" y1="198" x2="' + (X1 - 4) + '" y2="198"/><path d="M' + (X1 - 8) + ',194 L' + X1 + ',198 L' + (X1 - 8) + ',202 z"/></g>';
+      o += '<text x="' + X1 + '" y="216" text-anchor="end" font-style="italic" fill="var(--ink-soft)">t</text>';
+      o += '<text x="' + X0 + '" y="216" fill="' + (st.coh ? 'var(--success)' : 'var(--danger)') + '" font-weight="700">' +
+           (st.coh ? 'fázový rozdíl je stálý: interference je pozorovatelná' : 'fázový rozdíl se náhodně mění: interference nepozorujeme') + '</text>';
+      o += '</g>';
+      svg.innerHTML = o;
+      newBtn.hidden = st.coh;
+    }
+    Array.prototype.forEach.call(btns, function(btn, bi){
+      btn.addEventListener('click', function(){ st.coh = bi === 0; setChips(btns, bi); render(); });
+    });
+    newBtn.addEventListener('click', function(){ st.seed = st.seed % 1000 + 1; render(); });
     render();
   })();
 
