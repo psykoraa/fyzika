@@ -1418,27 +1418,9 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
         o += '<line x1="28" y1="' + (yc + yi * 22) + '" x2="' + (xs - 4) + '" y2="' + (yc + yi * 22) + '" stroke="' + (st.white ? '#999' : col) + '" stroke-width="1.6" stroke-opacity="0.8" marker-end="url(#g-arr-in)"/>';
       }
       o += '<g clip-path="url(#g-clip)">';
-      function ray(kk, lamK, c, wdt){
-        var xx = xpos(kk, lamK, b); if(!isFinite(xx) || Math.abs(xx * ky) > 110) return;
-        [1, -1].forEach(function(s){
-          if(kk === 0 && s === -1) return;
-          o += '<line x1="' + xs + '" y1="' + yc + '" x2="' + xsc + '" y2="' + (yc - s * xx * ky) + '" stroke="' + c + '" stroke-width="' + wdt + '" stroke-opacity="0.55"/>';
-        });
-      }
-      if(!st.white){
-        for(k = 0; k <= kmaxMono; k++){ ray(k, lam, col, 1.8); }
-        if(st.mk !== null){                                          // dráhy ke zvolenému bodu ze dvou sousedních štěrbin
-          var ya = yc - sp / 2, yb = yc + sp / 2;
-          o += '<g stroke="' + col + '" stroke-width="2"><line x1="' + xs + '" y1="' + ya + '" x2="' + xsc + '" y2="' + yk + '"/><line x1="' + xs + '" y1="' + yb + '" x2="' + xsc + '" y2="' + yk + '"/></g>';
-        }
-      } else {
-        ray(0, 400e-9, '#999', 1.8);
-        bands.forEach(function(bd){
-          for(var w2 = 400; w2 <= 700; w2 += 25){
-            if(w2 * 1e-9 > bd.lamHi) break;
-            ray(bd.k, w2 * 1e-9, rgbStr(lamRGB(w2)), 1.4);
-          }
-        });
+      if(!st.white && st.mk !== null){                               // dráhy ke zvolenému bodu ze dvou sousedních štěrbin
+        var ya = yc - sp / 2, yb = yc + sp / 2;
+        o += '<g stroke="' + col + '" stroke-width="2"><line x1="' + xs + '" y1="' + ya + '" x2="' + xsc + '" y2="' + yk + '"/><line x1="' + xs + '" y1="' + yb + '" x2="' + xsc + '" y2="' + yk + '"/></g>';
       }
       o += '</g>';
       // mřížka: M štěrbin, mezi nimi neprůhledné části
