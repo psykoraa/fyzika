@@ -751,7 +751,7 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
           <svg class="optics" id="optics-svg" viewBox="0 0 960 640" role="img" aria-label="Ohyb světla na jedné štěrbině: nahoře schéma s laserem, štěrbinou a stínítkem, uprostřed difrakční obrazec na stínítku a dole graf intenzity světla v závislosti na poloze na stínítku."></svg>
           <div class="legend" id="legend" aria-hidden="true"></div>
         </div>
-        <p class="hint">Schéma nahoře je nakreslené svisle zvětšeně a není v měřítku: štěrbina je zvětšená (její šířka v obrázku odpovídá posuvníku) a svazek světla je vždy ohraničen prvními minimy. Barevný pásek u stínítka ukazuje obrazec shora; rozsah, který zobrazuje (je u něj napsaný), závisí jen na vlnové délce a vzdálenosti stínítka, takže se s šířkou štěrbiny obrazec spojitě zužuje a rozšiřuje. Svazek je vždy ohraničen prvními minima. Obrazec a graf pod schématem mají měřítko dané volbou zobrazené části stínítka. Pokud je jas zvýrazněný, je obrazec zobrazen jasněji než ve skutečnosti, aby byla vidět slabá vedlejší maxima; graf ukazuje skutečnou intenzitu. Svislé tečkované čáry označují minima intenzity. Model počítá s ohybem na štěrbině nekonečné délky v rovnoběžném svazku (Fraunhoferův ohyb).</p>
+        <p class="hint">Schéma nahoře je nakreslené svisle zvětšeně a není v měřítku: štěrbina je zvětšená (její šířka v obrázku odpovídá posuvníku) a svazek světla je vždy ohraničen prvními minimy. Barevný pásek u stínítka ukazuje obrazec shora; zobrazuje stejnou část stínítka jako obrazec pod ním (rozsah je u něj napsaný), takže se mění s každým posuvníkem. Svazek světla vede na první minima; je-li hlavní maximum užší než štěrbina nebo širší než zobrazená část, je svazek v obrázku omezen a šipka <i>L</i> se nekreslí. Obrazec a graf pod schématem mají měřítko dané volbou zobrazené části stínítka. Pokud je jas zvýrazněný, je obrazec zobrazen jasněji než ve skutečnosti, aby byla vidět slabá vedlejší maxima; graf ukazuje skutečnou intenzitu. Svislé tečkované čáry označují minima intenzity. Model počítá s ohybem na štěrbině nekonečné délky v rovnoběžném svazku (Fraunhoferův ohyb).</p>
       </div>
 
       <div class="applet-results">
@@ -924,11 +924,11 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
     var col = 'rgb(' + Math.round(rgb[0] * 255) + ',' + Math.round(rgb[1] * 255) + ',' + Math.round(rgb[2] * 255) + ')';
     var gamma = st.boost ? 0.4 : 1;
     var x1 = minPos(1);                // m
-    // pásek shora: rozsah (cm) závisí jen na vlnové délce a vzdálenosti stínítka (ne na šířce štěrbiny),
-    // je 1,6krát větší než poloha prvního minima pro nejužší štěrbinu (20 µm). Šířka štěrbiny se proto
-    // projeví tím, že se obrazec zužuje/roztahuje; škála se nikdy nemění skokem.
-    var XS = 1.6 * DD * (lamN * 1e-9) / 20e-6 * 100, H1 = 40;
-    if(x1 > 0){ H1 = 64 * x1 * 100 / XS; }
+    // pásek shora má stejnou škálu jako obrazec pod ním (zvolená část stínítka), takže se mění
+    // s každým posuvníkem; svazek vede na první minima, ale nikdy není užší než štěrbina ani širší než pásek
+    var XS = X, H1raw = x1 > 0 ? 64 * x1 * 100 / X : 40;
+    var gapPx = 2.5 + (dU - 20) * (3.5 / 180);
+    var H1 = Math.max(gapPx / 2 + 1, Math.min(64, H1raw));
     var fs = function(n){ return Math.round(n * K * 10) / 10; };
     var o = '';
 
@@ -954,7 +954,7 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
     // ---------- A: schéma (pohled shora, svisle zvětšeno) ----------
     var yc = 92, ky = 64 / X;          // px na cm
     var xs = 120, xsc = xs + DD * 130; // štěrbina a stínítko
-    var gap = 2.5 + (dU - 20) * (3.5 / 180);   // šířka štěrbiny v obrázku (2,5 až 6 px), vždy užší než svazek (ten má nejméně 8 px)
+    var gap = gapPx;                   // šířka štěrbiny v obrázku (2,5 až 6 px)
     var yA = yc - gap / 2, yB = yc + gap / 2;
     o += '<g font-family="Work Sans, sans-serif" font-size="' + (Math.round(13 * Math.min(K, 2) * 10) / 10) + '" fill="var(--ink)">';
     // rovnoběžné paprsky zleva; ten ve středu vždy projde štěrbinou
@@ -981,7 +981,7 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
     o += '<g stroke="var(--ink-soft)" stroke-width="1.4"><line x1="' + xs + '" y1="' + (yc + 66) + '" x2="' + xsc + '" y2="' + (yc + 66) + '" stroke-dasharray="none"/></g>';
     o += '<text x="' + ((xs + xsc) / 2) + '" y="' + (yc + 62) + '" text-anchor="middle" font-style="italic" font-weight="700">D = ' + cz(DD, 1) + ' m</text>';
     // šířka hlavního maxima L
-    if(x1 > 0){
+    if(x1 > 0 && H1raw >= gapPx / 2 + 1 && H1raw <= 64){
       var yl = H1;
       o += '<line x1="' + (xsc + 28) + '" y1="' + (yc - yl) + '" x2="' + (xsc + 28) + '" y2="' + (yc + yl) + '" stroke="var(--accent)" stroke-width="1.8" marker-start="url(#arr-L)" marker-end="url(#arr-L)"/>';
       o += '<text x="' + (xsc + 36) + '" y="' + (yc + 5) + '" font-style="italic" font-weight="700" fill="var(--accent)">L</text>';
