@@ -602,9 +602,13 @@
   // Aktivní čas = stránka je vidět a v posledních STATS_IDLE_MS na ní uživatel něco dělal.
   // Návštěvník je náhodné ID v localStorage (bez jména); u přihlášeného server doplní účet a třídu.
   // Admin se neměří — jeho procházení webu by statistiky zkreslovalo.
+  // Neměří se ani rozcestníky (STATS_SKIP_PAGES) a návštěvy s aktivním časem kratším než STATS_MIN_MS:
+  // data takové návštěvy se drží v paměti a odešlou se, až aktivní čas limit dosáhne.
   var STATS_TICK_MS = 5000;
   var STATS_IDLE_MS = 5 * 60000;
   var STATS_MAX_EVENTS = 30;
+  var STATS_MIN_MS = 15000;
+  var STATS_SKIP_PAGES = ['index.html', 'kvinta.html', 'oktava.html', 'mereni.html'];
   var STATS_EVENT_RE = /^[a-z0-9-]{1,30}$/;
 
   var stats = null; // stav aktuální návštěvy (nová po návratu stránky z bfcache)
@@ -612,7 +616,7 @@
   function statsNewVisit() {
     var now = Date.now();
     stats = { id: newRid().slice(0, 16), start: now, lastTick: now, lastAct: now, sent: false,
-              tabs: {}, events: [], records: {}, busy: false };
+              tabs: {}, events: [], records: {}, busy: false, active: 0 };
   }
 
   function statsOn() {
@@ -621,7 +625,7 @@
     if (user && user.role === 'admin') return false;
     if (document.documentElement.classList.contains('fz-blocked')) return false;
     var page = currentPage();
-    return RE_LOCAL_PAGE.test(page) && page !== 'admin.html';
+    return RE_LOCAL_PAGE.test(page) && page !== 'admin.html' && STATS_SKIP_PAGES.indexOf(page) < 0;
   }
 
   function statsVisitor() {
@@ -652,6 +656,7 @@
     if (!stats.busy && now - stats.lastAct > STATS_IDLE_MS) return;
     var tab = statsTab();
     stats.tabs[tab] = (stats.tabs[tab] || 0) + dt;
+    stats.active += dt;
   }
 
   function statsEvent(name, detail, value) {
@@ -687,6 +692,8 @@
     try {
       if (!statsOn()) return;
       statsTick();
+      // Krátká návštěva se zatím neposílá; data zůstávají v paměti a odejdou, jakmile aktivní čas dosáhne limitu.
+      if (!stats.sent && stats.active < STATS_MIN_MS) return;
       var now = Date.now();
       var rows = [];
       Object.keys(stats.tabs).forEach(function (t) {
