@@ -47,7 +47,6 @@
     'prumerna-okamzita-rychlost.html': 'kvinta',
     'grafy-rovnomerne-zrychleneho-pohybu.html': 'kvinta',
     'pohyb-po-kruznici.html': 'kvinta',
-    'pohyb-po-kruznici-aplet.html': 'kvinta',
     'kulova-zrcadla.html': 'oktava',
     'cocky.html': 'oktava',
     'zorny-uhel-a-lupa.html': 'oktava',
