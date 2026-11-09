@@ -1442,15 +1442,14 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
     { id:'uran', name:'Uran', group:'Planety', center:'sun', r:2867.0e9, T:30589*DAY, col:'#7fd3dc' },
     { id:'neptun', name:'Neptun', group:'Planety', center:'sun', r:4515.0e9, T:59800*DAY, col:'#5b7be0' },
     { id:'ceres', name:'Ceres', group:'Trpasličí planeta v hlavním pásu planetek', center:'sun', r:2.7658*AU, T:4.59984*YEAR, col:'#cfc6b8' },
-    { id:'mesic', name:'Měsíc', group:'Měsíc Země', center:'earth', parent:'zeme', r:0.384e9, T:27.3*DAY },
-    { id:'io', name:'Io', group:'Galileovy měsíce Jupiteru', center:'jupiter', parent:'jupiter', r:5.905*R_JUP, T:42.46*HOUR },
-    { id:'europa', name:'Europa', group:'Galileovy měsíce Jupiteru', center:'jupiter', parent:'jupiter', r:9.397*R_JUP, T:85.24*HOUR },
-    { id:'ganymed', name:'Ganymed', group:'Galileovy měsíce Jupiteru', center:'jupiter', parent:'jupiter', r:14.99*R_JUP, T:171.7*HOUR },
-    { id:'callisto', name:'Callisto', group:'Galileovy měsíce Jupiteru', center:'jupiter', parent:'jupiter', r:26.37*R_JUP, T:400.5*HOUR }
+    { id:'mesic', name:'Měsíc', group:'Měsíc Země', center:'earth', parent:'zeme', r:0.384e9, T:27.3*DAY, col:'#d4d1c9' },
+    { id:'io', name:'Io', group:'Galileovy měsíce Jupiteru', center:'jupiter', parent:'jupiter', r:5.905*R_JUP, T:42.46*HOUR, col:'#e8c35a' },
+    { id:'europa', name:'Europa', group:'Galileovy měsíce Jupiteru', center:'jupiter', parent:'jupiter', r:9.397*R_JUP, T:85.24*HOUR, col:'#e3d9c4' },
+    { id:'ganymed', name:'Ganymed', group:'Galileovy měsíce Jupiteru', center:'jupiter', parent:'jupiter', r:14.99*R_JUP, T:171.7*HOUR, col:'#a79b8a' },
+    { id:'callisto', name:'Callisto', group:'Galileovy měsíce Jupiteru', center:'jupiter', parent:'jupiter', r:26.37*R_JUP, T:400.5*HOUR, col:'#7d7266' }
   ];
-  var SUN_SPEEDS = [1,2,5,10,20,50,100,200,500,1000,2000,5000];
-  var OV_SPEEDS = [5,10,20,50,100,200,500,1000,2000,5000,10000,20000];   // celá soustava (dny za sekundu)
-  var OV_DEFAULT_IDX = 3;
+  var SUN_SPEEDS = [1,2,5,10,20,50,100,200,500,1000,2000,5000,10000,20000];
+  var OV_DEFAULT_IDX = 5;     // celá soustava: 50 dní za sekundu
   var SCENE_CFG = {
     sun:     { rU:'mkm', tU:'d', centerName:'Slunce', speeds:SUN_SPEEDS, sU:'d', showAu:true },
     earth:   { rU:'tkm', tU:'d', centerName:'Země', speeds:[0.1,0.2,0.5,1,2,5,10,20,50,100,200,500], sU:'d', showAu:false },
@@ -1475,6 +1474,8 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
     fIdx: fIndex(0.75),
     show: { vec:true, trail:true, angle:true, second:false },
     focus: 'system',           // 'system' = celá soustava, jinak id tělesa
+    sub: false,                // true = planeta s měsíci uprostřed a měsíci kolem
+    th0: 0,                    // počáteční úhel sledovaného tělesa (rad), od něj se měří φ
     simT: 0,                   // celá soustava: simulovaný čas (s)
     rIn: 0, TIn: 0,            // vesmír: aktuální r a T (SI)
     speedIdx: 5,
@@ -1482,9 +1483,38 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
   };
   var ref = { f:null, r1:null, r2:null };   // hodnoty na začátku tažení posuvníku
 
-  function isOverview(){ return state.scene === 'solar' && state.focus === 'system'; }
-  function curBody(){ return state.scene === 'solar' && state.focus !== 'system' ? bodyById(state.focus) : null; }
-  function cfg(){ return SCENE_CFG[curBody().center]; }
+  function viewKind(){
+    if(state.scene === 'gramofon') return 'gramofon';
+    if(state.focus === 'system') return 'overview';
+    return state.sub ? 'sub' : 'body';
+  }
+  function isOverview(){ return viewKind() === 'overview'; }
+  function isSub(){ return viewKind() === 'sub'; }
+  function moonsOf(id){
+    var out = [];
+    for(var i = 0; i < BODY_LIST.length; i++) if(BODY_LIST[i].parent === id) out.push(BODY_LIST[i]);
+    return out;
+  }
+  function sunBodies(){
+    var out = [];
+    for(var i = 0; i < BODY_LIST.length; i++) if(BODY_LIST[i].center === 'sun') out.push(BODY_LIST[i]);
+    return out;
+  }
+  function curBody(){ return viewKind() === 'body' ? bodyById(state.focus) : null; }
+  function cfgKey(){
+    var k = viewKind();
+    if(k === 'overview') return 'sun';
+    if(k === 'sub') return moonsOf(state.focus)[0].center;
+    return curBody().center;
+  }
+  function cfg(){ return SCENE_CFG[cfgKey()]; }
+  function subRMax(){
+    var m = moonsOf(state.focus), mx = 0;
+    for(var i = 0; i < m.length; i++) mx = Math.max(mx, m[i].r);
+    return mx;
+  }
+  function bodyPhase(b){ return 2.4 * BODY_LIST.indexOf(b) + 0.5; }   // počáteční polohy jsou libovolné
+  function bodyTheta(b){ return bodyPhase(b) + TWO_PI * state.simT / b.T; }
   function curF(){ return F_STOPS[state.fIdx]; }
 
   // ---------- fyzika (SI) ----------
@@ -1500,6 +1530,7 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
   var svg = document.getElementById('scene-svg');
   var $ = function(id){ return document.getElementById(id); };
   var E = {};                  // odkazy na prvky aktuální scény
+  var host = svg;              // skupina, do které se aktuální scéna kreslí
 
   function el(name, attrs, parent){
     var n = document.createElementNS(NS, name);
@@ -1568,99 +1599,153 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
   }
 
   // ---------- kreslení scén ----------
-  function buildScene(){
-    clear(svg);
+  function buildScene(keepOld){
+    if(!keepOld) clear(svg);
+    host = el('g', null, svg);
     E = {};
-    var isG = state.scene === 'gramofon';
-    if(isOverview()){
-      svg.setAttribute('aria-label', 'Celá sluneční soustava při pohledu shora: Slunce, dráhy osmi planet a Ceres. Vzdálenosti jsou v odmocninové stupnici. Kliknutím na těleso se k němu přiblížíte.');
-      buildOverview();
+    var kind = viewKind(), isG = kind === 'gramofon';
+    E.kind = kind;
+    if(kind === 'overview' || kind === 'sub'){
+      var pn = kind === 'sub' ? bodyById(state.focus).name : '';
+      svg.setAttribute('aria-label', kind === 'overview'
+        ? 'Celá sluneční soustava při pohledu shora: Slunce, dráhy osmi planet a Ceres. Vzdálenosti jsou v odmocninové stupnici. Kliknutím na těleso se k němu přiblížíte.'
+        : 'Pohled shora: ' + pn + ' uprostřed a kolem něj obíhají jeho měsíce. Kliknutím na měsíc se k němu přiblížíte.');
+      var defs0 = el('defs', null, host);
+      if(kind === 'overview') buildOverview(); else buildSub(defs0);
       buildLegend();
       return;
     }
     svg.setAttribute('aria-label', isG
       ? 'Gramofon při pohledu shora. Otáčí se deska, na ní je červená značka ve vzdálenosti r od osy. Z ní vychází vektor rychlosti po tečně a vektor dostředivého zrychlení do středu.'
       : 'Těleso obíhá po kružnici kolem středového tělesa. Z tělesa vychází vektor rychlosti po tečně a vektor dostředivého zrychlení do středu.');
-    var defs = el('defs', null, svg);
+    var defs = el('defs', null, host);
     if(isG) buildGramofon(); else buildSpace(defs);
     // body, vektory, popisky (společné)
     E.pts = [];
     var cols = [{ p:'var(--danger)', v:'var(--focus)', a:'var(--accent)' }, { p:'var(--bod2)', v:'var(--focus)', a:'var(--accent)' }];
     for(var k = 0; k < 2; k++){
-      var P = { trail: makeTrail(svg, cols[k].p) };
+      var P = { trail: makeTrail(host, cols[k].p) };
       P.wedge = null;
       if(k === 0){
-        E.wedgeG = el('g', null, svg);
+        E.wedgeG = el('g', null, host);
         E.wedge = el('path', { fill:'var(--danger)', 'fill-opacity':0.28, stroke:'var(--danger)', 'stroke-width':2 }, E.wedgeG);
         E.phiTxt = el('text', { 'font-size':17, 'font-weight':700, 'font-style':'italic', fill:'var(--danger)', 'text-anchor':'middle',
                                 'paint-order':'stroke', stroke:'#fff', 'stroke-width':4, 'stroke-linejoin':'round' }, E.wedgeG);
         E.phiTxt.textContent = 'φ';
       }
-      P.vArrow = makeArrow(svg, cols[k].v);
-      P.aArrow = makeArrow(svg, cols[k].a);
-      P.dot = el('circle', { r:7.5, fill:cols[k].p, stroke:'#fff', 'stroke-width':2.2 }, svg);
-      P.vLab = makeLabel(svg, cols[k].v, 'v');
-      P.aLab = makeLabel(svg, cols[k].a, 'a');
+      P.vArrow = makeArrow(host, cols[k].v);
+      P.aArrow = makeArrow(host, cols[k].a);
+      P.dot = el('circle', { r:7.5, fill:cols[k].p, stroke:'#fff', 'stroke-width':2.2 }, host);
+      P.vLab = makeLabel(host, cols[k].v, 'v');
+      P.aLab = makeLabel(host, cols[k].a, 'a');
       if(!isG && k === 0){
         P.name = el('text', { 'font-size':15, 'font-weight':600, fill:'#fff', 'text-anchor':'middle',
-                              'paint-order':'stroke', stroke:'#0e1520', 'stroke-width':4, 'stroke-linejoin':'round' }, svg);
+                              'paint-order':'stroke', stroke:'#0e1520', 'stroke-width':4, 'stroke-linejoin':'round' }, host);
       }
       E.pts.push(P);
     }
     buildLegend();
   }
 
-  function buildOverview(){
-    el('rect', { x:6, y:6, width:388, height:388, rx:22, fill:'#0e1520', stroke:'var(--line)', 'stroke-width':2 }, svg);
-    var i;
-    for(i = 0; i < STARS.length; i++){
+  // klikací značka tělesa (přehled i pohled na planetu s měsíci)
+  function makeMarker(b, dotR){
+    var g = el('g', { tabindex:0, role:'button', 'aria-label':'Přiblížit na těleso ' + b.name, style:'cursor:pointer' }, host);
+    el('circle', { r:15, fill:'#fff', 'fill-opacity':0.001 }, g);
+    el('circle', { r:dotR, fill:b.col, stroke:'#fff', 'stroke-width':1.4 }, g);
+    var t = el('text', { 'font-size':12.5, 'font-weight':600, fill:'#fff', 'text-anchor':'middle', 'paint-order':'stroke', stroke:'#0e1520', 'stroke-width':3.5, 'stroke-linejoin':'round' }, g);
+    t.textContent = b.name;
+    g.addEventListener('click', function(){ setFocus(b.id); });
+    g.addEventListener('keydown', function(ev){
+      if(ev.key === 'Enter' || ev.key === ' '){ ev.preventDefault(); setFocus(b.id); }
+    });
+    return { b:b, g:g, t:t, x:CX, y:CY };
+  }
+  function spaceBackground(){
+    el('rect', { x:6, y:6, width:388, height:388, rx:22, fill:'#0e1520', stroke:'var(--line)', 'stroke-width':2 }, host);
+    for(var i = 0; i < STARS.length; i++){
       var d = Math.sqrt(Math.pow(STARS[i][0] - CX, 2) + Math.pow(STARS[i][1] - CY, 2));
-      if(d > 20) el('circle', { cx:STARS[i][0], cy:STARS[i][1], r:STARS[i][2], fill:'#fff', opacity:0.5 }, svg);
-    }
-    var list = [];
-    for(i = 0; i < BODY_LIST.length; i++) if(BODY_LIST[i].center === 'sun') list.push(BODY_LIST[i]);
-    for(i = 0; i < list.length; i++){
-      el('circle', { cx:CX, cy:CY, r:ovRadius(list[i].r), fill:'none', stroke:'#fff', 'stroke-opacity':0.35, 'stroke-width':1, 'stroke-dasharray':'2 4' }, svg);
-    }
-    el('circle', { cx:CX, cy:CY, r:17, fill:'#f4b73a', opacity:0.25 }, svg);
-    el('circle', { cx:CX, cy:CY, r:10, fill:'#f4b73a' }, svg);
-    E.ov = [];
-    for(i = 0; i < list.length; i++){
-      (function(b){
-        var g = el('g', { tabindex:0, role:'button', 'aria-label':'Přiblížit na těleso ' + b.name, style:'cursor:pointer' }, svg);
-        el('circle', { r:15, fill:'#fff', 'fill-opacity':0.001 }, g);
-        var isCeres = b.id === 'ceres';
-        var dot = el('circle', { r:(b.id === 'jupiter' || b.id === 'saturn') ? 6 : (isCeres ? 3.6 : 4.8), fill:b.col, stroke:'#fff', 'stroke-width':1.4 }, g);
-        var t = el('text', { 'font-size':12.5, 'font-weight':600, fill:'#fff', 'text-anchor':'middle', 'paint-order':'stroke', stroke:'#0e1520', 'stroke-width':3.5, 'stroke-linejoin':'round' }, g);
-        t.textContent = b.name;
-        g.addEventListener('click', function(){ setFocus(b.id); });
-        g.addEventListener('keydown', function(ev){
-          if(ev.key === 'Enter' || ev.key === ' '){ ev.preventDefault(); setFocus(b.id); }
-        });
-        E.ov.push({ b:b, g:g, t:t, R:ovRadius(b.r), ph:2.4 * E.ov.length + 0.5 });   // počáteční polohy jsou libovolné
-      })(list[i]);
+      if(d > 24) el('circle', { cx:STARS[i][0], cy:STARS[i][1], r:STARS[i][2], fill:'#fff', opacity:0.5 }, host);
     }
   }
-  function renderOverview(){
-    for(var i = 0; i < E.ov.length; i++){
-      var o = E.ov[i];
-      var th = o.ph + TWO_PI * state.simT / o.b.T;
+  function buildOverview(){
+    spaceBackground();
+    var list = sunBodies(), i;
+    for(i = 0; i < list.length; i++){
+      el('circle', { cx:CX, cy:CY, r:ovRadius(list[i].r), fill:'none', stroke:'#fff', 'stroke-opacity':0.35, 'stroke-width':1, 'stroke-dasharray':'2 4' }, host);
+    }
+    el('circle', { cx:CX, cy:CY, r:17, fill:'#f4b73a', opacity:0.25 }, host);
+    el('circle', { cx:CX, cy:CY, r:10, fill:'#f4b73a' }, host);
+    E.list = [];
+    for(i = 0; i < list.length; i++){
+      var b = list[i];
+      var o = makeMarker(b, (b.id === 'jupiter' || b.id === 'saturn') ? 6 : (b.id === 'ceres' ? 3.6 : 4.8));
+      o.R = ovRadius(b.r);
+      E.list.push(o);
+    }
+  }
+  function drawCenter(c, defs){
+    var i;
+    if(c === 'Slunce'){
+      el('circle', { cx:CX, cy:CY, r:30, fill:'#f4b73a', opacity:0.22 }, host);
+      el('circle', { cx:CX, cy:CY, r:18, fill:'#f4b73a' }, host);
+    }else if(c === 'Země'){
+      el('circle', { cx:CX, cy:CY, r:14, fill:'#3f7fd0' }, host);
+      el('ellipse', { cx:CX - 4, cy:CY - 3, rx:6, ry:4, fill:'#4f9a5a' }, host);
+      el('ellipse', { cx:CX + 5, cy:CY + 5, rx:4, ry:3, fill:'#4f9a5a' }, host);
+    }else{
+      el('clipPath', { id:'cl-jup' }, defs).appendChild(el('circle', { cx:CX, cy:CY, r:20 }));
+      el('circle', { cx:CX, cy:CY, r:20, fill:'#d3a77a' }, host);
+      var jg = el('g', { 'clip-path':'url(#cl-jup)' }, host);
+      var ys = [-12, -5, 2, 9, 15];
+      for(i = 0; i < ys.length; i++) el('rect', { x:CX - 20, y:CY + ys[i], width:40, height:(i % 2 ? 3 : 4.5), fill:(i % 2 ? '#a9743f' : '#efe0c6'), opacity:0.8 }, jg);
+    }
+  }
+  function makeScaleBar(){
+    E.scaleBar = {
+      l: el('line', { stroke:'#fff', 'stroke-width':2.4 }, host),
+      a: el('line', { stroke:'#fff', 'stroke-width':2.4 }, host),
+      b: el('line', { stroke:'#fff', 'stroke-width':2.4 }, host),
+      t: el('text', { 'font-size':14, 'font-weight':600, fill:'#fff', 'text-anchor':'middle' }, host)
+    };
+  }
+  function buildSub(defs){
+    var pl = bodyById(state.focus), moons = moonsOf(pl.id), rmax = subRMax(), i;
+    spaceBackground();
+    for(i = 0; i < moons.length; i++){
+      el('circle', { cx:CX, cy:CY, r:R_ORBIT * moons[i].r / rmax, fill:'none', stroke:'#fff', 'stroke-opacity':0.4, 'stroke-width':1.1, 'stroke-dasharray':'3 5' }, host);
+    }
+    drawCenter(pl.id === 'zeme' ? 'Země' : 'Jupiter', defs);
+    var cn = el('text', { x:CX, y:CY + 38, 'font-size':13, 'font-weight':600, fill:'#fff', 'text-anchor':'middle', opacity:0.85 }, host);
+    cn.textContent = pl.name;
+    makeScaleBar();
+    E.list = [];
+    for(i = 0; i < moons.length; i++){
+      var o = makeMarker(moons[i], 4.6);
+      o.R = R_ORBIT * moons[i].r / rmax;
+      E.list.push(o);
+    }
+  }
+  function renderList(){
+    for(var i = 0; i < E.list.length; i++){
+      var o = E.list[i];
+      var th = bodyTheta(o.b);
       var ux = Math.cos(th), uy = -Math.sin(th);
-      o.g.setAttribute('transform', 'translate(' + (CX + o.R * ux).toFixed(2) + ' ' + (CY + o.R * uy).toFixed(2) + ')');
+      o.x = CX + o.R * ux; o.y = CY + o.R * uy;
+      o.g.setAttribute('transform', 'translate(' + o.x.toFixed(2) + ' ' + o.y.toFixed(2) + ')');
       var tx = ux * 15, ty = uy * 15 + 4.5;
-      o.t.setAttribute('x', Math.max(24 - (CX + o.R * ux), Math.min(376 - (CX + o.R * ux), tx)).toFixed(1));
-      o.t.setAttribute('y', Math.max(18 - (CY + o.R * uy), Math.min(390 - (CY + o.R * uy), ty)).toFixed(1));
+      o.t.setAttribute('x', Math.max(44 - o.x, Math.min(356 - o.x, tx)).toFixed(1));
+      o.t.setAttribute('y', Math.max(18 - o.y, Math.min(390 - o.y, ty)).toFixed(1));
     }
   }
 
   function buildGramofon(){
     // skříň
-    el('rect', { x:6, y:6, width:388, height:388, rx:22, fill:'var(--surface-2)', stroke:'var(--line)', 'stroke-width':2 }, svg);
+    el('rect', { x:6, y:6, width:388, height:388, rx:22, fill:'var(--surface-2)', stroke:'var(--line)', 'stroke-width':2 }, host);
     // talíř (poloměr 16 cm) se světlým okrajem
-    el('circle', { cx:CX, cy:CY, r:160, fill:'#4a535b' }, svg);
-    el('circle', { cx:CX, cy:CY, r:157.5, fill:'none', stroke:'#b9c2c8', 'stroke-width':4 }, svg);
+    el('circle', { cx:CX, cy:CY, r:160, fill:'#4a535b' }, host);
+    el('circle', { cx:CX, cy:CY, r:157.5, fill:'none', stroke:'#b9c2c8', 'stroke-width':4 }, host);
     // rameno přenosky (dekorace, nehybné)
-    var arm = el('g', null, svg);
+    var arm = el('g', null, host);
     el('line', { x1:370, y1:46, x2:375, y2:18, stroke:'#6f7a82', 'stroke-width':9, 'stroke-linecap':'round' }, arm);
     el('line', { x1:370, y1:46, x2:362, y2:150, stroke:'#8a949b', 'stroke-width':6, 'stroke-linecap':'round' }, arm);
     el('circle', { cx:370, cy:46, r:15, fill:'#aab3b9', stroke:'#6f7a82', 'stroke-width':2 }, arm);
@@ -1668,7 +1753,7 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
     el('polygon', { points:'355,148 369,150 367,166 357,164', fill:'#2c3238', stroke:'#8a949b', 'stroke-width':1.5 }, arm);
     el('circle', { cx:362, cy:166, r:2.2, fill:'#d7dde1' }, arm);
     // otáčející se deska
-    E.rot = el('g', null, svg);
+    E.rot = el('g', null, host);
     el('circle', { cx:CX, cy:CY, r:150, fill:'#15181c' }, E.rot);
     for(var rr = 56; rr <= 146; rr += 6){
       el('circle', { cx:CX, cy:CY, r:rr, fill:'none', stroke:'#fff', 'stroke-opacity':0.07, 'stroke-width':1 }, E.rot);
@@ -1680,25 +1765,25 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
     el('line', { x1:CX + 136, y1:CY, x2:CX + 148, y2:CY, stroke:'#fff', 'stroke-width':3.6, 'stroke-linecap':'round' }, E.rot);
     el('line', { x1:CX, y1:CY - 136, x2:CX, y2:CY - 148, stroke:'#fff', 'stroke-opacity':0.6, 'stroke-width':2.4, 'stroke-linecap':'round' }, E.rot);
     // trn
-    el('circle', { cx:CX, cy:CY, r:5.5, fill:'#c9d0d5', stroke:'#2c3238', 'stroke-width':1.5 }, svg);
-    el('circle', { cx:CX, cy:CY, r:2, fill:'#2c3238' }, svg);
+    el('circle', { cx:CX, cy:CY, r:5.5, fill:'#c9d0d5', stroke:'#2c3238', 'stroke-width':1.5 }, host);
+    el('circle', { cx:CX, cy:CY, r:2, fill:'#2c3238' }, host);
     // pomocné osy po 90° (pevné vůči skříni) a popisky
-    var ax = el('g', { stroke:'#fff', 'stroke-opacity':0.3, 'stroke-width':1, 'stroke-dasharray':'4 4' }, svg);
+    var ax = el('g', { stroke:'#fff', 'stroke-opacity':0.3, 'stroke-width':1, 'stroke-dasharray':'4 4' }, host);
     el('line', { x1:CX - 150, y1:CY, x2:CX + 150, y2:CY }, ax);
     el('line', { x1:CX, y1:CY - 150, x2:CX, y2:CY + 150 }, ax);
-    var lab = el('g', { 'font-size':14, 'font-weight':600, fill:'var(--ink)', 'text-anchor':'middle' }, svg);
+    var lab = el('g', { 'font-size':14, 'font-weight':600, fill:'var(--ink)', 'text-anchor':'middle' }, host);
     var tx = [['0°', CX + 177, CY + 5], ['90°', CX, CY - 168], ['180°', CX - 176, CY + 5], ['270°', CX, CY + 182]];
     for(var i = 0; i < tx.length; i++){
       var t = el('text', { x:tx[i][1], y:tx[i][2] }, lab); t.textContent = tx[i][0];
     }
     // kružnice drah
-    E.path1 = el('circle', { cx:CX, cy:CY, fill:'none', stroke:'#fff', 'stroke-opacity':0.6, 'stroke-width':1.3, 'stroke-dasharray':'3 5' }, svg);
-    E.path2 = el('circle', { cx:CX, cy:CY, fill:'none', stroke:'#fff', 'stroke-opacity':0.6, 'stroke-width':1.3, 'stroke-dasharray':'3 5' }, svg);
+    E.path1 = el('circle', { cx:CX, cy:CY, fill:'none', stroke:'#fff', 'stroke-opacity':0.6, 'stroke-width':1.3, 'stroke-dasharray':'3 5' }, host);
+    E.path2 = el('circle', { cx:CX, cy:CY, fill:'none', stroke:'#fff', 'stroke-opacity':0.6, 'stroke-width':1.3, 'stroke-dasharray':'3 5' }, host);
     // měřítko 5 cm
-    el('line', { x1:24, y1:372, x2:24 + 5 * PX_PER_CM, y2:372, stroke:'var(--ink)', 'stroke-width':2.4 }, svg);
-    el('line', { x1:24, y1:367, x2:24, y2:377, stroke:'var(--ink)', 'stroke-width':2.4 }, svg);
-    el('line', { x1:24 + 5 * PX_PER_CM, y1:367, x2:24 + 5 * PX_PER_CM, y2:377, stroke:'var(--ink)', 'stroke-width':2.4 }, svg);
-    var st = el('text', { x:24 + 25, y:361, 'font-size':14, 'font-weight':600, fill:'var(--ink)', 'text-anchor':'middle' }, svg);
+    el('line', { x1:24, y1:372, x2:24 + 5 * PX_PER_CM, y2:372, stroke:'var(--ink)', 'stroke-width':2.4 }, host);
+    el('line', { x1:24, y1:367, x2:24, y2:377, stroke:'var(--ink)', 'stroke-width':2.4 }, host);
+    el('line', { x1:24 + 5 * PX_PER_CM, y1:367, x2:24 + 5 * PX_PER_CM, y2:377, stroke:'var(--ink)', 'stroke-width':2.4 }, host);
+    var st = el('text', { x:24 + 25, y:361, 'font-size':14, 'font-weight':600, fill:'var(--ink)', 'text-anchor':'middle' }, host);
     st.textContent = '5 cm';
   }
 
@@ -1714,44 +1799,21 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
   })();
 
   function buildSpace(defs){
-    el('rect', { x:6, y:6, width:388, height:388, rx:22, fill:'#0e1520', stroke:'var(--line)', 'stroke-width':2 }, svg);
-    var i;
-    for(i = 0; i < STARS.length; i++){
-      var d = Math.sqrt(Math.pow(STARS[i][0] - CX, 2) + Math.pow(STARS[i][1] - CY, 2));
-      if(d > 30) el('circle', { cx:STARS[i][0], cy:STARS[i][1], r:STARS[i][2], fill:'#fff', opacity:0.55 }, svg);
-    }
-    el('circle', { cx:CX, cy:CY, r:R_ORBIT, fill:'none', stroke:'#fff', 'stroke-opacity':0.55, 'stroke-width':1.3, 'stroke-dasharray':'3 5' }, svg);
+    spaceBackground();
+    el('circle', { cx:CX, cy:CY, r:R_ORBIT, fill:'none', stroke:'#fff', 'stroke-opacity':0.55, 'stroke-width':1.3, 'stroke-dasharray':'3 5' }, host);
     var c = cfg().centerName;
-    if(c === 'Slunce'){
-      el('circle', { cx:CX, cy:CY, r:30, fill:'#f4b73a', opacity:0.22 }, svg);
-      el('circle', { cx:CX, cy:CY, r:18, fill:'#f4b73a' }, svg);
-    }else if(c === 'Země'){
-      el('circle', { cx:CX, cy:CY, r:14, fill:'#3f7fd0' }, svg);
-      el('ellipse', { cx:CX - 4, cy:CY - 3, rx:6, ry:4, fill:'#4f9a5a' }, svg);
-      el('ellipse', { cx:CX + 5, cy:CY + 5, rx:4, ry:3, fill:'#4f9a5a' }, svg);
-    }else{
-      el('clipPath', { id:'cl-jup' }, defs).appendChild(el('circle', { cx:CX, cy:CY, r:20 }));
-      el('circle', { cx:CX, cy:CY, r:20, fill:'#d3a77a' }, svg);
-      var jg = el('g', { 'clip-path':'url(#cl-jup)' }, svg);
-      var ys = [-12, -5, 2, 9, 15];
-      for(i = 0; i < ys.length; i++) el('rect', { x:CX - 20, y:CY + ys[i], width:40, height:(i % 2 ? 3 : 4.5), fill:(i % 2 ? '#a9743f' : '#efe0c6'), opacity:0.8 }, jg);
-    }
-    E.scaleBar = {
-      l: el('line', { stroke:'#fff', 'stroke-width':2.4 }, svg),
-      a: el('line', { stroke:'#fff', 'stroke-width':2.4 }, svg),
-      b: el('line', { stroke:'#fff', 'stroke-width':2.4 }, svg),
-      t: el('text', { 'font-size':14, 'font-weight':600, fill:'#fff', 'text-anchor':'middle' }, svg)
-    };
-    E.ref0 = el('line', { x1:CX, y1:CY, x2:CX + R_ORBIT, y2:CY, stroke:'#fff', 'stroke-opacity':0.3, 'stroke-width':1, 'stroke-dasharray':'4 4' }, svg);
-    var cn = el('text', { x:CX, y:CY + 38, 'font-size':13, 'font-weight':600, fill:'#fff', 'text-anchor':'middle', opacity:0.85 }, svg);
+    drawCenter(c, defs);
+    makeScaleBar();
+    E.ref0 = el('line', { x1:CX, y1:CY, x2:CX + R_ORBIT, y2:CY, stroke:'#fff', 'stroke-opacity':0.3, 'stroke-width':1, 'stroke-dasharray':'4 4' }, host);
+    var cn = el('text', { x:CX, y:CY + 38, 'font-size':13, 'font-weight':600, fill:'#fff', 'text-anchor':'middle', opacity:0.85 }, host);
     cn.textContent = c;
   }
 
   function buildLegend(){
     var lg = $('legend');
     var isG = state.scene === 'gramofon';
-    if(isOverview()){
-      lg.innerHTML = '<span>symbolické značky těles</span><span>čárkované kružnice: dráhy (odmocninová stupnice)</span><span>klikněte na těleso a přiblížíte se</span>';
+    if(isOverview() || isSub()){
+      lg.innerHTML = '<span>symbolické značky těles</span><span>čárkované kružnice: dráhy' + (isOverview() ? ' (odmocninová stupnice)' : '') + '</span><span>klikněte na těleso a přiblížíte se</span>';
       return;
     }
     var h = '<span><span class="sw" style="background:var(--danger)"></span>' +
@@ -1769,7 +1831,7 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
       var rcm = k === 0 ? state.r1 : state.r2;
       return { R:rcm * PX_PER_CM, theta:state.phi + (k === 0 ? 0 : Math.PI), kin:gramoKin(rcm, curF()) };
     }
-    return { R:R_ORBIT, theta:state.phi, kin:spaceKin() };
+    return { R:R_ORBIT, theta:state.phi + state.th0, kin:spaceKin() };
   }
 
   function updateOvTime(){
@@ -1777,7 +1839,7 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
     if(t) t.textContent = trim(num(state.simT / DAY, 4)).replace(/\u00a0/g, ' ') + ' d';
   }
   function render(){
-    if(E.ov){ renderOverview(); updateOvTime(); return; }
+    if(E.list){ renderList(); updateOvTime(); return; }
     if(!E.pts) return;
     var isG = state.scene === 'gramofon';
     var two = isG && state.show.second;
@@ -1817,14 +1879,18 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
         var showW = state.show.angle && phiMod > 0.004;
         E.wedgeG.style.display = showW ? '' : 'none';
         if(showW){
-          var ra = Math.min(36, g.R * 0.7);
-          var ex = CX + ra * Math.cos(phiMod), ey = CY - ra * Math.sin(phiMod);
-          E.wedge.setAttribute('d', 'M' + CX + ',' + CY + ' L' + (CX + ra) + ',' + CY + ' A' + ra + ',' + ra + ' 0 ' + (phiMod > Math.PI ? 1 : 0) + ' 0 ' + ex + ',' + ey + ' Z');
-          var mid = phiMod / 2;
+          var ra = Math.min(36, g.R * 0.7), t0 = state.th0;
+          var sx = CX + ra * Math.cos(t0), sy = CY - ra * Math.sin(t0);
+          var ex = CX + ra * Math.cos(t0 + phiMod), ey = CY - ra * Math.sin(t0 + phiMod);
+          E.wedge.setAttribute('d', 'M' + CX + ',' + CY + ' L' + sx + ',' + sy + ' A' + ra + ',' + ra + ' 0 ' + (phiMod > Math.PI ? 1 : 0) + ' 0 ' + ex + ',' + ey + ' Z');
+          var mid = t0 + phiMod / 2;
           E.phiTxt.setAttribute('x', CX + (ra + 14) * Math.cos(mid));
           E.phiTxt.setAttribute('y', CY - (ra + 14) * Math.sin(mid) + 6);
         }
-        if(E.ref0) E.ref0.style.display = state.show.angle ? '' : 'none';
+        if(E.ref0){
+          E.ref0.style.display = state.show.angle ? '' : 'none';
+          E.ref0.setAttribute('x2', CX + R_ORBIT * Math.cos(state.th0)); E.ref0.setAttribute('y2', CY - R_ORBIT * Math.sin(state.th0));
+        }
         updateLive(g);
       }
     }
@@ -1858,14 +1924,14 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
 
   // ---------- tabulka veličin ----------
   function buildOverviewTable(t){
+    var list = isOverview() ? sunBodies() : moonsOf(state.focus), CF = cfg();
+    var rU = UNIT_R[CF.rU], tU = UNIT_T[CF.tU];
     var h = '<thead><tr><th scope="col">Těleso</th><th scope="col"><i>r</i></th><th scope="col"><i>T</i></th><th scope="col"><i>v</i></th><th scope="col"><i>a</i><sub>d</sub></th></tr></thead><tbody>';
-    for(var i = 0; i < BODY_LIST.length; i++){
-      var b = BODY_LIST[i];
-      if(b.center !== 'sun') continue;
-      var kk = kin(b.r, b.T);
+    for(var i = 0; i < list.length; i++){
+      var b = list[i], kk = kin(b.r, b.T);
       h += '<tr><th scope="row"><button type="button" class="linklike" data-focus="' + b.id + '" style="font-size:0.9rem;font-weight:600;color:var(--ink)">' + b.name + '</button></th>' +
-        '<td>' + num(b.r / 1e9, 4) + u('mil. km') + '</td>' +
-        '<td>' + num(b.T / DAY, 4) + u('d') + '</td>' +
+        '<td>' + num(b.r / rU.f, 4) + u(rU.txt) + '</td>' +
+        '<td>' + num(b.T / tU.f, 4) + u(tU.txt) + '</td>' +
         '<td>' + num(kk.v / 1000, 3) + U_KM_S + '</td>' +
         '<td>' + auto(kk.a, 3) + U_M_S2 + '</td></tr>';
     }
@@ -1873,7 +1939,7 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
   }
   function buildTable(){
     var t = $('qtable');
-    if(isOverview()){
+    if(isOverview() || isSub()){
       buildOverviewTable(t);
       E.live1 = null; E.live2 = null;
       return;
@@ -1931,16 +1997,13 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
     $('out-r').innerHTML = num(state.r1, 3) + u('cm');
     $('out-r2').innerHTML = num(state.r2, 3) + u('cm');
     $('out-f').innerHTML = num(f, 3) + u('Hz') + ' <span style="font-weight:500;color:var(--ink-soft)">(' + rpmText(f) + u('ot·min<sup>−1</sup>') + ')</span>';
-    if(isOverview()){
-      var spo = OV_SPEEDS[state.speedIdx];
-      $('out-time').innerHTML = '1' + u('s') + ' animace = ' + trim(num(spo, 2)) + u('d') +
-        '<br><span style="font-weight:500;color:var(--ink-soft)">Země oběhne za ' + num(bodyById('zeme').T / (spo * DAY), 2) + u('s') + '</span>';
-    }else if(state.scene !== 'gramofon'){
+    if(state.scene !== 'gramofon'){
       var CF = cfg();
       var sp = CF.speeds[state.speedIdx];
-      var perOrbit = state.TIn / (sp * UNIT_T[CF.sU].f);
+      var ref = isOverview() ? bodyById('zeme') : (isSub() ? moonsOf(state.focus)[0] : curBody());
+      var perOrbit = (isOverview() || isSub() ? ref.T : state.TIn) / (sp * UNIT_T[CF.sU].f);
       $('out-time').innerHTML = '1' + u('s') + ' animace = ' + trim(num(sp, 2)) + u(UNIT_T[CF.sU].txt) +
-        '<br><span style="font-weight:500;color:var(--ink-soft)">oběh trvá ' + num(perOrbit, 2) + u('s') + '</span>';
+        '<br><span style="font-weight:500;color:var(--ink-soft)">' + (isOverview() ? 'Země oběhne za ' : (isSub() ? ref.name + ' oběhne za ' : 'oběh trvá ')) + num(perOrbit, 2) + u('s') + '</span>';
     }
   }
 
@@ -1954,11 +2017,25 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
     var c = $('comment');
     var p = [];
     var isG = state.scene === 'gramofon';
+    if(isSub()){
+      var pl = bodyById(state.focus), ms = moonsOf(pl.id), CS = cfg();
+      var g1 = kin(ms[0].r, ms[0].T);
+      if(ms.length === 1){
+        p.push(ms[0].name + ' obíhá ' + (pl.id === 'zeme' ? 'Zemi' : 'Jupiter') + ' po téměř kruhové dráze o poloměru ' + num(ms[0].r / UNIT_R[CS.rU].f, 3) + u(UNIT_R[CS.rU].txt) + ' s periodou ' + num(ms[0].T / UNIT_T[CS.tU].f, 3) + u(UNIT_T[CS.tU].txt) + '. Obvodová rychlost je ' + num(g1.v / 1000, 3) + U_KM_S + ' a dostředivé zrychlení ' + auto(g1.a, 3) + U_M_S2 + ', tedy asi ' + num(G_EARTH / g1.a, 2) + 'krát menší než tíhové zrychlení na Zemi.');
+      }else{
+        var g2 = kin(ms[ms.length - 1].r, ms[ms.length - 1].T);
+        p.push('Čtyři největší měsíce obíhají Jupiter po kruhových drahách o různém poloměru. Nejbližší ' + ms[0].name + ' má periodu ' + num(ms[0].T / UNIT_T[CS.tU].f, 4) + u(UNIT_T[CS.tU].txt) + ' a rychlost ' + num(g1.v / 1000, 3) + U_KM_S + ', nejvzdálenější ' + ms[ms.length - 1].name + ' periodu ' + num(ms[ms.length - 1].T / UNIT_T[CS.tU].f, 4) + u(UNIT_T[CS.tU].txt) + ' a rychlost jen ' + num(g2.v / 1000, 3) + U_KM_S + '.');
+        p.push('Dostředivé zrychlení ' + ms[0].name + ' (' + auto(g1.a, 3) + U_M_S2 + ') je asi ' + num(g1.a / g2.a, 2) + 'krát větší než u ' + ms[ms.length - 1].name + ' (' + auto(g2.a, 3) + U_M_S2 + '). Čím blíž k planetě, tím kratší perioda a větší rychlost i zrychlení.');
+      }
+      p.push('Kliknutím na ' + (ms.length === 1 ? 'měsíc' : 'měsíc') + ' se k němu přiblížíte a uvidíte vektory <b>v</b> a <b>a</b><sub>d</sub>. Oběh samotné planety kolem Slunce ukáže tlačítko „Oběh kolem Slunce“.');
+      c.innerHTML = '<p>' + p.join('</p><p>') + '</p>';
+      return;
+    }
     if(isOverview()){
       var km = kin(bodyById('merkur').r, bodyById('merkur').T), kn = kin(bodyById('neptun').r, bodyById('neptun').T);
       p.push('Všechny planety i Ceres obíhají kolem Slunce ve stejném směru, ale každá s jinou periodou. Merkur obíhá rychlostí ' + num(km.v / 1000, 3) + U_KM_S + ' a oběh mu trvá ' + num(bodyById('merkur').T / DAY, 3) + u('d') + '. Neptun jen ' + num(kn.v / 1000, 3) + U_KM_S + ' a oběh trvá ' + num(bodyById('neptun').T / DAY, 4) + u('d') + '.');
       p.push('Dostředivé zrychlení Merkuru (' + auto(km.a, 3) + U_M_S2 + ') je asi ' + num(km.a / kn.a, 2) + 'krát větší než u Neptunu (' + auto(kn.a, 3) + U_M_S2 + '). Čím vzdálenější planeta, tím delší perioda a menší rychlost i zrychlení.');
-      p.push('Přibližte se k tělesu kliknutím nebo v nabídce „Přiblížit na“. Tam uvidíte vektory <b>v</b> a <b>a</b><sub>d</sub> a můžete přepsat poloměr i periodu.');
+      p.push('Přibližte se k tělesu kliknutím nebo v nabídce „Přiblížit na“. U Země uvidíte obíhat Měsíc, u Jupiteru jeho měsíce, u ostatních těles vektory <b>v</b> a <b>a</b><sub>d</sub>.');
       c.innerHTML = '<p>' + p.join('</p><p>') + '</p>';
       return;
     }
@@ -2005,13 +2082,16 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
       n.innerHTML = '<b>Upozornění:</b> skutečné dráhy planet jsou elipsy, ne kružnice. Aplet je pro jednoduchost nahrazuje kružnicemi o poloměru rovném velké poloose. U většiny planet je to dobré přiblížení, nejhorší je u Merkuru. Dostředivé zrychlení v tabulce je proto průměrná hodnota.';
       return;
     }
+    if(isSub()){
+      n.hidden = true;
+    }
     if(isG){
       n.hidden = true;
       sn.innerHTML = 'Pohled shora. Otáčí se deska s talířem, přenoska u okraje je jen dekorace. Měřítko vlevo dole: úsečka odpovídá <b>5 cm</b>. Poloměr desky je 15 cm.';
       return;
     }
     var CF = cfg(), kk = spaceKin(), rU = UNIT_R[CF.rU];
-    var rd = kk.r / rU.f;                 // r ve zvolené jednotce
+    var rd = (isSub() ? subRMax() : kk.r) / rU.f;     // r ve zvolené jednotce
     var target = rd / R_ORBIT * 50;       // délka úsečky 50 jednotek plátna
     var e = Math.floor(Math.log10(target)), m = target / Math.pow(10, e);
     var nice = (m < 1.5 ? 1 : (m < 3.5 ? 2 : (m < 7.5 ? 5 : 10))) * Math.pow(10, e);
@@ -2024,6 +2104,10 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
     sb.t.setAttribute('text-anchor', 'start'); sb.t.setAttribute('x', 24); sb.t.setAttribute('y', 361);
     sb.t.textContent = label.replace(/ /g, ' ');
     var words = rU.txt === 'mil. km' ? num(nice, 3) + u('milionů km') : num(nice, 3) + u('tisíc km');
+    if(isSub()){
+      sn.innerHTML = 'Pohled shora. Měřítko vlevo dole: úsečka odpovídá <b>' + words + '</b>. Velikost značek planety i měsíců je jen <b>symbolická</b> (v měřítku nejsou). <span>Simulovaný čas: <b id="ov-time">0 d</b>.</span>';
+      return;
+    }
     sn.innerHTML = 'Měřítko vlevo dole: úsečka odpovídá <b>' + words + '</b>. Dráha vždy zaplní plátno, takže se měřítko mění s tělesem. Velikost značek těles je jen <b>symbolická</b> (v měřítku nejsou). Šipky ukazují jen <b>směr</b>: jejich délka není úměrná velikosti veličiny ani se neporovnává mezi scénami, velikost je dána číslem v tabulce.';
     n.hidden = false;
     n.innerHTML = '<b>Upozornění:</b> skutečné dráhy planet jsou elipsy, ne kružnice. Aplet je pro jednoduchost nahrazuje kružnicí o poloměru rovném velké poloose. U většiny planet je to dobré přiblížení, nejhorší je u Merkuru. Dostředivé zrychlení v tabulce je proto průměrná hodnota.';
@@ -2031,29 +2115,115 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
 
   // ---------- řízení stavu ----------
   function show(id, vis){ $(id).hidden = !vis; }
-  function applyScene(){
-    var isG = state.scene === 'gramofon', isO = isOverview(), isB = !isG && !isO;
+  function autoSpeed(b, CF){
+    var best = 0, bd = 1e9;
+    for(var j = 0; j < CF.speeds.length; j++){
+      var dur = b.T / (CF.speeds[j] * UNIT_T[CF.sU].f);
+      var dd = Math.abs(Math.log(dur / 12));
+      if(dd < bd){ bd = dd; best = j; }
+    }
+    return best;
+  }
+  var prevKey = null;
+  function applyScene(keepOld){
+    var kind = viewKind(), isG = kind === 'gramofon', isO = kind === 'overview', isB = kind === 'body';
     show('r-row', isG); show('f-row', isG); show('slow-row', isG); show('preset-row', isG);
     show('r2-row', isG && state.show.second);
     show('time-row', !isG); show('space-in-row', isB);
-    show('body-row', !isG); show('show-row', !isO);
+    show('body-row', !isG); show('show-row', isB || isG);
     $('chip-second').hidden = !isG;
-    if(isB) loadBody();
-    if(isO){
-      state.speedIdx = OV_DEFAULT_IDX; state.simT = 0;
-      $('sl-time').max = OV_SPEEDS.length - 1; $('sl-time').value = state.speedIdx;
+    state.th0 = 0;
+    if(!isG){
+      var key = cfgKey(), CF = SCENE_CFG[key];
+      if(prevKey !== key){
+        state.speedIdx = isO ? OV_DEFAULT_IDX : autoSpeed(isB ? curBody() : moonsOf(state.focus)[0], CF);
+      }
+      prevKey = key;
+      $('sl-time').max = CF.speeds.length - 1;
+      state.speedIdx = Math.min(state.speedIdx, CF.speeds.length - 1);
+      $('sl-time').value = state.speedIdx;
+      if(isB) loadBody();
+      syncFocusUi();
+    }else{
+      prevKey = null;
     }
-    if(!isG){ syncFocusUi(); }
-    buildScene();
+    buildScene(keepOld);
     buildTable();
     spaceNotes();
     updateOuts();
     buildComment();
     render();
   }
-  function setFocus(id){
-    state.focus = id; state.phi = 0; state.change = null;
-    applyScene();
+
+  // ---------- plynulé přiblížení: přechod mezi dvěma scénami ----------
+  var tr = null;
+  var ZOOM_DUR = 1100;
+  function ease(x){ return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; }
+  function sstep(a, b, x){ var t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); }
+  function markerPos(Eo, id){
+    if(Eo && Eo.list) for(var i = 0; i < Eo.list.length; i++) if(Eo.list[i].b.id === id) return { x:Eo.list[i].x, y:Eo.list[i].y };
+    return { x:CX, y:CY };
+  }
+  function drawTransition(e){
+    // e = 0: vidět malá scéna, e = 1: vidět velká (přiblížená) scéna
+    var Z = tr.Z, P = tr.P, S = Math.pow(Z, e);
+    var tx = P.x + (CX - P.x) * e - S * P.x, ty = P.y + (CY - P.y) * e - S * P.y;
+    tr.small.setAttribute('transform', 'translate(' + tx.toFixed(2) + ' ' + ty.toFixed(2) + ') scale(' + S.toFixed(4) + ')');
+    tr.small.setAttribute('opacity', (1 - sstep(0.35, 0.9, e)).toFixed(3));
+    var s2 = Math.pow(Z, e - 1);
+    tr.big.setAttribute('transform', 'translate(' + (CX * (1 - s2)).toFixed(2) + ' ' + (CY * (1 - s2)).toFixed(2) + ') scale(' + s2.toFixed(4) + ')');
+    tr.big.setAttribute('opacity', sstep(0.1, 0.65, e).toFixed(3));
+  }
+  function finishTransition(){
+    if(!tr) return;
+    if(tr.old.parentNode) tr.old.parentNode.removeChild(tr.old);
+    tr.live.removeAttribute('transform'); tr.live.removeAttribute('opacity');
+    tr = null;
+  }
+  function startTransition(oldG, oldE, oldKind, oldFocus){
+    var newKind = viewKind(), nf = state.focus;
+    var spec = { mode:'fade', Z:1, P:{ x:CX, y:CY } };
+    var ob = bodyById(oldFocus), nb = bodyById(nf);
+    var ZMIN = 1.15;
+    if(oldKind === 'overview' && newKind === 'sub') spec = { mode:'in', Z:8, P:markerPos(oldE, nf) };
+    else if(oldKind === 'sub' && newKind === 'overview') spec = { mode:'out', Z:8, P:markerPos(E, oldFocus) };
+    else if(oldKind === 'overview' && newKind === 'body' && nb.center === 'sun') spec = { mode:'in', Z:Math.max(ZMIN, R_ORBIT / ovRadius(nb.r)), P:{ x:CX, y:CY } };
+    else if(oldKind === 'body' && newKind === 'overview' && ob.center === 'sun') spec = { mode:'out', Z:Math.max(ZMIN, R_ORBIT / ovRadius(ob.r)), P:{ x:CX, y:CY } };
+    else if(oldKind === 'sub' && newKind === 'body' && nb.parent === oldFocus){
+      var mx = 0, ms = moonsOf(oldFocus); for(var i = 0; i < ms.length; i++) mx = Math.max(mx, ms[i].r);
+      spec = { mode:'in', Z:Math.max(ZMIN, mx / nb.r), P:{ x:CX, y:CY } };
+    }else if(oldKind === 'body' && newKind === 'sub' && ob.parent === nf){
+      var mx2 = 0, ms2 = moonsOf(nf); for(var j = 0; j < ms2.length; j++) mx2 = Math.max(mx2, ms2[j].r);
+      spec = { mode:'out', Z:Math.max(ZMIN, mx2 / ob.r), P:{ x:CX, y:CY } };
+    }
+    tr = { mode:spec.mode, Z:spec.Z, P:spec.P, old:oldG, live:host, t0:null };
+    if(spec.mode === 'out'){ tr.small = host; tr.big = oldG; }
+    else { tr.small = oldG; tr.big = host; }
+    oldG.setAttribute('pointer-events', 'none');
+    host.setAttribute('pointer-events', 'none');
+    drawTransition(spec.mode === 'out' ? 1 : 0);
+  }
+  function stepTransition(now){
+    if(tr.t0 === null) tr.t0 = now;
+    var u = Math.min(1, (now - tr.t0) / (tr.mode === 'fade' ? 450 : ZOOM_DUR));
+    var e = tr.mode === 'out' ? 1 - ease(u) : (tr.mode === 'in' ? ease(u) : u);
+    if(tr.mode === 'fade') e = u;       // prosté prolnutí: malá scéna = stará, velká = nová
+    drawTransition(e);
+    if(u >= 1){ tr.live.removeAttribute('pointer-events'); finishTransition(); }
+  }
+  function navigate(next){
+    var oldKind = viewKind(), oldFocus = state.focus, oldE = E;
+    finishTransition();
+    var oldG = (!reduceMotion && host && host.parentNode === svg) ? host : null;
+    oldE = E;
+    state.scene = next.scene; state.focus = next.focus; state.sub = !!next.sub;
+    state.phi = 0; state.change = null;
+    applyScene(!!oldG);
+    if(oldG) startTransition(oldG, oldE, oldKind, oldFocus);
+  }
+  function setFocus(id, sub){
+    if(id === 'system'){ navigate({ scene:'solar', focus:'system', sub:false }); return; }
+    navigate({ scene:'solar', focus:id, sub:(sub === undefined ? moonsOf(id).length > 0 : sub) });
     try{ $('body-sel').focus(); }catch(e){}
   }
   // nabídka těles (volí se jednou) a tlačítka rychlé změny přiblížení
@@ -2066,20 +2236,30 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
     }
     sel.innerHTML = h + '</optgroup>';
   }
+  function chip(id, label, sub, accent){
+    return '<button class="chip' + (accent ? ' accented' : '') + '" type="button" data-focus="' + id + '"' + (sub !== undefined ? ' data-sub="' + (sub ? 1 : 0) + '"' : '') + '>' + label + '</button>';
+  }
   function syncFocusUi(){
     $('body-sel').value = state.focus;
-    var seg = $('focus-seg'), h = '', b = curBody(), i, m;
-    if(b){
-      h += '<button class="chip" type="button" data-focus="system">← Celá soustava</button>';
+    var h = '', kind = viewKind(), i, m, b;
+    if(kind === 'sub'){
+      b = bodyById(state.focus);
+      h += chip('system', '← Celá soustava');
+      var ms = moonsOf(b.id);
+      for(i = 0; i < ms.length; i++) h += chip(ms[i].id, ms[i].name, undefined, true);
+      h += chip(b.id, 'Oběh kolem Slunce', false);
+    }else if(kind === 'body'){
+      b = curBody();
+      h += chip('system', '← Celá soustava');
       if(b.parent){
-        h += '<button class="chip" type="button" data-focus="' + b.parent + '">← ' + bodyById(b.parent).name + '</button>';
-      }
-      for(i = 0; i < BODY_LIST.length; i++){
-        m = BODY_LIST[i];
-        if(m.parent === b.id) h += '<button class="chip accented" type="button" data-focus="' + m.id + '">' + m.name + '</button>';
+        h += chip(b.parent, '← ' + bodyById(b.parent).name + ' a měsíce', true);
+        var sib = moonsOf(b.parent);
+        for(i = 0; i < sib.length; i++) if(sib[i] !== b) h += chip(sib[i].id, sib[i].name, undefined, true);
+      }else if(moonsOf(b.id).length){
+        h += chip(b.id, '← ' + b.name + ' a měsíce', true);
       }
     }
-    seg.innerHTML = h;
+    $('focus-seg').innerHTML = h;
   }
   function loadBody(){
     var b = curBody(), CF = cfg();
@@ -2087,16 +2267,7 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
     $('in-r-unit').textContent = UNIT_R[CF.rU].txt.replace('mil. km', 'milionů km').replace('tis. km', 'tisíc km');
     $('in-T-unit').textContent = UNIT_T[CF.tU].txt === 'd' ? 'dní' : 'hodin';
     writeInputs();
-    // rychlost času: oběh asi za 8 až 20 s
-    var best = 0, bd = 1e9;
-    for(var j = 0; j < CF.speeds.length; j++){
-      var dur = b.T / (CF.speeds[j] * UNIT_T[CF.sU].f);
-      var dd = Math.abs(Math.log(dur / 12));
-      if(dd < bd){ bd = dd; best = j; }
-    }
-    state.speedIdx = best;
-    $('sl-time').max = CF.speeds.length - 1;
-    $('sl-time').value = best;
+    state.th0 = bodyTheta(b);     // těleso zůstává tam, kde bylo v přehledu; φ se měří od této polohy
     state.phi = 0;
     state.change = null;
   }
@@ -2121,12 +2292,11 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
   function advance(dt){
     if(state.scene === 'gramofon'){
       state.phi += TWO_PI * curF() * dt * state.slow;
-    }else if(isOverview()){
-      state.simT += OV_SPEEDS[state.speedIdx] * DAY * dt;
     }else{
       var CF = cfg();
-      var simPerSec = CF.speeds[state.speedIdx] * UNIT_T[CF.sU].f;     // s simulovaného času za 1 s animace
-      state.phi += TWO_PI / state.TIn * simPerSec * dt;
+      var simDt = CF.speeds[state.speedIdx] * UNIT_T[CF.sU].f * dt;     // simulovaný čas (s) za tento snímek
+      state.simT += simDt;
+      if(viewKind() === 'body') state.phi += TWO_PI / state.TIn * simDt;
     }
   }
   function frame(ts){
@@ -2135,8 +2305,8 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
     lastTs = ts;
     if(dt > 0.1) dt = 0.1;                 // po návratu na záložku se pohyb neskočí
     if(!appletSection.hidden){
-      if(state.running) advance(dt);
-      if(state.running) render();
+      if(tr){ stepTransition(ts); }        // během přiblížení čas stojí, scény na sebe navazují
+      else if(state.running){ advance(dt); render(); }
     }
     window.requestAnimationFrame(frame);
   }
@@ -2152,15 +2322,16 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
     b.addEventListener('click', function(){
       state.scene = b.getAttribute('data-scene');
       setPressed($('scene-seg'), 'data-scene', state.scene);
-      state.phi = 0; state.change = null;
-      if(state.scene === 'solar') state.focus = 'system';
-      applyScene();
+      navigate({ scene:state.scene, focus:'system', sub:false });
     });
   });
   $('body-sel').addEventListener('change', function(){ setFocus(this.value); });
   $('focus-seg').addEventListener('click', function(ev){
     var t = ev.target; while(t && t !== this && !t.getAttribute('data-focus')) t = t.parentNode;
-    if(t && t !== this) setFocus(t.getAttribute('data-focus'));
+    if(t && t !== this){
+      var sb = t.getAttribute('data-sub');
+      setFocus(t.getAttribute('data-focus'), sb === null ? undefined : sb === '1');
+    }
   });
   $('qtable').addEventListener('click', function(ev){
     var t = ev.target;
@@ -2171,7 +2342,11 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
     this.textContent = state.running ? 'Pozastavit' : 'Spustit';
     lastTs = null;
   });
-  $('btn-reset').addEventListener('click', function(){ state.phi = 0; state.simT = 0; render(); });
+  $('btn-reset').addEventListener('click', function(){
+    state.phi = 0; state.simT = 0;
+    if(viewKind() === 'body') state.th0 = bodyTheta(curBody());
+    render();
+  });
   Array.prototype.forEach.call($('slow-seg').querySelectorAll('button'), function(b){
     b.addEventListener('click', function(){
       state.slow = parseFloat(b.getAttribute('data-slow'));
@@ -2272,7 +2447,7 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
   $('sl-r').value = state.r1;
   $('sl-r2').value = state.r2;
   $('btn-play').textContent = state.running ? 'Pozastavit' : 'Spustit';
-  applyScene();
+  applyScene(false);
   window.requestAnimationFrame(frame);
   var appletTab = document.getElementById('top-tab-aplet');
   if(appletTab) appletTab.addEventListener('click', function(){ lastTs = null; render(); });
