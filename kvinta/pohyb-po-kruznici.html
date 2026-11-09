@@ -922,7 +922,7 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
         </div>
         <span class="slider-val" id="out-f" aria-live="polite"></span>
       </div>
-      <p class="hint" id="f-marks-desc" style="margin:0;" hidden>Posuvník se zastavuje po 0,01&nbsp;Hz a navíc na hodnotě 0,556&nbsp;Hz, což je přesných 33⅓ otáčky za minutu.</p>
+      <p class="hint" id="f-marks-desc" style="margin:0;" hidden>Posuvník se zastavuje po 0,01&nbsp;Hz a navíc na hodnotě 0,5556&nbsp;Hz (5/9&nbsp;Hz), což je 33⅓ otáčky za minutu.</p>
 
       <div class="mode-row" id="space-in-row" hidden>
         <span class="mode-row-label">Vlastní hodnoty</span>
@@ -950,7 +950,7 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
       <div class="mode-row" id="preset-row">
         <span class="mode-row-label" id="lbl-preset">Předvolby</span>
         <div class="seg" id="preset-seg" role="group" aria-labelledby="lbl-preset">
-          <button class="chip" type="button" data-f="0.55" data-r="14">gramofon 33⅓ ot·min⁻¹</button>
+          <button class="chip" type="button" data-f="0.5555555555555556" data-r="14">gramofon 33⅓ ot·min⁻¹</button>
           <button class="chip" type="button" data-f="0.75" data-r="14">gramofon 45 ot·min⁻¹</button>
           <button class="chip" type="button" data-f="1.3" data-r="14">gramofon 78 ot·min⁻¹</button>
         </div>
@@ -964,8 +964,8 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
       <details class="navod">
         <summary>Návod</summary>
         <div class="hint">
-          <p>Červená značka leží na desce a otáčí se spolu s ní. Přenoska u okraje je jen dekorace a nehýbe se. Pohyb můžete zpomalit (1×, 0,5×, 0,1×), pozastavit a vynulovat. Svislé a vodorovné čárkované úsečky vyznačují úhly 0°, 90°, 180° a 270°.</p>
-          <p>Posuvník frekvence se zastavuje po 0,01&nbsp;Hz a navíc na hodnotě 0,556&nbsp;Hz (přesně 33⅓ ot·min⁻¹). Pod posuvníkem jsou značky skutečných otáček gramofonu. Tlačítky Předvolby nastavíte frekvenci i poloměr najednou. Šipka vektoru je kvůli viditelnosti nejméně 10 jednotek plátna dlouhá, i když je veličina velmi malá.</p>
+          <p>Červená značka leží na desce a otáčí se spolu s ní. Přenoska spočívá na desce, je jen dekorace a nehýbe se. Deska se otáčí po směru hodinových ručiček jako u skutečného gramofonu, planety a měsíce obíhají proti směru hodinových ručiček. Pohyb můžete zpomalit (1×, 0,5×, 0,1×), pozastavit a vynulovat. Svislé a vodorovné čárkované úsečky vyznačují úhly 0°, 90°, 180° a 270°.</p>
+          <p>Posuvník frekvence se zastavuje po 0,01&nbsp;Hz a navíc na hodnotě 0,5556&nbsp;Hz (5/9&nbsp;Hz, tedy 33⅓ ot·min⁻¹). Pod posuvníkem jsou značky skutečných otáček gramofonu. Tlačítky Předvolby nastavíte frekvenci i poloměr najednou. Šipka vektoru je kvůli viditelnosti nejméně 10 jednotek plátna dlouhá, i když je veličina velmi malá.</p>
           <p>Po zapnutí druhého bodu se objeví další posuvník poloměru a tabulka porovná oba body. Ve sluneční soustavě je nejdřív vidět celá soustava: planety a Ceres obíhají současně a skutečnými poměry period. Vzdálenosti jsou kvůli přehlednosti v odmocninové stupnici, proto nejsou v měřítku. Kliknutím na těleso, tlačítkem nebo nabídkou „Přiblížit na“ se k němu přiblížíte. Po přiblížení na Zemi nebo Jupiter tlačítkem „Měsíc Země“ či „Měsíce Jupiteru“ uvidíte jejich měsíce obíhat kolem planety. V přiblížení nastavíte rychlost času (kolik dnů nebo hodin uplyne za sekundu animace) a můžete přepsat poloměr a periodu; čárka i tečka jsou povoleny. Šipky jsou ve sluneční soustavě jen směrové.</p>
         </div>
       </details>
@@ -1410,7 +1410,7 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
   var F_STOPS = [];
   (function(){
     for(var i = 50; i <= 130; i++){
-      if(i === 56) F_STOPS.push(0.556);    // přesně 33⅓ ot·min⁻¹ (100/3/60 = 0,5556 Hz)
+      if(i === 56) F_STOPS.push(5 / 9);     // 33⅓ ot·min⁻¹ = (100/3)/60 Hz = 5/9 Hz ≐ 0,5556 Hz
       F_STOPS.push(i / 100);
     }
   })();
@@ -1422,7 +1422,8 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
     }
     return best;
   }
-  function isExact33(f){ return f === 0.556; }
+  function isExact33(f){ return Math.abs(f - 5 / 9) < 1e-9; }
+  function fFmt(f){ return isExact33(f) ? num(f, 4) : num(f, 3); }
   function rpmText(f){
     if(isExact33(f)) return '33⅓';
     return num(f * 60, 3);
@@ -1586,16 +1587,16 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
     }
     return { g:g, segs:segs };
   }
-  function setTrail(tr, R, theta, traveled){
+  function setTrail(tr, R, theta, traveled, dir){
     for(var i = 0; i < TRAIL_N; i++){
       var b0 = TRAIL_SPAN * i / TRAIL_N, b1 = TRAIL_SPAN * (i + 1) / TRAIL_N;
       var seg = tr.segs[i];
       if(b0 >= traveled){ seg.setAttribute('opacity', 0); continue; }
       var q = 1 - i / TRAIL_N;
       seg.setAttribute('opacity', (0.6 * q * q).toFixed(3));
-      seg.setAttribute('x1', CX + R * Math.cos(theta - b0)); seg.setAttribute('y1', CY - R * Math.sin(theta - b0));
+      seg.setAttribute('x1', CX + R * Math.cos(theta - dir * b0)); seg.setAttribute('y1', CY - R * Math.sin(theta - dir * b0));
       var be = Math.min(b1, traveled);     // poslední úsek se zkrátí na skutečně urazený úhel, konec stopy tak neskáče po úsecích
-      seg.setAttribute('x2', CX + R * Math.cos(theta - be)); seg.setAttribute('y2', CY - R * Math.sin(theta - be));
+      seg.setAttribute('x2', CX + R * Math.cos(theta - dir * be)); seg.setAttribute('y2', CY - R * Math.sin(theta - dir * be));
     }
   }
 
@@ -1745,14 +1746,6 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
     // talíř (poloměr 16 cm) se světlým okrajem
     el('circle', { cx:CX, cy:CY, r:160, fill:'#4a535b' }, host);
     el('circle', { cx:CX, cy:CY, r:157.5, fill:'none', stroke:'#b9c2c8', 'stroke-width':4 }, host);
-    // rameno přenosky (dekorace, nehybné)
-    var arm = el('g', null, host);
-    el('line', { x1:370, y1:46, x2:375, y2:18, stroke:'#6f7a82', 'stroke-width':9, 'stroke-linecap':'round' }, arm);
-    el('line', { x1:370, y1:46, x2:362, y2:150, stroke:'#8a949b', 'stroke-width':6, 'stroke-linecap':'round' }, arm);
-    el('circle', { cx:370, cy:46, r:15, fill:'#aab3b9', stroke:'#6f7a82', 'stroke-width':2 }, arm);
-    el('circle', { cx:370, cy:46, r:5.5, fill:'#6f7a82' }, arm);
-    el('polygon', { points:'355,148 369,150 367,166 357,164', fill:'#2c3238', stroke:'#8a949b', 'stroke-width':1.5 }, arm);
-    el('circle', { cx:362, cy:166, r:2.2, fill:'#d7dde1' }, arm);
     // otáčející se deska
     E.rot = el('g', null, host);
     el('circle', { cx:CX, cy:CY, r:150, fill:'#15181c' }, E.rot);
@@ -1768,12 +1761,22 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
     // trn
     el('circle', { cx:CX, cy:CY, r:5.5, fill:'#c9d0d5', stroke:'#2c3238', 'stroke-width':1.5 }, host);
     el('circle', { cx:CX, cy:CY, r:2, fill:'#2c3238' }, host);
+    // rameno přenosky: jehla spočívá na desce (asi 11,7 cm od osy); je to dekorace a nehýbe se, kreslí se nad desku a pod sledované body
+    var arm = el('g', null, host);
+    el('line', { x1:370, y1:46, x2:376, y2:20, stroke:'#6f7a82', 'stroke-width':9, 'stroke-linecap':'round' }, arm);
+    el('line', { x1:370, y1:46, x2:309, y2:121, stroke:'#000', 'stroke-opacity':0.28, 'stroke-width':8, 'stroke-linecap':'round', transform:'translate(2.5 3)' }, arm);
+    el('line', { x1:370, y1:46, x2:309, y2:121, stroke:'#9aa4ab', 'stroke-width':6, 'stroke-linecap':'round' }, arm);
+    el('circle', { cx:370, cy:46, r:15, fill:'#aab3b9', stroke:'#6f7a82', 'stroke-width':2 }, arm);
+    el('circle', { cx:370, cy:46, r:5.5, fill:'#6f7a82' }, arm);
+    el('polygon', { points:'313.3,124.5 304.7,117.5 295,132.8 300.4,137.2', fill:'#2c3238', stroke:'#c3cbd0', 'stroke-width':1.3, 'stroke-linejoin':'round' }, arm);
+    el('circle', { cx:297.7, cy:135, r:2.2, fill:'#e6ebee' }, arm);
     // pomocné osy po 90° (pevné vůči skříni) a popisky
     var ax = el('g', { stroke:'#fff', 'stroke-opacity':0.3, 'stroke-width':1, 'stroke-dasharray':'4 4' }, host);
     el('line', { x1:CX - 150, y1:CY, x2:CX + 150, y2:CY }, ax);
     el('line', { x1:CX, y1:CY - 150, x2:CX, y2:CY + 150 }, ax);
     var lab = el('g', { 'font-size':14, 'font-weight':600, fill:'var(--ink)', 'text-anchor':'middle' }, host);
-    var tx = [['0°', CX + 177, CY + 5], ['90°', CX, CY - 168], ['180°', CX - 176, CY + 5], ['270°', CX, CY + 182]];
+    // úhel φ roste ve směru otáčení desky (po směru hodinových ručiček)
+    var tx = [['0°', CX + 177, CY + 5], ['90°', CX, CY + 182], ['180°', CX - 176, CY + 5], ['270°', CX, CY - 168]];
     for(var i = 0; i < tx.length; i++){
       var t = el('text', { x:tx[i][1], y:tx[i][2] }, lab); t.textContent = tx[i][0];
     }
@@ -1830,7 +1833,7 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
     // vrací { R (jednotky plátna), theta, kin }
     if(state.scene === 'gramofon'){
       var rcm = k === 0 ? state.r1 : state.r2;
-      return { R:rcm * PX_PER_CM, theta:state.phi + (k === 0 ? 0 : Math.PI), kin:gramoKin(rcm, curF()) };
+      return { R:rcm * PX_PER_CM, theta:-state.phi + (k === 0 ? 0 : Math.PI), kin:gramoKin(rcm, curF()) };   // gramofon: po směru hodinových ručiček
     }
     return { R:R_ORBIT, theta:state.phi + state.th0, kin:spaceKin() };
   }
@@ -1845,7 +1848,7 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
     var isG = state.scene === 'gramofon';
     var two = isG && state.show.second;
     var phiMod = state.phi % TWO_PI;
-    if(isG) E.rot.setAttribute('transform', 'rotate(' + (-(state.phi * 180 / Math.PI) % 360).toFixed(3) + ' ' + CX + ' ' + CY + ')');
+    if(isG) E.rot.setAttribute('transform', 'rotate(' + ((state.phi * 180 / Math.PI) % 360).toFixed(3) + ' ' + CX + ' ' + CY + ')');
     for(var k = 0; k < 2; k++){
       var P = E.pts[k];
       var on = k === 0 || two;
@@ -1856,9 +1859,10 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
       var g = pointGeom(k);
       var x = CX + g.R * Math.cos(g.theta), y = CY - g.R * Math.sin(g.theta);
       P.dot.setAttribute('cx', x); P.dot.setAttribute('cy', y);
-      if(state.show.trail) setTrail(P.trail, g.R, g.theta, state.phi);
+      if(state.show.trail) setTrail(P.trail, g.R, g.theta, state.phi, isG ? -1 : 1);
       if(state.show.vec){
-        var vx = -Math.sin(g.theta), vy = -Math.cos(g.theta);     // směr rychlosti (proti směru hodinových ručiček)
+        var dd = isG ? -1 : 1;                                     // gramofon po směru, planety proti směru hodinových ručiček
+        var vx = -dd * Math.sin(g.theta), vy = -dd * Math.cos(g.theta);     // směr rychlosti (tečna)
         var ax = -Math.cos(g.theta), ay = Math.sin(g.theta);      // do středu
         var lv, la;
         if(isG){ lv = Math.max(10, g.kin.v * 100); la = Math.max(10, g.kin.a * 11); }
@@ -1882,9 +1886,10 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
         if(showW){
           var ra = Math.min(36, g.R * 0.7), t0 = state.th0;
           var sx = CX + ra * Math.cos(t0), sy = CY - ra * Math.sin(t0);
-          var ex = CX + ra * Math.cos(t0 + phiMod), ey = CY - ra * Math.sin(t0 + phiMod);
-          E.wedge.setAttribute('d', 'M' + CX + ',' + CY + ' L' + sx + ',' + sy + ' A' + ra + ',' + ra + ' 0 ' + (phiMod > Math.PI ? 1 : 0) + ' 0 ' + ex + ',' + ey + ' Z');
-          var mid = t0 + phiMod / 2;
+          var sg = isG ? -1 : 1;
+          var ex = CX + ra * Math.cos(t0 + sg * phiMod), ey = CY - ra * Math.sin(t0 + sg * phiMod);
+          E.wedge.setAttribute('d', 'M' + CX + ',' + CY + ' L' + sx + ',' + sy + ' A' + ra + ',' + ra + ' 0 ' + (phiMod > Math.PI ? 1 : 0) + ' ' + (isG ? 1 : 0) + ' ' + ex + ',' + ey + ' Z');
+          var mid = t0 + sg * phiMod / 2;
           E.phiTxt.setAttribute('x', CX + (ra + 14) * Math.cos(mid));
           E.phiTxt.setAttribute('y', CY - (ra + 14) * Math.sin(mid) + 6);
         }
@@ -1956,7 +1961,7 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
       if(two) ks.push(gramoKin(state.r2, f));
       var cells = function(fn){ var c = []; for(var i = 0; i < ks.length; i++) c.push(fn(ks[i], i)); return c; };
       row('<i>r</i>', cells(function(k, i){ return num(i ? state.r2 : state.r1, 3) + u('cm'); }));
-      row('<i>f</i>', cells(function(){ return num(f, 3) + u('Hz') + '<small>' + rpmText(f) + u('ot·min<sup>−1</sup>') + '</small>'; }));
+      row('<i>f</i>', cells(function(){ return fFmt(f) + u('Hz') + '<small>' + rpmText(f) + u('ot·min<sup>−1</sup>') + '</small>'; }));
       row('<i>T</i> = 1/<i>f</i>', cells(function(k){ return num(k.T, 3) + u('s'); }));
       row('<i>ω</i> = 2π<i>f</i>', cells(function(k){ return num(k.w, 3) + U_RAD_S; }));
       row('<i>v</i> = <i>ωr</i>', cells(function(k){ return num(k.v, 3) + U_M_S; }));
@@ -1997,7 +2002,7 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
     var f = curF();
     $('out-r').innerHTML = num(state.r1, 3) + u('cm');
     $('out-r2').innerHTML = num(state.r2, 3) + u('cm');
-    $('out-f').innerHTML = num(f, 3) + u('Hz') + ' <span style="font-weight:500;color:var(--ink-soft)">(' + rpmText(f) + u('ot·min<sup>−1</sup>') + ')</span>';
+    $('out-f').innerHTML = fFmt(f) + u('Hz') + ' <span style="font-weight:500;color:var(--ink-soft)">(' + rpmText(f) + u('ot·min<sup>−1</sup>') + ')</span>';
     if(state.scene !== 'gramofon'){
       var CF = cfg();
       var sp = CF.speeds[state.speedIdx];
@@ -2050,18 +2055,18 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
         var k = ch.to / ch.from;
         if(Math.abs(k - 2) < 0.01) p.push('Frekvenci jste zdvojnásobili: úhlová i obvodová rychlost vzrostly dvakrát, ale dostředivé zrychlení <b>čtyřikrát</b> (<i>a</i><sub>d</sub> je úměrné <i>ω</i>²).');
         else if(Math.abs(k - 0.5) < 0.01) p.push('Frekvenci jste snížili na polovinu: rychlost klesla na polovinu, ale dostředivé zrychlení na <b>čtvrtinu</b>.');
-        else p.push('Frekvence se změnila ' + ratioTxt(k) + '× (' + num(ch.from, 3) + u('Hz') + ' → ' + num(ch.to, 3) + u('Hz') + '). Úhlová a obvodová rychlost se ' + (k > 1 ? 'zvětšily' : 'zmenšily') + ' ' + ratioTxt(k) + '×, dostředivé zrychlení se ' + (k > 1 ? 'zvětšilo' : 'zmenšilo') + ' ' + ratioTxt(k * k) + '× (kvadraticky).');
+        else p.push('Frekvence se změnila ' + ratioTxt(k) + '× (' + fFmt(ch.from) + u('Hz') + ' → ' + fFmt(ch.to) + u('Hz') + '). Úhlová a obvodová rychlost se ' + (k > 1 ? 'zvětšily' : 'zmenšily') + ' ' + ratioTxt(k) + '×, dostředivé zrychlení se ' + (k > 1 ? 'zvětšilo' : 'zmenšilo') + ' ' + ratioTxt(k * k) + '× (kvadraticky).');
       }else if(ch && ch.kind === 'r' && ch.from !== ch.to){
         var kr = ch.to / ch.from;
         p.push('Poloměr se změnil ' + ratioTxt(kr) + '×. Perioda i úhlová rychlost zůstaly stejné, ale obvodová rychlost a dostředivé zrychlení se ' + (kr > 1 ? 'zvětšily' : 'zmenšily') + ' ' + ratioTxt(kr) + '× (obě jsou úměrné poloměru).');
       }
       if(state.show.second){
         var k2 = gramoKin(state.r2, f), q = state.r2 / state.r1;
-        p.push('Oba body mají stejnou periodu (' + num(k2.T, 3) + u('s') + ') a úhlovou rychlost (' + num(k2.w, 3) + U_RAD_S + '). Bod 2 je od osy ' + (q >= 1 ? num(q, 3) + '× dál' : num(1 / q, 3) + '× blíž') + ', proto je jeho rychlost ' + num(k2.v, 3) + U_M_S + ' a zrychlení ' + num(k2.a, 3) + U_M_S2 + ' (obojí ' + num(q, 3) + '× ' + (q >= 1 ? 'větší' : 'menší') + ' než u bodu 1).');
+        p.push('Oba body mají stejnou periodu (' + num(k2.T, 3) + u('s') + ') a úhlovou rychlost (' + num(k2.w, 3) + U_RAD_S + '). Bod 2 je od osy ' + (q >= 1 ? num(q, 3) + '× dál' : num(1 / q, 3) + '× blíž') + ', proto je jeho rychlost ' + num(k2.v, 3) + U_M_S + ' a zrychlení ' + num(k2.a, 3) + U_M_S2 + ' (obojí ' + num(q >= 1 ? q : 1 / q, 3) + '× ' + (q >= 1 ? 'větší' : 'menší') + ' než u bodu 1).');
       }
-      if(f === 0.55 || f === 0.556){
-        var ka = gramoKin(state.r1, 0.55), kb = gramoKin(state.r1, 0.556);
-        p.push('<b>Proč 0,55 a 0,556 Hz?</b> Gramofon se točí 33⅓ otáček za minutu, tedy přesně <i>f</i> = 100/3/60 Hz = 0,556 Hz. Při počítání ve škole se zaokrouhluje na 0,55 Hz. Pro vaše nastavení to dává <i>ω</i> = ' + num(ka.w, 3) + U_RAD_S + ' a <i>v</i> = ' + num(ka.v, 2) + U_M_S + ' (0,55 Hz), resp. <i>ω</i> = ' + num(kb.w, 3) + U_RAD_S + ' a <i>v</i> = ' + num(kb.v, 2) + U_M_S + ' (0,556 Hz). Rozdíl je jen ve zaokrouhlení vstupní frekvence, není to chyba výpočtu.');
+      if(f === 0.55 || isExact33(f)){
+        var ka = gramoKin(state.r1, 0.55), kb = gramoKin(state.r1, 5 / 9);
+        p.push('<b>Proč 0,55 a 0,5556\u00a0Hz?</b> Gramofon se otáčí 33⅓ otáčky za minutu, tedy <i>f</i> = (100/3)/60\u00a0Hz = 5/9\u00a0Hz ≐ 0,5556\u00a0Hz. Při počítání se někdy používá hodnota 0,55\u00a0Hz (po zkrácení; zaokrouhlením na dvě desetinná místa by vyšlo 0,56\u00a0Hz). Pro vaše nastavení to dává <i>ω</i> = ' + num(ka.w, 3) + U_RAD_S + ' a <i>v</i> = ' + num(ka.v, 2) + U_M_S + ' při 0,55\u00a0Hz, resp. <i>ω</i> = ' + num(kb.w, 3) + U_RAD_S + ' a <i>v</i> = ' + num(kb.v, 2) + U_M_S + ' při 0,5556\u00a0Hz. Rozdíl je jen v zaokrouhlení vstupní frekvence, není to chyba výpočtu.');
       }
     }else{
       var b = curBody(), kk = spaceKin(), CF = cfg();
@@ -2080,7 +2085,7 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
     if(isOverview()){
       sn.innerHTML = 'Pohled na celou sluneční soustavu shora. Poloměry drah jsou kvůli přehlednosti v <b>odmocninové stupnici</b> (poloměr dráhy na plátně je úměrný √<i>r</i>), takže vzdálenosti <b>nejsou v měřítku</b>. Velikost značek těles i jejich počáteční polohy jsou jen <b>symbolické</b>. Měsíc Země a měsíce Jupiteru uvidíte po přiblížení na Zemi nebo Jupiter tlačítkem „Měsíc Země“ či „Měsíce Jupiteru“. <span id="ov-time-wrap">Simulovaný čas: <b id="ov-time">0 d</b>.</span>';
       n.hidden = false;
-      n.innerHTML = '<b>Upozornění:</b> skutečné dráhy planet jsou elipsy, ne kružnice. Aplet je pro jednoduchost nahrazuje kružnicemi o poloměru rovném velké poloose. U většiny planet je to dobré přiblížení, nejhorší je u Merkuru. Dostředivé zrychlení v tabulce je proto průměrná hodnota.';
+      n.innerHTML = '<b>Upozornění:</b> skutečné dráhy planet jsou elipsy, ne kružnice. Aplet je pro jednoduchost nahrazuje kružnicemi o poloměru rovném velké poloose. U většiny planet je to dobré přiblížení, nejhorší je u Merkuru. Dostředivé zrychlení v tabulce je proto přibližná hodnota: jde o zrychlení náhradní kruhové dráhy.';
       return;
     }
     if(isSub()){
@@ -2088,7 +2093,7 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
     }
     if(isG){
       n.hidden = true;
-      sn.innerHTML = 'Pohled shora. Otáčí se deska s talířem, přenoska u okraje je jen dekorace. Měřítko vlevo dole: úsečka odpovídá <b>5 cm</b>. Poloměr desky je 15 cm.';
+      sn.innerHTML = 'Pohled shora. Deska s talířem se otáčí po směru hodinových ručiček, přenoska na ní spočívá a je jen dekorace (nehýbe se). Měřítko vlevo dole: úsečka odpovídá <b>5 cm</b>. Poloměr desky je 15 cm.';
       return;
     }
     var CF = cfg(), kk = spaceKin(), rU = UNIT_R[CF.rU];
@@ -2111,7 +2116,7 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
     }
     sn.innerHTML = 'Měřítko vlevo dole: úsečka odpovídá <b>' + words + '</b>. Dráha vždy zaplní plátno, takže se měřítko mění s tělesem. Velikost značek těles je jen <b>symbolická</b> (v měřítku nejsou). Šipky ukazují jen <b>směr</b>: jejich délka není úměrná velikosti veličiny ani se neporovnává mezi scénami, velikost je dána číslem v tabulce.';
     n.hidden = false;
-    n.innerHTML = '<b>Upozornění:</b> skutečné dráhy planet jsou elipsy, ne kružnice. Aplet je pro jednoduchost nahrazuje kružnicí o poloměru rovném velké poloose. U většiny planet je to dobré přiblížení, nejhorší je u Merkuru. Dostředivé zrychlení v tabulce je proto průměrná hodnota.';
+    n.innerHTML = '<b>Upozornění:</b> skutečné dráhy planet jsou elipsy, ne kružnice. Aplet je pro jednoduchost nahrazuje kružnicí o poloměru rovném velké poloose. U většiny planet je to dobré přiblížení, nejhorší je u Merkuru. Dostředivé zrychlení v tabulce je proto přibližná hodnota: jde o zrychlení náhradní kruhové dráhy.';
   }
 
   // ---------- řízení stavu ----------
@@ -2432,7 +2437,7 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
   // ---------- značky otáček pod posuvníkem frekvence ----------
   (function(){
     var marks = $('f-marks'), n = F_STOPS.length - 1;
-    var items = [[0.556, '33⅓'], [0.75, '45'], [1.3, '78']];
+    var items = [[5 / 9, '33⅓'], [0.75, '45'], [1.3, '78']];
     for(var i = 0; i < items.length; i++){
       var s = document.createElement('span');
       var p = fIndex(items[i][0]) / n;
