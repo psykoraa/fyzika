@@ -295,6 +295,7 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
 .qtable-wrap{ overflow-x:auto; margin-top:6px; }
 .qtable{ border-collapse:collapse; width:100%; font-size:0.9rem; min-width:300px; }
 .qtable th, .qtable td{ border:1px solid var(--line); padding:7px 10px; text-align:left; vertical-align:top; }
+.qtable thead th i{ text-transform:none; }
 .qtable thead th{
   background:var(--surface-2); color:var(--ink-soft); font-weight:600;
   font-size:0.72rem; text-transform:uppercase; letter-spacing:0.05em;
@@ -860,22 +861,20 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
       <div class="applet-head">
         <span class="cat-tag">Aplet</span>
         <h2>Od gramofonu k planetám</h2>
-        <p class="desc">Sledujte červenou značku na otáčející se desce a měňte poloměr a frekvenci. Pak přepněte scénu a zkuste totéž s planetou nebo měsícem.</p>
+        <p class="desc">Sledujte červenou značku na otáčející se desce a měňte poloměr a frekvenci. Pak přepněte na sluneční soustavu, prohlédněte si ji celou a přibližte se k planetě, Ceres nebo měsíci.</p>
       </div>
 
       <div class="mode-row">
         <span class="mode-row-label" id="lbl-scene">Scéna</span>
         <div class="seg" id="scene-seg" role="group" aria-labelledby="lbl-scene">
           <button class="chip accented on" type="button" data-scene="gramofon" aria-pressed="true">Gramofon</button>
-          <button class="chip accented" type="button" data-scene="planety" aria-pressed="false">Planety</button>
-          <button class="chip accented" type="button" data-scene="ceres" aria-pressed="false">Ceres</button>
-          <button class="chip accented" type="button" data-scene="mesic" aria-pressed="false">Měsíc</button>
-          <button class="chip accented" type="button" data-scene="galilei" aria-pressed="false">Galileovy měsíce</button>
+          <button class="chip accented" type="button" data-scene="solar" aria-pressed="false">Sluneční soustava</button>
         </div>
       </div>
       <div class="mode-row" id="body-row" hidden>
-        <label class="mode-row-label" for="body-sel">Těleso</label>
+        <label class="mode-row-label" for="body-sel">Přiblížit na</label>
         <select class="sel" id="body-sel"></select>
+        <div class="seg" id="focus-seg" role="group" aria-label="Rychlá změna přiblížení"></div>
       </div>
 
       <div class="canvas-wrap">
@@ -938,7 +937,7 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
         </div>
       </div>
 
-      <div class="mode-row">
+      <div class="mode-row" id="show-row">
         <span class="mode-row-label" id="lbl-show">Zobrazit</span>
         <div class="seg" id="show-seg" role="group" aria-labelledby="lbl-show">
           <button class="chip accented on" type="button" data-show="vec" aria-pressed="true">vektory</button>
@@ -967,7 +966,7 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
         <div class="hint">
           <p>Červená značka leží na desce a otáčí se spolu s ní. Přenoska u okraje je jen dekorace a nehýbe se. Pohyb můžete zpomalit (1×, 0,5×, 0,1×), pozastavit a vynulovat. Svislé a vodorovné čárkované úsečky vyznačují úhly 0°, 90°, 180° a 270°.</p>
           <p>Posuvník frekvence se zastavuje po 0,01&nbsp;Hz a navíc na hodnotě 0,556&nbsp;Hz (přesně 33⅓ ot·min⁻¹). Pod posuvníkem jsou značky skutečných otáček gramofonu. Tlačítky Předvolby nastavíte frekvenci i poloměr najednou. Šipka vektoru je kvůli viditelnosti nejméně 10 jednotek plátna dlouhá, i když je veličina velmi malá.</p>
-          <p>Po zapnutí druhého bodu se objeví další posuvník poloměru a tabulka porovná oba body. Ve scénách s tělesy vesmíru vyberete těleso a posuvníkem času zvolíte, kolik dnů nebo hodin uplyne za jednu sekundu animace. Poloměr a periodu můžete přepsat; čárka i tečka jsou povoleny. Šipky jsou ve vesmírných scénách jen směrové.</p>
+          <p>Po zapnutí druhého bodu se objeví další posuvník poloměru a tabulka porovná oba body. Ve sluneční soustavě je nejdřív vidět celá soustava: planety a Ceres obíhají současně a skutečnými poměry period. Vzdálenosti jsou kvůli přehlednosti v odmocninové stupnici, proto nejsou v měřítku. Kliknutím na těleso, tlačítkem nebo nabídkou „Přiblížit na“ se k němu přiblížíte. Země má Měsíc a Jupiter čtyři Galileovy měsíce, ty vyberete po přiblížení na jejich planetu. V přiblížení nastavíte rychlost času (kolik dnů nebo hodin uplyne za sekundu animace) a můžete přepsat poloměr a periodu; čárka i tečka jsou povoleny. Šipky jsou ve sluneční soustavě jen směrové.</p>
         </div>
       </details>
 
@@ -1433,32 +1432,36 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
   // r a T v základních jednotkách; rUnit/tUnit: jednotky zobrazení
   var UNIT_R = { mkm:{ f:1e9, txt:'mil. km' }, tkm:{ f:1e6, txt:'tis. km' } };
   var UNIT_T = { d:{ f:DAY, txt:'d' }, h:{ f:HOUR, txt:'h' } };
-  var BODIES = {
-    planety: [
-      { id:'merkur', name:'Merkur', center:'sun', r:57.9e9, T:88.0*DAY },
-      { id:'venuse', name:'Venuše', center:'sun', r:108.2e9, T:224.7*DAY },
-      { id:'zeme', name:'Země', center:'sun', r:149.6e9, T:365.2*DAY },
-      { id:'mars', name:'Mars', center:'sun', r:228.0e9, T:687.0*DAY },
-      { id:'jupiter', name:'Jupiter', center:'sun', r:778.5e9, T:4331*DAY },
-      { id:'saturn', name:'Saturn', center:'sun', r:1432.0e9, T:10747*DAY },
-      { id:'uran', name:'Uran', center:'sun', r:2867.0e9, T:30589*DAY },
-      { id:'neptun', name:'Neptun', center:'sun', r:4515.0e9, T:59800*DAY }
-    ],
-    ceres: [ { id:'ceres', name:'Ceres', center:'sun', r:2.7658*AU, T:4.59984*YEAR } ],
-    mesic: [ { id:'mesic', name:'Měsíc', center:'earth', r:0.384e9, T:27.3*DAY } ],
-    galilei: [
-      { id:'io', name:'Io', center:'jupiter', r:5.905*R_JUP, T:42.46*HOUR },
-      { id:'europa', name:'Europa', center:'jupiter', r:9.397*R_JUP, T:85.24*HOUR },
-      { id:'ganymed', name:'Ganymed', center:'jupiter', r:14.99*R_JUP, T:171.7*HOUR },
-      { id:'callisto', name:'Callisto', center:'jupiter', r:26.37*R_JUP, T:400.5*HOUR }
-    ]
-  };
+  var BODY_LIST = [
+    { id:'merkur', name:'Merkur', group:'Planety', center:'sun', r:57.9e9, T:88.0*DAY, col:'#a9a39a' },
+    { id:'venuse', name:'Venuše', group:'Planety', center:'sun', r:108.2e9, T:224.7*DAY, col:'#e6c477' },
+    { id:'zeme', name:'Země', group:'Planety', center:'sun', r:149.6e9, T:365.2*DAY, col:'#4a86d8' },
+    { id:'mars', name:'Mars', group:'Planety', center:'sun', r:228.0e9, T:687.0*DAY, col:'#d0573a' },
+    { id:'jupiter', name:'Jupiter', group:'Planety', center:'sun', r:778.5e9, T:4331*DAY, col:'#d3a77a' },
+    { id:'saturn', name:'Saturn', group:'Planety', center:'sun', r:1432.0e9, T:10747*DAY, col:'#e8d28c' },
+    { id:'uran', name:'Uran', group:'Planety', center:'sun', r:2867.0e9, T:30589*DAY, col:'#7fd3dc' },
+    { id:'neptun', name:'Neptun', group:'Planety', center:'sun', r:4515.0e9, T:59800*DAY, col:'#5b7be0' },
+    { id:'ceres', name:'Ceres', group:'Trpasličí planeta v hlavním pásu planetek', center:'sun', r:2.7658*AU, T:4.59984*YEAR, col:'#cfc6b8' },
+    { id:'mesic', name:'Měsíc', group:'Měsíc Země', center:'earth', parent:'zeme', r:0.384e9, T:27.3*DAY },
+    { id:'io', name:'Io', group:'Galileovy měsíce Jupiteru', center:'jupiter', parent:'jupiter', r:5.905*R_JUP, T:42.46*HOUR },
+    { id:'europa', name:'Europa', group:'Galileovy měsíce Jupiteru', center:'jupiter', parent:'jupiter', r:9.397*R_JUP, T:85.24*HOUR },
+    { id:'ganymed', name:'Ganymed', group:'Galileovy měsíce Jupiteru', center:'jupiter', parent:'jupiter', r:14.99*R_JUP, T:171.7*HOUR },
+    { id:'callisto', name:'Callisto', group:'Galileovy měsíce Jupiteru', center:'jupiter', parent:'jupiter', r:26.37*R_JUP, T:400.5*HOUR }
+  ];
+  var SUN_SPEEDS = [1,2,5,10,20,50,100,200,500,1000,2000,5000];
+  var OV_SPEEDS = [5,10,20,50,100,200,500,1000,2000,5000,10000,20000];   // celá soustava (dny za sekundu)
+  var OV_DEFAULT_IDX = 3;
   var SCENE_CFG = {
-    planety: { rU:'mkm', tU:'d', centerName:'Slunce', speeds:[1,2,5,10,20,50,100,200,500,1000,2000,5000], sU:'d', showAu:true },
-    ceres:   { rU:'mkm', tU:'d', centerName:'Slunce', speeds:[1,2,5,10,20,50,100,200,500,1000,2000,5000], sU:'d', showAu:true },
-    mesic:   { rU:'tkm', tU:'d', centerName:'Země', speeds:[0.1,0.2,0.5,1,2,5,10,20,50,100,200,500], sU:'d', showAu:false },
-    galilei: { rU:'tkm', tU:'h', centerName:'Jupiter', speeds:[0.5,1,2,5,10,20,50,100,200,500,1000,2000], sU:'h', showAu:false }
+    sun:     { rU:'mkm', tU:'d', centerName:'Slunce', speeds:SUN_SPEEDS, sU:'d', showAu:true },
+    earth:   { rU:'tkm', tU:'d', centerName:'Země', speeds:[0.1,0.2,0.5,1,2,5,10,20,50,100,200,500], sU:'d', showAu:false },
+    jupiter: { rU:'tkm', tU:'h', centerName:'Jupiter', speeds:[0.5,1,2,5,10,20,50,100,200,500,1000,2000], sU:'h', showAu:false }
   };
+  function bodyById(id){
+    for(var i = 0; i < BODY_LIST.length; i++) if(BODY_LIST[i].id === id) return BODY_LIST[i];
+    return null;
+  }
+  var R_NEPTUN = bodyById('neptun').r;
+  function ovRadius(r_m){ return R_ORBIT * Math.sqrt(r_m / R_NEPTUN); }   // odmocninová stupnice pro přehled
 
   // ---------- stav ----------
   var reduceMotion = false;
@@ -1471,14 +1474,17 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
     r1: 10, r2: 5,             // cm
     fIdx: fIndex(0.75),
     show: { vec:true, trail:true, angle:true, second:false },
-    bodyIdx: { planety:2, ceres:0, mesic:0, galilei:0 },
+    focus: 'system',           // 'system' = celá soustava, jinak id tělesa
+    simT: 0,                   // celá soustava: simulovaný čas (s)
     rIn: 0, TIn: 0,            // vesmír: aktuální r a T (SI)
     speedIdx: 5,
     change: null               // poslední změna pro komentář
   };
   var ref = { f:null, r1:null, r2:null };   // hodnoty na začátku tažení posuvníku
 
-  function curBody(){ var b = BODIES[state.scene]; return b ? b[state.bodyIdx[state.scene]] : null; }
+  function isOverview(){ return state.scene === 'solar' && state.focus === 'system'; }
+  function curBody(){ return state.scene === 'solar' && state.focus !== 'system' ? bodyById(state.focus) : null; }
+  function cfg(){ return SCENE_CFG[curBody().center]; }
   function curF(){ return F_STOPS[state.fIdx]; }
 
   // ---------- fyzika (SI) ----------
@@ -1566,6 +1572,12 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
     clear(svg);
     E = {};
     var isG = state.scene === 'gramofon';
+    if(isOverview()){
+      svg.setAttribute('aria-label', 'Celá sluneční soustava při pohledu shora: Slunce, dráhy osmi planet a Ceres. Vzdálenosti jsou v odmocninové stupnici. Kliknutím na těleso se k němu přiblížíte.');
+      buildOverview();
+      buildLegend();
+      return;
+    }
     svg.setAttribute('aria-label', isG
       ? 'Gramofon při pohledu shora. Otáčí se deska, na ní je červená značka ve vzdálenosti r od osy. Z ní vychází vektor rychlosti po tečně a vektor dostředivého zrychlení do středu.'
       : 'Těleso obíhá po kružnici kolem středového tělesa. Z tělesa vychází vektor rychlosti po tečně a vektor dostředivého zrychlení do středu.');
@@ -1596,6 +1608,49 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
       E.pts.push(P);
     }
     buildLegend();
+  }
+
+  function buildOverview(){
+    el('rect', { x:6, y:6, width:388, height:388, rx:22, fill:'#0e1520', stroke:'var(--line)', 'stroke-width':2 }, svg);
+    var i;
+    for(i = 0; i < STARS.length; i++){
+      var d = Math.sqrt(Math.pow(STARS[i][0] - CX, 2) + Math.pow(STARS[i][1] - CY, 2));
+      if(d > 20) el('circle', { cx:STARS[i][0], cy:STARS[i][1], r:STARS[i][2], fill:'#fff', opacity:0.5 }, svg);
+    }
+    var list = [];
+    for(i = 0; i < BODY_LIST.length; i++) if(BODY_LIST[i].center === 'sun') list.push(BODY_LIST[i]);
+    for(i = 0; i < list.length; i++){
+      el('circle', { cx:CX, cy:CY, r:ovRadius(list[i].r), fill:'none', stroke:'#fff', 'stroke-opacity':0.35, 'stroke-width':1, 'stroke-dasharray':'2 4' }, svg);
+    }
+    el('circle', { cx:CX, cy:CY, r:17, fill:'#f4b73a', opacity:0.25 }, svg);
+    el('circle', { cx:CX, cy:CY, r:10, fill:'#f4b73a' }, svg);
+    E.ov = [];
+    for(i = 0; i < list.length; i++){
+      (function(b){
+        var g = el('g', { tabindex:0, role:'button', 'aria-label':'Přiblížit na těleso ' + b.name, style:'cursor:pointer' }, svg);
+        el('circle', { r:15, fill:'#fff', 'fill-opacity':0.001 }, g);
+        var isCeres = b.id === 'ceres';
+        var dot = el('circle', { r:(b.id === 'jupiter' || b.id === 'saturn') ? 6 : (isCeres ? 3.6 : 4.8), fill:b.col, stroke:'#fff', 'stroke-width':1.4 }, g);
+        var t = el('text', { 'font-size':12.5, 'font-weight':600, fill:'#fff', 'text-anchor':'middle', 'paint-order':'stroke', stroke:'#0e1520', 'stroke-width':3.5, 'stroke-linejoin':'round' }, g);
+        t.textContent = b.name;
+        g.addEventListener('click', function(){ setFocus(b.id); });
+        g.addEventListener('keydown', function(ev){
+          if(ev.key === 'Enter' || ev.key === ' '){ ev.preventDefault(); setFocus(b.id); }
+        });
+        E.ov.push({ b:b, g:g, t:t, R:ovRadius(b.r), ph:2.4 * E.ov.length + 0.5 });   // počáteční polohy jsou libovolné
+      })(list[i]);
+    }
+  }
+  function renderOverview(){
+    for(var i = 0; i < E.ov.length; i++){
+      var o = E.ov[i];
+      var th = o.ph + TWO_PI * state.simT / o.b.T;
+      var ux = Math.cos(th), uy = -Math.sin(th);
+      o.g.setAttribute('transform', 'translate(' + (CX + o.R * ux).toFixed(2) + ' ' + (CY + o.R * uy).toFixed(2) + ')');
+      var tx = ux * 15, ty = uy * 15 + 4.5;
+      o.t.setAttribute('x', Math.max(24 - (CX + o.R * ux), Math.min(376 - (CX + o.R * ux), tx)).toFixed(1));
+      o.t.setAttribute('y', Math.max(18 - (CY + o.R * uy), Math.min(390 - (CY + o.R * uy), ty)).toFixed(1));
+    }
   }
 
   function buildGramofon(){
@@ -1666,7 +1721,7 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
       if(d > 30) el('circle', { cx:STARS[i][0], cy:STARS[i][1], r:STARS[i][2], fill:'#fff', opacity:0.55 }, svg);
     }
     el('circle', { cx:CX, cy:CY, r:R_ORBIT, fill:'none', stroke:'#fff', 'stroke-opacity':0.55, 'stroke-width':1.3, 'stroke-dasharray':'3 5' }, svg);
-    var c = SCENE_CFG[state.scene].centerName;
+    var c = cfg().centerName;
     if(c === 'Slunce'){
       el('circle', { cx:CX, cy:CY, r:30, fill:'#f4b73a', opacity:0.22 }, svg);
       el('circle', { cx:CX, cy:CY, r:18, fill:'#f4b73a' }, svg);
@@ -1695,6 +1750,10 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
   function buildLegend(){
     var lg = $('legend');
     var isG = state.scene === 'gramofon';
+    if(isOverview()){
+      lg.innerHTML = '<span>symbolické značky těles</span><span>čárkované kružnice: dráhy (odmocninová stupnice)</span><span>klikněte na těleso a přiblížíte se</span>';
+      return;
+    }
     var h = '<span><span class="sw" style="background:var(--danger)"></span>' +
       (isG ? 'sledovaný bod na desce' : 'sledované těleso') + '</span>';
     if(isG) h += '<span id="lg-p2" ' + (state.show.second ? '' : 'hidden') + '><span class="sw" style="background:var(--bod2)"></span>druhý bod</span>';
@@ -1713,7 +1772,12 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
     return { R:R_ORBIT, theta:state.phi, kin:spaceKin() };
   }
 
+  function updateOvTime(){
+    var t = $('ov-time');
+    if(t) t.textContent = trim(num(state.simT / DAY, 4)).replace(/\u00a0/g, ' ') + ' d';
+  }
   function render(){
+    if(E.ov){ renderOverview(); updateOvTime(); return; }
     if(!E.pts) return;
     var isG = state.scene === 'gramofon';
     var two = isG && state.show.second;
@@ -1787,14 +1851,33 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
   }
   function sFmt(s_m){
     if(state.scene === 'gramofon') return num(s_m, 3) + u('m');
-    var cfg = SCENE_CFG[state.scene];
-    var big = s_m / UNIT_R[cfg.rU].f;
-    return num(big, 3) + u(UNIT_R[cfg.rU].txt) + '<small>' + sci(s_m, 3) + u('m') + '</small>';
+    var CF = cfg();
+    var big = s_m / UNIT_R[CF.rU].f;
+    return num(big, 3) + u(UNIT_R[CF.rU].txt) + '<small>' + sci(s_m, 3) + u('m') + '</small>';
   }
 
   // ---------- tabulka veličin ----------
+  function buildOverviewTable(t){
+    var h = '<thead><tr><th scope="col">Těleso</th><th scope="col"><i>r</i></th><th scope="col"><i>T</i></th><th scope="col"><i>v</i></th><th scope="col"><i>a</i><sub>d</sub></th></tr></thead><tbody>';
+    for(var i = 0; i < BODY_LIST.length; i++){
+      var b = BODY_LIST[i];
+      if(b.center !== 'sun') continue;
+      var kk = kin(b.r, b.T);
+      h += '<tr><th scope="row"><button type="button" class="linklike" data-focus="' + b.id + '" style="font-size:0.9rem;font-weight:600;color:var(--ink)">' + b.name + '</button></th>' +
+        '<td>' + num(b.r / 1e9, 4) + u('mil. km') + '</td>' +
+        '<td>' + num(b.T / DAY, 4) + u('d') + '</td>' +
+        '<td>' + num(kk.v / 1000, 3) + U_KM_S + '</td>' +
+        '<td>' + auto(kk.a, 3) + U_M_S2 + '</td></tr>';
+    }
+    t.innerHTML = h + '</tbody>';
+  }
   function buildTable(){
     var t = $('qtable');
+    if(isOverview()){
+      buildOverviewTable(t);
+      E.live1 = null; E.live2 = null;
+      return;
+    }
     var isG = state.scene === 'gramofon';
     var two = isG && state.show.second;
     var h = '';
@@ -1815,9 +1898,9 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
       row('<i>φ</i> od startu', cells(function(k, i){ return '<span data-lv="deg' + i + '"></span><small data-lv="rad' + i + '"></small>'; }));
       row('<i>s</i> = <i>φr</i>', cells(function(k, i){ return '<span data-lv="s' + i + '"></span>'; }));
     }else{
-      var kk = spaceKin(), cfg = SCENE_CFG[state.scene];
-      var rU = UNIT_R[cfg.rU], tU = UNIT_T[cfg.tU];
-      var rtxt = num(kk.r / rU.f, 4) + u(rU.txt) + '<small>' + sci(kk.r, 4) + u('m') + (cfg.showAu ? ' = ' + num(kk.r / AU, 4) + u('au') : '') + '</small>';
+      var kk = spaceKin(), CF = cfg();
+      var rU = UNIT_R[CF.rU], tU = UNIT_T[CF.tU];
+      var rtxt = num(kk.r / rU.f, 4) + u(rU.txt) + '<small>' + sci(kk.r, 4) + u('m') + (CF.showAu ? ' = ' + num(kk.r / AU, 4) + u('au') : '') + '</small>';
       var ttxt = num(kk.T / tU.f, 4) + u(tU.txt) + '<small>' + sci(kk.T, 4) + u('s') + '</small>';
       row('<i>r</i>', [rtxt]);
       row('<i>T</i>', [ttxt]);
@@ -1848,11 +1931,15 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
     $('out-r').innerHTML = num(state.r1, 3) + u('cm');
     $('out-r2').innerHTML = num(state.r2, 3) + u('cm');
     $('out-f').innerHTML = num(f, 3) + u('Hz') + ' <span style="font-weight:500;color:var(--ink-soft)">(' + rpmText(f) + u('ot·min<sup>−1</sup>') + ')</span>';
-    if(state.scene !== 'gramofon'){
-      var cfg = SCENE_CFG[state.scene];
-      var sp = cfg.speeds[state.speedIdx];
-      var perOrbit = state.TIn / (sp * UNIT_T[cfg.sU].f);
-      $('out-time').innerHTML = '1' + u('s') + ' animace = ' + trim(num(sp, 2)) + u(UNIT_T[cfg.sU].txt) +
+    if(isOverview()){
+      var spo = OV_SPEEDS[state.speedIdx];
+      $('out-time').innerHTML = '1' + u('s') + ' animace = ' + trim(num(spo, 2)) + u('d') +
+        '<br><span style="font-weight:500;color:var(--ink-soft)">Země oběhne za ' + num(bodyById('zeme').T / (spo * DAY), 2) + u('s') + '</span>';
+    }else if(state.scene !== 'gramofon'){
+      var CF = cfg();
+      var sp = CF.speeds[state.speedIdx];
+      var perOrbit = state.TIn / (sp * UNIT_T[CF.sU].f);
+      $('out-time').innerHTML = '1' + u('s') + ' animace = ' + trim(num(sp, 2)) + u(UNIT_T[CF.sU].txt) +
         '<br><span style="font-weight:500;color:var(--ink-soft)">oběh trvá ' + num(perOrbit, 2) + u('s') + '</span>';
     }
   }
@@ -1867,6 +1954,14 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
     var c = $('comment');
     var p = [];
     var isG = state.scene === 'gramofon';
+    if(isOverview()){
+      var km = kin(bodyById('merkur').r, bodyById('merkur').T), kn = kin(bodyById('neptun').r, bodyById('neptun').T);
+      p.push('Všechny planety i Ceres obíhají kolem Slunce ve stejném směru, ale každá s jinou periodou. Merkur obíhá rychlostí ' + num(km.v / 1000, 3) + U_KM_S + ' a oběh mu trvá ' + num(bodyById('merkur').T / DAY, 3) + u('d') + '. Neptun jen ' + num(kn.v / 1000, 3) + U_KM_S + ' a oběh trvá ' + num(bodyById('neptun').T / DAY, 4) + u('d') + '.');
+      p.push('Dostředivé zrychlení Merkuru (' + auto(km.a, 3) + U_M_S2 + ') je asi ' + num(km.a / kn.a, 2) + 'krát větší než u Neptunu (' + auto(kn.a, 3) + U_M_S2 + '). Čím vzdálenější planeta, tím delší perioda a menší rychlost i zrychlení.');
+      p.push('Přibližte se k tělesu kliknutím nebo v nabídce „Přiblížit na“. Tam uvidíte vektory <b>v</b> a <b>a</b><sub>d</sub> a můžete přepsat poloměr i periodu.');
+      c.innerHTML = '<p>' + p.join('</p><p>') + '</p>';
+      return;
+    }
     if(isG){
       var f = curF(), k1 = gramoKin(state.r1, f);
       p.push('Bod ve vzdálenosti ' + num(state.r1, 3) + u('cm') + ' od osy oběhne kružnici za <i>T</i> = ' + num(k1.T, 3) + u('s') +
@@ -1891,8 +1986,8 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
         p.push('<b>Proč 0,55 a 0,556 Hz?</b> Gramofon se točí 33⅓ otáček za minutu, tedy přesně <i>f</i> = 100/3/60 Hz = 0,556 Hz. Při počítání ve škole se zaokrouhluje na 0,55 Hz. Pro vaše nastavení to dává <i>ω</i> = ' + num(ka.w, 3) + U_RAD_S + ' a <i>v</i> = ' + num(ka.v, 2) + U_M_S + ' (0,55 Hz), resp. <i>ω</i> = ' + num(kb.w, 3) + U_RAD_S + ' a <i>v</i> = ' + num(kb.v, 2) + U_M_S + ' (0,556 Hz). Rozdíl je jen ve zaokrouhlení vstupní frekvence, není to chyba výpočtu.');
       }
     }else{
-      var b = curBody(), kk = spaceKin(), cfg = SCENE_CFG[state.scene];
-      p.push(b.name + ' obíhá kolem ' + (cfg.centerName === 'Slunce' ? 'Slunce' : (cfg.centerName === 'Země' ? 'Země' : 'Jupiteru')) + ' po kružnici o poloměru ' + num(kk.r / UNIT_R[cfg.rU].f, 4) + u(UNIT_R[cfg.rU].txt) + ' s periodou ' + num(kk.T / UNIT_T[cfg.tU].f, 4) + u(UNIT_T[cfg.tU].txt) + '. Obvodová rychlost je ' + num(kk.v / 1000, 3) + U_KM_S + ' a dostředivé zrychlení ' + auto(kk.a, 3) + U_M_S2 + ', což je ' + (G_EARTH / kk.a > 1 ? num(G_EARTH / kk.a, 2) + 'krát menší' : num(kk.a / G_EARTH, 2) + 'krát větší') + ' než tíhové zrychlení na Zemi.');
+      var b = curBody(), kk = spaceKin(), CF = cfg();
+      p.push(b.name + ' obíhá kolem ' + (CF.centerName === 'Slunce' ? 'Slunce' : (CF.centerName === 'Země' ? 'Země' : 'Jupiteru')) + ' po kružnici o poloměru ' + num(kk.r / UNIT_R[CF.rU].f, 4) + u(UNIT_R[CF.rU].txt) + ' s periodou ' + num(kk.T / UNIT_T[CF.tU].f, 4) + u(UNIT_T[CF.tU].txt) + '. Obvodová rychlost je ' + num(kk.v / 1000, 3) + U_KM_S + ' a dostředivé zrychlení ' + auto(kk.a, 3) + U_M_S2 + ', což je ' + (G_EARTH / kk.a > 1 ? num(G_EARTH / kk.a, 2) + 'krát menší' : num(kk.a / G_EARTH, 2) + 'krát větší') + ' než tíhové zrychlení na Zemi.');
       if(state.change && state.change.kind === 'space'){
         p.push('Hodnoty jste přepsali. Aplet přepočítal všechny veličiny ze zadaného <i>r</i> a <i>T</i>; stejné vztahy platí pro gramofon i pro planety.');
       }
@@ -1904,12 +1999,18 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
   function spaceNotes(){
     var n = $('space-note'), sn = $('scale-note');
     var isG = state.scene === 'gramofon';
+    if(isOverview()){
+      sn.innerHTML = 'Pohled na celou sluneční soustavu shora. Poloměry drah jsou kvůli přehlednosti v <b>odmocninové stupnici</b> (poloměr dráhy na plátně je úměrný √<i>r</i>), takže vzdálenosti <b>nejsou v měřítku</b>. Velikost značek těles i jejich počáteční polohy jsou jen <b>symbolické</b>. Měsíc a měsíce Jupiteru uvidíte po přiblížení na Zemi a na Jupiter. <span id="ov-time-wrap">Simulovaný čas: <b id="ov-time">0 d</b>.</span>';
+      n.hidden = false;
+      n.innerHTML = '<b>Upozornění:</b> skutečné dráhy planet jsou elipsy, ne kružnice. Aplet je pro jednoduchost nahrazuje kružnicemi o poloměru rovném velké poloose. U většiny planet je to dobré přiblížení, nejhorší je u Merkuru. Dostředivé zrychlení v tabulce je proto průměrná hodnota.';
+      return;
+    }
     if(isG){
       n.hidden = true;
       sn.innerHTML = 'Pohled shora. Otáčí se deska s talířem, přenoska u okraje je jen dekorace. Měřítko vlevo dole: úsečka odpovídá <b>5 cm</b>. Poloměr desky je 15 cm.';
       return;
     }
-    var cfg = SCENE_CFG[state.scene], kk = spaceKin(), rU = UNIT_R[cfg.rU];
+    var CF = cfg(), kk = spaceKin(), rU = UNIT_R[CF.rU];
     var rd = kk.r / rU.f;                 // r ve zvolené jednotce
     var target = rd / R_ORBIT * 50;       // délka úsečky 50 jednotek plátna
     var e = Math.floor(Math.log10(target)), m = target / Math.pow(10, e);
@@ -1931,13 +2032,18 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
   // ---------- řízení stavu ----------
   function show(id, vis){ $(id).hidden = !vis; }
   function applyScene(){
-    var isG = state.scene === 'gramofon';
+    var isG = state.scene === 'gramofon', isO = isOverview(), isB = !isG && !isO;
     show('r-row', isG); show('f-row', isG); show('slow-row', isG); show('preset-row', isG);
     show('r2-row', isG && state.show.second);
-    show('time-row', !isG); show('space-in-row', !isG);
-    show('body-row', state.scene === 'planety' || state.scene === 'galilei');
+    show('time-row', !isG); show('space-in-row', isB);
+    show('body-row', !isG); show('show-row', !isO);
     $('chip-second').hidden = !isG;
-    if(!isG) loadBody(false);
+    if(isB) loadBody();
+    if(isO){
+      state.speedIdx = OV_DEFAULT_IDX; state.simT = 0;
+      $('sl-time').max = OV_SPEEDS.length - 1; $('sl-time').value = state.speedIdx;
+    }
+    if(!isG){ syncFocusUi(); }
     buildScene();
     buildTable();
     spaceNotes();
@@ -1945,35 +2051,59 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
     buildComment();
     render();
   }
-  function loadBody(resetSpeed){
-    var b = curBody(), cfg = SCENE_CFG[state.scene];
-    state.rIn = b.r; state.TIn = b.T;
-    var sel = $('body-sel');
-    if(state.scene === 'planety' || state.scene === 'galilei'){
-      var list = BODIES[state.scene], h = '';
-      for(var i = 0; i < list.length; i++) h += '<option value="' + i + '"' + (i === state.bodyIdx[state.scene] ? ' selected' : '') + '>' + list[i].name + '</option>';
-      sel.innerHTML = h;
+  function setFocus(id){
+    state.focus = id; state.phi = 0; state.change = null;
+    applyScene();
+    try{ $('body-sel').focus(); }catch(e){}
+  }
+  // nabídka těles (volí se jednou) a tlačítka rychlé změny přiblížení
+  function buildBodySelect(){
+    var sel = $('body-sel'), h = '<option value="system">Celá sluneční soustava</option>', g = null;
+    for(var i = 0; i < BODY_LIST.length; i++){
+      var b = BODY_LIST[i];
+      if(b.group !== g){ if(g !== null) h += '</optgroup>'; h += '<optgroup label="' + b.group + '">'; g = b.group; }
+      h += '<option value="' + b.id + '">' + b.name + '</option>';
     }
-    $('in-r-unit').textContent = UNIT_R[cfg.rU].txt.replace('mil. km', 'milionů km').replace('tis. km', 'tisíc km');
-    $('in-T-unit').textContent = UNIT_T[cfg.tU].txt === 'd' ? 'dní' : 'hodin';
+    sel.innerHTML = h + '</optgroup>';
+  }
+  function syncFocusUi(){
+    $('body-sel').value = state.focus;
+    var seg = $('focus-seg'), h = '', b = curBody(), i, m;
+    if(b){
+      h += '<button class="chip" type="button" data-focus="system">← Celá soustava</button>';
+      if(b.parent){
+        h += '<button class="chip" type="button" data-focus="' + b.parent + '">← ' + bodyById(b.parent).name + '</button>';
+      }
+      for(i = 0; i < BODY_LIST.length; i++){
+        m = BODY_LIST[i];
+        if(m.parent === b.id) h += '<button class="chip accented" type="button" data-focus="' + m.id + '">' + m.name + '</button>';
+      }
+    }
+    seg.innerHTML = h;
+  }
+  function loadBody(){
+    var b = curBody(), CF = cfg();
+    state.rIn = b.r; state.TIn = b.T;
+    $('in-r-unit').textContent = UNIT_R[CF.rU].txt.replace('mil. km', 'milionů km').replace('tis. km', 'tisíc km');
+    $('in-T-unit').textContent = UNIT_T[CF.tU].txt === 'd' ? 'dní' : 'hodin';
     writeInputs();
     // rychlost času: oběh asi za 8 až 20 s
     var best = 0, bd = 1e9;
-    for(var j = 0; j < cfg.speeds.length; j++){
-      var dur = b.T / (cfg.speeds[j] * UNIT_T[cfg.sU].f);
+    for(var j = 0; j < CF.speeds.length; j++){
+      var dur = b.T / (CF.speeds[j] * UNIT_T[CF.sU].f);
       var dd = Math.abs(Math.log(dur / 12));
       if(dd < bd){ bd = dd; best = j; }
     }
     state.speedIdx = best;
-    $('sl-time').max = cfg.speeds.length - 1;
+    $('sl-time').max = CF.speeds.length - 1;
     $('sl-time').value = best;
     state.phi = 0;
     state.change = null;
   }
   function writeInputs(){
-    var cfg = SCENE_CFG[state.scene];
-    $('in-r').value = numPlain(state.rIn / UNIT_R[cfg.rU].f);
-    $('in-T').value = numPlain(state.TIn / UNIT_T[cfg.tU].f);
+    var CF = cfg();
+    $('in-r').value = numPlain(state.rIn / UNIT_R[CF.rU].f);
+    $('in-T').value = numPlain(state.TIn / UNIT_T[CF.tU].f);
     $('in-r').removeAttribute('aria-invalid'); $('in-T').removeAttribute('aria-invalid');
   }
   function numPlain(x){ return num(x, 5).replace(/ /g, ''); }   // pole input: čárka, bez mezer
@@ -1991,9 +2121,11 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
   function advance(dt){
     if(state.scene === 'gramofon'){
       state.phi += TWO_PI * curF() * dt * state.slow;
+    }else if(isOverview()){
+      state.simT += OV_SPEEDS[state.speedIdx] * DAY * dt;
     }else{
-      var cfg = SCENE_CFG[state.scene];
-      var simPerSec = cfg.speeds[state.speedIdx] * UNIT_T[cfg.sU].f;     // s simulovaného času za 1 s animace
+      var CF = cfg();
+      var simPerSec = CF.speeds[state.speedIdx] * UNIT_T[CF.sU].f;     // s simulovaného času za 1 s animace
       state.phi += TWO_PI / state.TIn * simPerSec * dt;
     }
   }
@@ -2021,20 +2153,25 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
       state.scene = b.getAttribute('data-scene');
       setPressed($('scene-seg'), 'data-scene', state.scene);
       state.phi = 0; state.change = null;
+      if(state.scene === 'solar') state.focus = 'system';
       applyScene();
     });
   });
-  $('body-sel').addEventListener('change', function(){
-    state.bodyIdx[state.scene] = parseInt(this.value, 10);
-    loadBody(true);
-    refresh();
+  $('body-sel').addEventListener('change', function(){ setFocus(this.value); });
+  $('focus-seg').addEventListener('click', function(ev){
+    var t = ev.target; while(t && t !== this && !t.getAttribute('data-focus')) t = t.parentNode;
+    if(t && t !== this) setFocus(t.getAttribute('data-focus'));
+  });
+  $('qtable').addEventListener('click', function(ev){
+    var t = ev.target;
+    if(t && t.getAttribute && t.getAttribute('data-focus')) setFocus(t.getAttribute('data-focus'));
   });
   $('btn-play').addEventListener('click', function(){
     state.running = !state.running;
     this.textContent = state.running ? 'Pozastavit' : 'Spustit';
     lastTs = null;
   });
-  $('btn-reset').addEventListener('click', function(){ state.phi = 0; render(); });
+  $('btn-reset').addEventListener('click', function(){ state.phi = 0; state.simT = 0; render(); });
   Array.prototype.forEach.call($('slow-seg').querySelectorAll('button'), function(b){
     b.addEventListener('click', function(){
       state.slow = parseFloat(b.getAttribute('data-slow'));
@@ -2042,6 +2179,7 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
     });
   });
   $('sl-time').addEventListener('input', function(){ state.speedIdx = parseInt(this.value, 10); updateOuts(); });
+  buildBodySelect();
 
   function bindSlider(id, onInput, onStart){
     var s = $(id);
@@ -2098,13 +2236,13 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
   sanitizeNumericInput($('in-r'), true);
   sanitizeNumericInput($('in-T'), true);
   function onSpaceInput(){
-    var cfg = SCENE_CFG[state.scene];
+    var CF = cfg();
     var rv = parseNum($('in-r').value), tv = parseNum($('in-T').value);
     var okR = isFinite(rv) && rv > 0, okT = isFinite(tv) && tv > 0;
     $('in-r').setAttribute('aria-invalid', okR ? 'false' : 'true');
     $('in-T').setAttribute('aria-invalid', okT ? 'false' : 'true');
     if(!okR || !okT) return;
-    state.rIn = rv * UNIT_R[cfg.rU].f; state.TIn = tv * UNIT_T[cfg.tU].f;
+    state.rIn = rv * UNIT_R[CF.rU].f; state.TIn = tv * UNIT_T[CF.tU].f;
     state.change = { kind:'space' };
     refresh();
   }
