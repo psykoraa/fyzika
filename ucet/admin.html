@@ -321,6 +321,8 @@ footer{ margin-top:40px; }
           <span>Provoz webu</span>
           <div class="toolbar">
             <select id="tr-period" aria-label="Období">
+              <option value="dnes">Dnes</option>
+              <option value="vcera">Včera</option>
               <option value="7">Posledních 7 dní</option>
               <option value="30" selected>Posledních 30 dní</option>
               <option value="90">Posledních 90 dní</option>
@@ -937,6 +939,8 @@ footer{ margin-top:40px; }
   // Zvolené období jako { from, to } v ms (to = půlnoc po posledním dni).
   function trPeriod(){
     var v = $('tr-period').value, today = dayStart(Date.now()), tomorrow = addDays(today, 1);
+    if(v==='dnes') return { from: today.getTime(), to: tomorrow.getTime() };
+    if(v==='vcera') return { from: addDays(today, -1).getTime(), to: today.getTime() };
     if(v==='7' || v==='30' || v==='90') return { from: addDays(today, 1 - Number(v)).getTime(), to: tomorrow.getTime() };
     var y = today.getFullYear(), m = today.getMonth(); // m: 0 = leden, 8 = září
     var sy = m >= 8 ? y : y - 1;                        // školní rok začíná 1. září
