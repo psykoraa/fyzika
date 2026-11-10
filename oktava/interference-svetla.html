@@ -2260,6 +2260,16 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
 
     function jumpTop(){ return st.n > st.n1; }        // odraz na horním rozhraní (vrstva je opticky hustší než okolí nad ní)
     function jumpBottom(){ return st.n2 > st.n; }     // odraz na dolním rozhraní
+    // index lomu vrstvy shodný s okolím: na rozhraní se nic neodráží (bit 1 = horní, bit 2 = dolní rozhraní)
+    function missing(){
+      var m = 0;
+      if(Math.abs(st.n - st.n1) < 0.005) m |= 1;
+      if(Math.abs(st.n - st.n2) < 0.005) m |= 2;
+      return m;
+    }
+    function noI(x, y, fs){
+      return '<text x="' + x + '" y="' + y + '" text-anchor="middle" font-size="' + fs + '" font-weight="700" fill="var(--danger)">Interference nevzniká</text>';
+    }
     function shifted(){ return jumpTop() !== jumpBottom(); }   // právě jeden skok fáze → rozdíl navíc λ/2
     // relativní odrazivost I / I_max (dva odražené svazky o stejné amplitudě), d a λ v nm
     function inten(d, lam){
@@ -2317,7 +2327,7 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
       var fsz = function(v){ return Math.round(v * K * 10) / 10; };
       var rgb = lamRGB(lam), col = rgbStr(rgb);
       var o = '', i, x, y;
-      var jT = jumpTop(), jB = jumpBottom();
+      var jT = jumpTop(), jB = jumpBottom(), dg = missing();
 
       // ---------- A1: schéma vrstvy ----------
       var T = 118, h = 8 + d / DMAX * 52;
@@ -2329,19 +2339,19 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
       o += '<line x1="' + (Ax - dxr) + '" y1="' + ry + '" x2="' + Ax + '" y2="' + T + '" stroke="var(--ink)" stroke-width="2.2"/>';
       o += arrow(Ax - 1, T - 1.5, dxr, T - ry, 'var(--ink)');
       o += '<line x1="' + Ax + '" y1="' + T + '" x2="' + Bx + '" y2="' + (T + h) + '" stroke="var(--ink)" stroke-width="1.4"/>';
-      o += '<line x1="' + Bx + '" y1="' + (T + h) + '" x2="' + Cx + '" y2="' + T + '" stroke="var(--ink)" stroke-width="1.4"/>';
-      o += '<line x1="' + Ax + '" y1="' + T + '" x2="' + (Ax + dxr) + '" y2="' + ry + '" stroke="var(--accent)" stroke-width="2.2"/>';
-      o += '<line x1="' + Cx + '" y1="' + T + '" x2="' + (Cx + dxr) + '" y2="' + ry + '" stroke="var(--focus)" stroke-width="2.2"/>';
-      o += arrow(Ax + dxr, ry, dxr, -(T - ry), 'var(--accent)') + arrow(Cx + dxr, ry, dxr, -(T - ry), 'var(--focus)');
-      o += '<circle cx="' + Ax + '" cy="' + T + '" r="3.4" fill="var(--ink)"/><circle cx="' + Bx + '" cy="' + (T + h) + '" r="3.4" fill="var(--ink)"/><circle cx="' + Cx + '" cy="' + T + '" r="3.4" fill="var(--ink)"/>';
+      if(!(dg & 2)) o += '<line x1="' + Bx + '" y1="' + (T + h) + '" x2="' + Cx + '" y2="' + T + '" stroke="var(--ink)" stroke-width="1.4"/>';
+      if(!(dg & 1)) o += '<line x1="' + Ax + '" y1="' + T + '" x2="' + (Ax + dxr) + '" y2="' + ry + '" stroke="var(--accent)" stroke-width="2.2"/>';
+      if(!(dg & 2)) o += '<line x1="' + Cx + '" y1="' + T + '" x2="' + (Cx + dxr) + '" y2="' + ry + '" stroke="var(--focus)" stroke-width="2.2"/>';
+      o += (dg & 1 ? '' : arrow(Ax + dxr, ry, dxr, -(T - ry), 'var(--accent)')) + (dg & 2 ? '' : arrow(Cx + dxr, ry, dxr, -(T - ry), 'var(--focus)'));
+      o += '<circle cx="' + Ax + '" cy="' + T + '" r="3.4" fill="var(--ink)"/><circle cx="' + Bx + '" cy="' + (T + h) + '" r="3.4" fill="var(--ink)"/>' + (dg & 2 ? '' : '<circle cx="' + Cx + '" cy="' + T + '" r="3.4" fill="var(--ink)"/>');
       var fx = function(v){ return Math.round(v * Math.min(K, 2) * 10) / 10; };
       var fA = fx(14);
       o += '<g font-size="' + fA + '" font-weight="700" font-style="italic">' +
            '<text x="' + (Ax - dxr - 14) + '" y="' + (ry + 4) + '" text-anchor="end" fill="var(--ink)">1</text>' +
-           '<text x="' + (Ax + dxr - 4) + '" y="' + (ry - 4) + '" text-anchor="end" fill="var(--accent)">2</text>' +
-           '<text x="' + (Cx + dxr + 10) + '" y="' + (ry + 6) + '" fill="var(--focus)">3</text></g>';
-      if(jT) o += '<text x="' + (Ax - 14) + '" y="' + (T + Math.min(h - 2, 16)) + '" font-size="' + fx(13) + '" font-weight="700" text-anchor="end" fill="var(--accent)">π</text>';
-      if(jB) o += '<text x="' + (Bx + 10) + '" y="' + (T + h + 18) + '" font-size="' + fx(13) + '" font-weight="700" fill="var(--focus)">π</text>';
+           (dg & 1 ? '' : '<text x="' + (Ax + dxr - 4) + '" y="' + (ry - 4) + '" text-anchor="end" fill="var(--accent)">2</text>') +
+           (dg & 2 ? '' : '<text x="' + (Cx + dxr + 10) + '" y="' + (ry + 6) + '" fill="var(--focus)">3</text>') + '</g>';
+      if(jT && !(dg & 1)) o += '<text x="' + (Ax - 14) + '" y="' + (T + Math.min(h - 2, 16)) + '" font-size="' + fx(13) + '" font-weight="700" text-anchor="end" fill="var(--accent)">π</text>';
+      if(jB && !(dg & 2)) o += '<text x="' + (Bx + 10) + '" y="' + (T + h + 18) + '" font-size="' + fx(13) + '" font-weight="700" fill="var(--focus)">π</text>';
       // tloušťka d
       o += '<g stroke="var(--ink)" stroke-width="1.4"><line x1="388" y1="' + T + '" x2="388" y2="' + (T + h) + '"/><line x1="382" y1="' + T + '" x2="394" y2="' + T + '"/><line x1="382" y1="' + (T + h) + '" x2="394" y2="' + (T + h) + '"/></g>';
       o += '<text x="400" y="' + (T + h / 2 + fx(5)) + '" font-size="' + fA + '" font-weight="700" font-style="italic" fill="var(--ink)">d</text>';
@@ -2363,15 +2373,17 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
       }
       o += '<line x1="' + GX0 + '" y1="' + GY0 + '" x2="' + (GX0 + GW) + '" y2="' + GY0 + '" stroke="var(--ink)" stroke-width="1.4"/><line x1="' + GX0 + '" y1="' + LY(1) + '" x2="' + GX0 + '" y2="' + GY0 + '" stroke="var(--ink)" stroke-width="1.4"/>';
       var pth = '';
-      for(sx = 400; sx <= 700; sx += 2) pth += (sx === 400 ? 'M' : 'L') + LX(sx).toFixed(1) + ',' + LY(inten(d, sx)).toFixed(1) + ' ';
-      o += '<path d="' + pth + '" fill="none" stroke="var(--accent)" stroke-width="2.6" stroke-linejoin="round"/>';
+      if(!dg) for(sx = 400; sx <= 700; sx += 2) pth += (sx === 400 ? 'M' : 'L') + LX(sx).toFixed(1) + ',' + LY(inten(d, sx)).toFixed(1) + ' ';
+      if(!dg) o += '<path d="' + pth + '" fill="none" stroke="var(--accent)" stroke-width="2.6" stroke-linejoin="round"/>';
       var fT = fsz(11);
       [400, 500, 600, 700].forEach(function(l){
         o += '<line x1="' + LX(l) + '" y1="' + GY0 + '" x2="' + LX(l) + '" y2="' + (GY0 + 5) + '" stroke="var(--ink)"/><text x="' + LX(l) + '" y="' + (GY0 + 20 + fT) + '" font-size="' + fT + '" text-anchor="middle" fill="var(--ink-soft)">' + l + '</text>';
       });
       o += '<text x="' + (GX0 - 6) + '" y="' + (LY(1) + 4) + '" font-size="' + fT + '" text-anchor="end" fill="var(--ink-soft)">1</text><text x="' + (GX0 - 6) + '" y="' + (GY0 + 4) + '" font-size="' + fT + '" text-anchor="end" fill="var(--ink-soft)">0</text>';
       o += '<text x="' + (GX0 + GW) + '" y="' + (GY0 + 20 + fT * 2.5) + '" font-size="' + fT + '" text-anchor="end" fill="var(--ink-soft)"><tspan font-style="italic">λ</tspan> (nm)</text>';
-      if(st.white){
+      if(dg){
+        o += noI(GX0 + GW / 2, LY(0.5) + 5, fsz(14));
+      } else if(st.white){
         lamList(d, true).forEach(function(l){ o += '<circle cx="' + LX(l) + '" cy="' + LY(1) + '" r="5" fill="var(--accent)"/>'; });
         lamList(d, false).forEach(function(l){ o += '<circle cx="' + LX(l) + '" cy="' + LY(0) + '" r="5" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>'; });
       } else {
@@ -2388,7 +2400,7 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
         stops += '<stop offset="' + (i / N).toFixed(4) + '" stop-color="' + c + '"/>';
       }
       o += '<defs><linearGradient id="t-grad" x1="0" y1="0" x2="1" y2="0">' + stops + '</linearGradient></defs>';
-      o += '<rect x="' + PL + '" y="304" width="' + PW + '" height="44" fill="url(#t-grad)" stroke="var(--ink)" stroke-width="1.2"/>';
+      o += '<rect x="' + PL + '" y="304" width="' + PW + '" height="44" fill="' + (dg ? 'var(--surface-2)' : 'url(#t-grad)') + '" stroke="var(--ink)" stroke-width="1.2"/>';
       var BY0 = 548, BH = 150;
       function BY(v){ return BY0 - BH * v; }
       o += '<g stroke="var(--line)" stroke-width="1"><line x1="' + PL + '" y1="' + BY(1) + '" x2="' + (PL + PW) + '" y2="' + BY(1) + '"/><line x1="' + PL + '" y1="' + BY(0.5) + '" x2="' + (PL + PW) + '" y2="' + BY(0.5) + '"/>';
@@ -2403,7 +2415,9 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
         for(var q = 0; q <= DMAX; q += 2) p += (q === 0 ? 'M' : 'L') + DX(q).toFixed(1) + ',' + BY(inten(q, l)).toFixed(1) + ' ';
         return '<path d="' + p + '" fill="none" stroke="' + color + '" stroke-width="' + wd + '" stroke-linejoin="round"/>';
       }
-      if(st.white){
+      if(dg){
+        o += noI(PL + PW / 2, BY(0.5) + 5, fsz(14));
+      } else if(st.white){
         [[450, 'rgb(40,70,235)'], [550, 'rgb(20,150,50)'], [650, 'rgb(220,30,30)']].forEach(function(cl){ o += curve(cl[0], cl[1], 2.2); });
       } else {
         o += curve(lam, 'var(--accent)', 2.8);
@@ -2412,7 +2426,9 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
       var xd = DX(d);
       o += '<line x1="' + xd + '" y1="300" x2="' + xd + '" y2="' + BY0 + '" stroke="var(--ink)" stroke-width="2" stroke-dasharray="6 4"/>';
       o += '<circle cx="' + xd + '" cy="326" r="7" fill="none" stroke="var(--ink)" stroke-width="2.4"/>';
-      if(st.white){
+      if(dg){
+        // bez interference nejsou žádné body na křivkách
+      } else if(st.white){
         [[450, 'rgb(40,70,235)'], [550, 'rgb(20,150,50)'], [650, 'rgb(220,30,30)']].forEach(function(cl){
           o += '<circle cx="' + xd + '" cy="' + BY(inten(d, cl[0])) + '" r="5" fill="' + cl[1] + '" stroke="var(--surface)" stroke-width="1.5"/>';
         });
@@ -2430,6 +2446,22 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
       outD.innerHTML = '<i>d</i> = ' + d + ' nm';
       outLam.innerHTML = '<i>λ</i> = ' + lam + ' nm';
       var dl = 2 * n * d;
+      var dg = missing();
+      if(dg){
+        var why = dg === 3 ? 'Index lomu vrstvy je stejný jako u obou okolních prostředí, vrstva se od okolí opticky neliší a nic se neodráží.'
+          : dg === 1 ? 'Index lomu vrstvy je stejný jako u prostředí nad ní (<i>n</i>\u00a0=\u00a0<i>n</i><sub>1</sub>), takže se na horním rozhraní nic neodráží.'
+          : 'Index lomu vrstvy je stejný jako u prostředí pod ní (<i>n</i>\u00a0=\u00a0<i>n</i><sub>2</sub>), takže se na dolním rozhraní nic neodráží.';
+        document.getElementById('t-legend').innerHTML = '<span><span><b>Interference nevzniká.</b> Na rozhraní, kde se index lomu nemění, se světlo neodráží.</span></span>';
+        document.getElementById('t-out-dl').textContent = '—';
+        document.getElementById('t-out-jump').textContent = '—';
+        document.getElementById('t-out-I').textContent = '—';
+        document.getElementById('t-note').innerHTML = '<b>Nemožný stav.</b> ' + why + (dg === 3 ? '' : ' Vzniká nejvýše jeden odražený svazek, a proto interference nevzniká.') + ' Změňte index lomu vrstvy nebo vyberte jiné uspořádání.';
+        document.getElementById('t-table').innerHTML = '';
+        document.getElementById('t-calc').innerHTML = '';
+        document.getElementById('t-table-title').textContent = 'Interference nevzniká';
+        document.getElementById('t-row-lam').hidden = st.white;
+        return;
+      }
       var legend = '<span><svg width="26" height="10"><line x1="1" y1="5" x2="25" y2="5" stroke="var(--accent)" stroke-width="2.6"/></svg><span>relativní odrazivost' + (st.white ? ' pro <i>λ</i> = 400 až 700 nm' : '') + '</span></span>';
       if(st.white){
         var wc = rgbStr(whiteColor(d));
