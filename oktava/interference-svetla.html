@@ -2261,7 +2261,7 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
     function jumpTop(){ return st.n > st.n1; }        // odraz na horním rozhraní (vrstva je opticky hustší než okolí nad ní)
     function jumpBottom(){ return st.n2 > st.n; }     // odraz na dolním rozhraní
     function shifted(){ return jumpTop() !== jumpBottom(); }   // právě jeden skok fáze → rozdíl navíc λ/2
-    // relativní odrazivost I / I_max (dva odražené svazky o stejné amplitudě), d a λ v nm
+    // relativní odrazivost I / I_max (dva odražené svazky o stejné amplitudě), d a λ v nm
     function inten(d, lam){
       var delta = 4 * Math.PI * st.n * d / lam + (shifted() ? Math.PI : 0);
       return (1 + Math.cos(delta)) / 2;
@@ -2279,7 +2279,7 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
       for(i = 0; i < LS.length; i++) s += inten(d, LS[i]);
       return s / LS.length;
     }
-    // vlnové délky (nm) z intervalu 400 až 700 nm, které se při dané tloušťce zesílí / zeslabí
+    // vlnové délky (nm) z intervalu 400 až 700 nm, které se při dané tloušťce zesílí / zeslabí
     function lamList(d, max){
       var res = [], k, l, dl = 2 * st.n * d, sh = shifted();
       if(dl <= 0) return res;
@@ -2325,7 +2325,7 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
       o += '<rect x="30" y="30" width="370" height="' + (T - 30) + '" fill="' + topFill + '" opacity="0.6" stroke="var(--line)"/>';
       o += '<rect x="30" y="' + (T + h) + '" width="370" height="' + (222 - T - h) + '" fill="' + botFill + '" opacity="0.6" stroke="var(--line)"/>';
       o += '<rect x="30" y="' + T + '" width="370" height="' + h + '" fill="' + (n > 1.2 ? 'var(--surface-2)' : 'var(--surface)') + '" stroke="var(--ink)" stroke-width="1.6"/>';
-      var Ax = 200, off = h * 0.42, Bx = Ax + off, Cx = Ax + 2 * off, ry = 40, dxr = 0.7 * (T - ry);
+      var Ax = 260, off = h * 0.42, Bx = Ax + off, Cx = Ax + 2 * off, ry = 40, dxr = 0.7 * (T - ry);
       o += '<line x1="' + (Ax - dxr) + '" y1="' + ry + '" x2="' + Ax + '" y2="' + T + '" stroke="var(--ink)" stroke-width="2.2"/>';
       o += arrow(Ax - 1, T - 1.5, dxr, T - ry, 'var(--ink)');
       o += '<line x1="' + Ax + '" y1="' + T + '" x2="' + Bx + '" y2="' + (T + h) + '" stroke="var(--ink)" stroke-width="1.4"/>';
@@ -2334,7 +2334,7 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
       o += '<line x1="' + Cx + '" y1="' + T + '" x2="' + (Cx + dxr) + '" y2="' + ry + '" stroke="var(--focus)" stroke-width="2.2"/>';
       o += arrow(Ax + dxr, ry, dxr, -(T - ry), 'var(--accent)') + arrow(Cx + dxr, ry, dxr, -(T - ry), 'var(--focus)');
       o += '<circle cx="' + Ax + '" cy="' + T + '" r="3.4" fill="var(--ink)"/><circle cx="' + Bx + '" cy="' + (T + h) + '" r="3.4" fill="var(--ink)"/><circle cx="' + Cx + '" cy="' + T + '" r="3.4" fill="var(--ink)"/>';
-      var fx = function(v){ return Math.round(v * Math.min(K, 1.5) * 10) / 10; };
+      var fx = function(v){ return Math.round(v * Math.min(K, 2) * 10) / 10; };
       var fA = fx(14);
       o += '<g font-size="' + fA + '" font-weight="700" font-style="italic">' +
            '<text x="' + (Ax - dxr - 14) + '" y="' + (ry + 4) + '" text-anchor="end" fill="var(--ink)">1</text>' +
@@ -2343,12 +2343,12 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
       if(jT) o += '<text x="' + (Ax - 14) + '" y="' + (T + Math.min(h - 2, 16)) + '" font-size="' + fx(13) + '" font-weight="700" text-anchor="end" fill="var(--accent)">π</text>';
       if(jB) o += '<text x="' + (Bx + 10) + '" y="' + (T + h + 18) + '" font-size="' + fx(13) + '" font-weight="700" fill="var(--focus)">π</text>';
       // tloušťka d
-      o += '<g stroke="var(--ink)" stroke-width="1.4"><line x1="372" y1="' + T + '" x2="372" y2="' + (T + h) + '"/><line x1="366" y1="' + T + '" x2="378" y2="' + T + '"/><line x1="366" y1="' + (T + h) + '" x2="378" y2="' + (T + h) + '"/></g>';
-      o += '<text x="384" y="' + (T + h / 2 + 5) + '" font-size="' + fA + '" font-weight="700" font-style="italic" fill="var(--ink)">d</text>';
+      o += '<g stroke="var(--ink)" stroke-width="1.4"><line x1="388" y1="' + T + '" x2="388" y2="' + (T + h) + '"/><line x1="382" y1="' + T + '" x2="394" y2="' + T + '"/><line x1="382" y1="' + (T + h) + '" x2="394" y2="' + (T + h) + '"/></g>';
+      o += '<text x="400" y="' + (T + h / 2 + fx(5)) + '" font-size="' + fA + '" font-weight="700" font-style="italic" fill="var(--ink)">d</text>';
       // indexy lomu
-      o += '<text x="40" y="' + (T - 10) + '" font-size="' + fx(13) + '" fill="var(--ink-soft)">' + lbl('1', st.n1) + '</text>';
-      o += '<text x="40" y="' + (T + h + 22) + '" font-size="' + fx(13) + '" fill="var(--ink-soft)">' + lbl('2', st.n2) + '</text>';
-      o += '<text x="40" y="' + (T + h / 2 + 5) + '" font-size="' + fx(13) + '" font-weight="700" fill="var(--ink)">' + lbl('', n) + '</text>';
+      o += '<text x="40" y="' + (30 + fx(13) + 6) + '" font-size="' + fx(13) + '" fill="var(--ink-soft)">' + lbl('1', st.n1) + '</text>';
+      o += '<text x="40" y="' + (T + h + fx(13) + 14) + '" font-size="' + fx(13) + '" fill="var(--ink-soft)">' + lbl('2', st.n2) + '</text>';
+      o += '<text x="40" y="' + (T + h / 2 + fx(13) * 0.35) + '" font-size="' + fx(13) + '" font-weight="700" fill="var(--ink)">' + lbl('', n) + '</text>';
 
       // ---------- A2: graf odrazivosti v závislosti na vlnové délce ----------
       var GX0 = 570, GW = 350, GY0 = 190, GH = 130;
@@ -2367,10 +2367,10 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
       o += '<path d="' + pth + '" fill="none" stroke="var(--accent)" stroke-width="2.6" stroke-linejoin="round"/>';
       var fT = fsz(11);
       [400, 500, 600, 700].forEach(function(l){
-        o += '<line x1="' + LX(l) + '" y1="' + GY0 + '" x2="' + LX(l) + '" y2="' + (GY0 + 5) + '" stroke="var(--ink)"/><text x="' + LX(l) + '" y="' + (GY0 + 36) + '" font-size="' + fT + '" text-anchor="middle" fill="var(--ink-soft)">' + l + '</text>';
+        o += '<line x1="' + LX(l) + '" y1="' + GY0 + '" x2="' + LX(l) + '" y2="' + (GY0 + 5) + '" stroke="var(--ink)"/><text x="' + LX(l) + '" y="' + (GY0 + 20 + fT) + '" font-size="' + fT + '" text-anchor="middle" fill="var(--ink-soft)">' + l + '</text>';
       });
       o += '<text x="' + (GX0 - 6) + '" y="' + (LY(1) + 4) + '" font-size="' + fT + '" text-anchor="end" fill="var(--ink-soft)">1</text><text x="' + (GX0 - 6) + '" y="' + (GY0 + 4) + '" font-size="' + fT + '" text-anchor="end" fill="var(--ink-soft)">0</text>';
-      o += '<text x="' + (GX0 + GW) + '" y="' + (GY0 + 52) + '" font-size="' + fT + '" text-anchor="end" fill="var(--ink-soft)"><tspan font-style="italic">λ</tspan> (nm)</text>';
+      o += '<text x="' + (GX0 + GW) + '" y="' + (GY0 + 20 + fT * 2.5) + '" font-size="' + fT + '" text-anchor="end" fill="var(--ink-soft)"><tspan font-style="italic">λ</tspan> (nm)</text>';
       if(st.white){
         lamList(d, true).forEach(function(l){ o += '<circle cx="' + LX(l) + '" cy="' + LY(1) + '" r="5" fill="var(--accent)"/>'; });
         lamList(d, false).forEach(function(l){ o += '<circle cx="' + LX(l) + '" cy="' + LY(0) + '" r="5" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>'; });
@@ -2380,7 +2380,7 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
       }
 
       // ---------- B: barva podle tloušťky a graf I(d) ----------
-      o += '<text x="' + PL + '" y="278" font-size="' + fsz(13) + '" font-weight="700" fill="var(--ink)">Odražené světlo podle tloušťky vrstvy</text>';
+      o += '<text x="' + PL + '" y="294" font-size="' + fsz(13) + '" font-weight="700" fill="var(--ink)">Odražené světlo podle tloušťky vrstvy</text>';
       var N = 430, stops = '', dd, c;
       for(i = 0; i <= N; i++){
         dd = DMAX * i / N;
@@ -2388,16 +2388,16 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
         stops += '<stop offset="' + (i / N).toFixed(4) + '" stop-color="' + c + '"/>';
       }
       o += '<defs><linearGradient id="t-grad" x1="0" y1="0" x2="1" y2="0">' + stops + '</linearGradient></defs>';
-      o += '<rect x="' + PL + '" y="288" width="' + PW + '" height="50" fill="url(#t-grad)" stroke="var(--ink)" stroke-width="1.2"/>';
-      var BY0 = 566, BH = 190;
+      o += '<rect x="' + PL + '" y="304" width="' + PW + '" height="44" fill="url(#t-grad)" stroke="var(--ink)" stroke-width="1.2"/>';
+      var BY0 = 548, BH = 150;
       function BY(v){ return BY0 - BH * v; }
       o += '<g stroke="var(--line)" stroke-width="1"><line x1="' + PL + '" y1="' + BY(1) + '" x2="' + (PL + PW) + '" y2="' + BY(1) + '"/><line x1="' + PL + '" y1="' + BY(0.5) + '" x2="' + (PL + PW) + '" y2="' + BY(0.5) + '"/>';
       for(i = 0; i <= 5; i++) o += '<line x1="' + DX(i * 200) + '" y1="' + BY(1) + '" x2="' + DX(i * 200) + '" y2="' + BY0 + '"/>';
       o += '</g>';
       o += '<line x1="' + PL + '" y1="' + BY0 + '" x2="' + (PL + PW) + '" y2="' + BY0 + '" stroke="var(--ink)" stroke-width="1.4"/><line x1="' + PL + '" y1="' + BY(1) + '" x2="' + PL + '" y2="' + BY0 + '" stroke="var(--ink)" stroke-width="1.4"/>';
-      for(i = 0; i <= 5; i++) o += '<line x1="' + DX(i * 200) + '" y1="' + BY0 + '" x2="' + DX(i * 200) + '" y2="' + (BY0 + 5) + '" stroke="var(--ink)"/><text x="' + DX(i * 200) + '" y="' + (BY0 + 22) + '" font-size="' + fT + '" text-anchor="middle" fill="var(--ink-soft)">' + (i * 200) + '</text>';
+      for(i = 0; i <= 5; i++) o += '<line x1="' + DX(i * 200) + '" y1="' + BY0 + '" x2="' + DX(i * 200) + '" y2="' + (BY0 + 5) + '" stroke="var(--ink)"/><text x="' + DX(i * 200) + '" y="' + (BY0 + 10 + fT) + '" font-size="' + fT + '" text-anchor="middle" fill="var(--ink-soft)">' + (i * 200) + '</text>';
       o += '<text x="' + (PL - 8) + '" y="' + (BY(1) + 4) + '" font-size="' + fT + '" text-anchor="end" fill="var(--ink-soft)">1</text><text x="' + (PL - 8) + '" y="' + (BY0 + 4) + '" font-size="' + fT + '" text-anchor="end" fill="var(--ink-soft)">0</text>';
-      o += '<text x="' + (PL + PW) + '" y="' + (BY0 + 42) + '" font-size="' + fsz(12) + '" text-anchor="end" fill="var(--ink-soft)">tloušťka vrstvy <tspan font-style="italic">d</tspan> (nm)</text>';
+      o += '<text x="' + (PL + PW) + '" y="' + (BY0 + 10 + fT * 2.5) + '" font-size="' + fT + '" text-anchor="end" fill="var(--ink-soft)">tloušťka vrstvy <tspan font-style="italic">d</tspan> (nm)</text>';
       function curve(l, color, wd){
         var p = '';
         for(var q = 0; q <= DMAX; q += 2) p += (q === 0 ? 'M' : 'L') + DX(q).toFixed(1) + ',' + BY(inten(q, l)).toFixed(1) + ' ';
@@ -2410,8 +2410,8 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
       }
       // vybraná tloušťka
       var xd = DX(d);
-      o += '<line x1="' + xd + '" y1="284" x2="' + xd + '" y2="' + BY0 + '" stroke="var(--ink)" stroke-width="2" stroke-dasharray="6 4"/>';
-      o += '<circle cx="' + xd + '" cy="313" r="7" fill="none" stroke="var(--ink)" stroke-width="2.4"/>';
+      o += '<line x1="' + xd + '" y1="300" x2="' + xd + '" y2="' + BY0 + '" stroke="var(--ink)" stroke-width="2" stroke-dasharray="6 4"/>';
+      o += '<circle cx="' + xd + '" cy="326" r="7" fill="none" stroke="var(--ink)" stroke-width="2.4"/>';
       if(st.white){
         [[450, 'rgb(40,70,235)'], [550, 'rgb(20,150,50)'], [650, 'rgb(220,30,30)']].forEach(function(cl){
           o += '<circle cx="' + xd + '" cy="' + BY(inten(d, cl[0])) + '" r="5" fill="' + cl[1] + '" stroke="var(--surface)" stroke-width="1.5"/>';
@@ -2426,35 +2426,35 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
 
     function updateTexts(col){
       var n = st.n, d = st.d, lam = st.lam, sh = shifted();
-      outN.innerHTML = '<i>n</i> = ' + cz(n, 2);
-      outD.innerHTML = '<i>d</i> = ' + d + ' nm';
-      outLam.innerHTML = '<i>λ</i> = ' + lam + ' nm';
+      outN.innerHTML = '<i>n</i> = ' + cz(n, 2);
+      outD.innerHTML = '<i>d</i> = ' + d + ' nm';
+      outLam.innerHTML = '<i>λ</i> = ' + lam + ' nm';
       var dl = 2 * n * d;
-      var legend = '<span><svg width="26" height="10"><line x1="1" y1="5" x2="25" y2="5" stroke="var(--accent)" stroke-width="2.6"/></svg>relativní odrazivost' + (st.white ? ' pro <i>λ</i> = 400 až 700 nm' : '') + '</span>';
+      var legend = '<span><svg width="26" height="10"><line x1="1" y1="5" x2="25" y2="5" stroke="var(--accent)" stroke-width="2.6"/></svg><span>relativní odrazivost' + (st.white ? ' pro <i>λ</i> = 400 až 700 nm' : '') + '</span></span>';
       if(st.white){
         var wc = rgbStr(whiteColor(d));
-        legend += '<span><svg width="26" height="12"><rect x="1" y="1" width="24" height="10" rx="2" fill="' + wc + '" stroke="var(--ink-soft)"/></svg>barva odraženého světla pro <i>d</i> = ' + d + ' nm</span>' +
-                  '<span><svg width="26" height="12"><circle cx="13" cy="6" r="5" fill="var(--accent)"/></svg>zesílená <i>λ</i></span>' +
-                  '<span><svg width="26" height="12"><circle cx="13" cy="6" r="4.2" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/></svg>zeslabená <i>λ</i></span>' +
-                  '<span><svg width="26" height="10"><line x1="1" y1="5" x2="25" y2="5" stroke="rgb(40,70,235)" stroke-width="2.4"/></svg>450 nm</span>' +
-                  '<span><svg width="26" height="10"><line x1="1" y1="5" x2="25" y2="5" stroke="rgb(20,150,50)" stroke-width="2.4"/></svg>550 nm</span>' +
-                  '<span><svg width="26" height="10"><line x1="1" y1="5" x2="25" y2="5" stroke="rgb(220,30,30)" stroke-width="2.4"/></svg>650 nm</span>';
+        legend += '<span><svg width="26" height="12"><rect x="1" y="1" width="24" height="10" rx="2" fill="' + wc + '" stroke="var(--ink-soft)"/></svg><span>barva odraženého světla pro <i>d</i> = ' + d + ' nm</span></span>' +
+                  '<span><svg width="26" height="12"><circle cx="13" cy="6" r="5" fill="var(--accent)"/></svg><span>zesílená <i>λ</i></span></span>' +
+                  '<span><svg width="26" height="12"><circle cx="13" cy="6" r="4.2" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/></svg><span>zeslabená <i>λ</i></span></span>' +
+                  '<span><svg width="26" height="10"><line x1="1" y1="5" x2="25" y2="5" stroke="rgb(40,70,235)" stroke-width="2.4"/></svg><span>450 nm</span></span>' +
+                  '<span><svg width="26" height="10"><line x1="1" y1="5" x2="25" y2="5" stroke="rgb(20,150,50)" stroke-width="2.4"/></svg><span>550 nm</span></span>' +
+                  '<span><svg width="26" height="10"><line x1="1" y1="5" x2="25" y2="5" stroke="rgb(220,30,30)" stroke-width="2.4"/></svg><span>650 nm</span></span>';
       } else {
-        legend += '<span><svg width="26" height="12"><rect x="1" y="1" width="24" height="10" rx="2" fill="' + col + '"/></svg>barva světla pro vlnovou délku ' + lam + ' nm</span>';
+        legend += '<span><svg width="26" height="12"><rect x="1" y="1" width="24" height="10" rx="2" fill="' + col + '"/></svg><span>barva světla pro vlnovou délku ' + lam + ' nm</span></span>';
       }
-      legend += '<span><b>π</b> = skok fáze při odrazu</span>';
+      legend += '<span><span><b>π</b> = skok fáze při odrazu</span></span>';
       document.getElementById('t-legend').innerHTML = legend;
 
-      document.getElementById('t-out-dl').textContent = (dl === 0 ? '0' : sig3(dl)) + ' nm';
+      document.getElementById('t-out-dl').textContent = (dl === 0 ? '0' : sig3(dl)) + ' nm';
       document.getElementById('t-out-jump').textContent = (jumpTop() ? 1 : 0) + (jumpBottom() ? 1 : 0);
       var note = document.getElementById('t-note'), tex, q, kk, msg;
       var inv = st.white ? whiteAvg(d) : inten(d, lam);
-      document.getElementById('t-out-I').textContent = Math.round(inv * 100) + ' %';
+      document.getElementById('t-out-I').textContent = Math.round(inv * 100) + ' %';
       var shTxt = sh ? 'Právě jeden odraz má skok fáze, a proto se dráhový rozdíl efektivně zvětší o <i>λ</i>/2.' : (jumpTop() ? 'Oba odrazy mají skok fáze, takže se navzájem vyruší a rozdíl fází určuje jen dráhový rozdíl.' : 'Žádný odraz nemá skok fáze, takže rozdíl fází určuje jen dráhový rozdíl.');
       var tbl = document.getElementById('t-table'), h = '', i;
       if(!st.white){
         q = dl / lam + (sh ? 0.5 : 0);
-        tex = '\\Delta l=2nd=2\\cdot' + texNum(cz(n, 2)) + '\\cdot' + d + '\\ \\mathrm{nm}=' + texNum(sig3(dl)) + '\\ \\mathrm{nm}';
+        tex = '\\Delta l=2nd\\\\[2pt]=2\\cdot' + texNum(cz(n, 2)) + '\\cdot' + d + '\\ \\mathrm{nm}=' + texNum(sig3(dl)) + '\\ \\mathrm{nm}';
         tex += '\\\\[4pt]' + (sh ? '\\frac{\\Delta l}{\\lambda}+\\frac12=' + texNum(sig3(dl / lam)) + '+0{,}5=' : '\\frac{\\Delta l}{\\lambda}=') + texNum(sig3(q));
         var rq = Math.round(q);
         if(Math.abs(q - rq) < 0.08 && q > 0.3){ msg = 'maximum (' + rq + '. řád): odražené světlo se zesílí.'; }
@@ -2462,33 +2462,33 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
         else if(q <= 0.08 && !sh){ msg = 'tloušťka je téměř nulová a rozdíl fází také, odražené světlo je zesílené.'; }
         else if(q <= 0.08 && sh){ msg = 'tloušťka je téměř nulová, zbývá jen skok fáze o <i>λ</i>/2 a odražené světlo se zeslabí.'; }
         else msg = 'mezi maximem a minimem.';
-        note.innerHTML = shTxt + ' Pro <i>d</i> = ' + d + ' nm a <i>λ</i> = ' + lam + ' nm vychází ' + msg;
+        note.innerHTML = shTxt + ' Pro <i>d</i> = ' + d + ' nm a <i>λ</i> = ' + lam + ' nm vychází ' + msg;
         h = '<thead><tr><th>řád</th><th class="mono">maximum</th><th class="mono">minimum</th></tr></thead><tbody>';
         var rows = 0, a, b2;
         for(kk = 0; kk <= 12; kk++){
           a = dMax(kk, lam); b2 = dMin(kk, lam);
           if((a === null || a > DMAX) && (b2 === null || b2 > DMAX)) continue;
-          h += '<tr><td class="mono">' + kk + '</td><td class="mono">' + (a === null || a > DMAX ? '—' : sig3(a) + ' nm') + '</td><td class="mono">' + (b2 === null || b2 > DMAX ? '—' : (b2 === 0 ? '0 nm' : sig3(b2) + ' nm')) + '</td></tr>';
+          h += '<tr><td class="mono">' + kk + '</td><td class="mono">' + (a === null || a > DMAX ? '—' : sig3(a) + ' nm') + '</td><td class="mono">' + (b2 === null || b2 > DMAX ? '—' : (b2 === 0 ? '0 nm' : sig3(b2) + ' nm')) + '</td></tr>';
           rows++;
         }
         h += '</tbody>';
       } else {
         var mx = lamList(d, true), mn = lamList(d, false);
-        tex = '\\Delta l=2nd=2\\cdot' + texNum(cz(n, 2)) + '\\cdot' + d + '\\ \\mathrm{nm}=' + texNum(sig3(dl)) + '\\ \\mathrm{nm}';
+        tex = '\\Delta l=2nd\\\\[2pt]=2\\cdot' + texNum(cz(n, 2)) + '\\cdot' + d + '\\ \\mathrm{nm}=' + texNum(sig3(dl)) + '\\ \\mathrm{nm}';
         tex += '\\\\[4pt]\\lambda_\\mathrm{max}=' + (sh ? '\\frac{4nd}{2k-1}' : '\\frac{2nd}{k}') + ',\\quad \\lambda_\\mathrm{min}=' + (sh ? '\\frac{2nd}{k}' : '\\frac{4nd}{2k-1}');
-        var sMx = mx.length ? mx.map(function(l){ return Math.round(l); }).join(' nm, ') + ' nm' : 'žádná';
-        var sMn = mn.length ? mn.map(function(l){ return Math.round(l); }).join(' nm, ') + ' nm' : 'žádná';
-        note.innerHTML = shTxt + ' Pro <i>d</i> = ' + d + ' nm se ve viditelném spektru zesílí: ' + sMx + '. Zeslabí se: ' + sMn + '.';
+        var sMx = mx.length ? mx.map(function(l){ return Math.round(l); }).join(' nm, ') + ' nm' : 'žádná';
+        var sMn = mn.length ? mn.map(function(l){ return Math.round(l); }).join(' nm, ') + ' nm' : 'žádná';
+        note.innerHTML = shTxt + ' Pro <i>d</i> = ' + d + ' nm se ve viditelném spektru zesílí: ' + sMx + '. Zeslabí se: ' + sMn + '.';
         h = '<thead><tr><th class="mono">zesílí</th><th class="mono">zeslabí</th></tr></thead><tbody>';
         var cnt = Math.max(mx.length, mn.length, 1);
         for(i = 0; i < cnt; i++){
-          h += '<tr><td class="mono">' + (mx[i] ? Math.round(mx[i]) + ' nm' : '—') + '</td><td class="mono">' + (mn[i] ? Math.round(mn[i]) + ' nm' : '—') + '</td></tr>';
+          h += '<tr><td class="mono">' + (mx[i] ? Math.round(mx[i]) + ' nm' : '—') + '</td><td class="mono">' + (mn[i] ? Math.round(mn[i]) + ' nm' : '—') + '</td></tr>';
         }
         h += '</tbody>';
       }
       tbl.innerHTML = h;
       if(window.katex){ try{ document.getElementById('t-calc').innerHTML = katex.renderToString(tex, { displayMode:true, throwOnError:false }); }catch(e){} }
-      document.getElementById('t-table-title').textContent = st.white ? 'Zesílené a zeslabené vlnové délky' : 'Tloušťky pro maxima a minima (λ = ' + lam + ' nm)';
+      document.getElementById('t-table-title').textContent = st.white ? 'Zesílené a zeslabené vlnové délky' : 'Tloušťky pro maxima a minima (λ = ' + lam + ' nm)';
       document.getElementById('t-row-lam').hidden = st.white;
     }
 
@@ -2533,7 +2533,7 @@ svg.optics text{ font-family:'Work Sans', sans-serif; paint-order:stroke; stroke
     }
     svg.addEventListener('pointerdown', function(e){
       var p = svgP(e); if(!p) return;
-      if(p.y >= 262) dragMode = 'd';
+      if(p.y >= 278) dragMode = 'd';
       else if(p.x >= 560 && p.x <= 930 && p.y < 240 && !st.white) dragMode = 'lam';
       else return;
       try{ svg.setPointerCapture(e.pointerId); }catch(err){}
