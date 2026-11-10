@@ -227,6 +227,68 @@ a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
   white-space:nowrap;
 }
 
+/* ---- aplet: hlavička s tlačítkem na celou obrazovku ---- */
+.applet-head{ display:flex; gap:16px; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; }
+.applet-head-text{ flex:1 1 360px; }
+.applet-head .cat-tag{ margin-bottom:10px; }
+button.btn.fs-btn{ display:inline-flex; align-items:center; gap:8px; flex:none; padding:9px 16px; font-size:0.86rem; }
+button.btn.fs-btn svg{ flex:none; }
+.applet-stage .theory-fig{ margin-top:4px; }
+
+/* ---- celá obrazovka: nahoře pruh s ovládáním, pod ním obrázek přes zbytek plochy ---- */
+.applet-card.is-full{
+  position:fixed;
+  inset:0;
+  z-index:1000;
+  margin:0;
+  border-radius:0;
+  border:0;
+  overflow:hidden;
+  padding:0;
+  background:var(--surface);
+  display:flex;
+  flex-direction:column;
+}
+.applet-card:fullscreen{ width:100%; height:100%; }
+.applet-card.is-full .applet-head{
+  flex:none; flex-wrap:nowrap; align-items:center;
+  padding:8px 14px 0; background:var(--surface); order:0;
+}
+.applet-card.is-full .applet-head-text{ flex:1 1 auto; }
+.applet-card.is-full .applet-head{ justify-content:space-between; }
+.applet-card.is-full .applet-controls{
+  flex:none; display:flex; flex-wrap:wrap; align-items:center; gap:0 26px;
+  padding:0 14px 8px; background:var(--surface); border-bottom:1px solid var(--line); order:1;
+}
+.applet-card.is-full .mode-row{ margin:0; padding:4px 0 0; border-top:0; flex-wrap:nowrap; }
+.applet-card.is-full .mode-row-label{ flex:none; }
+.applet-card.is-full .slider-row{ flex:1 1 380px; }
+.applet-card.is-full .slider-row input[type=range]{ height:28px; }
+.applet-card.is-full details.navod,
+.applet-card.is-full figcaption,
+.applet-card.is-full .desc,
+.applet-card.is-full .cat-tag{ display:none; }
+.applet-card.is-full h2{ font-size:1.25rem; margin:0; }
+.applet-card.is-full .applet-stage{ flex:1 1 auto; min-height:0; position:relative; margin:0; order:2; }
+.applet-card.is-full .theory-fig{
+  position:absolute; inset:0; margin:0; padding:0; border:0; border-radius:0;
+  display:flex; flex-direction:column;
+}
+.applet-card.is-full .theory-fig svg{ flex:1 1 auto; min-height:0; width:100%; max-width:none; height:100%; margin:0; }
+/* telefon na výšku, který neumí zamknout orientaci (např. iPhone): karta se otočí o 90° */
+.applet-card.is-full.rotated{
+  inset:auto; top:0; left:0;
+  width:100vh; height:100vw;
+  width:100dvh; height:100dvw;
+  transform-origin:top left;
+  transform:translateX(100vw) rotate(90deg);
+}
+/* telefon na šířku (zamčený i otočený): kompaktní pruh, ať je obrázek co největší */
+.applet-card.is-full.rotated .applet-head-text{ display:none; }
+@media (max-height:500px) and (orientation:landscape){
+  .applet-card.is-full .applet-head-text{ display:none; }
+}
+
 @media (max-width:520px){
   .card{ padding:20px 16px 22px; }
 }
@@ -590,12 +652,28 @@ a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
 
   <!-- ============ APLET ============ -->
   <div id="aplet-section" class="tab-section" hidden>
-    <div class="card">
-      <span class="cat-tag">Aplet</span>
-      <h2>Světlo jako příčné vlnění</h2>
-      <p class="desc">Vyberte druh světla, tvar a orientaci polarizace a případně zobrazte i vektor magnetické indukce.</p>
+    <div class="card applet-card" id="applet-card">
+
+      <div class="applet-head">
+        <div class="applet-head-text">
+          <span class="cat-tag">Aplet</span>
+          <h2>Světlo jako příčné vlnění</h2>
+          <p class="desc">Vyberte druh světla, tvar a orientaci polarizace a případně zobrazte i vektor magnetické indukce.</p>
+        </div>
+        <button class="btn ghost fs-btn" id="fs-btn" type="button" aria-pressed="false">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path id="fs-icon" d="M1.5 5.5V1.5H5.5M10.5 1.5H14.5V5.5M14.5 10.5V14.5H10.5M5.5 14.5H1.5V10.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="fs-label">Celá obrazovka</span>
+        </button>
+      </div>
+
+      <div class="applet-stage">
       <figure class="theory-fig" id="pz-fig">
         <svg id="pz-svg" viewBox="0 0 560 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Animace světelné vlny šířící se doprava. Šipky ukazují vektor intenzity elektrického pole v různých místech paprsku kolmo ke směru šíření, volitelně i vektor magnetické indukce. Vpravo je pohled proti směru šíření, na kterém se vidí, jak se konec vektoru elektrické intenzity pohybuje v čase."></svg>
+        <figcaption>Světelná vlna s vektorem \(\boldsymbol{E}\) kolmým ke směru šíření. Mezi lineární a kruhovou polarizací leží polarizace eliptická. Ta i kruhová jsou nad rámec učebnice, v ní je jen lineární a nepolarizované světlo.</figcaption>
+      </figure>
+      </div>
+
+      <div class="applet-controls">
         <div class="mode-row">
           <span class="mode-row-label">Světlo</span>
           <div class="seg" id="pz-mode" role="group" aria-label="Druh světla">
@@ -620,12 +698,13 @@ a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
             <button class="chip" id="pz-play" type="button">Pozastavit</button>
           </div>
         </div>
-        <details class="navod">
-          <summary>Návod</summary>
-          <p class="hint">Šipky ukazují vektor \(\boldsymbol{E}\) v různých místech osy \(x\) ve stejném okamžiku, křivka spojuje jejich konce. Vlna se šíří doprava. Vpravo je pohled proti směru šíření v rovině P: tečkované osy jsou \(y\) (svisle) a \(z\) (směrem k nám a doleva) a světlá stopa ukazuje, kudy se konec vektoru pohyboval za poslední dvě periody. Tatáž stopa je nakreslená i přímo v rovině P vedle vlny. U <b>polarizovaného</b> světla posuvník <i>Tvar polarizace</i> mění vlnu od lineární (vektor kmitá v přímce) přes eliptickou (konec vektoru opisuje elipsu) po kruhovou (kružnici); posuvník <i>Orientace kmitů</i> otáčí kmitovou rovinu, resp. hlavní osu elipsy (u kruhové polarizace na orientaci nezáleží). U <b>nepolarizovaného</b> světla se směr kmitů mění nahodile po krátkých úsecích vlny („klubkách“). Tlačítkem <i>vektor B</i> zobrazíte vektor magnetické indukce; je vždy kolmý na \(\boldsymbol{E}\) i na směr šíření a kmitá s ním ve fázi. Veličiny \(E\) a \(B\) mají různé jednotky, jejich délky v obrázku proto nelze porovnávat.</p>
-        </details>
-        <figcaption>Světelná vlna s vektorem \(\boldsymbol{E}\) kolmým ke směru šíření. Mezi lineární a kruhovou polarizací leží polarizace eliptická. Ta i kruhová jsou nad rámec učebnice, v ní je jen lineární a nepolarizované světlo.</figcaption>
-      </figure>
+      </div>
+
+      <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint">Šipky ukazují vektor \(\boldsymbol{E}\) v různých místech osy \(x\) ve stejném okamžiku, křivka spojuje jejich konce. Vlna se šíří doprava. Vpravo je pohled proti směru šíření v rovině P: tečkované osy jsou \(y\) (svisle) a \(z\) (směrem k nám a doleva) a světlá stopa ukazuje, kudy se konec vektoru pohyboval za poslední dvě periody. Tatáž stopa je nakreslená i přímo v rovině P vedle vlny. U <b>polarizovaného</b> světla posuvník <i>Tvar polarizace</i> mění vlnu od lineární (vektor kmitá v přímce) přes eliptickou (konec vektoru opisuje elipsu) po kruhovou (kružnici); posuvník <i>Orientace kmitů</i> otáčí kmitovou rovinu, resp. hlavní osu elipsy (u kruhové polarizace na orientaci nezáleží). U <b>nepolarizovaného</b> světla se směr kmitů mění nahodile po krátkých úsecích vlny („klubkách“). Tlačítkem <i>vektor B</i> zobrazíte vektor magnetické indukce; je vždy kolmý na \(\boldsymbol{E}\) i na směr šíření a kmitá s ním ve fázi. Veličiny \(E\) a \(B\) mají různé jednotky, jejich délky v obrázku proto nelze porovnávat.</p>
+      </details>
+
     </div>
   </div>
 
@@ -870,6 +949,80 @@ a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
       if(st.running && svg.getBoundingClientRect().width > 0){ st.th += OMEGA * dt; render(); }
       window.requestAnimationFrame(frame);
     }
+    // ---- celá obrazovka (stejně jako na stránce Difrakce světla) ----
+    var card = document.getElementById('applet-card');
+    var fsBtn = document.getElementById('fs-btn'), fsLabel = document.getElementById('fs-label'), fsIcon = document.getElementById('fs-icon');
+    var ICON_ENTER = 'M1.5 5.5V1.5H5.5M10.5 1.5H14.5V5.5M14.5 10.5V14.5H10.5M5.5 14.5H1.5V10.5';
+    var ICON_EXIT = 'M5.5 1.5V5.5H1.5M14.5 5.5H10.5V1.5M10.5 14.5V10.5H14.5M1.5 10.5H5.5V14.5';
+    var isPhone = window.matchMedia && matchMedia('(pointer:coarse)').matches && Math.min(screen.width, screen.height) < 600;
+    var portraitMq = window.matchMedia ? matchMedia('(orientation:portrait)') : null;
+    var orientLocked = false;
+    function updateRotated(){
+      var on = card.classList.contains('is-full') && isPhone && !orientLocked && !!portraitMq && portraitMq.matches;
+      if(on === card.classList.contains('rotated')) return;
+      card.classList.toggle('rotated', on);
+    }
+    if(portraitMq){
+      if(portraitMq.addEventListener) portraitMq.addEventListener('change', updateRotated);
+      else if(portraitMq.addListener) portraitMq.addListener(updateRotated);
+    }
+    var keepFull = false;
+    function fsElement(){ return document.fullscreenElement || document.webkitFullscreenElement || null; }
+    function lockFailed(){
+      if(isPhone && portraitMq && portraitMq.matches && fsElement()){
+        keepFull = true;
+        try{ (document.exitFullscreen || document.webkitExitFullscreen).call(document); }catch(e){ keepFull = false; }
+      }
+      updateRotated();
+    }
+    function lockLandscape(){
+      var so = screen.orientation;
+      if(!isPhone){ updateRotated(); return; }
+      if(!so || !so.lock){ lockFailed(); return; }
+      try{
+        so.lock('landscape').then(function(){ orientLocked = true; updateRotated(); }, lockFailed);
+      }catch(e){ lockFailed(); }
+    }
+    function setFullClass(on){
+      card.classList.toggle('is-full', on);
+      if(!on){
+        if(orientLocked){ try{ screen.orientation.unlock(); }catch(e){} }
+        orientLocked = false;
+      }
+      updateRotated();
+      document.documentElement.style.overflow = on ? 'hidden' : '';
+      fsLabel.textContent = on ? 'Zavřít celou obrazovku' : 'Celá obrazovka';
+      fsIcon.setAttribute('d', on ? ICON_EXIT : ICON_ENTER);
+      fsBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    }
+    fsBtn.addEventListener('click', function(){
+      if(card.classList.contains('is-full')){
+        if(fsElement()){
+          (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+        } else setFullClass(false);
+        return;
+      }
+      var req = card.requestFullscreen || card.webkitRequestFullscreen;
+      setFullClass(true);
+      if(req){
+        try{
+          var pr0 = req.call(card);
+          if(pr0 && pr0.then) pr0.then(lockLandscape, lockLandscape);
+          else lockLandscape();
+        }catch(e){ lockLandscape(); }
+      } else lockLandscape();
+    });
+    function onFsChange(){
+      if(fsElement()) return;
+      if(keepFull){ keepFull = false; return; }
+      if(card.classList.contains('is-full')) setFullClass(false);
+    }
+    document.addEventListener('fullscreenchange', onFsChange);
+    document.addEventListener('webkitfullscreenchange', onFsChange);
+    document.addEventListener('keydown', function(e){
+      if(e.key === 'Escape' && card.classList.contains('is-full') && !fsElement()) setFullClass(false);
+    });
+
     updateUI(); render();
     window.requestAnimationFrame(frame);
   })();
