@@ -1227,10 +1227,10 @@ button.btn.fs-btn svg{ flex:none; }
     }
     // tenká 3D destička (kosoúhlé promítání): rovina yz je kolmá na osu x; ang = směr propustných čárek (od svislice k hloubce z)
     function slabSVG(xf, yc, t, hz, hy, ang, alpha){
-      function P(x, z, y){ return f1(xf + x + KZ * z) + ',' + f1(yc - y - MZ * z); }
+      function P(x, z, y){ return f1(xf + x - KZ * z) + ',' + f1(yc - y + MZ * z); }   // stejné promítání jako pr(): z míří k pozorovateli
       function poly(pts, fill, fo){ return '<polygon points="' + pts.join(' ') + '" fill="' + fill + '" fill-opacity="' + fo + '" stroke="var(--ink)" stroke-width="1.6" stroke-linejoin="round"/>'; }
       var a0 = alpha === undefined ? 1 : alpha, o = '';
-      o += poly([P(-t, -hz, -hy), P(0, -hz, -hy), P(0, -hz, hy), P(-t, -hz, hy)], 'var(--ink-soft)', 0.55 * a0);
+      o += poly([P(-t, hz, -hy), P(0, hz, -hy), P(0, hz, hy), P(-t, hz, hy)], 'var(--ink-soft)', 0.55 * a0);
       o += poly([P(-t, -hz, hy), P(0, -hz, hy), P(0, hz, hy), P(-t, hz, hy)], 'var(--surface)', a0);
       o += poly([P(0, -hz, -hy), P(0, hz, -hy), P(0, hz, hy), P(0, -hz, hy)], 'var(--surface-2)', a0);
       if(ang !== null && ang !== undefined){
@@ -1427,7 +1427,6 @@ button.btn.fs-btn svg{ flex:none; }
       mk('line', { x1:XS - 8, y1:YC, x2:XE + 18, y2:YC, stroke:'var(--ink)', 'stroke-width':'1.5', 'marker-end':'url(#pb-mX)' }, svg);
       sunIcon(svg, 26, YC);
       var gCrys = mk('g', {}, svg);
-      gCrys.innerHTML = slabSVG(XC1, YC, XC1 - XC0, HZ, HY, null, 0.32);
       text(svg, (XC0 + XC1) / 2 - 14, YC + 102, 'krystal (šipka = hlavní řez)', 12.5, 'var(--ink-soft)', 'middle');
       var rayO = mk('polyline', { fill:'none', stroke:'var(--accent)', 'stroke-width':'1.2', opacity:'0.6' }, svg);
       var rayE = mk('polyline', { fill:'none', stroke:'var(--ray2)', 'stroke-width':'1.2', opacity:'0.7' }, svg);
@@ -1457,6 +1456,22 @@ button.btn.fs-btn svg{ flex:none; }
       capI.innerHTML = '<tspan x="' + CX + '" dy="0">pohled zezadu: dva obrazy</tspan><tspan x="' + CX + '" dy="14">(plocha zdroje je v počátku)</tspan>';
 
       function ar(){ return st.alpha * Math.PI / 180; }
+      // krystal jako hranol s obdélníkovým průřezem, který se otáčí kolem paprsku; viditelné stěny podle směru pohledu v = (0,5; 0,36; 1)
+      function crystalSVG(x0, x1, a, hu, hv){
+        function P(x, y, z){ return f1(x - KZ * z) + ',' + f1(YC - y + MZ * z); }
+        var pu = [Math.cos(a), Math.sin(a)], qv = [-Math.sin(a), Math.cos(a)], k, A, B, ey, ez, len, ny, nz, facing, o = '', pts;
+        var cs = [[1, 1], [-1, 1], [-1, -1], [1, -1]].map(function(c){ return [c[0] * hu * pu[0] + c[1] * hv * qv[0], c[0] * hu * pu[1] + c[1] * hv * qv[1]]; });
+        for(k = 0; k < 4; k++){
+          A = cs[k]; B = cs[(k + 1) % 4]; ey = B[0] - A[0]; ez = B[1] - A[1]; len = Math.sqrt(ey * ey + ez * ez);
+          ny = ez / len; nz = -ey / len; facing = (MZ * ny + nz) / 1.1;
+          if(facing <= 0.001) continue;
+          pts = [P(x0, A[0], A[1]), P(x1, A[0], A[1]), P(x1, B[0], B[1]), P(x0, B[0], B[1])];
+          o += '<polygon points="' + pts.join(' ') + '" fill="var(--ink-soft)" fill-opacity="' + (0.1 + 0.28 * (1 - facing)).toFixed(2) + '" stroke="var(--ink)" stroke-width="1.6" stroke-linejoin="round"/>';
+        }
+        pts = cs.map(function(c){ return P(x1, c[0], c[1]); });
+        o += '<polygon points="' + pts.join(' ') + '" fill="var(--surface-2)" fill-opacity="0.6" stroke="var(--ink)" stroke-width="1.6" stroke-linejoin="round"/>';
+        return o;
+      }
       function field(which, x, th){
         var u = (x - XS) * TWO_PI / LAM, phi = u - th, c = Math.cos(phi), psi = psiOf(phi), a = ar(), dir, amp, g, dot;
         if(x < XC0) return [c * Math.cos(psi), c * Math.sin(psi)];
@@ -1481,6 +1496,7 @@ button.btn.fs-btn svg{ flex:none; }
           e = field('o', x, th); p = pr(e[0], e[1], AMP); b = base('o', x); ptsO.push(f1(b[0] + p[0]) + ',' + f1(b[1] + p[1]));
           e = field('e', x, th); p = pr(e[0], e[1], AMP); b = base('e', x); ptsE.push(f1(b[0] + p[0]) + ',' + f1(b[1] + p[1]));
         }
+        gCrys.innerHTML = crystalSVG(XC0, XC1, a, 48, 30);
         pathO.setAttribute('points', ptsO.join(' ')); pathE.setAttribute('points', ptsE.join(' '));
         for(j = 0; j <= N; j++){
           x = XS + (XE - XS) * j / N;
@@ -1492,7 +1508,7 @@ button.btn.fs-btn svg{ flex:none; }
         rayO.setAttribute('points', XS + ',' + YC + ' ' + XE + ',' + YC);
         rayE.setAttribute('points', XS + ',' + YC + ' ' + XC0 + ',' + YC + ' ' + f1(XC1 + D[0]) + ',' + f1(YC + D[1]) + ' ' + f1(XE + D[0]) + ',' + f1(YC + D[1]));
         // hlavní řez na výstupní ploše krystalu
-        var q1 = pr(Math.cos(a), Math.sin(a), 30), q2 = pr(-Math.cos(a), -Math.sin(a), 30);
+        var q1 = pr(Math.cos(a), Math.sin(a), 38), q2 = pr(-Math.cos(a), -Math.sin(a), 38);
         setLine(axisLine, XC1 + q2[0], YC + q2[1], XC1 + q1[0], YC + q1[1], false);
         // vložený pohled
         var Dy = Math.cos(a), Dz = Math.sin(a), ox = CX + Dz * SP, oy = CY + Dy * SP, ex = CX - Dz * SP, ey = CY - Dy * SP, g = st.gam * Math.PI / 180;
