@@ -315,6 +315,88 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
   font-size:0.68rem; text-transform:uppercase; letter-spacing:0.1em;
   color:var(--ink-soft); font-weight:600; margin:20px 0 6px;
 }
+
+/* ---- hlavička apletu s tlačítkem na celou obrazovku (stejně jako u apletů optiky) ---- */
+.applet-head{ display:flex; gap:16px; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; }
+.applet-head-text{ flex:1 1 360px; }
+button.btn.fs-btn{ display:inline-flex; align-items:center; gap:8px; flex:none; padding:9px 16px; font-size:0.86rem; }
+button.btn.fs-btn svg{ flex:none; }
+
+/* ---- celá obrazovka: nahoře pruh s ovládáním, pod ním plátno přes zbytek plochy ---- */
+.applet-card.is-full{
+  position:fixed; inset:0; z-index:1000; margin:0; border-radius:0; border:0;
+  overflow:hidden; padding:0; background:var(--surface);
+  display:flex; flex-direction:column;
+}
+.applet-card:fullscreen{ width:100%; height:100%; }
+.applet-card.is-full .applet-head{ order:0; flex:none; flex-wrap:nowrap; align-items:center; padding:8px 14px 0; background:var(--surface); }
+.applet-card.is-full .applet-head-text{ flex:1 1 auto; }
+.applet-card.is-full .scene-rows{ order:1; }
+.applet-card.is-full .applet-controls{ order:2; padding-bottom:8px; border-bottom:1px solid var(--line); }
+.applet-card.is-full .scene-rows, .applet-card.is-full .applet-controls{
+  flex:none; display:flex; flex-wrap:wrap; align-items:center; gap:0 26px;
+  padding-left:14px; padding-right:14px; background:var(--surface);
+}
+.applet-card.is-full .mode-row{ margin:0; padding:4px 0 0; border-top:0; flex-wrap:nowrap; }
+.applet-card.is-full .mode-row[hidden]{ display:none; }
+.applet-card.is-full .mode-row-label{ flex:none; }
+.applet-card.is-full .slider-row{ flex:1 1 380px; }
+.applet-card.is-full .slider-row input[type=range]{ height:28px; }
+.applet-card.is-full .f-marks{ height:30px; }
+.applet-card.is-full .applet-results,
+.applet-card.is-full .scale-note,
+.applet-card.is-full .desc,
+.applet-card.is-full .cat-tag{ display:none; }
+.applet-card.is-full h2{ font-size:1.25rem; margin:0; }
+.applet-card.is-full .applet-stage{ order:3; flex:1 1 auto; min-height:0; position:relative; margin:0; }
+.applet-card.is-full .canvas-wrap{
+  position:absolute; inset:0; margin:0; max-width:none; border:0; border-radius:0;
+  display:flex; flex-direction:column;
+}
+.applet-card.is-full svg.scene{ flex:1 1 auto; min-height:0; width:100%; height:100%; aspect-ratio:auto; }
+.applet-card.is-full .legend{ flex:none; position:static; justify-content:center; padding:6px 14px; background:var(--surface); }
+/* leží-li obrazovka na šířku: plátno vlevo přes celou výšku, ovládání v posuvném pruhu vpravo */
+@media (orientation:landscape) and (min-width:700px){
+  .applet-card.is-full{ display:grid; grid-template-columns:minmax(0,1fr) minmax(280px,420px); grid-template-rows:auto auto minmax(0,1fr); }
+  .applet-card.is-full .applet-stage{ grid-column:1; grid-row:1 / span 3; order:0; }
+  .applet-card.is-full .applet-head{ grid-column:2; grid-row:1; padding-bottom:6px; border-left:1px solid var(--line); }
+  .applet-card.is-full .scene-rows{ grid-column:2; grid-row:2; display:block; border-left:1px solid var(--line); }
+  .applet-card.is-full .applet-controls{ grid-column:2; grid-row:3; display:block; overflow-y:auto; border-bottom:0; padding-bottom:12px; border-left:1px solid var(--line); }
+  .applet-card.is-full .mode-row{ flex-wrap:wrap; padding:8px 0; border-top:1px solid var(--line); }
+  .applet-card.is-full .mode-row-label{ flex:0 0 100%; display:block; }
+  .applet-card.is-full .slider-row{ flex:none; }
+  .applet-card.is-full .slider-val{ flex:0 0 auto; }
+  .applet-card.is-full .f-wrap{ margin-right:14px; }
+  .applet-card.is-full #preset-row{ display:flex; }
+  .applet-card.is-full #preset-row[hidden]{ display:none; }
+}
+/* telefon na výšku, který neumí zamknout orientaci (např. iPhone): karta se otočí o 90° a zobrazí se jako na šířku */
+.applet-card.is-full.rotated{
+  inset:auto; top:0; left:0;
+  width:100vh; height:100vw;
+  width:100dvh; height:100dvw;
+  transform-origin:top left;
+  transform:translateX(100vw) rotate(90deg);
+}
+.applet-card.is-full.rotated .legend,
+.applet-card.is-full.rotated .applet-head-text{ display:none; }
+.applet-card.is-full.rotated{ display:grid; grid-template-columns:minmax(0,1fr) minmax(280px,420px); grid-template-rows:auto auto minmax(0,1fr); }
+.applet-card.is-full.rotated .applet-stage{ grid-column:1; grid-row:1 / span 3; order:0; }
+.applet-card.is-full.rotated .applet-head{ grid-column:2; grid-row:1; padding-bottom:6px; border-left:1px solid var(--line); }
+.applet-card.is-full.rotated .scene-rows{ grid-column:2; grid-row:2; display:block; border-left:1px solid var(--line); }
+.applet-card.is-full.rotated .applet-controls{ grid-column:2; grid-row:3; display:block; overflow-y:auto; border-bottom:0; padding-bottom:12px; border-left:1px solid var(--line); }
+.applet-card.is-full.rotated .mode-row{ flex-wrap:wrap; padding:8px 0; border-top:1px solid var(--line); }
+.applet-card.is-full.rotated .mode-row-label{ flex:0 0 100%; display:block; }
+.applet-card.is-full.rotated .slider-row{ flex:none; }
+.applet-card.is-full.rotated .slider-val{ flex:0 0 auto; }
+.applet-card.is-full.rotated .f-wrap{ margin-right:14px; }
+.applet-card.is-full.rotated #preset-row{ display:flex; }
+.applet-card.is-full.rotated #preset-row[hidden]{ display:none; }
+@media (max-height:500px) and (orientation:landscape){
+  .applet-card.is-full .legend,
+  .applet-card.is-full .applet-head-text{ display:none; }
+}
+
 @media (max-width:720px){
   .mode-row-label{ flex-basis:100%; }
   .slider-val{ flex-basis:auto; }
@@ -859,11 +941,18 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
 
     <div class="card applet-card" id="applet-card">
       <div class="applet-head">
-        <span class="cat-tag">Aplet</span>
-        <h2>Od gramofonu k planetám</h2>
-        <p class="desc">Sledujte červenou značku na otáčející se desce a měňte poloměr a frekvenci. Pak přepněte na sluneční soustavu, prohlédněte si ji celou a přibližte se k planetě, Ceres nebo měsíci.</p>
+        <div class="applet-head-text">
+          <span class="cat-tag">Aplet</span>
+          <h2>Od gramofonu k planetám</h2>
+          <p class="desc">Sledujte červenou značku na otáčející se desce a měňte poloměr a frekvenci. Pak přepněte na sluneční soustavu, prohlédněte si ji celou a přibližte se k planetě, Ceres nebo měsíci.</p>
+        </div>
+        <button class="btn ghost fs-btn" id="fs-btn" type="button" aria-pressed="false">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path id="fs-icon" d="M1.5 5.5V1.5H5.5M10.5 1.5H14.5V5.5M14.5 10.5V14.5H10.5M5.5 14.5H1.5V10.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="fs-label">Celá obrazovka</span>
+        </button>
       </div>
 
+      <div class="scene-rows">
       <div class="mode-row">
         <span class="mode-row-label" id="lbl-scene">Scéna</span>
         <div class="seg" id="scene-seg" role="group" aria-labelledby="lbl-scene">
@@ -877,12 +966,17 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
         <div class="seg" id="focus-seg" role="group" aria-label="Rychlá změna přiblížení"></div>
       </div>
 
+      </div>
+
+      <div class="applet-stage">
       <div class="canvas-wrap">
         <svg class="scene" id="scene-svg" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pohled shora na pohyb po kružnici."></svg>
         <div class="legend" id="legend"></div>
       </div>
       <p class="scale-note" id="scale-note"></p>
+      </div>
 
+      <div class="applet-controls">
       <div class="mode-row">
         <span class="mode-row-label">Animace</span>
         <div class="btn-row">
@@ -956,6 +1050,9 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
         </div>
       </div>
 
+      </div>
+
+      <div class="applet-results">
       <div class="q-title">Veličiny</div>
       <div class="qtable-wrap"><table class="qtable" id="qtable"></table></div>
 
@@ -964,13 +1061,14 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
       <details class="navod">
         <summary>Návod</summary>
         <div class="hint">
-          <p>Červená značka leží na desce a otáčí se spolu s ní. Přenoska spočívá na desce, je jen dekorace a nehýbe se. Deska se otáčí po směru hodinových ručiček jako u skutečného gramofonu, planety a měsíce obíhají proti směru hodinových ručiček. Pohyb můžete zpomalit (1×, 0,5×, 0,1×), pozastavit a vynulovat. Svislé a vodorovné čárkované úsečky vyznačují úhly 0°, 90°, 180° a 270°.</p>
+          <p>Červená značka leží na desce a otáčí se spolu s ní. Přenoska spočívá na desce, je jen dekorace a nehýbe se. Deska se otáčí po směru hodinových ručiček jako u skutečného gramofonu, planety a měsíce obíhají proti směru hodinových ručiček. Pohyb můžete zpomalit (1×, 0,5×, 0,1×), pozastavit a vynulovat. Tlačítko Celá obrazovka zvětší plátno na celé okno a ovládání dá do pruhu vedle něj; zavřete ho stejným tlačítkem nebo klávesou Esc. Svislé a vodorovné čárkované úsečky vyznačují úhly 0°, 90°, 180° a 270°.</p>
           <p>Posuvník frekvence se zastavuje po 0,01&nbsp;Hz a navíc na hodnotě 0,5556&nbsp;Hz (5/9&nbsp;Hz, tedy 33⅓ ot·min⁻¹). Pod posuvníkem jsou značky skutečných otáček gramofonu. Tlačítky Předvolby nastavíte frekvenci i poloměr najednou. Šipka vektoru je kvůli viditelnosti nejméně 10 jednotek plátna dlouhá, i když je veličina velmi malá.</p>
           <p>Po zapnutí druhého bodu se objeví další posuvník poloměru a tabulka porovná oba body. Ve sluneční soustavě je nejdřív vidět celá soustava: planety a Ceres obíhají současně a skutečnými poměry period. Vzdálenosti jsou kvůli přehlednosti v odmocninové stupnici, proto nejsou v měřítku. Kliknutím na těleso, tlačítkem nebo nabídkou „Přiblížit na“ se k němu přiblížíte. Po přiblížení na Zemi nebo Jupiter tlačítkem „Měsíc Země“ či „Měsíce Jupiteru“ uvidíte jejich měsíce obíhat kolem planety. V přiblížení nastavíte rychlost času (kolik dnů nebo hodin uplyne za sekundu animace) a můžete přepsat poloměr a periodu; čárka i tečka jsou povoleny. Šipky jsou ve sluneční soustavě jen směrové.</p>
         </div>
       </details>
 
       <p class="scale-note" id="space-note" hidden></p>
+      </div>
     </div>
 
   </div>
@@ -2447,6 +2545,87 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
       s.innerHTML = items[i][1] + '<br>ot·min⁻¹';
       marks.appendChild(s);
     }
+  })();
+
+  // ---- celá obrazovka (Fullscreen API; jinak karta vyplní okno; stejné řešení jako u apletů optiky) ----
+  (function(){
+    var card = document.getElementById('applet-card'), fsBtn = document.getElementById('fs-btn');
+    var fsLabel = document.getElementById('fs-label'), fsIcon = document.getElementById('fs-icon');
+    var ICON_ENTER = 'M1.5 5.5V1.5H5.5M10.5 1.5H14.5V5.5M14.5 10.5V14.5H10.5M5.5 14.5H1.5V10.5';
+    var ICON_EXIT = 'M5.5 1.5V5.5H1.5M14.5 5.5H10.5V1.5M10.5 14.5V10.5H14.5M1.5 10.5H5.5V14.5';
+    var isPhone = window.matchMedia && matchMedia('(pointer:coarse)').matches && Math.min(screen.width, screen.height) < 600;
+    var portraitMq = window.matchMedia ? matchMedia('(orientation:portrait)') : null;
+    var orientLocked = false, keepFull = false;
+    function fsElement(){ return document.fullscreenElement || document.webkitFullscreenElement || null; }
+    function updateRotated(){
+      var on = card.classList.contains('is-full') && isPhone && !orientLocked && !!portraitMq && portraitMq.matches;
+      if(on === card.classList.contains('rotated')) return;
+      card.classList.toggle('rotated', on);
+    }
+    if(portraitMq){
+      if(portraitMq.addEventListener) portraitMq.addEventListener('change', updateRotated);
+      else if(portraitMq.addListener) portraitMq.addListener(updateRotated);
+    }
+    function lockFailed(){
+      if(isPhone && portraitMq && portraitMq.matches && fsElement()){
+        keepFull = true;
+        try{ (document.exitFullscreen || document.webkitExitFullscreen).call(document); }catch(e){ keepFull = false; }
+      }
+      updateRotated();
+    }
+    function lockLandscape(){
+      var so = screen.orientation;
+      if(!isPhone){ updateRotated(); return; }
+      if(!so || !so.lock){ lockFailed(); return; }
+      try{ so.lock('landscape').then(function(){ orientLocked = true; updateRotated(); }, lockFailed); }catch(e){ lockFailed(); }
+    }
+    function setFullClass(on){
+      card.classList.toggle('is-full', on);
+      if(!on){
+        if(orientLocked){ try{ screen.orientation.unlock(); }catch(e){} }
+        orientLocked = false;
+      }
+      updateRotated();
+      document.documentElement.style.overflow = on ? 'hidden' : '';
+      fsLabel.textContent = on ? 'Zavřít celou obrazovku' : 'Celá obrazovka';
+      fsIcon.setAttribute('d', on ? ICON_EXIT : ICON_ENTER);
+      fsBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    }
+    fsBtn.addEventListener('click', function(){
+      if(card.classList.contains('is-full')){
+        if(fsElement()){ (document.exitFullscreen || document.webkitExitFullscreen).call(document); }
+        else setFullClass(false);
+        return;
+      }
+      var req = card.requestFullscreen || card.webkitRequestFullscreen;
+      setFullClass(true);
+      if(req){
+        try{
+          var pr = req.call(card);
+          if(pr && pr.then) pr.then(lockLandscape, lockLandscape);
+          else lockLandscape();
+        }catch(e){ lockLandscape(); }
+      } else lockLandscape();
+    });
+    function onFsChange(){
+      if(fsElement()) return;
+      if(keepFull){ keepFull = false; return; }
+      if(card.classList.contains('is-full')) setFullClass(false);
+    }
+    document.addEventListener('fullscreenchange', onFsChange);
+    document.addEventListener('webkitfullscreenchange', onFsChange);
+    document.addEventListener('keydown', function(e){
+      if(e.key === 'Escape' && card.classList.contains('is-full') && !fsElement()) setFullClass(false);
+    });
+    // při přepnutí na jinou záložku se celá obrazovka zavře
+    Array.prototype.forEach.call(document.querySelectorAll('.toptab'), function(t){
+      t.addEventListener('click', function(){
+        if(card.classList.contains('is-full')){
+          if(fsElement()){ try{ (document.exitFullscreen || document.webkitExitFullscreen).call(document); }catch(e){ setFullClass(false); } }
+          else setFullClass(false);
+        }
+      });
+    });
   })();
 
   // ---------- start ----------
