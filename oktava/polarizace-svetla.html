@@ -622,7 +622,7 @@ a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
         </div>
         <details class="navod">
           <summary>Návod</summary>
-          <p class="hint">Šipky ukazují vektor \(\boldsymbol{E}\) v různých místech osy \(x\) ve stejném okamžiku, křivka spojuje jejich konce. Vlna se šíří doprava. Vpravo je pohled proti směru šíření v rovině P: tečkované osy jsou \(y\) (svisle) a \(z\) (směrem k nám a doleva) a světlá stopa ukazuje, kudy se konec vektoru pohyboval za poslední dvě periody. U <b>polarizovaného</b> světla posuvník <i>Tvar polarizace</i> mění vlnu od lineární (vektor kmitá v přímce) přes eliptickou (konec vektoru opisuje elipsu) po kruhovou (kružnici); posuvník <i>Orientace kmitů</i> otáčí kmitovou rovinu, resp. hlavní osu elipsy (u kruhové polarizace na orientaci nezáleží). U <b>nepolarizovaného</b> světla se směr kmitů mění nahodile po krátkých úsecích vlny („klubkách“). Tlačítkem <i>vektor B</i> zobrazíte vektor magnetické indukce; je vždy kolmý na \(\boldsymbol{E}\) i na směr šíření a kmitá s ním ve fázi. Veličiny \(E\) a \(B\) mají různé jednotky, jejich délky v obrázku proto nelze porovnávat.</p>
+          <p class="hint">Šipky ukazují vektor \(\boldsymbol{E}\) v různých místech osy \(x\) ve stejném okamžiku, křivka spojuje jejich konce. Vlna se šíří doprava. Vpravo je pohled proti směru šíření v rovině P: tečkované osy jsou \(y\) (svisle) a \(z\) (směrem k nám a doleva) a světlá stopa ukazuje, kudy se konec vektoru pohyboval za poslední dvě periody. Tatáž stopa je nakreslená i přímo v rovině P vedle vlny. U <b>polarizovaného</b> světla posuvník <i>Tvar polarizace</i> mění vlnu od lineární (vektor kmitá v přímce) přes eliptickou (konec vektoru opisuje elipsu) po kruhovou (kružnici); posuvník <i>Orientace kmitů</i> otáčí kmitovou rovinu, resp. hlavní osu elipsy (u kruhové polarizace na orientaci nezáleží). U <b>nepolarizovaného</b> světla se směr kmitů mění nahodile po krátkých úsecích vlny („klubkách“). Tlačítkem <i>vektor B</i> zobrazíte vektor magnetické indukce; je vždy kolmý na \(\boldsymbol{E}\) i na směr šíření a kmitá s ním ve fázi. Veličiny \(E\) a \(B\) mají různé jednotky, jejich délky v obrázku proto nelze porovnávat.</p>
         </details>
         <figcaption>Světelná vlna s vektorem \(\boldsymbol{E}\) kolmým ke směru šíření. Mezi lineární a kruhovou polarizací leží polarizace eliptická. Ta i kruhová jsou nad rámec učebnice, v ní je jen lineární a nepolarizované světlo.</figcaption>
       </figure>
@@ -755,6 +755,7 @@ a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
     var corners = [[1,1],[1,-1],[-1,-1],[-1,1]].map(function(c){ var p = pr(c[0] * 1.15, c[1] * 1.15); return f1(XR + p[0]) + ',' + f1(YC + p[1]); });
     mk('polygon', { points:corners.join(' '), fill:'var(--surface-2)', 'fill-opacity':'0.55', stroke:'var(--ink-soft)', 'stroke-width':'1.2', 'stroke-dasharray':'4 3' }, svg);
     var pl = mk('text', { x:XR + 45, y:YC - 100, 'font-family':'Work Sans, sans-serif', 'font-size':'13', 'font-style':'italic', fill:'var(--ink-soft)' }, svg); pl.textContent = 'P';
+    var trailP = mk('polyline', { fill:'none', stroke:'var(--accent)', 'stroke-width':'1.8', 'stroke-linejoin':'round', 'stroke-linecap':'round', opacity:'0.6' }, svg);   // stopa konce vektoru v rovině P
     var note = mk('text', { x:24, y:290, 'font-family':'Work Sans, sans-serif', 'font-size':'12.5', fill:'var(--ink-soft)' }, svg);
     note.textContent = 'Světlo se šíří doprava, ve směru osy x.';
 
@@ -818,11 +819,13 @@ a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
         }
       }
       // pohled proti směru šíření: konec vektoru v rovině P v posledních dvou periodách
-      pts = [];
+      pts = []; var ptsP = [];
       for(d = th - 2 * TWO_PI; d <= th + 0.0001; d += 0.1){
         fl = field(U_MAX, d); pts.push(f1(CX - fl[1] * R) + ',' + f1(CY - fl[0] * R));
+        p = pr(fl[0], fl[1]); ptsP.push(f1(XR + p[0]) + ',' + f1(YC + p[1]));
       }
       trail.setAttribute('points', pts.join(' '));
+      trailP.setAttribute('points', ptsP.join(' '));
       fl = field(U_MAX, th);
       arrE.setAttribute('x2', f1(CX - fl[1] * R)); arrE.setAttribute('y2', f1(CY - fl[0] * R));
       arrB.setAttribute('x2', f1(CX - fl[0] * R)); arrB.setAttribute('y2', f1(CY + fl[1] * R));   // B = (−E_z, E_y): vodorovně −B_z·R = −E_y·R, svisle −B_y·R = +E_z·R
