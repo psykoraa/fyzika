@@ -241,8 +241,8 @@ a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
 .slider-row input[type=range]{ flex:1 1 220px; min-width:0; height:34px; margin:0; accent-color:var(--accent); cursor:pointer; }
 .slider-row input[type=range]:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
 .slider-val{
-  flex:0 0 190px; font-weight:600; font-size:0.95rem;
-  font-variant-numeric:tabular-nums; white-space:nowrap;
+  flex:0 0 170px; width:170px; font-weight:600; font-size:0.95rem;
+  font-variant-numeric:tabular-nums; white-space:nowrap;   /* pevná šířka: posuvníky se při změně hodnot nezkracují ani neprodlužují */
 }
 .mode-row-label i{ text-transform:none; font-family:'STIX Two Text', Georgia, serif; font-size:1.15em; letter-spacing:0; }
 .slider-val i, .qtable i{ font-family:'STIX Two Text', Georgia, serif; font-size:1.08em; }
@@ -339,10 +339,12 @@ button.btn.fs-btn svg{ flex:none; }
 }
 .applet-card.is-full .mode-row{ margin:0; padding:4px 0 0; border-top:0; flex-wrap:nowrap; }
 .applet-card.is-full .mode-row[hidden]{ display:none; }
-.applet-card.is-full .mode-row-label{ flex:none; }
-.applet-card.is-full .slider-row{ flex:1 1 380px; }
-.applet-card.is-full .slider-row input[type=range]{ height:28px; }
+.applet-card.is-full .mode-row-label{ flex:0 0 118px; }     /* stejně široké popisky = stejně dlouhé posuvníky */
+.applet-card.is-full .slider-row{ flex:0 1 460px; max-width:100%; }
+.applet-card.is-full .slider-row input[type=range]{ height:28px; margin-right:14px; }
 .applet-card.is-full .f-marks{ height:30px; }
+.applet-card.is-full .f-wrap{ margin-right:14px; }
+.applet-card.is-full .f-wrap input[type=range]{ margin-right:0; }
 .applet-card.is-full .applet-results,
 .applet-card.is-full .scale-note,
 .applet-card.is-full .desc,
@@ -365,8 +367,6 @@ button.btn.fs-btn svg{ flex:none; }
   .applet-card.is-full .mode-row{ flex-wrap:wrap; padding:8px 0; border-top:1px solid var(--line); }
   .applet-card.is-full .mode-row-label{ flex:0 0 100%; display:block; }
   .applet-card.is-full .slider-row{ flex:none; }
-  .applet-card.is-full .slider-val{ flex:0 0 auto; }
-  .applet-card.is-full .f-wrap{ margin-right:14px; }
   .applet-card.is-full #preset-row{ display:flex; }
   .applet-card.is-full #preset-row[hidden]{ display:none; }
 }
@@ -388,10 +388,12 @@ button.btn.fs-btn svg{ flex:none; }
 .applet-card.is-full.rotated .mode-row{ flex-wrap:wrap; padding:8px 0; border-top:1px solid var(--line); }
 .applet-card.is-full.rotated .mode-row-label{ flex:0 0 100%; display:block; }
 .applet-card.is-full.rotated .slider-row{ flex:none; }
-.applet-card.is-full.rotated .slider-val{ flex:0 0 auto; }
-.applet-card.is-full.rotated .f-wrap{ margin-right:14px; }
 .applet-card.is-full.rotated #preset-row{ display:flex; }
 .applet-card.is-full.rotated #preset-row[hidden]{ display:none; }
+@media (max-width:720px){
+  .applet-card.is-full .mode-row{ flex-wrap:wrap; }
+  .applet-card.is-full .mode-row-label{ flex:0 0 100%; }
+}
 @media (max-height:500px) and (orientation:landscape){
   .applet-card.is-full .legend,
   .applet-card.is-full .applet-head-text{ display:none; }
@@ -399,7 +401,6 @@ button.btn.fs-btn svg{ flex:none; }
 
 @media (max-width:720px){
   .mode-row-label{ flex-basis:100%; }
-  .slider-val{ flex-basis:auto; }
 }
 </style>
 </head>
@@ -2100,7 +2101,7 @@ button.btn.fs-btn svg{ flex:none; }
     var f = curF();
     $('out-r').innerHTML = num(state.r1, 3) + u('cm');
     $('out-r2').innerHTML = num(state.r2, 3) + u('cm');
-    $('out-f').innerHTML = fFmt(f) + u('Hz') + ' <span style="font-weight:500;color:var(--ink-soft)">(' + rpmText(f) + u('ot·min<sup>−1</sup>') + ')</span>';
+    $('out-f').innerHTML = fFmt(f) + u('Hz') + '<br><span style="font-weight:500;color:var(--ink-soft)">(' + rpmText(f) + u('ot·min<sup>−1</sup>') + ')</span>';
     if(state.scene !== 'gramofon'){
       var CF = cfg();
       var sp = CF.speeds[state.speedIdx];
