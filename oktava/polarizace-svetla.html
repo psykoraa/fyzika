@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Polarizace světla</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../spolecne/config.js"></script>
+<script src="../spolecne/auth.js"></script>
+<script src="../spolecne/zalozky.js?v=3"></script>
+<link rel="stylesheet" href="../spolecne/styl.css">
+<style>
+:root{
+  --paper:#f2eff8;
+  --surface:#fdfcff;
+  --surface-2:#e6e0f1;
+  --ink:#241f36;
+  --ink-soft:#645d7a;
+  --line:rgba(36,31,54,0.12);
+  --accent:#6b3fb5;
+  --accent-ink:#faf7ff;
+  --success:#28794f;
+  --success-bg:#e3efe0;
+  --danger:#b3392b;
+  --danger-bg:#f5e4de;
+  --focus:#1e6f66;
+  --shadow:0 1px 0 rgba(36,31,54,0.06);
+
+  /* barvy paprsků v obrázcích (stejné jako na stránkách optiky) */
+  --ray1:#c77c0e;
+  --ray2:#c2378f;
+}
+
+.panel{ margin-bottom:22px; }
+.panel-title{ margin-bottom:8px; }
+.panel p{
+  margin:0 0 8px;
+  font-size:0.9rem;
+  line-height:1.55;
+}
+.panel p:last-child{ margin-bottom:0; }
+.panel b{ color:var(--ink); }
+.panel ul, .panel ol{ margin:0 0 8px; padding-left:22px; font-size:0.9rem; line-height:1.55; }
+.panel li{ margin-bottom:4px; }
+.panel h3{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.05rem;
+  letter-spacing:0.01em;
+  margin:16px 0 6px;
+}
+.panel h3:first-child{ margin-top:0; }
+
+.card{ padding:26px 26px 28px; text-align:left; margin-bottom:24px; }
+.cat-tag{ margin-bottom:10px; }
+.card h2{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.6rem;
+  letter-spacing:0.02em;
+  color:var(--ink);
+  text-transform:none;
+  margin-bottom:6px;
+}
+.card .desc{
+  font-size:0.86rem;
+  color:var(--ink-soft);
+  line-height:1.5;
+  margin:0 0 14px;
+}
+
+.katex{ font-size:1.05em; }
+.formula-box{
+  background:var(--surface-2);
+  border-radius:8px;
+  padding:12px 16px;
+  margin:10px 0;
+  font-size:1.1rem;
+  text-align:center;
+}
+.formula-line{
+  text-align:center;
+  font-size:1.1rem;
+  color:var(--ink);
+  line-height:1.8;
+}
+.line-scroll{
+  position:relative;
+  white-space:nowrap;
+  overflow-x:auto;
+  overflow-y:hidden;
+  padding:2px 0 4px;
+}
+.given-data{
+  font-size:clamp(0.9rem, 2.4vw, 1.05rem);
+  color:var(--ink-soft);
+  margin-bottom:20px;
+}
+
+.theory-table-wrap{ overflow-x:auto; margin:6px 0 4px; }
+.theory-table{
+  border-collapse:collapse;
+  font-size:0.88rem;
+  width:100%;
+  min-width:320px;
+}
+.theory-table th, .theory-table td{
+  border:1px solid var(--line);
+  padding:8px 12px;
+  text-align:left;
+}
+.theory-table thead th{
+  background:var(--surface-2);
+  color:var(--ink-soft);
+  font-weight:600;
+  font-size:0.72rem;
+  text-transform:uppercase;
+  letter-spacing:0.05em;
+}
+.theory-table td.mono, .theory-table th.mono{
+  font-family:'IBM Plex Mono', monospace;
+  font-variant-numeric:tabular-nums;
+  text-align:center;
+}
+.theory-table tbody tr:nth-child(even) td{ background:rgba(0,0,0,0.02); }
+
+.theory-fig{
+  margin:12px 0 10px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:10px 12px 8px;
+}
+.theory-fig svg{ display:block; width:100%; max-width:560px; height:auto; margin:0 auto; }
+.theory-fig figcaption{
+  font-size:0.8rem;
+  color:var(--ink-soft);
+  line-height:1.45;
+  text-align:center;
+  margin-top:4px;
+}
+
+.example-grid{ display:flex; flex-direction:column; gap:12px; margin-top:6px; }
+.example-item{
+  background:var(--surface-2);
+  border-radius:10px;
+  padding:12px 14px;
+}
+.example-tag{
+  font-size:0.66rem;
+  text-transform:uppercase;
+  letter-spacing:0.06em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-bottom:6px;
+  display:block;
+}
+.example-eq{
+  font-size:1.05rem;
+  margin-bottom:4px;
+}
+.example-note{ font-size:0.82rem; color:var(--ink-soft); line-height:1.45; }
+
+.links{ margin-top:14px; display:flex; flex-wrap:wrap; gap:10px; justify-content:center; }
+a.btn-link{
+  display:inline-block;
+  font-weight:600;
+  font-size:0.95rem;
+  padding:10px 22px;
+  border-radius:8px;
+  background:var(--accent);
+  color:var(--accent-ink);
+  text-decoration:none;
+}
+a.btn-link:hover{ filter:brightness(1.06); }
+a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+
+.credit{
+  margin-top:24px;
+  font-size:0.8rem;
+  line-height:1.5;
+  color:var(--ink-soft);
+  text-align:center;
+}
+.credit a{ color:inherit; }
+
+@media (max-width:520px){
+  .card{ padding:20px 16px 22px; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <a class="back-link" href="../rozcestniky/oktava.html">← Zpět na Oktáva/4. ročník</a>
+
+  <div class="brand">
+    <div class="brand-lockup">
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect x="16" y="5" width="8" height="30" rx="2" fill="var(--surface-2)" stroke="var(--ink)" stroke-width="2"/>
+        <line x1="20" y1="9" x2="20" y2="31" stroke="var(--ink-soft)" stroke-width="1.2"/>
+        <path d="M2,20 Q6,12 10,20 T16,20" stroke="var(--ink-soft)" stroke-width="1.4" fill="none"/>
+        <path d="M24,20 Q27,8 30,20 T37,20" stroke="var(--accent)" stroke-width="2" fill="none"/>
+      </svg>
+      <div class="brand-text">
+        <h1>Polarizace světla</h1>
+        <p>Příčné vlnění, polarizace odrazem, dvojlomem a absorpcí</p>
+      </div>
+    </div>
+    <!-- Hlavičkové skóre (.readout) se přidává jen u stránek se záložkou Trénink — viz references/zalozky-trenink-aplet.md -->
+  </div>
+
+  <div class="top-tabs">
+    <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+      </div>
+
+  <!-- ============ TEORIE ============ -->
+  <div id="theory-section" class="tab-section">
+
+    <div class="panel">
+      <div class="panel-title">Světlo jako příčné vlnění</div>
+      <p>Světlo je elektromagnetické vlnění a vlnění je <b>příčné</b>: vektor intenzity elektrického pole <b><i>E</i></b> je v každém místě kolmý ke směru, kterým se vlnění šíří. V rovině kolmé k paprsku ale zbývá směrů, kterými může <b><i>E</i></b> kmitat, nekonečně mnoho.</p>
+      <p>U světla ze Slunce, žárovky nebo plamene se směr kmitů <b><i>E</i></b> nahodile mění. Takovému světlu říkáme <b>nepolarizované</b>. Jeho zdroje totiž vyzařují po krátkých „klubkách“ vln a každé klubko má kmity orientované jinak (viz <a href="interference-svetla.html">Interference světla</a>).</p>
+      <p>Kmitá-li vektor <b><i>E</i></b> stále v jedné rovině, jde o <b>lineárně polarizované světlo</b>. Tuto rovinu, určenou vektorem <b><i>E</i></b> a směrem šíření, nazýváme <b>kmitová rovina</b>.</p>
+      <figure class="theory-fig">
+        <svg viewBox="0 0 440 210" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pohled proti směru šíření světla. Vlevo kmitá vektor intenzity elektrického pole v nepolarizovaném světle v nahodilých směrech kolmých na paprsek, vpravo kmitá stále v jednom směru.">
+    <defs><marker id="pol-hd" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="4.4" markerHeight="4.4" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/></marker></defs>
+    <circle cx="115" cy="98" r="72" fill="var(--surface-2)" stroke="var(--line)" stroke-width="1.5"/>
+    <line x1="57" y1="98" x2="173" y2="98" stroke="var(--accent)" stroke-width="2.2" marker-start="url(#pol-hd)" marker-end="url(#pol-hd)"/>
+    <line x1="68.6" y1="116.7" x2="161.4" y2="79.3" stroke="var(--accent)" stroke-width="2.2" marker-start="url(#pol-hd)" marker-end="url(#pol-hd)"/>
+    <line x1="76.8" y1="139" x2="153.2" y2="57" stroke="var(--accent)" stroke-width="2.2" marker-start="url(#pol-hd)" marker-end="url(#pol-hd)"/>
+    <line x1="97" y1="142.5" x2="133" y2="53.5" stroke="var(--accent)" stroke-width="2.2" marker-start="url(#pol-hd)" marker-end="url(#pol-hd)"/>
+    <line x1="115" y1="158" x2="115" y2="38" stroke="var(--accent)" stroke-width="2.2" marker-start="url(#pol-hd)" marker-end="url(#pol-hd)"/>
+    <line x1="135.3" y1="145.9" x2="94.7" y2="50.1" stroke="var(--accent)" stroke-width="2.2" marker-start="url(#pol-hd)" marker-end="url(#pol-hd)"/>
+    <line x1="155.3" y1="138.3" x2="74.7" y2="57.7" stroke="var(--accent)" stroke-width="2.2" marker-start="url(#pol-hd)" marker-end="url(#pol-hd)"/>
+    <line x1="160.4" y1="116.4" x2="69.6" y2="79.6" stroke="var(--accent)" stroke-width="2.2" marker-start="url(#pol-hd)" marker-end="url(#pol-hd)"/>
+    <circle cx="115" cy="98" r="4" fill="var(--ink)"/>
+    <circle cx="115" cy="98" r="8.5" fill="none" stroke="var(--ink)" stroke-width="1.4"/>
+    <text x="115" y="198" text-anchor="middle" font-family="Work Sans, sans-serif" font-size="14" font-weight="600" fill="var(--ink)">nepolarizované světlo</text>
+    <circle cx="325" cy="98" r="72" fill="var(--surface-2)" stroke="var(--line)" stroke-width="1.5"/>
+    <line x1="325" y1="158" x2="325" y2="38" stroke="var(--accent)" stroke-width="2.2" marker-start="url(#pol-hd)" marker-end="url(#pol-hd)"/>
+    <circle cx="325" cy="98" r="4" fill="var(--ink)"/>
+    <circle cx="325" cy="98" r="8.5" fill="none" stroke="var(--ink)" stroke-width="1.4"/>
+    <text x="325" y="198" text-anchor="middle" font-family="Work Sans, sans-serif" font-size="14" font-weight="600" fill="var(--ink)">lineárně polarizované světlo</text>
+    <text x="347" y="38" font-family="IBM Plex Mono, monospace" font-size="15" font-style="italic" font-weight="700" fill="var(--accent)">E</text>
+    <text x="137" y="30" font-family="IBM Plex Mono, monospace" font-size="15" font-style="italic" font-weight="700" fill="var(--accent)">E</text>
+    </svg>
+        <figcaption>Pohled proti směru šíření světla (paprsek míří k nám, značka ⊙). Vlevo se směr vektoru \(\boldsymbol{E}\) mění nahodile, vpravo kmitá pořád stejným směrem.</figcaption>
+      </figure>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="9" cy="9" r="7.5" stroke="var(--focus)" stroke-width="1.6"/>
+          <line x1="9" y1="8" x2="9" y2="13" stroke="var(--focus)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="5.2" r="1" fill="var(--focus)"/>
+        </svg>
+        <p>Oko polarizované světlo od nepolarizovaného nerozliší. Poznáme ho teprve pomocí dalšího polarizačního filtru (viz panel Polarizace absorpcí).</p>
+      </div>
+      <p>Přirozené světlo lze na polarizované přeměnit třemi způsoby: <b>odrazem a lomem</b>, <b>dvojlomem</b> a <b>absorpcí</b>.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Polarizace odrazem a lomem</div>
+      <p>Dopadne-li nepolarizované světlo na skleněnou desku, odráží se polarizované: v odraženém paprsku kmitá vektor <b><i>E</i></b> kolmo k rovině dopadu, tedy rovnoběžně s povrchem desky. Polarizace je většinou jen <b>částečná</b>, protože odražené světlo obsahuje i kmity jiných směrů, a závisí na úhlu dopadu.</p>
+      <p><b>Úplně polarizované</b> je odražené světlo jen při jediném úhlu dopadu, kterému říkáme <b>Brewsterův (polarizační) úhel</b> \(\alpha_\mathrm{B}\). Jeho velikost závisí na indexu lomu prostředí, od něhož se světlo odráží. U skla s \(n = 1{,}5\) vychází asi \(56^\circ\).</p>
+      <figure class="theory-fig">
+        <svg viewBox="0 0 440 262" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Polarizace odrazem. Nepolarizovaný paprsek dopadá na skleněnou desku pod Brewsterovým úhlem. Odražený paprsek je kolmý na lomený a je lineárně polarizovaný, vektor E kmitá kolmo k rovině dopadu.">
+    <rect x="20" y="118" width="400" height="138" fill="var(--surface-2)"/>
+    <line x1="20" y1="118" x2="420" y2="118" stroke="var(--ink)" stroke-width="1.8"/>
+    <line x1="220" y1="4" x2="220" y2="232" stroke="var(--ink-soft)" stroke-width="1.2" stroke-dasharray="5 4"/>
+    <text x="30" y="110" font-family="Work Sans, sans-serif" font-size="13" fill="var(--ink-soft)">vzduch</text>
+    <text x="30" y="138" font-family="Work Sans, sans-serif" font-size="13" fill="var(--ink-soft)">sklo</text>
+    <text x="226" y="238" font-family="Work Sans, sans-serif" font-size="13" font-style="italic" fill="var(--ink-soft)">kolmice dopadu</text>
+    <line x1="130.1" y1="58.1" x2="220" y2="118" stroke="var(--ray1)" stroke-width="2.6"/>
+    <line x1="220" y1="118" x2="309.9" y2="58.1" stroke="var(--ray1)" stroke-width="2.6"/>
+    <line x1="220" y1="118" x2="279.9" y2="207.9" stroke="var(--ray1)" stroke-width="2.6"/>
+    <polygon points="187.1,96 178.2,84.1 172.6,92.4" fill="var(--ray1)"/>
+    <polygon points="283.2,75.9 268.8,79.5 274.3,87.8" fill="var(--ray1)"/>
+    <polygon points="262.1,181.2 258.5,166.8 250.2,172.3" fill="var(--ray1)"/>
+    <line x1="154.9" y1="63.8" x2="144.9" y2="78.8" stroke="var(--accent)" stroke-width="2.2" stroke-linecap="round"/>
+    <line x1="207" y1="98.5" x2="197" y2="113.5" stroke="var(--accent)" stroke-width="2.2" stroke-linecap="round"/>
+    <circle cx="166.1" cy="82.1" r="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.6"/><circle cx="166.1" cy="82.1" r="2.2" fill="var(--accent)"/>
+    <circle cx="251.5" cy="97" r="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.6"/><circle cx="251.5" cy="97" r="2.2" fill="var(--accent)"/>
+    <circle cx="299.1" cy="65.3" r="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.6"/><circle cx="299.1" cy="65.3" r="2.2" fill="var(--accent)"/>
+    <line x1="248.5" y1="144.5" x2="233.5" y2="154.4" stroke="var(--accent)" stroke-width="2.2" stroke-linecap="round"/>
+    <line x1="264.6" y1="168.7" x2="249.7" y2="178.7" stroke="var(--accent)" stroke-width="2.2" stroke-linecap="round"/>
+    <line x1="280.2" y1="192.1" x2="265.2" y2="202.1" stroke="var(--accent)" stroke-width="2.2" stroke-linecap="round"/>
+    <path d="M186.7,95.8 A40,40 0 0 1 220,78" fill="none" stroke="var(--ink)" stroke-width="1.5"/>
+    <path d="M220,78 A40,40 0 0 1 253.3,95.8" fill="none" stroke="var(--ink)" stroke-width="1.5"/>
+    <path d="M220,164 A46,46 0 0 0 245.5,156.3" fill="none" stroke="var(--ink)" stroke-width="1.5"/>
+    <polyline points="232.5,109.7 240.8,122.2 228.3,130.5" fill="none" stroke="var(--danger)" stroke-width="1.6"/>
+    <text x="193" y="72" text-anchor="middle" font-family="Work Sans, sans-serif" font-size="15" fill="var(--ink)"><tspan font-style="italic">α</tspan><tspan font-size="11" dy="3">B</tspan></text>
+    <text x="245" y="72" text-anchor="middle" font-family="Work Sans, sans-serif" font-size="15" fill="var(--ink)"><tspan font-style="italic">α</tspan><tspan font-size="11" dy="3">B</tspan></text>
+    <text x="233" y="186" text-anchor="middle" font-family="Work Sans, sans-serif" font-size="15" font-style="italic" fill="var(--ink)">β</text>
+    <text x="254" y="144" font-family="IBM Plex Mono, monospace" font-size="14" font-weight="700" fill="var(--danger)">90°</text>
+    <text x="124.1" y="50.1" font-family="Work Sans, sans-serif" font-size="13" fill="var(--ink)">dopadající</text>
+    <text x="313.9" y="50.1" text-anchor="end" font-family="Work Sans, sans-serif" font-size="13" fill="var(--ink)">odražený</text>
+    <text x="289.9" y="211.9" font-family="Work Sans, sans-serif" font-size="13" fill="var(--ink)">lomený</text>
+    </svg>
+        <figcaption>Dopad pod Brewsterovým úhlem. Kolečka s tečkou značí kmity \(\boldsymbol{E}\) kolmé k rovině obrázku, úsečky kmity ležící v rovině obrázku. Odražený a lomený paprsek jsou na sebe kolmé.</figcaption>
+      </figure>
+      <p>Částečně se polarizuje i <b>lomené</b> světlo, ale opačně: převažují kmity <b><i>E</i></b> rovnoběžné s rovinou dopadu. Pošleme-li světlo postupně přes více skleněných destiček, polarizace lomeného světla se při každém průchodu zlepší.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Brewsterův zákon</div>
+      <p>Pro úplnou polarizaci odrazem platí podmínka: odražený a lomený paprsek svírají pravý úhel. Z ní se dá snadno odvodit, jak \(\alpha_\mathrm{B}\) souvisí s indexem lomu \(n\).</p>
+      <ol>
+        <li>Úhel odrazu je roven úhlu dopadu \(\alpha_\mathrm{B}\), úhel lomu označíme \(\beta\). Paprsky jsou kolmé, takže
+          <p class="formula-line">\[ \alpha_\mathrm{B} + \beta = 90^\circ \quad\Rightarrow\quad \sin\beta = \cos\alpha_\mathrm{B} . \]</p></li>
+        <li>Zákon lomu pro rozhraní vzduch–látka dává
+          <p class="formula-line">\[ n = \dfrac{\sin\alpha_\mathrm{B}}{\sin\beta} = \dfrac{\sin\alpha_\mathrm{B}}{\cos\alpha_\mathrm{B}} . \]</p></li>
+      </ol>
+      <div class="formula-box">\[ \operatorname{tg}\alpha_\mathrm{B} = n \]</div>
+      <p>Čím větší je index lomu, tím větší je Brewsterův úhel.</p>
+      <div class="theory-table-wrap">
+        <table class="theory-table">
+          <thead>
+            <tr><th>Látka</th><th class="mono"><i>n</i></th><th class="mono">α<sub>B</sub></th></tr>
+          </thead>
+          <tbody>
+            <tr><td>voda</td><td class="mono">1,33</td><td class="mono">53,1°</td></tr>
+            <tr><td>sklo</td><td class="mono">1,5</td><td class="mono">56,3°</td></tr>
+            <tr><td>diamant</td><td class="mono">2,42</td><td class="mono">67,5°</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M9 2.5 L16 15.5 H2 Z" stroke="var(--danger)" stroke-width="1.4" stroke-linejoin="round"/>
+          <line x1="9" y1="7" x2="9" y2="11.5" stroke="var(--danger)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="13.6" r="1" fill="var(--danger)"/>
+        </svg>
+        <p>Úhly \(\alpha_\mathrm{B}\) se měří od kolmice k rozhraní, ne od povrchu. Indexy lomu v tabulce jsou přibližné, protože se mírně mění s vlnovou délkou světla.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="cat-tag">Příklad z praxe</span>
+      <h2>Odlesk na ledové ploše</h2>
+      <p class="desc">Rozklikejte si postup krok po kroku — další krok se odemkne, jakmile otevřete ten předchozí.</p>
+      <div class="given-data">
+        <div class="given-line">Zadáno: index lomu ledu \(n = 1{,}31\)</div>
+        <div class="given-line">Hledáme: úhel dopadu, při němž je světlo odražené od ledové plochy úplně polarizované, odpovídající úhel lomu a směr kmitů \(\boldsymbol{E}\) v odraženém světle</div>
+      </div>
+      <div class="stepper" data-reset="reset-polarizace-led">
+        <div class="step" data-step="1">
+          <div class="step-connector"></div>
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">1</span>
+            <span class="step-title">Brewsterův úhel \(\alpha_\mathrm{B}\)</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <p>Úplná polarizace odrazem nastane pro úhel dopadu, jehož tangenta je rovna indexu lomu.</p>
+            <div class="step-result">\(\alpha_\mathrm{B} = \operatorname{arctg} n = \operatorname{arctg} 1{,}31 = 52{,}6^\circ\)</div>
+          </div>
+        </div>
+        <div class="step" data-step="2">
+          <div class="step-connector"></div>
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">2</span>
+            <span class="step-title">Úhel lomu \(\beta\)</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <p>Odražený a lomený paprsek jsou kolmé, proto \(\alpha_\mathrm{B} + \beta = 90^\circ\).</p>
+            <div class="step-result">\(\beta = 90^\circ - \alpha_\mathrm{B} = 90^\circ - 52{,}6^\circ = 37{,}4^\circ\)</div>
+            <p>Kontrola zákonem lomu:</p>
+            <div class="step-result">\(\dfrac{\sin 52{,}6^\circ}{\sin 37{,}4^\circ} = \dfrac{0{,}795}{0{,}607} = 1{,}31 = n\)</div>
+          </div>
+        </div>
+        <div class="step" data-step="3">
+          <div class="step-connector"></div>
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">3</span>
+            <span class="step-title">Kmity v odraženém světle</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <p>Odražené světlo je polarizované tak, že vektor \(\boldsymbol{E}\) kmitá kolmo k rovině dopadu, tedy vodorovně, rovnoběžně s povrchem ledu. Světelný paprsek přitom dopadá a odráží se pod výškovým úhlem \(90^\circ - \alpha_\mathrm{B} = 37{,}4^\circ\) nad ledem.</p>
+            <p>Brýle s polarizačními skly s propustným směrem svislým takový odlesk pohltí. Propustí naopak svislé kmity, které v odlesku chybí.</p>
+          </div>
+        </div>
+        <div class="step" data-step="4">
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">4</span>
+            <span class="step-title">Výsledek</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <div class="result-box"><div class="line-scroll">\(\alpha_\mathrm{B} = 52{,}6^\circ,\quad \beta = 37{,}4^\circ\)</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn ghost" id="reset-polarizace-led">Zopakovat postup od začátku</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Polarizace dvojlomem</div>
+      <p>V <b>izotropním</b> prostředí (sklo, voda, vzduch) se světlo šíří všemi směry stejně rychle. Některé krystaly jsou ale <b>anizotropní</b>: rychlost světla v nich závisí na směru. Dopadne-li na takový krystal paprsek, rozdělí se na rozhraní na <b>dva paprsky</b>, kterým říkáme <b>řádný</b> a <b>mimořádný</b>. Nastal <b>dvojlom</b>.</p>
+      <p>Oba paprsky jsou lineárně polarizované a vektory <b><i>E</i></b> v nich kmitají v rovinách navzájem kolmých.</p>
+      <figure class="theory-fig">
+        <svg viewBox="0 0 440 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Dvojlom v krystalu. Paprsek nepolarizovaného světla se v krystalu rozdělí na paprsek řádný a mimořádný. Oba jsou lineárně polarizované a vektory E kmitají v navzájem kolmých rovinách.">
+    <polygon points="154,82 364,82 330,168 120,168" fill="var(--surface-2)" stroke="var(--ink)" stroke-width="1.8" stroke-linejoin="round"/>
+    <text x="197" y="160" text-anchor="middle" font-family="Work Sans, sans-serif" font-size="13" fill="var(--ink-soft)">krystal</text>
+    <line x1="250" y1="20" x2="250" y2="82" stroke="var(--ray1)" stroke-width="2.6"/>
+    <line x1="250" y1="82" x2="250" y2="168" stroke="var(--ray1)" stroke-width="2.6"/>
+    <line x1="250" y1="168" x2="250" y2="225" stroke="var(--ray1)" stroke-width="2.6"/>
+    <line x1="250" y1="82" x2="270" y2="168" stroke="var(--ray2)" stroke-width="2.6"/>
+    <line x1="270" y1="168" x2="270" y2="225" stroke="var(--ray2)" stroke-width="2.6"/>
+    <polygon points="250,68 245,57 255,57" fill="var(--ray1)"/>
+    <polygon points="250,198 245,187 255,187" fill="var(--ray1)"/>
+    <polygon points="270,198 265,187 275,187" fill="var(--ray2)"/>
+    <circle cx="250" cy="28" r="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.6"/><circle cx="250" cy="28" r="2.2" fill="var(--accent)"/>
+    <line x1="241" y1="46" x2="259" y2="46" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round"/>
+    <circle cx="250" cy="212" r="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.6"/><circle cx="250" cy="212" r="2.2" fill="var(--accent)"/>
+    <line x1="261" y1="212" x2="279" y2="212" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round"/>
+    <text x="270" y="40" font-family="Work Sans, sans-serif" font-size="13" fill="var(--ink)">dopadající paprsek</text><text x="270" y="56" font-family="Work Sans, sans-serif" font-size="12" fill="var(--ink-soft)">(nepolarizované světlo)</text>
+    <text x="242" y="236" text-anchor="end" font-family="Work Sans, sans-serif" font-size="13" font-weight="600" fill="var(--ray1)">řádný</text>
+    <text x="280" y="236" font-family="Work Sans, sans-serif" font-size="13" font-weight="600" fill="var(--ray2)">mimořádný</text>
+    </svg>
+        <figcaption>Dvojlom v krystalu. Při kolmém dopadu pokračuje řádný paprsek (kmity kolmé k rovině obrázku) beze změny směru, mimořádný paprsek (kmity v rovině obrázku) se odchýlí. Posunutí je pro názornost zveličené.</figcaption>
+      </figure>
+      <p>Nejznámějším dvojlomným minerálem je <b>islandský vápenec</b>, který tvoří čiré a často velké krystaly. Položíme-li ho na text nebo kresbu, vidíme ji <b>zdvojenou</b>, protože řádný i mimořádný paprsek se lámou pod jiným úhlem.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Polarizace absorpcí</div>
+      <p>V praxi se nejčastěji používají <b>polarizační filtry</b>, tedy tenké ohebné fólie z plastu (<b>polaroidy</b>). Při výrobě se jejich podlouhlé molekuly srovnají do jednoho směru. Prochází-li fólií světlo, složka vektoru <b><i>E</i></b> v jednom směru se pohltí a složka k němu kolmá projde.</p>
+      <p>Filtry se obvykle používají ve dvojici:</p>
+      <ul>
+        <li><b>polarizátor</b> mění přirozené světlo na polarizované,</li>
+        <li><b>analyzátor</b> propouští polarizované světlo jen s jednou orientací kmitové roviny a umožní nám ji tak zjistit.</li>
+      </ul>
+      <p>Mají-li oba filtry <b>souhlasné</b> propustné směry, světlo projde. Jsou-li <b>navzájem kolmé</b>, světlo neprojde.</p>
+      <figure class="theory-fig">
+        <svg viewBox="0 0 440 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Polarizátor a analyzátor. V horní řadě mají oba filtry propustný směr svislý a světlo projde. Ve spodní řadě je propustný směr analyzátoru vodorovný a světlo neprojde.">
+    <circle cx="40" cy="62" r="13" fill="var(--surface)" stroke="var(--ink)" stroke-width="1.8"/>
+    <line x1="57" y1="62" x2="63" y2="62" stroke="var(--ink)" stroke-width="1.6" stroke-linecap="round"/>
+    <line x1="52" y1="74" x2="56.3" y2="78.3" stroke="var(--ink)" stroke-width="1.6" stroke-linecap="round"/>
+    <line x1="40" y1="79" x2="40" y2="85" stroke="var(--ink)" stroke-width="1.6" stroke-linecap="round"/>
+    <line x1="28" y1="74" x2="23.7" y2="78.3" stroke="var(--ink)" stroke-width="1.6" stroke-linecap="round"/>
+    <line x1="23" y1="62" x2="17" y2="62" stroke="var(--ink)" stroke-width="1.6" stroke-linecap="round"/>
+    <line x1="28" y1="50" x2="23.7" y2="45.7" stroke="var(--ink)" stroke-width="1.6" stroke-linecap="round"/>
+    <line x1="40" y1="45" x2="40" y2="39" stroke="var(--ink)" stroke-width="1.6" stroke-linecap="round"/>
+    <line x1="52" y1="50" x2="56.3" y2="45.7" stroke="var(--ink)" stroke-width="1.6" stroke-linecap="round"/>
+    <line x1="66" y1="62" x2="132" y2="62" stroke="var(--ray1)" stroke-width="2.6"/>
+    <line x1="86" y1="62" x2="110" y2="62" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/><line x1="88.8" y1="69.7" x2="107.2" y2="54.3" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/><line x1="98" y1="74" x2="98" y2="50" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/><line x1="105.7" y1="71.2" x2="90.3" y2="52.8" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/>
+    <rect x="132" y="24" width="26" height="76" rx="4" fill="var(--surface-2)" stroke="var(--ink)" stroke-width="1.8"/><line x1="138" y1="30" x2="138" y2="94" stroke="var(--ink-soft)" stroke-width="1.4"/><line x1="145" y1="30" x2="145" y2="94" stroke="var(--ink-soft)" stroke-width="1.4"/><line x1="152" y1="30" x2="152" y2="94" stroke="var(--ink-soft)" stroke-width="1.4"/><text x="145" y="118" text-anchor="middle" font-family="Work Sans, sans-serif" font-size="12" fill="var(--ink-soft)">polarizátor</text>
+    <line x1="158" y1="62" x2="262" y2="62" stroke="var(--ray1)" stroke-width="2.6"/>
+    <line x1="190" y1="74" x2="190" y2="50" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/>
+    <rect x="262" y="24" width="26" height="76" rx="4" fill="var(--surface-2)" stroke="var(--ink)" stroke-width="1.8"/><line x1="268" y1="30" x2="268" y2="94" stroke="var(--ink-soft)" stroke-width="1.4"/><line x1="275" y1="30" x2="275" y2="94" stroke="var(--ink-soft)" stroke-width="1.4"/><line x1="282" y1="30" x2="282" y2="94" stroke="var(--ink-soft)" stroke-width="1.4"/><text x="275" y="118" text-anchor="middle" font-family="Work Sans, sans-serif" font-size="12" fill="var(--ink-soft)">analyzátor</text>
+    <line x1="288" y1="62" x2="400" y2="62" stroke="var(--ray1)" stroke-width="2.6"/>
+    <line x1="344" y1="74" x2="344" y2="50" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/>
+    <text x="344" y="94" text-anchor="middle" font-family="Work Sans, sans-serif" font-size="13" font-weight="600" fill="var(--success)">světlo projde</text>
+    <circle cx="40" cy="178" r="13" fill="var(--surface)" stroke="var(--ink)" stroke-width="1.8"/>
+    <line x1="57" y1="178" x2="63" y2="178" stroke="var(--ink)" stroke-width="1.6" stroke-linecap="round"/>
+    <line x1="52" y1="190" x2="56.3" y2="194.3" stroke="var(--ink)" stroke-width="1.6" stroke-linecap="round"/>
+    <line x1="40" y1="195" x2="40" y2="201" stroke="var(--ink)" stroke-width="1.6" stroke-linecap="round"/>
+    <line x1="28" y1="190" x2="23.7" y2="194.3" stroke="var(--ink)" stroke-width="1.6" stroke-linecap="round"/>
+    <line x1="23" y1="178" x2="17" y2="178" stroke="var(--ink)" stroke-width="1.6" stroke-linecap="round"/>
+    <line x1="28" y1="166" x2="23.7" y2="161.7" stroke="var(--ink)" stroke-width="1.6" stroke-linecap="round"/>
+    <line x1="40" y1="161" x2="40" y2="155" stroke="var(--ink)" stroke-width="1.6" stroke-linecap="round"/>
+    <line x1="52" y1="166" x2="56.3" y2="161.7" stroke="var(--ink)" stroke-width="1.6" stroke-linecap="round"/>
+    <line x1="66" y1="178" x2="132" y2="178" stroke="var(--ray1)" stroke-width="2.6"/>
+    <line x1="86" y1="178" x2="110" y2="178" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/><line x1="88.8" y1="185.7" x2="107.2" y2="170.3" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/><line x1="98" y1="190" x2="98" y2="166" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/><line x1="105.7" y1="187.2" x2="90.3" y2="168.8" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/>
+    <rect x="132" y="140" width="26" height="76" rx="4" fill="var(--surface-2)" stroke="var(--ink)" stroke-width="1.8"/><line x1="138" y1="146" x2="138" y2="210" stroke="var(--ink-soft)" stroke-width="1.4"/><line x1="145" y1="146" x2="145" y2="210" stroke="var(--ink-soft)" stroke-width="1.4"/><line x1="152" y1="146" x2="152" y2="210" stroke="var(--ink-soft)" stroke-width="1.4"/><text x="145" y="234" text-anchor="middle" font-family="Work Sans, sans-serif" font-size="12" fill="var(--ink-soft)">polarizátor</text>
+    <line x1="158" y1="178" x2="262" y2="178" stroke="var(--ray1)" stroke-width="2.6"/>
+    <line x1="190" y1="190" x2="190" y2="166" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/>
+    <rect x="262" y="140" width="26" height="76" rx="4" fill="var(--surface-2)" stroke="var(--ink)" stroke-width="1.8"/><line x1="266" y1="156" x2="284" y2="156" stroke="var(--ink-soft)" stroke-width="1.4"/><line x1="266" y1="167" x2="284" y2="167" stroke="var(--ink-soft)" stroke-width="1.4"/><line x1="266" y1="178" x2="284" y2="178" stroke="var(--ink-soft)" stroke-width="1.4"/><line x1="266" y1="189" x2="284" y2="189" stroke="var(--ink-soft)" stroke-width="1.4"/><line x1="266" y1="200" x2="284" y2="200" stroke="var(--ink-soft)" stroke-width="1.4"/><text x="275" y="234" text-anchor="middle" font-family="Work Sans, sans-serif" font-size="12" fill="var(--ink-soft)">analyzátor</text>
+    <text x="344" y="182" text-anchor="middle" font-family="Work Sans, sans-serif" font-size="13" font-weight="600" fill="var(--danger)">tma</text>
+    </svg>
+        <figcaption>Nahoře mají polarizátor i analyzátor stejný propustný směr, dole je analyzátor otočený o \(90^\circ\). Čárky v fólii znázorňují propustný směr.</figcaption>
+      </figure>
+      <h3>Mechanický model</h3>
+      <p>Chování filtrů si lze představit na gumové hadici, kterou rozkmitáme příčným kmitáním. Hadice prochází dvěma štěrbinami. První (polarizátor) propustí jen kmity rovnoběžné se štěrbinou, takže za ní je vlnění lineárně polarizované. Druhá (analyzátor) je propustí, jen když je rovnoběžná s první. Je-li na ni kolmá, vlnění se zastaví.</p>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="9" cy="9" r="7.5" stroke="var(--focus)" stroke-width="1.6"/>
+          <line x1="9" y1="8" x2="9" y2="13" stroke="var(--focus)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="5.2" r="1" fill="var(--focus)"/>
+        </svg>
+        <p>Polarizovat lze jen příčné vlnění. Zvuk ve vzduchu je vlnění podélné (částice kmitají ve směru šíření), a proto se polarizovat nedá.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Přehled způsobů polarizace</div>
+      <div class="theory-table-wrap">
+        <table class="theory-table">
+          <thead>
+            <tr><th>Způsob</th><th>Co se děje</th><th>Výsledek</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>odraz</td><td>světlo se odráží od rozhraní</td><td>\(\boldsymbol{E}\) kolmo k rovině dopadu; úplně při \(\alpha_\mathrm{B}\)</td></tr>
+            <tr><td>lom</td><td>světlo prochází rozhraním</td><td>převažuje \(\boldsymbol{E}\) rovnoběžně s rovinou dopadu; jen částečně</td></tr>
+            <tr><td>dvojlom</td><td>anizotropní krystal rozdělí paprsek na dva</td><td>dva paprsky, \(\boldsymbol{E}\) v navzájem kolmých rovinách</td></tr>
+            <tr><td>absorpce</td><td>polaroid pohltí jednu složku \(\boldsymbol{E}\)</td><td>projde jen kolmá složka</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Využití polarizovaného světla</div>
+      <ul>
+        <li><b>Displeje</b> mobilních telefonů, počítačů a plochých televizorů obsahují polarizační filtry.</li>
+        <li><b>Polarizační brýle</b> potlačují odlesky z vodní hladiny, silnice nebo skla. Odražené světlo je polarizované a filtr s propustným směrem svislým ho zeslabí, zatímco ostatní světlo jen částečně. Díky tomu uvidíme třeba dno nádrže pod lesklou hladinou.</li>
+        <li><b>Stáčení polarizační roviny.</b> Některé látky a jejich roztoky (například cukr) mění orientaci kmitové roviny polarizovaného světla. Úhel stočení závisí na koncentraci roztoku, takže se tak dá koncentrace měřit.</li>
+        <li><b>Mechanické napětí.</b> V některých pevných látkách ovlivňuje polarizační rovinu i mechanické napětí. Mezi dvěma filtry se pak namáhaná místa zobrazí a je vidět, kde je materiál nejvíc zatížen.</li>
+      </ul>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="9" cy="9" r="7.5" stroke="var(--focus)" stroke-width="1.6"/>
+          <line x1="9" y1="8" x2="9" y2="13" stroke="var(--focus)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="5.2" r="1" fill="var(--focus)"/>
+        </svg>
+        <p>Zkuste doma: podívejte se přes polarizační brýle na obrazovku počítače a brýle pomalu otáčejte. U většiny LCD monitorů se obraz při určité poloze ztmaví.</p>
+      </div>
+      <div class="links">
+        <a class="btn-link" href="interference-svetla.html">Interference světla →</a>
+        <a class="btn-link" href="difrakce-svetla.html">Difrakce světla →</a>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Shrnutí</div>
+      <p>• Světlo je příčné elektromagnetické vlnění; vektor \(\boldsymbol{E}\) je kolmý ke směru šíření.</p>
+      <p>• V nepolarizovaném světle se směr kmitů \(\boldsymbol{E}\) nahodile mění, v lineárně polarizovaném světle kmitá stále v jedné rovině.</p>
+      <p>• Polarizaci lze získat odrazem a lomem, dvojlomem nebo absorpcí (polarizačním filtrem).</p>
+      <p>• Odražené světlo je úplně polarizované při Brewsterově úhlu: \(\operatorname{tg}\alpha_\mathrm{B} = n\). Odražený a lomený paprsek jsou pak kolmé.</p>
+      <p>• Při dvojlomu se paprsek rozdělí na řádný a mimořádný, oba jsou polarizované v navzájem kolmých rovinách.</p>
+      <p>• Polarizátor mění přirozené světlo na polarizované, analyzátor tuto polarizaci odhalí: při souhlasných směrech světlo projde, při kolmých ne.</p>
+      <p>• Polarizovat lze jen příčné vlnění, zvuk nikoli.</p>
+    </div>
+
+  </div>
+
+  <footer>Fyzika — Oktáva/4. ročník</footer>
+</div>
+
+<script src="../spolecne/spolecne.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  // ---- záložky: tlačítko .toptab[data-tab="x"] ↔ sekce #x-section (Teorie = #theory-section) ----
+  var tabs = {}, sections = {};
+  Array.prototype.forEach.call(document.querySelectorAll('.toptab[data-tab]'), function(btn){
+    var name = btn.getAttribute('data-tab');
+    tabs[name] = btn;
+    sections[name] = document.getElementById(name === 'teorie' ? 'theory-section' : name + '-section');
+  });
+  function showTab(name){
+    for(var k in tabs){
+      tabs[k].classList.toggle('on', k === name);
+      if(sections[k]) sections[k].hidden = k !== name;
+    }
+    // skóre, série a úspěšnost v hlavičce jen u tréninku
+    var readout = document.getElementById('header-readout');
+    if(readout) readout.hidden = name !== 'trenink';
+  }
+  Object.keys(tabs).forEach(function(k){ tabs[k].addEventListener('click', function(){ showTab(k); }); });
+  var hash = location.hash.replace('#', '');
+  if(hash && tabs[hash]) showTab(hash);
+
+  // ---- příklady: postupně odemykané steppery ----
+  Array.prototype.forEach.call(document.querySelectorAll('.stepper'), function(wrap){
+    var steps = Array.prototype.slice.call(wrap.querySelectorAll('.step'));
+    var unlockedUpTo = 1;
+
+    function refreshLocks(){
+      steps.forEach(function(st){
+        var idx = parseInt(st.getAttribute('data-step'), 10);
+        var locked = idx > unlockedUpTo;
+        st.classList.toggle('locked', locked);
+        st.classList.toggle('unlocked', !locked && !st.classList.contains('done'));
+        st.querySelector('.step-head').setAttribute('aria-disabled', locked ? 'true' : 'false');
+      });
+    }
+
+    steps.forEach(function(st){
+      var idx = parseInt(st.getAttribute('data-step'), 10);
+      var head = st.querySelector('.step-head');
+      var body = st.querySelector('.step-body');
+      head.addEventListener('click', function(){
+        if(idx > unlockedUpTo) return;
+        var wasOpen = st.classList.contains('open');
+        st.classList.toggle('open', !wasOpen);
+        body.hidden = wasOpen;
+        head.setAttribute('aria-expanded', (!wasOpen).toString());
+        if(!wasOpen){
+          st.classList.add('done');
+          if(idx === unlockedUpTo && unlockedUpTo < steps.length){ unlockedUpTo++; }
+          refreshLocks();
+        }
+      });
+    });
+
+    var resetBtn = document.getElementById(wrap.getAttribute('data-reset'));
+    if(resetBtn){
+      resetBtn.addEventListener('click', function(){
+        unlockedUpTo = 1;
+        steps.forEach(function(st){
+          st.classList.remove('open', 'done');
+          st.querySelector('.step-body').hidden = true;
+          st.querySelector('.step-head').setAttribute('aria-expanded', 'false');
+        });
+        refreshLocks();
+      });
+    }
+
+    refreshLocks();
+  });
+
+  // ---- vzorce (KaTeX) ----
+  if(window.renderMathInElement){
+    try{
+      renderMathInElement(document.getElementById('theory-section'), {
+        delimiters: [{left:'\\(', right:'\\)', display:false}, {left:'\\[', right:'\\]', display:true}]
+      });
+    }catch(e){}
+  }
+
+  // ---- sbalovací panely v teorii ----
+  try{ makePanelsCollapsible(document.getElementById('theory-section')); }catch(e){}
+})();
+</script>
+</body>
+</html>
