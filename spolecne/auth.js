@@ -868,14 +868,23 @@
       if (hidden && isAdmin) a.setAttribute('title', 'Skryto pro studenty (vidíte jako admin)');
       else if (a.getAttribute('title') === 'Skryto pro studenty (vidíte jako admin)') a.removeAttribute('title');
     }
-    // Karta, ve které jsou skryté všechny odkazy, se skryje celá.
-    var cards = document.querySelectorAll('.card');
+    // Karta, ve které jsou skryté všechny odkazy, se skryje celá (.card i .topic-card na rozcestnících).
+    var cards = document.querySelectorAll('.card, .topic-card');
     for (var j = 0; j < cards.length; j++) {
       var links = cards[j].querySelectorAll('a.btn');
       if (!links.length) continue;
       var allHidden = true;
       for (var k = 0; k < links.length; k++) if (!links[k].classList.contains('fz-hidden')) allHidden = false;
       cards[j].classList.toggle('fz-hidden', allHidden);
+    }
+    // Kapitola (oddíl s kartami), ve které jsou skryté všechny karty, se skryje také.
+    var chapters = document.querySelectorAll('section.chapter');
+    for (var c = 0; c < chapters.length; c++) {
+      var tc = chapters[c].querySelectorAll('.topic-card');
+      if (!tc.length) continue;
+      var allCardsHidden = true;
+      for (var t = 0; t < tc.length; t++) if (!tc[t].classList.contains('fz-hidden')) allCardsHidden = false;
+      chapters[c].classList.toggle('fz-hidden', allCardsHidden);
     }
   }
 
