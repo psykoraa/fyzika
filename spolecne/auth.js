@@ -101,6 +101,9 @@
     'pohyb-po-kruznici.html': [
       { d: 'serie', key: 'fyzika:pohyb-po-kruznici:stats', field: 'bestStreak' }
     ],
+    'sila.html': [
+      { d: 'serie', key: 'fyzika:sila:stats', field: 'bestStreak' }
+    ],
     'skladani-vektoru.html': [
       { d: 'serie', key: 'fyzika:skladani-vektoru:stats', field: 'bestStreak' },
       { d: 'hra-60s', key: 'fyzika:skladani-vektoru:game-bests', field: '60' },
