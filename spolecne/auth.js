@@ -648,24 +648,63 @@
     return Math.min(screen.width, screen.height) >= 600 ? 'tablet' : 'mobil';
   }
 
-  // Stát návštěvníka: dvoupísmenný kód (CZ…) zjištěný podle IP adresy externí službou api.country.is.
-  // Ukládá se jen kód státu (ne IP) v localStorage, služba se volá jen jednou za STATS_GEO_TTL.
-  var STATS_GEO_URL = 'https://api.country.is/';
+  // Stát (CZ…) a u Česka kraj (JM, ZL…) návštěvníka podle IP adresy. Zjišťuje je prohlížeč externí službou
+  // ipwho.is (jen pole country_code a region; záložně api.country.is jen pro stát). Ukládá se jen kód státu
+  // a kraje (ne IP, město ani souřadnice) v localStorage, služba se volá jen jednou za STATS_GEO_TTL.
+  var STATS_GEO_URL = 'https://ipwho.is/?fields=success,country_code,region,region_code';
+  var STATS_GEO_FALLBACK_URL = 'https://api.country.is/';
   var STATS_GEO_TTL = 14 * 24 * 3600 * 1000;
-  var statsGeo = '', statsGeoStarted = false;
+  var statsGeo = '', statsKraj = '', statsGeoStarted = false;
+
+  // Název nebo kód regionu od služby -> kód českého kraje (ISO 3166-2:CZ, bez předpony), nebo ''.
+  var KRAJE_RE = [
+    ['MO', /moravsko-?\s?slez|moravian-?\s?silesia/], ['JM', /jihomorav|south moravia/], ['ZL', /zlin/],
+    ['OL', /olomou/], ['PA', /pardubic/], ['KR', /hradec|kralovehrade/], ['LI', /liberec/],
+    ['US', /ustec|usti/], ['KA', /karlovar|karlovy/], ['PL', /plzen/], ['JC', /jihocesk|south bohemia/],
+    ['ST', /stredocesk|central bohemia/], ['VY', /vysocina|highlands/], ['PR', /prague|praha|prag\b/]
+  ];
+  var KRAJE_CODES = { MO:1, JM:1, ZL:1, OL:1, PA:1, KR:1, LI:1, US:1, KA:1, PL:1, JC:1, ST:1, VY:1, PR:1 };
+  var KRAJE_NUM = { '10':'PR', '20':'ST', '31':'JC', '32':'PL', '41':'KA', '42':'US', '51':'LI', '52':'KR',
+                    '53':'PA', '63':'VY', '64':'JM', '71':'OL', '72':'ZL', '80':'MO' };
+  function statsKrajCode(region, code) {
+    var n = String(region || '').toLowerCase();
+    try { n = n.normalize('NFD').replace(/[\u0300-\u036f]/g, ''); } catch (e) {}
+    for (var i = 0; i < KRAJE_RE.length; i++) if (KRAJE_RE[i][1].test(n)) return KRAJE_RE[i][0];
+    var c = String(code || '').toUpperCase().replace(/^CZ-/, '');
+    if (KRAJE_CODES[c] === 1) return c;
+    return KRAJE_NUM[c] || '';
+  }
+
+  function statsGeoSet(c, k) {
+    if (!/^[A-Z]{2}$/.test(c)) return;
+    statsGeo = c;
+    statsKraj = c === 'CZ' && KRAJE_CODES[k] === 1 ? k : '';
+    lsSet('fyzika-geo', JSON.stringify({ c: statsGeo, k: statsKraj, t: Date.now() }));
+  }
+
   function statsGeoLoad() {
     try {
       var raw = lsGet('fyzika-geo'), o = raw ? JSON.parse(raw) : null;
-      if (o && /^[A-Z]{2}$/.test(o.c) && Date.now() - o.t < STATS_GEO_TTL) { statsGeo = o.c; return; }
+      // Starší záznam bez kraje (jen stát) se u Česka načte znovu.
+      if (o && /^[A-Z]{2}$/.test(o.c) && Date.now() - o.t < STATS_GEO_TTL && (o.c !== 'CZ' || typeof o.k === 'string')) {
+        statsGeo = o.c; statsKraj = typeof o.k === 'string' && KRAJE_CODES[o.k] === 1 ? o.k : ''; return;
+      }
       if (!window.fetch) return;
-      var ctl = window.AbortController ? new AbortController() : null;
-      if (ctl) setTimeout(function () { ctl.abort(); }, 5000);
-      fetch(STATS_GEO_URL, { credentials: 'omit', cache: 'no-store', signal: ctl ? ctl.signal : undefined })
-        .then(function (r) { return r.json(); })
-        .then(function (j) {
-          var c = j && typeof j.country === 'string' ? j.country.toUpperCase() : '';
-          if (/^[A-Z]{2}$/.test(c)) { statsGeo = c; lsSet('fyzika-geo', JSON.stringify({ c: c, t: Date.now() })); }
-        }).catch(function () {});
+      var get = function (url) {
+        var ctl = window.AbortController ? new AbortController() : null;
+        if (ctl) setTimeout(function () { ctl.abort(); }, 5000);
+        return fetch(url, { credentials: 'omit', cache: 'no-store', signal: ctl ? ctl.signal : undefined })
+          .then(function (r) { return r.json(); });
+      };
+      get(STATS_GEO_URL).then(function (j) {
+        var c = j && j.success !== false && typeof j.country_code === 'string' ? j.country_code.toUpperCase() : '';
+        if (!/^[A-Z]{2}$/.test(c)) throw new Error('geo');
+        statsGeoSet(c, c === 'CZ' ? statsKrajCode(j.region, j.region_code) : '');
+      }).catch(function () {
+        return get(STATS_GEO_FALLBACK_URL).then(function (j) {
+          statsGeoSet(j && typeof j.country === 'string' ? j.country.toUpperCase() : '', '');
+        });
+      }).catch(function () {});
     } catch (e) {}
   }
 
@@ -734,7 +773,7 @@
       if (!stats.sent && !rows.length) rows.push([statsTab(), 0]);
       if (!rows.length && !stats.events.length) return;
       var body = {
-        action: 'track', n: stats.id, v: statsVisitor(), d: statsDevice(), p: currentPage(), c: statsGeo,
+        action: 'track', n: stats.id, v: statsVisitor(), d: statsDevice(), p: currentPage(), c: statsGeo, k: statsKraj,
         a: now - stats.start, r: rows,
         e: stats.events.map(function (ev) { return [ev.e, ev.x, ev.h, ev.z, now - ev.t]; })
       };
