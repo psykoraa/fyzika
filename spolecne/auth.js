@@ -641,6 +641,27 @@
     return Math.min(screen.width, screen.height) >= 600 ? 'tablet' : 'mobil';
   }
 
+  // Stát návštěvníka: dvoupísmenný kód (CZ…) zjištěný podle IP adresy externí službou api.country.is.
+  // Ukládá se jen kód státu (ne IP) v localStorage, služba se volá jen jednou za STATS_GEO_TTL.
+  var STATS_GEO_URL = 'https://api.country.is/';
+  var STATS_GEO_TTL = 14 * 24 * 3600 * 1000;
+  var statsGeo = '', statsGeoStarted = false;
+  function statsGeoLoad() {
+    try {
+      var raw = lsGet('fyzika-geo'), o = raw ? JSON.parse(raw) : null;
+      if (o && /^[A-Z]{2}$/.test(o.c) && Date.now() - o.t < STATS_GEO_TTL) { statsGeo = o.c; return; }
+      if (!window.fetch) return;
+      var ctl = window.AbortController ? new AbortController() : null;
+      if (ctl) setTimeout(function () { ctl.abort(); }, 5000);
+      fetch(STATS_GEO_URL, { credentials: 'omit', cache: 'no-store', signal: ctl ? ctl.signal : undefined })
+        .then(function (r) { return r.json(); })
+        .then(function (j) {
+          var c = j && typeof j.country === 'string' ? j.country.toUpperCase() : '';
+          if (/^[A-Z]{2}$/.test(c)) { statsGeo = c; lsSet('fyzika-geo', JSON.stringify({ c: c, t: Date.now() })); }
+        }).catch(function () {});
+    } catch (e) {}
+  }
+
   function statsTab() {
     var b = document.querySelector('.toptab.on[data-tab]');
     var t = b ? b.getAttribute('data-tab') : '';
@@ -658,6 +679,7 @@
     var tab = statsTab();
     stats.tabs[tab] = (stats.tabs[tab] || 0) + dt;
     stats.active += dt;
+    if (!statsGeoStarted && statsOn()) { statsGeoStarted = true; statsGeoLoad(); }
   }
 
   function statsEvent(name, detail, value) {
@@ -705,7 +727,7 @@
       if (!stats.sent && !rows.length) rows.push([statsTab(), 0]);
       if (!rows.length && !stats.events.length) return;
       var body = {
-        action: 'track', n: stats.id, v: statsVisitor(), d: statsDevice(), p: currentPage(),
+        action: 'track', n: stats.id, v: statsVisitor(), d: statsDevice(), p: currentPage(), c: statsGeo,
         a: now - stats.start, r: rows,
         e: stats.events.map(function (ev) { return [ev.e, ev.x, ev.h, ev.z, now - ev.t]; })
       };

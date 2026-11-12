@@ -12,6 +12,7 @@
 <script src="../spolecne/config.js"></script>
 <script src="../spolecne/auth.js"></script>
 <script src="../spolecne/zalozky.js?v=3"></script>
+<script src="svet-mapa.js"></script>
 <link rel="stylesheet" href="../spolecne/styl.css">
 <style>
 :root{
@@ -204,6 +205,10 @@ footer{ margin-top:40px; }
 .heat .hc:hover{ outline:2px solid var(--ink); outline-offset:-1px; }
 .heat .hd{ display:flex; align-items:center; }
 .heat .hh{ white-space:nowrap; overflow:visible; }
+.worldmap{ display:block; width:100%; height:auto; }
+.worldmap path{ fill:var(--surface-2); stroke:var(--paper); stroke-width:.5; }
+.worldmap path.on:hover{ stroke:var(--ink); stroke-width:1.2; }
+.map-note{ margin-top:8px; font-size:0.78rem; color:var(--ink-soft); }
 .tr-legend{ display:flex; align-items:center; gap:6px; margin-top:10px; font-size:0.72rem; color:var(--ink-soft); }
 .tr-legend .ramp{ width:90px; height:10px; border-radius:3px; background:linear-gradient(to right, rgba(30,95,168,.12), rgba(30,95,168,1)); }
 .tr-tip{
@@ -373,6 +378,10 @@ footer{ margin-top:40px; }
           <div class="panel wide">
             <div class="panel-title"><span>Kdy se web používá (zobrazení podle dne a hodiny)</span></div>
             <div id="tr-heat"></div>
+          </div>
+          <div class="panel wide">
+            <div class="panel-title"><span>Odkud se web navštěvuje (podle státu)</span></div>
+            <div id="tr-map"></div>
           </div>
           <div class="panel">
             <div class="panel-title"><span>Třídy</span></div>
@@ -1037,7 +1046,7 @@ footer{ margin-top:40px; }
     trData.rows.forEach(function(r){
       var t = r[0] * 60000;
       if(t < p.from || t >= p.to) return;
-      var page = S[r[3]], user = S[r[9]], cls = S[r[10]], dev = S[r[11]];
+      var page = S[r[3]], user = S[r[9]], cls = S[r[10]], dev = S[r[11]], cc = r.length > 12 ? (S[r[12]] || '') : '';
       if(pages && !pages[page]) return;
       if(fd && dev !== fd) return;
       if(fc==='@in' && !user) return;
@@ -1048,7 +1057,7 @@ footer{ margin-top:40px; }
         return;
       }
       var v = visits[r[1]];
-      if(!v) v = visits[r[1]] = { t: t, page: page, visitor: r[2], user: user, cls: cls, dev: dev, sec: 0, tabs: {} };
+      if(!v) v = visits[r[1]] = { t: t, page: page, visitor: r[2], user: user, cls: cls, dev: dev, sec: 0, tabs: {}, cc: cc };
       if(t < v.t) v.t = t;
       v.sec += r[5];
       var tab = S[r[4]];
@@ -1071,6 +1080,7 @@ footer{ margin-top:40px; }
     renderTrafficPages(a);
     renderTrafficTabs(a);
     renderHeat(a);
+    renderMap(a);
     renderTrafficClasses(a);
     renderDevices(a);
     renderEvents(a);
@@ -1282,6 +1292,54 @@ footer{ margin-top:40px; }
     leg.appendChild(el('span','ramp'));
     leg.appendChild(el('span', null, 'více (nejvíc ' + fmtNum(max) + ' za hodinu)'));
     box.appendChild(leg);
+  }
+
+  // Mapa světa: sytost modré = počet zobrazení z daného státu. Stát zjišťuje prohlížeč návštěvníka
+  // (geo-IP, uloží se jen dvoupísmenný kód) a posílá ho s hlášením návštěvy.
+  function renderMap(a){
+    var box = $('tr-map'); box.innerHTML = '';
+    var W = window.FZ_WORLD;
+    if(!W){ box.appendChild(el('div','empty','Chybí soubor svet-mapa.js.')); return; }
+    var cnt = {}, known = 0, max = 0;
+    a.visits.forEach(function(v){
+      if(!v.cc) return;
+      cnt[v.cc] = (cnt[v.cc] || 0) + 1; known++;
+      if(cnt[v.cc] > max) max = cnt[v.cc];
+    });
+    if(!known){
+      box.appendChild(el('div','empty','Zatím nejsou k dispozici údaje o státu. Objeví se u návštěv zaznamenaných po nasazení nové verze webu a Apps Scriptu.'));
+      return;
+    }
+    var NS = 'http://www.w3.org/2000/svg';
+    var svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('viewBox', '0 0 ' + W.w + ' ' + W.h);
+    svg.setAttribute('class', 'worldmap');
+    svg.setAttribute('role', 'img');
+    svg.setAttribute('aria-label', 'Mapa světa podle počtu zobrazení z jednotlivých států');
+    var shown = {};
+    W.c.forEach(function(c){
+      var n = cnt[c[0]] || 0, p = document.createElementNS(NS, 'path');
+      p.setAttribute('d', c[2]);
+      if(n){
+        shown[c[0]] = true;
+        p.setAttribute('class', 'on');
+        p.style.fill = 'rgba(' + ACCENT_RGB + ',' + (0.15 + 0.85 * n / max).toFixed(3) + ')';
+      }
+      p.setAttribute('data-tip', c[1] + '\n' + fmtNum(n) + ' zobrazení' + (n ? ' (' + Math.round(n / known * 100) + ' %)' : ''));
+      svg.appendChild(p);
+    });
+    box.appendChild(svg);
+    var leg = el('div','tr-legend');
+    leg.appendChild(el('span', null, 'méně'));
+    leg.appendChild(el('span','ramp'));
+    leg.appendChild(el('span', null, 'více (nejvíc ' + fmtNum(max) + ' zobrazení z jednoho státu)'));
+    box.appendChild(leg);
+    var other = Object.keys(cnt).filter(function(k){ return !shown[k]; });
+    var unknown = a.visits.length - known;
+    var note = [];
+    if(unknown) note.push(fmtNum(unknown) + ' zobrazení bez údaje o státu');
+    if(other.length) note.push('mimo mapu: ' + other.map(function(k){ return k + ' (' + cnt[k] + '×)'; }).join(', '));
+    if(note.length) box.appendChild(el('div','map-note', note.join(' · ') + '.'));
   }
 
   function renderTrafficClasses(a){
