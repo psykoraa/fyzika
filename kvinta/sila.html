@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Síla</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../spolecne/config.js"></script>
+<script src="../spolecne/auth.js"></script>
+<script src="../spolecne/zalozky.js?v=3"></script>
+<link rel="stylesheet" href="../spolecne/styl.css">
+<style>
+:root{
+  --paper:#f5f0e3;
+  --surface:#fffcf5;
+  --surface-2:#ece4d1;
+  --ink:#212b34;
+  --ink-soft:#5d6b76;
+  --line:rgba(33,43,52,0.12);
+  --accent:#c9581f;
+  --accent-ink:#fff8f0;
+  --success:#28794f;
+  --success-bg:#e3efe0;
+  --danger:#b3392b;
+  --danger-bg:#f5e4de;
+  --focus:#1e6f66;
+  --shadow:0 1px 0 rgba(33,43,52,0.06);
+}
+
+.panel{ margin-bottom:22px; }
+.panel-title{ margin-bottom:8px; }
+.panel p{
+  margin:0 0 8px;
+  font-size:0.9rem;
+  line-height:1.55;
+}
+.panel p:last-child{ margin-bottom:0; }
+.panel b{ color:var(--ink); }
+.panel ul, .panel ol{ margin:0 0 8px; padding-left:22px; font-size:0.9rem; line-height:1.55; }
+.panel li{ margin-bottom:4px; }
+.panel h3{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.05rem;
+  letter-spacing:0.01em;
+  margin:16px 0 6px;
+}
+.panel h3:first-child{ margin-top:0; }
+
+.card{ padding:26px 26px 28px; text-align:left; margin-bottom:24px; }
+.cat-tag{ margin-bottom:10px; }
+.card h2{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.6rem;
+  letter-spacing:0.02em;
+  color:var(--ink);
+  text-transform:none;
+  margin-bottom:6px;
+}
+.card .desc{
+  font-size:0.86rem;
+  color:var(--ink-soft);
+  line-height:1.5;
+  margin:0 0 14px;
+}
+
+.katex{ font-size:1.05em; }
+.formula-box{
+  background:var(--surface-2);
+  border-radius:8px;
+  padding:12px 16px;
+  margin:10px 0;
+  font-size:1.1rem;
+  text-align:center;
+}
+.formula-line{
+  text-align:center;
+  font-size:1.1rem;
+  color:var(--ink);
+  line-height:1.8;
+}
+.line-scroll{
+  position:relative;
+  white-space:nowrap;
+  overflow-x:auto;
+  overflow-y:hidden;
+  padding:2px 0 4px;
+}
+.given-data{
+  font-size:clamp(0.9rem, 2.4vw, 1.05rem);
+  color:var(--ink-soft);
+  margin-bottom:20px;
+}
+
+.theory-table-wrap{ overflow-x:auto; margin:6px 0 4px; }
+.theory-table{
+  border-collapse:collapse;
+  font-size:0.88rem;
+  width:100%;
+  min-width:320px;
+}
+.theory-table th, .theory-table td{
+  border:1px solid var(--line);
+  padding:8px 12px;
+  text-align:left;
+}
+.theory-table thead th{
+  background:var(--surface-2);
+  color:var(--ink-soft);
+  font-weight:600;
+  font-size:0.72rem;
+  text-transform:uppercase;
+  letter-spacing:0.05em;
+}
+.theory-table td.mono, .theory-table th.mono{
+  font-family:'IBM Plex Mono', monospace;
+  font-variant-numeric:tabular-nums;
+  text-align:center;
+}
+.theory-table tbody tr:nth-child(even) td{ background:rgba(0,0,0,0.02); }
+
+.theory-fig{
+  margin:12px 0 10px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:10px 12px 8px;
+}
+.theory-fig svg{ display:block; width:100%; max-width:560px; height:auto; margin:0 auto; }
+.theory-fig figcaption{
+  font-size:0.8rem;
+  color:var(--ink-soft);
+  line-height:1.45;
+  text-align:center;
+  margin-top:4px;
+}
+
+.example-grid{ display:flex; flex-direction:column; gap:12px; margin-top:6px; }
+.example-item{
+  background:var(--surface-2);
+  border-radius:10px;
+  padding:12px 14px;
+}
+.example-tag{
+  font-size:0.66rem;
+  text-transform:uppercase;
+  letter-spacing:0.06em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-bottom:6px;
+  display:block;
+}
+.example-eq{
+  font-size:1.05rem;
+  margin-bottom:4px;
+}
+.example-note{ font-size:0.82rem; color:var(--ink-soft); line-height:1.45; }
+
+.links{ margin-top:14px; display:flex; flex-wrap:wrap; gap:10px; justify-content:center; }
+a.btn-link{
+  display:inline-block;
+  font-weight:600;
+  font-size:0.95rem;
+  padding:10px 22px;
+  border-radius:8px;
+  background:var(--accent);
+  color:var(--accent-ink);
+  text-decoration:none;
+}
+a.btn-link:hover{ filter:brightness(1.06); }
+a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+
+.credit{
+  margin-top:24px;
+  font-size:0.8rem;
+  line-height:1.5;
+  color:var(--ink-soft);
+  text-align:center;
+}
+.credit a{ color:inherit; }
+
+@media (max-width:520px){
+  .card{ padding:20px 16px 22px; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <a class="back-link" href="../rozcestniky/kvinta.html">← Zpět na Kvinta/1. ročník</a>
+
+  <div class="brand">
+    <div class="brand-lockup">
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <line x1="5" y1="31" x2="35" y2="31" stroke="var(--ink-soft)" stroke-width="1.4"/>
+        <rect x="12" y="20" width="14" height="11" rx="1.5" stroke="var(--ink)" stroke-width="1.6"/>
+        <line x1="19" y1="25.5" x2="31" y2="25.5" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round"/>
+        <path d="M34,25.5 L29.5,22.5 V28.5 Z" fill="var(--accent)"/>
+        <line x1="19" y1="25.5" x2="19" y2="10" stroke="var(--focus)" stroke-width="2.4" stroke-linecap="round"/>
+        <path d="M19,6.5 L16,11 H22 Z" fill="var(--focus)"/>
+      </svg>
+      <div class="brand-text">
+        <h1>Síla</h1>
+        <p>Vzájemné působení těles, účinky síly, vektor síly a výslednice</p>
+      </div>
+    </div>
+    <!-- Hlavičkové skóre (.readout) se přidává jen u stránek se záložkou Trénink — viz references/zalozky-trenink-aplet.md -->
+  </div>
+
+  <div class="top-tabs">
+    <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+    <!-- další záložky: <button class="toptab" id="top-tab-trenink" data-tab="trenink">Trénink</button> -->
+  </div>
+
+  <!-- ============ TEORIE ============ -->
+  <div id="theory-section" class="tab-section">
+
+    <div class="panel">
+      <div class="panel-title">O čem je dynamika</div>
+      <p>Kinematika popisuje, <i>jak</i> se těleso pohybuje. Dynamika se ptá, <i>proč</i> se pohybuje právě takhle: co jeho pohyb zahajuje, mění nebo ukončuje. Odpovědí je <b>síla</b>.</p>
+      <p>Budeme se zabývat <b>klasickou dynamikou</b>. Platí pro makroskopická tělesa, jejichž rychlost je zanedbatelná proti rychlosti světla ve vakuu (asi \(3\cdot 10^{8}\ \mathrm{m\cdot s^{-1}}\)). Tělesa si jako v kinematice zjednodušujeme na hmotné body.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Síla jako vzájemné působení těles</div>
+      <p>Stisknete-li gumový míč, promáčkne se. Současně ale cítíte, jak míč tlačí zpět do vaší dlaně. Působení je tedy vždy <b>vzájemné</b> (říká se mu také <b>interakce</b>) a popisujeme ho veličinou <b>síla</b>. Značíme ji \(\boldsymbol{F}\), jednotkou je <b>newton</b> (\(\mathrm{N}\)).</p>
+      <p>Tělesa na sebe mohou působit dvojím způsobem:</p>
+      <ul>
+        <li><b>přímým stykem</b> — ruka a míč, lokomotiva a vagon, podrážka a chodník,</li>
+        <li><b>prostřednictvím silového pole</b>, aniž se dotýkají — gravitační pole (Země a Měsíc, Země a kámen), magnetické pole (dva magnety) nebo elektrické pole (dvě nabitá tělesa).</li>
+      </ul>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M9 2.5 L16 15.5 H2 Z" stroke="var(--danger)" stroke-width="1.4" stroke-linejoin="round"/>
+          <line x1="9" y1="7" x2="9" y2="11.5" stroke="var(--danger)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="13.6" r="1" fill="var(--danger)"/>
+        </svg>
+        <p>Síla není předmět ani vlastnost tělesa, která by „se v něm ukrývala“ a „letěla s ním“. Vždy ji způsobuje nějaké <b>jiné těleso</b>. U každé síly proto umíme říct, <b>kdo na koho</b> působí (například Země na kámen).</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Účinky síly</div>
+      <ul>
+        <li><b>Deformační</b> účinek mění tvar nebo objem tělesa — stlačená houba, natažená pružina.</li>
+        <li><b>Posuvný</b> účinek mění rychlost tělesa (jeho pohybový stav) — míč, který chytíme do rukou, zastaví; vozík, do kterého strčíme, se rozjede.</li>
+        <li><b>Otáčivý</b> účinek roztáčí těleso kolem osy — dveře otáčející se na pantech.</li>
+      </ul>
+      <p>Účinky se často objevují společně: při prudkém úderu do míče se míč zároveň deformuje i letí. Posuvný a otáčivý účinek dohromady tvoří <b>pohybový</b> účinek. Hmotný bod nemá rozměry, a proto se u něj budeme zabývat jen posuvným účinkem.</p>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="9" cy="9" r="7.5" stroke="var(--focus)" stroke-width="1.6"/>
+          <line x1="9" y1="8" x2="9" y2="13" stroke="var(--focus)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="5.2" r="1" fill="var(--focus)"/>
+        </svg>
+        <p>Stejně velká síla může mít různý účinek podle toho, <b>kde na těleso působí</b>. Dveře otevřete snadno tlakem u kliky, ale tlakem těsně u pantů je téměř neotočíte.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Jednotka síly a odhad velikosti</div>
+      <p>Sílu měříme <b>siloměrem</b>. V pružinovém siloměru se pružina prodlužuje tím víc, čím větší silou na ni působíme (deformační účinek).</p>
+      <p>Pro představu: Země přitahuje těleso o hmotnosti \(100\ \mathrm{g}\) silou přibližně \(1\ \mathrm{N}\), takže tabulka čokolády na dlani nám „dává“ asi jeden newton.</p>
+      <div class="theory-table-wrap">
+        <table class="theory-table">
+          <thead>
+            <tr><th>Těleso</th><th class="mono">Hmotnost</th><th class="mono">Síla, kterou ho přitahuje Země</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>tabulka čokolády</td><td class="mono">\(0{,}1\ \mathrm{kg}\)</td><td class="mono">asi \(1\ \mathrm{N}\)</td></tr>
+            <tr><td>balení cukru</td><td class="mono">\(1\ \mathrm{kg}\)</td><td class="mono">asi \(10\ \mathrm{N}\)</td></tr>
+            <tr><td>žák</td><td class="mono">\(60\ \mathrm{kg}\)</td><td class="mono">asi \(600\ \mathrm{N}\)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Síla je vektor</div>
+      <p>Síla je <b>vektorová veličina</b>. Znázorňujeme ji orientovanou úsečkou (šipkou). U každé síly proto určujeme:</p>
+      <ul>
+        <li><b>působiště</b> — bod, ve kterém síla na těleso působí (začátek šipky); u hmotného bodu je to přímo tento bod,</li>
+        <li><b>směr</b> — přímka, na které šipka leží (vektorová přímka), a orientace šipky,</li>
+        <li><b>velikost</b> — délka šipky v předem zvoleném měřítku,</li>
+        <li><b>dvojici těles</b> — které těleso působí na které.</li>
+      </ul>
+      <figure class="theory-fig">
+        <svg viewBox="0 0 300 190" style="max-width:340px" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Vektor síly: působiště P, vektorová přímka p, směr šipky a velikost daná délkou šipky v zvoleném měřítku."><defs><marker id="s1-f" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4.2" markerHeight="4.2" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--focus)"/></marker><marker id="s1-a" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4.2" markerHeight="4.2" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/></marker><marker id="s1-d" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4.2" markerHeight="4.2" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--danger)"/></marker><marker id="s1-i" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4.2" markerHeight="4.2" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink)"/></marker><marker id="s1-s" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4.2" markerHeight="4.2" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink-soft)"/></marker></defs><line x1="16.7" y1="175" x2="267.8" y2="30" stroke="var(--ink-soft)" stroke-width="1.2" stroke-dasharray="5 4"/><line x1="60" y1="150" x2="189.9" y2="75" stroke="var(--accent)" stroke-width="3" marker-end="url(#s1-a)"/><circle cx="60" cy="150" r="4.5" fill="var(--ink)"/><text x="70" y="172" text-anchor="start" font-family="Work Sans, sans-serif" font-size="13" font-weight="600" fill="var(--ink)">působiště <tspan font-style="italic">P</tspan></text><text x="193.9" y="95" text-anchor="start" font-family="Work Sans, sans-serif" font-size="16" fill="var(--accent)"><tspan font-style="italic" font-weight="700">F</tspan></text><text x="271.8" y="32" text-anchor="start" font-family="Work Sans, sans-serif" font-size="15" fill="var(--ink-soft)"><tspan font-style="italic" font-weight="700">p</tspan></text><line x1="200" y1="176" x2="250" y2="176" stroke="var(--ink)" stroke-width="2"/><line x1="200" y1="171" x2="200" y2="181" stroke="var(--ink)" stroke-width="2"/><line x1="250" y1="171" x2="250" y2="181" stroke="var(--ink)" stroke-width="2"/><text x="225" y="166" text-anchor="middle" font-family="Work Sans, sans-serif" font-size="13" font-weight="600" fill="var(--ink)">10&#160;N</text></svg>
+        <figcaption>Síla \(\boldsymbol{F}\) o velikosti \(30\ \mathrm{N}\): působiště \(P\), vektorová přímka \(p\) a šipka, jejíž délka je podle měřítka vpravo dole (úsečka odpovídá \(10\ \mathrm{N}\)) třikrát větší.</figcaption>
+      </figure>
+      <p>Chceme-li správně porovnat dvě síly v nákresu, musí být jejich šipky kresleny ve <b>stejném měřítku</b>.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Druhy sil podle původu</div>
+      <p>Sílu pojmenováváme podle toho, odkud pochází. Ke každé v tabulce si vždy řekněte, <b>které těleso působí na které</b>.</p>
+      <div class="theory-table-wrap">
+        <table class="theory-table">
+          <thead>
+            <tr><th>Síla</th><th>Kdo na koho</th><th>Příklad</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>tíhová (gravitační)</td><td>Země na těleso, směr dolů</td><td>padající hruška</td></tr>
+            <tr><td>tlaková síla podložky</td><td>podložka na těleso, kolmo k podložce</td><td>knížka ležící na stole</td></tr>
+            <tr><td>tahová síla vlákna, lana</td><td>lano na těleso, ve směru lana</td><td>kabina visící na laně lanovky</td></tr>
+            <tr><td>síla pružnosti</td><td>pružina (guma) na těleso</td><td>natažená gumička</td></tr>
+            <tr><td>třecí</td><td>podložka na těleso, proti pohybu</td><td>sáňky zpomalující na rovině</td></tr>
+            <tr><td>odporová</td><td>vzduch (voda) na těleso, proti pohybu</td><td>padák, plavec</td></tr>
+            <tr><td>vztlaková</td><td>kapalina (plyn) na těleso, nahoru</td><td>balon, ponořený korek</td></tr>
+            <tr><td>magnetická, elektrická</td><td>magnet nebo nabité těleso na těleso, na dálku</td><td>magnet přitahující sponku, hřeben přitahující papírky</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Výslednice sil</div>
+      <p>Působí-li na těleso více sil najednou, můžeme je nahradit jedinou silou, která má stejný účinek jako všechny dohromady. Nazývá se <b>výslednice sil</b> \(\boldsymbol{F}_\mathrm{v}\) a získáme ji <b>vektorovým součtem</b> (skládáním sil):</p>
+      <div class="formula-box">\[ \boldsymbol{F}_\mathrm{v} = \boldsymbol{F}_1 + \boldsymbol{F}_2 + \dots \]</div>
+      <h3>Dvě síly se společným působištěm</h3>
+      <ul>
+        <li><b>Stejný směr:</b> velikosti se sčítají a výslednice má směr obou sil. \(F_\mathrm{v} = F_1 + F_2\)</li>
+        <li><b>Opačný směr:</b> velikosti se odčítají a výslednice má směr větší síly. \(F_\mathrm{v} = |F_1 - F_2|\)</li>
+        <li><b>Různoběžné síly:</b> výslednice je úhlopříčka rovnoběžníku sestrojeného ze sil. Jsou-li k sobě <b>kolmé</b>, platí podle Pythagorovy věty \(F_\mathrm{v} = \sqrt{F_1^2 + F_2^2}\).</li>
+      </ul>
+      <figure class="theory-fig">
+        <svg viewBox="0 0 360 450" style="max-width:400px" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Skládání dvou sil: a) stejný směr, velikosti se sčítají; b) opačný směr, velikosti se odčítají; c) různoběžné síly, výslednice je úhlopříčka rovnoběžníku."><defs><marker id="s2-f" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4.2" markerHeight="4.2" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--focus)"/></marker><marker id="s2-a" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4.2" markerHeight="4.2" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/></marker><marker id="s2-d" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4.2" markerHeight="4.2" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--danger)"/></marker><marker id="s2-i" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4.2" markerHeight="4.2" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink)"/></marker><marker id="s2-s" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4.2" markerHeight="4.2" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink-soft)"/></marker></defs><line x1="10" y1="150" x2="350" y2="150" stroke="var(--line)" stroke-width="1.2"/><line x1="10" y1="300" x2="350" y2="300" stroke="var(--line)" stroke-width="1.2"/><text x="14" y="24" text-anchor="start" font-family="Work Sans, sans-serif" font-size="14" font-weight="700" fill="var(--ink)">a)&#160;stejný směr</text><line x1="40" y1="40" x2="40" y2="128" stroke="var(--ink-soft)" stroke-width="1" stroke-dasharray="3 3"/><line x1="40" y1="58" x2="120" y2="58" stroke="var(--focus)" stroke-width="2.6" marker-end="url(#s2-f)"/><text x="128" y="63" text-anchor="start" font-family="Work Sans, sans-serif" font-size="16" fill="var(--focus)"><tspan font-style="italic" font-weight="700">F</tspan><tspan font-size="12" dy="4" font-weight="700">1</tspan><tspan dy="-4">&#160;=&#160;40&#160;N</tspan></text><line x1="40" y1="84" x2="100" y2="84" stroke="var(--accent)" stroke-width="2.6" marker-end="url(#s2-a)"/><text x="108" y="89" text-anchor="start" font-family="Work Sans, sans-serif" font-size="16" fill="var(--accent)"><tspan font-style="italic" font-weight="700">F</tspan><tspan font-size="12" dy="4" font-weight="700">2</tspan><tspan dy="-4">&#160;=&#160;30&#160;N</tspan></text><line x1="40" y1="116" x2="180" y2="116" stroke="var(--danger)" stroke-width="3.2" marker-end="url(#s2-d)"/><text x="188" y="121" text-anchor="start" font-family="Work Sans, sans-serif" font-size="16" fill="var(--danger)"><tspan font-style="italic" font-weight="700">F</tspan><tspan font-size="12" dy="4" font-weight="700">v</tspan><tspan dy="-4">&#160;=&#160;70&#160;N</tspan></text><text x="14" y="174" text-anchor="start" font-family="Work Sans, sans-serif" font-size="14" font-weight="700" fill="var(--ink)">b)&#160;opačný směr</text><line x1="170" y1="190" x2="170" y2="278" stroke="var(--ink-soft)" stroke-width="1" stroke-dasharray="3 3"/><line x1="170" y1="208" x2="250" y2="208" stroke="var(--focus)" stroke-width="2.6" marker-end="url(#s2-f)"/><text x="258" y="213" text-anchor="start" font-family="Work Sans, sans-serif" font-size="16" fill="var(--focus)"><tspan font-style="italic" font-weight="700">F</tspan><tspan font-size="12" dy="4" font-weight="700">1</tspan><tspan dy="-4">&#160;=&#160;40&#160;N</tspan></text><line x1="170" y1="234" x2="110" y2="234" stroke="var(--accent)" stroke-width="2.6" marker-end="url(#s2-a)"/><text x="102" y="239" text-anchor="end" font-family="Work Sans, sans-serif" font-size="16" fill="var(--accent)"><tspan font-style="italic" font-weight="700">F</tspan><tspan font-size="12" dy="4" font-weight="700">2</tspan><tspan dy="-4">&#160;=&#160;30&#160;N</tspan></text><line x1="170" y1="266" x2="190" y2="266" stroke="var(--danger)" stroke-width="3.2" marker-end="url(#s2-d)"/><text x="198" y="271" text-anchor="start" font-family="Work Sans, sans-serif" font-size="16" fill="var(--danger)"><tspan font-style="italic" font-weight="700">F</tspan><tspan font-size="12" dy="4" font-weight="700">v</tspan><tspan dy="-4">&#160;=&#160;10&#160;N</tspan></text><text x="14" y="324" text-anchor="start" font-family="Work Sans, sans-serif" font-size="14" font-weight="700" fill="var(--ink)">c)&#160;různoběžné síly (úhel 60°)</text><line x1="120" y1="428" x2="150" y2="376" stroke="var(--accent)" stroke-width="1.4" stroke-dasharray="5 4"/><line x1="70" y1="376" x2="150" y2="376" stroke="var(--focus)" stroke-width="1.4" stroke-dasharray="5 4"/><line x1="40" y1="428" x2="120" y2="428" stroke="var(--focus)" stroke-width="2.6" marker-end="url(#s2-f)"/><text x="130" y="434" text-anchor="start" font-family="Work Sans, sans-serif" font-size="16" fill="var(--focus)"><tspan font-style="italic" font-weight="700">F</tspan><tspan font-size="12" dy="4" font-weight="700">1</tspan><tspan dy="-4">&#160;=&#160;40&#160;N</tspan></text><line x1="40" y1="428" x2="70" y2="376" stroke="var(--accent)" stroke-width="2.6" marker-end="url(#s2-a)"/><text x="40" y="360" text-anchor="start" font-family="Work Sans, sans-serif" font-size="16" fill="var(--accent)"><tspan font-style="italic" font-weight="700">F</tspan><tspan font-size="12" dy="4" font-weight="700">2</tspan><tspan dy="-4">&#160;=&#160;30&#160;N</tspan></text><line x1="40" y1="428" x2="150" y2="376" stroke="var(--danger)" stroke-width="3.2" marker-end="url(#s2-d)"/><text x="158" y="380" text-anchor="start" font-family="Work Sans, sans-serif" font-size="16" fill="var(--danger)"><tspan font-style="italic" font-weight="700">F</tspan><tspan font-size="12" dy="4" font-weight="700">v</tspan><tspan dy="-4">&#160;≈&#160;61&#160;N</tspan></text><circle cx="40" cy="428" r="4" fill="var(--ink)"/></svg>
+        <figcaption>Skládání dvou sil: a) \(40\ \mathrm{N} + 30\ \mathrm{N} = 70\ \mathrm{N}\), b) \(40\ \mathrm{N} - 30\ \mathrm{N} = 10\ \mathrm{N}\), c) úhlopříčka rovnoběžníku. Všechny šipky jsou ve stejném měřítku.</figcaption>
+      </figure>
+      <p>Je-li výslednice <b>nulová</b>, síly se navzájem ruší a těleso se chová stejně, jako by na ně nepůsobila žádná síla.</p>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M9 2.5 L16 15.5 H2 Z" stroke="var(--danger)" stroke-width="1.4" stroke-linejoin="round"/>
+          <line x1="9" y1="7" x2="9" y2="11.5" stroke="var(--danger)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="13.6" r="1" fill="var(--danger)"/>
+        </svg>
+        <p>Velikosti sil se sčítají jen u sil <b>stejného směru</b>. Obecně platí \(F_\mathrm{v} \neq F_1 + F_2\): například kolmé síly \(3\ \mathrm{N}\) a \(4\ \mathrm{N}\) mají výslednici jen \(5\ \mathrm{N}\).</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Jak kreslit síly působící na těleso</div>
+      <ol>
+        <li>Vyberte <b>jediné těleso</b>, které zkoumáte, a nakreslete ho (nebo jen bod).</li>
+        <li>Zjistěte, <b>která tělesa na ně působí</b>: nejdřív ta, která se ho dotýkají (podložka, lano, ruka, vzduch), a pak ta, která působí na dálku (vždy Země).</li>
+        <li>Každé z nich nakreslete <b>jednu šipku</b> z působiště a popište ji značkou i původcem (například \(\boldsymbol{F}_\mathrm{G}\) — Země).</li>
+        <li>Délky šipek volte <b>přibližně úměrně velikostem</b> sil. Síly, které se vyrovnávají, kreslete stejně dlouhé.</li>
+      </ol>
+      <figure class="theory-fig">
+        <svg viewBox="0 0 360 450" style="max-width:400px" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Síly působící na krabici: 1) leží na podlaze, tíhová síla a síla podložky jsou stejně velké; 2) tlačíme ji rukou, přibývá síla ruky a třecí síla; 3) po puštění už síla ruky nepůsobí, zůstává tíha, síla podložky a tření."><defs><marker id="s3-f" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4.2" markerHeight="4.2" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--focus)"/></marker><marker id="s3-a" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4.2" markerHeight="4.2" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/></marker><marker id="s3-d" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4.2" markerHeight="4.2" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--danger)"/></marker><marker id="s3-i" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4.2" markerHeight="4.2" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink)"/></marker><marker id="s3-s" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4.2" markerHeight="4.2" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink-soft)"/></marker></defs><line x1="10" y1="150" x2="350" y2="150" stroke="var(--line)" stroke-width="1.2"/><line x1="10" y1="300" x2="350" y2="300" stroke="var(--line)" stroke-width="1.2"/><text x="14" y="24" text-anchor="start" font-family="Work Sans, sans-serif" font-size="14" font-weight="700" fill="var(--ink)">1)&#160;krabice leží na podlaze</text><rect x="155" y="62" width="50" height="40" rx="3" fill="var(--surface-2)" stroke="var(--ink)" stroke-width="1.8"/><line x1="30" y1="102" x2="330" y2="102" stroke="var(--ink)" stroke-width="2.4"/><line x1="36" y1="102" x2="29" y2="109" stroke="var(--ink-soft)" stroke-width="1"/><line x1="50" y1="102" x2="43" y2="109" stroke="var(--ink-soft)" stroke-width="1"/><line x1="64" y1="102" x2="57" y2="109" stroke="var(--ink-soft)" stroke-width="1"/><line x1="78" y1="102" x2="71" y2="109" stroke="var(--ink-soft)" stroke-width="1"/><line x1="92" y1="102" x2="85" y2="109" stroke="var(--ink-soft)" stroke-width="1"/><line x1="106" y1="102" x2="99" y2="109" stroke="var(--ink-soft)" stroke-width="1"/><line x1="120" y1="102" x2="113" y2="109" stroke="var(--ink-soft)" stroke-width="1"/><line x1="134" y1="102" x2="127" y2="109" stroke="var(--ink-soft)" stroke-width="1"/><line x1="148" y1="102" x2="141" y2="109" stroke="var(--ink-soft)" stroke-width="1"/><line x1="162" y1="102" x2="155" y2="109" stroke="var(--ink-soft)" stroke-width="1"/><line x1="176" y1="102" x2="169" y2="109" stroke="var(--ink-soft)" stroke-width="1"/><line x1="190" y1="102" x2="183" y2="109" stroke="var(--ink-soft)" stroke-width="1"/><line x1="204" y1="102" x2="197" y2="109" stroke="var(--ink-soft)" stroke-width="1"/><line x1="218" y1="102" x2="211" y2="109" stroke="var(--ink-soft)" stroke-width="1"/><line x1="232" y1="102" x2="225" y2="109" stroke="var(--ink-soft)" stroke-width="1"/><line x1="246" y1="102" x2="239" y2="109" stroke="var(--ink-soft)" stroke-width="1"/><line x1="260" y1="102" x2="253" y2="109" stroke="var(--ink-soft)" stroke-width="1"/><line x1="274" y1="102" x2="267" y2="109" stroke="var(--ink-soft)" stroke-width="1"/><line x1="288" y1="102" x2="281" y2="109" stroke="var(--ink-soft)" stroke-width="1"/><line x1="302" y1="102" x2="295" y2="109" stroke="var(--ink-soft)" stroke-width="1"/><line x1="316" y1="102" x2="309" y2="109" stroke="var(--ink-soft)" stroke-width="1"/><line x1="180" y1="82" x2="180" y2="126" stroke="var(--ink)" stroke-width="2.6" marker-end="url(#s3-i)"/><text x="188" y="125" text-anchor="start" font-family="Work Sans, sans-serif" font-size="16" fill="var(--ink)"><tspan font-style="italic" font-weight="700">F</tspan><tspan font-size="12" dy="4" font-weight="700">G</tspan></text><line x1="180" y1="82" x2="180" y2="38" stroke="var(--focus)" stroke-width="2.6" marker-end="url(#s3-f)"/><text x="188" y="48" text-anchor="start" font-family="Work Sans, sans-serif" font-size="16" fill="var(--focus)"><tspan font-style="italic" font-weight="700">F</tspan><tspan font-size="12" dy="4" font-weight="700">N</tspan></text><text x="14" y="174" text-anchor="start" font-family="Work Sans, sans-serif" font-size="14" font-weight="700" fill="var(--ink)">2)&#160;tlačíme ji rukou</text><rect x="155" y="212" width="50" height="40" rx="3" fill="var(--surface-2)" stroke="var(--ink)" stroke-width="1.8"/><line x1="30" y1="252" x2="330" y2="252" stroke="var(--ink)" stroke-width="2.4"/><line x1="36" y1="252" x2="29" y2="259" stroke="var(--ink-soft)" stroke-width="1"/><line x1="50" y1="252" x2="43" y2="259" stroke="var(--ink-soft)" stroke-width="1"/><line x1="64" y1="252" x2="57" y2="259" stroke="var(--ink-soft)" stroke-width="1"/><line x1="78" y1="252" x2="71" y2="259" stroke="var(--ink-soft)" stroke-width="1"/><line x1="92" y1="252" x2="85" y2="259" stroke="var(--ink-soft)" stroke-width="1"/><line x1="106" y1="252" x2="99" y2="259" stroke="var(--ink-soft)" stroke-width="1"/><line x1="120" y1="252" x2="113" y2="259" stroke="var(--ink-soft)" stroke-width="1"/><line x1="134" y1="252" x2="127" y2="259" stroke="var(--ink-soft)" stroke-width="1"/><line x1="148" y1="252" x2="141" y2="259" stroke="var(--ink-soft)" stroke-width="1"/><line x1="162" y1="252" x2="155" y2="259" stroke="var(--ink-soft)" stroke-width="1"/><line x1="176" y1="252" x2="169" y2="259" stroke="var(--ink-soft)" stroke-width="1"/><line x1="190" y1="252" x2="183" y2="259" stroke="var(--ink-soft)" stroke-width="1"/><line x1="204" y1="252" x2="197" y2="259" stroke="var(--ink-soft)" stroke-width="1"/><line x1="218" y1="252" x2="211" y2="259" stroke="var(--ink-soft)" stroke-width="1"/><line x1="232" y1="252" x2="225" y2="259" stroke="var(--ink-soft)" stroke-width="1"/><line x1="246" y1="252" x2="239" y2="259" stroke="var(--ink-soft)" stroke-width="1"/><line x1="260" y1="252" x2="253" y2="259" stroke="var(--ink-soft)" stroke-width="1"/><line x1="274" y1="252" x2="267" y2="259" stroke="var(--ink-soft)" stroke-width="1"/><line x1="288" y1="252" x2="281" y2="259" stroke="var(--ink-soft)" stroke-width="1"/><line x1="302" y1="252" x2="295" y2="259" stroke="var(--ink-soft)" stroke-width="1"/><line x1="316" y1="252" x2="309" y2="259" stroke="var(--ink-soft)" stroke-width="1"/><line x1="180" y1="232" x2="180" y2="276" stroke="var(--ink)" stroke-width="2.6" marker-end="url(#s3-i)"/><text x="188" y="275" text-anchor="start" font-family="Work Sans, sans-serif" font-size="16" fill="var(--ink)"><tspan font-style="italic" font-weight="700">F</tspan><tspan font-size="12" dy="4" font-weight="700">G</tspan></text><line x1="180" y1="232" x2="180" y2="188" stroke="var(--focus)" stroke-width="2.6" marker-end="url(#s3-f)"/><text x="188" y="198" text-anchor="start" font-family="Work Sans, sans-serif" font-size="16" fill="var(--focus)"><tspan font-style="italic" font-weight="700">F</tspan><tspan font-size="12" dy="4" font-weight="700">N</tspan></text><line x1="180" y1="232" x2="260" y2="232" stroke="var(--accent)" stroke-width="2.6" marker-end="url(#s3-a)"/><text x="266" y="226" text-anchor="start" font-family="Work Sans, sans-serif" font-size="16" fill="var(--accent)"><tspan font-style="italic" font-weight="700">F</tspan><tspan font-size="12" dy="4" font-weight="700">r</tspan></text><line x1="180" y1="232" x2="140" y2="232" stroke="var(--danger)" stroke-width="2.6" marker-end="url(#s3-d)"/><text x="134" y="226" text-anchor="end" font-family="Work Sans, sans-serif" font-size="16" fill="var(--danger)"><tspan font-style="italic" font-weight="700">F</tspan><tspan font-size="12" dy="4" font-weight="700">t</tspan></text><text x="14" y="324" text-anchor="start" font-family="Work Sans, sans-serif" font-size="14" font-weight="700" fill="var(--ink)">3)&#160;po puštění klouže dál</text><rect x="155" y="362" width="50" height="40" rx="3" fill="var(--surface-2)" stroke="var(--ink)" stroke-width="1.8"/><line x1="30" y1="402" x2="330" y2="402" stroke="var(--ink)" stroke-width="2.4"/><line x1="36" y1="402" x2="29" y2="409" stroke="var(--ink-soft)" stroke-width="1"/><line x1="50" y1="402" x2="43" y2="409" stroke="var(--ink-soft)" stroke-width="1"/><line x1="64" y1="402" x2="57" y2="409" stroke="var(--ink-soft)" stroke-width="1"/><line x1="78" y1="402" x2="71" y2="409" stroke="var(--ink-soft)" stroke-width="1"/><line x1="92" y1="402" x2="85" y2="409" stroke="var(--ink-soft)" stroke-width="1"/><line x1="106" y1="402" x2="99" y2="409" stroke="var(--ink-soft)" stroke-width="1"/><line x1="120" y1="402" x2="113" y2="409" stroke="var(--ink-soft)" stroke-width="1"/><line x1="134" y1="402" x2="127" y2="409" stroke="var(--ink-soft)" stroke-width="1"/><line x1="148" y1="402" x2="141" y2="409" stroke="var(--ink-soft)" stroke-width="1"/><line x1="162" y1="402" x2="155" y2="409" stroke="var(--ink-soft)" stroke-width="1"/><line x1="176" y1="402" x2="169" y2="409" stroke="var(--ink-soft)" stroke-width="1"/><line x1="190" y1="402" x2="183" y2="409" stroke="var(--ink-soft)" stroke-width="1"/><line x1="204" y1="402" x2="197" y2="409" stroke="var(--ink-soft)" stroke-width="1"/><line x1="218" y1="402" x2="211" y2="409" stroke="var(--ink-soft)" stroke-width="1"/><line x1="232" y1="402" x2="225" y2="409" stroke="var(--ink-soft)" stroke-width="1"/><line x1="246" y1="402" x2="239" y2="409" stroke="var(--ink-soft)" stroke-width="1"/><line x1="260" y1="402" x2="253" y2="409" stroke="var(--ink-soft)" stroke-width="1"/><line x1="274" y1="402" x2="267" y2="409" stroke="var(--ink-soft)" stroke-width="1"/><line x1="288" y1="402" x2="281" y2="409" stroke="var(--ink-soft)" stroke-width="1"/><line x1="302" y1="402" x2="295" y2="409" stroke="var(--ink-soft)" stroke-width="1"/><line x1="316" y1="402" x2="309" y2="409" stroke="var(--ink-soft)" stroke-width="1"/><line x1="180" y1="382" x2="180" y2="426" stroke="var(--ink)" stroke-width="2.6" marker-end="url(#s3-i)"/><text x="188" y="425" text-anchor="start" font-family="Work Sans, sans-serif" font-size="16" fill="var(--ink)"><tspan font-style="italic" font-weight="700">F</tspan><tspan font-size="12" dy="4" font-weight="700">G</tspan></text><line x1="180" y1="382" x2="180" y2="338" stroke="var(--focus)" stroke-width="2.6" marker-end="url(#s3-f)"/><text x="188" y="348" text-anchor="start" font-family="Work Sans, sans-serif" font-size="16" fill="var(--focus)"><tspan font-style="italic" font-weight="700">F</tspan><tspan font-size="12" dy="4" font-weight="700">N</tspan></text><line x1="180" y1="382" x2="140" y2="382" stroke="var(--danger)" stroke-width="2.6" marker-end="url(#s3-d)"/><text x="134" y="376" text-anchor="end" font-family="Work Sans, sans-serif" font-size="16" fill="var(--danger)"><tspan font-style="italic" font-weight="700">F</tspan><tspan font-size="12" dy="4" font-weight="700">t</tspan></text><line x1="215" y1="342" x2="275" y2="342" stroke="var(--ink-soft)" stroke-width="2.2" stroke-dasharray="5 3" marker-end="url(#s3-s)"/><text x="281" y="347" text-anchor="start" font-family="Work Sans, sans-serif" font-size="16" fill="var(--ink-soft)"><tspan font-style="italic" font-weight="700">v</tspan></text></svg>
+        <figcaption>Síly působící na krabici: tíhová síla \(\boldsymbol{F}_\mathrm{G}\), tlaková síla podložky \(\boldsymbol{F}_\mathrm{N}\), síla ruky \(\boldsymbol{F}_\mathrm{r}\) a třecí síla \(\boldsymbol{F}_\mathrm{t}\). V situaci 1 se \(\boldsymbol{F}_\mathrm{G}\) a \(\boldsymbol{F}_\mathrm{N}\) ruší, v situaci 2 je \(\boldsymbol{F}_\mathrm{r}\) větší než \(\boldsymbol{F}_\mathrm{t}\), takže se krabice rozjíždí. Ve 3. situaci rychlost \(\boldsymbol{v}\) není síla.</figcaption>
+      </figure>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M9 2.5 L16 15.5 H2 Z" stroke="var(--danger)" stroke-width="1.4" stroke-linejoin="round"/>
+          <line x1="9" y1="7" x2="9" y2="11.5" stroke="var(--danger)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="13.6" r="1" fill="var(--danger)"/>
+        </svg>
+        <p>Do nákresu patří <b>jen síly působící na vybrané těleso</b>, ne síly, kterými působí ono na okolí (třeba tlak krabice na podlahu). Rychlost není síla a „sílu pohybu“ do obrázku nekreslíme: ve 3. situaci ruka už krabici netlačí, takže tam žádná síla od ruky není.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="cat-tag">Příklady</span>
+      <h2>Výslednice dvou sil</h2>
+      <p class="desc">Nejdřív dva krátké případy na jedné přímce, pak řešený příklad se silami kolmými.</p>
+      <div class="example-grid">
+        <div class="example-item">
+          <span class="example-tag">Stejný směr: rybáři vytahují loďku</span>
+          <div class="example-eq">\[F_\mathrm{v} = F_1 + F_2 = 240\ \mathrm{N} + 190\ \mathrm{N} = \mathbf{430\ \mathrm{N}}\]</div>
+          <div class="example-note">Dva rybáři táhnou lano loďky na břeh stejným směrem silami \(240\ \mathrm{N}\) a \(190\ \mathrm{N}\). Výslednice míří také k břehu.</div>
+        </div>
+        <div class="example-item">
+          <span class="example-tag">Opačný směr: tlačená bedna</span>
+          <div class="example-eq">\[F_\mathrm{v} = F_1 - F_\mathrm{t} = 150\ \mathrm{N} - 40\ \mathrm{N} = \mathbf{110\ \mathrm{N}}\]</div>
+          <div class="example-note">Bednu tlačíme silou \(150\ \mathrm{N}\), proti pohybu působí tření \(40\ \mathrm{N}\). Výslednice míří ve směru tlačení, protože tato síla je větší.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="cat-tag">Příklad z praxe</span>
+      <h2>Sáňky tažené dvěma lany</h2>
+      <p class="desc">Rozklikejte si postup krok po kroku — další krok se odemkne, jakmile otevřete ten předchozí.</p>
+      <div class="given-data">
+        <div class="given-line">Zadáno: dvě děti táhnou sáňky po ledě dvěma lany, která jsou na sebe kolmá. První táhne silou \(F_1 = 45\ \mathrm{N}\), druhé silou \(F_2 = 70\ \mathrm{N}\). Určete velikost a směr výslednice.</div>
+      </div>
+      <div class="stepper" data-reset="reset-sanky">
+        <div class="step" data-step="1">
+          <div class="step-connector"></div>
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">1</span>
+            <span class="step-title">Nakreslete síly a rovnoběžník</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <p>Zvolte měřítko, například \(10\ \mathrm{N}\) odpovídá \(1\ \mathrm{cm}\). Ze společného působiště nakreslete šipky dlouhé \(4{,}5\ \mathrm{cm}\) a \(7{,}0\ \mathrm{cm}\) kolmo na sebe a doplňte je na obdélník. Jeho úhlopříčka z působiště je výslednice.</p>
+          </div>
+        </div>
+        <div class="step" data-step="2">
+          <div class="step-connector"></div>
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">2</span>
+            <span class="step-title">Spočtěte velikost výslednice</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <p>Síly jsou kolmé, použijeme Pythagorovu větu:</p>
+            <div class="step-result"><div class="line-scroll">\(F_\mathrm{v} = \sqrt{F_1^2 + F_2^2}\)</div></div>
+            <div class="step-result"><div class="line-scroll">\(F_\mathrm{v} = \sqrt{(45\ \mathrm{N})^2 + (70\ \mathrm{N})^2} \doteq 83\ \mathrm{N}\)</div></div>
+          </div>
+        </div>
+        <div class="step" data-step="3">
+          <div class="step-connector"></div>
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">3</span>
+            <span class="step-title">Určete směr výslednice</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <p>Úhel \(\alpha\), který výslednice svírá se silou \(\boldsymbol{F}_1\), získáme z pravoúhlého trojúhelníku:</p>
+            <div class="step-result"><div class="line-scroll">\(\mathrm{tg}\,\alpha = \dfrac{F_2}{F_1} = \dfrac{70\ \mathrm{N}}{45\ \mathrm{N}} \doteq 1{,}56\)</div></div>
+            <div class="step-result"><div class="line-scroll">\(\alpha \doteq 57^\circ\)</div></div>
+          </div>
+        </div>
+        <div class="step" data-step="4">
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">4</span>
+            <span class="step-title">Zapište výsledek a zkontrolujte ho</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <div class="result-box"><div class="line-scroll">\(F_\mathrm{v} \doteq 83\ \mathrm{N}\), \(\alpha \doteq 57^\circ\)</div></div>
+            <p>Výslednice má velikost asi \(83\ \mathrm{N}\) a svírá se silou \(\boldsymbol{F}_1\) úhel přibližně \(57^\circ\).</p>
+            <p>Kontrola: výslednice je větší než každá z obou sil, ale menší než jejich součet (\(45\ \mathrm{N} + 70\ \mathrm{N} = 115\ \mathrm{N}\)) a míří blíž k větší síle \(\boldsymbol{F}_2\). Souhlasí to s nákresem z prvního kroku.</p>
+          </div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn ghost" id="reset-sanky">Zopakovat postup od začátku</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Shrnutí</div>
+      <p>• Dynamika zkoumá příčiny změn pohybu; příčinou je síla.</p>
+      <p>• Síla \(\boldsymbol{F}\) popisuje vzájemné působení dvou těles (stykem nebo polem), jednotkou je newton \(\mathrm{N}\).</p>
+      <p>• Účinky síly: deformační, posuvný a otáčivý.</p>
+      <p>• Síla je vektor: určíme působiště, směr, velikost a dvojici těles.</p>
+      <p>• Výslednice \(\boldsymbol{F}_\mathrm{v}\) je vektorový součet všech sil; při nulové výslednici se síly ruší.</p>
+      <p>• Do nákresu patří jen síly, které působí na zvolené těleso.</p>
+    </div>
+
+  </div>
+
+  <!-- ============ DALŠÍ ZÁLOŽKY (sekce s id "<data-tab>-section", atributem hidden) ============ -->
+
+  <footer>Fyzika — Kvinta/1. ročník</footer>
+</div>
+
+<script src="../spolecne/spolecne.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  // ---- záložky: tlačítko .toptab[data-tab="x"] ↔ sekce #x-section (Teorie = #theory-section) ----
+  var tabs = {}, sections = {};
+  Array.prototype.forEach.call(document.querySelectorAll('.toptab[data-tab]'), function(btn){
+    var name = btn.getAttribute('data-tab');
+    tabs[name] = btn;
+    sections[name] = document.getElementById(name === 'teorie' ? 'theory-section' : name + '-section');
+  });
+  function showTab(name){
+    for(var k in tabs){
+      tabs[k].classList.toggle('on', k === name);
+      if(sections[k]) sections[k].hidden = k !== name;
+    }
+    // skóre, série a úspěšnost v hlavičce jen u tréninku
+    var readout = document.getElementById('header-readout');
+    if(readout) readout.hidden = name !== 'trenink';
+  }
+  Object.keys(tabs).forEach(function(k){ tabs[k].addEventListener('click', function(){ showTab(k); }); });
+  var hash = location.hash.replace('#', '');
+  if(hash && tabs[hash]) showTab(hash);
+
+  // ---- příklady: postupně odemykané steppery ----
+  Array.prototype.forEach.call(document.querySelectorAll('.stepper'), function(wrap){
+    var steps = Array.prototype.slice.call(wrap.querySelectorAll('.step'));
+    var unlockedUpTo = 1;
+
+    function refreshLocks(){
+      steps.forEach(function(st){
+        var idx = parseInt(st.getAttribute('data-step'), 10);
+        var locked = idx > unlockedUpTo;
+        st.classList.toggle('locked', locked);
+        st.classList.toggle('unlocked', !locked && !st.classList.contains('done'));
+        st.querySelector('.step-head').setAttribute('aria-disabled', locked ? 'true' : 'false');
+      });
+    }
+
+    steps.forEach(function(st){
+      var idx = parseInt(st.getAttribute('data-step'), 10);
+      var head = st.querySelector('.step-head');
+      var body = st.querySelector('.step-body');
+      head.addEventListener('click', function(){
+        if(idx > unlockedUpTo) return;
+        var wasOpen = st.classList.contains('open');
+        st.classList.toggle('open', !wasOpen);
+        body.hidden = wasOpen;
+        head.setAttribute('aria-expanded', (!wasOpen).toString());
+        if(!wasOpen){
+          st.classList.add('done');
+          if(idx === unlockedUpTo && unlockedUpTo < steps.length){ unlockedUpTo++; }
+          refreshLocks();
+        }
+      });
+    });
+
+    var resetBtn = document.getElementById(wrap.getAttribute('data-reset'));
+    if(resetBtn){
+      resetBtn.addEventListener('click', function(){
+        unlockedUpTo = 1;
+        steps.forEach(function(st){
+          st.classList.remove('open', 'done');
+          st.querySelector('.step-body').hidden = true;
+          st.querySelector('.step-head').setAttribute('aria-expanded', 'false');
+        });
+        refreshLocks();
+      });
+    }
+
+    refreshLocks();
+  });
+
+  // ---- vzorce (KaTeX) ----
+  if(window.renderMathInElement){
+    try{
+      renderMathInElement(document.getElementById('theory-section'), {
+        delimiters: [{left:'\\(', right:'\\)', display:false}, {left:'\\[', right:'\\]', display:true}]
+      });
+    }catch(e){}
+  }
+
+  // ---- sbalovací panely v teorii ----
+  try{ makePanelsCollapsible(document.getElementById('theory-section')); }catch(e){}
+})();
+</script>
+</body>
+</html>
