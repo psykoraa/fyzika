@@ -102,7 +102,11 @@
       { d: 'serie', key: 'fyzika:pohyb-po-kruznici:stats', field: 'bestStreak' }
     ],
     'sila.html': [
-      { d: 'serie', key: 'fyzika:sila:stats', field: 'bestStreak' }
+      { d: 'serie', key: 'fyzika:sila:stats', field: 'bestStreak' },
+      { d: 'hra-60s', key: 'fyzika:sila:game-bests', field: '60' },
+      { d: 'hra-120s', key: 'fyzika:sila:game-bests', field: '120' },
+      { d: 'hra-180s', key: 'fyzika:sila:game-bests', field: '180' },
+      { d: 'hra-300s', key: 'fyzika:sila:game-bests', field: '300' }
     ],
     'skladani-vektoru.html': [
       { d: 'serie', key: 'fyzika:skladani-vektoru:stats', field: 'bestStreak' },

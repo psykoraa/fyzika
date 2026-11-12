@@ -227,8 +227,8 @@ a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
   padding:4px 12px;
   border-radius:10px 0 10px 0;
 }
-#hra-section .card{ text-align:center; }
-#hra-diagram svg{ display:block; width:100%; max-width:520px; height:auto; margin:0 auto; }
+#trenink-section .card, #hra-section .card{ text-align:center; }
+#tr-diagram svg, #game-diagram svg{ display:block; width:100%; max-width:520px; height:auto; margin:0 auto; }
 .choices-title{
   margin-top:22px;
   padding-top:14px;
@@ -262,9 +262,9 @@ a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
 .choice-btn.selected{ border-color:var(--ink); box-shadow:0 0 0 2px var(--ink); background:var(--surface-2); }
 .choice-btn.correct{ border-color:var(--success); box-shadow:0 0 0 2px var(--success); background:var(--success-bg); }
 .choice-btn.wrong{ border-color:var(--danger); box-shadow:0 0 0 2px var(--danger); background:var(--danger-bg); }
-#hra-options .choice-btn{
+#tr-options .choice-btn, #game-options .choice-btn{
   display:grid;
-  grid-template-columns:48px 1fr;
+  grid-template-columns:56px 1fr;
   column-gap:10px;
   row-gap:2px;
   align-items:center;
@@ -273,11 +273,11 @@ a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
   font-family:inherit;
   color:var(--ink);
 }
-#hra-options .choice-btn svg{ grid-row:1 / span 2; width:48px; height:48px; }
-#hra-options .choice-btn b{ font-size:0.88rem; line-height:1.3; }
-#hra-options .choice-btn span{ font-size:0.78rem; color:var(--ink-soft); }
-#hra-steps p{ margin:0 0 6px; font-size:0.86rem; line-height:1.5; }
-#hra-steps p:last-child{ margin-bottom:0; }
+#tr-options .choice-btn svg, #game-options .choice-btn svg{ grid-row:1 / span 2; width:56px; height:56px; }
+#tr-options .choice-btn b, #game-options .choice-btn b{ font-size:0.88rem; line-height:1.3; }
+#tr-options .choice-btn span, #game-options .choice-btn span{ font-size:0.78rem; color:var(--ink-soft); }
+#tr-steps p, #game-steps p{ margin:0 0 6px; font-size:0.86rem; line-height:1.5; }
+#tr-steps p:last-child, #game-steps p:last-child{ margin-bottom:0; }
 @media (max-width:520px){
   .choice-grid{ grid-template-columns:1fr; }
   .readout .cell{ min-width:64px; padding:6px 8px; }
@@ -317,7 +317,8 @@ a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
 
   <div class="top-tabs">
     <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
-    <button class="toptab" id="top-tab-hra" data-tab="hra">Hra</button>
+    <button class="toptab" id="top-tab-trenink" data-tab="trenink">Trénink</button>
+    <button class="toptab" id="top-tab-hra" data-tab="hra">Hra na čas</button>
   </div>
 
   <!-- ============ TEORIE ============ -->
@@ -564,43 +565,120 @@ a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
   </div>
 
 
-  <!-- ============ HRA ============ -->
-  <div id="hra-section" class="tab-section" hidden>
+  <!-- ============ TRÉNINK ============ -->
+  <div id="trenink-section" class="tab-section" hidden>
     <div class="panel">
       <div class="section-block">
         <div class="panel-title">Úroveň</div>
-        <div class="row" id="hra-level-row"></div>
+        <div class="row" id="tr-level-row"></div>
         <details class="navod">
           <summary>Návod</summary>
           <p>Přečtěte si popis situace a prohlédněte si silový diagram. Šipky v něm jsou síly, které už jsou nakreslené (plná čára). Přerušovaná šipka s písmenem <i>v</i> ukazuje jen směr pohybu a není to síla.</p>
-          <p>Ve druhé části si vyberte z nabídky síly, které do diagramu patří. Vybrané síly se hned objeví v diagramu přerušovanou čarou. Šipka u každé nabídky ukazuje její směr v diagramu. Správně je jen tehdy, když vyberete <b>všechny</b> potřebné síly a žádnou navíc.</p>
+          <p>Ve druhé části si vyberte z nabídky síly, které do diagramu patří. Vybrané síly se hned objeví v diagramu přerušovanou čarou. Šipka u každé nabídky ukazuje její směr a přibližnou velikost v diagramu. Nabídky se mohou lišit nejen směrem a názvem, ale i velikostí (menší, stejná nebo větší než jiná síla). Správně je jen tehdy, když vyberete <b>všechny</b> potřebné síly a žádnou navíc.</p>
           <p>V úrovni 1 chybí právě jedna síla. V úrovni 2 chybí jedna nebo více sil. V úrovni 3 je diagram prázdný a síly si vybíráte sami. Za správnou odpověď dostanete 10, 15 nebo 25 bodů, podle úrovně. Série se přeruší chybou nebo tlačítkem Nevím. Délky šipek jsou jen přibližné.</p>
         </details>
       </div>
       <div class="settings-foot">
-        <span class="hint">Nejlepší série: <b id="hra-best">0</b></span>
-        <button class="linklike" id="hra-reset">vynulovat statistiku</button>
+        <span class="hint">Nejlepší série: <b id="tr-best">0</b></span>
+        <button class="linklike" id="tr-reset">vynulovat statistiku</button>
       </div>
     </div>
 
     <div class="card">
-      <span class="cat-tag" id="hra-cat">Úroveň 1</span>
-      <p class="task" id="hra-task"></p>
-      <p class="task-note" id="hra-note"></p>
+      <span class="cat-tag" id="tr-cat">Úroveň 1</span>
+      <p class="task" id="tr-task"></p>
+      <p class="task-note" id="tr-note"></p>
       <figure class="given-graph">
-        <span class="graph-badge" id="hra-badge">Neúplný diagram</span>
-        <div id="hra-diagram"></div>
+        <span class="graph-badge" id="tr-badge">Neúplný diagram</span>
+        <div id="tr-diagram"></div>
       </figure>
-      <div class="choices-title" id="hra-opt-title"></div>
-      <div class="choice-grid" id="hra-options"></div>
+      <div class="choices-title" id="tr-opt-title"></div>
+      <div class="choice-grid" id="tr-options"></div>
       <div class="hint" style="margin-top:12px;">Enter vyhodnotí odpověď a po vyhodnocení posune na další úlohu.</div>
       <div class="actions">
-        <button class="btn primary" id="hra-check">Zkontrolovat</button>
-        <button class="btn ghost" id="hra-skip">Nevím / Zobrazit řešení</button>
+        <button class="btn primary" id="tr-check">Zkontrolovat</button>
+        <button class="btn ghost" id="tr-skip">Nevím / Zobrazit řešení</button>
       </div>
-      <div class="feedback" id="hra-feedback" hidden>
-        <div class="headline" id="hra-headline"></div>
-        <div class="steps" id="hra-steps"></div>
+      <div class="feedback" id="tr-feedback" hidden>
+        <div class="headline" id="tr-headline"></div>
+        <div class="steps" id="tr-steps"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ HRA NA ČAS ============ -->
+  <div id="hra-section" class="tab-section" hidden>
+    <div id="game-info">
+      <div class="panel" id="game-rules-panel">
+        <div class="panel-title">Pravidla hry</div>
+        <p class="game-rules">
+          Uvidíte popis situace a silový diagram, ve kterém chybí některé síly, nebo je dokonce prázdný.
+          Z nabídky vyberte <strong>všechny správné síly</strong> a žádnou navíc. Nabídky se liší směrem, názvem
+          i <strong>velikostí</strong> šipky (menší, stejná nebo větší než jiná síla). Za správnou odpověď získáte
+          <strong>10 bodů</strong> v 1. úrovni, <strong>15 bodů</strong> ve 2. a <strong>25 bodů</strong> ve 3. úrovni.
+          Za špatnou odpověď (i za „Nevím“) se strhává <strong>5 bodů</strong>. Po vypršení zvoleného času se hra ukončí.
+        </p>
+        <details class="navod">
+          <summary>Návod</summary>
+          <p>Síly vybíráte kliknutím na nabídky, vybrané síly se hned objeví v diagramu přerušovanou čarou. Plné šipky jsou síly, které v diagramu už jsou. Přerušovaná šipka s písmenem <i>v</i> ukazuje jen směr pohybu a není to síla. Po vyhodnocení se zobrazí rozbor a tlačítko „Další úloha →“. Enter vyhodnotí odpověď a po vyhodnocení posune na další úlohu. Délky šipek jsou jen přibližné.</p>
+        </details>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Úroveň</div>
+        <div class="row" id="game-level-row"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Délka hry</div>
+        <div class="row" id="game-duration-row"></div>
+      </div>
+    </div>
+
+    <div id="game-start-panel">
+      <div class="panel">
+        <div class="settings-foot">
+          <span class="hint" id="game-best-hint">Nejlepší skóre: —</span>
+          <button class="btn primary" id="btn-game-start">Spustit hru</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="game-play" hidden>
+      <div class="game-header">
+        <div class="game-timer" id="game-timer">2:00</div>
+        <div class="readout">
+          <div class="cell"><span class="label">Body</span><span class="value" id="game-score">0</span></div>
+          <div class="cell"><span class="label">Nejlepší</span><span class="value" id="game-best-live">0</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <span class="cat-tag" id="game-cat">Úroveň 1</span>
+        <span class="points-badge" id="game-points-badge">+10 b</span>
+        <p class="task" id="game-task"></p>
+        <p class="task-note" id="game-note"></p>
+        <figure class="given-graph">
+          <span class="graph-badge" id="game-badge">Neúplný diagram</span>
+          <div id="game-diagram"></div>
+        </figure>
+        <div class="choices-title" id="game-opt-title"></div>
+        <div class="choice-grid" id="game-options"></div>
+        <div class="feedback" id="game-feedback" hidden>
+          <div class="headline" id="game-headline"></div>
+          <div class="steps" id="game-steps"></div>
+        </div>
+        <div class="actions">
+          <button class="btn primary" id="game-check">Zkontrolovat</button>
+          <button class="btn ghost" id="game-skip">Nevím / Zobrazit řešení</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="game-over" hidden>
+      <span class="cat-tag">Konec hry</span>
+      <div class="game-final-score" id="game-final-score">0 bodů</div>
+      <div class="hint" id="game-final-detail"></div>
+      <div class="actions">
+        <button class="btn primary" id="btn-game-restart">Hrát znovu</button>
       </div>
     </div>
   </div>
@@ -625,9 +703,9 @@ a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
       tabs[k].classList.toggle('on', k === name);
       if(sections[k]) sections[k].hidden = k !== name;
     }
-    // skóre, série a úspěšnost v hlavičce jen u hry
+    // skóre, série a úspěšnost v hlavičce jen u tréninku
     var readout = document.getElementById('header-readout');
-    if(readout) readout.hidden = name !== 'hra';
+    if(readout) readout.hidden = name !== 'trenink';
   }
   Object.keys(tabs).forEach(function(k){ tabs[k].addEventListener('click', function(){ showTab(k); }); });
   var hash = location.hash.replace('#', '');
@@ -713,25 +791,25 @@ a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
     { lv:1, text:'Učebnice fyziky leží v klidu na vodorovném stole.', scene:{type:'floor'}, body:'box',
       forces:[
         { k:'G', given:true, ok:true },
-        { k:'N', ok:true, why:'Stůl se knihy dotýká a podpírá ji. Tlačí na ni kolmo vzhůru stejně velkou silou, jakou Země táhne knihu dolů, proto kniha neklesá.' },
-        { k:'pohybu', a:0, why:WHY_POHYBU },
-        { k:'t', a:0, l:40, why:'Kniha neklouže a nikdo ji do strany netlačí, takže se nemá proti čemu třít. Třecí síla tu nevzniká.' },
-        { k:'o', a:180, l:30, why:'Kniha stojí. Odpor vzduchu vzniká při pohybu a navíc by nemířil vodorovně.' } ] },
+        { k:'N', ok:true, rel:'stejně velká jako F_G', why:'Stůl se knihy dotýká a podpírá ji. Tlačí na ni kolmo vzhůru stejně velkou silou, jakou Země táhne knihu dolů, proto kniha neklesá.' },
+        { k:'N', a:90, l:28, rel:'menší než F_G', why:'Podpora by nestačila vyrovnat tíhu a kniha by se propadala dolů. V klidu musí být výslednice nulová.' },
+        { k:'N', a:90, l:90, rel:'větší než F_G', why:'Stůl by tlačil víc, než Země táhne dolů, a kniha by se zrychlovala vzhůru. V klidu musí být výslednice nulová.' },
+        { k:'pohybu', a:0, why:WHY_POHYBU } ] },
     { lv:1, text:'Krabici tlačíte rukou po podlaze doprava a ona se rozjíždí (zrychluje).', scene:{type:'floor'}, body:'box',
       forces:[
         { k:'G', given:true, ok:true }, { k:'N', given:true, ok:true },
         { k:'r', given:true, ok:true, a:0, l:80 },
-        { k:'t', ok:true, a:180, l:40, why:'Podlaha se o krabici tře a brzdí ji, proto třecí síla míří proti pohybu (doleva). Je menší než síla ruky, takže se krabice rozjíždí.' },
-        { k:'t', a:0, l:40, why:'Tření míří vždy proti pohybu, ne po pohybu. Tady by mířilo opačně, než je správné.' },
-        { k:'setr', a:180, l:40, why:WHY_SETR },
-        { k:'T', a:0, l:50, why:'Krabici netahá žádné lano, tlačí ji jen ruka.' } ] },
+        { k:'t', ok:true, a:180, l:40, rel:'menší než F_r', why:'Podlaha se o krabici tře a brzdí ji, proto třecí síla míří proti pohybu (doleva). Je menší než síla ruky, takže se krabice rozjíždí.' },
+        { k:'t', a:180, l:80, rel:'stejně velká jako F_r', why:'Obě síly by se vyrovnaly, výslednice by byla nulová a krabice by se nerozjížděla. Ona se ale rozjíždí, takže tření musí být menší než síla ruky.' },
+        { k:'t', a:180, l:120, rel:'větší než F_r', why:'Tření by bylo větší než síla ruky a krabice by se vůbec nerozjela. Ona se rozjíždí, takže tření musí být menší.' },
+        { k:'t', a:0, l:40, rel:'menší než F_r', why:'Tření míří vždy proti pohybu, ne po pohybu. Tady by mířilo opačně, než je správné.' } ] },
     { lv:1, text:'Kámen padá z mostu. Je chvíli po upuštění a rychlost má zatím malou.', scene:{type:'air'}, body:'ball',
       forces:[
         { k:'G', given:true, ok:true },
-        { k:'o', ok:true, a:90, l:14, why:'Padající kámen naráží do vzduchu, a ten ho brzdí směrem vzhůru. Při malé rychlosti je odpor slabý, proto je šipka krátká.' },
-        { k:'r', a:270, l:40, why:'Kámen jste pustili, ruka už se ho nedotýká, a proto na něj nepůsobí.' },
-        { k:'N', a:90, l:56, why:'Kámen nikde neleží, nic ho nepodpírá, takže tlaková síla podložky nevzniká.' },
-        { k:'pohybu', a:270, l:50, why:WHY_POHYBU } ] },
+        { k:'o', ok:true, a:90, l:14, rel:'mnohem menší než F_G', why:'Padající kámen naráží do vzduchu, a ten ho brzdí směrem vzhůru. Při malé rychlosti je odpor slabý, proto je šipka krátká.' },
+        { k:'o', a:90, l:56, rel:'stejně velký jako F_G', why:'Při stejně velkém odporu by kámen padal stálou rychlostí. Kámen je ale chvíli po upuštění, odpor roste s rychlostí, a proto je zatím mnohem menší než tíha.' },
+        { k:'o', a:90, l:100, rel:'větší než F_G', why:'Kámen by se zastavoval a letěl vzhůru. Padá ale dolů a zrychluje.' },
+        { k:'r', a:270, l:40, why:'Kámen jste pustili, ruka už se ho nedotýká, a proto na něj nepůsobí.' } ] },
     { lv:1, text:'Auto jede po vodorovné silnici na neutrál (motor netáhne) a zpomaluje.', scene:{type:'floor'}, body:'car',
       forces:[
         { k:'G', given:true, ok:true }, { k:'N', given:true, ok:true },
@@ -751,32 +829,33 @@ a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
     { lv:1, text:'Lampa visí v klidu na lanu ze stropu.', scene:{type:'ceiling'}, body:'box',
       forces:[
         { k:'G', given:true, ok:true },
-        { k:'T', ok:true, why:'Lampu drží lano. Táhne ji kolmo vzhůru stejně velkou silou, jakou Země táhne lampu dolů, proto lampa visí v klidu.' },
-        { k:'N', a:90, why:'Lampa nestojí na podložce, nese ji lano. Tlaková síla podložky tu nevzniká.' },
-        { k:'pr', a:90, why:'Žádná pružina tu není, lampu drží lano.' },
-        { k:'odst', a:270, l:40, why:'Lampa se netočí, a hlavně žádné těleso takovou sílu nezpůsobuje.' } ] },
+        { k:'T', ok:true, rel:'stejně velká jako F_G', why:'Lampu drží lano. Táhne ji kolmo vzhůru stejně velkou silou, jakou Země táhne lampu dolů, proto lampa visí v klidu.' },
+        { k:'T', a:90, l:28, rel:'menší než F_G', why:'Lano by lampu neudrželo a lampa by padala dolů. Visí v klidu, takže tahová síla musí vyrovnat tíhu.' },
+        { k:'T', a:90, l:90, rel:'větší než F_G', why:'Lano by táhlo lampu vzhůru víc, než ji táhne Země dolů, a lampa by se zrychlovala nahoru. Visí v klidu.' },
+        { k:'N', a:90, why:'Lampa nestojí na podložce, nese ji lano. Tlaková síla podložky tu nevzniká.' } ] },
     { lv:1, text:'Korek plave v klidu na hladině vody.', scene:{type:'water'}, body:'box',
       forces:[
         { k:'G', given:true, ok:true },
-        { k:'vz', ok:true, why:'Voda tlačí na ponořenou část korku zdola nahoru. Je to vztlaková síla a je stejně velká jako tíha, proto korek plave a neklesá.' },
-        { k:'N', a:90, why:'Korek neleží na pevné podložce. Nahoru ho tlačí voda, a ta působí vztlakovou silou.' },
-        { k:'o', a:180, l:30, why:'Korek stojí, a odpor vody vzniká jen při pohybu.' },
-        { k:'T', a:90, why:'Korek nedrží žádné lano.' } ] },
+        { k:'vz', ok:true, rel:'stejně velká jako F_G', why:'Voda tlačí na ponořenou část korku zdola nahoru. Je to vztlaková síla a je stejně velká jako tíha, proto korek plave a neklesá.' },
+        { k:'vz', a:90, l:28, rel:'menší než F_G', why:'Voda by korek neunesla a korek by se potápěl. Plave, takže vztlaková síla musí vyrovnat tíhu.' },
+        { k:'vz', a:90, l:90, rel:'větší než F_G', why:'Korek by se zrychloval vzhůru a vyskočil by z vody. Plave v klidu, takže síly jsou stejně velké.' },
+        { k:'o', a:180, l:30, why:'Korek stojí. Odpor vody vzniká jen při pohybu.' } ] },
     { lv:1, text:'Magnetek drží na svislých dvířkách ledničky a nesklouzává.', scene:{type:'wall'}, body:'box',
       forces:[
         { k:'G', given:true, ok:true, l:50 },
         { k:'m', given:true, ok:true, a:180, l:40 },
         { k:'N', given:true, ok:true, a:0, l:40 },
-        { k:'t', ok:true, a:90, l:50, why:'Magnetek se dvířek dotýká a tíha ho táhne dolů. Dvířka mu brání v klouzání klidovou třecí silou směrem vzhůru. Je stejně velká jako tíha.' },
-        { k:'t', a:270, l:50, why:'Tření brání pohybu. Magnetek by klouzal dolů, takže tření musí mířit nahoru.' },
-        { k:'pr', a:90, l:50, why:'Žádná pružina tu není.' },
-        { k:'r', a:90, l:50, why:'Magnetek drží sám, nikdo ho rukou nepodpírá.' } ] },
+        { k:'t', ok:true, a:90, l:50, rel:'stejně velká jako F_G', why:'Magnetek se dvířek dotýká a tíha ho táhne dolů. Dvířka mu brání v klouzání klidovou třecí silou směrem vzhůru. Je stejně velká jako tíha.' },
+        { k:'t', a:90, l:25, rel:'menší než F_G', why:'Magnetek by klouzal dolů. Držet ho může jen tření stejně velké jako tíha.' },
+        { k:'t', a:90, l:80, rel:'větší než F_G', why:'Magnetek by se zrychloval vzhůru. Klidové tření se vždy přizpůsobí a jen právě vyrovná tíhu.' },
+        { k:'t', a:270, l:50, rel:'stejně velká jako F_G', why:'Tření brání pohybu. Magnetek by klouzal dolů, takže tření musí mířit nahoru.' } ] },
 
     // ===== Úroveň 2: chybí jedna nebo víc sil =====
     { lv:2, text:'Hokejista tlačí holí puk po vodorovném ledu doprava a puk se rozjíždí. Tření zanedbejte.', scene:{type:'floor'}, body:'box',
       forces:[
         { k:'G', given:true, ok:true },
-        { k:'N', ok:true, why:'Led puk podpírá, a tlačí ho kolmo vzhůru stejně silou, jako je tíha.' },
+        { k:'N', ok:true, rel:'stejně velká jako F_G', why:'Led puk podpírá a tlačí ho kolmo vzhůru stejně silou, jako je tíha.' },
+        { k:'N', a:90, l:28, rel:'menší než F_G', why:'Led by tíhu nevyrovnal a puk by se propadal dolů. Puk se pohybuje jen vodorovně.' },
         { k:'r', ok:true, a:0, l:70, name:'Síla hole', who:'hůl na puk', why:'Hůl se puku dotýká a tlačí ho doprava, proto se puk rozjíždí.' },
         { k:'t', a:180, l:30, why:'Podle zadání tření zanedbáváme.' },
         { k:'setr', a:180, l:40, why:WHY_SETR },
@@ -784,7 +863,8 @@ a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
     { lv:2, text:'Kámen dopadl na beton. V okamžiku dopadu prudce brzdí. Odpor vzduchu zanedbejte.', scene:{type:'floor'}, body:'ball',
       forces:[
         { k:'G', given:true, ok:true },
-        { k:'N', ok:true, l:130, why:'Beton kámen prudce zastavuje, proto na něj tlačí nahoru mnohem větší silou, než je tíha. Právě ta způsobuje silné brzdění.' },
+        { k:'N', ok:true, l:130, rel:'mnohem větší než F_G', why:'Beton kámen prudce zastavuje, proto na něj tlačí nahoru mnohem větší silou, než je tíha. Právě ta způsobuje silné brzdění.' },
+        { k:'N', a:90, l:56, rel:'stejně velká jako F_G', why:'Tak velká síla by kámen jen podepřela, kdyby ležel. On ale prudce brzdí, takže potřebuje mnohem větší sílu.' },
         { k:'o', a:90, l:30, why:'Odpor vzduchu podle zadání zanedbáváme.' },
         { k:'pohybu', a:270, l:60, why:WHY_POHYBU },
         { k:'t', a:0, l:30, why:'Kámen nic nebrzdí ve vodorovném směru a nic ho tam ani netlačí, tření tu nevzniká.' },
@@ -792,7 +872,8 @@ a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
     { lv:2, text:'Auto jede po vodorovné silnici na neutrál a zpomaluje.', scene:{type:'floor'}, body:'car',
       forces:[
         { k:'G', given:true, ok:true },
-        { k:'N', ok:true, why:'Vozovka auto podpírá, takže tlačí na něj kolmo vzhůru. Je stejně velká jako tíha.' },
+        { k:'N', ok:true, rel:'stejně velká jako F_G', why:'Vozovka auto podpírá, takže tlačí na něj kolmo vzhůru. Je stejně velká jako tíha.' },
+        { k:'N', a:90, l:28, rel:'menší než F_G', why:'Vozovka by tíhu nevyrovnala a auto by se zabořovalo do vozovky. Svisle se auto nepohybuje.' },
         { k:'t', ok:true, a:180, l:30, p:[0,22], name:'Valivý odpor (tření) vozovky', why:'Pneumatiky se po vozovce valí a ta je brzdí. Tato síla míří proti pohybu.' },
         { k:'o', ok:true, a:180, l:30, p:[0,-12], why:'Auto naráží do vzduchu, který ho brzdí proti pohybu.' },
         { k:'h', a:0, l:60, why:'Je zařazen neutrál, motor kola netáhne, hnací síla tedy nepůsobí.' },
@@ -801,10 +882,11 @@ a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
     { lv:2, text:'Lyžař sjíždí po svahu se sklonem 22° a zrychluje.', scene:{type:'slope', alpha:22}, body:'box',
       forces:[
         { k:'G', given:true, ok:true },
-        { k:'N', ok:true, a:112, l:52, why:'Svah lyžaře podpírá, a tlačí na něj kolmo ke svahu, ne svisle nahoru.' },
+        { k:'N', ok:true, a:112, l:52, rel:'menší než F_G', why:'Svah lyžaře podpírá, a tlačí na něj kolmo ke svahu, ne svisle nahoru. Je o něco menší než tíha, protože část tíhy míří podél svahu.' },
+        { k:'N', a:112, l:56, rel:'stejně velká jako F_G', why:'Kolmo ke svahu je tlaková síla menší než tíha, protože část tíhy míří podél svahu. Stejně velká by byla jen na vodorovné rovině.' },
         { k:'t', ok:true, a:22, l:11, p:[-4,14], why:'Sníh lyžaře brzdí. Třecí síla míří proti pohybu, tedy podél svahu nahoru.' },
         { k:'o', ok:true, a:22, l:6, p:[-4,-14], why:'Lyžař naráží do vzduchu, který ho brzdí proti pohybu, podél svahu nahoru.' },
-        { k:'N', a:90, l:56, name:'Tlaková síla podložky (svisle)', why:'Svah tlačí kolmo ke svahu, ne svisle nahoru.' },
+        { k:'N', a:90, l:56, rel:'stejně velká jako F_G', name:'Tlaková síla podložky (svisle)', why:'Svah tlačí kolmo ke svahu, ne svisle nahoru.' },
         { k:'comp', a:202, l:21, why:'Složka tíhy je jen část síly F_G. Kdybyste ji nakreslili spolu s F_G, započítali byste tíhu dvakrát.' },
         { k:'pohybu', a:202, l:30, why:WHY_POHYBU } ] },
     { lv:2, text:'Fotbalový míč letí šikmo vzhůru po kopnutí. Odpor vzduchu zanedbejte.', scene:{type:'air'}, body:'ball', vel:{ a:50, l:50 },
@@ -817,7 +899,8 @@ a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
     { lv:2, text:'Bedna klouže po podlaze doprava, nikdo ji netlačí a ona zpomaluje.', scene:{type:'floor'}, body:'box', vel:{ a:0, l:50 },
       forces:[
         { k:'G', given:true, ok:true },
-        { k:'N', ok:true, why:'Podlaha bednu podpírá, a tlačí na ni kolmo vzhůru. Je stejně velká jako tíha.' },
+        { k:'N', ok:true, rel:'stejně velká jako F_G', why:'Podlaha bednu podpírá, a tlačí na ni kolmo vzhůru. Je stejně velká jako tíha.' },
+        { k:'N', a:90, l:28, rel:'menší než F_G', why:'Podlaha by tíhu nevyrovnala a bedna by se propadala. Svisle se bedna nepohybuje.' },
         { k:'t', ok:true, a:180, l:40, why:'Podlaha bednu brzdí. Třecí síla míří proti pohybu, a proto bedna zpomaluje.' },
         { k:'t', a:0, l:40, why:'Tření míří proti pohybu, ne po pohybu.' },
         { k:'h', a:0, l:60, name:'Hnací síla', who:'motor na těleso', why:'Bedna nemá motor, a nikdo ji netlačí.' },
@@ -826,7 +909,8 @@ a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
       forces:[
         { k:'G', given:true, ok:true },
         { k:'T', ok:true, a:30, l:60, why:'Lano táhne sáně šikmo vzhůru podél lana. Vodorovná část síly táhne sáně vpřed, svislá část je částečně nadlehčuje.' },
-        { k:'N', ok:true, l:26, why:'Sníh sáně podpírá, ale lano je zvedá, a proto je tlaková síla podložky menší než tíha. Svislé síly se vyrovnávají.' },
+        { k:'N', ok:true, l:26, rel:'menší než F_G', why:'Sníh sáně podpírá, ale lano je zvedá, a proto je tlaková síla podložky menší než tíha. Svislé síly se vyrovnávají.' },
+        { k:'N', a:90, l:56, rel:'stejně velká jako F_G', why:'Lano sáně nadlehčuje, proto na ně sníh tlačí méně, než je tíha.' },
         { k:'t', ok:true, a:180, l:52, why:'Sníh sáně brzdí, třecí síla míří proti pohybu. Sáně jedou stálou rychlostí, proto je stejně velká jako vodorovná část tahové síly.' },
         { k:'r', a:0, l:60, why:'Ruka táhne za lano, ne za sáně. Na sáně působí lano, ne ruka.' },
         { k:'pohybu', a:0, l:50, why:WHY_POHYBU },
@@ -834,7 +918,9 @@ a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
     { lv:2, text:'Žák stojí ve výtahu, který se právě rozjíždí směrem nahoru.', scene:{type:'floor'}, body:'box',
       forces:[
         { k:'G', given:true, ok:true },
-        { k:'N', ok:true, l:70, why:'Podlaha kabiny žáka podpírá a při rozjezdu tlačí silněji, než je tíha. Právě rozdíl sil žáka urychluje směrem vzhůru.' },
+        { k:'N', ok:true, l:70, rel:'větší než F_G', why:'Podlaha kabiny žáka podpírá a při rozjezdu tlačí silněji, než je tíha. Právě rozdíl sil žáka urychluje směrem vzhůru.' },
+        { k:'N', a:90, l:56, rel:'stejně velká jako F_G', why:'Tak velká by byla při klidu nebo stálé rychlosti. Při rozjezdu nahoru žák zrychluje vzhůru, takže podlaha musí tlačit víc.' },
+        { k:'N', a:90, l:30, rel:'menší než F_G', why:'Žák by zrychloval dolů, tedy by kabina klesala. Kabina se rozjíždí nahoru.' },
         { k:'T', a:90, l:70, why:'Lano táhne kabinu výtahu, ne žáka. Na žáka přímo působí podlaha kabiny.' },
         { k:'setr', a:270, l:30, why:WHY_SETR },
         { k:'pohybu', a:90, l:50, why:WHY_POHYBU },
@@ -846,16 +932,18 @@ a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
         { k:'G', ok:true, why:'Zemi táhne bednu dolů.' },
         { k:'N', ok:true, why:'Podlaha bednu podpírá a tlačí ji nahoru stejně silou, jako je tíha.' },
         { k:'r', ok:true, a:0, l:50, why:'Ruka se bedny dotýká a tlačí ji doprava.' },
-        { k:'t', ok:true, a:180, l:50, name:'Klidová třecí síla', why:'Bedna se nehýbe, protože podlaha působí proti tlaku ruky stejně velkou klidovou třecí silou. Obě síly se vyrovnají.' },
-        { k:'t', a:0, l:50, name:'Třecí síla (opačný směr)', why:'Tření brání pohybu, a proto míří proti síle ruky.' },
+        { k:'t', ok:true, a:180, l:50, rel:'stejně velká jako F_r', name:'Klidová třecí síla', why:'Bedna se nehýbe, protože podlaha působí proti tlaku ruky stejně velkou klidovou třecí silou. Obě síly se vyrovnají.' },
+        { k:'t', a:180, l:25, rel:'menší než F_r', name:'Klidová třecí síla', why:'Výslednice by nebyla nulová a bedna by se rozjela doprava. Ona stojí, takže tření musí tlak ruky přesně vyrovnat.' },
+        { k:'t', a:0, l:50, rel:'stejně velká jako F_r', name:'Třecí síla (opačný směr)', why:'Tření brání pohybu, a proto míří proti síle ruky.' },
         { k:'N', a:270, l:56, name:'Tlaková síla bedny na podlahu', who:'bedna na podlahu', why:'Tuto sílu působí bedna na podlahu, ne podlaha na bednu. Do diagramu bedny patří jen síly, které působí na bednu.' },
         { k:'pohybu', a:0, l:50, why:WHY_POHYBU },
         { k:'setr', a:180, l:40, why:'Bedna stojí. Setrvačnost není síla.' } ] },
     { lv:3, text:'Kámen padá z útesu. Je chvíli po upuštění a rychlost má zatím malou.', scene:{type:'air'}, body:'ball',
       forces:[
         { k:'G', ok:true, why:'Zemi táhne kámen dolů.' },
-        { k:'o', ok:true, a:90, l:14, why:'Kámen naráží do vzduchu, který ho brzdí vzhůru. Při malé rychlosti je odpor slabý.' },
-        { k:'o', a:270, l:14, name:'Odpor vzduchu (dolů)', why:'Odpor vzduchu brání pohybu, takže míří proti pohybu, tedy nahoru.' },
+        { k:'o', ok:true, a:90, l:14, rel:'mnohem menší než F_G', why:'Kámen naráží do vzduchu, který ho brzdí vzhůru. Při malé rychlosti je odpor slabý.' },
+        { k:'o', a:90, l:56, rel:'stejně velký jako F_G', why:'Kámen by padal stálou rychlostí. Je ale chvíli po upuštění, odpor roste s rychlostí, a proto je zatím mnohem menší než tíha.' },
+        { k:'o', a:270, l:14, rel:'mnohem menší než F_G', name:'Odpor vzduchu (dolů)', why:'Odpor vzduchu brání pohybu, takže míří proti pohybu, tedy nahoru.' },
         { k:'r', a:270, l:40, why:'Kámen jste pustili, ruka už na něj nepůsobí.' },
         { k:'N', a:90, l:56, why:'Kámen nikde neleží, nic ho nepodpírá.' },
         { k:'pohybu', a:270, l:50, why:WHY_POHYBU },
@@ -864,10 +952,11 @@ a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
       forces:[
         { k:'G', ok:true, why:'Země táhne auto dolů.' },
         { k:'N', ok:true, why:'Vozovka auto podpírá a tlačí je nahoru stejně silou, jako je tíha.' },
-        { k:'h', ok:true, a:0, l:60, why:'Motor přes kola žene auto vpřed. Auto jede stálou rychlostí, proto je hnací síla stejně velká jako obě odporové síly dohromady.' },
+        { k:'h', ok:true, a:0, l:60, rel:'stejně velká jako obě odporové síly dohromady', why:'Motor přes kola žene auto vpřed. Auto jede stálou rychlostí, proto je hnací síla stejně velká jako obě odporové síly dohromady.' },
+        { k:'h', a:0, l:30, rel:'menší než obě odporové síly dohromady', why:'Auto by zpomalovalo. Jede ale stálou rychlostí, takže hnací síla musí odpor vyrovnat.' },
         { k:'t', ok:true, a:180, l:22, p:[0,22], name:'Valivý odpor (tření) vozovky', why:'Pneumatiky se po vozovce valí a ta je brzdí proti pohybu.' },
         { k:'o', ok:true, a:180, l:38, p:[0,-12], why:'Auto naráží do vzduchu, který ho brzdí proti pohybu.' },
-        { k:'h', a:180, l:60, name:'Hnací síla (dozadu)', why:'Hnací síla by auto brzdila. Ve skutečnosti míří dopředu.' },
+        { k:'h', a:180, l:60, rel:'stejně velká jako obě odporové síly dohromady', name:'Hnací síla (dozadu)', why:'Hnací síla by auto brzdila. Ve skutečnosti míří dopředu.' },
         { k:'pohybu', a:0, l:50, why:WHY_POHYBU },
         { k:'setr', a:180, l:40, why:WHY_SETR } ] },
     { lv:3, text:'Auto jede po vodorovné silnici na neutrál a zpomaluje.', scene:{type:'floor'}, body:'car',
@@ -900,8 +989,10 @@ a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
     { lv:3, text:'Motorový člun pluje po klidném jezeře stálou rychlostí doprava a vrtule běží.', scene:{type:'water'}, body:'boat',
       forces:[
         { k:'G', ok:true, why:'Země táhne člun dolů.' },
-        { k:'vz', ok:true, why:'Voda tlačí na ponořenou část člunu nahoru. Člun neklesá, proto je vztlaková síla stejně velká jako tíha.' },
-        { k:'h', ok:true, a:0, l:50, name:'Tah vrtule', who:'voda (přes vrtuli) na člun', why:'Vrtule odhazuje vodu dozadu, a voda tlačí člun vpřed.' },
+        { k:'vz', ok:true, rel:'stejně velká jako F_G', why:'Voda tlačí na ponořenou část člunu nahoru. Člun neklesá, proto je vztlaková síla stejně velká jako tíha.' },
+        { k:'vz', a:90, l:28, rel:'menší než F_G', why:'Voda by člun neunesla a člun by se potápěl. Pluje, takže vztlaková síla musí vyrovnat tíhu.' },
+        { k:'h', ok:true, a:0, l:50, rel:'stejný jako odpor vody', name:'Tah vrtule', who:'voda (přes vrtuli) na člun', why:'Vrtule odhazuje vodu dozadu, a voda tlačí člun vpřed. Člun jede stálou rychlostí, proto je tah stejně velký jako odpor vody.' },
+        { k:'h', a:0, l:25, rel:'menší než odpor vody', name:'Tah vrtule', who:'voda (přes vrtuli) na člun', why:'Člun by zpomaloval. Jede ale stálou rychlostí, takže tah musí odpor vody vyrovnat.' },
         { k:'o', ok:true, a:180, l:50, name:'Odpor vody', who:'voda na člun', why:'Voda brání pohybu člunu. Člun jede stálou rychlostí, proto je odpor vody stejně velký jako tah vrtule.' },
         { k:'N', a:90, l:56, why:'Člun nestojí na pevné podložce. Nahoru ho tlačí voda, a ta působí vztlakovou silou.' },
         { k:'pohybu', a:0, l:50, why:WHY_POHYBU },
@@ -927,47 +1018,55 @@ a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
   ];
   // ---- DATA END ----
 
-  // ---- hra: silový diagram ----
+  // ---- hra: silový diagram (trénink a hra na čas) ----
   var HRA_KEY = 'fyzika:sila:stats';
+  var GAME_KEY = 'fyzika:sila:game-bests';
+  var WRONG_PENALTY = 5;
   var HRA_LEVELS = [
     { lv:1, name:'1 — doplňte jednu sílu',          points:10, note:'Vyberte jednu sílu, která v diagramu chybí.' },
     { lv:2, name:'2 — doplňte chybějící síly',      points:15, note:'V diagramu chybí jedna nebo více sil. Vyberte všechny.' },
     { lv:3, name:'3 — sestavte celý diagram',       points:25, note:'Diagram je prázdný. Vyberte všechny síly, které na těleso působí.' }
   ];
+  var GAME_DURATIONS = [
+    { key:60, name:'1 min' },
+    { key:120, name:'2 min' },
+    { key:180, name:'3 min' },
+    { key:300, name:'5 min' }
+  ];
   var VB_W = 440, VB_H = 260, CX = 220;
-  var hra = { lv:1, scn:null, opts:[], sel:{}, locked:false, touched:false, last:-1,
-              score:0, streak:0, bestStreak:0, answered:0, correct:0 };
-
-  function hraLoad(){
-    try{ var raw = localStorage.getItem(HRA_KEY); if(raw){ hra.bestStreak = JSON.parse(raw).bestStreak || 0; } }catch(e){}
-  }
-  function hraSave(){
-    try{ localStorage.setItem(HRA_KEY, JSON.stringify({bestStreak: hra.bestStreak})); }catch(e){}
-  }
 
   function colorOf(c){
     return { ink:'var(--ink)', focus:'var(--focus)', accent:'var(--accent)', danger:'var(--danger)', soft:'var(--ink-soft)' }[c] || 'var(--ink)';
   }
   function rad(d){ return d*Math.PI/180; }
   function r1(x){ return Math.round(x*10)/10; }
+  function scoreText(n){ return n < 0 ? '−' + Math.abs(n) : String(n); }
+  function pointWord(n){
+    var abs = Math.abs(n);
+    if(abs === 1) return 'bod';
+    if(abs >= 2 && abs <= 4) return 'body';
+    return 'bodů';
+  }
 
   // Údaje síly = výchozí hodnoty z knihovny přepsané údaji úlohy.
   function resolve(f){
     var d = LIB[f.k];
     return {
-      k:f.k, sym:f.sym || d.sym, name:f.name || d.name, who:f.who || d.who,
+      k:f.k, sym:f.sym || d.sym, name:f.name || d.name, who:f.who || d.who, rel:f.rel || '',
       a:(f.a !== undefined ? f.a : d.a), l:(f.l !== undefined ? f.l : d.l), p:f.p || [0,0],
       col:d.col, given:!!f.given, ok:!!f.ok, why:f.why || ''
     };
   }
 
   function symHtml(sym){ return '<i>F</i><sub>' + sym[1] + '</sub>'; }
+  function relHtml(rel){ return rel.replace(/F_([A-Za-z]+)/g, '<i>F</i><sub>$1</sub>'); }
+  function optTitle(f){ return symHtml(f.sym) + ' — ' + f.name + (f.rel ? ', ' + relHtml(f.rel) : ''); }
   function symSvg(sym, size, color, x, y, anchor){
     return '<text x="' + r1(x) + '" y="' + r1(y) + '" text-anchor="' + anchor + '" font-family="Work Sans, sans-serif" font-size="' + size +
       '" font-weight="700" fill="' + color + '" stroke="#fbeadd" stroke-width="4" stroke-linejoin="round" paint-order="stroke"><tspan font-style="italic">' + sym[0] + '</tspan><tspan font-size="' + (size-5) + '" dy="4">' + sym[1] + '</tspan></text>';
   }
 
-  // Šipka od bodu (sx, sy) ve směru a (stupně), délka l (px). Vrací řetězec SVG.
+  // Šipka od bodu (sx, sy) ve směru a (stupně), délka l (px).
   function arrowSvg(sx, sy, a, l, color, dashed, width){
     var ux = Math.cos(rad(a)), uy = -Math.sin(rad(a));
     var ex = sx + l*ux, ey = sy + l*uy;
@@ -987,7 +1086,7 @@ a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
     return { x:x, y:y, anchor:anchor };
   }
 
-  // Scéna a těleso. Vrací střed tělesa.
+  // Scéna a těleso. Vrací SVG a střed tělesa.
   function sceneSvg(scn){
     var t = scn.scene.type, s = '', c = { x:CX, y:170 };
     var hatchY = function(y, x0, x1){
@@ -1025,12 +1124,11 @@ a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
     }else{ // air
       c = { x:CX, y:120 };
     }
-    // těleso
     var b = scn.body, x = c.x, y = c.y;
     if(b === 'box'){
       var rot = (t === 'slope') ? ' transform="rotate(' + (-scn.scene.alpha) + ' ' + r1(x) + ' ' + r1(y) + ')"' : '';
-      var w = (t === 'wall') ? 40 : 60, hh = (t === 'wall') ? 40 : 40;
-      s += '<rect x="' + r1(x-w/2) + '" y="' + r1(y-hh/2) + '" width="' + w + '" height="' + hh + '" rx="3" fill="var(--surface-2)" stroke="var(--ink)" stroke-width="2"' + rot + '/>';
+      var w = (t === 'wall') ? 40 : 60;
+      s += '<rect x="' + r1(x-w/2) + '" y="' + r1(y-20) + '" width="' + w + '" height="40" rx="3" fill="var(--surface-2)" stroke="var(--ink)" stroke-width="2"' + rot + '/>';
     }else if(b === 'ball'){
       s += '<circle cx="' + r1(x) + '" cy="' + r1(y) + '" r="16" fill="var(--surface-2)" stroke="var(--ink)" stroke-width="2"/>';
     }else if(b === 'car'){
@@ -1048,16 +1146,15 @@ a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
   // items: [{ f:(resolved), style:'given'|'sel'|'sol' }]
   function drawDiagram(scn, items){
     var sc = sceneSvg(scn), s = sc.svg, c = sc.c, labels = '';
-    var all = items.slice();
     if(scn.vel){
       // šipka rychlosti vychází nad tělesem, aby se nepletla se silami
       var oy = (scn.body === 'ball') ? -26 : (scn.body === 'sat') ? -20 : -34;
       var v = arrowSvg(c.x, c.y + oy, scn.vel.a, scn.vel.l, 'var(--ink-soft)', true, 2.4);
       s += v.svg;
-      var lp = labelPos(v, 16);
-      labels += '<text x="' + r1(lp.x) + '" y="' + r1(lp.y) + '" text-anchor="' + lp.anchor + '" font-family="Work Sans, sans-serif" font-size="16" font-style="italic" font-weight="700" fill="var(--ink-soft)" stroke="#fbeadd" stroke-width="4" stroke-linejoin="round" paint-order="stroke">v</text>';
+      var vp = labelPos(v, 16);
+      labels += '<text x="' + r1(vp.x) + '" y="' + r1(vp.y) + '" text-anchor="' + vp.anchor + '" font-family="Work Sans, sans-serif" font-size="16" font-style="italic" font-weight="700" fill="var(--ink-soft)" stroke="#fbeadd" stroke-width="4" stroke-linejoin="round" paint-order="stroke">v</text>';
     }
-    all.forEach(function(it){
+    items.forEach(function(it){
       var f = it.f, col = colorOf(f.col);
       var ar = arrowSvg(c.x + f.p[0], c.y + f.p[1], f.a, f.l, col, it.style === 'sel', 3.2);
       s += ar.svg;
@@ -1067,210 +1164,335 @@ a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
     return '<svg viewBox="0 0 ' + VB_W + ' ' + VB_H + '" role="img" aria-label="Silový diagram: ' + scn.text.replace(/"/g, '') + '">' + s + labels + '</svg>';
   }
 
+  // Ikona nabídky: šipka stejného směru a úměrné délky jako v diagramu.
   function iconSvg(f){
-    var ar = arrowSvg(24 - 14*Math.cos(rad(f.a)), 24 + 14*Math.sin(rad(f.a)), f.a, 28, colorOf(f.col), false, 3);
-    return '<svg viewBox="0 0 48 48" aria-hidden="true">' + ar.svg + '</svg>';
+    var L = Math.max(10, Math.min(54, f.l*0.42)), u = [Math.cos(rad(f.a)), -Math.sin(rad(f.a))];
+    var ar = arrowSvg(32 - u[0]*L/2, 32 - u[1]*L/2, f.a, L, colorOf(f.col), false, 3);
+    return '<svg viewBox="0 0 64 64" aria-hidden="true">' + ar.svg + '</svg>';
   }
-
-  // ---------- průběh hry ----------
 
   function shuffle(a){
     for(var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random()*(i+1)); var t = a[i]; a[i] = a[j]; a[j] = t; }
     return a;
   }
 
-  var decks = {};
-  function nextScenario(){
-    var d = decks[hra.lv];
-    if(!d || !d.length){
-      var ids = [];
-      SCENARIOS.forEach(function(s, i){ if(s.lv === hra.lv) ids.push(i); });
-      d = decks[hra.lv] = shuffle(ids);
-      if(d.length > 1 && d[d.length-1] === hra.last){ d.unshift(d.pop()); } // nezačne stejnou úlohou jako právě skončená
+  // ---------- jedna „herní plocha“ (trénink i hra na čas mají každá svou) ----------
+  // px = předpona id prvků (px-diagram, px-options, …); hooks.result(ok, skipped, points) vrací nadpis zpětné vazby.
+  function makeBoard(px, hooks){
+    function $(id){ return document.getElementById(px + '-' + id); }
+    var B = { lv:1, scn:null, opts:[], sel:{}, locked:false, touched:false, last:-1, decks:{} };
+
+    function nextScenario(){
+      var d = B.decks[B.lv];
+      if(!d || !d.length){
+        var ids = [];
+        SCENARIOS.forEach(function(s, i){ if(s.lv === B.lv) ids.push(i); });
+        d = B.decks[B.lv] = shuffle(ids);
+        if(d.length > 1 && d[d.length-1] === B.last){ d.unshift(d.pop()); } // nezačne stejnou úlohou jako právě skončená
+      }
+      B.last = d.pop();
+      return SCENARIOS[B.last];
     }
-    hra.last = d.pop();
-    return SCENARIOS[hra.last];
-  }
-
-  function updateHraStats(){
-    document.getElementById('stat-score').textContent = hra.score;
-    document.getElementById('stat-streak').textContent = hra.streak;
-    document.getElementById('stat-accuracy').textContent = hra.answered ? Math.round(hra.correct*100/hra.answered) + ' %' : '—';
-    document.getElementById('hra-best').textContent = hra.bestStreak;
-  }
-
-  function newTask(){
-    var scn = nextScenario();
-    hra.scn = scn;
-    hra.sel = {}; hra.locked = false; hra.touched = false;
-    hra.opts = scn.forces.map(resolve).map(function(f, i){ f.id = i; return f; }).filter(function(f){ return !f.given; });
-    shuffle(hra.opts);
-    document.getElementById('hra-cat').textContent = 'Úroveň ' + hra.lv;
-    document.getElementById('hra-task').textContent = scn.text;
-    document.getElementById('hra-note').textContent = HRA_LEVELS[hra.lv-1].note;
-    document.getElementById('hra-feedback').hidden = true;
-    document.getElementById('hra-badge').textContent = hra.lv === 3 ? 'Situace' : 'Neúplný diagram';
-    document.getElementById('hra-check').textContent = 'Zkontrolovat';
-    document.getElementById('hra-skip').hidden = false;
-    document.getElementById('hra-check').disabled = false;
-    buildOptions();
-    redraw();
-  }
-
-  function givenItems(){
-    var out = [];
-    hra.scn.forces.forEach(function(f){ var r = resolve(f); if(r.given){ out.push({ f:r, style:'given' }); } });
-    return out;
-  }
-  function redraw(){
-    var items = givenItems();
-    hra.opts.forEach(function(f){ if(hra.sel[f.id]){ items.push({ f:f, style:'sel' }); } });
-    document.getElementById('hra-diagram').innerHTML = drawDiagram(hra.scn, items);
-  }
-  function showSolution(){
-    var items = givenItems();
-    hra.opts.forEach(function(f){ if(f.ok){ items.push({ f:f, style:'sol' }); } });
-    document.getElementById('hra-diagram').innerHTML = drawDiagram(hra.scn, items);
-  }
-
-  function buildOptions(){
-    var grid = document.getElementById('hra-options');
-    grid.innerHTML = '';
-    hra.opts.forEach(function(f){
-      var b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'choice-btn';
-      b.setAttribute('aria-pressed', 'false');
-      b.setAttribute('data-id', f.id);
-      b.innerHTML = iconSvg(f) + '<b>' + symHtml(f.sym) + ' — ' + f.name + '</b><span>' + f.who + '</span>';
-      b.addEventListener('click', function(){ toggle(f.id); });
-      grid.appendChild(b);
-    });
-    document.getElementById('hra-opt-title').textContent = hra.lv === 1 ? 'Která síla chybí? (jedna)' : hra.lv === 2 ? 'Které síly chybí? (jedna nebo více)' : 'Které síly na těleso působí? (jedna nebo více)';
-  }
-
-  function toggle(id){
-    if(hra.locked) return;
-    hra.touched = true;
-    if(hra.lv === 1){
-      var was = !!hra.sel[id];
-      hra.sel = {};
-      if(!was) hra.sel[id] = true;
-    }else{
-      if(hra.sel[id]) delete hra.sel[id]; else hra.sel[id] = true;
+    function givenItems(){
+      var out = [];
+      B.scn.forces.forEach(function(f){ var r = resolve(f); if(r.given){ out.push({ f:r, style:'given' }); } });
+      return out;
     }
-    Array.prototype.forEach.call(document.querySelectorAll('#hra-options .choice-btn'), function(b){
-      var on = !!hra.sel[b.getAttribute('data-id')];
-      b.classList.toggle('selected', on);
-      b.setAttribute('aria-pressed', on ? 'true' : 'false');
-    });
-    redraw();
-  }
-
-  function selectedCount(){ var n = 0; for(var k in hra.sel){ if(hra.sel[k]) n++; } return n; }
-
-  function finish(correct, skipped){
-    hra.locked = true;
-    hra.answered++;
-    var pts = HRA_LEVELS[hra.lv-1].points;
-    if(correct){
-      hra.correct++; hra.streak++; hra.score += pts;
-      if(hra.streak > hra.bestStreak){ hra.bestStreak = hra.streak; hraSave(); }
-    }else{
-      hra.streak = 0;
+    function redraw(){
+      var items = givenItems();
+      B.opts.forEach(function(f){ if(B.sel[f.id]){ items.push({ f:f, style:'sel' }); } });
+      $('diagram').innerHTML = drawDiagram(B.scn, items);
     }
-    updateHraStats();
+    function showSolution(){
+      var items = givenItems();
+      B.opts.forEach(function(f){ if(f.ok){ items.push({ f:f, style:'sol' }); } });
+      $('diagram').innerHTML = drawDiagram(B.scn, items);
+    }
+    function selectedCount(){ var n = 0; for(var k in B.sel){ if(B.sel[k]) n++; } return n; }
 
-    var fb = document.getElementById('hra-feedback');
-    fb.className = 'feedback ' + (correct ? 'ok' : 'bad');
-    document.getElementById('hra-headline').textContent = correct ? 'Správně! +' + pts + ' bodů' : (skipped ? 'Správné řešení' : 'Zatím ne');
-    var html = '', good = '', other = '';
-    hra.opts.forEach(function(f){
-      var picked = !!hra.sel[f.id], line;
-      if(f.ok){
-        line = '<p><b>' + (picked ? '✓ ' : '✗ Chybělo: ') + symHtml(f.sym) + ' — ' + f.name + '</b> (' + f.who + '). ' + f.why + '</p>';
-        good += line;
+    function buildOptions(){
+      var grid = $('options');
+      grid.innerHTML = '';
+      B.opts.forEach(function(f){
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'choice-btn';
+        b.setAttribute('aria-pressed', 'false');
+        b.setAttribute('data-id', f.id);
+        b.innerHTML = iconSvg(f) + '<b>' + optTitle(f) + '</b><span>' + f.who + '</span>';
+        b.addEventListener('click', function(){ toggle(f.id); });
+        grid.appendChild(b);
+      });
+      $('opt-title').textContent = B.lv === 1 ? 'Která síla chybí? (jedna)' : B.lv === 2 ? 'Které síly chybí? (jedna nebo více)' : 'Které síly na těleso působí? (jedna nebo více)';
+    }
+
+    function toggle(id){
+      if(B.locked) return;
+      B.touched = true;
+      if(B.lv === 1){
+        var was = !!B.sel[id];
+        B.sel = {};
+        if(!was) B.sel[id] = true;
       }else{
-        line = '<p><b>' + (picked ? '✗ Nepatří: ' : 'Nepatří: ') + symHtml(f.sym) + ' — ' + f.name + '</b>. ' + f.why + '</p>';
-        other += line;
+        if(B.sel[id]) delete B.sel[id]; else B.sel[id] = true;
       }
-      var b = document.querySelector('#hra-options .choice-btn[data-id="' + f.id + '"]');
-      if(b){
-        b.classList.remove('selected');
-        b.disabled = true;
-        if(f.ok) b.classList.add('correct');
-        else if(picked) b.classList.add('wrong');
-      }
-    });
-    html = '<p><b>Do diagramu patří:</b></p>' + good + (other ? '<p style="margin-top:8px"><b>Ostatní nabídky:</b></p>' + other : '');
-    document.getElementById('hra-steps').innerHTML = html;
-    fb.hidden = false;
-    showSolution();
-    document.getElementById('hra-check').textContent = 'Další úloha →';
-    document.getElementById('hra-skip').hidden = true;
-  }
-
-  function check(){
-    if(hra.locked){ newTask(); return; }
-    if(selectedCount() === 0){
-      if(!confirm('Nic jste nevybrali. Opravdu chcete odpověď zkontrolovat?')) return;
+      Array.prototype.forEach.call($('options').querySelectorAll('.choice-btn'), function(b){
+        var on = !!B.sel[b.getAttribute('data-id')];
+        b.classList.toggle('selected', on);
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+      redraw();
     }
-    var ok = true;
-    hra.opts.forEach(function(f){ if(!!hra.sel[f.id] !== f.ok) ok = false; });
-    finish(ok, false);
-  }
-  function skip(){
-    if(hra.locked){ newTask(); return; }
-    hra.sel = {};
-    finish(false, true);
+
+    B.newTask = function(){
+      var scn = nextScenario();
+      B.scn = scn;
+      B.sel = {}; B.locked = false; B.touched = false;
+      B.opts = scn.forces.map(resolve).map(function(f, i){ f.id = i; return f; }).filter(function(f){ return !f.given; });
+      shuffle(B.opts);
+      $('cat').textContent = 'Úroveň ' + B.lv;
+      $('task').textContent = scn.text;
+      $('note').textContent = HRA_LEVELS[B.lv-1].note;
+      $('feedback').hidden = true;
+      $('badge').textContent = B.lv === 3 ? 'Situace' : 'Neúplný diagram';
+      $('check').textContent = 'Zkontrolovat';
+      $('skip').hidden = false;
+      buildOptions();
+      redraw();
+      if(hooks.onNewTask) hooks.onNewTask(B);
+    };
+
+    function finish(correct, skipped){
+      B.locked = true;
+      var pts = HRA_LEVELS[B.lv-1].points;
+      var fb = $('feedback');
+      fb.className = 'feedback ' + (correct ? 'ok' : 'bad');
+      $('headline').textContent = hooks.result(correct, skipped, pts);
+      var good = '', other = '';
+      B.opts.forEach(function(f){
+        var picked = !!B.sel[f.id];
+        if(f.ok){
+          good += '<p><b>' + (picked ? '✓ ' : '✗ Chybělo: ') + optTitle(f) + '</b> (' + f.who + '). ' + f.why + '</p>';
+        }else{
+          other += '<p><b>' + (picked ? '✗ Nepatří: ' : 'Nepatří: ') + optTitle(f) + '</b>. ' + f.why + '</p>';
+        }
+        var b = $('options').querySelector('.choice-btn[data-id="' + f.id + '"]');
+        if(b){
+          b.classList.remove('selected');
+          b.disabled = true;
+          if(f.ok) b.classList.add('correct');
+          else if(picked) b.classList.add('wrong');
+        }
+      });
+      $('steps').innerHTML = '<p><b>Do diagramu patří:</b></p>' + good + (other ? '<p style="margin-top:8px"><b>Ostatní nabídky:</b></p>' + other : '');
+      fb.hidden = false;
+      showSolution();
+      $('check').textContent = 'Další úloha →';
+      $('skip').hidden = true;
+    }
+
+    B.check = function(){
+      if(B.locked){ B.newTask(); return; }
+      if(selectedCount() === 0){
+        if(!confirm('Nic jste nevybrali. Opravdu chcete odpověď zkontrolovat?')) return;
+      }
+      var ok = true;
+      B.opts.forEach(function(f){ if(!!B.sel[f.id] !== f.ok) ok = false; });
+      finish(ok, false);
+    };
+    B.skip = function(){
+      if(B.locked){ B.newTask(); return; }
+      B.sel = {};
+      finish(false, true);
+    };
+
+    $('check').addEventListener('click', B.check);
+    $('skip').addEventListener('click', B.skip);
+    return B;
   }
 
-  function buildLevelRow(){
-    var row = document.getElementById('hra-level-row');
-    row.innerHTML = '';
+  // ---------- Trénink: bez času, bez záporných bodů ----------
+  var tr = { score:0, streak:0, bestStreak:0, answered:0, correct:0 };
+  function trLoad(){
+    try{ var raw = localStorage.getItem(HRA_KEY); if(raw){ tr.bestStreak = JSON.parse(raw).bestStreak || 0; } }catch(e){}
+  }
+  function trSave(){
+    try{ localStorage.setItem(HRA_KEY, JSON.stringify({bestStreak: tr.bestStreak})); }catch(e){}
+  }
+  function updateTrStats(){
+    document.getElementById('stat-score').textContent = tr.score;
+    document.getElementById('stat-streak').textContent = tr.streak;
+    document.getElementById('stat-accuracy').textContent = tr.answered ? Math.round(tr.correct*100/tr.answered) + ' %' : '—';
+    document.getElementById('tr-best').textContent = tr.bestStreak;
+  }
+  var trBoard = makeBoard('tr', {
+    result:function(ok, skipped, pts){
+      tr.answered++;
+      if(ok){
+        tr.correct++; tr.streak++; tr.score += pts;
+        if(tr.streak > tr.bestStreak){ tr.bestStreak = tr.streak; trSave(); }
+      }else{
+        tr.streak = 0;
+      }
+      updateTrStats();
+      return ok ? 'Správně! +' + pts + ' bodů' : (skipped ? 'Správné řešení' : 'Zatím ne');
+    }
+  });
+  (function(){
+    var row = document.getElementById('tr-level-row');
     HRA_LEVELS.forEach(function(l){
       var b = document.createElement('button');
       b.type = 'button';
-      b.className = 'chip accented' + (l.lv === hra.lv ? ' on' : '');
+      b.className = 'chip accented' + (l.lv === trBoard.lv ? ' on' : '');
       b.textContent = l.name;
       b.addEventListener('click', function(){
-        if(l.lv === hra.lv) return;
+        if(l.lv === trBoard.lv) return;
         var graded = false;
-        if(!hra.locked && hra.touched){ // rozpracovanou úlohu nejdřív vyhodnotíme
-          check();
-          if(!hra.locked) return;
+        if(!trBoard.locked && trBoard.touched){ // rozpracovanou úlohu nejdřív vyhodnotíme
+          trBoard.check();
+          if(!trBoard.locked) return;
           graded = true;
         }
-        hra.lv = l.lv;
-        Array.prototype.forEach.call(row.children, function(el, i){ el.classList.toggle('on', HRA_LEVELS[i].lv === hra.lv); });
-        if(!graded) newTask(); // po vyhodnocení se úroveň změní až další úlohou
+        trBoard.lv = l.lv;
+        Array.prototype.forEach.call(row.children, function(el, i){ el.classList.toggle('on', HRA_LEVELS[i].lv === trBoard.lv); });
+        if(!graded) trBoard.newTask(); // po vyhodnocení se úroveň změní až další úlohou
+      });
+      row.appendChild(b);
+    });
+  })();
+  document.getElementById('tr-reset').addEventListener('click', function(){
+    tr.score = 0; tr.streak = 0; tr.answered = 0; tr.correct = 0; tr.bestStreak = 0;
+    try{ localStorage.removeItem(HRA_KEY); }catch(e){}
+    updateTrStats();
+  });
+
+  // ---------- Hra na čas ----------
+  var game = { duration:120, level:1, running:false, timeLeft:120, timerId:null, score:0, correct:0, wrong:0, answered:0, bests:{} };
+  function currentGameBest(){ return game.bests[game.duration] || 0; }
+  function updateGameBestHint(){
+    document.getElementById('game-best-hint').textContent = 'Nejlepší skóre: ' + (currentGameBest() ? scoreText(currentGameBest()) : '—');
+  }
+  function loadGameBests(){
+    try{ var raw = localStorage.getItem(GAME_KEY); if(raw) game.bests = JSON.parse(raw) || {}; }catch(e){}
+  }
+  function saveGameBests(){
+    try{ localStorage.setItem(GAME_KEY, JSON.stringify(game.bests)); }catch(e){}
+  }
+
+  var gameBoard = makeBoard('game', {
+    onNewTask:function(B){
+      document.getElementById('game-points-badge').textContent = '+' + HRA_LEVELS[B.lv-1].points + ' b';
+    },
+    result:function(ok, skipped, pts){
+      game.answered++;
+      var head;
+      if(ok){
+        game.score += pts; game.correct++;
+        head = 'Správně! +' + pts + ' b';
+      }else{
+        game.score -= WRONG_PENALTY; game.wrong++;
+        head = (skipped ? 'Přeskočeno.' : 'Bohužel, špatně.') + ' −' + WRONG_PENALTY + ' b · Správné řešení je v diagramu a v rozboru níže.';
+      }
+      document.getElementById('game-score').textContent = scoreText(game.score);
+      return head;
+    }
+  });
+
+  function tickGameTimer(){
+    game.timeLeft--;
+    var timerEl = document.getElementById('game-timer');
+    timerEl.textContent = formatGameTime(Math.max(0, game.timeLeft));
+    timerEl.classList.toggle('low-time', game.timeLeft <= 20 && game.timeLeft > 0);
+    if(game.timeLeft <= 0) endGame();
+  }
+  function startGame(){
+    game.running = true;
+    game.timeLeft = game.duration;
+    game.score = 0; game.correct = 0; game.wrong = 0; game.answered = 0;
+    document.getElementById('game-score').textContent = '0';
+    var timerEl = document.getElementById('game-timer');
+    timerEl.textContent = formatGameTime(game.duration);
+    timerEl.classList.remove('low-time');
+    document.getElementById('game-best-live').textContent = scoreText(currentGameBest());
+    document.getElementById('game-info').hidden = true;
+    document.getElementById('game-start-panel').hidden = true;
+    document.getElementById('game-over').hidden = true;
+    document.getElementById('game-play').hidden = false;
+    gameBoard.lv = game.level;
+    gameBoard.decks = {};
+    gameBoard.newTask();
+    if(game.timerId) clearInterval(game.timerId);
+    game.timerId = setInterval(tickGameTimer, 1000);
+  }
+  function endGame(){
+    if(!game.running) return;
+    game.running = false;
+    clearInterval(game.timerId);
+    game.timerId = null;
+    if(game.score > currentGameBest()){ game.bests[game.duration] = game.score; saveGameBests(); }
+    if(window.FyzikaScores) FyzikaScores.report('hra-' + game.duration + 's', game.score, true);
+    document.getElementById('game-play').hidden = true;
+    document.getElementById('game-over').hidden = false;
+    // Po konci hry zůstane nabídka nastavení nad výsledkem; pravidla a tlačítko „Spustit hru“ se skryjí.
+    document.getElementById('game-rules-panel').hidden = true;
+    document.getElementById('game-info').hidden = false;
+    document.getElementById('game-final-score').textContent = scoreText(game.score) + ' ' + pointWord(game.score);
+    document.getElementById('game-final-detail').textContent =
+      'Správně: ' + game.correct + ' · Špatně: ' + game.wrong + ' · Nejlepší skóre: ' + scoreText(currentGameBest());
+    updateGameBestHint();
+  }
+  function buildChipRow(rowId, items, getKey, setKey, accented){
+    var row = document.getElementById(rowId);
+    row.innerHTML = '';
+    items.forEach(function(it){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip' + (accented ? ' accented' : '') + (it.key === getKey() ? ' on' : '');
+      b.textContent = it.name;
+      b.addEventListener('click', function(){
+        if(game.running) return;
+        setKey(it.key);
+        Array.prototype.forEach.call(row.children, function(el, i){ el.classList.toggle('on', items[i].key === getKey()); });
+        updateGameBestHint();
       });
       row.appendChild(b);
     });
   }
+  buildChipRow('game-level-row', HRA_LEVELS.map(function(l){ return { key:l.lv, name:l.name }; }), function(){ return game.level; }, function(k){ game.level = k; }, true);
+  buildChipRow('game-duration-row', GAME_DURATIONS, function(){ return game.duration; }, function(k){ game.duration = k; }, false);
+  document.getElementById('btn-game-start').addEventListener('click', startGame);
+  document.getElementById('btn-game-restart').addEventListener('click', startGame);
 
-  document.getElementById('hra-check').addEventListener('click', check);
-  document.getElementById('hra-skip').addEventListener('click', skip);
-  document.getElementById('hra-reset').addEventListener('click', function(){
-    hra.score = 0; hra.streak = 0; hra.answered = 0; hra.correct = 0; hra.bestStreak = 0;
-    try{ localStorage.removeItem(HRA_KEY); }catch(e){}
-    updateHraStats();
-  });
+  // Enter vyhodnotí odpověď a po vyhodnocení posune na další úlohu (na tlačítku ho obslouží samo tlačítko).
   document.addEventListener('keydown', function(e){
-    if(e.key !== 'Enter') return;
-    var sec = document.getElementById('hra-section');
-    if(!sec || sec.hidden) return;
+    if(e.key !== 'Enter' || e.ctrlKey || e.metaKey || e.altKey) return;
     var t = e.target;
     if(t && (t.tagName === 'BUTTON' || t.tagName === 'A' || t.tagName === 'SUMMARY')) return;
-    e.preventDefault();
-    check();
+    if(game.running && !document.getElementById('hra-section').hidden){ e.preventDefault(); gameBoard.check(); return; }
+    if(!document.getElementById('trenink-section').hidden){ e.preventDefault(); trBoard.check(); }
   });
-  document.addEventListener('fyzika:scores-updated', function(){ hra.bestStreak = 0; hraLoad(); updateHraStats(); });
+  // Přepnutí na jinou záložku uprostřed běžící hry ji ukončí, aby čas neběžel „za zády“ žáka.
+  Object.keys(tabs).forEach(function(k){
+    tabs[k].addEventListener('click', function(){
+      if(k !== 'hra' && game.running){
+        if(!confirm('Přepnutím opustíte probíhající hru na čas. Hra se ukončí a započítá se aktuální skóre. Opravdu chcete pokračovat?')){
+          e.stopImmediatePropagation();
+          return;
+        }
+        endGame();
+      }
+    }, true);
+  });
+  document.addEventListener('fyzika:scores-updated', function(){
+    tr.bestStreak = 0; trLoad(); updateTrStats();
+    game.bests = {}; loadGameBests(); updateGameBestHint();
+  });
 
-  hraLoad();
-  buildLevelRow();
-  newTask();
-  updateHraStats();
+  trLoad();
+  loadGameBests();
+  updateTrStats();
+  updateGameBestHint();
+  trBoard.newTask();
 
   // ---- vzorce (KaTeX) ----
   if(window.renderMathInElement){
