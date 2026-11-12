@@ -227,8 +227,8 @@ a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
   padding:4px 12px;
   border-radius:10px 0 10px 0;
 }
-#trenink-section .card, #hra-section .card{ text-align:center; }
-#tr-diagram svg, #game-diagram svg{ display:block; width:100%; max-width:520px; height:auto; margin:0 auto; }
+#hra-section .card{ text-align:center; }
+#game-diagram svg{ display:block; width:100%; max-width:520px; height:auto; margin:0 auto; }
 .choices-title{
   margin-top:22px;
   padding-top:14px;
@@ -262,7 +262,7 @@ a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
 .choice-btn.selected{ border-color:var(--ink); box-shadow:0 0 0 2px var(--ink); background:var(--surface-2); }
 .choice-btn.correct{ border-color:var(--success); box-shadow:0 0 0 2px var(--success); background:var(--success-bg); }
 .choice-btn.wrong{ border-color:var(--danger); box-shadow:0 0 0 2px var(--danger); background:var(--danger-bg); }
-#tr-options .choice-btn, #game-options .choice-btn{
+#game-options .choice-btn{
   display:grid;
   grid-template-columns:56px 1fr;
   column-gap:10px;
@@ -273,11 +273,11 @@ a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
   font-family:inherit;
   color:var(--ink);
 }
-#tr-options .choice-btn svg, #game-options .choice-btn svg{ grid-row:1 / span 2; width:56px; height:56px; }
-#tr-options .choice-btn b, #game-options .choice-btn b{ font-size:0.88rem; line-height:1.3; }
-#tr-options .choice-btn span, #game-options .choice-btn span{ font-size:0.78rem; color:var(--ink-soft); }
-#tr-steps p, #game-steps p{ margin:0 0 6px; font-size:0.86rem; line-height:1.5; }
-#tr-steps p:last-child, #game-steps p:last-child{ margin-bottom:0; }
+#game-options .choice-btn svg{ grid-row:1 / span 2; width:56px; height:56px; }
+#game-options .choice-btn b{ font-size:0.88rem; line-height:1.3; }
+#game-options .choice-btn span{ font-size:0.78rem; color:var(--ink-soft); }
+#game-steps p{ margin:0 0 6px; font-size:0.86rem; line-height:1.5; }
+#game-steps p:last-child{ margin-bottom:0; }
 @media (max-width:520px){
   .choice-grid{ grid-template-columns:1fr; }
   .readout .cell{ min-width:64px; padding:6px 8px; }
@@ -308,16 +308,10 @@ a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
         <p>Vzájemné působení těles, účinky síly, vektor síly a výslednice</p>
       </div>
     </div>
-    <div class="readout" id="header-readout" hidden>
-      <div class="cell"><span class="label">Skóre</span><span class="value" id="stat-score">0</span></div>
-      <div class="cell"><span class="label">Série</span><span class="value" id="stat-streak">0</span></div>
-      <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="stat-accuracy">—</span></div>
-    </div>
   </div>
 
   <div class="top-tabs">
     <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
-    <button class="toptab" id="top-tab-trenink" data-tab="trenink">Trénink</button>
     <button class="toptab" id="top-tab-hra" data-tab="hra">Hra na čas</button>
   </div>
 
@@ -565,47 +559,6 @@ a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
   </div>
 
 
-  <!-- ============ TRÉNINK ============ -->
-  <div id="trenink-section" class="tab-section" hidden>
-    <div class="panel">
-      <div class="section-block">
-        <div class="panel-title">Úroveň</div>
-        <div class="row" id="tr-level-row"></div>
-        <details class="navod">
-          <summary>Návod</summary>
-          <p>Přečtěte si popis situace a prohlédněte si silový diagram. Šipky v něm jsou síly, které už jsou nakreslené (plná čára). Přerušovaná šipka s písmenem <i>v</i> ukazuje jen směr pohybu a není to síla.</p>
-          <p>Ve druhé části si vyberte z nabídky síly, které do diagramu patří. Vybrané síly se hned objeví v diagramu přerušovanou čarou. Šipka u každé nabídky ukazuje její směr a přibližnou velikost v diagramu. Nabídky se mohou lišit nejen směrem a názvem, ale i velikostí (menší, stejná nebo větší než jiná síla). Správně je jen tehdy, když vyberete <b>všechny</b> potřebné síly a žádnou navíc.</p>
-          <p>V úrovni 1 chybí právě jedna síla. V úrovni 2 chybí jedna nebo více sil. V úrovni 3 je diagram prázdný a síly si vybíráte sami. Za správnou odpověď dostanete 10, 15 nebo 25 bodů, podle úrovně. Série se přeruší chybou nebo tlačítkem Nevím. Délky šipek jsou jen přibližné.</p>
-        </details>
-      </div>
-      <div class="settings-foot">
-        <span class="hint">Nejlepší série: <b id="tr-best">0</b></span>
-        <button class="linklike" id="tr-reset">vynulovat statistiku</button>
-      </div>
-    </div>
-
-    <div class="card">
-      <span class="cat-tag" id="tr-cat">Úroveň 1</span>
-      <p class="task" id="tr-task"></p>
-      <p class="task-note" id="tr-note"></p>
-      <figure class="given-graph">
-        <span class="graph-badge" id="tr-badge">Neúplný diagram</span>
-        <div id="tr-diagram"></div>
-      </figure>
-      <div class="choices-title" id="tr-opt-title"></div>
-      <div class="choice-grid" id="tr-options"></div>
-      <div class="hint" style="margin-top:12px;">Enter vyhodnotí odpověď a po vyhodnocení posune na další úlohu.</div>
-      <div class="actions">
-        <button class="btn primary" id="tr-check">Zkontrolovat</button>
-        <button class="btn ghost" id="tr-skip">Nevím / Zobrazit řešení</button>
-      </div>
-      <div class="feedback" id="tr-feedback" hidden>
-        <div class="headline" id="tr-headline"></div>
-        <div class="steps" id="tr-steps"></div>
-      </div>
-    </div>
-  </div>
-
   <!-- ============ HRA NA ČAS ============ -->
   <div id="hra-section" class="tab-section" hidden>
     <div id="game-info">
@@ -703,9 +656,6 @@ a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
       tabs[k].classList.toggle('on', k === name);
       if(sections[k]) sections[k].hidden = k !== name;
     }
-    // skóre, série a úspěšnost v hlavičce jen u tréninku
-    var readout = document.getElementById('header-readout');
-    if(readout) readout.hidden = name !== 'trenink';
   }
   Object.keys(tabs).forEach(function(k){ tabs[k].addEventListener('click', function(){ showTab(k); }); });
   var hash = location.hash.replace('#', '');
@@ -1018,8 +968,7 @@ a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
   ];
   // ---- DATA END ----
 
-  // ---- hra: silový diagram (trénink a hra na čas) ----
-  var HRA_KEY = 'fyzika:sila:stats';
+  // ---- hra na čas: silový diagram ----
   var GAME_KEY = 'fyzika:sila:game-bests';
   var WRONG_PENALTY = 5;
   var HRA_LEVELS = [
@@ -1176,7 +1125,7 @@ a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
     return a;
   }
 
-  // ---------- jedna „herní plocha“ (trénink i hra na čas mají každá svou) ----------
+  // ---------- herní plocha ----------
   // px = předpona id prvků (px-diagram, px-options, …); hooks.result(ok, skipped, points) vrací nadpis zpětné vazby.
   function makeBoard(px, hooks){
     function $(id){ return document.getElementById(px + '-' + id); }
@@ -1311,61 +1260,6 @@ a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
     return B;
   }
 
-  // ---------- Trénink: bez času, bez záporných bodů ----------
-  var tr = { score:0, streak:0, bestStreak:0, answered:0, correct:0 };
-  function trLoad(){
-    try{ var raw = localStorage.getItem(HRA_KEY); if(raw){ tr.bestStreak = JSON.parse(raw).bestStreak || 0; } }catch(e){}
-  }
-  function trSave(){
-    try{ localStorage.setItem(HRA_KEY, JSON.stringify({bestStreak: tr.bestStreak})); }catch(e){}
-  }
-  function updateTrStats(){
-    document.getElementById('stat-score').textContent = tr.score;
-    document.getElementById('stat-streak').textContent = tr.streak;
-    document.getElementById('stat-accuracy').textContent = tr.answered ? Math.round(tr.correct*100/tr.answered) + ' %' : '—';
-    document.getElementById('tr-best').textContent = tr.bestStreak;
-  }
-  var trBoard = makeBoard('tr', {
-    result:function(ok, skipped, pts){
-      tr.answered++;
-      if(ok){
-        tr.correct++; tr.streak++; tr.score += pts;
-        if(tr.streak > tr.bestStreak){ tr.bestStreak = tr.streak; trSave(); }
-      }else{
-        tr.streak = 0;
-      }
-      updateTrStats();
-      return ok ? 'Správně! +' + pts + ' bodů' : (skipped ? 'Správné řešení' : 'Zatím ne');
-    }
-  });
-  (function(){
-    var row = document.getElementById('tr-level-row');
-    HRA_LEVELS.forEach(function(l){
-      var b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'chip accented' + (l.lv === trBoard.lv ? ' on' : '');
-      b.textContent = l.name;
-      b.addEventListener('click', function(){
-        if(l.lv === trBoard.lv) return;
-        var graded = false;
-        if(!trBoard.locked && trBoard.touched){ // rozpracovanou úlohu nejdřív vyhodnotíme
-          trBoard.check();
-          if(!trBoard.locked) return;
-          graded = true;
-        }
-        trBoard.lv = l.lv;
-        Array.prototype.forEach.call(row.children, function(el, i){ el.classList.toggle('on', HRA_LEVELS[i].lv === trBoard.lv); });
-        if(!graded) trBoard.newTask(); // po vyhodnocení se úroveň změní až další úlohou
-      });
-      row.appendChild(b);
-    });
-  })();
-  document.getElementById('tr-reset').addEventListener('click', function(){
-    tr.score = 0; tr.streak = 0; tr.answered = 0; tr.correct = 0; tr.bestStreak = 0;
-    try{ localStorage.removeItem(HRA_KEY); }catch(e){}
-    updateTrStats();
-  });
-
   // ---------- Hra na čas ----------
   var game = { duration:120, level:1, running:false, timeLeft:120, timerId:null, score:0, correct:0, wrong:0, answered:0, bests:{} };
   function currentGameBest(){ return game.bests[game.duration] || 0; }
@@ -1469,7 +1363,6 @@ a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
     var t = e.target;
     if(t && (t.tagName === 'BUTTON' || t.tagName === 'A' || t.tagName === 'SUMMARY')) return;
     if(game.running && !document.getElementById('hra-section').hidden){ e.preventDefault(); gameBoard.check(); return; }
-    if(!document.getElementById('trenink-section').hidden){ e.preventDefault(); trBoard.check(); }
   });
   // Přepnutí na jinou záložku uprostřed běžící hry ji ukončí, aby čas neběžel „za zády“ žáka.
   Object.keys(tabs).forEach(function(k){
@@ -1484,15 +1377,11 @@ a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
     }, true);
   });
   document.addEventListener('fyzika:scores-updated', function(){
-    tr.bestStreak = 0; trLoad(); updateTrStats();
     game.bests = {}; loadGameBests(); updateGameBestHint();
   });
 
-  trLoad();
   loadGameBests();
-  updateTrStats();
   updateGameBestHint();
-  trBoard.newTask();
 
   // ---- vzorce (KaTeX) ----
   if(window.renderMathInElement){
