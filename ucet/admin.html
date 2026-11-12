@@ -205,9 +205,9 @@ footer{ margin-top:40px; }
 .heat .hc:hover{ outline:2px solid var(--ink); outline-offset:-1px; }
 .heat .hd{ display:flex; align-items:center; }
 .heat .hh{ white-space:nowrap; overflow:visible; }
-.worldmap{ display:block; width:100%; height:auto; }
-.worldmap path{ fill:var(--surface-2); stroke:var(--paper); stroke-width:.5; }
-.worldmap path.on:hover{ stroke:var(--ink); stroke-width:1.2; }
+.worldmap{ display:block; width:100%; height:auto; max-height:72vh; }
+.worldmap path{ fill:var(--surface-2); stroke:var(--paper); stroke-width:.6; vector-effect:non-scaling-stroke; }
+.worldmap path.on:hover{ stroke:var(--ink); stroke-width:1.5; }
 .map-note{ margin-top:8px; font-size:0.78rem; color:var(--ink-soft); }
 .tr-legend{ display:flex; align-items:center; gap:6px; margin-top:10px; font-size:0.72rem; color:var(--ink-soft); }
 .tr-legend .ramp{ width:90px; height:10px; border-radius:3px; background:linear-gradient(to right, rgba(30,95,168,.12), rgba(30,95,168,1)); }
@@ -380,7 +380,9 @@ footer{ margin-top:40px; }
             <div id="tr-heat"></div>
           </div>
           <div class="panel wide">
-            <div class="panel-title"><span>Odkud se web navštěvuje (podle státu)</span></div>
+            <div class="panel-title"><span>Odkud se web navštěvuje (podle státu)</span>
+              <div class="toolbar"><select id="tr-map-region" aria-label="Oblast mapy"></select></div>
+            </div>
             <div id="tr-map"></div>
           </div>
           <div class="panel">
@@ -1297,6 +1299,25 @@ footer{ margin-top:40px; }
 
   // Mapa světa: sytost modré = počet zobrazení z daného státu. Stát zjišťuje prohlížeč návštěvníka
   // (geo-IP, uloží se jen dvoupísmenný kód) a posílá ho s hlášením návštěvy.
+  var mapRegion = 'evropa';
+  try{ var savedRegion = localStorage.getItem('fyzika-admin-map-region'); if(savedRegion) mapRegion = savedRegion; }catch(e){}
+  function mapRegionData(){
+    var R = window.FZ_WORLD.r;
+    for(var i = 0; i < R.length; i++) if(R[i][0] === mapRegion) return R[i];
+    return R[0];
+  }
+  (function fillMapRegions(){
+    var sel = $('tr-map-region');
+    if(!window.FZ_WORLD || !sel) return;
+    window.FZ_WORLD.r.forEach(function(r){ var o = el('option', null, r[1]); o.value = r[0]; sel.appendChild(o); });
+    sel.value = mapRegionData()[0];
+    mapRegion = sel.value;
+    sel.addEventListener('change', function(){
+      mapRegion = sel.value;
+      try{ localStorage.setItem('fyzika-admin-map-region', mapRegion); }catch(e){}
+      if(trData && !$('tr-body').hidden) renderMap(aggregateTraffic());
+    });
+  })();
   function renderMap(a){
     var box = $('tr-map'); box.innerHTML = '';
     var W = window.FZ_WORLD;
@@ -1317,7 +1338,8 @@ footer{ margin-top:40px; }
     }
     var NS = 'http://www.w3.org/2000/svg';
     var svg = document.createElementNS(NS, 'svg');
-    svg.setAttribute('viewBox', '0 0 ' + W.w + ' ' + W.h);
+    var reg = mapRegionData();
+    svg.setAttribute('viewBox', reg[2] + ' ' + reg[3] + ' ' + reg[4] + ' ' + reg[5]);
     svg.setAttribute('class', 'worldmap');
     svg.setAttribute('role', 'img');
     svg.setAttribute('aria-label', 'Mapa světa podle počtu zobrazení z jednotlivých států');
