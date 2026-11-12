@@ -1308,7 +1308,11 @@ footer{ margin-top:40px; }
       if(cnt[v.cc] > max) max = cnt[v.cc];
     });
     if(!known){
-      box.appendChild(el('div','empty','Zatím nejsou k dispozici údaje o státu. Objeví se u návštěv zaznamenaných po nasazení nové verze webu a Apps Scriptu.'));
+      var serverOld = trData.rows.length && trData.rows.every(function(r){ return r.length <= 12; });
+      var withCol = trData.rows.filter(function(r){ return r.length > 12 && trData.strings[r[12]]; }).length;
+      box.appendChild(el('div','empty', serverOld
+        ? 'Server (Apps Script) stát v odpovědi nevrací — běží stará verze Code.gs. V Nasadit → Spravovat nasazení upravte stávající nasazení a zvolte Novou verzi.'
+        : 'Zatím nejsou k dispozici údaje o státu. Objeví se u návštěv zaznamenaných po nasazení nové verze webu a Apps Scriptu. (Řádků se státem v celém načteném období: ' + withCol + '.)'));
       return;
     }
     var NS = 'http://www.w3.org/2000/svg';
