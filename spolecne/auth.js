@@ -55,7 +55,18 @@
     'dalekohled.html': 'oktava',
     'difrakce-svetla.html': 'oktava',
     'interference-svetla.html': 'oktava',
-    'polarizace-svetla.html': 'oktava'
+    'polarizace-svetla.html': 'oktava',
+    'rozmery-v-mikrosvete.html': 'oktava',
+    'vazebna-energie.html': 'oktava',
+    'modely-atomu.html': 'oktava',
+    'spektrum-vodiku.html': 'oktava',
+    'bohruv-model.html': 'oktava',
+    'fotoelektricky-jev.html': 'oktava',
+    'vlnove-vlastnosti-castic.html': 'oktava',
+    'kvantova-mechanika.html': 'oktava',
+    'kvantova-cisla.html': 'oktava',
+    'laser.html': 'oktava',
+    'castice-a-interakce.html': 'oktava'
   };
 
   // auth.js vždy žije na <kořen webu>/spolecne/auth.js — z jeho vlastní (absolutní)
@@ -153,6 +164,40 @@
     ],
     'cocky.html': [
       { d: 'serie', key: 'fyzika:cocky:stats', field: 'bestStreak' }
+    ],
+    'rozmery-v-mikrosvete.html': [
+      { d: 'serie', key: 'fyzika:rozmery-v-mikrosvete:stats', field: 'bestStreak' }
+    ],
+    'vazebna-energie.html': [
+      { d: 'serie', key: 'fyzika:vazebna-energie:stats', field: 'bestStreak' }
+    ],
+    'spektrum-vodiku.html': [
+      { d: 'serie', key: 'fyzika:spektrum-vodiku:stats', field: 'bestStreak' }
+    ],
+    'bohruv-model.html': [
+      { d: 'serie', key: 'fyzika:bohruv-model:stats', field: 'bestStreak' }
+    ],
+    'fotoelektricky-jev.html': [
+      { d: 'serie', key: 'fyzika:fotoelektricky-jev:stats', field: 'bestStreak' }
+    ],
+    'vlnove-vlastnosti-castic.html': [
+      { d: 'serie', key: 'fyzika:vlnove-vlastnosti-castic:stats', field: 'bestStreak' }
+    ],
+    'kvantova-cisla.html': [
+      { d: 'serie', key: 'fyzika:kvantova-cisla:stats', field: 'bestStreak' },
+      { d: 'hra-60s', key: 'fyzika:kvantova-cisla:game-bests', field: '60' },
+      { d: 'hra-120s', key: 'fyzika:kvantova-cisla:game-bests', field: '120' },
+      { d: 'hra-180s', key: 'fyzika:kvantova-cisla:game-bests', field: '180' },
+      { d: 'hra-300s', key: 'fyzika:kvantova-cisla:game-bests', field: '300' }
+    ],
+    'laser.html': [
+      { d: 'serie', key: 'fyzika:laser:stats', field: 'bestStreak' }
+    ],
+    'castice-a-interakce.html': [
+      { d: 'hra-60s', key: 'fyzika:castice-a-interakce:game-bests', field: '60' },
+      { d: 'hra-120s', key: 'fyzika:castice-a-interakce:game-bests', field: '120' },
+      { d: 'hra-180s', key: 'fyzika:castice-a-interakce:game-bests', field: '180' },
+      { d: 'hra-300s', key: 'fyzika:castice-a-interakce:game-bests', field: '300' }
     ]
   };
 
