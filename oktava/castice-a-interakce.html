@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Částice a interakce</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../spolecne/config.js"></script>
+<script src="../spolecne/auth.js"></script>
+<script src="../spolecne/zalozky.js?v=3"></script>
+<link rel="stylesheet" href="../spolecne/styl.css">
+<link rel="stylesheet" href="../spolecne/reseni.css?v=1">
+<style>
+:root{
+  --paper:#f2eff8;
+  --surface:#fdfcff;
+  --surface-2:#e6e0f1;
+  --ink:#241f36;
+  --ink-soft:#645d7a;
+  --line:rgba(36,31,54,0.12);
+  --accent:#6b3fb5;
+  --accent-ink:#faf7ff;
+  --success:#28794f;
+  --success-bg:#e3efe0;
+  --danger:#b3392b;
+  --danger-bg:#f5e4de;
+  --focus:#1e6f66;
+  --shadow:0 1px 0 rgba(36,31,54,0.06);
+  /* barvy kvarků ve hře a v obrázcích */
+  --q-up:#d23f24;
+  --q-down:#2f6fd0;
+  --q-strange:#28794f;
+}
+
+.panel{ margin-bottom:22px; }
+.panel-title{ margin-bottom:8px; }
+.panel p{
+  margin:0 0 8px;
+  font-size:0.9rem;
+  line-height:1.55;
+}
+.panel p:last-child{ margin-bottom:0; }
+.panel b{ color:var(--ink); }
+.panel ul, .panel ol{ margin:0 0 8px; padding-left:22px; font-size:0.9rem; line-height:1.55; }
+.panel li{ margin-bottom:4px; }
+.panel h3{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.05rem;
+  letter-spacing:0.01em;
+  margin:16px 0 6px;
+}
+.panel h3:first-child{ margin-top:0; }
+
+.card{ padding:26px 26px 28px; text-align:left; margin-bottom:24px; }
+.cat-tag{ margin-bottom:10px; }
+.card h2{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.6rem;
+  letter-spacing:0.02em;
+  color:var(--ink);
+  text-transform:none;
+  margin-bottom:6px;
+}
+.card .desc{
+  font-size:0.86rem;
+  color:var(--ink-soft);
+  line-height:1.5;
+  margin:0 0 14px;
+}
+
+.katex{ font-size:1.05em; }
+.formula-box{
+  background:var(--surface-2);
+  border-radius:8px;
+  padding:12px 16px;
+  margin:10px 0;
+  font-size:1.1rem;
+  text-align:center;
+}
+.formula-line{
+  text-align:center;
+  font-size:1.1rem;
+  color:var(--ink);
+  line-height:1.8;
+}
+.line-scroll{
+  position:relative;
+  white-space:nowrap;
+  overflow-x:auto;
+  overflow-y:hidden;
+  padding:2px 0 4px;
+}
+.given-data{
+  font-size:clamp(0.9rem, 2.4vw, 1.05rem);
+  color:var(--ink-soft);
+  margin-bottom:20px;
+}
+
+.theory-table-wrap{ overflow-x:auto; margin:6px 0 4px; }
+.theory-table{
+  border-collapse:collapse;
+  font-size:0.88rem;
+  width:100%;
+  min-width:320px;
+}
+.theory-table th, .theory-table td{
+  border:1px solid var(--line);
+  padding:8px 12px;
+  text-align:left;
+}
+.theory-table thead th{
+  background:var(--surface-2);
+  color:var(--ink-soft);
+  font-weight:600;
+  font-size:0.72rem;
+  text-transform:uppercase;
+  letter-spacing:0.05em;
+}
+.theory-table td.mono, .theory-table th.mono{
+  font-family:'IBM Plex Mono', monospace;
+  font-variant-numeric:tabular-nums;
+  text-align:center;
+}
+.theory-table tbody tr:nth-child(even) td{ background:rgba(0,0,0,0.02); }
+
+.theory-fig{
+  margin:12px 0 10px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:10px 12px 8px;
+}
+.theory-fig svg{ display:block; width:100%; max-width:560px; height:auto; margin:0 auto; }
+.theory-fig figcaption{
+  font-size:0.8rem;
+  color:var(--ink-soft);
+  line-height:1.45;
+  text-align:center;
+  margin-top:4px;
+}
+
+.example-grid{ display:flex; flex-direction:column; gap:12px; margin-top:6px; }
+.example-item{
+  background:var(--surface-2);
+  border-radius:10px;
+  padding:12px 14px;
+}
+.example-tag{
+  font-size:0.66rem;
+  text-transform:uppercase;
+  letter-spacing:0.06em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-bottom:6px;
+  display:block;
+}
+.example-eq{
+  font-size:1.05rem;
+  margin-bottom:4px;
+}
+.example-note{ font-size:0.82rem; color:var(--ink-soft); line-height:1.45; }
+
+.links{ margin-top:14px; display:flex; flex-wrap:wrap; gap:10px; justify-content:center; }
+a.btn-link{
+  display:inline-block;
+  font-weight:600;
+  font-size:0.95rem;
+  padding:10px 22px;
+  border-radius:8px;
+  background:var(--accent);
+  color:var(--accent-ink);
+  text-decoration:none;
+}
+a.btn-link:hover{ filter:brightness(1.06); }
+a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+
+.credit{
+  margin-top:24px;
+  font-size:0.8rem;
+  line-height:1.5;
+  color:var(--ink-soft);
+  text-align:center;
+}
+.credit a{ color:inherit; }
+
+
+/* ---- aplety: karta, řádky ovládání, kreslicí plocha, výstupy ---- */
+.applet-head .cat-tag{ margin-bottom:10px; }
+.mode-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:16px;
+  padding-top:14px;
+  border-top:1px solid var(--line);
+}
+.mode-row-label{
+  font-size:0.68rem;
+  text-transform:uppercase;
+  letter-spacing:0.1em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-right:2px;
+  flex:0 0 170px;
+}
+.seg{ display:flex; gap:6px; flex-wrap:wrap; }
+.chip{ font-size:0.82rem; gap:7px; }
+.chip.accented.on{ background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+.chip:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+.slider-wrap{ display:flex; align-items:center; gap:12px; flex:1 1 260px; min-width:0; }
+.slider-wrap input[type=range]{ flex:1 1 auto; min-width:0; accent-color:var(--accent); height:28px; }
+.slider-val{ font-family:'IBM Plex Mono', monospace; font-weight:600; font-size:0.92rem; white-space:nowrap; min-width:6.5em; text-align:right; }
+.canvas-wrap{
+  position:relative;
+  margin-top:18px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:10px;
+  overflow:hidden;
+}
+svg.scene{ width:100%; height:auto; display:block; background:var(--surface); user-select:none; -webkit-user-select:none; touch-action:manipulation; }
+svg.scene text{ font-family:'Work Sans', sans-serif; }
+.legend{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 18px;
+  padding:10px 14px;
+  border-top:1px solid var(--line);
+  font-size:0.78rem;
+  color:var(--ink-soft);
+}
+.legend span{ display:inline-flex; align-items:center; gap:7px; }
+.legend i{ font-style:normal; display:inline-block; width:12px; height:12px; border-radius:50%; background:var(--c); }
+.applet-out{
+  display:flex; flex-wrap:wrap; gap:8px 22px; margin-top:14px;
+  font-size:0.92rem; line-height:1.5;
+}
+.applet-out b{ font-variant-numeric:tabular-nums; }
+.applet-note{ font-size:0.86rem; color:var(--ink-soft); margin:10px 0 0; line-height:1.5; }
+.applet-actions{ display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+.applet-card + .applet-card{ margin-top:4px; }
+.nw{ white-space:nowrap; }
+@media (max-width:720px){
+  .mode-row-label{ flex-basis:100%; }
+}
+.mode-row-label i{ text-transform:none; }
+
+/* ---- hra na čas: výběr z možností ---- */
+.choice-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:16px;
+}
+.choice-btn{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:700;
+  font-size:1.05rem;
+  padding:14px 16px;
+  border-radius:10px;
+  border:1px solid var(--line);
+  background:var(--surface);
+  color:var(--ink);
+  cursor:pointer;
+  text-align:center;
+  transition:transform .05s ease, background .12s, border-color .12s;
+}
+.choice-btn:hover:not(:disabled){ border-color:var(--accent); }
+.choice-btn:active:not(:disabled){ transform:translateY(1px); }
+.choice-btn:disabled{ cursor:not-allowed; }
+.choice-btn.selected{ background:var(--ink); border-color:var(--ink); color:var(--paper); }
+.choice-btn.correct{ background:var(--success-bg); border-color:var(--success); color:var(--success); }
+.choice-btn.wrong{ background:var(--danger-bg); border-color:var(--danger); color:var(--danger); }
+@media (max-width:520px){
+  .choice-grid{ grid-template-columns:1fr; }
+}
+
+/* ---- hra Poskládej hadron ---- */
+.hadron-box{
+  min-height:96px; margin:4px auto 6px; max-width:360px;
+  border:2px dashed var(--line); border-radius:999px;
+  display:flex; align-items:center; justify-content:center; gap:12px; padding:10px;
+}
+.hadron-box.filled{ border-style:solid; border-color:var(--accent); background:var(--surface-2); }
+.q-tile{
+  width:62px; height:62px; border-radius:50%; border:none; cursor:pointer;
+  font-family:'IBM Plex Mono', monospace; font-weight:700; font-size:1.25rem; color:#fff;
+  display:inline-flex; flex-direction:column; align-items:center; justify-content:center; line-height:1.05;
+  background:var(--qc);
+}
+.q-tile small{ font-size:0.62rem; font-weight:600; opacity:0.95; }
+.q-tile.anti{ background:var(--surface); color:var(--qc); border:3px solid var(--qc); }
+.q-tile:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+.q-tile:disabled{ cursor:not-allowed; opacity:0.5; }
+.quark-row{ display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin:10px 0 4px; }
+.charge-line{ text-align:center; font-size:0.95rem; margin:4px 0 8px; min-height:1.4em; }
+.charge-line.bad{ color:var(--danger); font-weight:600; }
+
+@media (max-width:520px){
+  .card{ padding:20px 16px 22px; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <a class="back-link" href="../rozcestniky/oktava.html">← Zpět na Oktáva/4. ročník</a>
+
+  <div class="brand">
+    <div class="brand-lockup">
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <circle cx="20" cy="20" r="16" fill="var(--accent)" fill-opacity="0.14" stroke="var(--accent)" stroke-width="1.4"/>
+        <circle cx="14" cy="15" r="4" fill="var(--q-up)"/>
+        <circle cx="26" cy="15" r="4" fill="var(--q-up)"/>
+        <circle cx="20" cy="27" r="4" fill="var(--q-down)"/>
+        <path d="M16.5,18 L18.5,24 M23.5,18 L21.5,24 M18,15 L22,15" stroke="var(--ink-soft)" stroke-width="1.2"/>
+      </svg>
+      <div class="brand-text">
+        <h1>Částice a interakce</h1>
+        <p>atomová a částicová fyzika — kvarky, leptony, čtyři síly</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="top-tabs">
+    <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+    <button class="toptab" id="top-tab-hra" data-tab="hra">Hra na čas</button>
+  </div>
+
+  <!-- ============ TEORIE ============ -->
+  <div id="theory-section" class="tab-section">
+
+    <div class="panel">
+      <div class="panel-title">Z čeho se skládá hmota</div>
+      <p>Látka kolem nás je postavená z elektronů, protonů a neutronů. <b>Elektron</b> je podle všeho, co víme, <b>elementární</b> — nemá vnitřní strukturu. Proton a neutron elementární nejsou: pokusy s rychlými elektrony (podobné Rutherfordovu, jen mnohem energičtější) ukázaly, že se chovají jako soubor tří menších částic — <b>kvarků</b>.</p>
+      <ul>
+        <li><b>proton</b> = dva kvarky <i>u</i> (up) a jeden kvark <i>d</i> (down): uud,</li>
+        <li><b>neutron</b> = jeden kvark <i>u</i> a dva kvarky <i>d</i>: udd.</li>
+      </ul>
+      <p>Kvarky mají <b>neceločíselný náboj</b>: kvark <i>u</i> má \(+\tfrac{2}{3}e\), kvark <i>d</i> má \(-\tfrac{1}{3}e\). Kontrola: proton \(\tfrac{2}{3} + \tfrac{2}{3} - \tfrac{1}{3} = 1\) (náboj \(+e\)), neutron \(\tfrac{2}{3} - \tfrac{1}{3} - \tfrac{1}{3} = 0\).</p>
+      <figure class="theory-fig">
+        <svg viewBox="0 0 440 140" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Proton složený ze dvou kvarků u a jednoho kvarku d, neutron z jednoho kvarku u a dvou kvarků d.">
+          <circle cx="110" cy="66" r="52" fill="var(--q-up)" fill-opacity="0.1" stroke="var(--q-up)" stroke-width="1.5"/>
+          <circle cx="330" cy="66" r="52" fill="var(--ink-soft)" fill-opacity="0.1" stroke="var(--ink-soft)" stroke-width="1.5"/>
+          <g font-family="Work Sans, sans-serif" font-size="14" font-weight="700" fill="#fff" text-anchor="middle">
+            <circle cx="88" cy="50" r="15" fill="var(--q-up)"/><text x="88" y="55">u</text>
+            <circle cx="132" cy="50" r="15" fill="var(--q-up)"/><text x="132" y="55">u</text>
+            <circle cx="110" cy="88" r="15" fill="var(--q-down)"/><text x="110" y="93">d</text>
+            <circle cx="308" cy="50" r="15" fill="var(--q-up)"/><text x="308" y="55">u</text>
+            <circle cx="352" cy="50" r="15" fill="var(--q-down)"/><text x="352" y="55">d</text>
+            <circle cx="330" cy="88" r="15" fill="var(--q-down)"/><text x="330" y="93">d</text>
+          </g>
+          <g font-family="Work Sans, sans-serif" font-size="12" fill="var(--ink)" text-anchor="middle">
+            <text x="110" y="134">proton: +⅔ +⅔ −⅓ = +1</text><text x="330" y="134">neutron: +⅔ −⅓ −⅓ = 0</text>
+          </g>
+        </svg>
+        <figcaption>Složení nukleonů z kvarků (schematicky).</figcaption>
+      </figure>
+      <p>Samostatný kvark se nikdy nepodařilo vytrhnout. Podle teorie to ani nejde — síla, kterou by bylo nutné kvark z nukleonu vytáhnout, by s rostoucí vzdáleností neklesala, ale rostla. Mluvíme o <b>uvěznění kvarků</b>; podobně nelze získat jen jeden konec provázku.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Kvarky a leptony</div>
+      <p>Kromě kvarků <i>u</i> a <i>d</i> existují další čtyři a kromě elektronu další pět <b>leptonů</b> (řec. <i>leptos</i> = drobný). Tyto částice považujeme za elementární:</p>
+      <div class="theory-table-wrap">
+        <table class="theory-table">
+          <thead><tr><th>Skupina</th><th class="mono">1. generace</th><th class="mono">2. generace</th><th class="mono">3. generace</th><th class="mono">Náboj</th></tr></thead>
+          <tbody>
+            <tr><td rowspan="2">kvarky</td><td class="mono">u (up)</td><td class="mono">c (charm)</td><td class="mono">t (top)</td><td class="mono">+⅔ <i>e</i></td></tr>
+            <tr><td class="mono">d (down)</td><td class="mono">s (strange)</td><td class="mono">b (bottom)</td><td class="mono">−⅓ <i>e</i></td></tr>
+            <tr><td rowspan="2">leptony</td><td class="mono">elektron e⁻</td><td class="mono">mion μ⁻</td><td class="mono">tauon τ⁻</td><td class="mono">−<i>e</i></td></tr>
+            <tr><td class="mono">neutrino ν<sub>e</sub></td><td class="mono">neutrino ν<sub>μ</sub></td><td class="mono">neutrino ν<sub>τ</sub></td><td class="mono">0</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Běžnou látku tvoří jen první generace (u, d, elektron). Částice druhé a třetí generace jsou těžší a velmi rychle se rozpadají; vznikají v kosmickém záření nebo v urychlovačích. Například mion žije asi \(2\cdot 10^{-6}\ \mathrm{s}\).</p>
+      <p>Částice složené z kvarků se nazývají <b>hadrony</b> (řec. <i>hadros</i> = silný). Dělí se na <b>baryony</b> ze tří kvarků (proton, neutron, hyperony Λ, Σ, Ξ, Ω) a <b>mezony</b> z kvarku a antikvarku (piony, kaony). Částic dnes známe několik stovek, ale všechny se dají poskládat z těchto stavebních kamenů.</p>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="9" cy="9" r="7.5" stroke="var(--focus)" stroke-width="1.6"/>
+          <line x1="9" y1="8" x2="9" y2="13" stroke="var(--focus)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="5.2" r="1" fill="var(--focus)"/>
+        </svg>
+        <p>Částice se dělí i podle spinu. <b>Fermiony</b> (spin ½, 3/2, …) — kvarky, leptony, baryony — poslouchají Pauliho vylučovací princip. <b>Bosony</b> (spin 0, 1, 2, …) — mezony, foton a ostatní zprostředkující částice — ho neposlouchají.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Čtyři druhy interakcí</div>
+      <p>Jak je možné, že jádro drží pohromadě? Protony se elektricky odpuzují a neutrony nejsou nabité. Gravitace to není: mezi dvěma protony je gravitační síla asi \(10^{36}\)krát slabší než elektrická. V jádře proto musí působit ještě jiná síla — <b>silná interakce</b>. Drží pohromadě kvarky v nukleonech i nukleony v jádře; je velmi silná, ale s rostoucí vzdáleností rychle slábne, takže každý nukleon působí jen na své nejbližší sousedy.</p>
+      <p>Dnes známe čtyři druhy sil (interakcí). Představujeme si je tak, že si částice vyměňují <b>zprostředkující částice</b> — podobně jako dva bruslaři, kteří si přehazují těžký míč a přitom se od sebe vzdalují.</p>
+      <div class="theory-table-wrap">
+        <table class="theory-table">
+          <thead><tr><th>Interakce</th><th>Na co působí</th><th>Zprostředkuje</th><th>Kde se uplatní</th></tr></thead>
+          <tbody>
+            <tr><td><b>gravitační</b></td><td>všechny částice; nejslabší</td><td>graviton (dosud nepozorován)</td><td>pohyb planet, hvězd, galaxií</td></tr>
+            <tr><td><b>elektromagnetická</b></td><td>nabité částice</td><td>foton</td><td>atomy, molekuly, chemie, světlo, tření, pružnost</td></tr>
+            <tr><td><b>silná</b></td><td>kvarky (a hadrony)</td><td>gluony</td><td>soudržnost nukleonů a jader, jaderná energie</td></tr>
+            <tr><td><b>slabá</b></td><td>kvarky a leptony</td><td>bosony W⁺, W⁻, Z⁰</td><td>přeměna beta, děje s neutriny</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><b>Slabá interakce</b> má velmi krátký dosah. Uplatňuje se například při radioaktivní přeměně beta, kdy se neutron mění na proton, elektron a antineutrino. Její zprostředkující bosony W a Z jsou velmi těžké (přibližně jako středně těžká jádra); objevili je v CERN v roce 1983 a za objev byla udělena Nobelova cena (C. Rubbia, S. van der Meer, 1984). Teorie navíc ukázala, že elektromagnetická a slabá interakce jsou dva projevy jediné <b>elektroslabé</b> interakce. Fyzikové se snaží sjednotit i ostatní síly — sen o „teorii všeho“ zatím splněný není.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Antičástice a anihilace</div>
+      <p>Ke každé částici existuje <b>antičástice</b> se stejnou hmotností, ale s opačným nábojem (a dalšími opačnými vlastnostmi). Existenci antičástic předpověděl P. Dirac (1928); první, <b>pozitron</b> e⁺, objevil C. Anderson v kosmickém záření (1932). Později byly vyrobeny antiprotony, antineutrony a dokonce atomy antivodíku.</p>
+      <p>Setká-li se částice se svou antičásticí, obě zaniknou a jejich energie se uvolní ve formě fotonů — <b>anihilace</b>:</p>
+      <div class="formula-box">\[ \mathrm{e^- + e^+ \to \gamma + \gamma} \]</div>
+      <p>Název (lat. <i>nihil</i> = nic) není přesný: hmota nemizí v „nic“, ale mění se na fotony s nulovou klidovou hmotností. Probíhá i opačný děj — foton záření gama s dostatečnou energií se v blízkosti jádra může přeměnit na pár elektron–pozitron (<b>tvorba párů</b>).</p>
+    </div>
+
+    <div class="card">
+      <span class="cat-tag">Příklad</span>
+      <h2>Fotony z anihilace elektronu a pozitronu</h2>
+      <p class="desc">Pomalý elektron a pozitron anihilují za vzniku dvou fotonů se stejnou energií. Jakou energii a vlnovou délku má každý foton?</p>
+      <div class="stepper" data-reset="reset-anih">
+        <div class="step" data-step="1">
+          <div class="step-connector"></div>
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">1</span>
+            <span class="step-title">Energie jednoho fotonu</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <p>Částice jsou téměř v klidu, celková energie je \(2 m_\mathrm{e} c^2\) a každý foton odnese polovinu:</p>
+            <div class="step-result"><div class="line-scroll">\(E = m_\mathrm{e}c^2 = 9{,}109\cdot 10^{-31}\ \mathrm{kg}\cdot (2{,}998\cdot 10^{8}\ \mathrm{m\cdot s^{-1}})^2 \doteq 8{,}19\cdot 10^{-14}\ \mathrm{J} \doteq 0{,}511\ \mathrm{MeV}\)</div></div>
+          </div>
+        </div>
+        <div class="step" data-step="2">
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">2</span>
+            <span class="step-title">Vlnová délka</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <div class="result-box"><div class="line-scroll">\(\lambda = \dfrac{hc}{E} = \dfrac{6{,}626\cdot 10^{-34}\cdot 2{,}998\cdot 10^{8}}{8{,}19\cdot 10^{-14}}\ \mathrm{m} \doteq 2{,}43\cdot 10^{-12}\ \mathrm{m} = 2{,}43\ \mathrm{pm}\)</div></div>
+            <p>Jde o tvrdé záření gama. Fotony odlétají opačnými směry, aby se zachovala hybnost (před srážkou byla nulová). Na detekci těchto fotonů je založena lékařská metoda PET.</p>
+          </div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn ghost" id="reset-anih">Zopakovat postup od začátku</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Jak částice „vidíme“</div>
+      <p>Částice nevidíme přímo, ale podle stop, které za sebou zanechávají. Nabité částice ionizují atomy látky, kterou prolétají:</p>
+      <ul>
+        <li><b>mlžná komora</b> — v přesycené páře vznikají na iontech drobné kapičky a dráha částice se ukáže jako stopa mlhy;</li>
+        <li><b>bublinová komora</b> — v přehřáté kapalině vznikají podél dráhy bublinky;</li>
+        <li><b>Geigerův–Müllerův počítač</b> — každá částice vyvolá v plynu krátký výboj, který se počítá;</li>
+        <li>moderní <b>detektory</b> u urychlovačů jsou obří polovodičová a elektronická zařízení, dráhy se rekonstruují počítačem.</li>
+      </ul>
+      <p>Aby částice mohly vznikat a aby šlo nahlédnout do jejich nitra, urychlují se na velké energie v <b>urychlovačích</b>. Největší je v Evropské laboratoři pro jaderný výzkum <b>CERN</b> u Ženevy, jejímž členem je i Česká republika; kruhový tunel urychlovače LHC má obvod téměř 27&nbsp;km. Mimochodem právě v CERN vznikl web (www).</p>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="9" cy="9" r="7.5" stroke="var(--focus)" stroke-width="1.6"/>
+          <line x1="9" y1="8" x2="9" y2="13" stroke="var(--focus)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="5.2" r="1" fill="var(--focus)"/>
+        </svg>
+        <p>Difuzní mlžnou komoru lze postavit i ve třídě: průhledná krabice na kovové desce chlazené suchým ledem, u víka plsť nasycená isopropylalkoholem a boční osvětlení. Po ustálení jsou vidět krátké tlusté stopy částic alfa ze zářiče a občas dlouhé tenké stopy mionů z kosmického záření.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Shrnutí</div>
+      <p>• Hmotu tvoří kvarky a leptony; proton je uud, neutron udd, elektron je elementární lepton.</p>
+      <p>• Hadrony: baryony (tři kvarky) a mezony (kvark a antikvark); volné kvarky nepozorujeme.</p>
+      <p>• Čtyři interakce: gravitační, elektromagnetická (foton), silná (gluony), slabá (W, Z); jádra drží pohromadě silná interakce.</p>
+      <p>• Antičástice má stejnou hmotnost a opačný náboj; při anihilaci e⁻e⁺ vzniknou dva fotony gama, každý 0,511&nbsp;MeV (2,43&nbsp;pm).</p>
+    </div>
+
+  </div>
+
+  <!-- ============ HRA NA ČAS: POSKLÁDEJ HADRON ============ -->
+  <div id="hra-section" class="tab-section" hidden>
+
+    <div id="game-info">
+      <div class="panel" id="game-rules-panel">
+        <div class="panel-title">Pravidla hry — Poskládej hadron</div>
+        <p class="game-rules">
+          Hra zadá částici (například proton, pion π⁺ nebo hyperon Ω⁻) i s jejím nábojem. Klikáním na kvarky a antikvarky ji poskládejte:
+          baryon ze tří kvarků (antibaryon ze tří antikvarků), mezon z jednoho kvarku a jednoho antikvarku. Hra průběžně sčítá náboj;
+          kombinaci s neceločíselným nábojem odmítne (taková částice samostatně neexistuje) a nic nestrhne. Za správně poskládanou
+          částici získáte <strong>10 bodů</strong>, za špatnou (i za „Nevím“) se strhává <strong>5 bodů</strong>.
+        </p>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Délka hry</div>
+        <div class="row" id="game-duration-row"></div>
+      </div>
+    </div>
+
+    <div id="game-start-panel">
+      <div class="panel">
+        <div class="settings-foot">
+          <span class="hint" id="game-best-hint">Nejlepší skóre: —</span>
+          <button class="btn primary" id="btn-game-start">Spustit hru</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="game-play" hidden>
+      <div class="game-header">
+        <div class="game-timer" id="game-timer">2:00</div>
+        <div class="readout">
+          <div class="cell"><span class="label">Body</span><span class="value" id="game-score">0</span></div>
+          <div class="cell"><span class="label">Nejlepší</span><span class="value" id="game-best-live">0</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <span class="cat-tag" id="game-cat">Poskládej hadron</span>
+        <p class="task-text" id="game-question"></p>
+        <div class="hadron-box" id="hadron-box" aria-live="polite"></div>
+        <p class="charge-line" id="charge-line"></p>
+        <div class="quark-row" id="quark-row" role="group" aria-label="Kvarky a antikvarky"></div>
+        <div class="feedback" id="game-feedback" hidden>
+          <div class="headline" id="game-feedback-headline"></div>
+          <div class="steps" id="game-feedback-steps"></div>
+        </div>
+        <div class="actions">
+          <button class="btn primary" id="btn-game-check">Zkontrolovat</button>
+          <button class="btn ghost" id="btn-game-undo">Vrátit poslední</button>
+          <button class="btn ghost" id="btn-game-skip">Nevím / Další</button>
+        </div>
+        <details class="navod">
+          <summary>Návod</summary>
+          <p class="hint">Kliknutím na kvark ho přidáte do částice (nejvýše tři), kliknutím na kvark v částici nebo tlačítkem „Vrátit poslední“ ho odeberete. Antikvarky mají nad písmenem čárku a opačný náboj než kvarky. Na pořadí kvarků nezáleží. Enter potvrdí odpověď i přejde na další částici.</p>
+        </details>
+      </div>
+    </div>
+
+    <div class="card" id="game-over" hidden>
+      <span class="cat-tag">Konec hry</span>
+      <div class="game-final-score" id="game-final-score">0 bodů</div>
+      <div class="hint" id="game-final-detail"></div>
+      <div class="actions">
+        <button class="btn primary" id="btn-game-restart">Hrát znovu</button>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>Fyzika — Oktáva/4. ročník</footer>
+</div>
+
+<script src="../spolecne/reseni.js?v=1"></script>
+<script src="../spolecne/spolecne.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  // ---- záložky: tlačítko .toptab[data-tab="x"] ↔ sekce #x-section (Teorie = #theory-section) ----
+  var tabs = {}, sections = {};
+  Array.prototype.forEach.call(document.querySelectorAll('.toptab[data-tab]'), function(btn){
+    var name = btn.getAttribute('data-tab');
+    tabs[name] = btn;
+    sections[name] = document.getElementById(name === 'teorie' ? 'theory-section' : name + '-section');
+  });
+  function showTab(name){
+    for(var k in tabs){
+      tabs[k].classList.toggle('on', k === name);
+      if(sections[k]) sections[k].hidden = k !== name;
+    }
+    // skóre, série a úspěšnost v hlavičce jen u tréninku
+    var readout = document.getElementById('header-readout');
+    if(readout) readout.hidden = name !== 'trenink';
+  }
+  Object.keys(tabs).forEach(function(k){ tabs[k].addEventListener('click', function(){ showTab(k); }); });
+  var hash = location.hash.replace('#', '');
+  if(hash && tabs[hash]) showTab(hash);
+
+  // ---- příklady v teorii: postupně odemykané steppery ----
+  Array.prototype.forEach.call(document.querySelectorAll('.stepper'), function(wrap){
+    var steps = Array.prototype.slice.call(wrap.querySelectorAll('.step'));
+    var unlockedUpTo = 1;
+
+    function refreshLocks(){
+      steps.forEach(function(st){
+        var idx = parseInt(st.getAttribute('data-step'), 10);
+        var locked = idx > unlockedUpTo;
+        st.classList.toggle('locked', locked);
+        st.classList.toggle('unlocked', !locked && !st.classList.contains('done'));
+        st.querySelector('.step-head').setAttribute('aria-disabled', locked ? 'true' : 'false');
+      });
+    }
+
+    steps.forEach(function(st){
+      var idx = parseInt(st.getAttribute('data-step'), 10);
+      var head = st.querySelector('.step-head');
+      var body = st.querySelector('.step-body');
+      head.addEventListener('click', function(){
+        if(idx > unlockedUpTo) return;
+        var wasOpen = st.classList.contains('open');
+        st.classList.toggle('open', !wasOpen);
+        body.hidden = wasOpen;
+        head.setAttribute('aria-expanded', (!wasOpen).toString());
+        if(!wasOpen){
+          st.classList.add('done');
+          if(idx === unlockedUpTo && unlockedUpTo < steps.length){ unlockedUpTo++; }
+          refreshLocks();
+        }
+      });
+    });
+
+    var resetBtn = document.getElementById(wrap.getAttribute('data-reset'));
+    if(resetBtn){
+      resetBtn.addEventListener('click', function(){
+        unlockedUpTo = 1;
+        steps.forEach(function(st){
+          st.classList.remove('open', 'done');
+          st.querySelector('.step-body').hidden = true;
+          st.querySelector('.step-head').setAttribute('aria-expanded', 'false');
+        });
+        refreshLocks();
+      });
+    }
+
+    refreshLocks();
+  });
+
+  // ---- vzorce (KaTeX) ----
+  var KATEX_DELIMS = [{left:'\\(', right:'\\)', display:false}, {left:'\\[', right:'\\]', display:true}];
+  if(window.renderMathInElement){
+    Array.prototype.forEach.call(document.querySelectorAll('.tab-section'), function(sec){
+      try{ renderMathInElement(sec, { delimiters: KATEX_DELIMS }); }catch(e){}
+    });
+  }
+
+  // ---- sbalovací panely v teorii ----
+  try{ makePanelsCollapsible(document.getElementById('theory-section')); }catch(e){}
+
+  // ---- pomocné funkce pro aplety a tréninky ----
+  var NB = '\u00a0';
+  function tex(t){
+    try{ return window.katex ? katex.renderToString(t, {throwOnError:false}) : t; }catch(e){ return t; }
+  }
+  // číslo s daným počtem desetinných míst, desetinnou čárkou a mezerami mezi tisíci
+  function cz(n, dec){
+    var s = roundTo(n, dec).toFixed(dec);
+    var neg = s.charAt(0) === '-';
+    if(neg) s = s.slice(1);
+    var parts = s.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, NB);
+    return (neg ? '−' : '') + parts.join(',');
+  }
+  // totéž v TeXu (mezera mezi tisíci = \,, desetinná čárka = {,})
+  function czTex(n, dec){ return cz(n, dec).replace('−', '-').replace(',', '{,}').replace(/\u00a0/g, '\\,'); }
+  // číslo na `sig` platných číslic (desetinný zápis)
+  function czSig(x, sig){ var r = roundSig(x, sig); return cz(r, decimalsForSig(r, sig)); }
+  // rozklad na mantisu a exponent: x = m · 10^e, 1 ≤ |m| < 10 (po zaokrouhlení na sig číslic)
+  function sciParts(x, sig){
+    if(x === 0) return { m:0, e:0 };
+    var e = Math.floor(Math.log10(Math.abs(x)));
+    var m = roundSig(x / Math.pow(10, e), sig);
+    if(Math.abs(m) >= 10){ m = roundSig(m / 10, sig); e++; }
+    return { m:m, e:e };
+  }
+  // TeX zápis čísla: desetinně pro 0,001 ≤ |x| < 100 000, jinak a·10^n
+  function numTex(x, sig, forceSci){
+    var r = roundSig(x, sig), a = Math.abs(r);
+    if(!forceSci && (a === 0 || (a >= 1e-3 && a < 1e5))){
+      return czSig(x, sig).replace('−', '-').replace(',', '{,}').replace(/\u00a0/g, '\\,');
+    }
+    var p = sciParts(x, sig);
+    return cz(p.m, sig - 1).replace('−', '-').replace(',', '{,}') + '\\cdot 10^{' + p.e + '}';
+  }
+  // totéž jako prostý text do HTML
+  function numTxt(x, sig, forceSci){
+    var r = roundSig(x, sig), a = Math.abs(r);
+    if(!forceSci && (a === 0 || (a >= 1e-3 && a < 1e5))) return czSig(x, sig);
+    var p = sciParts(x, sig);
+    return cz(p.m, sig - 1) + '·10<sup>' + String(p.e).replace('-', '−') + '</sup>';
+  }
+  function randInt(a, b){ return a + Math.floor(Math.random() * (b - a + 1)); }
+  function pick(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+  function svgEl(name, attrs, parent){
+    var n = document.createElementNS('http://www.w3.org/2000/svg', name);
+    for(var k in attrs){ if(attrs.hasOwnProperty(k)) n.setAttribute(k, attrs[k]); }
+    if(parent) parent.appendChild(n);
+    return n;
+  }
+  function clearEl(n){ while(n.firstChild) n.removeChild(n.firstChild); }
+  function setPressed(group, btn){
+    Array.prototype.forEach.call(group.querySelectorAll('button'), function(b){
+      var on = b === btn;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+  }
+
+  // ================= HRA NA ČAS: POSKLÁDEJ HADRON =================
+  (function(){
+    var GAME_KEY = 'fyzika:castice-a-interakce:game-bests';
+    var DUR = [ { key:60, name:'1 min' }, { key:120, name:'2 min' }, { key:180, name:'3 min' }, { key:300, name:'5 min' } ];
+    // kvarky: náboj ve třetinách e
+    var Q = {
+      'u':{ t:'u', ch:2, anti:false, col:'var(--q-up)' }, 'd':{ t:'d', ch:-1, anti:false, col:'var(--q-down)' }, 's':{ t:'s', ch:-1, anti:false, col:'var(--q-strange)' },
+      'U':{ t:'ū', ch:-2, anti:true, col:'var(--q-up)' }, 'D':{ t:'d̄', ch:1, anti:true, col:'var(--q-down)' }, 'S':{ t:'s̄', ch:1, anti:true, col:'var(--q-strange)' }
+    };
+    var ORDER = ['u', 'd', 's', 'U', 'D', 'S'];
+    // částice: název, složení (velká písmena = antikvarky), druh
+    var TARGETS = [
+      ['proton p', 'uud', 'baryon'], ['neutron n', 'udd', 'baryon'], ['antiproton p̄', 'UUD', 'antibaryon'],
+      ['Δ⁺⁺', 'uuu', 'baryon'], ['Δ⁻', 'ddd', 'baryon'], ['Λ⁰ (lambda)', 'uds', 'baryon'], ['Σ⁺ (sigma)', 'uus', 'baryon'], ['Σ⁻ (sigma)', 'dds', 'baryon'],
+      ['Ξ⁰ (ksí)', 'uss', 'baryon'], ['Ξ⁻ (ksí)', 'dss', 'baryon'], ['Ω⁻ (omega)', 'sss', 'baryon'],
+      ['pion π⁺', 'uD', 'mezon'], ['pion π⁻', 'dU', 'mezon'], ['kaon K⁺', 'uS', 'mezon'], ['kaon K⁻', 'sU', 'mezon'], ['kaon K⁰', 'dS', 'mezon']
+    ];
+    var gs = { duration:120, running:false, timeLeft:120, timerId:null, score:0, correct:0, wrong:0, target:null, picked:[], locked:false, bests:{}, last:'' };
+    var box = document.getElementById('hadron-box'), row = document.getElementById('quark-row'), chargeLine = document.getElementById('charge-line');
+    var fb = document.getElementById('game-feedback'), fbHead = document.getElementById('game-feedback-headline'), fbSteps = document.getElementById('game-feedback-steps');
+    var checkBtn = document.getElementById('btn-game-check'), skipBtn = document.getElementById('btn-game-skip'), undoBtn = document.getElementById('btn-game-undo');
+    var timerEl = document.getElementById('game-timer');
+    function chargeOf(keys){ return keys.reduce(function(s, k){ return s + Q[k].ch; }, 0); }
+    function thirds(n){
+      if(n % 3 === 0){ var v = n / 3; return (v > 0 ? '+' : v < 0 ? '−' : '') + (Math.abs(v) === 1 ? '' : Math.abs(v)) + (v === 0 ? '0' : 'e'); }
+      return (n > 0 ? '+' : '−') + Math.abs(n) + '/3 e';
+    }
+    function sorted(str){ return str.split('').sort().join(''); }
+    function tile(k, small){
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'q-tile' + (Q[k].anti ? ' anti' : ''); b.style.setProperty('--qc', Q[k].col);
+      b.innerHTML = Q[k].t + (small ? '' : '<small>' + thirds(Q[k].ch).replace(' e', '') + '</small>');
+      b.setAttribute('aria-label', (Q[k].anti ? 'antikvark ' : 'kvark ') + Q[k].t.charAt(0) + ', náboj ' + thirds(Q[k].ch));
+      return b;
+    }
+    function renderBox(){
+      clearEl(box);
+      gs.picked.forEach(function(k, i){
+        var b = tile(k, false);
+        b.addEventListener('click', function(){ if(gs.locked) return; gs.picked.splice(i, 1); renderBox(); });
+        box.appendChild(b);
+      });
+      box.classList.toggle('filled', gs.picked.length > 0);
+      chargeLine.classList.remove('bad');
+      chargeLine.innerHTML = gs.picked.length ? 'Náboj poskládané částice: <b>' + thirds(chargeOf(gs.picked)) + '</b>' : 'Zatím žádný kvark.';
+      Array.prototype.forEach.call(row.children, function(b){ b.disabled = gs.locked || gs.picked.length >= 3; });
+    }
+    function buildRow(){
+      clearEl(row);
+      ORDER.forEach(function(k){
+        var b = tile(k, false);
+        b.addEventListener('click', function(){ if(gs.locked || gs.picked.length >= 3) return; gs.picked.push(k); renderBox(); });
+        row.appendChild(b);
+      });
+    }
+    function loadBests(){ try{ var raw = localStorage.getItem(GAME_KEY); if(raw) gs.bests = JSON.parse(raw) || {}; }catch(e){} }
+    function saveBests(){ try{ localStorage.setItem(GAME_KEY, JSON.stringify(gs.bests)); }catch(e){} }
+    function best(){ return gs.bests[gs.duration] || 0; }
+    function bestHint(){ document.getElementById('game-best-hint').textContent = 'Nejlepší skóre: ' + (best() || '—'); }
+    function pointWord(n){ var a = Math.abs(n); return a === 1 ? 'bod' : (a >= 2 && a <= 4) ? 'body' : 'bodů'; }
+    function compText(c){ return c.split('').map(function(k){ return Q[k].t; }).join(' '); }
+    function genQ(){
+      var t, k = 0;
+      do{ t = pick(TARGETS); k++; }while(t[0] === gs.last && k < 20);
+      gs.last = t[0]; gs.target = t; gs.picked = []; gs.locked = false;
+      document.getElementById('game-question').innerHTML = 'Poskládejte <b>' + t[0] + '</b> (náboj ' + thirds(chargeOf(t[1].split(''))) + ').';
+      fb.hidden = true; fb.className = 'feedback'; checkBtn.textContent = 'Zkontrolovat';
+      renderBox();
+    }
+    function finish(ok, bySkip){
+      gs.locked = true;
+      var t = gs.target;
+      fb.hidden = false;
+      if(ok){ gs.score += 10; gs.correct++; fb.className = 'feedback ok'; fbHead.textContent = 'Správně! +10 b'; }
+      else { gs.score -= 5; gs.wrong++; fb.className = 'feedback bad'; fbHead.textContent = (bySkip ? 'Přeskočeno.' : 'Bohužel, špatně.') + ' −5 b'; }
+      var parts = t[1].split('').map(function(k){ return thirds(Q[k].ch).replace(' e', ''); }).join(' ');
+      FyzikaReseni.show(fb, fbSteps, { steps:[t[0] + ' = ' + compText(t[1]) + ' (' + t[2] + '); náboj: ' + parts + ' = ' + thirds(chargeOf(t[1].split('')))], plain:true, title:'' });
+      document.getElementById('game-score').textContent = gs.score;
+      checkBtn.textContent = 'Další příklad →'; checkBtn.focus();
+      renderBox();
+    }
+    function tryCheck(){
+      if(!gs.running) return;
+      if(gs.locked){ genQ(); return; }
+      if(!gs.picked.length){ chargeLine.classList.add('bad'); chargeLine.textContent = 'Nejdřív poskládejte částici z kvarků.'; return; }
+      var c = chargeOf(gs.picked);
+      if(c % 3 !== 0){ chargeLine.classList.add('bad'); chargeLine.textContent = 'Náboj ' + thirds(c) + ' není celočíselný — taková částice samostatně neexistuje. Upravte složení.'; return; }
+      finish(sorted(gs.picked.join('')) === sorted(gs.target[1]), false);
+    }
+    function trySkip(){
+      if(!gs.running) return;
+      if(gs.locked){ genQ(); return; }
+      if(!confirm('Opravdu chcete přeskočit? Bude to počítáno jako špatná odpověď (−5 b).')) return;
+      finish(false, true);
+    }
+    function tick(){
+      gs.timeLeft--;
+      timerEl.textContent = formatGameTime(Math.max(0, gs.timeLeft));
+      timerEl.classList.toggle('low-time', gs.timeLeft <= 20 && gs.timeLeft > 0);
+      if(gs.timeLeft <= 0) endGame();
+    }
+    function startGame(){
+      gs.running = true; gs.timeLeft = gs.duration; gs.score = 0; gs.correct = 0; gs.wrong = 0;
+      document.getElementById('game-score').textContent = '0';
+      timerEl.textContent = formatGameTime(gs.duration); timerEl.classList.remove('low-time');
+      document.getElementById('game-best-live').textContent = best();
+      document.getElementById('game-info').hidden = true;
+      document.getElementById('game-start-panel').hidden = true;
+      document.getElementById('game-over').hidden = true;
+      document.getElementById('game-play').hidden = false;
+      genQ();
+      if(gs.timerId) clearInterval(gs.timerId);
+      gs.timerId = setInterval(tick, 1000);
+    }
+    function endGame(){
+      if(!gs.running) return;
+      gs.running = false; clearInterval(gs.timerId); gs.timerId = null;
+      if(gs.score > best()){ gs.bests[gs.duration] = gs.score; saveBests(); }
+      if(window.FyzikaScores) FyzikaScores.report('hra-' + gs.duration + 's', gs.score, true);
+      document.getElementById('game-play').hidden = true;
+      document.getElementById('game-over').hidden = false;
+      document.getElementById('game-rules-panel').hidden = true;
+      document.getElementById('game-info').hidden = false;
+      document.getElementById('game-final-score').textContent = gs.score + ' ' + pointWord(gs.score);
+      document.getElementById('game-final-detail').textContent = 'Správně: ' + gs.correct + ' · Špatně: ' + gs.wrong + ' · Nejlepší skóre: ' + best();
+      bestHint();
+    }
+    (function(){
+      var r = document.getElementById('game-duration-row');
+      DUR.forEach(function(d){
+        var b = document.createElement('button');
+        b.type = 'button'; b.className = 'chip' + (d.key === gs.duration ? ' on' : ''); b.textContent = d.name;
+        b.addEventListener('click', function(){
+          if(gs.running) return;
+          gs.duration = d.key;
+          Array.prototype.forEach.call(r.children, function(el, i){ el.classList.toggle('on', DUR[i].key === gs.duration); });
+          bestHint();
+        });
+        r.appendChild(b);
+      });
+    })();
+    document.getElementById('btn-game-start').addEventListener('click', startGame);
+    document.getElementById('btn-game-restart').addEventListener('click', startGame);
+    checkBtn.addEventListener('click', tryCheck);
+    skipBtn.addEventListener('click', trySkip);
+    undoBtn.addEventListener('click', function(){ if(gs.locked || !gs.picked.length) return; gs.picked.pop(); renderBox(); });
+    document.addEventListener('keydown', function(e){
+      if(!gs.running || document.getElementById('hra-section').hidden) return;
+      if(e.key === 'Enter'){ e.preventDefault(); tryCheck(); }
+    });
+    document.addEventListener('click', function(e){
+      var t = e.target.closest ? e.target.closest('.toptab') : null;
+      if(!t || !gs.running || t.getAttribute('data-tab') === 'hra') return;
+      if(confirm('Hra ještě běží. Opravdu ji chcete ukončit?')){ endGame(); }
+      else { e.stopPropagation(); e.preventDefault(); }
+    }, true);
+    document.addEventListener('fyzika:scores-updated', function(){ gs.bests = {}; loadBests(); bestHint(); });
+    buildRow(); loadBests(); bestHint();
+  })();
+})();
+</script>
+</body>
+</html>
