@@ -55,7 +55,12 @@
     'dalekohled.html': 'oktava',
     'difrakce-svetla.html': 'oktava',
     'interference-svetla.html': 'oktava',
-    'polarizace-svetla.html': 'oktava'
+    'polarizace-svetla.html': 'oktava',
+    'spektrum-em-zareni.html': 'oktava',
+    'druhy-zareni.html': 'oktava',
+    'spektra-latek.html': 'oktava',
+    'zareni-cerneho-telesa.html': 'oktava',
+    'zarovka-v-praxi.html': 'oktava'
   };
 
   // auth.js vždy žije na <kořen webu>/spolecne/auth.js — z jeho vlastní (absolutní)
@@ -153,6 +158,25 @@
     ],
     'cocky.html': [
       { d: 'serie', key: 'fyzika:cocky:stats', field: 'bestStreak' }
+    ],
+    'spektrum-em-zareni.html': [
+      { d: 'serie', key: 'fyzika:spektrum-em-zareni:stats', field: 'bestStreak' },
+      { d: 'hra-60s', key: 'fyzika:spektrum-em-zareni:game-bests', field: '60' },
+      { d: 'hra-120s', key: 'fyzika:spektrum-em-zareni:game-bests', field: '120' },
+      { d: 'hra-180s', key: 'fyzika:spektrum-em-zareni:game-bests', field: '180' },
+      { d: 'hra-300s', key: 'fyzika:spektrum-em-zareni:game-bests', field: '300' }
+    ],
+    'druhy-zareni.html': [
+      { d: 'serie', key: 'fyzika:druhy-zareni:stats', field: 'bestStreak' }
+    ],
+    'spektra-latek.html': [
+      { d: 'serie', key: 'fyzika:spektra-latek:stats', field: 'bestStreak' }
+    ],
+    'zareni-cerneho-telesa.html': [
+      { d: 'serie', key: 'fyzika:zareni-cerneho-telesa:stats', field: 'bestStreak' }
+    ],
+    'zarovka-v-praxi.html': [
+      { d: 'serie', key: 'fyzika:zarovka-v-praxi:stats', field: 'bestStreak' }
     ]
   };
 

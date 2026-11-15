@@ -1,0 +1,1372 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Druhy záření a luminiscence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../spolecne/config.js"></script>
+<script src="../spolecne/auth.js"></script>
+<script src="../spolecne/zalozky.js?v=3"></script>
+<link rel="stylesheet" href="../spolecne/styl.css">
+<link rel="stylesheet" href="../spolecne/reseni.css?v=1">
+<style>
+:root{
+  --paper:#f2eff8;
+  --surface:#fdfcff;
+  --surface-2:#e6e0f1;
+  --ink:#241f36;
+  --ink-soft:#645d7a;
+  --line:rgba(36,31,54,0.12);
+  --accent:#6b3fb5;
+  --accent-ink:#faf7ff;
+  --success:#28794f;
+  --success-bg:#e3efe0;
+  --danger:#b3392b;
+  --danger-bg:#f5e4de;
+  --focus:#1e6f66;
+  --shadow:0 1px 0 rgba(36,31,54,0.06);
+
+  /* barvy animace luminiscence */
+  --lum:#f1e6a6;
+  --uvc:#7a4fd6;
+  --uvc-soft:#d9cbf6;
+  --led-chip:#3a63c9;
+}
+
+}
+
+.panel{ margin-bottom:22px; }
+.panel-title{ margin-bottom:8px; }
+.panel p{
+  margin:0 0 8px;
+  font-size:0.9rem;
+  line-height:1.55;
+}
+.panel p:last-child{ margin-bottom:0; }
+.panel b{ color:var(--ink); }
+.panel ul, .panel ol{ margin:0 0 8px; padding-left:22px; font-size:0.9rem; line-height:1.55; }
+.panel li{ margin-bottom:4px; }
+.panel h3{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.05rem;
+  letter-spacing:0.01em;
+  margin:16px 0 6px;
+}
+.panel h3:first-child{ margin-top:0; }
+
+.card{ padding:26px 26px 28px; text-align:left; margin-bottom:24px; }
+.cat-tag{ margin-bottom:10px; }
+.card h2{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.6rem;
+  letter-spacing:0.02em;
+  color:var(--ink);
+  text-transform:none;
+  margin-bottom:6px;
+}
+.card .desc{
+  font-size:0.86rem;
+  color:var(--ink-soft);
+  line-height:1.5;
+  margin:0 0 14px;
+}
+
+.katex{ font-size:1.05em; }
+.formula-box{
+  background:var(--surface-2);
+  border-radius:8px;
+  padding:12px 16px;
+  margin:10px 0;
+  font-size:1.1rem;
+  text-align:center;
+}
+.formula-line{
+  text-align:center;
+  font-size:1.1rem;
+  color:var(--ink);
+  line-height:1.8;
+}
+.line-scroll{
+  position:relative;
+  white-space:nowrap;
+  overflow-x:auto;
+  overflow-y:hidden;
+  padding:2px 0 4px;
+}
+.given-data{
+  font-size:clamp(0.9rem, 2.4vw, 1.05rem);
+  color:var(--ink-soft);
+  margin-bottom:20px;
+}
+
+.theory-table-wrap{ overflow-x:auto; margin:6px 0 4px; }
+.theory-table{
+  border-collapse:collapse;
+  font-size:0.88rem;
+  width:100%;
+  min-width:320px;
+}
+.theory-table th, .theory-table td{
+  border:1px solid var(--line);
+  padding:8px 12px;
+  text-align:left;
+}
+.theory-table thead th{
+  background:var(--surface-2);
+  color:var(--ink-soft);
+  font-weight:600;
+  font-size:0.72rem;
+  text-transform:uppercase;
+  letter-spacing:0.05em;
+}
+.theory-table td.mono, .theory-table th.mono{
+  font-family:'IBM Plex Mono', monospace;
+  font-variant-numeric:tabular-nums;
+  text-align:center;
+}
+.theory-table tbody tr:nth-child(even) td{ background:rgba(0,0,0,0.02); }
+
+.theory-fig{
+  margin:12px 0 10px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:10px 12px 8px;
+}
+.theory-fig svg{ display:block; width:100%; max-width:560px; height:auto; margin:0 auto; }
+.theory-fig figcaption{
+  font-size:0.8rem;
+  color:var(--ink-soft);
+  line-height:1.45;
+  text-align:center;
+  margin-top:4px;
+}
+
+.example-grid{ display:flex; flex-direction:column; gap:12px; margin-top:6px; }
+.example-item{
+  background:var(--surface-2);
+  border-radius:10px;
+  padding:12px 14px;
+}
+.example-tag{
+  font-size:0.66rem;
+  text-transform:uppercase;
+  letter-spacing:0.06em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-bottom:6px;
+  display:block;
+}
+.example-eq{
+  font-size:1.05rem;
+  margin-bottom:4px;
+}
+.example-note{ font-size:0.82rem; color:var(--ink-soft); line-height:1.45; }
+
+.links{ margin-top:14px; display:flex; flex-wrap:wrap; gap:10px; justify-content:center; }
+a.btn-link{
+  display:inline-block;
+  font-weight:600;
+  font-size:0.95rem;
+  padding:10px 22px;
+  border-radius:8px;
+  background:var(--accent);
+  color:var(--accent-ink);
+  text-decoration:none;
+}
+a.btn-link:hover{ filter:brightness(1.06); }
+a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+
+.credit{
+  margin-top:24px;
+  font-size:0.8rem;
+  line-height:1.5;
+  color:var(--ink-soft);
+  text-align:center;
+}
+.credit a{ color:inherit; }
+
+/* ---- aplety: řádky ovládání (jako na stránce Polarizace světla) ---- */
+.mode-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:16px;
+  padding-top:14px;
+  border-top:1px solid var(--line);
+}
+.mode-row[hidden]{ display:none; }
+.mode-row-label{
+  font-size:0.68rem;
+  text-transform:uppercase;
+  letter-spacing:0.1em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-right:2px;
+  flex:0 0 120px;   /* stejná šířka ve všech řádcích */
+}
+.seg{ display:flex; gap:6px; flex-wrap:wrap; }
+.chip{ font-size:0.82rem; gap:7px; }
+.chip.accented.on{
+  background:var(--accent);
+  color:var(--accent-ink);
+  border-color:var(--accent);
+}
+.chip:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+.slider-row input[type=range]{ flex:1 1 220px; min-width:0; height:34px; margin:0; accent-color:var(--accent); cursor:pointer; }
+.slider-row input[type=range]:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+.slider-val{
+  flex:0 0 140px;
+  font-weight:600;
+  font-size:0.95rem;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+}
+
+/* ---- aplet: hlavička s tlačítkem na celou obrazovku ---- */
+.applet-head{ display:flex; gap:16px; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; }
+.applet-head-text{ flex:1 1 360px; }
+.applet-head .cat-tag{ margin-bottom:10px; }
+button.btn.fs-btn{ display:inline-flex; align-items:center; gap:8px; flex:none; padding:9px 16px; font-size:0.86rem; }
+button.btn.fs-btn svg{ flex:none; }
+.applet-stage .theory-fig{ margin-top:4px; }
+
+/* ---- celá obrazovka: nahoře pruh s ovládáním, pod ním obrázek přes zbytek plochy ---- */
+.applet-card.is-full{
+  position:fixed;
+  inset:0;
+  z-index:1000;
+  margin:0;
+  border-radius:0;
+  border:0;
+  overflow:hidden;
+  padding:0;
+  background:var(--surface);
+  display:flex;
+  flex-direction:column;
+}
+.applet-card:fullscreen{ width:100%; height:100%; }
+.applet-card.is-full .applet-head{
+  flex:none; flex-wrap:nowrap; align-items:center;
+  padding:8px 14px 0; background:var(--surface); order:0;
+}
+.applet-card.is-full .applet-head-text{ flex:1 1 auto; }
+.applet-card.is-full .applet-head{ justify-content:space-between; }
+.applet-card.is-full .applet-controls{
+  flex:none; display:flex; flex-wrap:wrap; align-items:center; gap:0 26px;
+  padding:0 14px 8px; background:var(--surface); border-bottom:1px solid var(--line); order:1;
+}
+.applet-card.is-full .mode-row{ margin:0; padding:4px 0 0; border-top:0; flex-wrap:nowrap; }
+.applet-card.is-full .mode-row-label{ flex:none; }
+.applet-card.is-full .slider-row{ flex:1 1 380px; }
+.applet-card.is-full .slider-row input[type=range]{ height:28px; }
+.applet-card.is-full details.navod,
+.applet-card.is-full figcaption,
+.applet-card.is-full .desc,
+.applet-card.is-full .cat-tag{ display:none; }
+.applet-card.is-full h2{ font-size:1.25rem; margin:0; }
+.applet-card.is-full .applet-stage{ flex:1 1 auto; min-height:0; position:relative; margin:0; order:2; }
+.applet-card.is-full .theory-fig{
+  position:absolute; inset:0; margin:0; padding:0; border:0; border-radius:0;
+  display:flex; flex-direction:column;
+}
+.applet-card.is-full .theory-fig svg{ flex:1 1 auto; min-height:0; width:100%; max-width:none; height:100%; margin:0; }
+/* telefon na výšku, který neumí zamknout orientaci (např. iPhone): karta se otočí o 90° */
+.applet-card.is-full.rotated{
+  inset:auto; top:0; left:0;
+  width:100vh; height:100vw;
+  width:100dvh; height:100dvw;
+  transform-origin:top left;
+  transform:translateX(100vw) rotate(90deg);
+}
+/* telefon na šířku (zamčený i otočený): kompaktní pruh, ať je obrázek co největší */
+.applet-card.is-full.rotated .applet-head-text{ display:none; }
+@media (max-height:500px) and (orientation:landscape){
+  .applet-card.is-full .applet-head-text{ display:none; }
+}
+
+/* ---- širší obrázky a delší výpis hodnot ---- */
+.fs-hint{ display:none; margin:8px 0 0; text-align:center; }
+.applet-card.is-full .fs-hint{ display:none; }
+.applet-card:not(.is-full) .theory-fig svg.wide{ max-width:760px; }
+.slider-val.wide{ flex:1 1 240px; white-space:normal; }
+
+@media (max-width:520px){
+  .card{ padding:20px 16px 22px; }
+  .top-tabs{ flex-wrap:wrap; }
+  .toptab{ flex:1 1 auto; padding:13px 8px; }
+  .fs-hint{ display:block; }
+}
+
+/* ---- trénink: zadání, odpověď a výběr z možností (podle stránek Kulová zrcadla a Převody jednotek) ---- */
+.task-banner{
+  display:flex;
+  align-items:baseline;
+  gap:6px 12px;
+  flex-wrap:wrap;
+  margin-top:14px;
+  background:var(--surface-2);
+  border:1px solid var(--line);
+  border-left:4px solid var(--accent);
+  border-radius:8px;
+  padding:11px 16px;
+}
+.task-banner-label{
+  font-size:0.78rem;
+  text-transform:uppercase;
+  letter-spacing:0.08em;
+  color:var(--ink-soft);
+  font-weight:600;
+}
+.task-text{ font-size:1rem; line-height:1.55; color:var(--ink); flex:1 1 100%; }
+.task-text .katex{ font-size:1.05em; }
+.task-fig{ margin-top:12px; }
+.equation{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:600;
+  font-size:clamp(1.2rem, 4vw, 1.8rem);
+  display:flex;
+  align-items:baseline;
+  justify-content:center;
+  gap:0.4em;
+  flex-wrap:wrap;
+  margin-top:18px;
+  font-variant-numeric:tabular-nums;
+}
+.equation .lhs .katex{ font-size:0.95em; }
+.equation .unit{ color:var(--ink-soft); font-size:0.7em; margin-left:0.1em; }
+.equation .eq{ color:var(--ink-soft); margin:0 0.1em; }
+.answer-input{ width:5.2em; }
+.answer-input.sci-mantissa{ width:3.6em; }
+.sci-group{ display:inline-flex; align-items:baseline; gap:0.12em; }
+.sci-times{ font-size:0.65em; color:var(--ink-soft); margin:0 0.02em; }
+.sci-exp{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:600;
+  width:2.4em;
+  text-align:center;
+  border:none;
+  border-bottom:2px solid var(--ink-soft);
+  background:transparent;
+  color:var(--ink);
+  font-size:0.55em;
+  vertical-align:top;
+  padding:0 0.05em;
+}
+.sci-exp:focus{ outline:none; border-color:var(--focus); }
+.sci-exp.correct{ border-color:var(--success); color:var(--success); }
+.sci-exp.wrong{ border-color:var(--danger); color:var(--danger); }
+.opt-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:8px; margin-top:16px; }
+.opt-grid.wide-opts{ grid-template-columns:1fr; }
+.opt-btn{
+  font-family:'Work Sans', sans-serif;
+  font-size:0.92rem;
+  font-weight:500;
+  text-align:left;
+  line-height:1.35;
+  min-height:44px;
+  padding:10px 14px;
+  border-radius:10px;
+  border:1px solid var(--line);
+  background:var(--surface);
+  color:var(--ink);
+  cursor:pointer;
+  transition:transform .05s ease, background .12s, border-color .12s, box-shadow .12s;
+}
+.opt-btn:hover:not(:disabled){ border-color:var(--accent); }
+.opt-btn:active:not(:disabled){ transform:translateY(1px); }
+.opt-btn:disabled{ cursor:default; }
+.opt-btn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+.opt-btn.selected{ border-color:var(--ink); box-shadow:0 0 0 2px var(--ink); background:var(--surface-2); }
+.opt-btn.correct{ border-color:var(--success); box-shadow:0 0 0 2px var(--success); background:var(--success-bg); }
+.opt-btn.wrong{ border-color:var(--danger); box-shadow:0 0 0 2px var(--danger); background:var(--danger-bg); }
+.opt-btn.missed{ border-color:var(--success); border-style:dashed; }
+.trainer-card .actions{ margin-top:18px; gap:8px; }
+.trainer-card .feedback .steps{ font-size:0.88rem; line-height:1.6; margin-top:4px; }
+.trainer-card .feedback .tip{ font-size:0.84rem; }
+
+@media (max-width:520px){
+  .opt-grid{ grid-template-columns:1fr 1fr; }
+  .readout .cell{ min-width:64px; padding:6px 8px; }
+}
+.equation[hidden], .opt-grid[hidden], .task-fig[hidden]{ display:none; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <a class="back-link" href="../rozcestniky/oktava.html">← Zpět na Oktáva/4. ročník</a>
+
+  <div class="brand">
+    <div class="brand-lockup">
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect x="3" y="14" width="34" height="12" rx="6" fill="var(--surface-2)" stroke="var(--ink)" stroke-width="1.8"/>
+        <path d="M11,20 q2,-3 4,0 t4,0" stroke="var(--ink-soft)" stroke-width="1.4" fill="none" stroke-dasharray="2 1.5"/>
+        <path d="M24,12 L27,4 M30,13 L35,7 M24,28 L27,36 M30,27 L35,33" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <div class="brand-text">
+        <h1>Druhy záření a luminiscence</h1>
+        <p>Infračervené, ultrafialové a rentgenové záření, tepelné záření, luminiscence</p>
+      </div>
+    </div>
+    <div class="readout" id="header-readout" hidden>
+      <div class="cell"><span class="label">Skóre</span><span class="value" id="stat-score">0</span></div>
+      <div class="cell"><span class="label">Série</span><span class="value" id="stat-streak">0</span></div>
+      <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="stat-accuracy">—</span></div>
+    </div>
+  </div>
+
+  <div class="top-tabs">
+    <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+    <button class="toptab" id="top-tab-zarivka" data-tab="zarivka">Zářivka a LED</button>
+    <button class="toptab" id="top-tab-trenink" data-tab="trenink">Trénink</button>
+  </div>
+
+  <!-- ============ TEORIE ============ -->
+  <div id="theory-section" class="tab-section">
+
+    <div class="panel">
+      <div class="panel-title">Infračervené záření</div>
+      <p><b>Infračervené záření</b> leží ve spektru mezi světlem a nejkratšími rádiovými vlnami (1&nbsp;mm až 760&nbsp;nm). Vyzařují ho všechna tělesa zahřátá na vyšší teplotu — topení, kamna, ale i lidské tělo. Když ho těleso pohltí, probíhá tepelná výměna a těleso se ohřívá. Proto infrazářič hřeje, i když nesvítí.</p>
+      <p>Infračervené záření se láme a odráží podle stejných zákonů jako světlo, takže z něj lze stavět optické soustavy. Obyčejné optické sklo ho ale nepropouští, čočky se proto vyrábějí ze speciálních materiálů (například ZnS nebo ZnSe).</p>
+      <h3>Využití</h3>
+      <ul>
+        <li><b>Termovizní kamera</b> zachytí infračervené záření i z neosvětlených předmětů a každé teplotě povrchu přiřadí barvu. Vznikne <b>termogram</b>. Používá se při hledání úniků tepla z budov, poruch elektrického vedení, zánětů pod kůží nebo jako noční vidění.</li>
+        <li><b>Dálkový ovladač</b> vysílá infračervenou diodou krátké impulzy, které nesou zakódovaný povel; přijímá je čidlo v ovládaném přístroji.</li>
+        <li><b>Infrazářiče</b> k vytápění a sušení.</li>
+      </ul>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="9" cy="9" r="7.5" stroke="var(--focus)" stroke-width="1.6"/>
+          <line x1="9" y1="8" x2="9" y2="13" stroke="var(--focus)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="5.2" r="1" fill="var(--focus)"/>
+        </svg>
+        <p>Infračervené záření objevil William Herschel roku 1800: rozložil sluneční světlo hranolem a teploměrem zjistil, že nejvíce se ohřívá místo <i>za</i> červeným koncem spektra, kde oko nevidí nic. Blikající diodu dálkového ovladače neuvidíte okem, ale ukáže ji kamera mobilu.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Ultrafialové záření</div>
+      <p><b>Ultrafialové záření</b> (UV) má kratší vlnovou délku než fialové světlo (390&nbsp;nm až 10&nbsp;nm); nejkratší vlny zasahují až k rentgenovému záření. Oko ho nevidí, a přesto mu škodí — proti němu chrání brýle se speciálními skly.</p>
+      <h3>Účinky na organismus</h3>
+      <ul>
+        <li>V kůži vyvolává tvorbu ochranného pigmentu (opálení) a vitaminu D.</li>
+        <li>Velké dávky škodí; UV záření prokazatelně přispívá ke vzniku rakoviny kůže.</li>
+        <li>Ničí choroboplodné mikroorganismy, proto se jím <b>sterilizuje</b>.</li>
+      </ul>
+      <h3>Zdroje a pohlcování</h3>
+      <p>Ultrafialové záření vysílají velmi horká tělesa (Slunce, elektrický oblouk) a výbojky plněné rtuťovými parami. Obyčejné sklo ho pohlcuje, baňky UV výbojek se proto dělají z křemenného skla.</p>
+      <p>Silně ho pohlcuje i atmosféra. Ve vysokých vrstvách UV záření ionizuje kyslík, a tím vzniká a obnovuje se <b>ozon</b>. Vrstva s velkou koncentrací ozonu, <b>ozonosféra</b>, leží ve výšce asi 22&nbsp;km až 25&nbsp;km a většinu UV záření k zemskému povrchu nepropustí — bez ní by život na souši nebyl možný.</p>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M9 2.5 L16 15.5 H2 Z" stroke="var(--danger)" stroke-width="1.4" stroke-linejoin="round"/>
+          <line x1="9" y1="7" x2="9" y2="11.5" stroke="var(--danger)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="13.6" r="1" fill="var(--danger)"/>
+        </svg>
+        <p>Ozon rozkládají některé plynné sloučeniny fluoru (freony) dříve používané ve sprejích a chladničkách a také oxidy dusíku z výfukových plynů. V ozonosféře tak vznikají <b>ozonové díry</b>. Používání freonů bylo proto mezinárodními dohodami ukončeno.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Rentgenové záření</div>
+      <p><b>Rentgenové záření</b> má vlnové délky přibližně od 10&nbsp;nm do 1&nbsp;pm. Objevil ho koncem 19. století Wilhelm Conrad Röntgen při pokusech s výboji v plynech.</p>
+      <p>Zdrojem je <b>rentgenka</b>: elektrony uvolněné ze žhavené katody urychlí vysoké napětí (10&nbsp;kV až 400&nbsp;kV) a narazí do wolframové anody. Jejich energie se změní zčásti na rentgenové záření, z větší části na teplo, proto se anoda otáčí nebo chladí vodou. Čím vyšší napětí, tím větší energii elektrony mají a tím kratší vlnovou délku vzniklé záření má. Podle toho rozlišujeme <b>měkké</b> (delší vlny) a <b>tvrdé</b> rentgenové záření (kratší vlny, vlastnostmi blízké záření gama).</p>
+      <div class="theory-table-wrap">
+        <table class="theory-table">
+          <thead><tr><th>Druh</th><th>Jak vzniká</th><th>Spektrum</th></tr></thead>
+          <tbody>
+            <tr><td>brzdné záření</td><td>prudké zpomalení elektronů v kovu anody</td><td>spojité</td></tr>
+            <tr><td>charakteristické záření</td><td>změny energie atomů kovu anody</td><td>čárové</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>Vlastnosti a využití</h3>
+      <p>Rentgenové záření proniká látkami, látky ho pohlcují různě a ionizuje je. Pohlcování silně roste s protonovým číslem prvku: kosti (hlavně fosforečnan vápenatý) ho pohltí zhruba 150krát více než svaly (převážně voda), a na snímku jsou proto světlejší.</p>
+      <ul>
+        <li><b>rentgenová diagnostika</b> a <b>počítačová tomografie</b> (CT) — snímky těla po tenkých vrstvách,</li>
+        <li><b>defektoskopie</b> — skryté vady svarů a potrubí, kontrola zavazadel, průzkum obrazů a mumií,</li>
+        <li><b>rentgenová strukturní analýza</b> — ohyb záření na krystalové mřížce prozradí uspořádání atomů,</li>
+        <li><b>rentgenová astronomie</b> — zbytky supernov, neutronové hvězdy, černé díry (měří se z družic, atmosféra rentgenové záření pohltí).</li>
+      </ul>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M9 2.5 L16 15.5 H2 Z" stroke="var(--danger)" stroke-width="1.4" stroke-linejoin="round"/>
+          <line x1="9" y1="7" x2="9" y2="11.5" stroke="var(--danger)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="13.6" r="1" fill="var(--danger)"/>
+        </svg>
+        <p>Rentgenové záření je pro organismus nebezpečné a dávky ozáření se během života sčítají. Při práci s ním se stíní olovem a doba ozáření se zkracuje na nezbytné minimum.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Záření gama</div>
+      <p><b>Záření gama</b> uzavírá spektrum na straně nejkratších vlnových délek a zčásti se překrývá s rentgenovým zářením. Liší se od něj původem: rentgenové záření vzniká při změnách energie v elektronovém obalu atomu, záření gama při radioaktivních přeměnách atomových <b>jader</b>. Jeho vlastnosti proto probereme v jaderné fyzice.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Tepelné záření</div>
+      <p>Proč je baňka svítící žárovky horká, kdežto trubice zářivky zůstává chladná? Světlo v nich vzniká dvěma různými ději.</p>
+      <p>Ve vlákně žárovky získávají atomy energii <b>tepelným pohybem</b> a část jí vyzáří jako elektromagnetické záření. Takové záření nazýváme <b>tepelné záření</b>. Vyzařují ho všechna tělesa, nejen rozžhavená. Které vlnové délky těleso vyzařuje, závisí na jeho <b>teplotě</b>, nikoli na tom, z jaké látky je.</p>
+      <h3>Tepelná výměna zářením</h3>
+      <p>Tělesa záření vysílají i pohlcují. Teplejší těleso vyzáří víc, než pohltí, jeho vnitřní energie i teplota klesají; chladnější těleso naopak víc pohltí a ohřívá se. Pokud těleso za určitou dobu pohltí právě tolik energie záření, kolik jí samo vyzáří, je v <b>rovnovážném stavu</b> a jeho teplota se nemění.</p>
+      <h3>Barva rozžhaveného tělesa</h3>
+      <p>S rostoucí teplotou se vyzařování přesouvá ke kratším vlnovým délkám (vyšším frekvencím). Plotýnka vařiče nejdřív jen hřeje (vyzařuje infračervené záření), kolem 700&nbsp;°C začne rudě žhnout. Vlákno žárovky svítí při teplotě asi 900&nbsp;°C červeně, kolem 1&nbsp;100&nbsp;°C oranžově a kolem 1&nbsp;300&nbsp;°C žlutě.</p>
+      <div class="links"><a class="btn-link" href="zareni-cerneho-telesa.html">Záření černého tělesa →</a></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Luminiscence</div>
+      <p>V trubici zářivky probíhá elektrický výboj v plynu. Atomy plynu tu energii nezískávají tepelným pohybem, ale působením elektrického pole, proto trubice svítí, i když je chladná. Samotný výboj ale vysílá hlavně <b>ultrafialové záření</b>, které oko nevidí. Světlo vydává až vrstva látky na vnitřní stěně trubice, kterou ultrafialové záření „rozsvítí“.</p>
+      <p>Takovému záření říkáme <b>luminiscence</b>: <b>primární záření</b> s kratší vlnovou délkou (vyšší frekvencí) vyvolá v látce <b>sekundární záření</b> s delší vlnovou délkou (nižší frekvencí). Na rozdíl od tepelného záření je vlnová délka luminiscenčního světla určena <b>složením látky</b>.</p>
+      <p>Látky, které luminiscenci umožňují, jsou <b>luminofory</b> — většinou pevné látky s příměsmi (například ZnS nebo CdS s příměsí Cu, Mn, Al). Příměs určuje barvu světla.</p>
+      <h3>Fluorescence a fosforescence</h3>
+      <ul>
+        <li><b>fluorescence</b> — sekundární záření zhasne hned, jakmile primární záření přestane působit (zářivka, oblečení svítící pod UV lampou na diskotéce),</li>
+        <li><b>fosforescence</b> — sekundární záření dosvítí ještě nějakou dobu (svítící ručičky hodinek, nálepky svítící ve tmě).</li>
+      </ul>
+      <h3>Využití</h3>
+      <p>Bílé LED zdroje (modrá dioda budí žlutě svítící luminofor), zářivky, ochranná vlákna v bankovkách viditelná pod UV lampou, kriminalistika (stopy krve).</p>
+      <div class="links"><a class="btn-link" href="#zarivka" id="dz-link-zarivka">Animace: proč zářivka svítí bíle →</a></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Tepelné záření × luminiscence</div>
+      <div class="theory-table-wrap">
+        <table class="theory-table">
+          <thead><tr><th></th><th>Tepelné záření</th><th>Luminiscence</th></tr></thead>
+          <tbody>
+            <tr><td>odkud mají atomy energii</td><td>z tepelného pohybu</td><td>z pohlceného primárního záření (nebo z elektrického pole)</td></tr>
+            <tr><td>vlnové délky určuje</td><td>teplota tělesa</td><td>složení látky</td></tr>
+            <tr><td>zdroj je</td><td>horký (žárovka, Slunce)</td><td>může být chladný (zářivka, LED)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="cat-tag">Otázka k zamyšlení</span>
+      <h2>Lampa na sterilizaci</h2>
+      <p class="desc">Rozklikejte si postup krok po kroku — další krok se odemkne, jakmile otevřete ten předchozí.</p>
+      <div class="given-data">
+        <div class="given-line">Germicidní lampy, kterými se ničí bakterie například v nemocnicích, jsou rtuťové výbojky. Proč mají trubici z křemenného skla a proč se do jejich světla nesmí dívat?</div>
+      </div>
+      <div class="stepper" data-reset="reset-lampa">
+        <div class="step" data-step="1">
+          <div class="step-connector"></div>
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">1</span>
+            <span class="step-title">Jaké záření lampa má vysílat?</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden><p>Mikroorganismy ničí ultrafialové záření. Rtuťový výboj ho vysílá velké množství.</p></div>
+        </div>
+        <div class="step" data-step="2">
+          <div class="step-connector"></div>
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">2</span>
+            <span class="step-title">Proč ne obyčejné sklo?</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden><p>Obyčejné sklo ultrafialové záření pohlcuje, ven by se nedostalo. Křemenné sklo ho propouští. (U zářivky je to naopak žádoucí: její trubice je z obyčejného skla a UV záření zevnitř přeměňuje luminofor na světlo.)</p></div>
+        </div>
+        <div class="step" data-step="3">
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">3</span>
+            <span class="step-title">Proč se do lampy nedívat?</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden><div class="result-box">UV záření oko nevidí, ale poškozuje ho; navíc škodí i kůži. Proto se germicidní lampy zapínají jen v prázdné místnosti nebo jsou zakryté.</div></div>
+        </div>
+      </div>
+      <div class="actions"><button class="btn ghost" id="reset-lampa">Zopakovat postup od začátku</button></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Shrnutí</div>
+      <p>• Infračervené záření vyzařují zahřátá tělesa; pohlcené těleso ohřívá. Využití: termovize, infrazářiče, dálkové ovládání.</p>
+      <p>• Ultrafialové záření je neviditelné a ve velkých dávkách škodlivé; vyvolává opálení a tvorbu vitaminu D, ničí mikroorganismy. Pohlcuje ho obyčejné sklo i ozonosféra.</p>
+      <p>• Rentgenové záření vzniká v rentgence (brzdné — spojité, charakteristické — čárové); proniká látkami, kosti ho pohlcují víc než svaly.</p>
+      <p>• Záření gama vzniká při přeměnách atomových jader.</p>
+      <p>• Tepelné záření vyzařují všechna tělesa; jeho vlnové délky určuje teplota, s rostoucí teplotou se posouvají ke kratším. Pohltí-li těleso tolik energie, kolik vyzáří, je v rovnovážném stavu.</p>
+      <p>• Luminiscence: kratší primární záření vyvolá delší sekundární; vlnové délky určuje složení látky. Fluorescence zhasne hned, fosforescence dosvítí.</p>
+    </div>
+  </div>
+
+  <!-- ============ ANIMACE: ZÁŘIVKA A LED ============ -->
+  <div id="zarivka-section" class="tab-section" hidden>
+    <div class="card applet-card" id="zv-card">
+      <div class="applet-head">
+        <div class="applet-head-text">
+          <span class="cat-tag">Animace</span>
+          <h2>Proč zářivka svítí bíle</h2>
+          <p class="desc">Sledujte, jak v zářivce a v bílé LED vzniká světlo luminiscencí a proč má vycházející foton vždy menší energii než ten, který luminofor pohltil.</p>
+        </div>
+        <button class="btn ghost fs-btn" id="zv-fs" type="button" aria-pressed="false">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path id="zv-fs-icon" d="M1.5 5.5V1.5H5.5M10.5 1.5H14.5V5.5M14.5 10.5V14.5H10.5M5.5 14.5H1.5V10.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="zv-fs-label">Celá obrazovka</span>
+        </button>
+      </div>
+      <div class="applet-stage">
+        <figure class="theory-fig">
+          <svg id="zv-svg" class="wide" viewBox="0 0 640 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Animace vzniku světla. Vlevo je trubice zářivky s výbojem: elektrony narážejí do atomů rtuti, ty vysílají ultrafialové fotony, které dopadají na luminofor na stěně trubice a ten vysílá fotony viditelného světla. V režimu bílé LED vysílá modrá dioda modré fotony, část projde a část luminofor přemění na žluté. Vpravo energetický diagram porovnává energii pohlceného a vysláného fotonu."></svg>
+          <figcaption>Energie fotonu je úměrná frekvenci záření, \(E \sim f = c/\lambda\). Rozdíl energií pohlceného a vysláného fotonu zůstane v luminoforu jako teplo.</figcaption>
+        </figure>
+        <p class="hint fs-hint">Pro čitelnost popisků otevřete animaci na celou obrazovku.</p>
+      </div>
+      <div class="applet-controls">
+        <div class="mode-row">
+          <span class="mode-row-label">Zdroj</span>
+          <div class="seg" id="zv-mode" role="group" aria-label="Zdroj světla">
+            <button class="chip accented on" type="button" aria-pressed="true">zářivka</button>
+            <button class="chip accented" type="button" aria-pressed="false">bílá LED</button>
+          </div>
+        </div>
+        <div class="mode-row">
+          <span class="mode-row-label">Animace</span>
+          <div class="seg">
+            <button class="chip" id="zv-play" type="button">Pozastavit</button>
+            <button class="chip" id="zv-slow" type="button" aria-pressed="false">zpomalit</button>
+          </div>
+        </div>
+      </div>
+      <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint"><b>Zářivka:</b> elektrony (malé tečky) se ve výboji pohybují trubicí a narážejí do atomů rtuti (Hg). Atom energii získanou nárazem vyzáří jako foton ultrafialového záření o vlnové délce 254&nbsp;nm (fialová čárkovaná vlnovka — oko ho nevidí). Foton dopadne na luminofor na stěně trubice a ten vyšle foton viditelného světla; směs modrých, zelených a červených fotonů z různých složek luminoforu vnímáme jako bílé světlo. <b>Bílá LED:</b> modrá dioda vysílá fotony o vlnové délce asi 450&nbsp;nm. Část jich projde luminoforem beze změny, část luminofor přemění na žluté světlo; směs modré a žluté vnímáme jako bílou. Vpravo je energetický diagram posledního děje: šipka nahoru je energie pohlceného fotonu, šipka dolů energie vysláného fotonu, zbytek se přemění na teplo. Vlnové délky luminoforů jsou typické hodnoty, skutečné luminofory vyzařují v širších pásech. Velikosti atomů a fotonů nejsou v měřítku.</p>
+      </details>
+    </div>
+  </div>
+
+  <!-- ============ TRÉNINK ============ -->
+  <div id="trenink-section" class="tab-section" hidden>
+    <div class="card trainer-card">
+      <span class="cat-tag">Trénink</span>
+      <h2>Druhy záření a jejich vlastnosti</h2>
+      <p class="desc">Vyberte správnou odpověď a potvrďte tlačítkem Zkontrolovat. Po kontrole se zobrazí vysvětlení.</p>
+      <div class="mode-row">
+        <span class="mode-row-label">Okruh</span>
+        <div class="seg" id="tr-mode" role="group" aria-label="Okruh otázek">
+          <button class="chip accented on" type="button" data-mode="random" aria-pressed="true">Vše</button>
+          <button class="chip accented" type="button" data-mode="druhy" aria-pressed="false">Druhy záření</button>
+          <button class="chip accented" type="button" data-mode="tepelne" aria-pressed="false">Tepelné záření</button>
+          <button class="chip accented" type="button" data-mode="lumi" aria-pressed="false">Luminiscence</button>
+        </div>
+        <button class="linklike" id="tr-reset-stats" type="button">vynulovat statistiku</button>
+      </div>
+      <div id="tr-area"></div>
+      <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint">Otázky se vybírají náhodně ze zvoleného okruhu a pořadí možností se pokaždé zamíchá. Klávesa Enter potvrzuje odpověď a posouvá na další otázku.</p>
+      </details>
+    </div>
+  </div>
+
+  <footer>Fyzika — Oktáva/4. ročník</footer>
+</div>
+
+<script src="../spolecne/reseni.js?v=1"></script>
+<script src="../spolecne/spolecne.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  // ---- záložky: tlačítko .toptab[data-tab="x"] ↔ sekce #x-section (Teorie = #theory-section) ----
+  // Opuštění běžící hry na čas přepnutím záložky se potvrzuje (tabGuard nastaví hra).
+  var tabs = {}, sections = {}, tabGuard = null, currentTab = 'teorie';
+  Array.prototype.forEach.call(document.querySelectorAll('.toptab[data-tab]'), function(btn){
+    var name = btn.getAttribute('data-tab');
+    tabs[name] = btn;
+    sections[name] = document.getElementById(name === 'teorie' ? 'theory-section' : name + '-section');
+  });
+  function showTab(name){
+    if(tabGuard && name !== currentTab && !tabGuard(currentTab, name)) return;
+    currentTab = name;
+    for(var k in tabs){
+      tabs[k].classList.toggle('on', k === name);
+      if(sections[k]) sections[k].hidden = k !== name;
+    }
+    // skóre, série a úspěšnost v hlavičce jen u tréninku
+    var readout = document.getElementById('header-readout');
+    if(readout) readout.hidden = name !== 'trenink';
+  }
+  Object.keys(tabs).forEach(function(k){ tabs[k].addEventListener('click', function(){ showTab(k); }); });
+  var hash = location.hash.replace('#', '');
+  if(hash && tabs[hash]) showTab(hash);
+
+  // ---- příklady: postupně odemykané steppery ----
+  Array.prototype.forEach.call(document.querySelectorAll('.stepper'), function(wrap){
+    var steps = Array.prototype.slice.call(wrap.querySelectorAll('.step'));
+    var unlockedUpTo = 1;
+
+    function refreshLocks(){
+      steps.forEach(function(st){
+        var idx = parseInt(st.getAttribute('data-step'), 10);
+        var locked = idx > unlockedUpTo;
+        st.classList.toggle('locked', locked);
+        st.classList.toggle('unlocked', !locked && !st.classList.contains('done'));
+        st.querySelector('.step-head').setAttribute('aria-disabled', locked ? 'true' : 'false');
+      });
+    }
+
+    steps.forEach(function(st){
+      var idx = parseInt(st.getAttribute('data-step'), 10);
+      var head = st.querySelector('.step-head');
+      var body = st.querySelector('.step-body');
+      head.addEventListener('click', function(){
+        if(idx > unlockedUpTo) return;
+        var wasOpen = st.classList.contains('open');
+        st.classList.toggle('open', !wasOpen);
+        body.hidden = wasOpen;
+        head.setAttribute('aria-expanded', (!wasOpen).toString());
+        if(!wasOpen){
+          st.classList.add('done');
+          if(idx === unlockedUpTo && unlockedUpTo < steps.length){ unlockedUpTo++; }
+          refreshLocks();
+        }
+      });
+    });
+
+    var resetBtn = document.getElementById(wrap.getAttribute('data-reset'));
+    if(resetBtn){
+      resetBtn.addEventListener('click', function(){
+        unlockedUpTo = 1;
+        steps.forEach(function(st){
+          st.classList.remove('open', 'done');
+          st.querySelector('.step-body').hidden = true;
+          st.querySelector('.step-head').setAttribute('aria-expanded', 'false');
+        });
+        refreshLocks();
+      });
+    }
+
+    refreshLocks();
+  });
+
+  // ---- pomocné funkce pro kreslení a výpis čísel ----
+  var NS = 'http://www.w3.org/2000/svg';
+  var NB = ' ';
+  function mk(tag, attrs, parent){
+    var el = document.createElementNS(NS, tag), k;
+    for(k in attrs){ if(attrs.hasOwnProperty(k)) el.setAttribute(k, attrs[k]); }
+    if(parent) parent.appendChild(el);
+    return el;
+  }
+  function f1(x){ return (Math.round(x * 10) / 10).toString(); }
+  // číslo s desetinnou čárkou na daný počet desetinných míst
+  function fmt(x, dec){ return roundTo(x, dec).toFixed(dec).replace('.', ',').replace('-', '−'); }
+  // tisíce oddělené pevnou mezerou (2 400, 12 500)
+  function fmtThousands(str){
+    var parts = str.split(','), s = parts[0], neg = s.charAt(0) === '−';
+    if(neg) s = s.slice(1);
+    if(s.length > 3) s = s.replace(/\B(?=(\d{3})+(?!\d))/g, NB);
+    return (neg ? '−' : '') + s + (parts.length > 1 ? ',' + parts[1] : '');
+  }
+  // rozklad na mantisu a exponent: x = m · 10^e, 1 ≤ |m| < 10, m zaokrouhlená na sig platných číslic
+  function sciParts(x, sig){
+    if(x === 0) return { m:0, e:0 };
+    var e = Math.floor(Math.log10(Math.abs(x)));
+    var m = roundSig(x / Math.pow(10, e), sig);
+    if(Math.abs(m) >= 10){ m = roundSig(m / 10, sig); e++; }
+    return { m:m, e:e };
+  }
+  var SUP = { '0':'⁰', '1':'¹', '2':'²', '3':'³', '4':'⁴', '5':'⁵', '6':'⁶', '7':'⁷', '8':'⁸', '9':'⁹', '-':'⁻' };
+  function supStr(n){ return String(n).split('').map(function(c){ return SUP[c]; }).join(''); }
+  // text „4,62 · 10¹⁴“ (s pevnými mezerami)
+  function sciText(x, sig){
+    var p = sciParts(x, sig);
+    if(p.e === 0) return fmt(p.m, sig - 1);
+    return fmt(p.m, sig - 1) + NB + '·' + NB + '10' + supStr(p.e);
+  }
+  // totéž pro KaTeX: 4{,}62 \cdot 10^{14}
+  function sciTex(x, sig){
+    var p = sciParts(x, sig);
+    var m = fmt(p.m, sig - 1).replace('−', '-').replace(',', '{,}');
+    if(p.e === 0) return m;
+    return m + ' \\cdot 10^{' + p.e + '}';
+  }
+  function texNum(x, dec){ return fmtThousands(fmt(x, dec)).replace(',', '{,}').replace(/\u00a0/g, '\\,').replace('−', '-'); }
+  // Text s matematikou mezi $…$ (vysází KaTeX) jako HTML.
+  function esc(t){ return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function mathHtml(str){
+    return String(str).split('$').map(function(part, i){
+      if(i % 2 === 0) return part;
+      if(window.katex){ try{ return katex.renderToString(part, { throwOnError:false }); }catch(e){} }
+      return esc(part);
+    }).join('');
+  }
+  function setChips(btns, on){
+    Array.prototype.forEach.call(btns, function(b, i){ b.classList.toggle('on', i === on); b.setAttribute('aria-pressed', i === on ? 'true' : 'false'); });
+  }
+  function setToggle(btn, on){ btn.classList.toggle('on', on); btn.setAttribute('aria-pressed', on ? 'true' : 'false'); }
+  function randInt(a, b){ return a + Math.floor(Math.random() * (b - a + 1)); }
+  function pick(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+  function shuffle(arr){
+    var a = arr.slice(), i, j, t;
+    for(i = a.length - 1; i > 0; i--){ j = Math.floor(Math.random() * (i + 1)); t = a[i]; a[i] = a[j]; a[j] = t; }
+    return a;
+  }
+  var reduceMotion = false;
+  try{ reduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches); }catch(e){}
+
+  // ---- barva světla dané vlnové délky (nm) pro kreslení spekter; mimo 380–780 nm černá ----
+  // Přibližný převod podle D. Bruton; na okrajích viditelné oblasti jas klesá (oko je tam málo citlivé).
+  function wlRGB(nm){
+    var r = 0, g = 0, b = 0, k;
+    if(nm >= 380 && nm < 440){ r = -(nm - 440) / 60; b = 1; }
+    else if(nm >= 440 && nm < 490){ g = (nm - 440) / 50; b = 1; }
+    else if(nm >= 490 && nm < 510){ g = 1; b = -(nm - 510) / 20; }
+    else if(nm >= 510 && nm < 580){ r = (nm - 510) / 70; g = 1; }
+    else if(nm >= 580 && nm < 645){ r = 1; g = -(nm - 645) / 65; }
+    else if(nm >= 645 && nm <= 780){ r = 1; }
+    if(nm >= 380 && nm < 420) k = 0.3 + 0.7 * (nm - 380) / 40;
+    else if(nm >= 420 && nm <= 700) k = 1;
+    else if(nm > 700 && nm <= 780) k = 0.3 + 0.7 * (780 - nm) / 80;
+    else k = 0;
+    function c(v){ return v <= 0 ? 0 : Math.round(255 * Math.pow(v * k, 0.8)); }
+    return [c(r), c(g), c(b)];
+  }
+  function wlColor(nm){ var c = wlRGB(nm); return 'rgb(' + c[0] + ',' + c[1] + ',' + c[2] + ')'; }
+
+  // ---- celá obrazovka (stejně jako na stránce Polarizace světla) ----
+  function initFullscreen(cardId, btnId, labelId, iconId){
+    var card = document.getElementById(cardId), fsBtn = document.getElementById(btnId), fsLabel = document.getElementById(labelId), fsIcon = document.getElementById(iconId);
+    if(!card || !fsBtn) return;
+    var ICON_ENTER = 'M1.5 5.5V1.5H5.5M10.5 1.5H14.5V5.5M14.5 10.5V14.5H10.5M5.5 14.5H1.5V10.5';
+    var ICON_EXIT = 'M5.5 1.5V5.5H1.5M14.5 5.5H10.5V1.5M10.5 14.5V10.5H14.5M1.5 10.5H5.5V14.5';
+    var isPhone = window.matchMedia && matchMedia('(pointer:coarse)').matches && Math.min(screen.width, screen.height) < 600;
+    var portraitMq = window.matchMedia ? matchMedia('(orientation:portrait)') : null;
+    var orientLocked = false, keepFull = false;
+    function fsElement(){ return document.fullscreenElement || document.webkitFullscreenElement || null; }
+    function updateRotated(){
+      var on = card.classList.contains('is-full') && isPhone && !orientLocked && !!portraitMq && portraitMq.matches;
+      if(on === card.classList.contains('rotated')) return;
+      card.classList.toggle('rotated', on);
+    }
+    if(portraitMq){
+      if(portraitMq.addEventListener) portraitMq.addEventListener('change', updateRotated);
+      else if(portraitMq.addListener) portraitMq.addListener(updateRotated);
+    }
+    function lockFailed(){
+      if(isPhone && portraitMq && portraitMq.matches && fsElement()){
+        keepFull = true;
+        try{ (document.exitFullscreen || document.webkitExitFullscreen).call(document); }catch(e){ keepFull = false; }
+      }
+      updateRotated();
+    }
+    function lockLandscape(){
+      var so = screen.orientation;
+      if(!isPhone){ updateRotated(); return; }
+      if(!so || !so.lock){ lockFailed(); return; }
+      try{ so.lock('landscape').then(function(){ orientLocked = true; updateRotated(); }, lockFailed); }catch(e){ lockFailed(); }
+    }
+    function setFullClass(on){
+      card.classList.toggle('is-full', on);
+      if(!on){
+        if(orientLocked){ try{ screen.orientation.unlock(); }catch(e){} }
+        orientLocked = false;
+      }
+      updateRotated();
+      document.documentElement.style.overflow = on ? 'hidden' : '';
+      fsLabel.textContent = on ? 'Zavřít celou obrazovku' : 'Celá obrazovka';
+      fsIcon.setAttribute('d', on ? ICON_EXIT : ICON_ENTER);
+      fsBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    }
+    fsBtn.addEventListener('click', function(){
+      if(card.classList.contains('is-full')){
+        if(fsElement()){ (document.exitFullscreen || document.webkitExitFullscreen).call(document); }
+        else setFullClass(false);
+        return;
+      }
+      var req = card.requestFullscreen || card.webkitRequestFullscreen;
+      setFullClass(true);
+      if(req){
+        try{
+          var pr0 = req.call(card);
+          if(pr0 && pr0.then) pr0.then(lockLandscape, lockLandscape);
+          else lockLandscape();
+        }catch(e){ lockLandscape(); }
+      } else lockLandscape();
+    });
+    function onFsChange(){
+      if(fsElement()) return;
+      if(keepFull){ keepFull = false; return; }
+      if(card.classList.contains('is-full')) setFullClass(false);
+    }
+    document.addEventListener('fullscreenchange', onFsChange);
+    document.addEventListener('webkitfullscreenchange', onFsChange);
+    document.addEventListener('keydown', function(e){
+      if(e.key === 'Escape' && card.classList.contains('is-full') && !fsElement()) setFullClass(false);
+    });
+  }
+
+  // ================= TRÉNINK =================
+  // Úloha q = { tag, text, kind:'num'|'sci'|'choice'|'multi', lhs, unit, answer, tol (absolutní, u 'sci' relativní),
+  //   choices:[html], correct:index | [indexy], given:[], find:[], steps:[], final, tip }.
+  // Texty mohou obsahovat matematiku mezi $…$ (vysází KaTeX).
+  function makeTrainer(cfg){
+    var P = cfg.prefix || 'tr';
+    var area = document.getElementById(P + '-area');
+    if(!area) return null;
+    var state = { mode:cfg.defaultMode || 'random', q:null, revealed:false, touched:false, sel:[], lastKey:null,
+      score:0, streak:0, bestStreak:0, answered:0, correct:0 };
+
+    area.innerHTML =
+      '<div class="task-banner"><span class="task-banner-label" id="' + P + '-tag"></span><div class="task-text" id="' + P + '-text"></div></div>' +
+      '<div class="task-fig" id="' + P + '-fig" hidden></div>' +
+      '<div class="equation" id="' + P + '-eq" hidden>' +
+        '<span class="lhs" id="' + P + '-lhs"></span><span class="eq">=</span>' +
+        '<span class="answer-slot" id="' + P + '-num-wrap"><input class="answer-input" id="' + P + '-num" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="?" aria-label="Odpověď"></span>' +
+        '<span class="answer-slot sci-group" id="' + P + '-sci-wrap" hidden>' +
+          '<input class="answer-input sci-mantissa" id="' + P + '-man" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="a" aria-label="Mantisa a">' +
+          '<span class="sci-times">· 10</span>' +
+          '<input class="sci-exp" id="' + P + '-exp" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="n" aria-label="Exponent n">' +
+        '</span>' +
+        '<span class="unit" id="' + P + '-unit"></span>' +
+      '</div>' +
+      '<div class="opt-grid" id="' + P + '-opts" hidden></div>' +
+      '<div class="feedback" id="' + P + '-feedback" hidden><div class="headline" id="' + P + '-fb-head"></div><div class="steps" id="' + P + '-fb-steps"></div><div class="tip" id="' + P + '-fb-tip" hidden></div></div>' +
+      '<div class="actions">' +
+        '<button class="btn primary" id="' + P + '-check" type="button">Zkontrolovat</button>' +
+        '<button class="btn ghost" id="' + P + '-skip" type="button">Nevím / Zobrazit řešení</button>' +
+      '</div>';
+
+    function $(id){ return document.getElementById(P + '-' + id); }
+    var inNum = $('num'), inMan = $('man'), inExp = $('exp');
+    sanitizeNumericInput(inNum, true); sanitizeNumericInput(inMan, true); sanitizeNumericInput(inExp, false);
+    [inNum, inMan, inExp].forEach(function(el){ el.addEventListener('input', function(){ state.touched = el.value.trim() !== '' || state.touched; }); });
+
+    function parseNum(str){
+      var s = String(str).trim().replace(/[−–]/g, '-').replace(',', '.').replace(/\s+/g, '');
+      if(s === '' || s === '-' || s === '.') return NaN;
+      return parseFloat(s);
+    }
+
+    function newTask(){
+      var q, guard = 0;
+      do { q = cfg.gen(state.mode); guard++; } while(guard < 20 && q.key && q.key === state.lastKey);
+      state.lastKey = q.key || null;
+      state.q = q; state.revealed = false; state.touched = false; state.sel = [];
+      $('tag').textContent = q.tag || 'Úloha';
+      $('text').innerHTML = mathHtml(q.text);
+      var fig = $('fig');
+      if(q.fig){ fig.hidden = false; fig.innerHTML = ''; q.fig(fig); } else { fig.hidden = true; fig.innerHTML = ''; }
+      var isInput = q.kind === 'num' || q.kind === 'sci';
+      $('eq').hidden = !isInput;
+      $('num-wrap').hidden = q.kind !== 'num';
+      $('sci-wrap').hidden = q.kind !== 'sci';
+      [inNum, inMan, inExp].forEach(function(el){ el.value = ''; el.disabled = false; el.classList.remove('correct', 'wrong'); });
+      if(isInput){
+        $('lhs').innerHTML = mathHtml(q.lhs || '');
+        $('unit').innerHTML = mathHtml(q.unit || '');
+      }
+      var opts = $('opts');
+      opts.innerHTML = '';
+      opts.hidden = !(q.kind === 'choice' || q.kind === 'multi');
+      opts.classList.toggle('wide-opts', !!q.wideOpts);
+      if(!opts.hidden){
+        q.choices.forEach(function(c, i){
+          var b = document.createElement('button');
+          b.type = 'button'; b.className = 'opt-btn';
+          b.innerHTML = mathHtml(c);
+          b.setAttribute('aria-pressed', 'false');
+          b.addEventListener('click', function(){
+            if(state.revealed) return;
+            state.touched = true;
+            if(q.kind === 'choice'){
+              state.sel = [i];
+            } else {
+              var at = state.sel.indexOf(i);
+              if(at >= 0) state.sel.splice(at, 1); else state.sel.push(i);
+            }
+            Array.prototype.forEach.call(opts.children, function(o, j){
+              var on = state.sel.indexOf(j) >= 0;
+              o.classList.toggle('selected', on); o.setAttribute('aria-pressed', on ? 'true' : 'false');
+            });
+          });
+          opts.appendChild(b);
+        });
+      }
+      var fb = $('feedback'); fb.hidden = true; fb.className = 'feedback';
+      $('fb-tip').hidden = true;
+      $('check').textContent = 'Zkontrolovat';
+      if(q.kind === 'num'){ try{ inNum.focus({ preventScroll:true }); }catch(e){} }
+      else if(q.kind === 'sci'){ try{ inMan.focus({ preventScroll:true }); }catch(e){} }
+    }
+
+    function userValue(){
+      var q = state.q;
+      if(q.kind === 'num') return parseNum(inNum.value);
+      if(q.kind === 'sci'){
+        var m = parseNum(inMan.value), e = parseInt(String(inExp.value).replace(/[−–]/g, '-').replace(/\s+/g, ''), 10);
+        if(isNaN(m)) return NaN;
+        if(isNaN(e)) e = 0;
+        return m * Math.pow(10, e);
+      }
+      return NaN;
+    }
+
+    function isCorrect(){
+      var q = state.q, v;
+      if(q.kind === 'num'){ v = userValue(); return !isNaN(v) && Math.abs(v - q.answer) <= q.tol + 1e-12 * Math.abs(q.answer); }
+      if(q.kind === 'sci'){ v = userValue(); return !isNaN(v) && Math.abs(v - q.answer) <= q.tol * Math.abs(q.answer); }
+      if(q.kind === 'choice') return state.sel.length === 1 && state.sel[0] === q.correct;
+      var want = q.correct.slice().sort().join(','), got = state.sel.slice().sort().join(',');
+      return want === got;
+    }
+
+    function evaluate(bySkip){
+      if(state.revealed) return;
+      var q = state.q, ok = !bySkip && isCorrect();
+      state.revealed = true;
+      state.answered++;
+      if(ok){
+        state.score += 10; state.streak++; state.correct++;
+        if(state.streak > state.bestStreak){
+          state.bestStreak = state.streak; saveStats();
+          if(window.FyzikaScores) FyzikaScores.report('serie', state.bestStreak, false);
+        }
+      } else state.streak = 0;
+      var cls = ok ? 'correct' : 'wrong';
+      if(q.kind === 'num') inNum.classList.add(cls);
+      if(q.kind === 'sci'){ inMan.classList.add(cls); inExp.classList.add(cls); }
+      [inNum, inMan, inExp].forEach(function(el){ el.disabled = true; });
+      if(q.kind === 'choice' || q.kind === 'multi'){
+        var corr = q.kind === 'choice' ? [q.correct] : q.correct;
+        Array.prototype.forEach.call($('opts').children, function(o, j){
+          o.disabled = true;
+          var isC = corr.indexOf(j) >= 0, isS = state.sel.indexOf(j) >= 0;
+          o.classList.remove('selected');
+          if(isC && isS) o.classList.add('correct');
+          else if(isC) o.classList.add(bySkip || q.kind === 'choice' ? 'correct' : 'missed');
+          else if(isS) o.classList.add('wrong');
+        });
+      }
+      var fb = $('feedback');
+      fb.hidden = false;
+      if(bySkip){ fb.className = 'feedback neutral'; $('fb-head').textContent = 'Řešení'; }
+      else if(ok){ fb.className = 'feedback ok'; $('fb-head').textContent = 'Správně!'; }
+      else { fb.className = 'feedback bad'; $('fb-head').textContent = state.touched ? 'Bohužel, špatně.' : 'Nezadali jste odpověď.'; }
+      var tip = $('fb-tip');
+      tip.hidden = true;
+      if(ok && q.kind === 'sci'){
+        var m = Math.abs(parseNum(inMan.value));
+        if(!(m >= 1 && m < 10)){ tip.hidden = false; tip.textContent = 'Číselně správně — v normalizovaném zápisu má ale platit 1 ≤ a < 10.'; }
+      }
+      FyzikaReseni.show(fb, $('fb-steps'), {
+        given:(q.given || []).map(mathHtml), find:(q.find || []).map(mathHtml),
+        steps:(q.steps || []).map(mathHtml), final:q.final ? mathHtml(q.final) : '', note:q.note ? mathHtml(q.note) : '', raw:true
+      });
+      $('check').textContent = 'Další příklad →';
+      try{ $('check').focus({ preventScroll:true }); }catch(e){}
+      updateStats();
+    }
+
+    $('check').addEventListener('click', function(){
+      if(state.revealed){ newTask(); return; }
+      evaluate(false);
+    });
+    $('skip').addEventListener('click', function(){
+      if(state.revealed){ newTask(); return; }
+      evaluate(true);
+    });
+    // Enter potvrzuje odpověď a posouvá na další příklad
+    area.addEventListener('keydown', function(e){
+      if(e.key !== 'Enter') return;
+      var tg = e.target && e.target.tagName;
+      if(tg === 'BUTTON') return;
+      e.preventDefault();
+      if(state.revealed) newTask(); else evaluate(false);
+    });
+    document.addEventListener('keydown', function(e){
+      if(e.key !== 'Enter' || !state.revealed) return;
+      var sec = area.closest('.tab-section');
+      if(sec && sec.hidden) return;
+      var tg = e.target && e.target.tagName;
+      if(tg === 'BUTTON' || tg === 'INPUT') return;
+      e.preventDefault(); newTask();
+    });
+
+    // Přepnutí druhu úloh uprostřed rozepsaného příkladu: odpověď se nejdřív vyhodnotí
+    // (aby se přepínáním nedalo vyhnout špatné odpovědi), jinak rovnou nový příklad.
+    var modeBtns = document.querySelectorAll('#' + P + '-mode .chip');
+    Array.prototype.forEach.call(modeBtns, function(b, i){
+      b.addEventListener('click', function(){
+        setChips(modeBtns, i);
+        state.mode = b.getAttribute('data-mode');
+        if(!state.revealed && state.touched){ evaluate(false); return; }
+        newTask();
+      });
+    });
+
+    // ---- statistika ----
+    var STATS_KEY = cfg.statsKey;
+    function loadStats(){
+      try{ var raw = localStorage.getItem(STATS_KEY); if(raw) state.bestStreak = JSON.parse(raw).bestStreak || 0; }catch(e){}
+    }
+    function saveStats(){
+      try{ localStorage.setItem(STATS_KEY, JSON.stringify({ bestStreak:state.bestStreak })); }catch(e){}
+    }
+    function updateStats(){
+      var s = document.getElementById('stat-score'), st = document.getElementById('stat-streak'), a = document.getElementById('stat-accuracy');
+      if(s) s.textContent = state.score;
+      if(st) st.textContent = state.streak + (state.bestStreak > 0 ? ' / ' + state.bestStreak : '');
+      if(a) a.textContent = state.answered === 0 ? '—' : Math.round(100 * state.correct / state.answered) + ' %';
+    }
+    var rs = document.getElementById(P + '-reset-stats');
+    if(rs) rs.addEventListener('click', function(){
+      state.score = 0; state.streak = 0; state.answered = 0; state.correct = 0; state.bestStreak = 0;
+      try{ localStorage.removeItem(STATS_KEY); }catch(e){}
+      updateStats();
+    });
+    // Po synchronizaci s cloudem (auth.js) znovu načíst nejlepší sérii.
+    document.addEventListener('fyzika:scores-updated', function(){ state.bestStreak = 0; loadStats(); updateStats(); });
+
+    loadStats(); updateStats(); newTask();
+    return { newTask:newTask, state:state };
+  }
+
+  var linkZv = document.getElementById('dz-link-zarivka');
+  if(linkZv) linkZv.addEventListener('click', function(e){ e.preventDefault(); showTab('zarivka'); window.scrollTo(0, 0); });
+
+  // ================= ANIMACE: PROČ ZÁŘIVKA SVÍTÍ BÍLE =================
+  (function(){
+    var svg = document.getElementById('zv-svg');
+    if(!svg) return;
+    var C = 3.00e8;
+    var st = { mode:'fl', running:!reduceMotion, slow:false, t:0, nextEv:0.3 };
+    var TX0 = 30, TX1 = 400, TY0 = 90, TY1 = 210, COAT = 9;          // trubice zářivky
+    var LCX = 215, LCY = 240, LRX = 120, LRY = 120;                   // kopule luminoforu nad LED
+    var gFl = mk('g', {}, svg), gLed = mk('g', {}, svg), gPh = mk('g', {}, svg), gEn = mk('g', {}, svg);
+    function txt(parent, x, y, s, attrs){
+      var a = { x:x, y:y, 'font-size':'12.5', 'font-family':'Work Sans, sans-serif', fill:'var(--ink)' }, k;
+      for(k in (attrs || {})) a[k] = attrs[k];
+      var t = mk('text', a, parent); t.innerHTML = s; return t;
+    }
+    // --- zářivka ---
+    mk('rect', { x:TX0, y:TY0 - COAT, width:TX1 - TX0, height:TY1 - TY0 + 2 * COAT, rx:(TY1 - TY0) / 2 + COAT, fill:'var(--lum)', stroke:'var(--ink)', 'stroke-width':'1.6' }, gFl);
+    mk('rect', { x:TX0 + COAT, y:TY0, width:TX1 - TX0 - 2 * COAT, height:TY1 - TY0, rx:(TY1 - TY0) / 2, fill:'var(--surface)', stroke:'var(--ink-soft)', 'stroke-width':'0.8' }, gFl);
+    mk('rect', { x:TX0 - 14, y:130, width:16, height:40, rx:3, fill:'var(--ink-soft)' }, gFl);
+    mk('rect', { x:TX1 - 2, y:130, width:16, height:40, rx:3, fill:'var(--ink-soft)' }, gFl);
+    txt(gFl, TX0, 50, 'trubice zářivky: výboj v parách rtuti', { 'font-weight':'600' });
+    txt(gFl, TX0 + 60, TY0 - COAT - 6, 'luminofor na stěně', { fill:'var(--ink-soft)', 'font-size':'11.5' });
+    var atoms = [[100, 125], [170, 180], [235, 120], [300, 170], [345, 130], [140, 150], [265, 150]];
+    var atomEls = atoms.map(function(a){
+      var g = mk('g', {}, gFl);
+      var c = mk('circle', { cx:a[0], cy:a[1], r:11, fill:'var(--surface-2)', stroke:'var(--ink-soft)', 'stroke-width':'1.2' }, g);
+      txt(g, a[0], a[1] + 4, 'Hg', { 'text-anchor':'middle', 'font-size':'10', fill:'var(--ink-soft)' });
+      return c;
+    });
+    var electrons = [], i;
+    for(i = 0; i < 9; i++) electrons.push({ x:TX0 + 20 + Math.random() * (TX1 - TX0 - 40), y:TY0 + 15 + Math.random() * (TY1 - TY0 - 30), v:60 + Math.random() * 60,
+      el:mk('circle', { r:2.6, fill:'var(--focus)' }, gFl) });
+    txt(gFl, TX0, 250, '<tspan fill="var(--focus)">●</tspan> elektron   <tspan fill="var(--uvc)">∿</tspan> UV foton (neviditelný)', { 'font-size':'11.5', fill:'var(--ink-soft)' });
+    // --- LED ---
+    txt(gLed, TX0, 50, 'bílá LED: modrá dioda pod vrstvou luminoforu', { 'font-weight':'600' });
+    mk('path', { d:'M' + (LCX - LRX) + ',' + LCY + ' A' + LRX + ',' + LRY + ' 0 0 1 ' + (LCX + LRX) + ',' + LCY + ' Z', fill:'var(--lum)', stroke:'var(--ink)', 'stroke-width':'1.6' }, gLed);
+    mk('path', { d:'M' + (LCX - LRX + 14) + ',' + LCY + ' A' + (LRX - 14) + ',' + (LRY - 14) + ' 0 0 1 ' + (LCX + LRX - 14) + ',' + LCY + ' Z', fill:'var(--surface)', stroke:'var(--ink-soft)', 'stroke-width':'0.8' }, gLed);
+    mk('rect', { x:LCX - 18, y:LCY - 12, width:36, height:12, fill:'var(--led-chip)', stroke:'var(--ink)', 'stroke-width':'1.2' }, gLed);
+    mk('rect', { x:LCX - 70, y:LCY, width:140, height:14, fill:'var(--ink-soft)' }, gLed);
+    txt(gLed, LCX, LCY + 34, 'modrá LED', { 'text-anchor':'middle', fill:'var(--ink-soft)', 'font-size':'11.5' });
+    txt(gLed, LCX + LRX - 10, LCY - LRY + 20, 'luminofor', { fill:'var(--ink-soft)', 'font-size':'11.5' });
+    // --- energetický diagram ---
+    var EX = 450, EY0 = 280, EK = 0.16;   // px na THz
+    mk('line', { x1:EX, y1:EY0, x2:EX, y2:60, stroke:'var(--ink)', 'stroke-width':'1.4', 'marker-end':'url(#zv-arr)' }, gEn);
+    var defs = mk('defs', {}, svg);
+    function marker(id, col){
+      var m = mk('marker', { id:id, viewBox:'0 0 10 10', refX:'8.5', refY:'5', markerWidth:'7', markerHeight:'7', markerUnits:'userSpaceOnUse', orient:'auto' }, defs);
+      mk('path', { d:'M0,0 L10,5 L0,10 z', fill:col }, m);
+    }
+    marker('zv-arr', 'var(--ink)'); marker('zv-in', 'var(--uvc)'); marker('zv-out', 'var(--ink)');
+    txt(gEn, EX - 8, 56, 'energie fotonu', { 'text-anchor':'start', 'font-size':'11.5', fill:'var(--ink-soft)' });
+    mk('line', { x1:EX - 4, y1:EY0, x2:620, y2:EY0, stroke:'var(--ink)', 'stroke-width':'1.4' }, gEn);
+    var lvlTop = mk('line', { x1:EX - 4, x2:620, stroke:'var(--ink-soft)', 'stroke-width':'1.2' }, gEn);
+    var lvlMid = mk('line', { x1:EX - 4, x2:620, stroke:'var(--ink-soft)', 'stroke-width':'1.2', 'stroke-dasharray':'4 3' }, gEn);
+    var arrIn = mk('line', { x1:500, x2:500, y1:EY0, 'stroke-width':'3', 'marker-end':'url(#zv-in)' }, gEn);
+    var arrOut = mk('line', { x1:560, x2:560, 'stroke-width':'3' }, gEn);
+    var heat = mk('path', { fill:'none', stroke:'var(--danger)', 'stroke-width':'1.6' }, gEn);
+    var tIn = txt(gEn, 500, 0, '', { 'text-anchor':'middle', 'font-size':'11.5' });
+    var tOut = txt(gEn, 575, 0, '', { 'text-anchor':'start', 'font-size':'11.5' });
+    var tHeat = txt(gEn, 600, 0, 'teplo', { 'text-anchor':'middle', 'font-size':'11.5', fill:'var(--danger)' });
+    var tSum = txt(gEn, 450, 298, '', { 'font-size':'11.5', fill:'var(--ink-soft)' });
+
+    function setEnergy(lin, lout){
+      var fin = C / (lin * 1e-9) / 1e12, fout = C / (lout * 1e-9) / 1e12;
+      var yIn = EY0 - EK * fin, yOut = EY0 - EK * fout;
+      lvlTop.setAttribute('y1', f1(yIn)); lvlTop.setAttribute('y2', f1(yIn));
+      lvlMid.setAttribute('y1', f1(yOut)); lvlMid.setAttribute('y2', f1(yOut));
+      arrIn.setAttribute('y2', f1(yIn + 2)); arrIn.setAttribute('stroke', lin < 380 ? 'var(--uvc)' : wlColor(lin));
+      arrOut.setAttribute('y1', f1(yOut)); arrOut.setAttribute('y2', f1(EY0 - 2)); arrOut.setAttribute('stroke', wlColor(lout));
+      arrOut.setAttribute('marker-end', 'url(#zv-out)');
+      tIn.setAttribute('y', f1(yIn - 8)); tIn.innerHTML = '<tspan font-style="italic">λ</tspan> = ' + lin + ' nm';
+      tOut.setAttribute('y', f1((yOut + EY0) / 2)); tOut.innerHTML = lout + ' nm';
+      // vlnovka „tepla“ mezi hladinami
+      var d = 'M600,' + f1(yIn + 3), y;
+      for(y = yIn + 3; y < yOut - 3; y += 6) d += ' Q' + (y % 12 < 6 ? 606 : 594) + ',' + f1(y + 3) + ' 600,' + f1(Math.min(y + 6, yOut - 3));
+      heat.setAttribute('d', d);
+      tHeat.setAttribute('x', 612); tHeat.setAttribute('y', f1((yIn + yOut) / 2 + 4)); tHeat.setAttribute('text-anchor', 'start');
+      tSum.innerHTML = '<tspan x="450" dy="0">pohlcený foton: ' + fmtThousands(fmt(fin, 0)) + ' THz</tspan><tspan x="450" dy="15">vyslaný foton: ' + fmt(fout, 0) + ' THz</tspan>';
+    }
+
+    // fotony: { x, y, dx, dy, len, lam, life, age, uv, next }
+    var photons = [];
+    function addPhoton(p){
+      p.el = mk('polyline', { fill:'none', 'stroke-width':p.uv ? 2 : 2.4, stroke:p.uv ? 'var(--uvc)' : wlColor(p.lam), 'stroke-dasharray':p.uv ? '3 2' : '', 'stroke-linecap':'round' }, gPh);
+      p.age = 0; photons.push(p);
+    }
+    function drawPhoton(p){
+      var L = 34, n = 14, pts = [], j, s, px, py, wl = p.uv ? 5 : 8 + (p.lam - 400) / 40;
+      var nx = -p.dy, ny = p.dx, head = Math.min(p.age * p.speed, p.dist);
+      for(j = 0; j <= n; j++){
+        s = head - L + L * j / n; if(s < 0) continue;
+        px = p.x + p.dx * s + nx * 4 * Math.sin(2 * Math.PI * s / wl);
+        py = p.y + p.dy * s + ny * 4 * Math.sin(2 * Math.PI * s / wl);
+        pts.push(f1(px) + ',' + f1(py));
+      }
+      p.el.setAttribute('points', pts.join(' '));
+    }
+    var FL_OUT = [450, 545, 611];
+    function spawn(){
+      if(st.mode === 'fl'){
+        var k = Math.floor(Math.random() * atoms.length), a = atoms[k];
+        atomEls[k].setAttribute('fill', 'var(--uvc-soft)');
+        setTimeout(function(){ atomEls[k].setAttribute('fill', 'var(--surface-2)'); }, 350);
+        var up = Math.random() < 0.5, ang = (Math.random() - 0.5) * 0.9, dx = Math.sin(ang), dy = up ? -Math.cos(ang) : Math.cos(ang);
+        var wallY = up ? TY0 : TY1, dist = Math.abs((wallY - a[1]) / dy);
+        var lout = pick(FL_OUT);
+        addPhoton({ x:a[0], y:a[1], dx:dx, dy:dy, dist:dist, speed:150, lam:254, uv:true, then:function(p){
+          var hx = p.x + p.dx * p.dist, hy = p.y + p.dy * p.dist;
+          addPhoton({ x:hx, y:hy, dx:dx, dy:dy, dist:70, speed:150, lam:lout, uv:false });
+        } });
+        setEnergy(254, lout);
+      } else {
+        var th = -Math.PI / 2 + (Math.random() - 0.5) * 2.2, ux = Math.cos(th), uy = Math.sin(th);
+        var dist2 = 1 / Math.sqrt(ux * ux / ((LRX - 7) * (LRX - 7)) + uy * uy / ((LRY - 7) * (LRY - 7)));
+        var conv = Math.random() < 0.6;
+        addPhoton({ x:LCX, y:LCY - 12, dx:ux, dy:uy, dist:dist2, speed:150, lam:450, uv:false, then:function(p){
+          var hx = p.x + p.dx * p.dist, hy = p.y + p.dy * p.dist;
+          if(conv){ addPhoton({ x:hx, y:hy, dx:ux, dy:uy, dist:70, speed:150, lam:570, uv:false }); setEnergy(450, 570); }
+          else addPhoton({ x:hx, y:hy, dx:ux, dy:uy, dist:70, speed:150, lam:450, uv:false, keep:true });
+        } });
+        if(conv) setEnergy(450, 570);
+      }
+    }
+    function clearPhotons(){ photons.forEach(function(p){ if(p.el.parentNode) p.el.parentNode.removeChild(p.el); }); photons = []; }
+    function tick(dt){
+      var i, p, e;
+      st.t += dt;
+      if(st.t >= st.nextEv){ spawn(); st.nextEv = st.t + 0.45 + Math.random() * 0.4; }
+      for(i = 0; i < electrons.length && st.mode === 'fl'; i++){
+        e = electrons[i]; e.x += e.v * dt;
+        if(e.x > TX1 - 18){ e.x = TX0 + 18; e.y = TY0 + 15 + Math.random() * (TY1 - TY0 - 30); }
+        e.el.setAttribute('cx', f1(e.x)); e.el.setAttribute('cy', f1(e.y));
+      }
+      for(i = photons.length - 1; i >= 0; i--){
+        p = photons[i]; p.age += dt;
+        drawPhoton(p);
+        if(p.age * p.speed >= p.dist + 34){
+          if(p.then){ var f = p.then; p.then = null; f(p); }
+          if(p.el.parentNode) p.el.parentNode.removeChild(p.el);
+          photons.splice(photons.indexOf(p), 1);
+        } else if(p.then && p.age * p.speed >= p.dist){ var g2 = p.then; p.then = null; g2(p); }
+      }
+    }
+    var modeBtns = document.querySelectorAll('#zv-mode .chip'), btnPlay = document.getElementById('zv-play'), btnSlow = document.getElementById('zv-slow');
+    function updateUI(){
+      setChips(modeBtns, st.mode === 'fl' ? 0 : 1);
+      gFl.style.display = st.mode === 'fl' ? '' : 'none';
+      gLed.style.display = st.mode === 'fl' ? 'none' : '';
+      btnPlay.textContent = st.running ? 'Pozastavit' : 'Spustit';
+      setToggle(btnSlow, st.slow);
+    }
+    Array.prototype.forEach.call(modeBtns, function(b, bi){
+      b.addEventListener('click', function(){ st.mode = bi === 0 ? 'fl' : 'led'; clearPhotons(); setEnergy(bi === 0 ? 254 : 450, bi === 0 ? 545 : 570); updateUI(); });
+    });
+    btnPlay.addEventListener('click', function(){ st.running = !st.running; updateUI(); });
+    btnSlow.addEventListener('click', function(){ st.slow = !st.slow; updateUI(); });
+    var lastTs = null;
+    function frame(ts){
+      if(lastTs === null) lastTs = ts;
+      var dt = Math.min(0.1, (ts - lastTs) / 1000);
+      lastTs = ts;
+      if(st.running && svg.getBoundingClientRect().width > 0) tick(st.slow ? dt / 3 : dt);
+      window.requestAnimationFrame(frame);
+    }
+    setEnergy(254, 545); updateUI();
+    if(!st.running){ for(var k = 0; k < 40; k++) tick(0.05); }
+    window.requestAnimationFrame(frame);
+    initFullscreen('zv-card', 'zv-fs', 'zv-fs-label', 'zv-fs-icon');
+  })();
+
+  // ================= TRÉNINK: OTÁZKY =================
+  // [okruh, otázka, správná odpověď, špatné odpovědi…, vysvětlení]
+  var Q = [
+    ['druhy', 'Které záření vyzařuje lidské tělo nejvíce?', 'infračervené', ['ultrafialové', 'viditelné světlo', 'rentgenové'], 'Tělo o teplotě kolem 37 °C vyzařuje tepelné záření hlavně v infračervené oblasti; proto ho zachytí termovizní kamera.'],
+    ['druhy', 'Proč mají termovizní kamery čočky ze ZnS nebo ZnSe, a ne z optického skla?', 'optické sklo infračervené záření nepropouští', ['optické sklo by se teplem roztavilo', 'ZnSe zesiluje infračervené záření', 'optické sklo propouští jen ultrafialové záření'], 'Pro infračervené záření platí stejné zákony lomu jako pro světlo, ale obyčejné optické sklo ho pohlcuje.'],
+    ['druhy', 'Jak se nazývá obraz pořízený termovizní kamerou?', 'termogram', ['rentgenogram', 'spektrogram', 'tomogram'], 'V termogramu odpovídá každé teplotě povrchu určitá barva.'],
+    ['druhy', 'Jakým zářením komunikuje dálkový ovladač s televizorem?', 'infračerveným', ['ultrafialovým', 'mikrovlnným', 'viditelným světlem'], 'Infračervená dioda vysílá zakódované impulzy, které přijímá čidlo v televizoru. Okem je nevidíme, kamera mobilu ano.'],
+    ['druhy', 'Za oknem cítíme, že nás slunce hřeje, ale neopálíme se. Proč?', 'sklo propouští infračervené záření, ale pohlcuje ultrafialové', ['sklo pohlcuje infračervené záření', 'za sklem je slabší viditelné světlo', 'sklo mění ultrafialové záření na rentgenové'], 'Hřeje nás infračervené záření, které sklo propustí; opálení způsobuje ultrafialové, které obyčejné sklo pohltí.'],
+    ['druhy', 'Proč se na horách opálíme rychleji než v nížině?', 'záření prochází tenčí vrstvou atmosféry, takže se pohltí méně UV', ['na horách je větší teplota', 'na horách je víc infračerveného záření', 've výšce vzniká ultrafialové záření ve vzduchu'], 'Atmosféra ultrafialové záření pohlcuje; ve větší výšce je nad námi méně vzduchu.'],
+    ['druhy', 'V jaké výšce leží vrstva s velkou koncentrací ozonu (ozonosféra)?', 'asi 22 km až 25 km', ['asi 2 km až 5 km', 'asi 220 km až 250 km', 'těsně u zemského povrchu'], 'Ozonosféra ve výšce asi 22 km až 25 km pohlcuje většinu ultrafialového záření Slunce.'],
+    ['druhy', 'Proč se trubice rtuťových výbojek pro UV záření (horské slunce) vyrábějí z křemenného skla?', 'obyčejné sklo ultrafialové záření pohlcuje', ['křemenné sklo vydrží vyšší napětí', 'křemenné sklo mění světlo na UV', 'obyčejné sklo propouští rentgenové záření'], 'Obyčejné (draselné) sklo UV záření pohlcuje, křemenné ho propouští.'],
+    ['druhy', 'Které látky ničí ozon v ozonosféře?', 'freony a oxidy dusíku', ['oxid uhličitý a vodní pára', 'kyslík a dusík', 'helium a neon'], 'Freony (sloučeniny fluoru) ze sprejů a oxidy dusíku z výfukových plynů se slučují s ozonem; vznikají ozonové díry.'],
+    ['druhy', 'K čemu se využívá ultrafialové záření?', 'ke sterilizaci', ['k termovizi', 'k ohřevu jídla', 'k dálkovému ovládání'], 'UV záření ničí choroboplodné mikroorganismy.'],
+    ['druhy', 'Proč svářeč při obloukovém svařování nosí tmavý štít?', 'elektrický oblouk vysílá silné ultrafialové záření, které poškozuje oči', ['oblouk vysílá rentgenové záření', 'oblouk vysílá jen infračervené záření', 'aby lépe viděl rozžhavený kov'], 'Zdrojem UV záření jsou velmi horká tělesa včetně elektrického oblouku; oko ho nevidí, ale škodí mu.'],
+    ['druhy', 'V jakém zařízení vzniká rentgenové záření?', 'v rentgence', ['v magnetronu', 'v luminoforu', 've fotobuňce'], 'V rentgence dopadají elektrony urychlené vysokým napětím na wolframovou anodu.'],
+    ['druhy', 'Jaké spektrum má brzdné rentgenové záření?', 'spojité', ['čárové', 'pásové', 'absorpční'], 'Elektrony ztrácejí při brzdění v kovu nejrůznější energie, proto obsahuje všechny vlnové délky.'],
+    ['druhy', 'Jaké spektrum má charakteristické rentgenové záření?', 'čárové', ['spojité', 'pásové', 'nemá spektrum'], 'Souvisí se změnami energie atomů kovu anody, ty jsou pro daný kov určité.'],
+    ['druhy', 'Proč jsou kosti na rentgenovém snímku světlejší než svaly?', 'kosti pohlcují rentgenové záření víc (obsahují prvky s vyšším protonovým číslem)', ['kosti rentgenové záření odrážejí', 'svaly záření zesilují', 'kosti samy svítí'], 'Pohlcování roste s protonovým číslem; kosti z fosforečnanu vápenatého pohltí asi 150krát víc než svaly z vody.'],
+    ['druhy', 'Co se stane s vlnovou délkou rentgenového záření, když zvýšíme napětí na rentgence?', 'zkrátí se (záření bude tvrdší)', ['prodlouží se', 'nezmění se', 'záření se změní na ultrafialové'], 'Vyšší napětí znamená větší energii elektronů, a tím kratší vlnovou délku vzniklého záření.'],
+    ['druhy', 'Proč se rentgenové záření z vesmíru měří přístroji na družicích?', 'zemská atmosféra rentgenové záření pohltí', ['na Zemi ruší rentgeny v nemocnicích', 'družice jsou blíž hvězdám', 'rentgenové záření se šíří jen ve vakuu'], 'Atmosféra krátkovlnné záření pohlcuje, k povrchu Země se nedostane.'],
+    ['druhy', 'Čím se liší záření gama od rentgenového záření?', 'vzniká při přeměnách atomových jader', ['má vždy delší vlnovou délku', 'je viditelné', 'vzniká v elektronovém obalu'], 'Rentgenové záření vzniká v elektronovém obalu, gama v jádrech; vlnovými délkami se překrývají.'],
+    ['tepelne', 'Na čem závisí vlnové délky tepelného záření tělesa?', 'na teplotě tělesa', ['na složení látky tělesa', 'na barvě okolí', 'na velikosti tělesa'], 'Tepelné záření je určeno teplotou, ne tím, z jaké látky těleso je.'],
+    ['tepelne', 'Které těleso vyzařuje tepelné záření?', 'každé těleso', ['jen rozžhavená tělesa', 'jen kovy', 'jen tělesa teplejší než okolí'], 'Tepelné záření vyzařují všechna tělesa; chladná hlavně v infračervené oblasti.'],
+    ['tepelne', 'Kdy je těleso v rovnovážném stavu s okolím?', 'když za určitou dobu pohltí tolik energie záření, kolik vyzáří', ['když přestane vyzařovat', 'když nepohlcuje žádné záření', 'když svítí bíle'], 'Pohlcená a vyzářená energie se vyrovnají, teplota tělesa se nemění.'],
+    ['tepelne', 'Jak se mění barva vlákna žárovky, když roste jeho teplota?', 'od červené přes oranžovou ke žluté', ['od žluté přes oranžovou k červené', 'od modré k červené', 'nemění se'], 'S rostoucí teplotou se vyzařování přesouvá ke kratším vlnovým délkám: asi 900 °C červená, 1 100 °C oranžová, 1 300 °C žlutá.'],
+    ['tepelne', 'Při jaké teplotě začne plotýnka vařiče rudě žhnout?', 'přibližně 700 °C', ['přibližně 100 °C', 'přibližně 300 °C', 'přibližně 3 000 °C'], 'Za nižších teplot vyzařuje jen infračervené záření, kolem 700 °C už i červené světlo.'],
+    ['tepelne', 'Proč je baňka svítící žárovky horká, kdežto trubice zářivky chladná?', 'žárovka svítí tepelným zářením, zářivka luminiscencí', ['zářivka má menší příkon', 'zářivka je ze speciálního skla', 'žárovka vyzařuje ultrafialové záření'], 'Vlákno žárovky musí mít vysokou teplotu; v zářivce získávají atomy energii z elektrického pole a světlo vydává luminofor.'],
+    ['tepelne', 'Co se děje s energií, kterou chladnější těleso pohltí z tepelného záření teplejšího tělesa?', 'zvětší se jeho vnitřní energie a ohřeje se', ['odrazí se zpět', 'změní se na ultrafialové záření', 'nic, tepelné záření nenese energii'], 'Při tepelné výměně zářením chladnější těleso pohlcuje víc, než vyzáří, a jeho teplota roste.'],
+    ['lumi', 'Co je luminiscence?', 'vznik sekundárního záření s delší vlnovou délkou po pohlcení primárního záření', ['záření rozžhavených těles', 'odraz světla od luminoforu', 'vznik záření s kratší vlnovou délkou'], 'Primární záření má kratší vlnovou délku (vyšší frekvenci) než sekundární.'],
+    ['lumi', 'Čím jsou určeny vlnové délky světla při luminiscenci?', 'složením látky', ['teplotou tělesa', 'intenzitou primárního záření', 'tvarem tělesa'], 'Tím se luminiscence liší od tepelného záření, u kterého rozhoduje teplota.'],
+    ['lumi', 'Které záření vzniká přímo ve výboji uvnitř zářivky?', 'hlavně ultrafialové', ['bílé světlo', 'rentgenové', 'infračervené'], 'Výboj v parách rtuti vysílá hlavně UV záření; viditelné světlo vydá až luminofor na stěně.'],
+    ['lumi', 'Jak se nazývá látka, ve které lze vyvolat luminiscenci?', 'luminofor', ['polarizátor', 'fotodioda', 'dielektrikum'], 'Luminofory jsou většinou pevné látky s příměsmi, které určují barvu světla.'],
+    ['lumi', 'Co určuje barvu světla luminoforu?', 'zvolený příměsový prvek', ['teplota luminoforu', 'tloušťka vrstvy', 'napětí na zářivce'], 'Například ZnS s příměsí Cu nebo Mn svítí různými barvami.'],
+    ['lumi', 'Tričko svítí pod UV lampou na diskotéce, ale po vypnutí lampy hned zhasne. Jde o…', 'fluorescenci', ['fosforescenci', 'tepelné záření', 'odraz světla'], 'Sekundární záření zaniká hned po zániku primárního — fluorescence.'],
+    ['lumi', 'Nálepka na stropě svítí ještě několik minut po zhasnutí světla. Jde o…', 'fosforescenci', ['fluorescenci', 'tepelné záření', 'polarizaci'], 'Sekundární záření doznívá i po zániku primárního — fosforescence.'],
+    ['lumi', 'Jak vzniká bílé světlo v LED zdroji?', 'modrá dioda budí luminofor, který svítí žlutě; směs vnímáme jako bílou', ['dioda je rozžhavená na vysokou teplotu', 'dioda vysílá ultrafialové záření, které oko vidí jako bílé', 'tři žárovky různých barev'], 'Bílá LED je luminiscenční zdroj: část modrého světla projde, část luminofor přemění na delší vlnové délky.'],
+    ['lumi', 'Jak se ověřuje pravost bankovky pomocí luminiscence?', 'pod UV lampou se rozsvítí ochranná vlákna v papíru', ['bankovka se zahřeje a změní barvu', 'pod rentgenem se ukáže vodoznak', 'pod infralampou bankovka zčerná'], 'Papír bankovek obsahuje vlákna, která luminiscencí svítí po ozáření UV.'],
+    ['lumi', 'Může mít sekundární záření při luminiscenci kratší vlnovou délku než primární?', 'ne, sekundární záření má delší vlnovou délku', ['ano, vždy', 'jen u fosforescence', 'jen u bílých LED'], 'Vyslaný foton má menší energii (nižší frekvenci) než pohlcený; rozdíl se změní na teplo.']
+  ];
+  function genQ(mode){
+    var pool = Q.filter(function(q){ return mode === 'random' || q[0] === mode; });
+    var q = pick(pool), opts = shuffle([q[2]].concat(q[3]));
+    return { key:q[1], tag:{ druhy:'Druhy záření', tepelne:'Tepelné záření', lumi:'Luminiscence' }[q[0]], kind:'choice', wideOpts:true,
+      text:q[1], choices:opts, correct:opts.indexOf(q[2]), steps:[q[4]], final:'Správná odpověď: ' + q[2] };
+  }
+  makeTrainer({ prefix:'tr', statsKey:'fyzika:druhy-zareni:stats', gen:genQ });
+
+  // ---- vzorce (KaTeX) ----
+  if(window.renderMathInElement){
+    ['theory-section', 'zarivka-section', 'trenink-section'].forEach(function(id){
+      try{
+        renderMathInElement(document.getElementById(id), {
+          delimiters: [{left:'\\(', right:'\\)', display:false}, {left:'\\[', right:'\\]', display:true}]
+        });
+      }catch(e){}
+    });
+  }
+
+  // ---- sbalovací panely v teorii ----
+  try{ makePanelsCollapsible(document.getElementById('theory-section')); }catch(e){}
+})();
+</script>
+</body>
+</html>
