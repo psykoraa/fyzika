@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kvantová čísla</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../spolecne/config.js"></script>
+<script src="../spolecne/auth.js"></script>
+<script src="../spolecne/zalozky.js?v=3"></script>
+<link rel="stylesheet" href="../spolecne/styl.css">
+<link rel="stylesheet" href="../spolecne/reseni.css?v=1">
+<style>
+:root{
+  --paper:#f2eff8;
+  --surface:#fdfcff;
+  --surface-2:#e6e0f1;
+  --ink:#241f36;
+  --ink-soft:#645d7a;
+  --line:rgba(36,31,54,0.12);
+  --accent:#6b3fb5;
+  --accent-ink:#faf7ff;
+  --success:#28794f;
+  --success-bg:#e3efe0;
+  --danger:#b3392b;
+  --danger-bg:#f5e4de;
+  --focus:#1e6f66;
+  --shadow:0 1px 0 rgba(36,31,54,0.06);
+  /* barvy orbitalů: kladná a záporná část vlnové funkce */
+  --orb1:#6b3fb5;
+  --orb2:#1e6f66;
+}
+
+.panel{ margin-bottom:22px; }
+.panel-title{ margin-bottom:8px; }
+.panel p{
+  margin:0 0 8px;
+  font-size:0.9rem;
+  line-height:1.55;
+}
+.panel p:last-child{ margin-bottom:0; }
+.panel b{ color:var(--ink); }
+.panel ul, .panel ol{ margin:0 0 8px; padding-left:22px; font-size:0.9rem; line-height:1.55; }
+.panel li{ margin-bottom:4px; }
+.panel h3{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.05rem;
+  letter-spacing:0.01em;
+  margin:16px 0 6px;
+}
+.panel h3:first-child{ margin-top:0; }
+
+.card{ padding:26px 26px 28px; text-align:left; margin-bottom:24px; }
+.cat-tag{ margin-bottom:10px; }
+.card h2{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.6rem;
+  letter-spacing:0.02em;
+  color:var(--ink);
+  text-transform:none;
+  margin-bottom:6px;
+}
+.card .desc{
+  font-size:0.86rem;
+  color:var(--ink-soft);
+  line-height:1.5;
+  margin:0 0 14px;
+}
+
+.katex{ font-size:1.05em; }
+.formula-box{
+  background:var(--surface-2);
+  border-radius:8px;
+  padding:12px 16px;
+  margin:10px 0;
+  font-size:1.1rem;
+  text-align:center;
+}
+.formula-line{
+  text-align:center;
+  font-size:1.1rem;
+  color:var(--ink);
+  line-height:1.8;
+}
+.line-scroll{
+  position:relative;
+  white-space:nowrap;
+  overflow-x:auto;
+  overflow-y:hidden;
+  padding:2px 0 4px;
+}
+.given-data{
+  font-size:clamp(0.9rem, 2.4vw, 1.05rem);
+  color:var(--ink-soft);
+  margin-bottom:20px;
+}
+
+.theory-table-wrap{ overflow-x:auto; margin:6px 0 4px; }
+.theory-table{
+  border-collapse:collapse;
+  font-size:0.88rem;
+  width:100%;
+  min-width:320px;
+}
+.theory-table th, .theory-table td{
+  border:1px solid var(--line);
+  padding:8px 12px;
+  text-align:left;
+}
+.theory-table thead th{
+  background:var(--surface-2);
+  color:var(--ink-soft);
+  font-weight:600;
+  font-size:0.72rem;
+  text-transform:uppercase;
+  letter-spacing:0.05em;
+}
+.theory-table td.mono, .theory-table th.mono{
+  font-family:'IBM Plex Mono', monospace;
+  font-variant-numeric:tabular-nums;
+  text-align:center;
+}
+.theory-table tbody tr:nth-child(even) td{ background:rgba(0,0,0,0.02); }
+
+.theory-fig{
+  margin:12px 0 10px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:10px 12px 8px;
+}
+.theory-fig svg{ display:block; width:100%; max-width:560px; height:auto; margin:0 auto; }
+.theory-fig figcaption{
+  font-size:0.8rem;
+  color:var(--ink-soft);
+  line-height:1.45;
+  text-align:center;
+  margin-top:4px;
+}
+
+.example-grid{ display:flex; flex-direction:column; gap:12px; margin-top:6px; }
+.example-item{
+  background:var(--surface-2);
+  border-radius:10px;
+  padding:12px 14px;
+}
+.example-tag{
+  font-size:0.66rem;
+  text-transform:uppercase;
+  letter-spacing:0.06em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-bottom:6px;
+  display:block;
+}
+.example-eq{
+  font-size:1.05rem;
+  margin-bottom:4px;
+}
+.example-note{ font-size:0.82rem; color:var(--ink-soft); line-height:1.45; }
+
+.links{ margin-top:14px; display:flex; flex-wrap:wrap; gap:10px; justify-content:center; }
+a.btn-link{
+  display:inline-block;
+  font-weight:600;
+  font-size:0.95rem;
+  padding:10px 22px;
+  border-radius:8px;
+  background:var(--accent);
+  color:var(--accent-ink);
+  text-decoration:none;
+}
+a.btn-link:hover{ filter:brightness(1.06); }
+a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+
+.credit{
+  margin-top:24px;
+  font-size:0.8rem;
+  line-height:1.5;
+  color:var(--ink-soft);
+  text-align:center;
+}
+.credit a{ color:inherit; }
+
+
+/* ---- aplety: karta, řádky ovládání, kreslicí plocha, výstupy ---- */
+.applet-head .cat-tag{ margin-bottom:10px; }
+.mode-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:16px;
+  padding-top:14px;
+  border-top:1px solid var(--line);
+}
+.mode-row-label{
+  font-size:0.68rem;
+  text-transform:uppercase;
+  letter-spacing:0.1em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-right:2px;
+  flex:0 0 170px;
+}
+.seg{ display:flex; gap:6px; flex-wrap:wrap; }
+.chip{ font-size:0.82rem; gap:7px; }
+.chip.accented.on{ background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+.chip:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+.slider-wrap{ display:flex; align-items:center; gap:12px; flex:1 1 260px; min-width:0; }
+.slider-wrap input[type=range]{ flex:1 1 auto; min-width:0; accent-color:var(--accent); height:28px; }
+.slider-val{ font-family:'IBM Plex Mono', monospace; font-weight:600; font-size:0.92rem; white-space:nowrap; min-width:6.5em; text-align:right; }
+.canvas-wrap{
+  position:relative;
+  margin-top:18px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:10px;
+  overflow:hidden;
+}
+svg.scene{ width:100%; height:auto; display:block; background:var(--surface); user-select:none; -webkit-user-select:none; touch-action:manipulation; }
+svg.scene text{ font-family:'Work Sans', sans-serif; }
+.legend{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 18px;
+  padding:10px 14px;
+  border-top:1px solid var(--line);
+  font-size:0.78rem;
+  color:var(--ink-soft);
+}
+.legend span{ display:inline-flex; align-items:center; gap:7px; }
+.legend i{ font-style:normal; display:inline-block; width:12px; height:12px; border-radius:50%; background:var(--c); }
+.applet-out{
+  display:flex; flex-wrap:wrap; gap:8px 22px; margin-top:14px;
+  font-size:0.92rem; line-height:1.5;
+}
+.applet-out b{ font-variant-numeric:tabular-nums; }
+.applet-note{ font-size:0.86rem; color:var(--ink-soft); margin:10px 0 0; line-height:1.5; }
+.applet-actions{ display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+.applet-card + .applet-card{ margin-top:4px; }
+.nw{ white-space:nowrap; }
+@media (max-width:720px){
+  .mode-row-label{ flex-basis:100%; }
+}
+.mode-row-label i{ text-transform:none; }
+
+/* ---- trénink s číselnou odpovědí ---- */
+.section-block{ margin-bottom:16px; }
+.section-block:last-child{ margin-bottom:0; }
+.task-text{ font-size:0.92rem; color:var(--ink); line-height:1.55; text-align:center; margin:4px 0 18px; }
+.equation{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:600;
+  font-size:clamp(1.25rem, 4.2vw, 1.9rem);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:0.35em;
+  flex-wrap:wrap;
+  font-variant-numeric:tabular-nums;
+}
+.equation .unit{ color:var(--ink-soft); font-size:0.7em; margin-left:0.1em; }
+.equation .eq{ color:var(--ink-soft); margin:0 0.1em; }
+.equation .katex{ font-size:1em; }
+.equation .answer-input{ width:5.2em; }
+.answer-input.sci-mantissa{ width:3.6em; }
+.sci-group{ display:inline-flex; align-items:baseline; gap:0.12em; }
+.sci-times{ font-size:0.65em; color:var(--ink-soft); margin:0 0.02em; }
+.sci-exp{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:600;
+  width:2.4em;
+  text-align:center;
+  border:none;
+  border-bottom:2px solid var(--ink-soft);
+  background:transparent;
+  color:var(--ink);
+  font-size:0.55em;
+  vertical-align:top;
+  padding:0 0.05em;
+}
+.sci-exp:focus{ outline:none; border-color:var(--focus); }
+.sci-exp.correct{ border-color:var(--success); color:var(--success); }
+.sci-exp.wrong{ border-color:var(--danger); color:var(--danger); }
+.const-box{ font-size:0.82rem; color:var(--ink-soft); line-height:1.6; margin:0; }
+.feedback .tip{ font-size:0.78rem; color:var(--ink); opacity:0.75; margin-top:6px; font-style:italic; }
+
+/* ---- hra na čas: výběr z možností ---- */
+.choice-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:16px;
+}
+.choice-btn{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:700;
+  font-size:1.05rem;
+  padding:14px 16px;
+  border-radius:10px;
+  border:1px solid var(--line);
+  background:var(--surface);
+  color:var(--ink);
+  cursor:pointer;
+  text-align:center;
+  transition:transform .05s ease, background .12s, border-color .12s;
+}
+.choice-btn:hover:not(:disabled){ border-color:var(--accent); }
+.choice-btn:active:not(:disabled){ transform:translateY(1px); }
+.choice-btn:disabled{ cursor:not-allowed; }
+.choice-btn.selected{ background:var(--ink); border-color:var(--ink); color:var(--paper); }
+.choice-btn.correct{ background:var(--success-bg); border-color:var(--success); color:var(--success); }
+.choice-btn.wrong{ background:var(--danger-bg); border-color:var(--danger); color:var(--danger); }
+@media (max-width:520px){
+  .choice-grid{ grid-template-columns:1fr; }
+}
+
+@media (max-width:520px){
+  .card{ padding:20px 16px 22px; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <a class="back-link" href="../rozcestniky/oktava.html">← Zpět na Oktáva/4. ročník</a>
+
+  <div class="brand">
+    <div class="brand-lockup">
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <ellipse cx="20" cy="11" rx="6" ry="9" fill="var(--accent)" fill-opacity="0.55" stroke="var(--accent)" stroke-width="1.4"/>
+        <ellipse cx="20" cy="29" rx="6" ry="9" fill="var(--accent)" fill-opacity="0.25" stroke="var(--accent)" stroke-width="1.4"/>
+        <circle cx="20" cy="20" r="2" fill="var(--ink)"/>
+        <path d="M31,8 L31,16 M28,13 L31,16 L34,13" stroke="var(--focus)" stroke-width="1.6" fill="none"/>
+        <path d="M31,32 L31,24 M28,27 L31,24 L34,27" stroke="var(--focus)" stroke-width="1.6" fill="none"/>
+      </svg>
+      <div class="brand-text">
+        <h1>Kvantová čísla</h1>
+        <p>atomová a částicová fyzika — kvantově mechanický model atomu</p>
+      </div>
+    </div>
+    <div class="readout" id="header-readout" hidden>
+      <div class="cell"><span class="label">Skóre</span><span class="value" id="stat-score">0</span></div>
+      <div class="cell"><span class="label">Série</span><span class="value" id="stat-streak">0</span></div>
+      <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="stat-accuracy">—</span></div>
+    </div>
+  </div>
+
+  <div class="top-tabs">
+    <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+    <button class="toptab" id="top-tab-trenink" data-tab="trenink">Trénink</button>
+    <button class="toptab" id="top-tab-hra" data-tab="hra">Hra na čas</button>
+  </div>
+
+  <!-- ============ TEORIE ============ -->
+  <div id="theory-section" class="tab-section">
+
+    <div class="panel">
+      <div class="panel-title">Kvantově mechanický model atomu</div>
+      <p>Podle kvantové mechaniky nemá elektron v atomu dráhu. Víme jen, s jakou pravděpodobností ho najdeme v různých místech kolem jádra. Model atomu je proto takovýto:</p>
+      <ol>
+        <li>uprostřed je velmi malé, těžké a kladně nabité jádro;</li>
+        <li>kolem něj se v různých místech s různou pravděpodobností vyskytují elektrony.</li>
+      </ol>
+      <p>Rozložení pravděpodobnosti dostaneme řešením Schrödingerovy rovnice. Oblast, ve které se elektron vyskytuje s největší pravděpodobností, znázorňujeme jako geometrický útvar — <b>atomový orbital</b>.</p>
+      <p>V základním stavu atomu vodíku je elektron nejpravděpodobněji ve vzdálenosti Bohrova poloměru (0,053&nbsp;nm), ale s malou pravděpodobností ho můžeme najít i daleko od jádra. Energie elektronu přitom <b>nezávisí</b> na tom, jak daleko od jádra ho zrovna najdeme — závisí jen na stavu, ve kterém je. Například ve stavu 2s má elektron vyšší energii než ve stavu 1s, a přesto je jedno z maxim pravděpodobnosti stavu 2s blíž k jádru než maximum stavu 1s.</p>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="9" cy="9" r="7.5" stroke="var(--focus)" stroke-width="1.6"/>
+          <line x1="9" y1="8" x2="9" y2="13" stroke="var(--focus)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="5.2" r="1" fill="var(--focus)"/>
+        </svg>
+        <p>Co říká energie základního stavu vodíku −13,6&nbsp;eV? Že právě tolik energie musíme elektronu dodat, abychom ho z atomu uvolnili (atom ionizovali).</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Čtyři kvantová čísla</div>
+      <p>Stav elektronu v atomu je určen čtyřmi <b>kvantovými čísly</b>:</p>
+      <div class="theory-table-wrap">
+        <table class="theory-table">
+          <thead>
+            <tr><th>Kvantové číslo</th><th class="mono">Hodnoty</th><th>Co určuje</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><b>hlavní</b> \(n\)</td><td class="mono">1, 2, 3, …</td><td>energii stavu (u vodíku \(E_n = -13{,}6\ \mathrm{eV}/n^2\)) a velikost orbitalu</td></tr>
+            <tr><td><b>vedlejší</b> (orbitální) \(l\)</td><td class="mono">0, 1, …, <i>n</i> − 1</td><td>tvar orbitalu</td></tr>
+            <tr><td><b>magnetické</b> \(m\)</td><td class="mono">−<i>l</i>, …, 0, …, +<i>l</i></td><td>orientaci orbitalu v prostoru (\(2l + 1\) možností)</td></tr>
+            <tr><td><b>spinové magnetické</b> \(m_s\)</td><td class="mono">+½, −½</td><td>natočení spinu elektronu v magnetickém poli</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Hodnoty vedlejšího kvantového čísla se ve spektroskopii označují písmeny:</p>
+      <div class="theory-table-wrap">
+        <table class="theory-table">
+          <thead><tr><th><i>l</i></th><th class="mono">0</th><th class="mono">1</th><th class="mono">2</th><th class="mono">3</th></tr></thead>
+          <tbody><tr><td>písmeno</td><td class="mono">s</td><td class="mono">p</td><td class="mono">d</td><td class="mono">f</td></tr></tbody>
+        </table>
+      </div>
+      <p>Zápis <b>3d</b> tedy znamená stav s \(n = 3\) a \(l = 2\); zápis <b>4p</b> stav s \(n = 4\) a \(l = 1\). Kombinace jako „2d“ neexistuje, protože pro \(n = 2\) může být \(l\) jen 0 nebo 1.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Tvary orbitalů</div>
+      <figure class="theory-fig">
+        <svg viewBox="0 0 440 150" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Schematické tvary orbitalů: kulový orbital s a tři činkovité orbitaly p orientované podél os x, y a z.">
+          <circle cx="60" cy="72" r="34" fill="var(--orb1)" fill-opacity="0.3" stroke="var(--orb1)" stroke-width="1.5"/>
+          <circle cx="60" cy="72" r="2" fill="var(--ink)"/>
+          <g transform="translate(160 72)">
+            <ellipse cx="-20" cy="0" rx="20" ry="13" fill="var(--orb1)" fill-opacity="0.35" stroke="var(--orb1)" stroke-width="1.5"/>
+            <ellipse cx="20" cy="0" rx="20" ry="13" fill="var(--orb2)" fill-opacity="0.3" stroke="var(--orb2)" stroke-width="1.5"/>
+            <circle cx="0" cy="0" r="2" fill="var(--ink)"/>
+          </g>
+          <g transform="translate(260 72)">
+            <ellipse cx="0" cy="-20" rx="13" ry="20" fill="var(--orb1)" fill-opacity="0.35" stroke="var(--orb1)" stroke-width="1.5"/>
+            <ellipse cx="0" cy="20" rx="13" ry="20" fill="var(--orb2)" fill-opacity="0.3" stroke="var(--orb2)" stroke-width="1.5"/>
+            <circle cx="0" cy="0" r="2" fill="var(--ink)"/>
+          </g>
+          <g transform="translate(360 72)">
+            <ellipse cx="-11" cy="9" rx="15" ry="10" transform="rotate(-35 -11 9)" fill="var(--orb2)" fill-opacity="0.3" stroke="var(--orb2)" stroke-width="1.5"/>
+            <ellipse cx="11" cy="-9" rx="15" ry="10" transform="rotate(-35 11 -9)" fill="var(--orb1)" fill-opacity="0.35" stroke="var(--orb1)" stroke-width="1.5"/>
+            <circle cx="0" cy="0" r="2" fill="var(--ink)"/>
+          </g>
+          <g font-family="Work Sans, sans-serif" font-size="12" fill="var(--ink)" text-anchor="middle">
+            <text x="60" y="130">s (<tspan font-style="italic">l</tspan> = 0)</text><text x="160" y="130">p<tspan font-size="9" dy="3">x</tspan></text><text x="260" y="130">p<tspan font-size="9" dy="3">y</tspan></text><text x="360" y="130">p<tspan font-size="9" dy="3">z</tspan></text>
+            <text x="260" y="146" font-size="11" fill="var(--ink-soft)">tři orbitaly p (<tspan font-style="italic">l</tspan> = 1, <tspan font-style="italic">m</tspan> = −1, 0, +1)</text>
+          </g>
+        </svg>
+        <figcaption>Orbitaly s jsou kulově souměrné, orbitaly p mají tvar činky ve třech navzájem kolmých směrech (třetí je kreslen v perspektivě). Barvy rozlišují části s opačným znaménkem vlnové funkce.</figcaption>
+      </figure>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Spin</div>
+      <p>Pokusy s atomy v magnetickém poli ukázaly, že stavů je ve skutečnosti dvakrát víc, než by odpovídalo číslům \(n, l, m\). Elektron se chová jako malý magnet, který se ve vnějším magnetickém poli může natočit jen dvěma způsoby — po směru pole, nebo proti němu. Této vlastnosti se říká <b>spin</b> (angl. otáčení) a popisuje ji spinové magnetické kvantové číslo \(m_s = \pm\tfrac{1}{2}\).</p>
+      <p>Představa „roztočené kuličky“ je jen pomůcka; spin je vnitřní kvantová vlastnost částice, která v makrosvětě nemá obdobu.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Kolik stavů má hladina <i>n</i></div>
+      <p>Pro dané \(n\) může být \(l = 0, 1, \dots, n-1\) a pro každé \(l\) existuje \(2l + 1\) hodnot \(m\). Orbitalů je tedy</p>
+      <p class="formula-line">\[ 1 + 3 + 5 + \dots + (2n - 1) = n^2 \]</p>
+      <p>a protože každý orbital mohou obsadit dva elektrony s opačným spinem, odpovídá hlavnímu kvantovému číslu \(n\) celkem</p>
+      <div class="formula-box">\[ 2n^2 \ \text{stavů} \]</div>
+      <div class="theory-table-wrap">
+        <table class="theory-table">
+          <thead><tr><th class="mono"><i>n</i></th><th>možná <i>l</i></th><th class="mono">orbitalů <i>n</i>²</th><th class="mono">stavů 2<i>n</i>²</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">1</td><td>0 (1s)</td><td class="mono">1</td><td class="mono">2</td></tr>
+            <tr><td class="mono">2</td><td>0, 1 (2s, 2p)</td><td class="mono">1 + 3 = 4</td><td class="mono">8</td></tr>
+            <tr><td class="mono">3</td><td>0, 1, 2 (3s, 3p, 3d)</td><td class="mono">1 + 3 + 5 = 9</td><td class="mono">18</td></tr>
+            <tr><td class="mono">4</td><td>0, 1, 2, 3 (4s, 4p, 4d, 4f)</td><td class="mono">1 + 3 + 5 + 7 = 16</td><td class="mono">32</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="cat-tag">Příklad</span>
+      <h2>Všechny stavy pro <i>n</i> = 2</h2>
+      <p class="desc">Vypište všechny přípustné kombinace kvantových čísel pro \(n = 2\) a spočítejte orbitaly a stavy.</p>
+      <div class="stepper" data-reset="reset-n2">
+        <div class="step" data-step="1">
+          <div class="step-connector"></div>
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">1</span>
+            <span class="step-title">Možné hodnoty \(l\)</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <div class="step-result">\(l = 0, 1, \dots, n - 1 \ \Rightarrow\ l = 0\ (\text{2s}),\ l = 1\ (\text{2p})\)</div>
+          </div>
+        </div>
+        <div class="step" data-step="2">
+          <div class="step-connector"></div>
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">2</span>
+            <span class="step-title">Možné hodnoty \(m\)</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <div class="step-result">\(l = 0:\ m = 0; \qquad l = 1:\ m = -1, 0, +1\)</div>
+            <p>Celkem \(1 + 3 = 4 = n^2\) orbitaly.</p>
+          </div>
+        </div>
+        <div class="step" data-step="3">
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">3</span>
+            <span class="step-title">Přidejte spin</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <div class="result-box">\(4\ \text{orbitaly} \cdot 2 = 8\ \text{stavů} = 2n^2\)</div>
+            <p>Do hladiny (slupky) \(n = 2\) se tedy vejde nejvýše 8 elektronů.</p>
+          </div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn ghost" id="reset-n2">Zopakovat postup od začátku</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Pauliho princip a slupky</div>
+      <p>Podle <b>Pauliho vylučovacího principu</b> může být v každém kvantovém stavu (dané čtveřici \(n, l, m, m_s\)) nejvýše jeden elektron. V atomu s více elektrony se proto elektrony nemohou všechny „usadit“ v nejnižším stavu, ale postupně zaplňují vyšší stavy. Elektrony se stejným \(n\) tvoří <b>slupku</b>, elektrony se stejným \(n\) i \(l\) <b>podslupku</b>; slupky pojmou 2, 8, 18, 32 elektronů, podslupky s, p, d, f pak 2, 6, 10, 14.</p>
+      <p>V atomech s více elektrony už energie závisí nejen na \(n\), ale i na \(l\). Chemické vlastnosti prvku určují hlavně elektrony v poslední, <b>valenční</b> slupce — tím kvantová fyzika vysvětluje periodickou soustavu prvků.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Shrnutí</div>
+      <p>• V kvantově mechanickém modelu se elektrony vyskytují kolem jádra s různou pravděpodobností; oblast nejpravděpodobnějšího výskytu je orbital.</p>
+      <p>• Stav elektronu určují čtyři kvantová čísla: \(n = 1, 2, \dots\); \(l = 0, \dots, n-1\) (s, p, d, f); \(m = -l, \dots, +l\); \(m_s = \pm\tfrac{1}{2}\).</p>
+      <p>• Hladině \(n\) odpovídá \(n^2\) orbitalů a \(2n^2\) stavů; podslupka \(l\) pojme \(2(2l+1)\) elektronů.</p>
+      <p>• Pauliho princip: v jednom kvantovém stavu je nejvýše jeden elektron.</p>
+    </div>
+
+  </div>
+
+  <!-- ============ TRÉNINK ============ -->
+  <div id="trenink-section" class="tab-section" hidden>
+
+    <div class="panel">
+      <div class="section-block">
+        <div class="panel-title">Typ příkladů</div>
+        <div class="row" id="type-row"></div>
+      </div>
+      <div class="section-block">
+        <p class="const-box">Pravidla: \(n = 1, 2, 3, \dots\); \(l = 0, 1, \dots, n-1\) (s, p, d, f, g pro \(l = 0, 1, 2, 3, 4\)); \(m = -l, \dots, +l\); \(m_s = \pm\tfrac{1}{2}\).</p>
+      </div>
+      <div class="settings-foot" style="justify-content:flex-end;">
+        <button class="linklike" id="reset-stats">vynulovat statistiku</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="cat-tag" id="cat-tag">Trénink</span>
+      <p class="task-text" id="task-text"></p>
+      <div class="equation" id="equation">
+        <span id="eq-given"></span>
+        <span class="eq">=</span>
+        <span class="answer-slot" id="slot-dec">
+          <input class="answer-input" id="answer" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="?" aria-label="odpověď">
+        </span>
+        <span class="answer-slot sci-group" id="slot-sci" hidden>
+          <input class="answer-input sci-mantissa" id="answer-m" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="a" aria-label="mantisa">
+          <span class="sci-times">·10</span>
+          <input class="sci-exp" id="answer-e" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="n" aria-label="exponent">
+        </span>
+        <span class="unit" id="eq-unit"></span>
+      </div>
+      <div class="actions">
+        <button class="btn primary" id="btn-check">Zkontrolovat</button>
+        <button class="btn ghost" id="btn-skip">Nevím / Zobrazit řešení</button>
+      </div>
+      <div class="feedback" id="feedback" hidden>
+        <div class="headline" id="feedback-headline"></div>
+        <div class="steps" id="feedback-steps"></div>
+        <div class="tip" id="feedback-tip" hidden></div>
+      </div>
+      <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint">Odpovědí je vždy celé číslo — zapište ho do rámečku. Enter potvrdí odpověď i přejde na další příklad.</p>
+      </details>
+    </div>
+
+  </div>
+
+  <!-- ============ HRA NA ČAS ============ -->
+  <div id="hra-section" class="tab-section" hidden>
+
+    <div id="game-info">
+      <div class="panel" id="game-rules-panel">
+        <div class="panel-title">Pravidla hry</div>
+        <p class="game-rules">
+          Dostanete otázku na kvantová čísla — například zda je daná trojice <i>n</i>, <i>l</i>, <i>m</i> přípustná, jaké <i>l</i> odpovídá zápisu 4d
+          nebo kolik elektronů se vejde do podslupky. Ze čtyř (nebo dvou) možností vyberte správnou. Za správnou odpověď získáte
+          <strong>10 bodů</strong>, za špatnou odpověď (i za „Nevím“) se strhává <strong>5 bodů</strong>. Po vypršení zvoleného času se hra ukončí.
+        </p>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Délka hry</div>
+        <div class="row" id="game-duration-row"></div>
+      </div>
+    </div>
+
+    <div id="game-start-panel">
+      <div class="panel">
+        <div class="settings-foot">
+          <span class="hint" id="game-best-hint">Nejlepší skóre: —</span>
+          <button class="btn primary" id="btn-game-start">Spustit hru</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="game-play" hidden>
+      <div class="game-header">
+        <div class="game-timer" id="game-timer">2:00</div>
+        <div class="readout">
+          <div class="cell"><span class="label">Body</span><span class="value" id="game-score">0</span></div>
+          <div class="cell"><span class="label">Nejlepší</span><span class="value" id="game-best-live">0</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <span class="cat-tag" id="game-cat">Kvantová čísla</span>
+        <p class="task-text" id="game-question"></p>
+        <div class="choice-grid" id="game-choice-grid"></div>
+        <div class="feedback" id="game-feedback" hidden>
+          <div class="headline" id="game-feedback-headline"></div>
+          <div class="steps" id="game-feedback-steps"></div>
+        </div>
+        <div class="actions">
+          <button class="btn primary" id="btn-game-check">Zkontrolovat</button>
+          <button class="btn ghost" id="btn-game-skip">Nevím / Další</button>
+        </div>
+        <details class="navod">
+          <summary>Návod</summary>
+          <p class="hint">Možnost vyberte kliknutím (nebo klávesami 1 až 4) a potvrďte tlačítkem Zkontrolovat nebo Enterem; dalším Enterem přejdete na další otázku.</p>
+        </details>
+      </div>
+    </div>
+
+    <div class="card" id="game-over" hidden>
+      <span class="cat-tag">Konec hry</span>
+      <div class="game-final-score" id="game-final-score">0 bodů</div>
+      <div class="hint" id="game-final-detail"></div>
+      <div class="actions">
+        <button class="btn primary" id="btn-game-restart">Hrát znovu</button>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>Fyzika — Oktáva/4. ročník</footer>
+</div>
+
+<script src="../spolecne/reseni.js?v=1"></script>
+<script src="../spolecne/spolecne.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  // ---- záložky: tlačítko .toptab[data-tab="x"] ↔ sekce #x-section (Teorie = #theory-section) ----
+  var tabs = {}, sections = {};
+  Array.prototype.forEach.call(document.querySelectorAll('.toptab[data-tab]'), function(btn){
+    var name = btn.getAttribute('data-tab');
+    tabs[name] = btn;
+    sections[name] = document.getElementById(name === 'teorie' ? 'theory-section' : name + '-section');
+  });
+  function showTab(name){
+    for(var k in tabs){
+      tabs[k].classList.toggle('on', k === name);
+      if(sections[k]) sections[k].hidden = k !== name;
+    }
+    // skóre, série a úspěšnost v hlavičce jen u tréninku
+    var readout = document.getElementById('header-readout');
+    if(readout) readout.hidden = name !== 'trenink';
+  }
+  Object.keys(tabs).forEach(function(k){ tabs[k].addEventListener('click', function(){ showTab(k); }); });
+  var hash = location.hash.replace('#', '');
+  if(hash && tabs[hash]) showTab(hash);
+
+  // ---- příklady v teorii: postupně odemykané steppery ----
+  Array.prototype.forEach.call(document.querySelectorAll('.stepper'), function(wrap){
+    var steps = Array.prototype.slice.call(wrap.querySelectorAll('.step'));
+    var unlockedUpTo = 1;
+
+    function refreshLocks(){
+      steps.forEach(function(st){
+        var idx = parseInt(st.getAttribute('data-step'), 10);
+        var locked = idx > unlockedUpTo;
+        st.classList.toggle('locked', locked);
+        st.classList.toggle('unlocked', !locked && !st.classList.contains('done'));
+        st.querySelector('.step-head').setAttribute('aria-disabled', locked ? 'true' : 'false');
+      });
+    }
+
+    steps.forEach(function(st){
+      var idx = parseInt(st.getAttribute('data-step'), 10);
+      var head = st.querySelector('.step-head');
+      var body = st.querySelector('.step-body');
+      head.addEventListener('click', function(){
+        if(idx > unlockedUpTo) return;
+        var wasOpen = st.classList.contains('open');
+        st.classList.toggle('open', !wasOpen);
+        body.hidden = wasOpen;
+        head.setAttribute('aria-expanded', (!wasOpen).toString());
+        if(!wasOpen){
+          st.classList.add('done');
+          if(idx === unlockedUpTo && unlockedUpTo < steps.length){ unlockedUpTo++; }
+          refreshLocks();
+        }
+      });
+    });
+
+    var resetBtn = document.getElementById(wrap.getAttribute('data-reset'));
+    if(resetBtn){
+      resetBtn.addEventListener('click', function(){
+        unlockedUpTo = 1;
+        steps.forEach(function(st){
+          st.classList.remove('open', 'done');
+          st.querySelector('.step-body').hidden = true;
+          st.querySelector('.step-head').setAttribute('aria-expanded', 'false');
+        });
+        refreshLocks();
+      });
+    }
+
+    refreshLocks();
+  });
+
+  // ---- vzorce (KaTeX) ----
+  var KATEX_DELIMS = [{left:'\\(', right:'\\)', display:false}, {left:'\\[', right:'\\]', display:true}];
+  if(window.renderMathInElement){
+    Array.prototype.forEach.call(document.querySelectorAll('.tab-section'), function(sec){
+      try{ renderMathInElement(sec, { delimiters: KATEX_DELIMS }); }catch(e){}
+    });
+  }
+
+  // ---- sbalovací panely v teorii ----
+  try{ makePanelsCollapsible(document.getElementById('theory-section')); }catch(e){}
+
+  // ---- pomocné funkce pro aplety a tréninky ----
+  var NB = '\u00a0';
+  function tex(t){
+    try{ return window.katex ? katex.renderToString(t, {throwOnError:false}) : t; }catch(e){ return t; }
+  }
+  // číslo s daným počtem desetinných míst, desetinnou čárkou a mezerami mezi tisíci
+  function cz(n, dec){
+    var s = roundTo(n, dec).toFixed(dec);
+    var neg = s.charAt(0) === '-';
+    if(neg) s = s.slice(1);
+    var parts = s.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, NB);
+    return (neg ? '−' : '') + parts.join(',');
+  }
+  // totéž v TeXu (mezera mezi tisíci = \,, desetinná čárka = {,})
+  function czTex(n, dec){ return cz(n, dec).replace('−', '-').replace(',', '{,}').replace(/\u00a0/g, '\\,'); }
+  // číslo na `sig` platných číslic (desetinný zápis)
+  function czSig(x, sig){ var r = roundSig(x, sig); return cz(r, decimalsForSig(r, sig)); }
+  // rozklad na mantisu a exponent: x = m · 10^e, 1 ≤ |m| < 10 (po zaokrouhlení na sig číslic)
+  function sciParts(x, sig){
+    if(x === 0) return { m:0, e:0 };
+    var e = Math.floor(Math.log10(Math.abs(x)));
+    var m = roundSig(x / Math.pow(10, e), sig);
+    if(Math.abs(m) >= 10){ m = roundSig(m / 10, sig); e++; }
+    return { m:m, e:e };
+  }
+  // TeX zápis čísla: desetinně pro 0,001 ≤ |x| < 100 000, jinak a·10^n
+  function numTex(x, sig, forceSci){
+    var r = roundSig(x, sig), a = Math.abs(r);
+    if(!forceSci && (a === 0 || (a >= 1e-3 && a < 1e5))){
+      return czSig(x, sig).replace('−', '-').replace(',', '{,}').replace(/\u00a0/g, '\\,');
+    }
+    var p = sciParts(x, sig);
+    return cz(p.m, sig - 1).replace('−', '-').replace(',', '{,}') + '\\cdot 10^{' + p.e + '}';
+  }
+  // totéž jako prostý text do HTML
+  function numTxt(x, sig, forceSci){
+    var r = roundSig(x, sig), a = Math.abs(r);
+    if(!forceSci && (a === 0 || (a >= 1e-3 && a < 1e5))) return czSig(x, sig);
+    var p = sciParts(x, sig);
+    return cz(p.m, sig - 1) + '·10<sup>' + String(p.e).replace('-', '−') + '</sup>';
+  }
+  function randInt(a, b){ return a + Math.floor(Math.random() * (b - a + 1)); }
+  function pick(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+  function svgEl(name, attrs, parent){
+    var n = document.createElementNS('http://www.w3.org/2000/svg', name);
+    for(var k in attrs){ if(attrs.hasOwnProperty(k)) n.setAttribute(k, attrs[k]); }
+    if(parent) parent.appendChild(n);
+    return n;
+  }
+  function clearEl(n){ while(n.firstChild) n.removeChild(n.firstChild); }
+  function setPressed(group, btn){
+    Array.prototype.forEach.call(group.querySelectorAll('button'), function(b){
+      var on = b === btn;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+  }
+
+  // ================= TRÉNINK: typy příkladů =================
+  var LET = ['s', 'p', 'd', 'f', 'g'];
+  var TR_TYPES = [
+    { key:'stavy', name:'Počet stavů pro n', gen:function(){
+      var n = randInt(1, 6), orb = pick([true, false]);
+      return { cat:'Počet stavů', signature:'s' + n + orb,
+        task:orb ? 'Kolik orbitalů (různých kombinací ' + tex('l, m') + ') přísluší hlavnímu kvantovému číslu ' + tex('n = ' + n) + '?'
+                 : 'Kolik kvantových stavů (i se spinem) přísluší hlavnímu kvantovému číslu ' + tex('n = ' + n) + '? Kolik elektronů se tedy vejde do slupky?',
+        lhs:orb ? 'n^2' : '2n^2', unit:'', sci:false, integer:true, exact:orb ? n * n : 2 * n * n,
+        given:['n = ' + n], find:[orb ? '\\text{počet orbitalů}' : '\\text{počet stavů}'],
+        steps:['l = 0, \\dots, ' + (n - 1) + ':\\quad ' + (function(){ var a = []; for(var l = 0; l < n; l++) a.push(2 * l + 1); return a.join(' + '); })() + ' = ' + (n * n) + '\\ \\text{orbitalů}'].concat(orb ? [] : [(n * n) + '\\cdot 2 = ' + (2 * n * n) + '\\ \\text{stavů (dvě orientace spinu)}']),
+        final:(orb ? '\\text{orbitalů} = n^2 = ' + n * n : '\\text{stavů} = 2n^2 = ' + 2 * n * n) };
+    }},
+    { key:'m', name:'Hodnoty m pro dané l', gen:function(){
+      var l = randInt(0, 4), list = []; for(var m = -l; m <= l; m++) list.push(m);
+      return { cat:'Magnetické kvantové číslo', signature:'m' + l,
+        task:'Kolik různých hodnot magnetického kvantového čísla ' + tex('m') + ' je možných pro podslupku ' + LET[l] + ' (' + tex('l = ' + l) + ')?',
+        lhs:'2l + 1', unit:'', sci:false, integer:true, exact:2 * l + 1,
+        given:['l = ' + l], find:['\\text{počet hodnot } m'],
+        steps:['m = ' + list.join(',\\ ').replace(/-/g, '-')], final:'2l + 1 = ' + (2 * l + 1) };
+    }},
+    { key:'zapis', name:'Kvantová čísla ze zápisu', gen:function(){
+      var n = randInt(1, 6), l = randInt(0, Math.min(n - 1, 3)), askN = Math.random() < 0.35;
+      return { cat:'Spektroskopický zápis', signature:'z' + n + l + askN,
+        task:'Jaké ' + (askN ? 'hlavní kvantové číslo ' + tex('n') : 'vedlejší kvantové číslo ' + tex('l')) + ' má elektron ve stavu <b>' + n + LET[l] + '</b>?',
+        lhs:askN ? 'n' : 'l', unit:'', sci:false, integer:true, exact:askN ? n : l,
+        given:['\\text{stav } ' + n + '\\mathrm{' + LET[l] + '}'], find:[askN ? 'n' : 'l'],
+        steps:['\\text{číslice před písmenem: } n = ' + n + ',\\qquad \\mathrm{' + LET[l] + '} \\Rightarrow l = ' + l], final:(askN ? 'n = ' + n : 'l = ' + l) };
+    }},
+    { key:'podslupka', name:'Elektrony v podslupce', gen:function(){
+      var n = randInt(2, 6), l = randInt(0, Math.min(n - 1, 3));
+      return { cat:'Zaplnění podslupky', signature:'p' + n + l,
+        task:'Kolik elektronů se nejvýše vejde do podslupky <b>' + n + LET[l] + '</b>?',
+        lhs:'2(2l+1)', unit:'', sci:false, integer:true, exact:2 * (2 * l + 1),
+        given:['\\mathrm{' + LET[l] + '} \\Rightarrow l = ' + l], find:['\\text{počet elektronů}'],
+        steps:['2l + 1 = ' + (2 * l + 1) + '\\ \\text{orbitalů, v každém 2 elektrony (Pauliho princip)}'], final:'2(2l + 1) = ' + 2 * (2 * l + 1) };
+    }}
+  ];
+
+  // ================= HRA NA ČAS =================
+  (function(){
+    var GAME_KEY = 'fyzika:kvantova-cisla:game-bests';
+    var DUR = [ { key:60, name:'1 min' }, { key:120, name:'2 min' }, { key:180, name:'3 min' }, { key:300, name:'5 min' } ];
+    var gs = { duration:120, running:false, timeLeft:120, timerId:null, score:0, correct:0, wrong:0, q:null, selected:-1, locked:false, bests:{}, last:'' };
+    var grid = document.getElementById('game-choice-grid'), fb = document.getElementById('game-feedback');
+    var fbHead = document.getElementById('game-feedback-headline'), fbSteps = document.getElementById('game-feedback-steps');
+    var checkBtn = document.getElementById('btn-game-check'), skipBtn = document.getElementById('btn-game-skip');
+    var timerEl = document.getElementById('game-timer');
+    function shuffle(a){ for(var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+    function distinct(correct, pool){
+      var opts = [correct];
+      shuffle(pool.slice()).forEach(function(x){ if(opts.length < 4 && opts.indexOf(x) < 0) opts.push(x); });
+      return shuffle(opts);
+    }
+    var MAKERS = [
+      function(){   // přípustná trojice?
+        var n = randInt(1, 4), l, m, ok = Math.random() < 0.5;
+        if(ok){ l = randInt(0, n - 1); m = randInt(-l, l); }
+        else if(Math.random() < 0.5){ l = n + randInt(0, 1); m = randInt(-l, l); }
+        else { l = randInt(0, n - 1); m = (l + randInt(1, 2)) * (Math.random() < 0.5 ? -1 : 1); }
+        var why = l > n - 1 ? 'Pro n = ' + n + ' může být l nejvýše ' + (n - 1) + '.' : Math.abs(m) > l ? 'Pro l = ' + l + ' musí platit |m| ≤ ' + l + '.' : 'Platí l ≤ n − 1 i |m| ≤ l.';
+        return { sig:'t' + n + l + m, cat:'Přípustná kombinace?', q:'Je kombinace kvantových čísel <i>n</i>&nbsp;=&nbsp;' + n + ', <i>l</i>&nbsp;=&nbsp;' + l + ', <i>m</i>&nbsp;=&nbsp;' + String(m).replace('-', '−') + ' přípustná?',
+          opts:['ano', 'ne'], correct:ok ? 'ano' : 'ne', why:why };
+      },
+      function(){   // l ze zápisu
+        var n = randInt(2, 6), l = randInt(0, Math.min(3, n - 1));
+        return { sig:'l' + n + l, cat:'Zápis stavu', q:'Jaké vedlejší kvantové číslo <i>l</i> má stav <b>' + n + LET[l] + '</b>?',
+          opts:distinct(String(l), ['0', '1', '2', '3', String(n)]), correct:String(l), why:LET[l] + ' odpovídá l = ' + l + ' (s = 0, p = 1, d = 2, f = 3).' };
+      },
+      function(){   // existuje stav?
+        var n = randInt(1, 4), l = randInt(0, 3), ok = l <= n - 1;
+        return { sig:'e' + n + l, cat:'Existuje takový stav?', q:'Existuje v atomu stav <b>' + n + LET[l] + '</b>?',
+          opts:['ano', 'ne'], correct:ok ? 'ano' : 'ne', why:ok ? 'Pro n = ' + n + ' je l = ' + l + ' dovoleno (l ≤ ' + (n - 1) + ').' : 'Pro n = ' + n + ' může být l jen 0 až ' + (n - 1) + ', ' + LET[l] + ' (l = ' + l + ') nelze.' };
+      },
+      function(){   // elektrony ve slupce
+        var n = randInt(1, 5), c = 2 * n * n;
+        return { sig:'s' + n, cat:'Slupka', q:'Kolik elektronů se nejvýše vejde do slupky <i>n</i>&nbsp;=&nbsp;' + n + '?',
+          opts:distinct(String(c), [String(n * n), String(2 * n), String(c + 2), String(2 * (n + 1) * (n + 1)), String(4 * n)]), correct:String(c), why:'2n² = 2 · ' + (n * n) + ' = ' + c + '.' };
+      },
+      function(){   // elektrony v podslupce
+        var l = randInt(0, 3), c = 2 * (2 * l + 1);
+        return { sig:'p' + l, cat:'Podslupka', q:'Kolik elektronů se nejvýše vejde do podslupky <b>' + LET[l] + '</b>?',
+          opts:distinct(String(c), ['2', '6', '10', '14', String(2 * l + 1)]), correct:String(c), why:'2l + 1 = ' + (2 * l + 1) + ' orbitalů, v každém 2 elektrony: ' + c + '.' };
+      },
+      function(){   // hodnoty m
+        var l = randInt(1, 3), list = [], k; for(k = -l; k <= l; k++) list.push(k);
+        function txt(a){ return a.join(', ').replace(/-/g, '−'); }
+        var wrong = [txt(list.filter(function(x){ return x >= 0; })), txt(list.map(function(x){ return x; }).concat([l + 1])), (function(){ var a = []; for(var j = 0; j <= 2 * l; j++) a.push(j); return txt(a); })()];
+        return { sig:'m' + l, cat:'Magnetické kvantové číslo', q:'Které hodnoty může mít <i>m</i> pro podslupku <b>' + LET[l] + '</b>?',
+          opts:shuffle([txt(list)].concat(wrong)), correct:txt(list), why:'m = −l, …, +l, pro l = ' + l + ' tedy ' + txt(list) + '.' };
+      }
+    ];
+    function loadBests(){ try{ var raw = localStorage.getItem(GAME_KEY); if(raw) gs.bests = JSON.parse(raw) || {}; }catch(e){} }
+    function saveBests(){ try{ localStorage.setItem(GAME_KEY, JSON.stringify(gs.bests)); }catch(e){} }
+    function best(){ return gs.bests[gs.duration] || 0; }
+    function bestHint(){ document.getElementById('game-best-hint').textContent = 'Nejlepší skóre: ' + (best() || '—'); }
+    function pointWord(n){ var a = Math.abs(n); return a === 1 ? 'bod' : (a >= 2 && a <= 4) ? 'body' : 'bodů'; }
+    function genQ(){
+      var q, k = 0;
+      do{ q = pick(MAKERS)(); k++; }while(q.sig === gs.last && k < 20);
+      gs.last = q.sig; gs.q = q; gs.selected = -1; gs.locked = false;
+      document.getElementById('game-cat').textContent = q.cat;
+      document.getElementById('game-question').innerHTML = q.q;
+      clearEl(grid);
+      q.opts.forEach(function(o, i){
+        var b = document.createElement('button');
+        b.type = 'button'; b.className = 'choice-btn'; b.textContent = o;
+        b.addEventListener('click', function(){ if(gs.locked) return; gs.selected = i; Array.prototype.forEach.call(grid.children, function(c, j){ c.classList.toggle('selected', j === i); }); });
+        grid.appendChild(b);
+      });
+      fb.hidden = true; fb.className = 'feedback'; checkBtn.textContent = 'Zkontrolovat';
+    }
+    function evaluate(bySkip){
+      if(gs.locked) return;
+      gs.locked = true;
+      var q = gs.q, ok = !bySkip && gs.selected >= 0 && q.opts[gs.selected] === q.correct;
+      Array.prototype.forEach.call(grid.children, function(b, i){
+        b.disabled = true; b.classList.remove('selected');
+        if(q.opts[i] === q.correct) b.classList.add('correct'); else if(i === gs.selected) b.classList.add('wrong');
+      });
+      fb.hidden = false;
+      if(ok){ gs.score += 10; gs.correct++; fb.className = 'feedback ok'; fbHead.textContent = 'Správně! +10 b'; }
+      else { gs.score -= 5; gs.wrong++; fb.className = 'feedback bad'; fbHead.textContent = (bySkip ? 'Přeskočeno.' : 'Bohužel, špatně.') + ' −5 b'; }
+      FyzikaReseni.show(fb, fbSteps, { steps:['Správně: ' + q.correct + '. ' + q.why], plain:true, title:'' });
+      document.getElementById('game-score').textContent = gs.score;
+      checkBtn.textContent = 'Další příklad →'; checkBtn.focus();
+    }
+    function tryCheck(){
+      if(!gs.running) return;
+      if(gs.locked){ genQ(); return; }
+      if(gs.selected === -1 && !confirm('Nevybrali jste žádnou možnost. Opravdu chcete zkontrolovat?')) return;
+      evaluate(false);
+    }
+    function trySkip(){
+      if(!gs.running) return;
+      if(gs.locked){ genQ(); return; }
+      if(gs.selected === -1 && !confirm('Nevybrali jste žádnou možnost. Opravdu chcete přeskočit? Bude to počítáno jako špatná odpověď (−5 b).')) return;
+      evaluate(true);
+    }
+    function tick(){
+      gs.timeLeft--;
+      timerEl.textContent = formatGameTime(Math.max(0, gs.timeLeft));
+      timerEl.classList.toggle('low-time', gs.timeLeft <= 20 && gs.timeLeft > 0);
+      if(gs.timeLeft <= 0) endGame();
+    }
+    function startGame(){
+      gs.running = true; gs.timeLeft = gs.duration; gs.score = 0; gs.correct = 0; gs.wrong = 0;
+      document.getElementById('game-score').textContent = '0';
+      timerEl.textContent = formatGameTime(gs.duration); timerEl.classList.remove('low-time');
+      document.getElementById('game-best-live').textContent = best();
+      document.getElementById('game-info').hidden = true;
+      document.getElementById('game-start-panel').hidden = true;
+      document.getElementById('game-over').hidden = true;
+      document.getElementById('game-play').hidden = false;
+      genQ();
+      if(gs.timerId) clearInterval(gs.timerId);
+      gs.timerId = setInterval(tick, 1000);
+    }
+    function endGame(){
+      if(!gs.running) return;
+      gs.running = false; clearInterval(gs.timerId); gs.timerId = null;
+      if(gs.score > best()){ gs.bests[gs.duration] = gs.score; saveBests(); }
+      if(window.FyzikaScores) FyzikaScores.report('hra-' + gs.duration + 's', gs.score, true);
+      document.getElementById('game-play').hidden = true;
+      document.getElementById('game-over').hidden = false;
+      document.getElementById('game-rules-panel').hidden = true;
+      document.getElementById('game-info').hidden = false;
+      document.getElementById('game-final-score').textContent = gs.score + ' ' + pointWord(gs.score);
+      document.getElementById('game-final-detail').textContent = 'Správně: ' + gs.correct + ' · Špatně: ' + gs.wrong + ' · Nejlepší skóre: ' + best();
+      bestHint();
+    }
+    (function(){
+      var row = document.getElementById('game-duration-row');
+      DUR.forEach(function(d){
+        var b = document.createElement('button');
+        b.type = 'button'; b.className = 'chip' + (d.key === gs.duration ? ' on' : ''); b.textContent = d.name;
+        b.addEventListener('click', function(){
+          if(gs.running) return;
+          gs.duration = d.key;
+          Array.prototype.forEach.call(row.children, function(el, i){ el.classList.toggle('on', DUR[i].key === gs.duration); });
+          bestHint();
+        });
+        row.appendChild(b);
+      });
+    })();
+    document.getElementById('btn-game-start').addEventListener('click', startGame);
+    document.getElementById('btn-game-restart').addEventListener('click', startGame);
+    checkBtn.addEventListener('click', tryCheck);
+    skipBtn.addEventListener('click', trySkip);
+    document.addEventListener('keydown', function(e){
+      if(!gs.running || document.getElementById('hra-section').hidden) return;
+      if(e.key === 'Enter'){ e.preventDefault(); tryCheck(); }
+      else if(/^[1-4]$/.test(e.key) && !gs.locked && grid.children[parseInt(e.key, 10) - 1]){ grid.children[parseInt(e.key, 10) - 1].click(); }
+    });
+    // opuštění běžící hry přepnutím záložky
+    document.addEventListener('click', function(e){
+      var t = e.target.closest ? e.target.closest('.toptab') : null;
+      if(!t || !gs.running || t.getAttribute('data-tab') === 'hra') return;
+      if(confirm('Hra ještě běží. Opravdu ji chcete ukončit?')){ endGame(); }
+      else { e.stopPropagation(); e.preventDefault(); }
+    }, true);
+    document.addEventListener('fyzika:scores-updated', function(){ gs.bests = {}; loadBests(); bestHint(); });
+    loadBests(); bestHint();
+  })();
+
+  // ================= TRÉNINK (číselná odpověď) =================
+  // Typy příkladů definuje stránka v poli TR_TYPES: { key, name, gen } — gen() vrátí úlohu
+  // { cat, task, lhs, unit, sci, exact, sig, tol, integer, given[], find[], steps[], final }.
+  var trState = {
+    type:'all', score:0, streak:0, bestStreak:0, answered:0, correct:0,
+    current:null, lastSig:'', locked:false, touched:false
+  };
+  var TR_STATS_KEY = 'fyzika:kvantova-cisla:stats';
+  var trInputs = ['answer', 'answer-m', 'answer-e'];
+
+  function trLoadStats(){
+    try{ var raw = localStorage.getItem(TR_STATS_KEY); if(raw){ trState.bestStreak = JSON.parse(raw).bestStreak || 0; } }catch(e){}
+  }
+  function trSaveStats(){
+    try{ localStorage.setItem(TR_STATS_KEY, JSON.stringify({bestStreak: trState.bestStreak})); }catch(e){}
+  }
+  function trParse(str){
+    if(!str) return NaN;
+    str = str.trim().replace(/[−–]/g, '-').replace(',', '.').replace(/\s+/g, '');
+    return /^-?\d*\.?\d+$|^-?\d+\.$/.test(str) ? parseFloat(str) : NaN;
+  }
+  function trGenerate(){
+    var list = trState.type === 'all' ? TR_TYPES : TR_TYPES.filter(function(t){ return t.key === trState.type; });
+    var q = pick(list).gen(), tries = 0;
+    while(q.signature && q.signature === trState.lastSig && tries < 20){ q = pick(list).gen(); tries++; }
+    trState.lastSig = q.signature || '';
+    trState.current = q;
+    trState.locked = false; trState.touched = false;
+    trRender();
+  }
+  function trRender(){
+    var q = trState.current;
+    document.getElementById('cat-tag').textContent = q.cat;
+    document.getElementById('task-text').innerHTML = q.task;
+    document.getElementById('eq-given').innerHTML = tex(q.lhs);
+    document.getElementById('eq-unit').innerHTML = q.unit ? tex(q.unit) : '';
+    document.getElementById('slot-sci').hidden = !q.sci;
+    document.getElementById('slot-dec').hidden = !!q.sci;
+    trInputs.forEach(function(id){
+      var el = document.getElementById(id);
+      el.value = ''; el.disabled = false; el.classList.remove('correct', 'wrong');
+    });
+    var fb = document.getElementById('feedback');
+    fb.hidden = true; fb.classList.remove('ok', 'bad', 'sol');
+    document.getElementById('feedback-tip').hidden = true;
+    document.getElementById('btn-check').textContent = 'Zkontrolovat';
+    var first = document.getElementById(q.sci ? 'answer-m' : 'answer');
+    if(!document.getElementById('trenink-section').hidden) first.focus();
+  }
+  function trUserValue(){
+    var q = trState.current;
+    if(q.sci){
+      var m = trParse(document.getElementById('answer-m').value);
+      var es = document.getElementById('answer-e').value.trim().replace(/[−–]/g, '-');
+      var e = es === '' ? 0 : parseInt(es, 10);
+      if(isNaN(m) || isNaN(e)) return NaN;
+      return m * Math.pow(10, e);
+    }
+    return trParse(document.getElementById('answer').value);
+  }
+  function trIsEmpty(){ return isNaN(trUserValue()); }
+  function trMark(cls){
+    (trState.current.sci ? ['answer-m', 'answer-e'] : ['answer']).forEach(function(id){ document.getElementById(id).classList.add(cls); });
+  }
+  function trLock(){
+    trInputs.forEach(function(id){ document.getElementById(id).disabled = true; });
+    trState.locked = true;
+    var b = document.getElementById('btn-check');
+    b.textContent = 'Další příklad →';
+    b.focus();
+    trUpdateStats();
+  }
+  function trShowSolution(){
+    var q = trState.current;
+    // KaTeX vkládá do cest SVG (odmocnina) zalomení řádků; FyzikaReseni dělí řádky podle \n, proto je odstraníme
+    function t1(s){ return tex(s).replace(/\n/g, ' '); }
+    FyzikaReseni.show(document.getElementById('feedback'), document.getElementById('feedback-steps'), {
+      raw:true,
+      given:(q.given || []).map(t1),
+      find:(q.find || []).map(t1),
+      steps:(q.steps || []).map(t1),
+      final:q.final ? t1(q.final) : '',
+      note:q.note || ''
+    });
+  }
+  function trIsCorrect(v){
+    var q = trState.current;
+    if(isNaN(v)) return false;
+    if(q.integer) return Math.abs(v - q.exact) < 1e-9;
+    var tol = q.tol === undefined ? 0.01 : q.tol;
+    return Math.abs(v - q.exact) <= tol * Math.abs(q.exact) + 1e-300;
+  }
+  function trCheck(){
+    if(trState.locked){ trGenerate(); return; }
+    var v = trUserValue(), ok = trIsCorrect(v), q = trState.current;
+    trState.answered++;
+    var fb = document.getElementById('feedback'), head = document.getElementById('feedback-headline');
+    var tip = document.getElementById('feedback-tip');
+    fb.hidden = false; tip.hidden = true;
+    if(ok){
+      trState.score += 10; trState.streak++; trState.correct++;
+      if(trState.streak > trState.bestStreak){
+        trState.bestStreak = trState.streak; trSaveStats();
+        if(window.FyzikaScores) FyzikaScores.report('serie', trState.bestStreak, false);
+      }
+      trMark('correct'); fb.classList.add('ok'); fb.classList.remove('bad');
+      head.textContent = 'Správně!';
+    } else {
+      trState.streak = 0; trMark('wrong'); fb.classList.add('bad'); fb.classList.remove('ok');
+      head.textContent = isNaN(v) ? 'Doplňte odpověď.' : 'Bohužel špatně.';
+      if(!isNaN(v) && q.sci && !isNaN(q.exact) && q.exact !== 0){
+        var r = v / q.exact, lg = Math.log10(Math.abs(r));
+        if(Math.abs(lg - Math.round(lg)) < 0.005 && Math.round(lg) !== 0){
+          tip.hidden = false;
+          tip.textContent = 'Mantisa je správně, chyba je v exponentu (o ' + Math.abs(Math.round(lg)) + ' řád' + (Math.abs(Math.round(lg)) === 1 ? '' : Math.abs(Math.round(lg)) < 5 ? 'y' : 'ů') + ').';
+        }
+      }
+    }
+    trShowSolution(); trLock();
+  }
+  function trSkip(){
+    if(trState.locked){ trGenerate(); return; }
+    trState.streak = 0; trState.answered++;
+    var fb = document.getElementById('feedback');
+    fb.hidden = false; fb.classList.add('bad'); fb.classList.remove('ok');
+    document.getElementById('feedback-tip').hidden = true;
+    document.getElementById('feedback-headline').textContent = 'Správný postup:';
+    trShowSolution(); trLock();
+  }
+  function trUpdateStats(){
+    document.getElementById('stat-score').textContent = trState.score;
+    document.getElementById('stat-streak').textContent = trState.streak + (trState.bestStreak > 0 ? ' / ' + trState.bestStreak : '');
+    document.getElementById('stat-accuracy').textContent = trState.answered === 0 ? '—' : Math.round(100 * trState.correct / trState.answered) + ' %';
+  }
+  // Rozdělanou úlohu před změnou nastavení nejdřív vyhodnotí (stejná logika jako na ostatních stránkách).
+  function trSettle(){
+    if(trState.locked) return 'locked';
+    if(!trState.touched) return 'untouched';
+    if(trIsEmpty() && !confirm('Odpověď není vyplněná. Opravdu chcete změnit nastavení?')) return 'cancelled';
+    trCheck();
+    return 'settled';
+  }
+  (function(){
+    var row = document.getElementById('type-row');
+    var items = [{ key:'all', name:'Vše' }].concat(TR_TYPES);
+    items.forEach(function(d){
+      var b = document.createElement('button');
+      b.className = 'chip accented' + (d.key === trState.type ? ' on' : '');
+      b.type = 'button';
+      b.setAttribute('aria-pressed', d.key === trState.type ? 'true' : 'false');
+      b.textContent = d.name;
+      b.addEventListener('click', function(){
+        if(d.key === trState.type) return;
+        var res = trSettle();
+        if(res === 'cancelled') return;
+        trState.type = d.key;
+        setPressed(row, b);
+        if(res === 'locked' || res === 'untouched'){ trGenerate(); }
+      });
+      row.appendChild(b);
+    });
+  })();
+  function tryCheck(){
+    if(trState.locked){ trGenerate(); return; }
+    if(trIsEmpty() && !confirm('Odpověď není vyplněná. Opravdu chcete zkontrolovat?')) return;
+    trCheck();
+  }
+  function trySkip(){
+    if(trState.locked){ trGenerate(); return; }
+    trSkip();
+  }
+  document.getElementById('btn-check').addEventListener('click', tryCheck);
+  document.getElementById('btn-skip').addEventListener('click', trySkip);
+  trInputs.forEach(function(id){
+    var el = document.getElementById(id);
+    sanitizeNumericInput(el, id !== 'answer-e');
+    el.addEventListener('input', function(){ trState.touched = true; });
+    el.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); tryCheck(); } });
+  });
+  document.getElementById('reset-stats').addEventListener('click', function(){
+    trState.score = 0; trState.streak = 0; trState.answered = 0; trState.correct = 0; trState.bestStreak = 0;
+    try{ localStorage.removeItem(TR_STATS_KEY); }catch(e){}
+    trUpdateStats();
+  });
+  document.addEventListener('fyzika:scores-updated', function(){ trState.bestStreak = 0; trLoadStats(); trUpdateStats(); });
+  document.getElementById('top-tab-trenink').addEventListener('click', function(){
+    setTimeout(function(){ if(!trState.locked){ var q = trState.current; document.getElementById(q.sci ? 'answer-m' : 'answer').focus(); } }, 0);
+  });
+
+  trLoadStats();
+  trUpdateStats();
+  trGenerate();
+})();
+</script>
+</body>
+</html>
