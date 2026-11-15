@@ -42,8 +42,6 @@
   --medium:rgba(107,63,181,0.10);
 }
 
-}
-
 .panel{ margin-bottom:22px; }
 .panel-title{ margin-bottom:8px; }
 .panel p{
@@ -130,6 +128,8 @@
   text-transform:uppercase;
   letter-spacing:0.05em;
 }
+/* značky veličin v záhlaví nesmí převést na velká písmena (λ → Λ) */
+.theory-table thead th .katex{ text-transform:none; letter-spacing:0; font-size:1.25em; }
 .theory-table td.mono, .theory-table th.mono{
   font-family:'IBM Plex Mono', monospace;
   font-variant-numeric:tabular-nums;
@@ -427,6 +427,31 @@ button.btn.fs-btn svg{ flex:none; }
 .sp-info .v b{ color:var(--accent); }
 .sp-swatch{ display:inline-block; width:14px; height:14px; border-radius:3px; vertical-align:-2px; margin-right:6px; border:1px solid var(--line); }
 svg.sp-band-svg{ touch-action:none; }
+/* aplety vložené přímo do panelů teorie */
+.inline-applet{ margin:14px 0; padding:16px 18px 18px; border:1px solid var(--line); border-radius:12px; background:var(--surface); }
+.inline-applet .applet-head h2{ font-family:'Big Shoulders Display', sans-serif; font-weight:700; font-size:1.3rem; letter-spacing:0.02em; color:var(--ink); margin:0 0 4px; }
+.inline-applet.is-full{ padding:0; border-radius:0; }
+/* příklady zdrojů v tabulce spektra */
+.ex-cell{ min-width:180px; }
+.ex-chips{ display:flex; flex-wrap:wrap; gap:6px; }
+.ex-chips .chip{ font-size:0.78rem; padding:5px 10px; }
+.ex-chips .chip.on{ background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+@media (max-width:520px){ .inline-applet{ padding:12px 10px 14px; } }
+.spec-table td.mono{ white-space:nowrap; }
+/* na úzkém displeji: každý druh záření jako blok (název, λ a f vedle sebe, příklady pod nimi) */
+@media (max-width:560px){
+  .spec-table{ min-width:0; }
+  .spec-table thead{ display:none; }
+  .spec-table tr{ display:grid; grid-template-columns:1fr 1fr; border:1px solid var(--line); border-top:0; }
+  .spec-table tr:first-child{ border-top:1px solid var(--line); }
+  .spec-table td{ border:0; padding:4px 10px; }
+  .spec-table td:first-child{ grid-column:1 / -1; font-weight:600; padding-top:10px; }
+  .spec-table td.mono{ text-align:left; white-space:normal; }
+  .spec-table td.mono::before{ content:attr(data-label) " = "; font-family:'Work Sans', sans-serif; font-style:italic; color:var(--ink-soft); }
+  .spec-table td.ex-cell{ grid-column:1 / -1; min-width:0; padding-bottom:10px; }
+  .spec-table tbody tr:nth-child(even) td{ background:transparent; }
+  .spec-table tbody tr:nth-child(even){ background:rgba(0,0,0,0.02); }
+}
 .applet-card.is-full .sp-info{ display:none; }
 @media (max-width:520px){
   .sp-info{ grid-template-columns:1fr; gap:2px; }
@@ -464,8 +489,6 @@ svg.sp-band-svg{ touch-action:none; }
 
   <div class="top-tabs">
     <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
-    <button class="toptab" id="top-tab-spektrum" data-tab="spektrum">Posuvník po spektru</button>
-    <button class="toptab" id="top-tab-prostredi" data-tab="prostredi">Vlna v prostředí</button>
     <button class="toptab" id="top-tab-trenink" data-tab="trenink">Trénink</button>
     <button class="toptab" id="top-tab-hra" data-tab="hra">Hra na čas</button>
   </div>
@@ -501,23 +524,50 @@ svg.sp-band-svg{ touch-action:none; }
     <div class="panel">
       <div class="panel-title">Spektrum elektromagnetického záření</div>
       <p>Záření všech vlnových délek dohromady tvoří <b>spektrum elektromagnetického záření</b>. Podle vlnové délky (a tedy i podle vlastností a využití) v něm rozlišujeme sedm druhů. Od nejkratších vlnových délek k nejdelším jsou to záření <b>gama</b>, <b>rentgenové</b>, <b>ultrafialové</b>, <b>světlo</b>, <b>infračervené</b>, <b>mikrovlny</b> a <b>rádiové</b> záření.</p>
-      <figure class="theory-fig">
-        <svg id="sp-theory-svg" class="wide" viewBox="0 0 640 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pás spektra elektromagnetického záření s logaritmickou osou vlnové délky od deseti na minus čtrnáctou metru do deseti kilometrů. Zleva gama, rentgenové, ultrafialové, úzký pás světla, infračervené, mikrovlny a rádiové záření. Pod pásem je zvětšená viditelná oblast od 390 do 760 nanometrů v barvách duhy a pod osou vlnové délky je osa frekvence."></svg>
-        <figcaption>Osa je logaritmická: každý dílek znamená desetkrát větší vlnovou délku. Viditelné světlo je v celém spektru jen nepatrný proužek, proto je dole zvětšené.</figcaption>
-      </figure>
+      <div class="applet-card inline-applet" id="sp-card">
+        <div class="applet-head">
+          <div class="applet-head-text">
+            <span class="cat-tag">Aplet</span>
+            <h2>Posuvník po spektru</h2>
+          </div>
+          <button class="btn ghost fs-btn" id="sp-fs" type="button" aria-pressed="false">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path id="sp-fs-icon" d="M1.5 5.5V1.5H5.5M10.5 1.5H14.5V5.5M14.5 10.5V14.5H10.5M5.5 14.5H1.5V10.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span id="sp-fs-label">Celá obrazovka</span>
+          </button>
+        </div>
+        <div class="applet-stage">
+          <figure class="theory-fig">
+            <svg id="sp-svg" class="wide" viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pás spektra elektromagnetického záření s logaritmickou osou vlnové délky od deseti na minus čtrnáctou metru do deseti kilometrů a s posuvnou značkou. Zleva gama, rentgenové, ultrafialové, úzký pás světla, infračervené, mikrovlny a rádiové záření. Pod pásem je osa frekvence a zvětšená viditelná oblast od 390 do 760 nanometrů, pod ní údaje o vlnové délce, frekvenci a druhu záření."></svg>
+            <figcaption id="sp-caption">Osa je logaritmická: každý dílek znamená desetkrát větší vlnovou délku. Viditelné světlo je jen nepatrný proužek, proto je dole zvětšené. Značku můžete táhnout po pásu spektra.</figcaption>
+          </figure>
+          <p class="hint fs-hint">Pro čitelnost popisků otevřete aplet na celou obrazovku.</p>
+        </div>
+        <div class="applet-controls">
+          <div class="mode-row slider-row">
+            <label class="mode-row-label" for="sp-sl">Vlnová délka</label>
+            <input type="range" id="sp-sl" min="-14" max="4" step="0.001" value="-6.3">
+            <span class="slider-val" id="sp-out-l" aria-live="polite"></span>
+          </div>
+        </div>
+        <div class="sp-info" id="sp-info" aria-live="polite"></div>
+        <details class="navod">
+          <summary>Návod</summary>
+          <p class="hint">Posuvník mění vlnovou délku ve vakuu od \(10^{-14}\ \mathrm{m}\) do \(10^{4}\ \mathrm{m}\). Stupnice je logaritmická: posun o jeden dílek znamená desetinásobek vlnové délky. Značku lze také táhnout myší nebo prstem přímo po pásu spektra. Kliknutím na příklad v tabulce pod apletem se nastaví vlnová délka daného zdroje. Pod pásem se průběžně dopočítává frekvence \(f = c/\lambda\) a vypisuje se druh záření, jeho typické zdroje a využití. V místech, kde se oblasti překrývají nebo kde se hranice v různých zdrojích liší, se vypíší oba druhy. Údaj <i>Srovnatelná velikost</i> přiřazuje vlnové délce předmět podobné velikosti (jen řádově).</p>
+        </details>
+      </div>
       <div class="theory-table-wrap">
-        <table class="theory-table">
+        <table class="theory-table spec-table">
           <thead>
-            <tr><th>Druh záření</th><th class="mono">Vlnová délka <i>λ</i></th><th class="mono">Frekvence <i>f</i></th></tr>
+            <tr><th>Druh záření</th><th class="mono">Vlnová délka \(\lambda\)</th><th class="mono">Frekvence \(f\)</th><th>Příklady (klikněte)</th></tr>
           </thead>
           <tbody>
-            <tr><td>rádiové záření</td><td class="mono">10&nbsp;km až 10&nbsp;mm</td><td class="mono">30&nbsp;kHz až 30&nbsp;GHz</td></tr>
-            <tr><td>mikrovlny</td><td class="mono">10&nbsp;mm až 1&nbsp;mm</td><td class="mono">30&nbsp;GHz až 300&nbsp;GHz</td></tr>
-            <tr><td>infračervené záření</td><td class="mono">1&nbsp;mm až 760&nbsp;nm</td><td class="mono">300&nbsp;GHz až 395&nbsp;THz</td></tr>
-            <tr><td>světlo</td><td class="mono">760&nbsp;nm až 390&nbsp;nm</td><td class="mono">395&nbsp;THz až 769&nbsp;THz</td></tr>
-            <tr><td>ultrafialové záření</td><td class="mono">390&nbsp;nm až 10&nbsp;nm</td><td class="mono">769&nbsp;THz až 30&nbsp;PHz</td></tr>
-            <tr><td>rentgenové záření</td><td class="mono">10&nbsp;nm až 1&nbsp;pm</td><td class="mono">30&nbsp;PHz až 300&nbsp;EHz</td></tr>
-            <tr><td>záření gama</td><td class="mono">menší než 100&nbsp;pm</td><td class="mono">větší než 3&nbsp;EHz</td></tr>
+            <tr><td>rádiové záření</td><td class="mono" data-label="λ">10&nbsp;km až 10&nbsp;mm</td><td class="mono" data-label="f">30&nbsp;kHz až 30&nbsp;GHz</td><td class="ex-cell"><div class="ex-chips"><button class="chip sp-ex" type="button" data-l="300" aria-pressed="false">rozhlas AM 1&nbsp;MHz</button><button class="chip sp-ex" type="button" data-l="3" aria-pressed="false">rozhlas FM 100&nbsp;MHz</button></div></td></tr>
+            <tr><td>mikrovlny</td><td class="mono" data-label="λ">10&nbsp;mm až 1&nbsp;mm</td><td class="mono" data-label="f">30&nbsp;GHz až 300&nbsp;GHz</td><td class="ex-cell"><div class="ex-chips"><button class="chip sp-ex" type="button" data-l="1.87e-3" aria-pressed="false">reliktní záření 160&nbsp;GHz</button><button class="chip sp-ex" type="button" data-l="3.9e-3" aria-pressed="false">radar v autě 77&nbsp;GHz</button></div></td></tr>
+            <tr><td>infračervené záření</td><td class="mono" data-label="λ">1&nbsp;mm až 760&nbsp;nm</td><td class="mono" data-label="f">300&nbsp;GHz až 395&nbsp;THz</td><td class="ex-cell"><div class="ex-chips"><button class="chip sp-ex" type="button" data-l="9.4e-6" aria-pressed="false">lidské tělo</button><button class="chip sp-ex" type="button" data-l="9.4e-7" aria-pressed="false">dálkový ovladač</button></div></td></tr>
+            <tr><td>světlo</td><td class="mono" data-label="λ">760&nbsp;nm až 390&nbsp;nm</td><td class="mono" data-label="f">395&nbsp;THz až 769&nbsp;THz</td><td class="ex-cell"><div class="ex-chips"><button class="chip sp-ex" type="button" data-l="6.5e-7" aria-pressed="false">červený laser</button><button class="chip sp-ex" type="button" data-l="5.32e-7" aria-pressed="false">zelený laser</button></div></td></tr>
+            <tr><td>ultrafialové záření</td><td class="mono" data-label="λ">390&nbsp;nm až 10&nbsp;nm</td><td class="mono" data-label="f">769&nbsp;THz až 30&nbsp;PHz</td><td class="ex-cell"><div class="ex-chips"><button class="chip sp-ex" type="button" data-l="3.65e-7" aria-pressed="false">UV lampa na bankovky</button><button class="chip sp-ex" type="button" data-l="2.537e-7" aria-pressed="false">germicidní lampa</button></div></td></tr>
+            <tr><td>rentgenové záření</td><td class="mono" data-label="λ">10&nbsp;nm až 1&nbsp;pm</td><td class="mono" data-label="f">30&nbsp;PHz až 300&nbsp;EHz</td><td class="ex-cell"><div class="ex-chips"><button class="chip sp-ex" type="button" data-l="1.54e-10" aria-pressed="false">strukturní analýza (Cu)</button><button class="chip sp-ex" type="button" data-l="3e-11" aria-pressed="false">rentgen v nemocnici</button></div></td></tr>
+            <tr><td>záření gama</td><td class="mono" data-label="λ">menší než 100&nbsp;pm</td><td class="mono" data-label="f">větší než 3&nbsp;EHz</td><td class="ex-cell"><div class="ex-chips"><button class="chip sp-ex" type="button" data-l="9.3e-13" aria-pressed="false">kobalt 60</button></div></td></tr>
           </tbody>
         </table>
       </div>
@@ -537,7 +587,61 @@ svg.sp-band-svg{ touch-action:none; }
       <p>Vlnové délky v tabulce platí pro vakuum (ve vzduchu jsou prakticky stejné). V jiném prostředí se záření šíří pomaleji, rychlostí \(v = c/n\), kde \(n\) je index lomu. Frekvenci ale určuje zdroj, a ta se při přechodu do jiného prostředí <b>nemění</b>: kolik kmitů za sekundu do rozhraní přijde, tolik jich z něj musí odejít. Zkrátí se tedy vlnová délka:</p>
       <div class="formula-box">\[ \lambda_n = \frac{v}{f} = \frac{c}{n f} = \frac{\lambda}{n} \]</div>
       <p>Údaj o vlnové délce proto bez dodatku „ve vakuu“ nestačí, kdežto frekvence platí v každém prostředí. Proto je vhodnější charakterizovat záření frekvencí. Také barva světla je dána frekvencí: zelené světlo zůstane zelené i ve vodě nebo ve skle.</p>
-      <div class="links"><a class="btn-link" href="#prostredi" id="sp-link-prostredi">Vyzkoušejte v apletu →</a></div>
+      <div class="applet-card inline-applet" id="pr-card">
+        <div class="applet-head">
+          <div class="applet-head-text">
+            <span class="cat-tag">Animace</span>
+            <h2>Vlna v různých prostředích</h2>
+          </div>
+          <button class="btn ghost fs-btn" id="pr-fs" type="button" aria-pressed="false">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path id="pr-fs-icon" d="M1.5 5.5V1.5H5.5M10.5 1.5H14.5V5.5M14.5 10.5V14.5H10.5M5.5 14.5H1.5V10.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span id="pr-fs-label">Celá obrazovka</span>
+          </button>
+        </div>
+        <div class="applet-stage">
+          <figure class="theory-fig">
+            <svg id="pr-svg" class="wide" viewBox="0 0 640 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Animace vlny, která přechází zleva ze vzduchu přes svislé rozhraní do prostředí s větším indexem lomu. V prostředí má vlna kratší vlnovou délku. Dva body na vlně, jeden v každém prostředí, kmitají nahoru a dolů a počítadla ukazují, že oba vykonají stejný počet kmitů."></svg>
+          <figcaption>Vlnová délka se v optičtěji hustším prostředí zkrátí \(n\)krát, frekvence (počet kmitů za sekundu) zůstane stejná.</figcaption>
+          </figure>
+          <p class="hint fs-hint">Pro čitelnost popisků otevřete animaci na celou obrazovku.</p>
+        </div>
+        <div class="applet-controls">
+        <div class="mode-row slider-row">
+          <label class="mode-row-label" for="pr-sl-n">Index lomu</label>
+          <input type="range" id="pr-sl-n" min="100" max="250" step="1" value="133">
+          <span class="slider-val" id="pr-out-n" aria-live="polite"></span>
+        </div>
+        <div class="mode-row">
+          <span class="mode-row-label">Prostředí</span>
+          <div class="seg" id="pr-presets" role="group" aria-label="Volba prostředí">
+            <button class="chip accented" type="button" data-n="100" aria-pressed="false">vzduch</button>
+            <button class="chip accented on" type="button" data-n="133" aria-pressed="true">voda</button>
+            <button class="chip accented" type="button" data-n="150" aria-pressed="false">sklo</button>
+            <button class="chip accented" type="button" data-n="242" aria-pressed="false">diamant</button>
+          </div>
+        </div>
+        <div class="mode-row slider-row">
+          <label class="mode-row-label" for="pr-sl-l">Vlnová délka ve vzduchu</label>
+          <input type="range" id="pr-sl-l" min="390" max="760" step="5" value="650">
+          <span class="slider-val" id="pr-out-l" aria-live="polite"></span>
+        </div>
+        <div class="mode-row">
+          <span class="mode-row-label">Údaje</span>
+          <span class="slider-val wide" id="pr-out-v" aria-live="polite"></span>
+        </div>
+        <div class="mode-row">
+          <span class="mode-row-label">Animace</span>
+          <div class="seg">
+            <button class="chip" id="pr-play" type="button">Pozastavit</button>
+            <button class="chip" id="pr-zero" type="button">Vynulovat počítadla</button>
+          </div>
+        </div>
+      </div>
+        <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint">Vlna se šíří zleva doprava. Vlevo je vzduch (\(n = 1{,}00\)), vpravo za svislým rozhraním prostředí s indexem lomu nastaveným posuvníkem nebo tlačítky. Dva body (jeden ve vzduchu, jeden v prostředí) kmitají nahoru a dolů; počítadla nad nimi ukazují, kolik kmitů od vynulování vykonaly (kmit se započítá, když bod projde horní polohou; protože body nekmitají ve stejné fázi, může se jedno počítadlo krátce o jedničku předbíhat). Oba body kmitají stejně rychle, takže frekvence je v obou prostředích stejná, ale hřebeny vln jsou v prostředí blíž u sebe. Kóty ukazují vlnovou délku v obou prostředích. Animace je zpomalená (skutečné světlo kmitá stovky bilionůkrát za sekundu) a vlnová délka je v obrázku zvětšená. Barva vlny odpovídá zvolené vlnové délce ve vzduchu a v prostředí se nemění. Odraz na rozhraní a pohlcování světla animace zanedbává.</p>
+      </details>
+      </div>
     </div>
 
     <div class="card">
@@ -607,115 +711,6 @@ svg.sp-band-svg{ touch-action:none; }
       <p>• Vlnová délka a frekvence souvisejí vztahem \(\lambda = c/f\), kde \(c = 3{,}00 \cdot 10^{8}\ \mathrm{m\cdot s^{-1}}\).</p>
       <p>• Hranice mezi druhy záření nejsou ostré, oblasti se mohou překrývat.</p>
       <p>• Vlnová délka udávaná v tabulkách platí ve vakuu; frekvence je stejná ve všech prostředích, proto je výhodnější ji uvádět.</p>
-    </div>
-  </div>
-
-  <!-- ============ SPEKTRUM (posuvník) ============ -->
-  <div id="spektrum-section" class="tab-section" hidden>
-    <div class="card applet-card" id="sp-card">
-      <div class="applet-head">
-        <div class="applet-head-text">
-          <span class="cat-tag">Aplet</span>
-          <h2>Posuvník po spektru</h2>
-          <p class="desc">Posouvejte se po celém spektru elektromagnetického záření a sledujte, jak se mění frekvence, druh záření, jeho zdroje a využití.</p>
-        </div>
-        <button class="btn ghost fs-btn" id="sp-fs" type="button" aria-pressed="false">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path id="sp-fs-icon" d="M1.5 5.5V1.5H5.5M10.5 1.5H14.5V5.5M14.5 10.5V14.5H10.5M5.5 14.5H1.5V10.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          <span id="sp-fs-label">Celá obrazovka</span>
-        </button>
-      </div>
-      <div class="applet-stage">
-        <figure class="theory-fig">
-          <svg id="sp-svg" class="wide" viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pás spektra elektromagnetického záření s posuvnou značkou. Pod pásem je zvětšená viditelná oblast, vlna nakreslená v měřítku zvolené vlnové délky vzhledem k vybranému předmětu a údaje o vlnové délce, frekvenci a druhu záření."></svg>
-          <figcaption id="sp-caption">Značku můžete také přímo táhnout po pásu spektra.</figcaption>
-        </figure>
-        <p class="hint fs-hint">Pro čitelnost popisků otevřete aplet na celou obrazovku.</p>
-      </div>
-      <div class="applet-controls">
-        <div class="mode-row slider-row">
-          <label class="mode-row-label" for="sp-sl">Vlnová délka</label>
-          <input type="range" id="sp-sl" min="-14" max="4" step="0.01" value="-6.3">
-          <span class="slider-val" id="sp-out-l" aria-live="polite"></span>
-        </div>
-        <div class="mode-row">
-          <span class="mode-row-label">Příklady</span>
-          <div class="seg" id="sp-presets" role="group" aria-label="Příklady zdrojů záření">
-            <button class="chip" type="button" data-l="3">FM rádio 100&nbsp;MHz</button>
-            <button class="chip" type="button" data-l="0.1224">mikrovlnná trouba</button>
-            <button class="chip" type="button" data-l="9.4e-6">lidské tělo</button>
-            <button class="chip" type="button" data-l="9.4e-7">dálkový ovladač</button>
-            <button class="chip" type="button" data-l="5.32e-7">zelený laser</button>
-            <button class="chip" type="button" data-l="2.537e-7">germicidní lampa</button>
-            <button class="chip" type="button" data-l="3e-11">rentgen</button>
-            <button class="chip" type="button" data-l="9.3e-13">gama z kobaltu 60</button>
-          </div>
-        </div>
-      </div>
-      <div class="sp-info" id="sp-info" aria-live="polite"></div>
-      <details class="navod">
-        <summary>Návod</summary>
-        <p class="hint">Posuvník mění vlnovou délku ve vakuu od \(10^{-14}\ \mathrm{m}\) do \(10^{4}\ \mathrm{m}\). Stupnice je logaritmická: posun o jeden dílek znamená desetinásobek vlnové délky. Značku lze také táhnout myší nebo prstem přímo po pásu spektra, tlačítka <i>Příklady</i> nastaví vlnovou délku typického zdroje. Pod pásem se průběžně dopočítává frekvence \(f = c/\lambda\) a vypisuje se druh záření, jeho typické zdroje a využití. V místech, kde se oblasti překrývají nebo kde se hranice v různých zdrojích liší, se vypíší oba druhy. Proužek s vlnou ukazuje vlnovou délku v porovnání s předmětem podobné velikosti (velikosti předmětů jsou jen řádové).</p>
-      </details>
-    </div>
-  </div>
-
-  <!-- ============ VLNA V PROSTŘEDÍ ============ -->
-  <div id="prostredi-section" class="tab-section" hidden>
-    <div class="card applet-card" id="pr-card">
-      <div class="applet-head">
-        <div class="applet-head-text">
-          <span class="cat-tag">Animace</span>
-          <h2>Vlnová délka a frekvence v různých prostředích</h2>
-          <p class="desc">Světlo přechází ze vzduchu do prostředí s indexem lomu \(n\). Sledujte, co se změní a co zůstane stejné.</p>
-        </div>
-        <button class="btn ghost fs-btn" id="pr-fs" type="button" aria-pressed="false">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path id="pr-fs-icon" d="M1.5 5.5V1.5H5.5M10.5 1.5H14.5V5.5M14.5 10.5V14.5H10.5M5.5 14.5H1.5V10.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          <span id="pr-fs-label">Celá obrazovka</span>
-        </button>
-      </div>
-      <div class="applet-stage">
-        <figure class="theory-fig">
-          <svg id="pr-svg" class="wide" viewBox="0 0 640 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Animace vlny, která přechází zleva ze vzduchu přes svislé rozhraní do prostředí s větším indexem lomu. V prostředí má vlna kratší vlnovou délku. Dva body na vlně, jeden v každém prostředí, kmitají nahoru a dolů a počítadla ukazují, že oba vykonají stejný počet kmitů."></svg>
-          <figcaption>Vlnová délka se v optičtěji hustším prostředí zkrátí \(n\)krát, frekvence (počet kmitů za sekundu) zůstane stejná.</figcaption>
-        </figure>
-        <p class="hint fs-hint">Pro čitelnost popisků otevřete animaci na celou obrazovku.</p>
-      </div>
-      <div class="applet-controls">
-        <div class="mode-row slider-row">
-          <label class="mode-row-label" for="pr-sl-n">Index lomu</label>
-          <input type="range" id="pr-sl-n" min="100" max="250" step="1" value="133">
-          <span class="slider-val" id="pr-out-n" aria-live="polite"></span>
-        </div>
-        <div class="mode-row">
-          <span class="mode-row-label">Prostředí</span>
-          <div class="seg" id="pr-presets" role="group" aria-label="Volba prostředí">
-            <button class="chip accented" type="button" data-n="100" aria-pressed="false">vzduch</button>
-            <button class="chip accented on" type="button" data-n="133" aria-pressed="true">voda</button>
-            <button class="chip accented" type="button" data-n="150" aria-pressed="false">sklo</button>
-            <button class="chip accented" type="button" data-n="242" aria-pressed="false">diamant</button>
-          </div>
-        </div>
-        <div class="mode-row slider-row">
-          <label class="mode-row-label" for="pr-sl-l">Vlnová délka ve vzduchu</label>
-          <input type="range" id="pr-sl-l" min="390" max="760" step="5" value="650">
-          <span class="slider-val" id="pr-out-l" aria-live="polite"></span>
-        </div>
-        <div class="mode-row">
-          <span class="mode-row-label">Údaje</span>
-          <span class="slider-val wide" id="pr-out-v" aria-live="polite"></span>
-        </div>
-        <div class="mode-row">
-          <span class="mode-row-label">Animace</span>
-          <div class="seg">
-            <button class="chip" id="pr-play" type="button">Pozastavit</button>
-            <button class="chip" id="pr-zero" type="button">Vynulovat počítadla</button>
-          </div>
-        </div>
-      </div>
-      <details class="navod">
-        <summary>Návod</summary>
-        <p class="hint">Vlna se šíří zleva doprava. Vlevo je vzduch (\(n = 1{,}00\)), vpravo za svislým rozhraním prostředí s indexem lomu nastaveným posuvníkem nebo tlačítky. Dva body (jeden ve vzduchu, jeden v prostředí) kmitají nahoru a dolů; počítadla nad nimi ukazují, kolik kmitů od vynulování vykonaly (kmit se započítá, když bod projde horní polohou; protože body nekmitají ve stejné fázi, může se jedno počítadlo krátce o jedničku předbíhat). Oba body kmitají stejně rychle, takže frekvence je v obou prostředích stejná, ale hřebeny vln jsou v prostředí blíž u sebe. Kóty ukazují vlnovou délku v obou prostředích. Animace je zpomalená (skutečné světlo kmitá stovky bilionůkrát za sekundu) a vlnová délka je v obrázku zvětšená. Barva vlny odpovídá zvolené vlnové délce ve vzduchu a v prostředí se nemění. Odraz na rozhraní a pohlcování světla animace zanedbává.</p>
-      </details>
     </div>
   </div>
 
@@ -1499,11 +1494,11 @@ svg.sp-band-svg{ touch-action:none; }
     return { lx:lx, zx:zx, Y:Y, H:H, X0:X0, X1:X1, zy:zy, zh:zh };
   }
 
-  drawSpectrum(document.getElementById('sp-theory-svg'), { x0:40, x1:566, y:40, h:36, zx0:150, zx1:470, zy:170 });
-
-  // odkaz z teorie na aplet s prostředím
-  var linkPr = document.getElementById('sp-link-prostredi');
-  if(linkPr) linkPr.addEventListener('click', function(e){ e.preventDefault(); showTab('prostredi'); window.scrollTo(0, 0); });
+  // staré odkazy na zrušené záložky (#spektrum, #prostredi) vedou na aplet v teorii
+  (function(){
+    var target = { spektrum:'sp-card', prostredi:'pr-card' }[location.hash.replace('#', '')];
+    if(target) setTimeout(function(){ var el = document.getElementById(target); if(el) el.scrollIntoView(); }, 0);
+  })();
 
   // ================= APLET: POSUVNÍK PO SPEKTRU =================
   (function(){
@@ -1520,7 +1515,7 @@ svg.sp-band-svg{ touch-action:none; }
     var tF = mk('text', { x:40, y:258, 'font-size':'14', 'font-family':'Work Sans, sans-serif', fill:'var(--ink)' }, svg);
     var tT = mk('text', { x:40, y:282, 'font-size':'14', 'font-weight':'700', 'font-family':'Work Sans, sans-serif', fill:'var(--accent)' }, svg);
     var sl = document.getElementById('sp-sl'), outL = document.getElementById('sp-out-l'), info = document.getElementById('sp-info');
-    var presets = document.querySelectorAll('#sp-presets .chip');
+    var presets = document.querySelectorAll('.sp-ex');
 
     function render(){
       var L = parseFloat(sl.value), lam = Math.pow(10, L), f = C / lam, x = g.lx(L), ts = typesAt(L);
@@ -1552,7 +1547,10 @@ svg.sp-band-svg{ touch-action:none; }
     }
     sl.addEventListener('input', render);
     Array.prototype.forEach.call(presets, function(b){
-      b.addEventListener('click', function(){ sl.value = Math.log10(parseFloat(b.getAttribute('data-l'))).toFixed(2); render(); });
+      b.addEventListener('click', function(){
+        sl.value = Math.log10(parseFloat(b.getAttribute('data-l'))).toFixed(3); render();
+        try{ svg.scrollIntoView({ behavior:reduceMotion ? 'auto' : 'smooth', block:'center' }); }catch(e){ svg.scrollIntoView(); }
+      });
     });
     // tažení značky po pásu
     var dragging = false;
@@ -1561,7 +1559,7 @@ svg.sp-band-svg{ touch-action:none; }
       var m = svg.getScreenCTM(); if(!m) return;
       var p = pt.matrixTransform(m.inverse());
       var L = -14 + (p.x - g.X0) / (g.X1 - g.X0) * 18;
-      sl.value = Math.max(-14, Math.min(4, L)).toFixed(2); render();
+      sl.value = Math.max(-14, Math.min(4, L)).toFixed(3); render();
     }
     hit.addEventListener('pointerdown', function(e){ dragging = true; try{ hit.setPointerCapture(e.pointerId); }catch(er){} setFromEvent(e); });
     hit.addEventListener('pointermove', function(e){ if(dragging) setFromEvent(e); });
@@ -1604,7 +1602,7 @@ svg.sp-band-svg{ touch-action:none; }
     function count(x){ return Math.floor((st.th - phase(x)) / (2 * Math.PI)) - Math.floor((st.th0 - phase(x)) / (2 * Math.PI)); }
     function render(){
       var pts = [], x;
-      for(x = XL; x <= XR; x += 2) pts.push(x + ',' + f1(yAt(x)));
+      for(x = XL; x <= XR; x += 1) pts.push(x + ',' + f1(yAt(x)));
       wave.setAttribute('points', pts.join(' '));
       wave.setAttribute('stroke', wlColor(st.lam));
       dotA.setAttribute('cx', XA); dotA.setAttribute('cy', f1(yAt(XA)));
@@ -1718,7 +1716,7 @@ svg.sp-band-svg{ touch-action:none; }
 
   // ---- vzorce (KaTeX) ----
   if(window.renderMathInElement){
-    ['theory-section', 'spektrum-section', 'prostredi-section', 'trenink-section', 'hra-section'].forEach(function(id){
+    ['theory-section', 'trenink-section', 'hra-section'].forEach(function(id){
       try{
         renderMathInElement(document.getElementById(id), {
           delimiters: [{left:'\\(', right:'\\)', display:false}, {left:'\\[', right:'\\]', display:true}]

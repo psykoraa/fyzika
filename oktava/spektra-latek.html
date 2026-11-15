@@ -34,11 +34,6 @@
 
   /* barvy obrázků spekter (pozadí čárového spektra je černé jako ve spektroskopu) */
   --strip-bg:#14111c;
-  --glass:rgba(107,63,181,0.12);
-  --bulb:#f6dc7a;
-  --bulb-beam:#e5c34f;
-}
-
 }
 
 .panel{ margin-bottom:22px; }
@@ -553,7 +548,7 @@ button.btn.fs-btn svg{ flex:none; }
         <div class="applet-head-text">
           <span class="cat-tag">Animace</span>
           <h2>Emisní a absorpční spektrum</h2>
-          <p class="desc">Porovnejte spektrum, které plyn vyzařuje, se spektrem bílého světla, které stejným plynem prošlo.</p>
+          <p class="desc">Porovnejte emisní spektrum plynu s jeho absorpčním spektrem: čáry leží na stejných místech.</p>
         </div>
         <button class="btn ghost fs-btn" id="ea-fs" type="button" aria-pressed="false">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path id="ea-fs-icon" d="M1.5 5.5V1.5H5.5M10.5 1.5H14.5V5.5M14.5 10.5V14.5H10.5M5.5 14.5H1.5V10.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -562,7 +557,7 @@ button.btn.fs-btn svg{ flex:none; }
       </div>
       <div class="applet-stage">
         <figure class="theory-fig">
-          <svg id="ea-svg" class="wide" viewBox="0 0 640 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Nahoře zářící plyn ve výbojce, jeho světlo rozkládá hranol a vzniká emisní čárové spektrum. Dole svítí žárovka přes baňku se stejným chladným plynem a vzniká spojité spektrum s tmavými čarami na stejných místech. Vpravo jsou energetické hladiny atomu vodíku s přeskoky elektronu."></svg>
+          <svg id="ea-svg" class="wide" viewBox="0 0 640 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Nahoře emisní čárové spektrum zvoleného plynu: barevné čáry na tmavém pozadí. Dole absorpční spektrum téhož plynu: spojité spektrum s tmavými čarami na stejných místech. Vpravo jsou energetické hladiny atomu vodíku s přeskoky elektronu."></svg>
           <figcaption>Plyn pohlcuje právě ty vlnové délky, které sám vyzařuje.</figcaption>
         </figure>
         <p class="hint fs-hint">Pro čitelnost popisků otevřete animaci na celou obrazovku.</p>
@@ -587,7 +582,7 @@ button.btn.fs-btn svg{ flex:none; }
       </div>
       <details class="navod">
         <summary>Návod</summary>
-        <p class="hint">Horní řádek: výbojka se zvoleným plynem svítí, hranol rozloží její světlo a na stínítku je emisní (čárové) spektrum. Dolní řádek: žárovka vysílá bílé světlo se spojitým spektrem, to prochází baňkou se stejným, ale chladným plynem a na stínítku je absorpční spektrum s tmavými čarami. Přepínačem <i>Zobrazit</i> volíte jeden nebo oba řádky, přepínačem <i>Plyn</i> prvek. Vpravo je u vodíku zjednodušený model atomu s energetickými hladinami (\(n = 2\) až \(6\)): při vyzáření elektron přeskočí z vyšší hladiny na \(n = 2\) a vznikne foton dané barvy, při pohlcení naopak foton zmizí a elektron přeskočí výš. Model hladin je nad rámec této kapitoly, podrobněji v atomové fyzice; pro ostatní plyny se nezobrazuje, protože jejich hladiny jsou složitější. Jas čar je orientační.</p>
+        <p class="hint">Nahoře je emisní (čárové) spektrum světla, které zvolený plyn vyzařuje. Dole je absorpční spektrum: bílé světlo se spojitým spektrem prošlo stejným, ale chladným plynem a na místech, kde plyn pohltil určité vlnové délky, jsou tmavé čáry. Zvýrazněný rámeček ukazuje čáru, která právě odpovídá přeskoku elektronu v modelu atomu. Přepínačem <i>Zobrazit</i> volíte jeden nebo oba řádky, přepínačem <i>Plyn</i> prvek. Vpravo je u vodíku zjednodušený model atomu s energetickými hladinami (\(n = 2\) až \(6\)): při vyzáření elektron přeskočí z vyšší hladiny na \(n = 2\) a vznikne foton dané barvy, při pohlcení naopak foton zmizí a elektron přeskočí výš. Model hladin je nad rámec této kapitoly, podrobněji v atomové fyzice; pro ostatní plyny se nezobrazuje, protože jejich hladiny jsou složitější. Jas čar je orientační.</p>
       </details>
     </div>
   </div>
@@ -1174,48 +1169,21 @@ button.btn.fs-btn svg{ flex:none; }
     var svg = document.getElementById('ea-svg');
     if(!svg) return;
     var st = { mode:2, el:'H', running:!reduceMotion, t:0, tr:null, trT:0, phase:0 };
-    var SX = 230, SW = 190, SH = 26;
+    // jen dva proužky spekter nad sebou (bez zdrojů a hranolu) a vpravo model hladin vodíku
+    var SX = 20, SW = 380, SH = 46, TOPY = 62, BOTY = 210;
     var gTop = mk('g', {}, svg), gBot = mk('g', {}, svg), gAtom = mk('g', {}, svg);
-    var stripTop, stripBot, beamsTop = [], beamsBot = [];
-    function prism(parent, x, y){ mk('path', { d:'M' + x + ',' + (y + 22) + ' L' + (x + 20) + ',' + (y - 22) + ' L' + (x + 40) + ',' + (y + 22) + ' Z', fill:'var(--glass)', stroke:'var(--ink)', 'stroke-width':'1.4' }, parent); }
-    function beam(parent, x1, y1, x2, y2, col, list){
-      var l = mk('line', { x1:x1, y1:y1, x2:x2, y2:y2, stroke:col, 'stroke-width':'3', 'stroke-dasharray':'8 6', 'stroke-linecap':'round' }, parent);
-      list.push(l); return l;
-    }
-    function fan(parent, x, y, lines, kind){
-      // paprsky z hranolu na stínítko (jen naznačené)
-      var g = mk('g', {}, parent);
-      if(kind === 'emise') lines.forEach(function(l){ var xx = SX + (l[0] - NM0) / (NM1 - NM0) * SW; mk('line', { x1:x, y1:y, x2:f1(xx), y2:y + 20, stroke:wlColor(l[0]), 'stroke-width':'1.2', opacity:'0.7' }, g); });
-      else mk('path', { d:'M' + x + ',' + y + ' L' + SX + ',' + (y + 20) + ' L' + (SX + SW) + ',' + (y + 20) + ' Z', fill:'var(--glass)', opacity:'0.8' }, g);
-      return g;
-    }
-    var tubeTop, gasBot, fanTop, fanBot;
+    var stripTop, stripBot;
     function build(){
       [gTop, gBot].forEach(function(g){ while(g.firstChild) g.removeChild(g.firstChild); });
-      beamsTop = []; beamsBot = [];
-      var el = EL[st.el], strong = el.lines.reduce(function(a, b){ return b[1] > a[1] ? b : a; });
-      // horní řádek: výbojka → hranol → emisní spektrum
-      label(gTop, 20, 22, 'emisní spektrum: zářící plyn', { 'font-weight':'600' });
-      tubeTop = mk('rect', { x:24, y:48, width:70, height:22, rx:11, fill:wlColor(strong[0]), opacity:'0.85', stroke:'var(--ink)', 'stroke-width':'1.4' }, gTop);
-      label(gTop, 59, 90, 'výbojka (' + st.el + ')', { 'text-anchor':'middle', 'font-size':'11.5', fill:'var(--ink-soft)' });
-      beam(gTop, 98, 59, 150, 59, wlColor(strong[0]), beamsTop);
-      prism(gTop, 150, 59);
-      stripTop = drawStrip(gTop, SX, 82, SW, SH, 'emise', el.lines);
-      fanTop = fan(gTop, 182, 62, el.lines, 'emise');
-      drawAxisNm(gTop, SX, 82 + SH, SW, false);
-      // dolní řádek: žárovka → chladný plyn → hranol → absorpční spektrum
-      label(gBot, 20, 172, 'absorpční spektrum: bílé světlo prochází chladným plynem', { 'font-weight':'600' });
-      mk('circle', { cx:44, cy:212, r:16, fill:'var(--bulb)', stroke:'var(--ink)', 'stroke-width':'1.4' }, gBot);
-      mk('rect', { x:38, y:228, width:12, height:10, fill:'var(--ink-soft)' }, gBot);
-      label(gBot, 44, 256, 'žárovka', { 'text-anchor':'middle', 'font-size':'11.5', fill:'var(--ink-soft)' });
-      beam(gBot, 62, 212, 96, 212, 'var(--bulb-beam)', beamsBot);
-      gasBot = mk('rect', { x:96, y:194, width:40, height:36, rx:6, fill:'var(--glass)', stroke:'var(--ink)', 'stroke-width':'1.4' }, gBot);
-      label(gBot, 116, 256, 'plyn (' + st.el + ')', { 'text-anchor':'middle', 'font-size':'11.5', fill:'var(--ink-soft)' });
-      beam(gBot, 136, 212, 160, 212, 'var(--bulb-beam)', beamsBot);
-      prism(gBot, 160, 212);
-      stripBot = drawStrip(gBot, SX, 235, SW, SH, 'absorpce', el.lines);
-      fanBot = fan(gBot, 192, 215, el.lines, 'abs');
-      drawAxisNm(gBot, SX, 235 + SH, SW);
+      var el = EL[st.el];
+      label(gTop, SX, 30, 'emisní spektrum', { 'font-weight':'600' });
+      label(gTop, SX, 48, 'světlo, které vyzařuje zářící plyn (' + el.name + ')', { 'font-size':'11.5', fill:'var(--ink-soft)' });
+      stripTop = drawStrip(gTop, SX, TOPY, SW, SH, 'emise', el.lines);
+      drawAxisNm(gTop, SX, TOPY + SH, SW);
+      label(gBot, SX, BOTY - 32, 'absorpční spektrum', { 'font-weight':'600' });
+      label(gBot, SX, BOTY - 14, 'bílé světlo po průchodu chladným plynem (' + el.name + ')', { 'font-size':'11.5', fill:'var(--ink-soft)' });
+      stripBot = drawStrip(gBot, SX, BOTY, SW, SH, 'absorpce', el.lines);
+      drawAxisNm(gBot, SX, BOTY + SH, SW);
       drawAtom();
       updateUI();
     }
@@ -1237,7 +1205,7 @@ button.btn.fs-btn svg{ flex:none; }
         label(gAtom, AX0, f1(ey(n) + 4), '<tspan font-style="italic">n</tspan> = ' + n, { 'font-size':'11.5', fill:'var(--ink-soft)' });
       }
       arrow = mk('line', { 'stroke-width':'3', 'marker-end':'url(#ea-m)' }, gAtom);
-      photon = mk('polyline', { fill:'none', 'stroke-width':'2.4' }, gAtom);
+      photon = mk('polyline', { fill:'none', 'stroke-width':'2.4', 'stroke-linejoin':'round', 'stroke-linecap':'round' }, gAtom);
       aText = label(gAtom, AX0, 50, '', { 'font-size':'11.5', fill:'var(--ink-soft)' });
     }
     var defs = mk('defs', {}, svg);
@@ -1248,7 +1216,7 @@ button.btn.fs-btn svg{ flex:none; }
     function setHighlight(nm){
       hl.forEach(function(e){ e.parentNode && e.parentNode.removeChild(e); }); hl = [];
       if(nm === null) return;
-      [[stripTop, 82, gTop, st.mode !== 1], [stripBot, 235, gBot, st.mode !== 0]].forEach(function(s){
+      [[stripTop, TOPY, gTop, st.mode !== 1], [stripBot, BOTY, gBot, st.mode !== 0]].forEach(function(s){
         if(!s[3]) return;
         var xx = s[0].sx(nm);
         hl.push(mk('rect', { x:f1(xx - 5), y:s[1] - 4, width:10, height:SH + 8, fill:'none', stroke:'var(--accent)', 'stroke-width':'2', rx:2 }, s[2]));
@@ -1268,18 +1236,13 @@ button.btn.fs-btn svg{ flex:none; }
       arrow.setAttribute('stroke', 'var(--ink)');
       // foton: při vyzáření odlétá doprava, při pohlcení přilétá zleva k atomu
       var px0 = tr.emit ? x + 8 + 45 * k : x - 50 + 45 * k, py = (yHi + yLo) / 2, pts = [], j;
-      for(j = 0; j <= 20; j++){ var xx = px0 + j * 2; pts.push(f1(xx) + ',' + f1(py + 5 * Math.sin(j * 0.9))); }
+      for(j = 0; j <= 80; j++){ var xx = px0 + j * 0.5; pts.push(f1(xx) + ',' + f1(py + 5 * Math.sin(j * 0.225))); }
       photon.setAttribute('points', pts.join(' '));
       photon.setAttribute('stroke', wlColor(tr.nm));
       photon.style.display = (tr.emit ? k > 0.95 || st.trT > 0.7 : st.trT < 0.7) ? '' : 'none';
       aText.innerHTML = (tr.emit ? 'vyzáření ' : 'pohlcení ') + (tr.emit ? tr.n + ' → 2' : '2 → ' + tr.n) + ': <tspan font-style="italic">λ</tspan> = ' + fmt(tr.nm, 1) + ' nm';
     }
-    var off = 0;
-    function tick(dt){
-      off -= dt * 40;
-      beamsTop.concat(beamsBot).forEach(function(b){ b.setAttribute('stroke-dashoffset', f1(off)); });
-      animAtom(dt);
-    }
+    function tick(dt){ animAtom(dt); }
     var modeBtns = document.querySelectorAll('#ea-mode .chip'), elRow = document.getElementById('ea-el'), btnPlay = document.getElementById('ea-play');
     EL_KEYS.forEach(function(k){
       var b = document.createElement('button');
