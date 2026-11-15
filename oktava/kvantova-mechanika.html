@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kvantová mechanika</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../spolecne/config.js"></script>
+<script src="../spolecne/auth.js"></script>
+<script src="../spolecne/zalozky.js?v=3"></script>
+<link rel="stylesheet" href="../spolecne/styl.css">
+<style>
+:root{
+  --paper:#f2eff8;
+  --surface:#fdfcff;
+  --surface-2:#e6e0f1;
+  --ink:#241f36;
+  --ink-soft:#645d7a;
+  --line:rgba(36,31,54,0.12);
+  --accent:#6b3fb5;
+  --accent-ink:#faf7ff;
+  --success:#28794f;
+  --success-bg:#e3efe0;
+  --danger:#b3392b;
+  --danger-bg:#f5e4de;
+  --focus:#1e6f66;
+  --shadow:0 1px 0 rgba(36,31,54,0.06);
+  /* barvy v apletech */
+  --psi:#2f6fd0;
+  --psi2:#d23f24;
+}
+
+.panel{ margin-bottom:22px; }
+.panel-title{ margin-bottom:8px; }
+.panel p{
+  margin:0 0 8px;
+  font-size:0.9rem;
+  line-height:1.55;
+}
+.panel p:last-child{ margin-bottom:0; }
+.panel b{ color:var(--ink); }
+.panel ul, .panel ol{ margin:0 0 8px; padding-left:22px; font-size:0.9rem; line-height:1.55; }
+.panel li{ margin-bottom:4px; }
+.panel h3{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.05rem;
+  letter-spacing:0.01em;
+  margin:16px 0 6px;
+}
+.panel h3:first-child{ margin-top:0; }
+
+.card{ padding:26px 26px 28px; text-align:left; margin-bottom:24px; }
+.cat-tag{ margin-bottom:10px; }
+.card h2{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.6rem;
+  letter-spacing:0.02em;
+  color:var(--ink);
+  text-transform:none;
+  margin-bottom:6px;
+}
+.card .desc{
+  font-size:0.86rem;
+  color:var(--ink-soft);
+  line-height:1.5;
+  margin:0 0 14px;
+}
+
+.katex{ font-size:1.05em; }
+.formula-box{
+  background:var(--surface-2);
+  border-radius:8px;
+  padding:12px 16px;
+  margin:10px 0;
+  font-size:1.1rem;
+  text-align:center;
+}
+.formula-line{
+  text-align:center;
+  font-size:1.1rem;
+  color:var(--ink);
+  line-height:1.8;
+}
+.line-scroll{
+  position:relative;
+  white-space:nowrap;
+  overflow-x:auto;
+  overflow-y:hidden;
+  padding:2px 0 4px;
+}
+.given-data{
+  font-size:clamp(0.9rem, 2.4vw, 1.05rem);
+  color:var(--ink-soft);
+  margin-bottom:20px;
+}
+
+.theory-table-wrap{ overflow-x:auto; margin:6px 0 4px; }
+.theory-table{
+  border-collapse:collapse;
+  font-size:0.88rem;
+  width:100%;
+  min-width:320px;
+}
+.theory-table th, .theory-table td{
+  border:1px solid var(--line);
+  padding:8px 12px;
+  text-align:left;
+}
+.theory-table thead th{
+  background:var(--surface-2);
+  color:var(--ink-soft);
+  font-weight:600;
+  font-size:0.72rem;
+  text-transform:uppercase;
+  letter-spacing:0.05em;
+}
+.theory-table td.mono, .theory-table th.mono{
+  font-family:'IBM Plex Mono', monospace;
+  font-variant-numeric:tabular-nums;
+  text-align:center;
+}
+.theory-table tbody tr:nth-child(even) td{ background:rgba(0,0,0,0.02); }
+
+.theory-fig{
+  margin:12px 0 10px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:10px 12px 8px;
+}
+.theory-fig svg{ display:block; width:100%; max-width:560px; height:auto; margin:0 auto; }
+.theory-fig figcaption{
+  font-size:0.8rem;
+  color:var(--ink-soft);
+  line-height:1.45;
+  text-align:center;
+  margin-top:4px;
+}
+
+.example-grid{ display:flex; flex-direction:column; gap:12px; margin-top:6px; }
+.example-item{
+  background:var(--surface-2);
+  border-radius:10px;
+  padding:12px 14px;
+}
+.example-tag{
+  font-size:0.66rem;
+  text-transform:uppercase;
+  letter-spacing:0.06em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-bottom:6px;
+  display:block;
+}
+.example-eq{
+  font-size:1.05rem;
+  margin-bottom:4px;
+}
+.example-note{ font-size:0.82rem; color:var(--ink-soft); line-height:1.45; }
+
+.links{ margin-top:14px; display:flex; flex-wrap:wrap; gap:10px; justify-content:center; }
+a.btn-link{
+  display:inline-block;
+  font-weight:600;
+  font-size:0.95rem;
+  padding:10px 22px;
+  border-radius:8px;
+  background:var(--accent);
+  color:var(--accent-ink);
+  text-decoration:none;
+}
+a.btn-link:hover{ filter:brightness(1.06); }
+a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+
+.credit{
+  margin-top:24px;
+  font-size:0.8rem;
+  line-height:1.5;
+  color:var(--ink-soft);
+  text-align:center;
+}
+.credit a{ color:inherit; }
+
+
+/* ---- aplety: karta, řádky ovládání, kreslicí plocha, výstupy ---- */
+.applet-head .cat-tag{ margin-bottom:10px; }
+.mode-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:16px;
+  padding-top:14px;
+  border-top:1px solid var(--line);
+}
+.mode-row-label{
+  font-size:0.68rem;
+  text-transform:uppercase;
+  letter-spacing:0.1em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-right:2px;
+  flex:0 0 170px;
+}
+.seg{ display:flex; gap:6px; flex-wrap:wrap; }
+.chip{ font-size:0.82rem; gap:7px; }
+.chip.accented.on{ background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+.chip:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+.slider-wrap{ display:flex; align-items:center; gap:12px; flex:1 1 260px; min-width:0; }
+.slider-wrap input[type=range]{ flex:1 1 auto; min-width:0; accent-color:var(--accent); height:28px; }
+.slider-val{ font-family:'IBM Plex Mono', monospace; font-weight:600; font-size:0.92rem; white-space:nowrap; min-width:6.5em; text-align:right; }
+.canvas-wrap{
+  position:relative;
+  margin-top:18px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:10px;
+  overflow:hidden;
+}
+svg.scene{ width:100%; height:auto; display:block; background:var(--surface); user-select:none; -webkit-user-select:none; touch-action:manipulation; }
+svg.scene text{ font-family:'Work Sans', sans-serif; }
+.legend{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 18px;
+  padding:10px 14px;
+  border-top:1px solid var(--line);
+  font-size:0.78rem;
+  color:var(--ink-soft);
+}
+.legend span{ display:inline-flex; align-items:center; gap:7px; }
+.legend i{ font-style:normal; display:inline-block; width:12px; height:12px; border-radius:50%; background:var(--c); }
+.applet-out{
+  display:flex; flex-wrap:wrap; gap:8px 22px; margin-top:14px;
+  font-size:0.92rem; line-height:1.5;
+}
+.applet-out b{ font-variant-numeric:tabular-nums; }
+.applet-note{ font-size:0.86rem; color:var(--ink-soft); margin:10px 0 0; line-height:1.5; }
+.applet-actions{ display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+.applet-card + .applet-card{ margin-top:4px; }
+.nw{ white-space:nowrap; }
+@media (max-width:720px){
+  .mode-row-label{ flex-basis:100%; }
+}
+.mode-row-label i{ text-transform:none; }
+
+@media (max-width:520px){
+  .card{ padding:20px 16px 22px; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <a class="back-link" href="../rozcestniky/oktava.html">← Zpět na Oktáva/4. ročník</a>
+
+  <div class="brand">
+    <div class="brand-lockup">
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <line x1="5" y1="6" x2="5" y2="34" stroke="var(--ink)" stroke-width="2.4"/>
+        <line x1="35" y1="6" x2="35" y2="34" stroke="var(--ink)" stroke-width="2.4"/>
+        <line x1="5" y1="34" x2="35" y2="34" stroke="var(--ink-soft)" stroke-width="1.2"/>
+        <path d="M5,34 Q12.5,4 20,34 Q27.5,4 35,34" stroke="var(--accent)" stroke-width="2" fill="none"/>
+      </svg>
+      <div class="brand-text">
+        <h1>Kvantová mechanika</h1>
+        <p>atomová a částicová fyzika — relace neurčitosti, vlnová funkce, měření</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="top-tabs">
+    <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+    <button class="toptab" id="top-tab-aplet" data-tab="aplet">Aplety</button>
+  </div>
+
+  <!-- ============ TEORIE ============ -->
+  <div id="theory-section" class="tab-section">
+
+    <div class="panel">
+      <div class="panel-title">Teorie stojí na postulátech</div>
+      <p>Základem klasické mechaniky jsou Newtonovy zákony. Ani ty nelze odvodit z něčeho jednoduššího — vyslovujeme je na základě zkušenosti a ověřujeme důsledky. Takovým základním tvrzením se říká <b>postuláty</b> (axiomy).</p>
+      <p><b>Kvantová mechanika</b> je část kvantové fyziky, která popisuje pohyb částic v mikrosvětě. Má vlastní postuláty a její zákony vypadají úplně jinak než Newtonovy. Pro velká tělesa ale přecházejí v klasickou mechaniku (<b>princip korespondence</b>): Planckova konstanta je tak malá, že se kvantové jevy u míčů a planet neprojeví.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Heisenbergova relace neurčitosti</div>
+      <p>V klasické fyzice popíšeme pohybový stav tělesa polohou a rychlostí (hybností). V mikrosvětě to nejde. <b>W. Heisenberg</b> ukázal (1927), že polohu \(x\) a hybnost \(p\) částice <b>nelze současně určit libovolně přesně</b>. Neurčitosti \(\Delta x\) a \(\Delta p\) jsou svázány vztahem, který pro odhady zapisujeme</p>
+      <div class="formula-box">\[ \Delta x \cdot \Delta p \gtrsim h \]</div>
+      <p>Čím přesněji známe polohu, tím méně přesně známe hybnost, a naopak. Nejde o nedokonalost přístrojů — částice mikrosvěta prostě nemá zároveň přesnou polohu i přesnou hybnost. Proto nemá smysl mluvit o její dráze (trajektorii).</p>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="9" cy="9" r="7.5" stroke="var(--focus)" stroke-width="1.6"/>
+          <line x1="9" y1="8" x2="9" y2="13" stroke="var(--focus)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="5.2" r="1" fill="var(--focus)"/>
+        </svg>
+        <p>Přesná podoba relace je \(\Delta x\cdot\Delta p \geq \hbar/2\), kde \(\hbar = h/(2\pi)\); záleží na tom, jak přesně neurčitost definujeme. Pro řádové odhady stačí tvar výše.</p>
+      </div>
+      <div class="example-grid">
+        <div class="example-item">
+          <span class="example-tag">Elektron uvnitř atomu</span>
+          <div class="example-eq">\[ \Delta v \approx \frac{h}{m_\mathrm{e}\,\Delta x} = \frac{6{,}63\cdot 10^{-34}}{9{,}11\cdot 10^{-31}\cdot 10^{-10}}\ \mathrm{m\cdot s^{-1}} \approx 7\cdot 10^{6}\ \mathrm{m\cdot s^{-1}} \]</div>
+          <div class="example-note">Neurčitost rychlosti je obrovská — o „dráze“ elektronu v atomu nelze mluvit.</div>
+        </div>
+        <div class="example-item">
+          <span class="example-tag">Kulička 100 g, poloha na mikrometr</span>
+          <div class="example-eq">\[ \Delta v \approx \frac{6{,}63\cdot 10^{-34}}{0{,}1\cdot 10^{-6}}\ \mathrm{m\cdot s^{-1}} \approx 7\cdot 10^{-27}\ \mathrm{m\cdot s^{-1}} \]</div>
+          <div class="example-note">Úplně zanedbatelné — v makrosvětě relace neurčitosti nic nemění.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Vlnová funkce a pravděpodobnost</div>
+      <p>Stav částice proto v kvantové mechanice popisujeme <b>vlnovou funkcí</b> \(\Psi(x, y, z, t)\) — funkcí, jejíž hodnoty jsou obecně komplexní čísla. Sama o sobě přímý fyzikální význam nemá. <b>M. Born</b> ukázal, že druhá mocnina její absolutní hodnoty je <b>hustota pravděpodobnosti</b> výskytu částice:</p>
+      <div class="formula-box">\[ \Delta w = |\Psi|^2\,\Delta V \]</div>
+      <p>kde \(\Delta w\) je pravděpodobnost, že částici najdeme v malém objemu \(\Delta V\). Kvantová mechanika se tedy vzdává přesné polohy a říká jen, <b>s jakou pravděpodobností</b> částici kde najdeme.</p>
+      <h3>Pravděpodobnost a její hustota</h3>
+      <p>Na šestistěnné kostce padne šestka s pravděpodobností \(1/6\), na desetistěnné \(1/10\), na stostěnné \(1/100\). Na „kostce s nekonečně mnoha stěnami“ by pravděpodobnost jednoho určitého čísla byla nulová. U spojitých veličin, jako je poloha, proto nemá smysl ptát se na pravděpodobnost přesného bodu, ale na pravděpodobnost v nějakém objemu.</p>
+      <p>Je-li bodová částice se stejnou pravděpodobností kdekoli v prostoru o objemu 5&nbsp;m³, najdeme ji v části o objemu 2,5&nbsp;m³ s pravděpodobností \(1/2\), v 1&nbsp;m³ s pravděpodobností \(1/5\) a v 0,5&nbsp;m³ s pravděpodobností \(1/10\). Hustota pravděpodobnosti je zde všude stejná, \(1/(5\ \mathrm{m^3}) = 0{,}2\ \mathrm{m^{-3}}\). Vlnová funkce popisuje případ, kdy je hustota pravděpodobnosti v různých místech různá.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Postuláty kvantové mechaniky</div>
+      <ol>
+        <li>Stav částice (soustavy) je úplně popsán <b>vlnovou funkcí</b>; postulát určuje její vlastnosti.</li>
+        <li>Každé fyzikální veličině (poloze, hybnosti, energii) je přiřazen matematický předpis — <b>operátor</b>, který s vlnovou funkcí pracuje.</li>
+        <li>Měřením můžeme získat jen určité hodnoty (tzv. vlastní čísla operátoru). Proto například energie atomu nabývá jen určitých hodnot.</li>
+        <li>Časový vývoj vlnové funkce popisuje <b>Schrödingerova rovnice</b> (E. Schrödinger, 1926) — obdoba pohybových rovnic klasické mechaniky.</li>
+      </ol>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Měření mění stav</div>
+      <p>Představme si kosmonauta, který může být buď uvnitř vesmírné stanice, nebo venku před vchodem. Podíváme se a zjistíme, že je uvnitř. Klasicky je jasné, že tam byl i před naším pohledem.</p>
+      <p>Kvantově je to jinak. Stav „kvantového kosmonauta“ může být například: s pravděpodobností 70&nbsp;% uvnitř, s pravděpodobností 30&nbsp;% venku. Měření dá jeden výsledek — třeba „uvnitř“ — a tím se <b>stav změní</b>: teď je kosmonaut uvnitř se 100% pravděpodobností a další měření dá zase „uvnitř“. Co ale bylo před měřením? Stav byl 70&nbsp;% : 30&nbsp;%; kosmonaut nebyl ani jen uvnitř, ani jen venku. Zopakujeme-li celý pokus (s nově připraveným stavem) mnohokrát, vyjde „uvnitř“ přibližně v 70&nbsp;% případů.</p>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="9" cy="9" r="7.5" stroke="var(--focus)" stroke-width="1.6"/>
+          <line x1="9" y1="8" x2="9" y2="13" stroke="var(--focus)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="5.2" r="1" fill="var(--focus)"/>
+        </svg>
+        <p>Proslulou ilustrací je <b>Schrödingerova kočka</b>: myšlenkový pokus, v němž je osud kočky v uzavřené krabici svázán s kvantovým jevem (rozpadem jednoho atomu). Dokud se nepodíváme, je podle kvantové mechaniky stav soustavy „kočka živá i mrtvá zároveň“. Schrödinger tím chtěl ukázat, jak podivně výklad měření zní, přeneseme-li ho do makrosvěta.</p>
+      </div>
+      <p>Totéž vidíme u elektronů na dvojštěrbině: dokud nezjišťujeme, kterou štěrbinou elektron prošel, chová se jako vlna a vznikají interferenční proužky. Jakmile to měříme, proužky zmizí.</p>
+      <div class="links"><a class="btn-link" href="vlnove-vlastnosti-castic.html#aplet">Aplet Dvojštěrbina →</a></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Částice uzavřená v jámě</div>
+      <p>Uzavřeme částici mezi dvě nekonečně vysoké stěny ve vzdálenosti \(L\) (<b>nekonečně hluboká potenciálová jáma</b>). Klasická kulička by se mezi stěnami odrážela s libovolnou energií. Částice mikrosvěta se ale chová jako vlna a mezi stěnami se může „vejít“ jen <b>stojaté vlnění</b> — podobně jako na struně upevněné na obou koncích, kde se na délku \(L\) musí vejít celistvý počet půlvln:</p>
+      <p class="formula-line">\[ \lambda_n = \frac{2L}{n}, \qquad n = 1, 2, 3, \dots \]</p>
+      <p>Dosadíme de Broglieho vztah \(p = h/\lambda\) do kinetické energie \(E = p^2/(2m)\):</p>
+      <div class="formula-box">\[ E_n = \frac{h^2}{8mL^2}\, n^2 \]</div>
+      <ul>
+        <li>Energie je <b>kvantovaná</b> — částice může mít jen energie \(E_1, 4E_1, 9E_1, \dots\) (energetické hladiny). Číslo \(n\) je kvantové číslo.</li>
+        <li>Ani v základním stavu (\(n = 1\)) není energie nulová — uvězněná částice nemůže být v klidu.</li>
+        <li>Čím menší prostor, tím větší energie: atomům (\(10^{-10}\ \mathrm{m}\)) odpovídají energie řádově eV, jádrům (\(10^{-15}\ \mathrm{m}\)) MeV.</li>
+        <li>Rozložení \(|\Psi|^2\) se v čase nemění (stacionární stav) a částice v něm neztrácí energii. Energii může vyzářit nebo pohltit jen skokem mezi hladinami, \(hf = E_n - E_m\).</li>
+      </ul>
+      <div class="example-grid">
+        <div class="example-item">
+          <span class="example-tag">Elektron v jámě široké 1 nm</span>
+          <div class="example-eq">\[ E_1 = \frac{(6{,}626\cdot 10^{-34})^2}{8\cdot 9{,}109\cdot 10^{-31}\cdot (10^{-9})^2}\ \mathrm{J} \doteq 6{,}0\cdot 10^{-20}\ \mathrm{J} \doteq 0{,}38\ \mathrm{eV}, \qquad E_2 = 4E_1 \doteq 1{,}5\ \mathrm{eV} \]</div>
+          <div class="example-note">Jednotky: J²·s²/(kg·m²) = J·(kg·m²·s⁻²)·s²/(kg·m²) = J.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Pauliho vylučovací princip</div>
+      <p>Pro elektrony (a další částice s poločíselným spinem, tzv. fermiony) platí <b>Pauliho vylučovací princip</b>: žádné dvě takové částice nemohou být ve stejném kvantovém stavu. Díky němu se elektrony v atomu nenahromadí v nejnižším stavu, ale zaplňují postupně vyšší hladiny — a díky tomu existuje periodická soustava prvků a chemie.</p>
+      <div class="links"><a class="btn-link" href="kvantova-cisla.html">Kvantová čísla →</a></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Shrnutí</div>
+      <p>• Polohu a hybnost částice nelze současně přesně určit: \(\Delta x\cdot\Delta p \gtrsim h\); částice v mikrosvětě nemá trajektorii.</p>
+      <p>• Stav popisuje vlnová funkce \(\Psi\); \(|\Psi|^2\) je hustota pravděpodobnosti výskytu částice.</p>
+      <p>• Měření dá jeden z možných výsledků a změní stav; pravděpodobnosti se projeví až při mnoha opakováních.</p>
+      <p>• Částice uzavřená v omezeném prostoru má kvantovanou energii \(E_n = n^2h^2/(8mL^2)\).</p>
+      <p>• Pauliho princip: dva elektrony nemohou být ve stejném kvantovém stavu.</p>
+    </div>
+
+  </div>
+
+  <!-- ============ APLETY: KVANTOVÝ KOSMONAUT, ČÁSTICE V JÁMĚ ============ -->
+  <div id="aplet-section" class="tab-section" hidden>
+    <div class="card applet-card">
+      <div class="applet-head">
+        <span class="cat-tag">Aplet</span>
+        <h2>Kvantový kosmonaut</h2>
+        <p class="desc">Nastavte stav kosmonauta (pravděpodobnost, že je uvnitř stanice) a měřte. Sledujte, jak měření stav změní a jak se z mnoha pokusů vynoří pravděpodobnosti.</p>
+      </div>
+      <div class="mode-row">
+        <label class="mode-row-label" for="qa-p">Stav: uvnitř s pravděpodobností</label>
+        <div class="slider-wrap">
+          <input type="range" id="qa-p" min="0" max="100" step="5" value="70">
+          <span class="slider-val" id="qa-p-val"></span>
+        </div>
+      </div>
+      <div class="applet-actions">
+        <button class="btn primary" type="button" id="qa-measure">Změřit</button>
+        <button class="btn ghost" type="button" id="qa-reset">Připravit stav znovu</button>
+        <button class="btn ghost" type="button" id="qa-100">100 pokusů (vždy nová příprava)</button>
+        <button class="btn ghost" type="button" id="qa-zero">Vynulovat počítadlo</button>
+      </div>
+      <div class="canvas-wrap">
+        <svg class="scene" id="qa-svg" viewBox="0 0 600 240" role="img" aria-label="Vesmírná stanice s kosmonautem uvnitř a před vchodem; průhlednost postavy odpovídá pravděpodobnosti, že tam kosmonauta najdeme."></svg>
+      </div>
+      <div class="applet-out" id="qa-out" aria-live="polite"></div>
+      <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint">Posuvníkem připravte stav. Průhlednost obou postav odpovídá pravděpodobnosti, se kterou kosmonauta na daném místě najdeme. Tlačítko „Změřit“ náhodně (podle pravděpodobností) vybere výsledek a stav se změní na 100&nbsp;% — další měření už dá vždy stejný výsledek. Pro nový pokus je třeba stav znovu připravit. Tlačítko „100 pokusů“ provede stokrát přípravu a měření a počítadlo ukáže relativní četnosti. Kosmonaut je samozřejmě jen přirovnání — skutečně kvantově se chovají částice mikrosvěta.</p>
+      </details>
+    </div>
+
+    <div class="card applet-card">
+      <div class="applet-head">
+        <span class="cat-tag">Aplet</span>
+        <h2>Částice v jámě</h2>
+        <p class="desc">Elektron uzavřený v jámě široké 1&nbsp;nm. Zvolte kvantové číslo \(n\) a porovnejte vlnovou funkci \(\Psi\), hustotu pravděpodobnosti \(|\Psi|^2\) a energii.</p>
+      </div>
+      <div class="mode-row">
+        <span class="mode-row-label" id="lbl-n">Kvantové číslo <i>n</i></span>
+        <div class="seg" id="well-n" role="group" aria-labelledby="lbl-n"></div>
+      </div>
+      <div class="mode-row">
+        <span class="mode-row-label" id="lbl-show">Zobrazit</span>
+        <div class="seg" id="well-show" role="group" aria-labelledby="lbl-show">
+          <button class="chip accented on" type="button" data-show="both" aria-pressed="true">Ψ i |Ψ|²</button>
+          <button class="chip accented" type="button" data-show="psi" aria-pressed="false">jen Ψ</button>
+          <button class="chip accented" type="button" data-show="psi2" aria-pressed="false">jen |Ψ|²</button>
+        </div>
+      </div>
+      <div class="canvas-wrap">
+        <svg class="scene" id="well-svg" viewBox="0 0 600 300" role="img" aria-label="Nekonečně hluboká potenciálová jáma s energetickými hladinami a průběhem vlnové funkce pro zvolené kvantové číslo."></svg>
+      </div>
+      <div class="applet-out" id="well-out" aria-live="polite"></div>
+      <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint">Vlevo jsou energetické hladiny \(E_n = n^2 E_1\) (měřítko energie je lineární, vybraná hladina je zvýrazněná). Vpravo je jáma se stěnami: modrá křivka je vlnová funkce \(\Psi\) (stojatá vlna, na délku jámy se vejde \(n\) půlvln), červená plocha je \(|\Psi|^2\). Tam, kde je \(|\Psi|^2 = 0\) (uzly), elektron nikdy nenajdeme — přestože se „pohybuje“ po celé jámě. Výška křivek je jen schematická.</p>
+      </details>
+    </div>
+  </div>
+
+  <footer>Fyzika — Oktáva/4. ročník</footer>
+</div>
+
+<script src="../spolecne/spolecne.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  // ---- záložky: tlačítko .toptab[data-tab="x"] ↔ sekce #x-section (Teorie = #theory-section) ----
+  var tabs = {}, sections = {};
+  Array.prototype.forEach.call(document.querySelectorAll('.toptab[data-tab]'), function(btn){
+    var name = btn.getAttribute('data-tab');
+    tabs[name] = btn;
+    sections[name] = document.getElementById(name === 'teorie' ? 'theory-section' : name + '-section');
+  });
+  function showTab(name){
+    for(var k in tabs){
+      tabs[k].classList.toggle('on', k === name);
+      if(sections[k]) sections[k].hidden = k !== name;
+    }
+    // skóre, série a úspěšnost v hlavičce jen u tréninku
+    var readout = document.getElementById('header-readout');
+    if(readout) readout.hidden = name !== 'trenink';
+  }
+  Object.keys(tabs).forEach(function(k){ tabs[k].addEventListener('click', function(){ showTab(k); }); });
+  var hash = location.hash.replace('#', '');
+  if(hash && tabs[hash]) showTab(hash);
+
+  // ---- příklady v teorii: postupně odemykané steppery ----
+  Array.prototype.forEach.call(document.querySelectorAll('.stepper'), function(wrap){
+    var steps = Array.prototype.slice.call(wrap.querySelectorAll('.step'));
+    var unlockedUpTo = 1;
+
+    function refreshLocks(){
+      steps.forEach(function(st){
+        var idx = parseInt(st.getAttribute('data-step'), 10);
+        var locked = idx > unlockedUpTo;
+        st.classList.toggle('locked', locked);
+        st.classList.toggle('unlocked', !locked && !st.classList.contains('done'));
+        st.querySelector('.step-head').setAttribute('aria-disabled', locked ? 'true' : 'false');
+      });
+    }
+
+    steps.forEach(function(st){
+      var idx = parseInt(st.getAttribute('data-step'), 10);
+      var head = st.querySelector('.step-head');
+      var body = st.querySelector('.step-body');
+      head.addEventListener('click', function(){
+        if(idx > unlockedUpTo) return;
+        var wasOpen = st.classList.contains('open');
+        st.classList.toggle('open', !wasOpen);
+        body.hidden = wasOpen;
+        head.setAttribute('aria-expanded', (!wasOpen).toString());
+        if(!wasOpen){
+          st.classList.add('done');
+          if(idx === unlockedUpTo && unlockedUpTo < steps.length){ unlockedUpTo++; }
+          refreshLocks();
+        }
+      });
+    });
+
+    var resetBtn = document.getElementById(wrap.getAttribute('data-reset'));
+    if(resetBtn){
+      resetBtn.addEventListener('click', function(){
+        unlockedUpTo = 1;
+        steps.forEach(function(st){
+          st.classList.remove('open', 'done');
+          st.querySelector('.step-body').hidden = true;
+          st.querySelector('.step-head').setAttribute('aria-expanded', 'false');
+        });
+        refreshLocks();
+      });
+    }
+
+    refreshLocks();
+  });
+
+  // ---- vzorce (KaTeX) ----
+  var KATEX_DELIMS = [{left:'\\(', right:'\\)', display:false}, {left:'\\[', right:'\\]', display:true}];
+  if(window.renderMathInElement){
+    Array.prototype.forEach.call(document.querySelectorAll('.tab-section'), function(sec){
+      try{ renderMathInElement(sec, { delimiters: KATEX_DELIMS }); }catch(e){}
+    });
+  }
+
+  // ---- sbalovací panely v teorii ----
+  try{ makePanelsCollapsible(document.getElementById('theory-section')); }catch(e){}
+
+  // ---- pomocné funkce pro aplety a tréninky ----
+  var NB = '\u00a0';
+  function tex(t){
+    try{ return window.katex ? katex.renderToString(t, {throwOnError:false}) : t; }catch(e){ return t; }
+  }
+  // číslo s daným počtem desetinných míst, desetinnou čárkou a mezerami mezi tisíci
+  function cz(n, dec){
+    var s = roundTo(n, dec).toFixed(dec);
+    var neg = s.charAt(0) === '-';
+    if(neg) s = s.slice(1);
+    var parts = s.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, NB);
+    return (neg ? '−' : '') + parts.join(',');
+  }
+  // totéž v TeXu (mezera mezi tisíci = \,, desetinná čárka = {,})
+  function czTex(n, dec){ return cz(n, dec).replace('−', '-').replace(',', '{,}').replace(/\u00a0/g, '\\,'); }
+  // číslo na `sig` platných číslic (desetinný zápis)
+  function czSig(x, sig){ var r = roundSig(x, sig); return cz(r, decimalsForSig(r, sig)); }
+  // rozklad na mantisu a exponent: x = m · 10^e, 1 ≤ |m| < 10 (po zaokrouhlení na sig číslic)
+  function sciParts(x, sig){
+    if(x === 0) return { m:0, e:0 };
+    var e = Math.floor(Math.log10(Math.abs(x)));
+    var m = roundSig(x / Math.pow(10, e), sig);
+    if(Math.abs(m) >= 10){ m = roundSig(m / 10, sig); e++; }
+    return { m:m, e:e };
+  }
+  // TeX zápis čísla: desetinně pro 0,001 ≤ |x| < 100 000, jinak a·10^n
+  function numTex(x, sig, forceSci){
+    var r = roundSig(x, sig), a = Math.abs(r);
+    if(!forceSci && (a === 0 || (a >= 1e-3 && a < 1e5))){
+      return czSig(x, sig).replace('−', '-').replace(',', '{,}').replace(/\u00a0/g, '\\,');
+    }
+    var p = sciParts(x, sig);
+    return cz(p.m, sig - 1).replace('−', '-').replace(',', '{,}') + '\\cdot 10^{' + p.e + '}';
+  }
+  // totéž jako prostý text do HTML
+  function numTxt(x, sig, forceSci){
+    var r = roundSig(x, sig), a = Math.abs(r);
+    if(!forceSci && (a === 0 || (a >= 1e-3 && a < 1e5))) return czSig(x, sig);
+    var p = sciParts(x, sig);
+    return cz(p.m, sig - 1) + '·10<sup>' + String(p.e).replace('-', '−') + '</sup>';
+  }
+  function randInt(a, b){ return a + Math.floor(Math.random() * (b - a + 1)); }
+  function pick(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+  function svgEl(name, attrs, parent){
+    var n = document.createElementNS('http://www.w3.org/2000/svg', name);
+    for(var k in attrs){ if(attrs.hasOwnProperty(k)) n.setAttribute(k, attrs[k]); }
+    if(parent) parent.appendChild(n);
+    return n;
+  }
+  function clearEl(n){ while(n.firstChild) n.removeChild(n.firstChild); }
+  function setPressed(group, btn){
+    Array.prototype.forEach.call(group.querySelectorAll('button'), function(b){
+      var on = b === btn;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+  }
+
+  // ================= APLET: KVANTOVÝ KOSMONAUT =================
+  (function(){
+    var svg = document.getElementById('qa-svg'), pIn = document.getElementById('qa-p');
+    var st = { p:0.7, state:null, runs:0, inside:0 };   // state: null = nezměřeno, 'in' / 'out'
+    function astronaut(parent, x, y, op){
+      var g = svgEl('g', { opacity:op.toFixed(2) }, parent);
+      svgEl('rect', { x:x - 15, y:y - 10, width:30, height:38, rx:9, fill:'var(--surface)', stroke:'var(--ink)', 'stroke-width':2 }, g);
+      svgEl('circle', { cx:x, cy:y - 22, r:15, fill:'var(--surface)', stroke:'var(--ink)', 'stroke-width':2 }, g);
+      svgEl('rect', { x:x - 10, y:y - 29, width:20, height:12, rx:5, fill:'var(--focus)' }, g);
+      svgEl('rect', { x:x - 13, y:y + 28, width:10, height:16, rx:4, fill:'var(--surface)', stroke:'var(--ink)', 'stroke-width':2 }, g);
+      svgEl('rect', { x:x + 3, y:y + 28, width:10, height:16, rx:4, fill:'var(--surface)', stroke:'var(--ink)', 'stroke-width':2 }, g);
+      svgEl('rect', { x:x - 26, y:y - 6, width:11, height:26, rx:5, fill:'var(--surface)', stroke:'var(--ink)', 'stroke-width':2 }, g);
+      svgEl('rect', { x:x + 15, y:y - 6, width:11, height:26, rx:5, fill:'var(--surface)', stroke:'var(--ink)', 'stroke-width':2 }, g);
+    }
+    function render(){
+      clearEl(svg);
+      svgEl('rect', { x:0, y:0, width:600, height:240, fill:'#1f1a33' }, svg);
+      [[30, 30], [90, 200], [150, 60], [520, 40], [570, 190], [460, 210], [250, 20], [560, 110]].forEach(function(s){ svgEl('circle', { cx:s[0], cy:s[1], r:1.2, fill:'#fff', opacity:0.8 }, svg); });
+      // stanice
+      svgEl('rect', { x:300, y:40, width:250, height:160, rx:14, fill:'var(--surface-2)', stroke:'var(--ink-soft)', 'stroke-width':3 }, svg);
+      svgEl('rect', { x:286, y:100, width:14, height:60, fill:'var(--ink-soft)' }, svg);
+      svgEl('rect', { x:330, y:12, width:190, height:28, fill:'var(--focus)', opacity:0.75 }, svg);
+      var pin = st.state === null ? st.p : st.state === 'in' ? 1 : 0;
+      astronaut(svg, 425, 118, Math.max(0.06, pin) * (pin > 0 ? 1 : 0));
+      astronaut(svg, 170, 118, Math.max(0.06, 1 - pin) * (pin < 1 ? 1 : 0));
+      var t = svgEl('text', { x:425, y:186, 'text-anchor':'middle', 'font-size':14, fill:'var(--ink)', 'font-weight':600 }, svg); t.textContent = 'uvnitř: ' + Math.round(pin * 100) + ' %';
+      t = svgEl('text', { x:170, y:186, 'text-anchor':'middle', 'font-size':14, fill:'#fff', 'font-weight':600 }, svg); t.textContent = 'venku: ' + Math.round((1 - pin) * 100) + ' %';
+      var msg = st.state === null ? 'Stav je připravený, zatím nezměřeno.' : 'Změřeno: kosmonaut je ' + (st.state === 'in' ? 'uvnitř' : 'venku') + '. Stav se změnil na 100 %.';
+      var fr = st.runs ? Math.round(1000 * st.inside / st.runs) / 10 : null;
+      document.getElementById('qa-out').innerHTML = '<span>' + msg + '</span><span>Pokusů s novou přípravou: <b>' + st.runs + '</b></span>' +
+        '<span>Uvnitř: <b>' + st.inside + '</b>' + (fr !== null ? ' (' + cz(fr, 1) + NB + '%)' : '') + '</span><span>Venku: <b>' + (st.runs - st.inside) + '</b>' + (fr !== null ? ' (' + cz(100 - fr, 1) + NB + '%)' : '') + '</span>';
+      document.getElementById('qa-p-val').textContent = Math.round(st.p * 100) + NB + '%';
+      document.getElementById('qa-measure').textContent = st.state === null ? 'Změřit' : 'Změřit znovu';
+    }
+    function measure(){
+      if(st.state === null){ st.state = Math.random() < st.p ? 'in' : 'out'; st.runs++; if(st.state === 'in') st.inside++; }
+      render();
+    }
+    document.getElementById('qa-measure').addEventListener('click', measure);
+    document.getElementById('qa-reset').addEventListener('click', function(){ st.state = null; render(); });
+    document.getElementById('qa-100').addEventListener('click', function(){
+      for(var i = 0; i < 100; i++){ st.state = null; measure(); }
+    });
+    document.getElementById('qa-zero').addEventListener('click', function(){ st.runs = 0; st.inside = 0; render(); });
+    pIn.addEventListener('input', function(){ st.p = parseFloat(pIn.value) / 100; st.state = null; st.runs = 0; st.inside = 0; render(); });
+    render();
+  })();
+
+  // ================= APLET: ČÁSTICE V JÁMĚ =================
+  (function(){
+    var svg = document.getElementById('well-svg');
+    var E1 = 0.376, NMAX = 6, st = { n:1, show:'both' };   // E1 pro elektron v jámě 1 nm (eV)
+    var LX0 = 40, LX1 = 170, EY0 = 270, EY1 = 30;              // diagram hladin
+    var WX0 = 250, WX1 = 560, WY = 160, AMP = 95;              // jáma
+    function ey(E){ return EY0 - E / (NMAX * NMAX * E1) * (EY0 - EY1); }
+    function render(){
+      clearEl(svg);
+      var n, t, i;
+      svgEl('line', { x1:LX0, y1:EY0, x2:LX0, y2:EY1 - 8, stroke:'var(--ink)', 'stroke-width':1.4 }, svg);
+      t = svgEl('text', { x:LX0 + 6, y:EY1 - 12, 'font-size':12, fill:'var(--ink)' }, svg); t.textContent = 'E (eV)';
+      svgEl('line', { x1:LX0, y1:EY0, x2:LX1, y2:EY0, stroke:'var(--ink-soft)', 'stroke-width':1 }, svg);
+      t = svgEl('text', { x:LX0 - 6, y:EY0 + 4, 'text-anchor':'end', 'font-size':11, 'font-family':"'IBM Plex Mono', monospace", fill:'var(--ink-soft)' }, svg); t.textContent = '0';
+      for(n = 1; n <= NMAX; n++){
+        var on = n === st.n;
+        svgEl('line', { x1:LX0 + 10, y1:ey(n * n * E1), x2:LX1, y2:ey(n * n * E1), stroke:on ? 'var(--accent)' : 'var(--ink)', 'stroke-width':on ? 3 : 1.5 }, svg);
+        t = svgEl('text', { x:LX1 + 6, y:ey(n * n * E1) + 4, 'font-size':11, 'font-family':"'IBM Plex Mono', monospace", fill:on ? 'var(--accent)' : 'var(--ink)' }, svg);
+        t.textContent = (n >= 2 ? 'n=' + n : 'n=1') + (n >= 3 || n === 1 ? '  ' + cz(n * n * E1, n * n * E1 < 10 ? 2 : 1) : '');
+      }
+      // jáma
+      svgEl('rect', { x:WX0 - 12, y:30, width:12, height:250, fill:'var(--ink-soft)' }, svg);
+      svgEl('rect', { x:WX1, y:30, width:12, height:250, fill:'var(--ink-soft)' }, svg);
+      svgEl('line', { x1:WX0, y1:WY, x2:WX1, y2:WY, stroke:'var(--line)', 'stroke-width':1.4 }, svg);
+      var p1 = [], p2 = [WX0 + ',' + WY];
+      for(i = 0; i <= 200; i++){
+        var x = i / 200, psi = Math.sin(st.n * Math.PI * x);
+        p1.push((WX0 + x * (WX1 - WX0)).toFixed(1) + ',' + (WY - AMP * psi).toFixed(1));
+        p2.push((WX0 + x * (WX1 - WX0)).toFixed(1) + ',' + (WY - AMP * psi * psi).toFixed(1));
+      }
+      p2.push(WX1 + ',' + WY);
+      if(st.show !== 'psi') svgEl('polygon', { points:p2.join(' '), fill:'var(--psi2)', 'fill-opacity':'0.28', stroke:'var(--psi2)', 'stroke-width':1.6 }, svg);
+      if(st.show !== 'psi2') svgEl('polyline', { points:p1.join(' '), fill:'none', stroke:'var(--psi)', 'stroke-width':2.4 }, svg);
+      // uzly
+      for(i = 1; i < st.n; i++){ svgEl('circle', { cx:WX0 + i / st.n * (WX1 - WX0), cy:WY, r:3.5, fill:'var(--ink)' }, svg); }
+      t = svgEl('text', { x:(WX0 + WX1) / 2, y:292, 'text-anchor':'middle', 'font-size':12, fill:'var(--ink)' }, svg); t.textContent = 'L = 1 nm';
+      if(st.show !== 'psi2'){ t = svgEl('text', { x:WX1 - 6, y:46, 'text-anchor':'end', 'font-size':13, fill:'var(--psi)' }, svg); t.textContent = 'Ψ'; }
+      if(st.show !== 'psi'){ t = svgEl('text', { x:WX1 - 6, y:64, 'text-anchor':'end', 'font-size':13, fill:'var(--psi2)' }, svg); t.textContent = '|Ψ|²'; }
+      var En = st.n * st.n * E1;
+      document.getElementById('well-out').innerHTML = '<span><i>n</i>&nbsp;=&nbsp;' + st.n + '</span><span><i>E</i><sub><i>n</i></sub>&nbsp;=&nbsp;<i>n</i>²<i>E</i><sub>1</sub>&nbsp;=&nbsp;<b>' + cz(En, En < 10 ? 2 : 1) + NB + 'eV</b></span>' +
+        '<span>Vlnová délka: <i>λ</i>&nbsp;=&nbsp;2<i>L</i>/<i>n</i>&nbsp;=&nbsp;<b>' + czSig(2 / st.n, 3) + NB + 'nm</b></span><span>Uzlů uvnitř jámy: <b>' + (st.n - 1) + '</b></span>';
+    }
+    var seg = document.getElementById('well-n');
+    for(var n = 1; n <= NMAX; n++){
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'chip accented' + (n === 1 ? ' on' : ''); b.textContent = n; b.setAttribute('aria-pressed', n === 1 ? 'true' : 'false');
+      b.addEventListener('click', (function(k, btn){ return function(){ st.n = k; setPressed(seg, btn); render(); }; })(n, b));
+      seg.appendChild(b);
+    }
+    var sh = document.getElementById('well-show');
+    Array.prototype.forEach.call(sh.querySelectorAll('button'), function(b){
+      b.addEventListener('click', function(){ st.show = b.getAttribute('data-show'); setPressed(sh, b); render(); });
+    });
+    render();
+  })();
+})();
+</script>
+</body>
+</html>
