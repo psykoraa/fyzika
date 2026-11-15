@@ -874,7 +874,7 @@ button.btn.fs-btn svg{ flex:none; }
         '<span class="answer-slot sci-group" id="' + P + '-sci-wrap" hidden>' +
           '<input class="answer-input sci-mantissa" id="' + P + '-man" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="a" aria-label="Mantisa a">' +
           '<span class="sci-times">· 10</span>' +
-          '<input class="sci-exp" id="' + P + '-exp" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="n" aria-label="Exponent n">' +
+          '<input class="sci-exp" id="' + P + '-exp" inputmode="text" enterkeyhint="done" autocomplete="off" spellcheck="false" placeholder="n" aria-label="Exponent n">' +
         '</span>' +
         '<span class="unit" id="' + P + '-unit"></span>' +
       '</div>' +
@@ -1202,7 +1202,7 @@ button.btn.fs-btn svg{ flex:none; }
       vlab.innerHTML = '<tspan font-style="italic">λ</tspan><tspan font-size="9" dy="3">max</tspan><tspan dy="-3"> = ' + fmtThousands(fmt(lm, 0)) + ' nm</tspan>';
       disc.setAttribute('fill', bodyColor(T));
       outT.innerHTML = '<i>T</i> = ' + fmtThousands(String(T)) + NB + 'K';
-      outV.innerHTML = '<i>λ</i><sub>max</sub> = <i>b</i>/<i>T</i> = ' + fmtThousands(fmt(lm, 0)) + NB + 'nm (' + region(lm) + '), ve viditelné oblasti ' + fmt(100 * visibleFraction(T), 1) + NB + '% vyzářeného výkonu';
+      outV.innerHTML = '<i>λ</i><sub>max</sub> = <i>b</i>/<i>T</i> = ' + fmtThousands(fmt(lm, 0)) + NB + 'nm (' + region(lm) + '), ve viditelné oblasti ' + (100 * visibleFraction(T) < 0.05 ? 'méně než 0,1' : fmt(100 * visibleFraction(T), 1)) + NB + '% vyzářeného výkonu';
       Array.prototype.forEach.call(cmpBtns, function(b){ setToggle(b, cmpOn[b.getAttribute('data-t')]); });
     }
     sl.addEventListener('input', render);
@@ -1231,7 +1231,7 @@ button.btn.fs-btn svg{ flex:none; }
     if(mode === 't2l'){
       o = pick(OBJ_T); T = o[1]; lm = B_WIEN / T; a = lamAnswer(lm);
       return { key:'t' + T, tag:'Teplota → vlnová délka', kind:'num',
-        text:o[0][0].toUpperCase() + o[0].slice(1) + ' má teplotu $T = ' + texNum(T, 0) + '\\ \\mathrm{K}$. Na jaké vlnové délce vyzařuje nejvíce? (Považujte ho za absolutně černé těleso.)',
+        text:o[0][0].toUpperCase() + o[0].slice(1) + ' má teplotu $T = ' + texNum(T, 0) + '\\ \\mathrm{K}$. Na jaké vlnové délce vyzařuje nejvíce? (Považujte těleso za absolutně černé.)',
         lhs:'$\\lambda_\\mathrm{max}$', unit:a.unit, answer:a.v, tol:a.tol,
         given:['$T = ' + texNum(T, 0) + '\\ \\mathrm{K}$', '$b = 2{,}9 \\cdot 10^{-3}\\ \\mathrm{m\\cdot K}$'], find:['$\\lambda_\\mathrm{max} = {?}$'],
         steps:['$\\lambda_\\mathrm{max} = \\dfrac{b}{T} = \\dfrac{2{,}9 \\cdot 10^{-3}\\ \\mathrm{m\\cdot K}}{' + texNum(T, 0) + '\\ \\mathrm{K}} \\doteq ' + sciTex(lm, 3) + '\\ \\mathrm{m} = ' + a.tex + '$',
@@ -1241,7 +1241,7 @@ button.btn.fs-btn svg{ flex:none; }
     if(mode === 'c2l'){
       o = pick(OBJ_C); T = o[1] + 273.15; lm = B_WIEN / T; a = lamAnswer(lm);
       return { key:'c' + o[1], tag:'Teplota ve °C → vlnová délka', kind:'num',
-        text:o[0][0].toUpperCase() + o[0].slice(1) + ' má teplotu $t = ' + texNum(o[1], 0) + '\\ {}^{\\circ}\\mathrm{C}$. Na jaké vlnové délce vyzařuje nejvíce? (Považujte ho za absolutně černé těleso.)',
+        text:o[0][0].toUpperCase() + o[0].slice(1) + ' má teplotu $t = ' + texNum(o[1], 0) + '\\ {}^{\\circ}\\mathrm{C}$. Na jaké vlnové délce vyzařuje nejvíce? (Považujte těleso za absolutně černé.)',
         lhs:'$\\lambda_\\mathrm{max}$', unit:a.unit, answer:a.v, tol:a.tol,
         given:['$t = ' + texNum(o[1], 0) + '\\ {}^{\\circ}\\mathrm{C}$', '$b = 2{,}9 \\cdot 10^{-3}\\ \\mathrm{m\\cdot K}$'], find:['$\\lambda_\\mathrm{max} = {?}$'],
         steps:['$T = (' + texNum(o[1], 0) + ' + 273{,}15)\\ \\mathrm{K} = ' + texNum(T, 2) + '\\ \\mathrm{K}$',

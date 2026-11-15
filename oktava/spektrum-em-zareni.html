@@ -1056,7 +1056,7 @@ svg.sp-band-svg{ touch-action:none; }
         '<span class="answer-slot sci-group" id="' + P + '-sci-wrap" hidden>' +
           '<input class="answer-input sci-mantissa" id="' + P + '-man" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="a" aria-label="Mantisa a">' +
           '<span class="sci-times">· 10</span>' +
-          '<input class="sci-exp" id="' + P + '-exp" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="n" aria-label="Exponent n">' +
+          '<input class="sci-exp" id="' + P + '-exp" inputmode="text" enterkeyhint="done" autocomplete="off" spellcheck="false" placeholder="n" aria-label="Exponent n">' +
         '</span>' +
         '<span class="unit" id="' + P + '-unit"></span>' +
       '</div>' +
@@ -1474,7 +1474,7 @@ svg.sp-band-svg{ touch-action:none; }
         t.textContent = L === 0 ? '1 m' : '10' + supStr(L);
       }
     }
-    t = mk('text', { x:X1 + 6, y:ya + 18, 'font-size':'11', 'font-style':'italic', 'font-family':'Work Sans, sans-serif', fill:'var(--ink-soft)' }, svg); t.innerHTML = 'λ <tspan font-style="normal">(m)</tspan>';
+    t = mk('text', { x:X1 + 20, y:ya + 18, 'font-size':'11', 'font-style':'italic', 'font-family':'Work Sans, sans-serif', fill:'var(--ink-soft)' }, svg); t.innerHTML = 'λ <tspan font-style="normal">(m)</tspan>';
     var yf = ya + 26, LC = Math.log10(C), n;
     mk('line', { x1:X0, y1:yf, x2:X1, y2:yf, stroke:'var(--ink-soft)', 'stroke-width':'0.8' }, svg);
     var FL = { 6:'1 MHz', 9:'1 GHz', 12:'1 THz', 15:'1 PHz', 18:'1 EHz', 21:'10²¹ Hz' };
@@ -1483,7 +1483,7 @@ svg.sp-band-svg{ touch-action:none; }
       mk('line', { x1:f1(lx(L)), y1:yf, x2:f1(lx(L)), y2:yf + (FL[n] ? 6 : 3), stroke:'var(--ink-soft)', 'stroke-width':'1' }, svg);
       if(FL[n]){ t = mk('text', { x:f1(lx(L)), y:yf + 18, 'text-anchor':'middle', 'font-size':'10.5', 'font-family':"'IBM Plex Mono', monospace", fill:'var(--ink-soft)' }, svg); t.textContent = FL[n]; }
     }
-    t = mk('text', { x:X1 + 6, y:yf + 18, 'font-size':'11', 'font-style':'italic', 'font-family':'Work Sans, sans-serif', fill:'var(--ink-soft)' }, svg); t.innerHTML = 'f';
+    t = mk('text', { x:X1 + 20, y:yf + 18, 'font-size':'11', 'font-style':'italic', 'font-family':'Work Sans, sans-serif', fill:'var(--ink-soft)' }, svg); t.innerHTML = 'f';
     // zvětšená viditelná oblast
     var zx0 = o.zx0, zx1 = o.zx1, zy = o.zy, zh = 22;
     function zx(nm){ return zx0 + (nm - 390) / 370 * (zx1 - zx0); }
@@ -1651,8 +1651,10 @@ svg.sp-band-svg{ touch-action:none; }
   })();
 
   // ================= GENERÁTORY ÚLOH =================
-  // „bezpečné“ rozsahy log10 λ uvnitř jednoho druhu (shodně podle učebnice i podle hranice 10 cm)
-  var SAFE = { gama:[-13.7, -12.3], rtg:[-9.7, -8.4], uv:[-7.7, -6.5], svetlo:null, ir:[-5.9, -3.4], mw:[-2.75, -2.3], radio:[-0.3, 3.5] };
+  // „bezpečné“ rozsahy log10 λ uvnitř jednoho druhu (shodně podle učebnice i podle hranic 10 cm a 1 m mezi rádiovým zářením a mikrovlnami)
+  var SAFE = { gama:[-13.7, -12.3], rtg:[-9.7, -8.4], uv:[-7.7, -6.5], svetlo:null, ir:[-5.9, -3.4], mw:[-2.75, -2.3], radio:[0.05, 3.5] };
+  // tolerance „odchylka v poslední platné číslici“: relativně 1 jednotka třetí platné číslice mantisy
+  function tolSci(x){ return 0.0101 / Math.abs(sciParts(x, 3).m); }
   function randLambda(key){
     var lam;
     if(key === 'svetlo') lam = randInt(40, 74) * 1e-8;          // 400 nm až 740 nm
@@ -1677,7 +1679,7 @@ svg.sp-band-svg{ touch-action:none; }
       f = C / lam;
       return { key:'l2f' + lam, tag:'Vlnová délka → frekvence', kind:'sci',
         text:'Záření má ve vakuu vlnovou délku $' + lamGivenTex(lam) + '$. Určete jeho frekvenci.',
-        lhs:'$f$', unit:'$\\mathrm{Hz}$', answer:roundSig(f, 3), tol:0.006,
+        lhs:'$f$', unit:'$\\mathrm{Hz}$', answer:roundSig(f, 3), tol:tolSci(f),
         given:['$' + lamGivenTex(lam) + ' = ' + lamTexM(lam) + '$', '$c = 3{,}00 \\cdot 10^{8}\\ \\mathrm{m\\cdot s^{-1}}$'], find:['$f = {?}$'],
         steps:['$f = \\dfrac{c}{\\lambda} = \\dfrac{3{,}00 \\cdot 10^{8}\\ \\mathrm{m\\cdot s^{-1}}}{' + lamTexM(lam) + '} \\doteq ' + sciTex(f, 3) + '\\ \\mathrm{Hz}$',
           'Jednotky: $\\mathrm{m\\cdot s^{-1} / m = s^{-1} = Hz}$. Jde o ' + (t.key === 'svetlo' ? 'světlo' : t.name) + '.'],
@@ -1688,7 +1690,7 @@ svg.sp-band-svg{ touch-action:none; }
       var l2 = C / fg;
       return { key:'f2l' + fg, tag:'Frekvence → vlnová délka', kind:'sci',
         text:'Záření má frekvenci $f = ' + sciTex(fg, 2) + '\\ \\mathrm{Hz}$. Určete jeho vlnovou délku ve vakuu (v metrech).',
-        lhs:'$\\lambda$', unit:'$\\mathrm{m}$', answer:roundSig(l2, 3), tol:0.006,
+        lhs:'$\\lambda$', unit:'$\\mathrm{m}$', answer:roundSig(l2, 3), tol:tolSci(l2),
         given:['$f = ' + sciTex(fg, 2) + '\\ \\mathrm{Hz}$', '$c = 3{,}00 \\cdot 10^{8}\\ \\mathrm{m\\cdot s^{-1}}$'], find:['$\\lambda = {?}$'],
         steps:['$\\lambda = \\dfrac{c}{f} = \\dfrac{3{,}00 \\cdot 10^{8}\\ \\mathrm{m\\cdot s^{-1}}}{' + sciTex(fg, 2) + '\\ \\mathrm{Hz}} \\doteq ' + sciTex(l2, 3) + '\\ \\mathrm{m}$',
           'To je $' + withPrefix(l2, 3, LEN_P).tex + '$, tedy ' + (t.key === 'svetlo' ? 'světlo' : t.name) + '.'],

@@ -878,7 +878,7 @@ button.btn.fs-btn svg{ flex:none; }
         '<span class="answer-slot sci-group" id="' + P + '-sci-wrap" hidden>' +
           '<input class="answer-input sci-mantissa" id="' + P + '-man" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="a" aria-label="Mantisa a">' +
           '<span class="sci-times">· 10</span>' +
-          '<input class="sci-exp" id="' + P + '-exp" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="n" aria-label="Exponent n">' +
+          '<input class="sci-exp" id="' + P + '-exp" inputmode="text" enterkeyhint="done" autocomplete="off" spellcheck="false" placeholder="n" aria-label="Exponent n">' +
         '</span>' +
         '<span class="unit" id="' + P + '-unit"></span>' +
       '</div>' +
@@ -1360,7 +1360,10 @@ button.btn.fs-btn svg{ flex:none; }
         final:'Je to ' + EL[k].name + ' (' + k + ').' };
     }
     if(mode === 'smes'){
-      var pair = shuffle(EL_KEYS).slice(0, 2), lines = EL[pair[0]].lines.concat(EL[pair[1]].lines);
+      // sodík a neon se nekombinují: žlutý dublet sodíku 589,0/589,6 nm splývá v proužku s neonovou čarou 588,2 nm
+      var pair;
+      do { pair = shuffle(EL_KEYS).slice(0, 2); } while(pair.indexOf('Na') >= 0 && pair.indexOf('Ne') >= 0);
+      var lines = EL[pair[0]].lines.concat(EL[pair[1]].lines);
       return { key:'s' + pair.slice().sort().join(''), tag:'Směs dvou plynů', kind:'multi', fig:stripFig('emise', lines),
         text:'Ve výbojce je směs dvou plynů. Označte oba.',
         choices:EL_NAMES, correct:pair.map(function(p){ return EL_KEYS.indexOf(p); }),
