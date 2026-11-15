@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Modely atomu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../spolecne/config.js"></script>
+<script src="../spolecne/auth.js"></script>
+<script src="../spolecne/zalozky.js?v=3"></script>
+<link rel="stylesheet" href="../spolecne/styl.css">
+<style>
+:root{
+  --paper:#f2eff8;
+  --surface:#fdfcff;
+  --surface-2:#e6e0f1;
+  --ink:#241f36;
+  --ink-soft:#645d7a;
+  --line:rgba(36,31,54,0.12);
+  --accent:#6b3fb5;
+  --accent-ink:#faf7ff;
+  --success:#28794f;
+  --success-bg:#e3efe0;
+  --danger:#b3392b;
+  --danger-bg:#f5e4de;
+  --focus:#1e6f66;
+  --shadow:0 1px 0 rgba(36,31,54,0.06);
+  /* barvy v apletu: kladný náboj, záporný náboj, odchýlené dráhy */
+  --plus:#d23f24;
+  --minus:#2f6fd0;
+  --dev-mid:#c77c0e;
+}
+
+.panel{ margin-bottom:22px; }
+.panel-title{ margin-bottom:8px; }
+.panel p{
+  margin:0 0 8px;
+  font-size:0.9rem;
+  line-height:1.55;
+}
+.panel p:last-child{ margin-bottom:0; }
+.panel b{ color:var(--ink); }
+.panel ul, .panel ol{ margin:0 0 8px; padding-left:22px; font-size:0.9rem; line-height:1.55; }
+.panel li{ margin-bottom:4px; }
+.panel h3{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.05rem;
+  letter-spacing:0.01em;
+  margin:16px 0 6px;
+}
+.panel h3:first-child{ margin-top:0; }
+
+.card{ padding:26px 26px 28px; text-align:left; margin-bottom:24px; }
+.cat-tag{ margin-bottom:10px; }
+.card h2{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.6rem;
+  letter-spacing:0.02em;
+  color:var(--ink);
+  text-transform:none;
+  margin-bottom:6px;
+}
+.card .desc{
+  font-size:0.86rem;
+  color:var(--ink-soft);
+  line-height:1.5;
+  margin:0 0 14px;
+}
+
+.katex{ font-size:1.05em; }
+.formula-box{
+  background:var(--surface-2);
+  border-radius:8px;
+  padding:12px 16px;
+  margin:10px 0;
+  font-size:1.1rem;
+  text-align:center;
+}
+.formula-line{
+  text-align:center;
+  font-size:1.1rem;
+  color:var(--ink);
+  line-height:1.8;
+}
+.line-scroll{
+  position:relative;
+  white-space:nowrap;
+  overflow-x:auto;
+  overflow-y:hidden;
+  padding:2px 0 4px;
+}
+.given-data{
+  font-size:clamp(0.9rem, 2.4vw, 1.05rem);
+  color:var(--ink-soft);
+  margin-bottom:20px;
+}
+
+.theory-table-wrap{ overflow-x:auto; margin:6px 0 4px; }
+.theory-table{
+  border-collapse:collapse;
+  font-size:0.88rem;
+  width:100%;
+  min-width:320px;
+}
+.theory-table th, .theory-table td{
+  border:1px solid var(--line);
+  padding:8px 12px;
+  text-align:left;
+}
+.theory-table thead th{
+  background:var(--surface-2);
+  color:var(--ink-soft);
+  font-weight:600;
+  font-size:0.72rem;
+  text-transform:uppercase;
+  letter-spacing:0.05em;
+}
+.theory-table td.mono, .theory-table th.mono{
+  font-family:'IBM Plex Mono', monospace;
+  font-variant-numeric:tabular-nums;
+  text-align:center;
+}
+.theory-table tbody tr:nth-child(even) td{ background:rgba(0,0,0,0.02); }
+
+.theory-fig{
+  margin:12px 0 10px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:10px 12px 8px;
+}
+.theory-fig svg{ display:block; width:100%; max-width:560px; height:auto; margin:0 auto; }
+.theory-fig figcaption{
+  font-size:0.8rem;
+  color:var(--ink-soft);
+  line-height:1.45;
+  text-align:center;
+  margin-top:4px;
+}
+
+.example-grid{ display:flex; flex-direction:column; gap:12px; margin-top:6px; }
+.example-item{
+  background:var(--surface-2);
+  border-radius:10px;
+  padding:12px 14px;
+}
+.example-tag{
+  font-size:0.66rem;
+  text-transform:uppercase;
+  letter-spacing:0.06em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-bottom:6px;
+  display:block;
+}
+.example-eq{
+  font-size:1.05rem;
+  margin-bottom:4px;
+}
+.example-note{ font-size:0.82rem; color:var(--ink-soft); line-height:1.45; }
+
+.links{ margin-top:14px; display:flex; flex-wrap:wrap; gap:10px; justify-content:center; }
+a.btn-link{
+  display:inline-block;
+  font-weight:600;
+  font-size:0.95rem;
+  padding:10px 22px;
+  border-radius:8px;
+  background:var(--accent);
+  color:var(--accent-ink);
+  text-decoration:none;
+}
+a.btn-link:hover{ filter:brightness(1.06); }
+a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+
+.credit{
+  margin-top:24px;
+  font-size:0.8rem;
+  line-height:1.5;
+  color:var(--ink-soft);
+  text-align:center;
+}
+.credit a{ color:inherit; }
+
+
+/* ---- aplety: karta, řádky ovládání, kreslicí plocha, výstupy ---- */
+.applet-head .cat-tag{ margin-bottom:10px; }
+.mode-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:16px;
+  padding-top:14px;
+  border-top:1px solid var(--line);
+}
+.mode-row-label{
+  font-size:0.68rem;
+  text-transform:uppercase;
+  letter-spacing:0.1em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-right:2px;
+  flex:0 0 170px;
+}
+.seg{ display:flex; gap:6px; flex-wrap:wrap; }
+.chip{ font-size:0.82rem; gap:7px; }
+.chip.accented.on{ background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+.chip:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+.slider-wrap{ display:flex; align-items:center; gap:12px; flex:1 1 260px; min-width:0; }
+.slider-wrap input[type=range]{ flex:1 1 auto; min-width:0; accent-color:var(--accent); height:28px; }
+.slider-val{ font-family:'IBM Plex Mono', monospace; font-weight:600; font-size:0.92rem; white-space:nowrap; min-width:6.5em; text-align:right; }
+.canvas-wrap{
+  position:relative;
+  margin-top:18px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:10px;
+  overflow:hidden;
+}
+svg.scene{ width:100%; height:auto; display:block; background:var(--surface); user-select:none; -webkit-user-select:none; touch-action:manipulation; }
+svg.scene text{ font-family:'Work Sans', sans-serif; }
+.legend{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 18px;
+  padding:10px 14px;
+  border-top:1px solid var(--line);
+  font-size:0.78rem;
+  color:var(--ink-soft);
+}
+.legend span{ display:inline-flex; align-items:center; gap:7px; }
+.legend i{ font-style:normal; display:inline-block; width:12px; height:12px; border-radius:50%; background:var(--c); }
+.applet-out{
+  display:flex; flex-wrap:wrap; gap:8px 22px; margin-top:14px;
+  font-size:0.92rem; line-height:1.5;
+}
+.applet-out b{ font-variant-numeric:tabular-nums; }
+.applet-note{ font-size:0.86rem; color:var(--ink-soft); margin:10px 0 0; line-height:1.5; }
+.applet-actions{ display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+.applet-card + .applet-card{ margin-top:4px; }
+.nw{ white-space:nowrap; }
+@media (max-width:720px){
+  .mode-row-label{ flex-basis:100%; }
+}
+
+@media (max-width:520px){
+  .card{ padding:20px 16px 22px; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <a class="back-link" href="../rozcestniky/oktava.html">← Zpět na Oktáva/4. ročník</a>
+
+  <div class="brand">
+    <div class="brand-lockup">
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <circle cx="20" cy="22" r="4" fill="var(--accent)"/>
+        <path d="M2,30 L14,26 Q19,24 17,19 L12,4" stroke="var(--focus)" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+        <path d="M2,36 L38,30" stroke="var(--ink-soft)" stroke-width="1.4" stroke-linecap="round"/>
+        <path d="M2,14 L38,8" stroke="var(--ink-soft)" stroke-width="1.4" stroke-linecap="round"/>
+      </svg>
+      <div class="brand-text">
+        <h1>Modely atomu</h1>
+        <p>atomová a částicová fyzika — Thomsonův a Rutherfordův model</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="top-tabs">
+    <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+    <button class="toptab" id="top-tab-aplet" data-tab="aplet">Rutherfordův pokus</button>
+  </div>
+
+  <!-- ============ TEORIE ============ -->
+  <div id="theory-section" class="tab-section">
+
+    <div class="panel">
+      <div class="panel-title">Atom není nedělitelný</div>
+      <p>Slovo atom pochází z řeckého <i>atomos</i> — nedělitelný. Na konci 19. století se ale ukázalo, že z atomů lze vytrhnout menší, záporně nabité částice.</p>
+      <p>Ve výbojové trubici se silně zředěným plynem vychází z katody tzv. <b>katodové záření</b>. Rozsvěcuje stínítko a v magnetickém i elektrickém poli se stáčí stejně, jako by šlo o proud záporně nabitých částic. <b>J. J. Thomson</b> v roce 1897 prokázal, že jde o proud lehkých záporných částic — <b>elektronů</b> — a změřil poměr jejich náboje a hmotnosti (měrný náboj).</p>
+      <p>Velikost náboje elektronu určil o několik let později <b>R. Millikan</b> pokusy s nabitými kapičkami oleje: náboje kapiček byly vždy celistvými násobky elementárního náboje \(e = 1{,}602\cdot 10^{-19}\ \mathrm{C}\). Elektrický náboj je tedy <b>kvantovaný</b>.</p>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="9" cy="9" r="7.5" stroke="var(--focus)" stroke-width="1.6"/>
+          <line x1="9" y1="8" x2="9" y2="13" stroke="var(--focus)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="5.2" r="1" fill="var(--focus)"/>
+        </svg>
+        <p>Jak ověřit, že katodové záření nese náboj? Stačí k trubici přiblížit magnet: svítící stopa na stínítku se posune. Neutrální záření (například světlo) by se v magnetickém poli neodchýlilo.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Thomsonův (pudinkový) model, 1904</div>
+      <p>Atom je jako celek elektricky neutrální. Když obsahuje záporné elektrony, musí v něm být i kladný náboj stejné velikosti. Thomson si představoval, že kladný náboj je <b>rovnoměrně rozprostřený</b> v celém objemu atomu a elektrony jsou v něm rozptýlené.</p>
+      <p>Modelu se říká pudinkový podle anglického vánočního pudinku — husté bábovky se sušeným ovocem: těsto je kladně nabitá hmota, rozinky jsou elektrony.</p>
+      <figure class="theory-fig">
+        <svg viewBox="0 0 440 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Thomsonův model: koule rovnoměrně rozprostřeného kladného náboje, v ní rozptýlené elektrony. Rutherfordův model: malé kladné jádro uprostřed a elektrony v obalu.">
+          <circle cx="110" cy="82" r="66" fill="var(--plus)" fill-opacity="0.16" stroke="var(--plus)" stroke-width="1.5"/>
+          <g font-family="Work Sans, sans-serif" font-size="13" font-weight="700" fill="var(--plus)" text-anchor="middle">
+            <text x="80" y="60">+</text><text x="128" y="50">+</text><text x="150" y="88">+</text><text x="70" y="104">+</text><text x="112" y="122">+</text><text x="104" y="86">+</text>
+          </g>
+          <g fill="var(--minus)">
+            <circle cx="96" cy="44" r="5"/><circle cx="140" cy="66" r="5"/><circle cx="66" cy="78" r="5"/><circle cx="128" cy="108" r="5"/><circle cx="88" cy="126" r="5"/><circle cx="118" cy="80" r="5"/>
+          </g>
+          <text x="110" y="164" text-anchor="middle" font-family="Work Sans, sans-serif" font-size="12" fill="var(--ink)">Thomson: kladná „hmota“ s elektrony</text>
+          <circle cx="330" cy="82" r="66" fill="none" stroke="var(--ink-soft)" stroke-width="1" stroke-dasharray="4 4"/>
+          <ellipse cx="330" cy="82" rx="58" ry="22" fill="none" stroke="var(--ink-soft)" stroke-width="1"/>
+          <ellipse cx="330" cy="82" rx="58" ry="22" fill="none" stroke="var(--ink-soft)" stroke-width="1" transform="rotate(60 330 82)"/>
+          <ellipse cx="330" cy="82" rx="58" ry="22" fill="none" stroke="var(--ink-soft)" stroke-width="1" transform="rotate(-60 330 82)"/>
+          <circle cx="330" cy="82" r="5" fill="var(--plus)"/>
+          <g fill="var(--minus)"><circle cx="388" cy="82" r="4.5"/><circle cx="307" cy="38" r="4.5"/><circle cx="314" cy="128" r="4.5"/></g>
+          <text x="330" y="164" text-anchor="middle" font-family="Work Sans, sans-serif" font-size="12" fill="var(--ink)">Rutherford: malé kladné jádro</text>
+        </svg>
+        <figcaption>Oba modely schematicky. V Rutherfordově modelu je jádro ve skutečnosti asi stotisíckrát menší než atom.</figcaption>
+      </figure>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Rutherfordův pokus, 1911</div>
+      <p><b>E. Rutherford</b> se svými spolupracovníky <b>H. Geigerem</b> a <b>E. Marsdenem</b> ostřeloval velmi tenkou zlatou fólii <b>částicemi alfa</b> z radioaktivního zářiče. Částice alfa jsou jádra helia: mají kladný náboj \(2e\) a jsou přibližně 7&nbsp;300krát těžší než elektron. Po průchodu fólií dopadaly na stínítko, kde vyvolávaly drobné záblesky, a pokusníci počítali, kolik částic se odchýlilo pod jakým úhlem.</p>
+      <p>Jak dopadne pokus, záleží na tom, jak je v atomu rozložen kladný náboj:</p>
+      <ul>
+        <li>je-li „rozmazaný“ po celém atomu (Thomson), působí na částici jen slabé síly a ta se odchýlí nanejvýš o 1° až 2°;</li>
+        <li>je-li soustředěný ve velmi malém objemu, může se částice, která proletí těsně u něj, odchýlit o velký úhel, nebo se dokonce odrazit zpět.</li>
+      </ul>
+      <p>Většina částic fólií opravdu prolétla téměř bez odchýlení. Některé se ale odchýlily o velké úhly a vzácně se vracely zpět — to Thomsonův model vysvětlit nedokázal. Lehké elektrony takový odraz způsobit nemohou; musí za ním být malé, těžké a kladně nabité <b>jádro</b>.</p>
+      <figure class="theory-fig">
+        <svg viewBox="0 0 440 180" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Rutherfordův pokus: zářič vysílá úzký svazek částic alfa na zlatou fólii; většina projde rovně, některé se odchýlí a výjimečně se odrazí zpět. Kolem fólie je kruhové stínítko.">
+          <defs><marker id="ma-arr" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--focus)"/></marker></defs>
+          <circle cx="250" cy="90" r="78" fill="none" stroke="var(--ink-soft)" stroke-width="5" stroke-opacity="0.35"/>
+          <rect x="20" y="74" width="46" height="32" rx="4" fill="var(--ink-soft)"/>
+          <rect x="66" y="84" width="20" height="12" fill="var(--ink-soft)"/>
+          <text x="43" y="124" text-anchor="middle" font-family="Work Sans, sans-serif" font-size="11" fill="var(--ink)">zářič α</text>
+          <rect x="247" y="40" width="6" height="100" fill="#d6a520" stroke="#a87c12" stroke-width="1"/>
+          <text x="250" y="34" text-anchor="middle" font-family="Work Sans, sans-serif" font-size="11" fill="var(--ink)">zlatá fólie</text>
+          <g stroke="var(--focus)" stroke-width="1.6" fill="none" marker-end="url(#ma-arr)">
+            <path d="M88,86 L322,86"/>
+            <path d="M88,90 L322,90"/>
+            <path d="M88,94 L322,94"/>
+            <path d="M88,88 L250,88 L318,62"/>
+            <path d="M88,92 L250,92 L300,136"/>
+            <path d="M88,90 L246,90 L196,26"/>
+          </g>
+          <text x="340" y="94" font-family="Work Sans, sans-serif" font-size="11" fill="var(--ink)">většina projde</text>
+          <text x="326" y="58" font-family="Work Sans, sans-serif" font-size="11" fill="var(--ink)">některé se odchýlí</text>
+          <text x="120" y="28" font-family="Work Sans, sans-serif" font-size="11" fill="var(--ink)">vzácně zpět</text>
+          <text x="250" y="178" text-anchor="middle" font-family="Work Sans, sans-serif" font-size="11" fill="var(--ink-soft)">stínítko (počítání záblesků)</text>
+        </svg>
+        <figcaption>Schéma pokusu (vlastní náčrt, ne v měřítku). Celé zařízení je ve vakuu, protože vzduch by částice alfa brzdil.</figcaption>
+      </figure>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Rutherfordův (planetární) model</div>
+      <p>Na základě pokusu navrhl Rutherford v roce 1911 nový model atomu:</p>
+      <ul>
+        <li>celý kladný náboj a téměř celá hmotnost atomu jsou soustředěny v nepatrném <b>jádře</b> o rozměru \(10^{-15}\) až \(10^{-14}\ \mathrm{m}\);</li>
+        <li>kolem jádra se pohybují elektrony, k jádru je poutá přitažlivá elektrická síla — podobně jako gravitace poutá planety ke Slunci;</li>
+        <li>záporný náboj elektronů obalu \(-Ze\) se ruší s kladným nábojem jádra \(+Ze\).</li>
+      </ul>
+      <p>Z rozptylu částic alfa odvodil Rutherford i velikost jádra — je asi stotisíckrát menší než atom.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Proč planetární model nemůže být správný</div>
+      <p>Brzy se ukázalo, že planetární model je v rozporu s elektrodynamikou. Nabitá částice, která se pohybuje po zakřivené dráze, má zrychlení, a proto <b>vyzařuje elektromagnetické vlny</b>. Elektron by tak neustále ztrácel energii, dráha by se mu zmenšovala a do jádra by spadl řádově za \(10^{-11}\ \mathrm{s}\). Atomy by nebyly stálé — což zjevně nejsou.</p>
+      <p>Planetární model navíc neumí vysvětlit, proč atomy vyzařují jen určité vlnové délky. Elektron padající po spirále by vyzařoval všechny vlnové délky, spektrum by bylo spojité. Ve skutečnosti mají atomy <b>čárová spektra</b>, o nichž je další stránka.</p>
+      <div class="links"><a class="btn-link" href="spektrum-vodiku.html">Spektrum vodíku →</a></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Shrnutí</div>
+      <p>• Thomson objevil elektron (1897); Millikan ukázal, že náboj je kvantovaný (\(e = 1{,}602\cdot 10^{-19}\ \mathrm{C}\)).</p>
+      <p>• Thomsonův pudinkový model (1904): kladný náboj rozprostřený v celém atomu, v něm elektrony.</p>
+      <p>• Rutherfordův pokus se zlatou fólií: některé částice alfa se odchýlí o velké úhly → kladný náboj je v malém těžkém jádře.</p>
+      <p>• Planetární model (1911) je nestabilní: obíhající elektron by vyzařoval, ztrácel energii a spadl do jádra; neumí vysvětlit čárová spektra.</p>
+    </div>
+
+  </div>
+
+  <!-- ============ APLET: RUTHERFORDŮV POKUS ============ -->
+  <div id="aplet-section" class="tab-section" hidden>
+    <div class="card applet-card">
+      <div class="applet-head">
+        <span class="cat-tag">Aplet</span>
+        <h2>Rutherfordův pokus</h2>
+        <p class="desc">Vystřelujte částice alfa na jeden atom zlaté fólie a porovnejte, jak by se rozptylovaly podle Thomsonova a podle Rutherfordova modelu.</p>
+      </div>
+      <div class="mode-row">
+        <span class="mode-row-label" id="lbl-model">Model atomu</span>
+        <div class="seg" id="model-seg" role="group" aria-labelledby="lbl-model">
+          <button class="chip accented on" type="button" data-model="rutherford" aria-pressed="true">Rutherford (jádro)</button>
+          <button class="chip accented" type="button" data-model="thomson" aria-pressed="false">Thomson (pudink)</button>
+        </div>
+      </div>
+      <div class="applet-actions">
+        <button class="btn primary" type="button" id="fire1">Vystřelit 1 částici</button>
+        <button class="btn ghost" type="button" id="fire50">Vystřelit 50 částic</button>
+        <button class="btn ghost" type="button" id="clear">Smazat dráhy</button>
+      </div>
+      <div class="canvas-wrap">
+        <svg class="scene" id="ruth-svg" viewBox="0 0 600 340" role="img" aria-label="Dráhy částic alfa kolem jednoho atomu zlata."></svg>
+        <div class="legend">
+          <span><i style="--c:var(--ink-soft)"></i>odchylka do 10°</span>
+          <span><i style="--c:var(--dev-mid)"></i>10° až 90°</span>
+          <span><i style="--c:var(--plus)"></i>více než 90° (zpět)</span>
+        </div>
+      </div>
+      <div class="applet-out" aria-live="polite">
+        <span>Vystřeleno: <b id="n-all">0</b></span>
+        <span>do 10°: <b id="n-small">0</b></span>
+        <span>10° až 90°: <b id="n-mid">0</b></span>
+        <span>nad 90°: <b id="n-back">0</b></span>
+        <span>Největší odchylka: <b id="n-max">—</b></span>
+      </div>
+      <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint">Tlačítky vystřelujte částice alfa zleva; každá míří na atom v náhodné vzdálenosti od jeho středu. Přepínačem zvolte model atomu a porovnejte, kolik částic se odchýlí o velký úhel. Dráhy se počítají z Coulombova zákona: v Rutherfordově modelu odpuzuje částici bodové jádro, v Thomsonově modelu kladný náboj rovnoměrně rozprostřený v kouli atomu (vně atomu je síla nulová, protože atom je neutrální). Vliv lehkých elektronů je zanedbaný. Jádro je nakreslené mnohem větší, než odpovídá skutečnosti, a částice míří jen do okolí jednoho atomu, aby byly velké odchylky vidět častěji než ve skutečném pokusu.</p>
+      </details>
+    </div>
+  </div>
+
+  <footer>Fyzika — Oktáva/4. ročník</footer>
+</div>
+
+<script src="../spolecne/spolecne.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  // ---- záložky: tlačítko .toptab[data-tab="x"] ↔ sekce #x-section (Teorie = #theory-section) ----
+  var tabs = {}, sections = {};
+  Array.prototype.forEach.call(document.querySelectorAll('.toptab[data-tab]'), function(btn){
+    var name = btn.getAttribute('data-tab');
+    tabs[name] = btn;
+    sections[name] = document.getElementById(name === 'teorie' ? 'theory-section' : name + '-section');
+  });
+  function showTab(name){
+    for(var k in tabs){
+      tabs[k].classList.toggle('on', k === name);
+      if(sections[k]) sections[k].hidden = k !== name;
+    }
+    // skóre, série a úspěšnost v hlavičce jen u tréninku
+    var readout = document.getElementById('header-readout');
+    if(readout) readout.hidden = name !== 'trenink';
+  }
+  Object.keys(tabs).forEach(function(k){ tabs[k].addEventListener('click', function(){ showTab(k); }); });
+  var hash = location.hash.replace('#', '');
+  if(hash && tabs[hash]) showTab(hash);
+
+  // ---- příklady v teorii: postupně odemykané steppery ----
+  Array.prototype.forEach.call(document.querySelectorAll('.stepper'), function(wrap){
+    var steps = Array.prototype.slice.call(wrap.querySelectorAll('.step'));
+    var unlockedUpTo = 1;
+
+    function refreshLocks(){
+      steps.forEach(function(st){
+        var idx = parseInt(st.getAttribute('data-step'), 10);
+        var locked = idx > unlockedUpTo;
+        st.classList.toggle('locked', locked);
+        st.classList.toggle('unlocked', !locked && !st.classList.contains('done'));
+        st.querySelector('.step-head').setAttribute('aria-disabled', locked ? 'true' : 'false');
+      });
+    }
+
+    steps.forEach(function(st){
+      var idx = parseInt(st.getAttribute('data-step'), 10);
+      var head = st.querySelector('.step-head');
+      var body = st.querySelector('.step-body');
+      head.addEventListener('click', function(){
+        if(idx > unlockedUpTo) return;
+        var wasOpen = st.classList.contains('open');
+        st.classList.toggle('open', !wasOpen);
+        body.hidden = wasOpen;
+        head.setAttribute('aria-expanded', (!wasOpen).toString());
+        if(!wasOpen){
+          st.classList.add('done');
+          if(idx === unlockedUpTo && unlockedUpTo < steps.length){ unlockedUpTo++; }
+          refreshLocks();
+        }
+      });
+    });
+
+    var resetBtn = document.getElementById(wrap.getAttribute('data-reset'));
+    if(resetBtn){
+      resetBtn.addEventListener('click', function(){
+        unlockedUpTo = 1;
+        steps.forEach(function(st){
+          st.classList.remove('open', 'done');
+          st.querySelector('.step-body').hidden = true;
+          st.querySelector('.step-head').setAttribute('aria-expanded', 'false');
+        });
+        refreshLocks();
+      });
+    }
+
+    refreshLocks();
+  });
+
+  // ---- vzorce (KaTeX) ----
+  var KATEX_DELIMS = [{left:'\\(', right:'\\)', display:false}, {left:'\\[', right:'\\]', display:true}];
+  if(window.renderMathInElement){
+    Array.prototype.forEach.call(document.querySelectorAll('.tab-section'), function(sec){
+      try{ renderMathInElement(sec, { delimiters: KATEX_DELIMS }); }catch(e){}
+    });
+  }
+
+  // ---- sbalovací panely v teorii ----
+  try{ makePanelsCollapsible(document.getElementById('theory-section')); }catch(e){}
+
+  // ---- pomocné funkce pro aplety a tréninky ----
+  var NB = '\u00a0';
+  function tex(t){
+    try{ return window.katex ? katex.renderToString(t, {throwOnError:false}) : t; }catch(e){ return t; }
+  }
+  // číslo s daným počtem desetinných míst, desetinnou čárkou a mezerami mezi tisíci
+  function cz(n, dec){
+    var s = roundTo(n, dec).toFixed(dec);
+    var neg = s.charAt(0) === '-';
+    if(neg) s = s.slice(1);
+    var parts = s.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, NB);
+    return (neg ? '−' : '') + parts.join(',');
+  }
+  // totéž v TeXu (mezera mezi tisíci = \,, desetinná čárka = {,})
+  function czTex(n, dec){ return cz(n, dec).replace('−', '-').replace(',', '{,}').replace(/\u00a0/g, '\\,'); }
+  // číslo na `sig` platných číslic (desetinný zápis)
+  function czSig(x, sig){ var r = roundSig(x, sig); return cz(r, decimalsForSig(r, sig)); }
+  // rozklad na mantisu a exponent: x = m · 10^e, 1 ≤ |m| < 10 (po zaokrouhlení na sig číslic)
+  function sciParts(x, sig){
+    if(x === 0) return { m:0, e:0 };
+    var e = Math.floor(Math.log10(Math.abs(x)));
+    var m = roundSig(x / Math.pow(10, e), sig);
+    if(Math.abs(m) >= 10){ m = roundSig(m / 10, sig); e++; }
+    return { m:m, e:e };
+  }
+  // TeX zápis čísla: desetinně pro 0,001 ≤ |x| < 100 000, jinak a·10^n
+  function numTex(x, sig, forceSci){
+    var r = roundSig(x, sig), a = Math.abs(r);
+    if(!forceSci && (a === 0 || (a >= 1e-3 && a < 1e5))){
+      return czSig(x, sig).replace('−', '-').replace(',', '{,}').replace(/\u00a0/g, '\\,');
+    }
+    var p = sciParts(x, sig);
+    return cz(p.m, sig - 1).replace('−', '-').replace(',', '{,}') + '\\cdot 10^{' + p.e + '}';
+  }
+  // totéž jako prostý text do HTML
+  function numTxt(x, sig, forceSci){
+    var r = roundSig(x, sig), a = Math.abs(r);
+    if(!forceSci && (a === 0 || (a >= 1e-3 && a < 1e5))) return czSig(x, sig);
+    var p = sciParts(x, sig);
+    return cz(p.m, sig - 1) + '·10<sup>' + String(p.e).replace('-', '−') + '</sup>';
+  }
+  function randInt(a, b){ return a + Math.floor(Math.random() * (b - a + 1)); }
+  function pick(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+  function svgEl(name, attrs, parent){
+    var n = document.createElementNS('http://www.w3.org/2000/svg', name);
+    for(var k in attrs){ if(attrs.hasOwnProperty(k)) n.setAttribute(k, attrs[k]); }
+    if(parent) parent.appendChild(n);
+    return n;
+  }
+  function clearEl(n){ while(n.firstChild) n.removeChild(n.firstChild); }
+  function setPressed(group, btn){
+    Array.prototype.forEach.call(group.querySelectorAll('button'), function(b){
+      var on = b === btn;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+  }
+
+  // ================= APLET: RUTHERFORDŮV POKUS =================
+  (function(){
+    var svg = document.getElementById('ruth-svg');
+    var CX = 330, CY = 170, R = 125;     // střed a poloměr atomu (px)
+    var D = 8;                             // vzdálenost největšího přiblížení při čelní srážce (px)
+    var K = D / 2;                         // síla Coulombova odpuzování při rychlosti 1: v²/2 = K/D
+    var model = 'rutherford', stats = { all:0, small:0, mid:0, back:0, max:0 }, queue = [], animId = null;
+
+    var atomG = svgEl('g', {}, svg);
+    var pathsG = svgEl('g', {}, svg);
+    var liveG = svgEl('g', {}, svg);
+    var labG = svgEl('g', {}, svg);
+    function drawAtom(){
+      clearEl(atomG); clearEl(labG);
+      svgEl('rect', { x:0, y:0, width:600, height:340, fill:'var(--surface)' }, atomG);
+      svgEl('rect', { x:8, y:CY - 14, width:34, height:28, rx:4, fill:'var(--ink-soft)' }, atomG);
+      var t = svgEl('text', { x:25, y:CY + 30, 'text-anchor':'middle', 'font-size':12, fill:'var(--ink)' }, atomG); t.textContent = 'α';
+      if(model === 'thomson'){
+        svgEl('circle', { cx:CX, cy:CY, r:R, fill:'var(--plus)', 'fill-opacity':'0.12', stroke:'var(--plus)', 'stroke-width':1.2 }, atomG);
+        for(var i = 0; i < 26; i++){
+          var a = i * 2.39996, rr = R * 0.9 * Math.sqrt((i + 0.5) / 26);
+          svgEl('circle', { cx:CX + Math.cos(a) * rr, cy:CY + Math.sin(a) * rr, r:3.2, fill:'var(--minus)' }, atomG);
+        }
+      } else {
+        svgEl('circle', { cx:CX, cy:CY, r:R, fill:'none', stroke:'var(--ink-soft)', 'stroke-width':1, 'stroke-dasharray':'4 5' }, atomG);
+        svgEl('circle', { cx:CX, cy:CY, r:4, fill:'var(--plus)' }, atomG);
+        var tl = svgEl('text', { x:CX + 8, y:CY - 8, 'font-size':12, fill:'var(--plus)', 'paint-order':'stroke', stroke:'var(--surface)', 'stroke-width':3 }, labG); tl.textContent = 'jádro';
+      }
+      var ta = svgEl('text', { x:CX, y:CY - R - 8, 'text-anchor':'middle', 'font-size':12, fill:'var(--ink-soft)', 'paint-order':'stroke', stroke:'var(--surface)', 'stroke-width':3 }, labG);
+      ta.textContent = 'atom zlata';
+    }
+
+    // zrychlení částice v bodě (x, y) vzhledem ke středu atomu
+    function acc(x, y){
+      var r2 = x * x + y * y, r = Math.sqrt(r2), f;
+      if(model === 'rutherford'){ f = K / Math.max(r2, 1); }
+      else { f = r < R ? K * r / (R * R * R) : 0; }
+      return [f * x / Math.max(r, 1e-9), f * y / Math.max(r, 1e-9)];
+    }
+    // dráha jedné částice (Verletova metoda, kratší krok v blízkosti jádra)
+    function trajectory(b){
+      var x = -CX + 46, y = b, vx = 1, vy = 0, pts = [[x, y]], a = acc(x, y), n = 0;
+      while(n < 20000 && x > -CX && x < 600 - CX + 10 && y > -CY - 10 && y < 340 - CY + 10){
+        var r = Math.sqrt(x * x + y * y), dt = r < 40 ? 0.05 : 0.5;
+        x += vx * dt + 0.5 * a[0] * dt * dt; y += vy * dt + 0.5 * a[1] * dt * dt;
+        var a2 = acc(x, y);
+        vx += 0.5 * (a[0] + a2[0]) * dt; vy += 0.5 * (a[1] + a2[1]) * dt; a = a2;
+        n++;
+        if(n % (r < 40 ? 20 : 4) === 0) pts.push([x, y]);
+      }
+      pts.push([x, y]);
+      var ang = Math.abs(Math.atan2(vy, vx)) * 180 / Math.PI;
+      return { pts:pts, ang:ang };
+    }
+    function color(ang){ return ang > 90 ? 'var(--plus)' : ang > 10 ? 'var(--dev-mid)' : 'var(--ink-soft)'; }
+    function ptsAttr(pts, upto){
+      var s = [];
+      for(var i = 0; i < upto; i++) s.push((pts[i][0] + CX).toFixed(1) + ',' + (pts[i][1] + CY).toFixed(1));
+      return s.join(' ');
+    }
+    function record(tr){
+      stats.all++;
+      if(tr.ang > 90) stats.back++; else if(tr.ang > 10) stats.mid++; else stats.small++;
+      stats.max = Math.max(stats.max, tr.ang);
+      document.getElementById('n-all').textContent = stats.all;
+      document.getElementById('n-small').textContent = stats.small;
+      document.getElementById('n-mid').textContent = stats.mid;
+      document.getElementById('n-back').textContent = stats.back;
+      document.getElementById('n-max').textContent = cz(stats.max, stats.max < 10 ? 1 : 0) + '°';
+    }
+    function finish(tr){
+      svgEl('polyline', { points:ptsAttr(tr.pts, tr.pts.length), fill:'none', stroke:color(tr.ang), 'stroke-width':tr.ang > 10 ? 1.8 : 1.1, 'stroke-opacity':tr.ang > 10 ? 0.95 : 0.55 }, pathsG);
+      record(tr);
+    }
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    function animate(tr){
+      if(reduce){ finish(tr); return; }
+      clearEl(liveG);
+      var line = svgEl('polyline', { fill:'none', stroke:'var(--focus)', 'stroke-width':2 }, liveG);
+      var dot = svgEl('circle', { r:4, fill:'var(--focus)' }, liveG);
+      var i = 1, step = Math.max(2, Math.round(tr.pts.length / 60));
+      function frame(){
+        i = Math.min(tr.pts.length, i + step);
+        line.setAttribute('points', ptsAttr(tr.pts, i));
+        dot.setAttribute('cx', tr.pts[i - 1][0] + CX); dot.setAttribute('cy', tr.pts[i - 1][1] + CY);
+        if(i < tr.pts.length){ animId = requestAnimationFrame(frame); }
+        else { clearEl(liveG); animId = null; finish(tr); }
+      }
+      animId = requestAnimationFrame(frame);
+    }
+    function randomB(){ return (Math.random() * 2 - 1) * R; }
+    document.getElementById('fire1').addEventListener('click', function(){
+      if(animId){ cancelAnimationFrame(animId); animId = null; clearEl(liveG); }
+      animate(trajectory(randomB()));
+    });
+    document.getElementById('fire50').addEventListener('click', function(){
+      if(animId){ cancelAnimationFrame(animId); animId = null; clearEl(liveG); }
+      for(var i = 0; i < 50; i++) finish(trajectory(randomB()));
+    });
+    function clearAll(){
+      if(animId){ cancelAnimationFrame(animId); animId = null; }
+      clearEl(pathsG); clearEl(liveG);
+      stats = { all:0, small:0, mid:0, back:0, max:0 };
+      ['n-all', 'n-small', 'n-mid', 'n-back'].forEach(function(id){ document.getElementById(id).textContent = '0'; });
+      document.getElementById('n-max').textContent = '—';
+    }
+    document.getElementById('clear').addEventListener('click', clearAll);
+    var seg = document.getElementById('model-seg');
+    Array.prototype.forEach.call(seg.querySelectorAll('button'), function(b){
+      b.addEventListener('click', function(){
+        if(model === b.getAttribute('data-model')) return;
+        model = b.getAttribute('data-model');
+        setPressed(seg, b);
+        clearAll(); drawAtom();
+      });
+    });
+    drawAtom();
+  })();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spektrum vodíku</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../spolecne/config.js"></script>
+<script src="../spolecne/auth.js"></script>
+<script src="../spolecne/zalozky.js?v=3"></script>
+<link rel="stylesheet" href="../spolecne/styl.css">
+<link rel="stylesheet" href="../spolecne/reseni.css?v=1">
+<style>
+:root{
+  --paper:#f2eff8;
+  --surface:#fdfcff;
+  --surface-2:#e6e0f1;
+  --ink:#241f36;
+  --ink-soft:#645d7a;
+  --line:rgba(36,31,54,0.12);
+  --accent:#6b3fb5;
+  --accent-ink:#faf7ff;
+  --success:#28794f;
+  --success-bg:#e3efe0;
+  --danger:#b3392b;
+  --danger-bg:#f5e4de;
+  --focus:#1e6f66;
+  --shadow:0 1px 0 rgba(36,31,54,0.06);
+}
+
+.panel{ margin-bottom:22px; }
+.panel-title{ margin-bottom:8px; }
+.panel p{
+  margin:0 0 8px;
+  font-size:0.9rem;
+  line-height:1.55;
+}
+.panel p:last-child{ margin-bottom:0; }
+.panel b{ color:var(--ink); }
+.panel ul, .panel ol{ margin:0 0 8px; padding-left:22px; font-size:0.9rem; line-height:1.55; }
+.panel li{ margin-bottom:4px; }
+.panel h3{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.05rem;
+  letter-spacing:0.01em;
+  margin:16px 0 6px;
+}
+.panel h3:first-child{ margin-top:0; }
+
+.card{ padding:26px 26px 28px; text-align:left; margin-bottom:24px; }
+.cat-tag{ margin-bottom:10px; }
+.card h2{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.6rem;
+  letter-spacing:0.02em;
+  color:var(--ink);
+  text-transform:none;
+  margin-bottom:6px;
+}
+.card .desc{
+  font-size:0.86rem;
+  color:var(--ink-soft);
+  line-height:1.5;
+  margin:0 0 14px;
+}
+
+.katex{ font-size:1.05em; }
+.formula-box{
+  background:var(--surface-2);
+  border-radius:8px;
+  padding:12px 16px;
+  margin:10px 0;
+  font-size:1.1rem;
+  text-align:center;
+}
+.formula-line{
+  text-align:center;
+  font-size:1.1rem;
+  color:var(--ink);
+  line-height:1.8;
+}
+.line-scroll{
+  position:relative;
+  white-space:nowrap;
+  overflow-x:auto;
+  overflow-y:hidden;
+  padding:2px 0 4px;
+}
+.given-data{
+  font-size:clamp(0.9rem, 2.4vw, 1.05rem);
+  color:var(--ink-soft);
+  margin-bottom:20px;
+}
+
+.theory-table-wrap{ overflow-x:auto; margin:6px 0 4px; }
+.theory-table{
+  border-collapse:collapse;
+  font-size:0.88rem;
+  width:100%;
+  min-width:320px;
+}
+.theory-table th, .theory-table td{
+  border:1px solid var(--line);
+  padding:8px 12px;
+  text-align:left;
+}
+.theory-table thead th{
+  background:var(--surface-2);
+  color:var(--ink-soft);
+  font-weight:600;
+  font-size:0.72rem;
+  text-transform:uppercase;
+  letter-spacing:0.05em;
+}
+.theory-table td.mono, .theory-table th.mono{
+  font-family:'IBM Plex Mono', monospace;
+  font-variant-numeric:tabular-nums;
+  text-align:center;
+}
+.theory-table tbody tr:nth-child(even) td{ background:rgba(0,0,0,0.02); }
+
+.theory-fig{
+  margin:12px 0 10px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:10px 12px 8px;
+}
+.theory-fig svg{ display:block; width:100%; max-width:560px; height:auto; margin:0 auto; }
+.theory-fig figcaption{
+  font-size:0.8rem;
+  color:var(--ink-soft);
+  line-height:1.45;
+  text-align:center;
+  margin-top:4px;
+}
+
+.example-grid{ display:flex; flex-direction:column; gap:12px; margin-top:6px; }
+.example-item{
+  background:var(--surface-2);
+  border-radius:10px;
+  padding:12px 14px;
+}
+.example-tag{
+  font-size:0.66rem;
+  text-transform:uppercase;
+  letter-spacing:0.06em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-bottom:6px;
+  display:block;
+}
+.example-eq{
+  font-size:1.05rem;
+  margin-bottom:4px;
+}
+.example-note{ font-size:0.82rem; color:var(--ink-soft); line-height:1.45; }
+
+.links{ margin-top:14px; display:flex; flex-wrap:wrap; gap:10px; justify-content:center; }
+a.btn-link{
+  display:inline-block;
+  font-weight:600;
+  font-size:0.95rem;
+  padding:10px 22px;
+  border-radius:8px;
+  background:var(--accent);
+  color:var(--accent-ink);
+  text-decoration:none;
+}
+a.btn-link:hover{ filter:brightness(1.06); }
+a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+
+.credit{
+  margin-top:24px;
+  font-size:0.8rem;
+  line-height:1.5;
+  color:var(--ink-soft);
+  text-align:center;
+}
+.credit a{ color:inherit; }
+
+
+/* ---- aplety: karta, řádky ovládání, kreslicí plocha, výstupy ---- */
+.applet-head .cat-tag{ margin-bottom:10px; }
+.mode-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:16px;
+  padding-top:14px;
+  border-top:1px solid var(--line);
+}
+.mode-row-label{
+  font-size:0.68rem;
+  text-transform:uppercase;
+  letter-spacing:0.1em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-right:2px;
+  flex:0 0 170px;
+}
+.seg{ display:flex; gap:6px; flex-wrap:wrap; }
+.chip{ font-size:0.82rem; gap:7px; }
+.chip.accented.on{ background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+.chip:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+.slider-wrap{ display:flex; align-items:center; gap:12px; flex:1 1 260px; min-width:0; }
+.slider-wrap input[type=range]{ flex:1 1 auto; min-width:0; accent-color:var(--accent); height:28px; }
+.slider-val{ font-family:'IBM Plex Mono', monospace; font-weight:600; font-size:0.92rem; white-space:nowrap; min-width:6.5em; text-align:right; }
+.canvas-wrap{
+  position:relative;
+  margin-top:18px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:10px;
+  overflow:hidden;
+}
+svg.scene{ width:100%; height:auto; display:block; background:var(--surface); user-select:none; -webkit-user-select:none; touch-action:manipulation; }
+svg.scene text{ font-family:'Work Sans', sans-serif; }
+.legend{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 18px;
+  padding:10px 14px;
+  border-top:1px solid var(--line);
+  font-size:0.78rem;
+  color:var(--ink-soft);
+}
+.legend span{ display:inline-flex; align-items:center; gap:7px; }
+.legend i{ font-style:normal; display:inline-block; width:12px; height:12px; border-radius:50%; background:var(--c); }
+.applet-out{
+  display:flex; flex-wrap:wrap; gap:8px 22px; margin-top:14px;
+  font-size:0.92rem; line-height:1.5;
+}
+.applet-out b{ font-variant-numeric:tabular-nums; }
+.applet-note{ font-size:0.86rem; color:var(--ink-soft); margin:10px 0 0; line-height:1.5; }
+.applet-actions{ display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+.applet-card + .applet-card{ margin-top:4px; }
+.nw{ white-space:nowrap; }
+@media (max-width:720px){
+  .mode-row-label{ flex-basis:100%; }
+}
+
+/* ---- trénink s číselnou odpovědí ---- */
+.section-block{ margin-bottom:16px; }
+.section-block:last-child{ margin-bottom:0; }
+.task-text{ font-size:0.92rem; color:var(--ink); line-height:1.55; text-align:center; margin:4px 0 18px; }
+.equation{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:600;
+  font-size:clamp(1.25rem, 4.2vw, 1.9rem);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:0.35em;
+  flex-wrap:wrap;
+  font-variant-numeric:tabular-nums;
+}
+.equation .unit{ color:var(--ink-soft); font-size:0.7em; margin-left:0.1em; }
+.equation .eq{ color:var(--ink-soft); margin:0 0.1em; }
+.equation .katex{ font-size:1em; }
+.equation .answer-input{ width:5.2em; }
+.answer-input.sci-mantissa{ width:3.6em; }
+.sci-group{ display:inline-flex; align-items:baseline; gap:0.12em; }
+.sci-times{ font-size:0.65em; color:var(--ink-soft); margin:0 0.02em; }
+.sci-exp{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:600;
+  width:2.4em;
+  text-align:center;
+  border:none;
+  border-bottom:2px solid var(--ink-soft);
+  background:transparent;
+  color:var(--ink);
+  font-size:0.55em;
+  vertical-align:top;
+  padding:0 0.05em;
+}
+.sci-exp:focus{ outline:none; border-color:var(--focus); }
+.sci-exp.correct{ border-color:var(--success); color:var(--success); }
+.sci-exp.wrong{ border-color:var(--danger); color:var(--danger); }
+.const-box{ font-size:0.82rem; color:var(--ink-soft); line-height:1.6; margin:0; }
+.feedback .tip{ font-size:0.78rem; color:var(--ink); opacity:0.75; margin-top:6px; font-style:italic; }
+
+@media (max-width:520px){
+  .card{ padding:20px 16px 22px; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <a class="back-link" href="../rozcestniky/oktava.html">← Zpět na Oktáva/4. ročník</a>
+
+  <div class="brand">
+    <div class="brand-lockup">
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect x="3" y="11" width="34" height="18" rx="2" fill="var(--ink)"/>
+        <line x1="31" y1="11" x2="31" y2="29" stroke="#e0262b" stroke-width="2"/>
+        <line x1="17.5" y1="11" x2="17.5" y2="29" stroke="#18a7c9" stroke-width="2"/>
+        <line x1="10.5" y1="11" x2="10.5" y2="29" stroke="#4a3fd6" stroke-width="2"/>
+        <line x1="8" y1="11" x2="8" y2="29" stroke="#9a52e8" stroke-width="2"/>
+      </svg>
+      <div class="brand-text">
+        <h1>Spektrum vodíku</h1>
+        <p>atomová a částicová fyzika — čárová spektra a Rydbergova formule</p>
+      </div>
+    </div>
+    <div class="readout" id="header-readout" hidden>
+      <div class="cell"><span class="label">Skóre</span><span class="value" id="stat-score">0</span></div>
+      <div class="cell"><span class="label">Série</span><span class="value" id="stat-streak">0</span></div>
+      <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="stat-accuracy">—</span></div>
+    </div>
+  </div>
+
+  <div class="top-tabs">
+    <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+    <button class="toptab" id="top-tab-trenink" data-tab="trenink">Trénink</button>
+  </div>
+
+  <!-- ============ TEORIE ============ -->
+  <div id="theory-section" class="tab-section">
+
+    <div class="panel">
+      <div class="panel-title">Spojité a čárové spektrum</div>
+      <p>Rozložíme-li optickou mřížkou nebo hranolem světlo žárovky, uvidíme <b>spojité spektrum</b> — duhový pás se všemi barvami. Zahřáté pevné těleso vyzařuje všechny vlnové délky, jen s různou intenzitou.</p>
+      <p>Úplně jinak vypadá světlo výbojky, v níž svítí řídký plyn (vodík, neon, páry sodíku či rtuti). Vznikne <b>čárové spektrum</b>: několik ostrých barevných čar na tmavém pozadí. Každý prvek má jinou soustavu čar, podobně jako každý člověk má jiné otisky prstů. Podle čar lze prvek spolehlivě rozpoznat — to je princip <b>spektrální analýzy</b>.</p>
+      <p>Chladný plyn naopak ze spojitého světla pohlcuje právě ty vlnové délky, které by sám vyzařoval. Ve spektru Slunce proto vidíme tmavé <b>Fraunhoferovy čáry</b>; podle nich se zjistilo složení slunečního obalu a helium bylo objeveno na Slunci dřív než na Zemi.</p>
+      <figure class="theory-fig">
+        <svg viewBox="0 0 440 150" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Spojité spektrum žárovky a čárové spektrum vodíku se čtyřmi viditelnými čarami 410, 434, 486 a 656 nanometrů.">
+          <defs>
+            <linearGradient id="sv-duha" x1="0" x2="1" y1="0" y2="0">
+              <stop offset="0" stop-color="#7a2fd0"/><stop offset="0.17" stop-color="#3b3fd8"/><stop offset="0.33" stop-color="#18a7c9"/>
+              <stop offset="0.5" stop-color="#2fb24a"/><stop offset="0.62" stop-color="#e4d82a"/><stop offset="0.75" stop-color="#f08a1c"/><stop offset="1" stop-color="#c81e1e"/>
+            </linearGradient>
+          </defs>
+          <text x="20" y="16" font-family="Work Sans, sans-serif" font-size="12" fill="var(--ink)">žárovka — spojité spektrum</text>
+          <rect x="20" y="22" width="400" height="34" fill="url(#sv-duha)"/>
+          <text x="20" y="78" font-family="Work Sans, sans-serif" font-size="12" fill="var(--ink)">vodíková výbojka — čárové spektrum</text>
+          <rect x="20" y="84" width="400" height="34" fill="#15121f"/>
+          <g stroke-width="3">
+            <line x1="55.5" y1="84" x2="55.5" y2="118" stroke="#9a52e8"/>
+            <line x1="83.5" y1="84" x2="83.5" y2="118" stroke="#4a3fd6"/>
+            <line x1="144.8" y1="84" x2="144.8" y2="118" stroke="#18a7c9"/>
+            <line x1="345.1" y1="84" x2="345.1" y2="118" stroke="#e0262b"/>
+          </g>
+          <g font-family="IBM Plex Mono, monospace" font-size="11" fill="var(--ink)" text-anchor="middle">
+            <text x="51" y="134">410</text><text x="86" y="134">434</text><text x="144.8" y="134">486</text><text x="345.1" y="134">656</text>
+            <text x="404" y="134">nm</text>
+          </g>
+          <text x="20" y="148" font-family="Work Sans, sans-serif" font-size="10" fill="var(--ink-soft)">380 nm</text>
+          <text x="420" y="148" text-anchor="end" font-family="Work Sans, sans-serif" font-size="10" fill="var(--ink-soft)">720 nm</text>
+        </svg>
+        <figcaption>Viditelné čáry vodíku (Balmerova série). Barvy jsou jen přibližné.</figcaption>
+      </figure>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Balmerova série</div>
+      <p>Učitel matematiky z Basileje <b>J. Balmer</b> si v roce 1885 všiml, že frekvence čtyř viditelných čar vodíku splňují jednoduchý vztah</p>
+      <div class="formula-box">\[ f = R_f \left( \frac{1}{2^2} - \frac{1}{n^2} \right), \qquad n = 3, 4, 5, \dots \]</div>
+      <p>kde \(R_f = 3{,}290\cdot 10^{15}\ \mathrm{Hz}\) je <b>Rydbergova frekvence</b>. Nejmenší možné je \(n = 3\): pro \(n = 2\) by vyšla nulová frekvence a pro \(n = 1\) záporná, což nedává smysl.</p>
+      <div class="theory-table-wrap">
+        <table class="theory-table">
+          <thead>
+            <tr><th>Čára</th><th class="mono"><i>n</i></th><th class="mono">Naměřená <i>λ</i> (nm)</th><th>Barva</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>H<sub>α</sub></td><td class="mono">3</td><td class="mono">656,3</td><td>červená</td></tr>
+            <tr><td>H<sub>β</sub></td><td class="mono">4</td><td class="mono">486,1</td><td>modrozelená</td></tr>
+            <tr><td>H<sub>γ</sub></td><td class="mono">5</td><td class="mono">434,0</td><td>modrofialová</td></tr>
+            <tr><td>H<sub>δ</sub></td><td class="mono">6</td><td class="mono">410,2</td><td>fialová</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>S rostoucím \(n\) se čáry zhušťují a blíží se k tzv. <b>hraně série</b> (pro \(n \to \infty\)), u Balmerovy série asi 364,6&nbsp;nm.</p>
+    </div>
+
+    <div class="card">
+      <span class="cat-tag">Příklad</span>
+      <h2>Vlnová délka čáry H<sub>β</sub></h2>
+      <p class="desc">Vypočtěte z Balmerova vzorce vlnovou délku druhé čáry Balmerovy série (\(n = 4\)) a porovnejte ji s naměřenou hodnotou.</p>
+      <div class="given-data">
+        <div class="given-line">Zadáno: \(n = 4\), \(R_f = 3{,}290\cdot 10^{15}\ \mathrm{Hz}\), \(c = 2{,}998\cdot 10^{8}\ \mathrm{m\cdot s^{-1}}\)</div>
+      </div>
+      <div class="stepper" data-reset="reset-hbeta">
+        <div class="step" data-step="1">
+          <div class="step-connector"></div>
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">1</span>
+            <span class="step-title">Frekvence čáry</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <div class="step-result"><div class="line-scroll">\(f = 3{,}290\cdot 10^{15}\ \mathrm{Hz}\cdot\left(\dfrac{1}{4} - \dfrac{1}{16}\right) = 3{,}290\cdot 10^{15}\ \mathrm{Hz}\cdot \dfrac{3}{16} \doteq 6{,}169\cdot 10^{14}\ \mathrm{Hz}\)</div></div>
+          </div>
+        </div>
+        <div class="step" data-step="2">
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">2</span>
+            <span class="step-title">Vlnová délka ze vztahu \(c = \lambda f\)</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <div class="result-box"><div class="line-scroll">\(\lambda = \dfrac{c}{f} = \dfrac{2{,}998\cdot 10^{8}\ \mathrm{m\cdot s^{-1}}}{6{,}169\cdot 10^{14}\ \mathrm{s^{-1}}} \doteq 4{,}860\cdot 10^{-7}\ \mathrm{m} = 486{,}0\ \mathrm{nm}\)</div></div>
+            <p>Výpočet se s naměřenými 486,1&nbsp;nm shoduje na desetinu nanometru. Je to modrozelená čára.</p>
+          </div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn ghost" id="reset-hbeta">Zopakovat postup od začátku</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Série mimo viditelné světlo</div>
+      <p>Na počátku 20. století byly objeveny další čáry vodíku v neviditelných oblastech spektra. <b>T. Lyman</b> je pozoroval v ultrafialové oblasti (1906 až 1914), <b>F. Paschen</b> v infračervené (1908). Jejich frekvence splňují stejný typ vztahu, jen místo \(1/2^2\) je v závorce \(1/1^2\), resp. \(1/3^2\).</p>
+      <p>Všechny série shrnuje <b>Rydbergova formule</b>:</p>
+      <div class="formula-box">\[ f = R_f \left( \frac{1}{m^2} - \frac{1}{n^2} \right), \qquad m = 1, 2, 3, \dots,\quad n = m+1,\ m+2, \dots \]</div>
+      <div class="theory-table-wrap">
+        <table class="theory-table">
+          <thead>
+            <tr><th>Série</th><th class="mono"><i>m</i></th><th>Oblast spektra</th><th class="mono">1. čára (nm)</th><th class="mono">hrana (nm)</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Lymanova</td><td class="mono">1</td><td>ultrafialová</td><td class="mono">121,6</td><td class="mono">91</td></tr>
+            <tr><td>Balmerova</td><td class="mono">2</td><td>viditelná (a blízká UV)</td><td class="mono">656,3</td><td class="mono">365</td></tr>
+            <tr><td>Paschenova</td><td class="mono">3</td><td>infračervená</td><td class="mono">1&nbsp;875</td><td class="mono">820</td></tr>
+            <tr><td>Brackettova</td><td class="mono">4</td><td>infračervená</td><td class="mono">4&nbsp;051</td><td class="mono">1&nbsp;458</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Čím větší je \(m\), tím menší jsou frekvence a delší vlnové délky — další série (Pfundova pro \(m = 5\) a vyšší) leží hluboko v infračervené oblasti.</p>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M9 2.5 L16 15.5 H2 Z" stroke="var(--danger)" stroke-width="1.4" stroke-linejoin="round"/>
+          <line x1="9" y1="7" x2="9" y2="11.5" stroke="var(--danger)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="13.6" r="1" fill="var(--danger)"/>
+        </svg>
+        <p>Rydbergova formule dává frekvenci, ne vlnovou délku. Vlnovou délku dopočítáme až ze vztahu \(\lambda = c/f\) — častou chybou je dosadit \(R_f\) rovnou do vzorce pro \(\lambda\).</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Co z toho plyne pro model atomu</div>
+      <p>Elektron, který by podle Rutherfordova modelu obíhal kolem jádra a přitom vyzařoval, by postupně ztrácel energii a vyzařoval by <b>spojitě</b> — všechny vlnové délky. Atom vodíku ale vyzařuje jen přesně určené frekvence, které navíc poslouchají jednoduchý celočíselný zákon. To naznačuje, že energie atomu nemůže být libovolná. Vysvětlení přinesl až Bohrův model.</p>
+      <div class="links"><a class="btn-link" href="bohruv-model.html">Bohrův model atomu →</a></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Shrnutí</div>
+      <p>• Zahřáté pevné těleso má spojité spektrum, řídký plyn ve výboji čárové; soustava čar je pro každý prvek charakteristická.</p>
+      <p>• Frekvence čar vodíku popisuje Rydbergova formule \(f = R_f(1/m^2 - 1/n^2)\), \(R_f = 3{,}290\cdot 10^{15}\ \mathrm{Hz}\).</p>
+      <p>• \(m = 1\) Lymanova série (UV), \(m = 2\) Balmerova (viditelná), \(m = 3\) Paschenova (IR).</p>
+      <p>• Rutherfordův model by dával spojité spektrum — čárové spektrum vysvětlit neumí.</p>
+    </div>
+
+  </div>
+
+  <!-- ============ TRÉNINK ============ -->
+  <div id="trenink-section" class="tab-section" hidden>
+
+    <div class="panel">
+      <div class="section-block">
+        <div class="panel-title">Typ příkladů</div>
+        <div class="row" id="type-row"></div>
+      </div>
+      <div class="section-block">
+        <p class="const-box">Konstanty: \(R_f = 3{,}29\cdot 10^{15}\ \mathrm{Hz}\), \(c = 3{,}00\cdot 10^{8}\ \mathrm{m\cdot s^{-1}}\).</p>
+      </div>
+      <div class="settings-foot" style="justify-content:flex-end;">
+        <button class="linklike" id="reset-stats">vynulovat statistiku</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="cat-tag" id="cat-tag">Trénink</span>
+      <p class="task-text" id="task-text"></p>
+      <div class="equation" id="equation">
+        <span id="eq-given"></span>
+        <span class="eq">=</span>
+        <span class="answer-slot" id="slot-dec">
+          <input class="answer-input" id="answer" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="?" aria-label="odpověď">
+        </span>
+        <span class="answer-slot sci-group" id="slot-sci" hidden>
+          <input class="answer-input sci-mantissa" id="answer-m" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="a" aria-label="mantisa">
+          <span class="sci-times">·10</span>
+          <input class="sci-exp" id="answer-e" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="n" aria-label="exponent">
+        </span>
+        <span class="unit" id="eq-unit"></span>
+      </div>
+      <div class="actions">
+        <button class="btn primary" id="btn-check">Zkontrolovat</button>
+        <button class="btn ghost" id="btn-skip">Nevím / Zobrazit řešení</button>
+      </div>
+      <div class="feedback" id="feedback" hidden>
+        <div class="headline" id="feedback-headline"></div>
+        <div class="steps" id="feedback-steps"></div>
+        <div class="tip" id="feedback-tip" hidden></div>
+      </div>
+      <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint">Výsledek zapište do rámečku; čárku i tečku lze zadat obojí. Velmi malá a velmi velká čísla se zadávají ve tvaru <i>a</i>·10<sup><i>n</i></sup> — do prvního pole mantisu <i>a</i>, do malého pole exponent <i>n</i> (i záporný). Uznává se odchylka do 1&nbsp;% od přesné hodnoty, takže stačí počítat s konstantami uvedenými výše a výsledek zaokrouhlit na 3 platné číslice. Enter potvrdí odpověď i přejde na další příklad.</p>
+      </details>
+    </div>
+
+  </div>
+
+  <footer>Fyzika — Oktáva/4. ročník</footer>
+</div>
+
+<script src="../spolecne/reseni.js?v=1"></script>
+<script src="../spolecne/spolecne.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  // ---- záložky: tlačítko .toptab[data-tab="x"] ↔ sekce #x-section (Teorie = #theory-section) ----
+  var tabs = {}, sections = {};
+  Array.prototype.forEach.call(document.querySelectorAll('.toptab[data-tab]'), function(btn){
+    var name = btn.getAttribute('data-tab');
+    tabs[name] = btn;
+    sections[name] = document.getElementById(name === 'teorie' ? 'theory-section' : name + '-section');
+  });
+  function showTab(name){
+    for(var k in tabs){
+      tabs[k].classList.toggle('on', k === name);
+      if(sections[k]) sections[k].hidden = k !== name;
+    }
+    // skóre, série a úspěšnost v hlavičce jen u tréninku
+    var readout = document.getElementById('header-readout');
+    if(readout) readout.hidden = name !== 'trenink';
+  }
+  Object.keys(tabs).forEach(function(k){ tabs[k].addEventListener('click', function(){ showTab(k); }); });
+  var hash = location.hash.replace('#', '');
+  if(hash && tabs[hash]) showTab(hash);
+
+  // ---- příklady v teorii: postupně odemykané steppery ----
+  Array.prototype.forEach.call(document.querySelectorAll('.stepper'), function(wrap){
+    var steps = Array.prototype.slice.call(wrap.querySelectorAll('.step'));
+    var unlockedUpTo = 1;
+
+    function refreshLocks(){
+      steps.forEach(function(st){
+        var idx = parseInt(st.getAttribute('data-step'), 10);
+        var locked = idx > unlockedUpTo;
+        st.classList.toggle('locked', locked);
+        st.classList.toggle('unlocked', !locked && !st.classList.contains('done'));
+        st.querySelector('.step-head').setAttribute('aria-disabled', locked ? 'true' : 'false');
+      });
+    }
+
+    steps.forEach(function(st){
+      var idx = parseInt(st.getAttribute('data-step'), 10);
+      var head = st.querySelector('.step-head');
+      var body = st.querySelector('.step-body');
+      head.addEventListener('click', function(){
+        if(idx > unlockedUpTo) return;
+        var wasOpen = st.classList.contains('open');
+        st.classList.toggle('open', !wasOpen);
+        body.hidden = wasOpen;
+        head.setAttribute('aria-expanded', (!wasOpen).toString());
+        if(!wasOpen){
+          st.classList.add('done');
+          if(idx === unlockedUpTo && unlockedUpTo < steps.length){ unlockedUpTo++; }
+          refreshLocks();
+        }
+      });
+    });
+
+    var resetBtn = document.getElementById(wrap.getAttribute('data-reset'));
+    if(resetBtn){
+      resetBtn.addEventListener('click', function(){
+        unlockedUpTo = 1;
+        steps.forEach(function(st){
+          st.classList.remove('open', 'done');
+          st.querySelector('.step-body').hidden = true;
+          st.querySelector('.step-head').setAttribute('aria-expanded', 'false');
+        });
+        refreshLocks();
+      });
+    }
+
+    refreshLocks();
+  });
+
+  // ---- vzorce (KaTeX) ----
+  var KATEX_DELIMS = [{left:'\\(', right:'\\)', display:false}, {left:'\\[', right:'\\]', display:true}];
+  if(window.renderMathInElement){
+    Array.prototype.forEach.call(document.querySelectorAll('.tab-section'), function(sec){
+      try{ renderMathInElement(sec, { delimiters: KATEX_DELIMS }); }catch(e){}
+    });
+  }
+
+  // ---- sbalovací panely v teorii ----
+  try{ makePanelsCollapsible(document.getElementById('theory-section')); }catch(e){}
+
+  // ---- pomocné funkce pro aplety a tréninky ----
+  var NB = '\u00a0';
+  function tex(t){
+    try{ return window.katex ? katex.renderToString(t, {throwOnError:false}) : t; }catch(e){ return t; }
+  }
+  // číslo s daným počtem desetinných míst, desetinnou čárkou a mezerami mezi tisíci
+  function cz(n, dec){
+    var s = roundTo(n, dec).toFixed(dec);
+    var neg = s.charAt(0) === '-';
+    if(neg) s = s.slice(1);
+    var parts = s.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, NB);
+    return (neg ? '−' : '') + parts.join(',');
+  }
+  // totéž v TeXu (mezera mezi tisíci = \,, desetinná čárka = {,})
+  function czTex(n, dec){ return cz(n, dec).replace('−', '-').replace(',', '{,}').replace(/\u00a0/g, '\\,'); }
+  // číslo na `sig` platných číslic (desetinný zápis)
+  function czSig(x, sig){ var r = roundSig(x, sig); return cz(r, decimalsForSig(r, sig)); }
+  // rozklad na mantisu a exponent: x = m · 10^e, 1 ≤ |m| < 10 (po zaokrouhlení na sig číslic)
+  function sciParts(x, sig){
+    if(x === 0) return { m:0, e:0 };
+    var e = Math.floor(Math.log10(Math.abs(x)));
+    var m = roundSig(x / Math.pow(10, e), sig);
+    if(Math.abs(m) >= 10){ m = roundSig(m / 10, sig); e++; }
+    return { m:m, e:e };
+  }
+  // TeX zápis čísla: desetinně pro 0,001 ≤ |x| < 100 000, jinak a·10^n
+  function numTex(x, sig, forceSci){
+    var r = roundSig(x, sig), a = Math.abs(r);
+    if(!forceSci && (a === 0 || (a >= 1e-3 && a < 1e5))){
+      return czSig(x, sig).replace('−', '-').replace(',', '{,}').replace(/\u00a0/g, '\\,');
+    }
+    var p = sciParts(x, sig);
+    return cz(p.m, sig - 1).replace('−', '-').replace(',', '{,}') + '\\cdot 10^{' + p.e + '}';
+  }
+  // totéž jako prostý text do HTML
+  function numTxt(x, sig, forceSci){
+    var r = roundSig(x, sig), a = Math.abs(r);
+    if(!forceSci && (a === 0 || (a >= 1e-3 && a < 1e5))) return czSig(x, sig);
+    var p = sciParts(x, sig);
+    return cz(p.m, sig - 1) + '·10<sup>' + String(p.e).replace('-', '−') + '</sup>';
+  }
+  function randInt(a, b){ return a + Math.floor(Math.random() * (b - a + 1)); }
+  function pick(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+  function svgEl(name, attrs, parent){
+    var n = document.createElementNS('http://www.w3.org/2000/svg', name);
+    for(var k in attrs){ if(attrs.hasOwnProperty(k)) n.setAttribute(k, attrs[k]); }
+    if(parent) parent.appendChild(n);
+    return n;
+  }
+  function clearEl(n){ while(n.firstChild) n.removeChild(n.firstChild); }
+  function setPressed(group, btn){
+    Array.prototype.forEach.call(group.querySelectorAll('button'), function(b){
+      var on = b === btn;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+  }
+
+  // ================= TRÉNINK: typy příkladů =================
+  var RF = 3.29e15, C = 3.00e8;
+  var SERIES = { 1:'Lymanovy', 2:'Balmerovy', 3:'Paschenovy', 4:'Brackettovy' };
+  function fracTex(m, n){ return '\\left(\\dfrac{1}{' + m + '^2} - \\dfrac{1}{' + n + '^2}\\right)'; }
+  function line(){ var m = randInt(1, 4), n = m + randInt(1, 4); return { m:m, n:n, f:RF * (1 / (m * m) - 1 / (n * n)) }; }
+  var TR_TYPES = [
+    { key:'lambda', name:'Vlnová délka čáry', gen:function(){
+      var L = line(), lam = C / L.f * 1e9;
+      return { cat:'Rydbergova formule', signature:'l' + L.m + L.n,
+        task:'Vypočtěte vlnovou délku čáry ' + SERIES[L.m] + ' série vodíku pro ' + tex('n = ' + L.n) + '.',
+        lhs:'\\lambda', unit:'\\mathrm{nm}', sci:false, exact:lam,
+        given:['m = ' + L.m + ',\\ n = ' + L.n, 'R_f = 3{,}29\\cdot 10^{15}\\ \\mathrm{Hz}'], find:['\\lambda'],
+        steps:['f = R_f' + fracTex(L.m, L.n) + ' \\doteq ' + numTex(L.f, 3, true) + '\\ \\mathrm{Hz}',
+               '\\lambda = \\dfrac{c}{f} = \\dfrac{3{,}00\\cdot 10^{8}}{' + numTex(L.f, 3, true) + '}\\ \\mathrm{m} \\doteq ' + numTex(lam * 1e-9, 3, true) + '\\ \\mathrm{m}'],
+        final:'\\lambda \\doteq ' + numTex(lam, 3) + '\\ \\mathrm{nm}' };
+    }},
+    { key:'f', name:'Frekvence čáry', gen:function(){
+      var L = line();
+      return { cat:'Rydbergova formule', signature:'f' + L.m + L.n,
+        task:'Vypočtěte frekvenci čáry ' + SERIES[L.m] + ' série vodíku pro ' + tex('n = ' + L.n) + '.',
+        lhs:'f', unit:'\\mathrm{Hz}', sci:true, exact:L.f,
+        given:['m = ' + L.m + ',\\ n = ' + L.n, 'R_f = 3{,}29\\cdot 10^{15}\\ \\mathrm{Hz}'], find:['f'],
+        steps:['f = R_f' + fracTex(L.m, L.n) + ' = 3{,}29\\cdot 10^{15}\\cdot ' + numTex(1 / (L.m * L.m) - 1 / (L.n * L.n), 4) + '\\ \\mathrm{Hz}'],
+        final:'f \\doteq ' + numTex(L.f, 3, true) + '\\ \\mathrm{Hz}' };
+    }},
+    { key:'hrana', name:'Hrana série', gen:function(){
+      var m = randInt(1, 4), f = RF / (m * m), lam = C / f * 1e9;
+      return { cat:'Hrana série', signature:'h' + m,
+        task:'Určete vlnovou délku hrany ' + SERIES[m] + ' série vodíku (čára pro ' + tex('n \\to \\infty') + ').',
+        lhs:'\\lambda', unit:'\\mathrm{nm}', sci:false, exact:lam,
+        given:['m = ' + m + ',\\ n \\to \\infty', 'R_f = 3{,}29\\cdot 10^{15}\\ \\mathrm{Hz}'], find:['\\lambda'],
+        steps:['\\text{pro } n \\to \\infty \\text{ je } \\tfrac{1}{n^2} \\to 0:\\quad f = \\dfrac{R_f}{' + m + '^2} \\doteq ' + numTex(f, 3, true) + '\\ \\mathrm{Hz}',
+               '\\lambda = \\dfrac{c}{f} \\doteq ' + numTex(lam * 1e-9, 3, true) + '\\ \\mathrm{m}'],
+        final:'\\lambda \\doteq ' + numTex(lam, 3) + '\\ \\mathrm{nm}' };
+    }},
+    { key:'n', name:'Určete n', gen:function(){
+      var L = line(), lam = C / L.f * 1e9, lr = roundSig(lam, 3);
+      return { cat:'Která čára to je?', signature:'n' + L.m + L.n,
+        task:'Čára ' + SERIES[L.m] + ' série vodíku má vlnovou délku ' + tex(numTex(lr, 3) + '\\ \\mathrm{nm}') + '. Jaké je pro ni číslo ' + tex('n') + ' v Rydbergově formuli?',
+        lhs:'n', unit:'', sci:false, integer:true, exact:L.n,
+        given:['\\lambda = ' + numTex(lr, 3) + '\\ \\mathrm{nm},\\ m = ' + L.m], find:['n'],
+        steps:['f = \\dfrac{c}{\\lambda} \\doteq ' + numTex(C / (lr * 1e-9), 3, true) + '\\ \\mathrm{Hz}',
+               '\\dfrac{1}{n^2} = \\dfrac{1}{' + L.m + '^2} - \\dfrac{f}{R_f} \\doteq ' + numTex(1 / (L.m * L.m) - C / (lr * 1e-9) / RF, 3),
+               'n = \\sqrt{\\dfrac{1}{' + numTex(1 / (L.m * L.m) - C / (lr * 1e-9) / RF, 3) + '}} \\doteq ' + numTex(1 / Math.sqrt(1 / (L.m * L.m) - C / (lr * 1e-9) / RF), 3)],
+        final:'n = ' + L.n };
+    }}
+  ];
+
+  // ================= TRÉNINK (číselná odpověď) =================
+  // Typy příkladů definuje stránka v poli TR_TYPES: { key, name, gen } — gen() vrátí úlohu
+  // { cat, task, lhs, unit, sci, exact, sig, tol, integer, given[], find[], steps[], final }.
+  var trState = {
+    type:'all', score:0, streak:0, bestStreak:0, answered:0, correct:0,
+    current:null, lastSig:'', locked:false, touched:false
+  };
+  var TR_STATS_KEY = 'fyzika:spektrum-vodiku:stats';
+  var trInputs = ['answer', 'answer-m', 'answer-e'];
+
+  function trLoadStats(){
+    try{ var raw = localStorage.getItem(TR_STATS_KEY); if(raw){ trState.bestStreak = JSON.parse(raw).bestStreak || 0; } }catch(e){}
+  }
+  function trSaveStats(){
+    try{ localStorage.setItem(TR_STATS_KEY, JSON.stringify({bestStreak: trState.bestStreak})); }catch(e){}
+  }
+  function trParse(str){
+    if(!str) return NaN;
+    str = str.trim().replace(/[−–]/g, '-').replace(',', '.').replace(/\s+/g, '');
+    return /^-?\d*\.?\d+$|^-?\d+\.$/.test(str) ? parseFloat(str) : NaN;
+  }
+  function trGenerate(){
+    var list = trState.type === 'all' ? TR_TYPES : TR_TYPES.filter(function(t){ return t.key === trState.type; });
+    var q = pick(list).gen(), tries = 0;
+    while(q.signature && q.signature === trState.lastSig && tries < 20){ q = pick(list).gen(); tries++; }
+    trState.lastSig = q.signature || '';
+    trState.current = q;
+    trState.locked = false; trState.touched = false;
+    trRender();
+  }
+  function trRender(){
+    var q = trState.current;
+    document.getElementById('cat-tag').textContent = q.cat;
+    document.getElementById('task-text').innerHTML = q.task;
+    document.getElementById('eq-given').innerHTML = tex(q.lhs);
+    document.getElementById('eq-unit').innerHTML = q.unit ? tex(q.unit) : '';
+    document.getElementById('slot-sci').hidden = !q.sci;
+    document.getElementById('slot-dec').hidden = !!q.sci;
+    trInputs.forEach(function(id){
+      var el = document.getElementById(id);
+      el.value = ''; el.disabled = false; el.classList.remove('correct', 'wrong');
+    });
+    var fb = document.getElementById('feedback');
+    fb.hidden = true; fb.classList.remove('ok', 'bad', 'sol');
+    document.getElementById('feedback-tip').hidden = true;
+    document.getElementById('btn-check').textContent = 'Zkontrolovat';
+    var first = document.getElementById(q.sci ? 'answer-m' : 'answer');
+    if(!document.getElementById('trenink-section').hidden) first.focus();
+  }
+  function trUserValue(){
+    var q = trState.current;
+    if(q.sci){
+      var m = trParse(document.getElementById('answer-m').value);
+      var es = document.getElementById('answer-e').value.trim().replace(/[−–]/g, '-');
+      var e = es === '' ? 0 : parseInt(es, 10);
+      if(isNaN(m) || isNaN(e)) return NaN;
+      return m * Math.pow(10, e);
+    }
+    return trParse(document.getElementById('answer').value);
+  }
+  function trIsEmpty(){ return isNaN(trUserValue()); }
+  function trMark(cls){
+    (trState.current.sci ? ['answer-m', 'answer-e'] : ['answer']).forEach(function(id){ document.getElementById(id).classList.add(cls); });
+  }
+  function trLock(){
+    trInputs.forEach(function(id){ document.getElementById(id).disabled = true; });
+    trState.locked = true;
+    var b = document.getElementById('btn-check');
+    b.textContent = 'Další příklad →';
+    b.focus();
+    trUpdateStats();
+  }
+  function trShowSolution(){
+    var q = trState.current;
+    // KaTeX vkládá do cest SVG (odmocnina) zalomení řádků; FyzikaReseni dělí řádky podle \n, proto je odstraníme
+    function t1(s){ return tex(s).replace(/\n/g, ' '); }
+    FyzikaReseni.show(document.getElementById('feedback'), document.getElementById('feedback-steps'), {
+      raw:true,
+      given:(q.given || []).map(t1),
+      find:(q.find || []).map(t1),
+      steps:(q.steps || []).map(t1),
+      final:q.final ? t1(q.final) : '',
+      note:q.note || ''
+    });
+  }
+  function trIsCorrect(v){
+    var q = trState.current;
+    if(isNaN(v)) return false;
+    if(q.integer) return Math.abs(v - q.exact) < 1e-9;
+    var tol = q.tol === undefined ? 0.01 : q.tol;
+    return Math.abs(v - q.exact) <= tol * Math.abs(q.exact) + 1e-300;
+  }
+  function trCheck(){
+    if(trState.locked){ trGenerate(); return; }
+    var v = trUserValue(), ok = trIsCorrect(v), q = trState.current;
+    trState.answered++;
+    var fb = document.getElementById('feedback'), head = document.getElementById('feedback-headline');
+    var tip = document.getElementById('feedback-tip');
+    fb.hidden = false; tip.hidden = true;
+    if(ok){
+      trState.score += 10; trState.streak++; trState.correct++;
+      if(trState.streak > trState.bestStreak){
+        trState.bestStreak = trState.streak; trSaveStats();
+        if(window.FyzikaScores) FyzikaScores.report('serie', trState.bestStreak, false);
+      }
+      trMark('correct'); fb.classList.add('ok'); fb.classList.remove('bad');
+      head.textContent = 'Správně!';
+    } else {
+      trState.streak = 0; trMark('wrong'); fb.classList.add('bad'); fb.classList.remove('ok');
+      head.textContent = isNaN(v) ? 'Doplňte odpověď.' : 'Bohužel špatně.';
+      if(!isNaN(v) && q.sci && !isNaN(q.exact) && q.exact !== 0){
+        var r = v / q.exact, lg = Math.log10(Math.abs(r));
+        if(Math.abs(lg - Math.round(lg)) < 0.005 && Math.round(lg) !== 0){
+          tip.hidden = false;
+          tip.textContent = 'Mantisa je správně, chyba je v exponentu (o ' + Math.abs(Math.round(lg)) + ' řád' + (Math.abs(Math.round(lg)) === 1 ? '' : Math.abs(Math.round(lg)) < 5 ? 'y' : 'ů') + ').';
+        }
+      }
+    }
+    trShowSolution(); trLock();
+  }
+  function trSkip(){
+    if(trState.locked){ trGenerate(); return; }
+    trState.streak = 0; trState.answered++;
+    var fb = document.getElementById('feedback');
+    fb.hidden = false; fb.classList.add('bad'); fb.classList.remove('ok');
+    document.getElementById('feedback-tip').hidden = true;
+    document.getElementById('feedback-headline').textContent = 'Správný postup:';
+    trShowSolution(); trLock();
+  }
+  function trUpdateStats(){
+    document.getElementById('stat-score').textContent = trState.score;
+    document.getElementById('stat-streak').textContent = trState.streak + (trState.bestStreak > 0 ? ' / ' + trState.bestStreak : '');
+    document.getElementById('stat-accuracy').textContent = trState.answered === 0 ? '—' : Math.round(100 * trState.correct / trState.answered) + ' %';
+  }
+  // Rozdělanou úlohu před změnou nastavení nejdřív vyhodnotí (stejná logika jako na ostatních stránkách).
+  function trSettle(){
+    if(trState.locked) return 'locked';
+    if(!trState.touched) return 'untouched';
+    if(trIsEmpty() && !confirm('Odpověď není vyplněná. Opravdu chcete změnit nastavení?')) return 'cancelled';
+    trCheck();
+    return 'settled';
+  }
+  (function(){
+    var row = document.getElementById('type-row');
+    var items = [{ key:'all', name:'Vše' }].concat(TR_TYPES);
+    items.forEach(function(d){
+      var b = document.createElement('button');
+      b.className = 'chip accented' + (d.key === trState.type ? ' on' : '');
+      b.type = 'button';
+      b.setAttribute('aria-pressed', d.key === trState.type ? 'true' : 'false');
+      b.textContent = d.name;
+      b.addEventListener('click', function(){
+        if(d.key === trState.type) return;
+        var res = trSettle();
+        if(res === 'cancelled') return;
+        trState.type = d.key;
+        setPressed(row, b);
+        if(res === 'locked' || res === 'untouched'){ trGenerate(); }
+      });
+      row.appendChild(b);
+    });
+  })();
+  function tryCheck(){
+    if(trState.locked){ trGenerate(); return; }
+    if(trIsEmpty() && !confirm('Odpověď není vyplněná. Opravdu chcete zkontrolovat?')) return;
+    trCheck();
+  }
+  function trySkip(){
+    if(trState.locked){ trGenerate(); return; }
+    trSkip();
+  }
+  document.getElementById('btn-check').addEventListener('click', tryCheck);
+  document.getElementById('btn-skip').addEventListener('click', trySkip);
+  trInputs.forEach(function(id){
+    var el = document.getElementById(id);
+    sanitizeNumericInput(el, id !== 'answer-e');
+    el.addEventListener('input', function(){ trState.touched = true; });
+    el.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); tryCheck(); } });
+  });
+  document.getElementById('reset-stats').addEventListener('click', function(){
+    trState.score = 0; trState.streak = 0; trState.answered = 0; trState.correct = 0; trState.bestStreak = 0;
+    try{ localStorage.removeItem(TR_STATS_KEY); }catch(e){}
+    trUpdateStats();
+  });
+  document.addEventListener('fyzika:scores-updated', function(){ trState.bestStreak = 0; trLoadStats(); trUpdateStats(); });
+  document.getElementById('top-tab-trenink').addEventListener('click', function(){
+    setTimeout(function(){ if(!trState.locked){ var q = trState.current; document.getElementById(q.sci ? 'answer-m' : 'answer').focus(); } }, 0);
+  });
+
+  trLoadStats();
+  trUpdateStats();
+  trGenerate();
+})();
+</script>
+</body>
+</html>
