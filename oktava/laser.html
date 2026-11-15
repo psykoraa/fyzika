@@ -98,6 +98,8 @@
   overflow-y:hidden;
   padding:2px 0 4px;
 }
+.step-result{ max-width:100%; }
+.step-result > .line-scroll{ min-width:0; max-width:100%; }
 .given-data{
   font-size:clamp(0.9rem, 2.4vw, 1.05rem);
   color:var(--ink-soft);
@@ -807,6 +809,8 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
   var H_ = 6.63e-34, C = 3.00e8, EV = 1.60e-19;
   var LASERS = [ ['fialového polovodičového laseru', '405', 405, 'fialový polovodičový laser'], ['zeleného ukazovátka', '532', 532, 'zelené ukazovátko'], ['helium-neonového laseru', '632{,}8', 632.8, 'helium-neonový laser'],
     ['červeného ukazovátka', '650', 650, 'červené ukazovátko'], ['neodymového laseru', '1\\,064', 1064, 'neodymový laser'], ['laseru v optické mechanice CD', '780', 780, 'laser v optické mechanice CD'] ];
+  // pulzy dávají jen pulzní lasery (ukazovátko ani He-Ne laser joulové pulzy nevyšle)
+  var PULSED = [ ['neodymového laseru', '1\\,064', 1064], ['rubínového laseru', '694{,}3', 694.3] ];
   var TIMES = [ ['ms', 1e-3], ['µs', 1e-6], ['ns', 1e-9], ['ps', 1e-12], ['fs', 1e-15] ];
   var TR_TYPES = [
     { key:'foton', name:'Energie fotonu', gen:function(){
@@ -819,7 +823,7 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
         final:'E \\doteq ' + (ev ? numTex(E / EV, 3) + '\\ \\mathrm{eV}' : numTex(E, 3, true) + '\\ \\mathrm{J}') };
     }},
     { key:'pocet', name:'Počet fotonů za sekundu', gen:function(){
-      var L = pick(LASERS), Pm = pick([0.5, 1, 1.5, 2, 3, 4, 5, 10, 20, 50]), E = H_ * C / (L[2] * 1e-9), N = Pm * 1e-3 / E;
+      var L = pick(LASERS), Pm = pick([0.5, 1, 1.5, 2, 3, 4, 5, 10, 20]), E = H_ * C / (L[2] * 1e-9), N = Pm * 1e-3 / E;
       return { cat:'Počet fotonů', signature:'n' + L[1] + Pm,
         task:'Kolik fotonů vyšle za 1 sekundu ' + L[3] + ' (' + tex(L[1] + '\\ \\mathrm{nm}') + ') o výkonu ' + tex(czTex(Pm, Pm % 1 ? 1 : 0) + '\\ \\mathrm{mW}') + '?',
         lhs:'N', unit:'', sci:true, exact:N,
@@ -828,7 +832,9 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
         final:'N \\doteq ' + numTex(N, 3, true) };
     }},
     { key:'vykon', name:'Výkon pulzu', gen:function(){
-      var T = pick(TIMES.slice(1)), tv = pick([1, 2, 5, 10, 20, 50, 100]), Ej = pick([0.001, 0.01, 0.05, 0.1, 0.5, 1, 2, 10]), t = tv * T[1], P = Ej / t;
+      var T, tv, Ej, t, P;
+      // jen reálné pulzy: výkon nejvýše 1 PW (nejsilnější lasery dosahují jednotek PW)
+      do{ T = pick(TIMES.slice(1)); tv = pick([1, 2, 5, 10, 20, 50, 100]); Ej = pick([0.001, 0.01, 0.05, 0.1, 0.5, 1, 2, 10]); t = tv * T[1]; P = Ej / t; }while(P > 1e15);
       var Et = numTex(Ej, 2);
       return { cat:'Výkon laserového pulzu', signature:'p' + T[0] + tv + Ej,
         task:'Laser vyzáří energii ' + tex(Et + '\\ \\mathrm{J}') + ' v pulzu trvajícím ' + tex(tv + '\\ \\mathrm{' + T[0].replace('µ', '\\mu ') + '}') + '. Jaký je výkon pulzu?',
@@ -838,7 +844,7 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
         final:'P \\doteq ' + numTex(P, 3, true) + '\\ \\mathrm{W}' };
     }},
     { key:'pulz-fotony', name:'Fotony v pulzu', gen:function(){
-      var L = pick(LASERS), Ej = pick([0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1]), E = H_ * C / (L[2] * 1e-9), N = Ej / E;
+      var L = pick(PULSED), Ej = pick([0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1]), E = H_ * C / (L[2] * 1e-9), N = Ej / E;
       return { cat:'Počet fotonů v pulzu', signature:'f' + L[1] + Ej,
         task:'Pulz ' + L[0] + ' (' + tex(L[1] + '\\ \\mathrm{nm}') + ') nese energii ' + tex(numTex(Ej, 2) + '\\ \\mathrm{J}') + '. Kolik obsahuje fotonů?',
         lhs:'N', unit:'', sci:true, exact:N,

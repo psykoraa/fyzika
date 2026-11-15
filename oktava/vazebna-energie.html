@@ -93,6 +93,8 @@
   overflow-y:hidden;
   padding:2px 0 4px;
 }
+.step-result{ max-width:100%; }
+.step-result > .line-scroll{ min-width:0; max-width:100%; }
 .given-data{
   font-size:clamp(0.9rem, 2.4vw, 1.05rem);
   color:var(--ink-soft);
@@ -533,7 +535,7 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
       </div>
       <details class="navod">
         <summary>Návod</summary>
-        <p class="hint">Výsledek zapište do rámečku; čárku i tečku lze zadat obojí. Velmi malá a velmi velká čísla se zadávají ve tvaru <i>a</i>·10<sup><i>n</i></sup> — do prvního pole mantisu <i>a</i>, do malého pole exponent <i>n</i> (i záporný). Uznává se odchylka do 1&nbsp;% od přesné hodnoty (u výpočtu z hmotností jader do 0,2&nbsp;%), takže stačí počítat s konstantami uvedenými výše a výsledek zaokrouhlit na 3 platné číslice. Enter potvrdí odpověď i přejde na další příklad.</p>
+        <p class="hint">Výsledek zapište do rámečku; čárku i tečku lze zadat obojí. Velmi malá a velmi velká čísla se zadávají ve tvaru <i>a</i>·10<sup><i>n</i></sup> — do prvního pole mantisu <i>a</i>, do malého pole exponent <i>n</i> (i záporný). Uznává se odchylka do 1&nbsp;% od přesné hodnoty (u výpočtu z hmotností jader do 0,4&nbsp;%), takže stačí počítat s konstantami uvedenými výše a výsledek zaokrouhlit na 3 platné číslice. Enter potvrdí odpověď i přejde na další příklad.</p>
       </details>
     </div>
 
@@ -698,7 +700,9 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
   function nTex(n){ return '{}^{' + n[2] + '}_{' + n[1] + '}\\mathrm{' + n[0] + '}'; }
   var TR_TYPES = [
     { key:'horeni', name:'Hmotnostní úbytek při hoření', gen:function(){
-      var f = pick(FUELS), m = randInt(f[2][0], f[2][1]), E = m * f[1] * 1e6, B = E / (C * C);
+      var f = pick(FUELS), m = randInt(f[2][0], f[2][1]);
+      if(m >= 100) m = Math.round(m / 100) * 100;   // v tunách zadáváme jen celé stovky kg, aby zobrazená hodnota byla přesná
+      var E = m * f[1] * 1e6, B = E / (C * C);
       var big = m >= 100, mt = big ? czTex(m / 1000, m % 1000 === 0 ? 0 : 1) + '\\ \\mathrm{t}' : m + '\\ \\mathrm{kg}';
       return { cat:'Hmotnostní úbytek při hoření', signature:'f' + f[0] + m,
         task:'Spálením ' + tex(mt) + ' ' + f[0] + ' (výhřevnost ' + tex(f[1] + '\\ \\mathrm{MJ\\cdot kg^{-1}}') + ') se uvolní teplo. Jaký hmotnostní úbytek tomu odpovídá?',
@@ -732,7 +736,7 @@ svg.scene text{ font-family:'Work Sans', sans-serif; }
       var mj = roundTo(Z * MP + N * MN - n[4], 2), sum = roundTo(Z * MP + N * MN, 2), Ev = roundTo(sum - mj, 2);
       return { cat:'Vazebná energie z hmotností', signature:'h' + n[2] + n[0],
         task:'Jádro ' + tex(nTex(n)) + ' má hmotnost ' + tex(czTex(mj, 2) + '\\ \\mathrm{MeV}/c^2') + '. Určete jeho vazebnou energii.',
-        lhs:'E_\\mathrm{v}', unit:'\\mathrm{MeV}', sci:false, exact:Ev, tol:0.002,
+        lhs:'E_\\mathrm{v}', unit:'\\mathrm{MeV}', sci:false, exact:Ev, tol:0.004,
         given:['m_\\mathrm{j} = ' + czTex(mj, 2) + '\\ \\mathrm{MeV}/c^2', 'Z = ' + Z + ',\\ N = ' + N, 'm_\\mathrm{p} = 938{,}27\\ \\mathrm{MeV}/c^2', 'm_\\mathrm{n} = 939{,}57\\ \\mathrm{MeV}/c^2'], find:['E_\\mathrm{v}'],
         steps:['Z m_\\mathrm{p} + N m_\\mathrm{n} = ' + Z + '\\cdot 938{,}27 + ' + N + '\\cdot 939{,}57 = ' + czTex(sum, 2) + '\\ \\mathrm{MeV}/c^2',
                'B = ' + czTex(sum, 2) + ' - ' + czTex(mj, 2) + ' = ' + czTex(Ev, 2) + '\\ \\mathrm{MeV}/c^2'],
