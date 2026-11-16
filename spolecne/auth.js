@@ -48,6 +48,11 @@
     'grafy-rovnomerne-zrychleneho-pohybu.html': 'kvinta',
     'pohyb-po-kruznici.html': 'kvinta',
     'sila.html': 'kvinta',
+    'newtonovy-zakony.html': 'kvinta',
+    'hybnost.html': 'kvinta',
+    'treci-sila.html': 'kvinta',
+    'dostrediva-sila.html': 'kvinta',
+    'neinercialni-soustavy.html': 'kvinta',
     'kulova-zrcadla.html': 'oktava',
     'cocky.html': 'oktava',
     'zorny-uhel-a-lupa.html': 'oktava',
@@ -122,6 +127,21 @@
       { d: 'hra-120s', key: 'fyzika:sila:game-bests', field: '120' },
       { d: 'hra-180s', key: 'fyzika:sila:game-bests', field: '180' },
       { d: 'hra-300s', key: 'fyzika:sila:game-bests', field: '300' }
+    ],
+    'newtonovy-zakony.html': [
+      { d: 'serie', key: 'fyzika:newtonovy-zakony:stats', field: 'bestStreak' }
+    ],
+    'hybnost.html': [
+      { d: 'serie', key: 'fyzika:hybnost:stats', field: 'bestStreak' }
+    ],
+    'treci-sila.html': [
+      { d: 'serie', key: 'fyzika:treci-sila:stats', field: 'bestStreak' }
+    ],
+    'dostrediva-sila.html': [
+      { d: 'serie', key: 'fyzika:dostrediva-sila:stats', field: 'bestStreak' }
+    ],
+    'neinercialni-soustavy.html': [
+      { d: 'serie', key: 'fyzika:neinercialni-soustavy:stats', field: 'bestStreak' }
     ],
     'skladani-vektoru.html': [
       { d: 'serie', key: 'fyzika:skladani-vektoru:stats', field: 'bestStreak' },

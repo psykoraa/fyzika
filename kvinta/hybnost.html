@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hybnost</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../spolecne/config.js"></script>
+<script src="../spolecne/auth.js"></script>
+<script src="../spolecne/zalozky.js?v=3"></script>
+<link rel="stylesheet" href="../spolecne/styl.css">
+<link rel="stylesheet" href="../spolecne/reseni.css?v=1">
+<style>
+:root{
+  --paper:#f5f0e3;
+  --surface:#fffcf5;
+  --surface-2:#ece4d1;
+  --ink:#212b34;
+  --ink-soft:#5d6b76;
+  --line:rgba(33,43,52,0.12);
+  --accent:#c9581f;
+  --accent-ink:#fff8f0;
+  --success:#28794f;
+  --success-bg:#e3efe0;
+  --danger:#b3392b;
+  --danger-bg:#f5e4de;
+  --focus:#1e6f66;
+  --shadow:0 1px 0 rgba(33,43,52,0.06);
+}
+
+.panel{ margin-bottom:22px; }
+.panel-title{ margin-bottom:8px; }
+.panel p{
+  margin:0 0 8px;
+  font-size:0.9rem;
+  line-height:1.55;
+}
+.panel p:last-child{ margin-bottom:0; }
+.panel b{ color:var(--ink); }
+.panel ul, .panel ol{ margin:0 0 8px; padding-left:22px; font-size:0.9rem; line-height:1.55; }
+.panel li{ margin-bottom:4px; }
+.panel h3{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.05rem;
+  letter-spacing:0.01em;
+  margin:16px 0 6px;
+}
+.panel h3:first-child{ margin-top:0; }
+
+.card{ padding:26px 26px 28px; text-align:left; margin-bottom:24px; }
+.cat-tag{ margin-bottom:10px; }
+.card h2{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.6rem;
+  letter-spacing:0.02em;
+  color:var(--ink);
+  text-transform:none;
+  margin-bottom:6px;
+}
+.card .desc{
+  font-size:0.86rem;
+  color:var(--ink-soft);
+  line-height:1.5;
+  margin:0 0 14px;
+}
+
+.katex{ font-size:1.05em; }
+.formula-box{
+  background:var(--surface-2);
+  border-radius:8px;
+  padding:12px 16px;
+  margin:10px 0;
+  font-size:1.1rem;
+  text-align:center;
+}
+.formula-line{
+  text-align:center;
+  font-size:1.1rem;
+  color:var(--ink);
+  line-height:1.8;
+}
+.line-scroll{
+  position:relative;
+  white-space:nowrap;
+  overflow-x:auto;
+  overflow-y:hidden;
+  padding:2px 0 4px;
+}
+.given-data{
+  font-size:0.9rem;
+  line-height:1.55;
+  color:var(--ink-soft);
+  margin-bottom:20px;
+}
+
+.theory-table-wrap{ overflow-x:auto; margin:6px 0 4px; }
+.theory-table{
+  border-collapse:collapse;
+  font-size:0.88rem;
+  width:100%;
+  min-width:320px;
+}
+.theory-table th, .theory-table td{
+  border:1px solid var(--line);
+  padding:8px 12px;
+  text-align:left;
+}
+.theory-table thead th{
+  background:var(--surface-2);
+  color:var(--ink-soft);
+  font-weight:600;
+  font-size:0.72rem;
+  text-transform:uppercase;
+  letter-spacing:0.05em;
+}
+.theory-table thead th i{ text-transform:none; }
+.theory-table td.mono, .theory-table th.mono{
+  font-family:'IBM Plex Mono', monospace;
+  font-variant-numeric:tabular-nums;
+  text-align:center;
+}
+.theory-table tbody tr:nth-child(even) td{ background:rgba(0,0,0,0.02); }
+
+.theory-fig{
+  margin:12px 0 10px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:10px 12px 8px;
+}
+.theory-fig svg{ display:block; width:100%; max-width:560px; height:auto; margin:0 auto; }
+.theory-fig svg text{ font-family:'Work Sans', sans-serif; }
+.theory-fig figcaption{
+  font-size:0.8rem;
+  color:var(--ink-soft);
+  line-height:1.45;
+  text-align:center;
+  margin-top:4px;
+}
+
+.example-grid{ display:flex; flex-direction:column; gap:12px; margin-top:6px; }
+.example-item{
+  background:var(--surface-2);
+  border-radius:10px;
+  padding:12px 14px;
+}
+.example-tag{
+  font-size:0.66rem;
+  text-transform:uppercase;
+  letter-spacing:0.06em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-bottom:6px;
+  display:block;
+}
+.example-eq{
+  font-size:1.05rem;
+  margin-bottom:4px;
+}
+.example-note{ font-size:0.82rem; color:var(--ink-soft); line-height:1.45; }
+
+.links{ margin-top:14px; display:flex; flex-wrap:wrap; gap:10px; justify-content:center; }
+a.btn-link{
+  display:inline-block;
+  font-weight:600;
+  font-size:0.95rem;
+  padding:10px 22px;
+  border-radius:8px;
+  background:var(--accent);
+  color:var(--accent-ink);
+  text-decoration:none;
+}
+a.btn-link:hover{ filter:brightness(1.06); }
+a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+
+@media (max-width:520px){
+  .card{ padding:20px 16px 22px; }
+}
+
+/* ---- Trénink (číselná odpověď; stejná stavba jako Pohyb po kružnici) ---- */
+.section-block{ margin-bottom:16px; }
+.section-block:last-child{ margin-bottom:0; }
+.chip.accented.on{ background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+.equation{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:600;
+  font-size:clamp(1.3rem, 4.4vw, 2.1rem);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:0.4em;
+  flex-wrap:wrap;
+  font-variant-numeric:tabular-nums;
+}
+.equation .unit{ color:var(--ink-soft); font-size:0.8em; margin-left:0.1em; }
+.equation .eq{ color:var(--ink-soft); margin:0 0.1em; }
+.equation .katex{ font-size:1em; }
+.equation .answer-input{ width:4.6em; }
+.feedback .tip{ font-size:0.78rem; color:var(--ink); opacity:0.75; margin-top:6px; font-style:italic; }
+.task-text{ font-size:0.95rem; color:var(--ink); line-height:1.55; text-align:center; margin:0 auto 16px; max-width:56ch; }
+.task-rule{ font-size:0.8rem; color:var(--ink-soft); line-height:1.5; text-align:center; margin:-8px auto 14px; max-width:56ch; }
+@media (max-width:520px){
+  .card{ padding:26px 16px 24px; }
+  .readout .cell{ min-width:64px; padding:6px 8px; }
+}
+
+/* ---- aplet: karta, řádky ovládání (stejná stavba jako Pohyb po kružnici) ---- */
+.applet-head .cat-tag{ margin-bottom:10px; }
+.mode-row{
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+  margin-top:16px; padding-top:14px; border-top:1px solid var(--line);
+}
+.mode-row[hidden]{ display:none; }
+.mode-row-label{
+  font-size:0.68rem; text-transform:uppercase; letter-spacing:0.1em;
+  color:var(--ink-soft); font-weight:600; margin-right:2px; flex:0 0 150px;
+}
+.mode-row-label i{ text-transform:none; font-family:'STIX Two Text', Georgia, serif; font-size:1.15em; letter-spacing:0; }
+.seg{ display:flex; gap:6px; flex-wrap:wrap; }
+.chip{ font-size:0.82rem; gap:7px; }
+.chip:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+.slider-row input[type=range]{ flex:1 1 220px; min-width:0; height:34px; margin:0; accent-color:var(--accent); cursor:pointer; }
+.slider-row input[type=range]:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+.slider-val{
+  flex:0 0 150px; width:150px; font-weight:600; font-size:0.95rem;
+  font-variant-numeric:tabular-nums; white-space:nowrap;
+}
+.slider-val i, .qtable i{ font-family:'STIX Two Text', Georgia, serif; font-size:1.08em; }
+.canvas-wrap{
+  position:relative; margin:18px auto 0; max-width:680px;
+  background:var(--surface); border:1px solid var(--line); border-radius:10px; overflow:hidden;
+}
+svg.scene{ width:100%; height:auto; display:block; user-select:none; -webkit-user-select:none; }
+svg.scene text{ font-family:'Work Sans', sans-serif; }
+.legend{
+  display:flex; flex-wrap:wrap; gap:6px 18px; padding:10px 14px;
+  border-top:1px solid var(--line); font-size:0.8rem; color:var(--ink-soft);
+}
+.legend > span{ display:inline-flex; align-items:center; gap:7px; }
+.legend .sw{ width:12px; height:12px; border-radius:50%; flex:none; }
+.legend .sw.ar{ width:20px; height:4px; border-radius:2px; }
+.btn-row{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+.btn-row button.btn{ min-height:44px; }
+.qtable-wrap{ overflow-x:auto; margin-top:16px; }
+.qtable{ border-collapse:collapse; width:100%; font-size:0.9rem; min-width:300px; }
+.qtable th, .qtable td{ border:1px solid var(--line); padding:7px 10px; text-align:left; vertical-align:top; }
+.qtable thead th i{ text-transform:none; }
+.qtable thead th{
+  background:var(--surface-2); color:var(--ink-soft); font-weight:600;
+  font-size:0.72rem; text-transform:uppercase; letter-spacing:0.05em;
+}
+.qtable tbody th{ font-weight:600; white-space:nowrap; width:1%; background:rgba(0,0,0,0.02); }
+.qtable td{ font-variant-numeric:tabular-nums; }
+.comment{
+  margin-top:14px; background:var(--surface-2); border-radius:10px; padding:12px 14px;
+  font-size:0.9rem; line-height:1.55;
+}
+.comment p{ margin:0 0 8px; }
+.comment p:last-child{ margin-bottom:0; }
+.comment.warn{ background:var(--danger-bg); }
+.comment.good{ background:var(--success-bg); }
+@media (max-width:720px){
+  .mode-row-label{ flex-basis:100%; }
+}
+
+/* ================= tato stránka ================= */
+/* Srážky vozíků */
+.applet-card .qtable td{ white-space:nowrap; }
+.qtable td.sum{ font-weight:700; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <a class="back-link" href="../rozcestniky/kvinta.html">← Zpět na Kvinta/1. ročník</a>
+
+  <div class="brand">
+    <div class="brand-lockup">
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <line x1="2" y1="32" x2="38" y2="32" stroke="var(--ink-soft)" stroke-width="1.4"/>
+        <rect x="4" y="21" width="13" height="9" rx="1.5" stroke="var(--ink)" stroke-width="1.6"/>
+        <rect x="23" y="18" width="13" height="12" rx="1.5" stroke="var(--ink)" stroke-width="1.6"/>
+        <line x1="6" y1="13" x2="14" y2="13" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round"/>
+        <path d="M17.5,13 L13,10 V16 Z" fill="var(--accent)"/>
+        <line x1="34" y1="10" x2="28" y2="10" stroke="var(--focus)" stroke-width="2.4" stroke-linecap="round"/>
+        <path d="M24.5,10 L29,7 V13 Z" fill="var(--focus)"/>
+      </svg>
+      <div class="brand-text">
+        <h1>Hybnost</h1>
+        <p>Hybnost tělesa, impuls síly a zákon zachování hybnosti</p>
+      </div>
+    </div>
+    <div class="readout" id="header-readout" hidden>
+      <div class="cell"><span class="label">Skóre</span><span class="value" id="stat-score">0</span></div>
+      <div class="cell"><span class="label">Série</span><span class="value" id="stat-streak">0</span></div>
+      <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="stat-accuracy">—</span></div>
+    </div>
+  </div>
+
+  <div class="top-tabs">
+    <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+    <button class="toptab" id="top-tab-aplet" data-tab="aplet">Srážky vozíků</button>
+    <button class="toptab" id="top-tab-trenink" data-tab="trenink">Trénink</button>
+  </div>
+
+  <!-- ============ TEORIE ============ -->
+  <div id="theory-section" class="tab-section">
+    <div class="panel">
+      <div class="panel-title">Hybnost tělesa</div>
+      <p>Zastavit kutálející se tenisák je snadné, zastavit stejně rychle jedoucí auto nemožné. Zastavit dopadající kamínek je snadné, zastavit stejně malou vystřelenou kulku také nemožné. Jak obtížné je těleso zastavit, závisí na jeho <b>hmotnosti</b> i <b>rychlosti</b>. Obojí spojuje veličina <b>hybnost</b>:</p>
+      <div class="formula-box">\[\boldsymbol{p} = m\,\boldsymbol{v}\qquad [p] = \mathrm{kg\cdot m\cdot s^{-1}}\]</div>
+      <p>Hybnost je <b>vektorová</b> veličina. Hmotnost je kladný skalár, proto má hybnost vždy <b>stejný směr jako rychlost</b>. Jednotka nemá vlastní název, píšeme \(\mathrm{kg\cdot m\cdot s^{-1}}\) (případně \(\mathrm{N\cdot s}\), jak uvidíme níže).</p>
+      <div class="theory-table-wrap">
+        <table class="theory-table">
+          <thead>
+            <tr><th>Těleso</th><th class="mono"><i>m</i></th><th class="mono"><i>v</i></th><th class="mono"><i>p</i> (kg·m·s⁻¹)</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>vystřelená kulka</td><td class="mono">\(10\ \mathrm{g}\)</td><td class="mono">\(800\ \mathrm{m\cdot s^{-1}}\)</td><td class="mono">\(8\)</td></tr>
+            <tr><td>kopnutý fotbalový míč</td><td class="mono">\(0{,}43\ \mathrm{kg}\)</td><td class="mono">\(25\ \mathrm{m\cdot s^{-1}}\)</td><td class="mono">\(11\)</td></tr>
+            <tr><td>chodec</td><td class="mono">\(70\ \mathrm{kg}\)</td><td class="mono">\(1{,}4\ \mathrm{m\cdot s^{-1}}\)</td><td class="mono">\(98\)</td></tr>
+            <tr><td>osobní auto na silnici</td><td class="mono">\(1\,200\ \mathrm{kg}\)</td><td class="mono">\(90\ \mathrm{km\cdot h^{-1}}\)</td><td class="mono">\(30\,000\)</td></tr>
+            <tr><td>kamion na dálnici</td><td class="mono">\(40\ \mathrm{t}\)</td><td class="mono">\(80\ \mathrm{km\cdot h^{-1}}\)</td><td class="mono">\(890\,000\)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Lehká, ale velmi rychlá kulka má hybnost srovnatelnou s kopnutým míčem; pomalý chodec ji má desetkrát větší.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Změna hybnosti</div>
+      <p>Změní-li se rychlost tělesa z \(\boldsymbol{v}_1\) na \(\boldsymbol{v}_2\), změní se jeho hybnost o</p>
+      <div class="formula-line">\(\Delta\boldsymbol{p} = \boldsymbol{p}_2 - \boldsymbol{p}_1 = m\,(\boldsymbol{v}_2 - \boldsymbol{v}_1)\)</div>
+      <p>Protože jde o vektory, záleží na směru. Pohybuje-li se těleso po přímce, zvolíme kladný směr a rychlosti opačného směru dosazujeme se záporným znaménkem. Míček, který se odrazí zpět, proto změní hybnost víc, než kdyby se jen zastavil.</p>
+      <figure class="theory-fig">
+        <svg viewBox="0 0 440 170" style="max-width:460px" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Míček letí ke stěně rychlostí v1 a odrazí se zpět rychlostí v2. Změna hybnosti míří od stěny a je rovna součtu velikostí obou hybností.">
+          <rect x="390" y="10" width="16" height="150" fill="var(--surface-2)" stroke="var(--ink)" stroke-width="1.4"/>
+          <circle cx="370" cy="85" r="12" fill="var(--accent)"/>
+          <g font-size="13" fill="var(--ink)">
+            <text x="20" y="34">před odrazem</text>
+            <text x="20" y="84">po odrazu</text>
+            <text x="20" y="134">změna hybnosti</text>
+          </g>
+          <line x1="130" y1="30" x2="262" y2="30" stroke="var(--accent)" stroke-width="3"/><path d="M276,30 L262,24 V36 Z" fill="var(--accent)"/>
+          <text x="282" y="35" font-size="14" fill="var(--accent)"><tspan font-weight="700" font-style="italic">p</tspan><tspan font-size="10" dy="3">1</tspan></text>
+          <line x1="246" y1="80" x2="144" y2="80" stroke="var(--focus)" stroke-width="3"/><path d="M130,80 L144,74 V86 Z" fill="var(--focus)"/>
+          <text x="252" y="85" font-size="14" fill="var(--focus)"><tspan font-weight="700" font-style="italic">p</tspan><tspan font-size="10" dy="3">2</tspan></text>
+          <line x1="376" y1="130" x2="144" y2="130" stroke="var(--danger)" stroke-width="3"/><path d="M130,130 L144,124 V136 Z" fill="var(--danger)"/>
+          <text x="300" y="152" font-size="14" fill="var(--danger)">Δ<tspan font-weight="700" font-style="italic">p</tspan> = <tspan font-weight="700" font-style="italic">p</tspan><tspan font-size="10" dy="3">2</tspan><tspan dy="-3"> − </tspan><tspan font-weight="700" font-style="italic">p</tspan><tspan font-size="10" dy="3">1</tspan></text>
+        </svg>
+        <figcaption>Míček se odrazí zpět. Změna hybnosti míří od stěny a její velikost je součtem velikostí \(p_1 + p_2\).</figcaption>
+      </figure>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Druhý Newtonův zákon a impuls síly</div>
+      <p>Z pohybové rovnice dostaneme: \(\boldsymbol{F} = m\boldsymbol{a} = m\dfrac{\Delta\boldsymbol{v}}{\Delta t} = \dfrac{\Delta(m\boldsymbol{v})}{\Delta t}\). Zákon síly lze tedy zapsat pomocí hybnosti:</p>
+      <div class="formula-box">\[\boldsymbol{F} = \frac{\Delta\boldsymbol{p}}{\Delta t}\qquad\text{neboli}\qquad \boldsymbol{F}\,\Delta t = \Delta\boldsymbol{p}\]</div>
+      <p>Výslednice sil je rovna změně hybnosti za jednotku času. Součin \(\boldsymbol{F}\Delta t\) se nazývá <b>impuls síly</b> (jednotka \(\mathrm{N\cdot s} = \mathrm{kg\cdot m\cdot s^{-1}}\)). Tentýž impuls, tedy tutéž změnu hybnosti, lze dodat velkou silou za krátkou dobu, nebo malou silou za dlouhou dobu.</p>
+      <figure class="theory-fig">
+        <svg viewBox="0 0 360 210" style="max-width:400px" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Graf síly v závislosti na čase pro dopad na beton (vysoký úzký pulz) a do písku (nízký široký pulz). Plochy pod oběma křivkami jsou stejné.">
+          <line x1="40" y1="180" x2="340" y2="180" stroke="var(--ink)" stroke-width="1.4"/>
+          <path d="M340,180 L332,176 V184 Z" fill="var(--ink)"/>
+          <line x1="40" y1="180" x2="40" y2="12" stroke="var(--ink)" stroke-width="1.4"/>
+          <path d="M40,12 L36,20 H44 Z" fill="var(--ink)"/>
+          <path d="M60,180 L80,40 L100,180 Z" fill="var(--danger)" fill-opacity="0.18" stroke="var(--danger)" stroke-width="2.2"/>
+          <path d="M130,180 L200,140 L270,180 Z" fill="var(--focus)" fill-opacity="0.18" stroke="var(--focus)" stroke-width="2.2"/>
+          <g font-size="12.5">
+            <text x="88" y="40" fill="var(--danger)">beton: krátký náraz, velká síla</text>
+            <text x="190" y="130" fill="var(--focus)" text-anchor="middle">písek: dlouhé brzdění, malá síla</text>
+            <text x="336" y="198" text-anchor="end" fill="var(--ink)"><tspan font-style="italic">t</tspan></text>
+            <text x="48" y="22" fill="var(--ink)"><tspan font-style="italic">F</tspan></text>
+          </g>
+        </svg>
+        <figcaption>Při doskoku se hybnost změní vždy stejně. Plocha pod grafem \(F(t)\) (impuls) je proto stejná; delší doba brzdění znamená menší sílu.</figcaption>
+      </figure>
+      <p>Proto skáčeme do písku, ne na beton, a při doskoku pokrčíme kolena. Stejnou úlohu mají deformační zóny aut, airbagy, přilby, žíněnky v tělocvičně nebo pružná lana horolezců.</p>
+      <div class="example-grid">
+        <div class="example-item">
+          <span class="example-tag">Odraz volejbalového míče</span>
+          <div class="example-eq">\[\Delta p = m\,(v_1 + v_2) = 0{,}27\ \mathrm{kg}\cdot(12 + 15)\ \mathrm{m\cdot s^{-1}} \doteq 7{,}3\ \mathrm{kg\cdot m\cdot s^{-1}},\qquad F = \frac{\Delta p}{\Delta t} = \frac{7{,}29\ \mathrm{kg\cdot m\cdot s^{-1}}}{0{,}02\ \mathrm{s}} \doteq 360\ \mathrm{N}\]</div>
+          <div class="example-note">Míč o hmotnosti \(0{,}27\ \mathrm{kg}\) přiletí rychlostí \(12\ \mathrm{m\cdot s^{-1}}\) a po úderu trvajícím \(0{,}02\ \mathrm{s}\) letí zpět rychlostí \(15\ \mathrm{m\cdot s^{-1}}\). Rychlosti mají opačný směr, proto se jejich velikosti sčítají.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Izolovaná soustava</div>
+      <p>Často zkoumáme více těles najednou, například dva vozíky, které se srazí. Síly, kterými na sebe tělesa soustavy působí navzájem, jsou <b>vnitřní síly</b>. Síly od těles mimo soustavu jsou <b>vnější síly</b>.</p>
+      <p>Soustava, na kterou nepůsobí vnější síly (nebo je jejich výslednice nulová), je <b>izolovaná soustava</b>. Vozíky na vodorovné dráze tvoří přibližně izolovanou soustavu: tíhová síla a tlaková síla podložky se ruší a tření je malé.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Zákon zachování hybnosti</div>
+      <div class="formula-box">Celková hybnost izolované soustavy těles se nemění. Pro dvě tělesa: \[m_1\boldsymbol{v}_1 + m_2\boldsymbol{v}_2 = m_1\boldsymbol{v}'_1 + m_2\boldsymbol{v}'_2\]</div>
+      <p>Čárkou označujeme rychlosti <b>po</b> ději (srážce, výstřelu, odrazu), bez čárky rychlosti <b>před</b> ním.</p>
+      <h3>Proč zákon platí</h3>
+      <p>Při srážce působí vozík 1 na vozík 2 silou \(\boldsymbol{F}\) a podle zákona akce a reakce vozík 2 na vozík 1 silou \(-\boldsymbol{F}\), po stejnou dobu \(\Delta t\). Změny hybnosti obou vozíků jsou proto \(\Delta\boldsymbol{p}_2 = \boldsymbol{F}\Delta t\) a \(\Delta\boldsymbol{p}_1 = -\boldsymbol{F}\Delta t\). Co jeden vozík hybnosti získá, to druhý ztratí, a jejich součet zůstane stejný.</p>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="9" cy="9" r="7.5" stroke="var(--focus)" stroke-width="1.6"/>
+          <line x1="9" y1="8" x2="9" y2="13" stroke="var(--focus)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="5.2" r="1" fill="var(--focus)"/>
+        </svg>
+        <p>Zachovává se <b>celková</b> hybnost soustavy, nikoli hybnosti jednotlivých těles. A protože je hybnost vektor, zachovává se její velikost i směr.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Jak řešit úlohy na zachování hybnosti</div>
+      <ol>
+        <li>Zvolte kladný směr (obvykle směr pohybu prvního tělesa).</li>
+        <li>Zapište celkovou hybnost soustavy <b>před</b> dějem; rychlosti opačného směru se záporným znaménkem.</li>
+        <li>Zapište celkovou hybnost <b>po</b> ději.</li>
+        <li>Obě hybnosti položte sobě rovny a vyjádřete neznámou. Záporný výsledek znamená pohyb proti zvolenému kladnému směru.</li>
+      </ol>
+      <h3>Typické děje</h3>
+      <ul>
+        <li><b>Nepružná srážka:</b> tělesa se po srážce spojí a pohybují se společně: \(m_1 v_1 + m_2 v_2 = (m_1 + m_2)\,v'\).</li>
+        <li><b>Rozpojení (výstřel, odstrčení):</b> soustava je na začátku v klidu, celková hybnost je nulová: \(0 = m_1 v'_1 + m_2 v'_2\). Tělesa se rozjedou opačnými směry, lehčí rychleji. Odtud zpětný ráz pušky nebo děla.</li>
+        <li><b>Pružná srážka:</b> tělesa se od sebe odrazí (kulečníkové koule, Newtonova kolébka). Hybnost se zachovává také; k určení obou rychlostí po srážce je ale potřeba ještě zákon zachování energie, který probereme později.</li>
+        <li><b>Reaktivní pohon:</b> raketa a spaliny tvoří izolovanou soustavu. Spaliny získají hybnost dozadu, raketa stejně velkou hybnost dopředu.</li>
+      </ul>
+      <div class="example-grid">
+        <div class="example-item">
+          <span class="example-tag">Bruslař dohoní bruslařku a chytí ji</span>
+          <div class="example-eq">\[v' = \frac{m_1 v_1 + m_2 v_2}{m_1 + m_2} = \frac{75\ \mathrm{kg}\cdot 3\ \mathrm{m\cdot s^{-1}} + 50\ \mathrm{kg}\cdot 1\ \mathrm{m\cdot s^{-1}}}{125\ \mathrm{kg}} = 2{,}2\ \mathrm{m\cdot s^{-1}}\]</div>
+          <div class="example-note">Oba jedou stejným směrem, rychlosti dosazujeme se stejným znaménkem. Po spojení jedou pomaleji než bruslař, ale rychleji než bruslařka.</div>
+        </div>
+        <div class="example-item">
+          <span class="example-tag">Kotva vyhozená z loďky</span>
+          <div class="example-eq">\[0 = m_\mathrm{L} v'_\mathrm{L} + m_\mathrm{k} v'_\mathrm{k}\;\Rightarrow\; v'_\mathrm{L} = -\frac{m_\mathrm{k} v'_\mathrm{k}}{m_\mathrm{L}} = -\frac{6\ \mathrm{kg}\cdot(-5\ \mathrm{m\cdot s^{-1}})}{120\ \mathrm{kg}} = 0{,}25\ \mathrm{m\cdot s^{-1}}\]</div>
+          <div class="example-note">Rybář v loďce (dohromady \(120\ \mathrm{kg}\)) stojící na klidné vodě vyhodí dozadu kotvu \(6\ \mathrm{kg}\) rychlostí \(5\ \mathrm{m\cdot s^{-1}}\). Kladný směr je dopředu, loďka se rozjede dopředu rychlostí \(0{,}25\ \mathrm{m\cdot s^{-1}}\).</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="cat-tag">Příklad z praxe</span>
+      <h2>Vozíky na vzduchové dráze</h2>
+      <p class="desc">Rozklikejte si postup krok po kroku — další krok se odemkne, jakmile otevřete ten předchozí.</p>
+      <div class="given-data">
+        <div class="given-line">Zadáno: vozík o hmotnosti \(0{,}40\ \mathrm{kg}\) jede rychlostí \(0{,}60\ \mathrm{m\cdot s^{-1}}\) proti vozíku o hmotnosti \(0{,}20\ \mathrm{kg}\), který jede opačným směrem rychlostí \(0{,}90\ \mathrm{m\cdot s^{-1}}\). Vozíky se při srážce spojí magnetem. Jakou rychlostí a kterým směrem se budou pohybovat?</div>
+      </div>
+      <div class="stepper" data-reset="reset-voziky">
+        <div class="step" data-step="1">
+          <div class="step-connector"></div>
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">1</span>
+            <span class="step-title">Zvolte kladný směr a určete hybnosti před srážkou</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <p>Kladný směr zvolíme ve směru pohybu těžšího vozíku. Rychlost lehčího vozíku je pak záporná.</p>
+            <div class="step-result"><div class="line-scroll">\(p_1 = m_1 v_1 = 0{,}40\ \mathrm{kg}\cdot 0{,}60\ \mathrm{m\cdot s^{-1}} = 0{,}24\ \mathrm{kg\cdot m\cdot s^{-1}}\)</div></div>
+            <div class="step-result"><div class="line-scroll">\(p_2 = m_2 v_2 = 0{,}20\ \mathrm{kg}\cdot(-0{,}90\ \mathrm{m\cdot s^{-1}}) = -0{,}18\ \mathrm{kg\cdot m\cdot s^{-1}}\)</div></div>
+          </div>
+        </div>
+        <div class="step" data-step="2">
+          <div class="step-connector"></div>
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">2</span>
+            <span class="step-title">Sečtěte hybnosti</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <div class="step-result"><div class="line-scroll">\(p = p_1 + p_2 = 0{,}24\ \mathrm{kg\cdot m\cdot s^{-1}} - 0{,}18\ \mathrm{kg\cdot m\cdot s^{-1}} = 0{,}06\ \mathrm{kg\cdot m\cdot s^{-1}}\)</div></div>
+            <p>Celková hybnost soustavy se srážkou nezmění.</p>
+          </div>
+        </div>
+        <div class="step" data-step="3">
+          <div class="step-connector"></div>
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">3</span>
+            <span class="step-title">Vyjádřete společnou rychlost po srážce</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <div class="step-result"><div class="line-scroll">\(p = (m_1 + m_2)\,v' \;\Rightarrow\; v' = \dfrac{p}{m_1 + m_2} = \dfrac{0{,}06\ \mathrm{kg\cdot m\cdot s^{-1}}}{0{,}60\ \mathrm{kg}} = 0{,}10\ \mathrm{m\cdot s^{-1}}\)</div></div>
+          </div>
+        </div>
+        <div class="step" data-step="4">
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">4</span>
+            <span class="step-title">Zapište výsledek a zkontrolujte ho</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <div class="result-box"><div class="line-scroll">\(v' = 0{,}10\ \mathrm{m\cdot s^{-1}}\) ve směru pohybu těžšího vozíku</div></div>
+            <p>Výsledek je kladný, spojené vozíky tedy jedou ve směru původního pohybu těžšího vozíku. Kontrola: hybnost po srážce \(0{,}60\ \mathrm{kg}\cdot 0{,}10\ \mathrm{m\cdot s^{-1}} = 0{,}06\ \mathrm{kg\cdot m\cdot s^{-1}}\) se rovná hybnosti před srážkou.</p>
+          </div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn ghost" id="reset-voziky">Zopakovat postup od začátku</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Hybnost je vektor: srážka v rovině</div>
+      <p>Nepohybují-li se tělesa po jedné přímce, sčítáme hybnosti jako vektory. Auto o hmotnosti \(1\,200\ \mathrm{kg}\) jede na východ rychlostí \(15\ \mathrm{m\cdot s^{-1}}\), druhé auto o hmotnosti \(1\,500\ \mathrm{kg}\) na sever rychlostí \(10\ \mathrm{m\cdot s^{-1}}\). Na křižovatce se srazí a zaklesnou do sebe.</p>
+      <figure class="theory-fig">
+        <svg viewBox="0 0 280 212" style="max-width:320px" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Vektor hybnosti prvního auta míří na východ, druhého na sever. Jejich součet je úhlopříčka obdélníku, svírající s východem úhel alfa.">
+          <line x1="40" y1="185" x2="226" y2="185" stroke="var(--accent)" stroke-width="3"/><path d="M240,185 L226,179 V191 Z" fill="var(--accent)"/>
+          <line x1="40" y1="185" x2="40" y2="32" stroke="var(--focus)" stroke-width="3"/><path d="M40,18 L34,32 H46 Z" fill="var(--focus)"/>
+          <line x1="240" y1="185" x2="240" y2="18" stroke="var(--ink-soft)" stroke-width="1.2" stroke-dasharray="5 4"/>
+          <line x1="40" y1="18" x2="240" y2="18" stroke="var(--ink-soft)" stroke-width="1.2" stroke-dasharray="5 4"/>
+          <line x1="40" y1="185" x2="229.3" y2="27" stroke="var(--danger)" stroke-width="3"/><path d="M240,18 L233.1,31.6 L225.4,22.4 Z" fill="var(--danger)"/>
+          <path d="M85,185 A45,45 0 0 0 74.6,156.2" fill="none" stroke="var(--ink)" stroke-width="1.2"/>
+          <g font-size="14">
+            <text x="140" y="205" fill="var(--accent)" text-anchor="middle"><tspan font-weight="700" font-style="italic">p</tspan><tspan font-size="10" dy="3">1</tspan></text>
+            <text x="16" y="105" fill="var(--focus)"><tspan font-weight="700" font-style="italic">p</tspan><tspan font-size="10" dy="3">2</tspan></text>
+            <text x="116" y="90" fill="var(--danger)"><tspan font-weight="700" font-style="italic">p</tspan></text>
+            <text x="90" y="176" fill="var(--ink)" font-style="italic">α</text>
+          </g>
+        </svg>
+        <figcaption>Celková hybnost \(\boldsymbol{p}\) je vektorovým součtem hybností obou aut. Po srážce se zaklesnutá auta pohybují ve směru \(\boldsymbol{p}\).</figcaption>
+      </figure>
+      <div class="formula-line">\(p_1 = 18\,000\ \mathrm{kg\cdot m\cdot s^{-1}},\quad p_2 = 15\,000\ \mathrm{kg\cdot m\cdot s^{-1}},\quad p = \sqrt{p_1^2 + p_2^2} \doteq 23\,400\ \mathrm{kg\cdot m\cdot s^{-1}}\)</div>
+      <div class="formula-line">\(v' = \dfrac{p}{m_1 + m_2} \doteq \dfrac{23\,400\ \mathrm{kg\cdot m\cdot s^{-1}}}{2\,700\ \mathrm{kg}} \doteq 8{,}7\ \mathrm{m\cdot s^{-1}},\qquad \mathrm{tg}\,\alpha = \dfrac{p_2}{p_1} \doteq 0{,}83,\ \ \alpha \doteq 40^\circ\)</div>
+      <p>Zaklesnutá auta se po srážce pohybují rychlostí asi \(8{,}7\ \mathrm{m\cdot s^{-1}}\) směrem, který svírá s východem úhel asi \(40^\circ\) na sever. Podobně dopravní policisté zpětně určují rychlosti aut před nehodou.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Shrnutí</div>
+      <p>• Hybnost \(\boldsymbol{p} = m\boldsymbol{v}\) je vektor se směrem rychlosti, jednotka \(\mathrm{kg\cdot m\cdot s^{-1}}\).</p>
+      <p>• Změna hybnosti \(\Delta\boldsymbol{p} = m(\boldsymbol{v}_2 - \boldsymbol{v}_1)\); při odrazu se velikosti hybností sčítají.</p>
+      <p>• 2. Newtonův zákon: \(\boldsymbol{F} = \dfrac{\Delta\boldsymbol{p}}{\Delta t}\); impuls síly \(\boldsymbol{F}\Delta t = \Delta\boldsymbol{p}\). Delší doba děje znamená menší sílu.</p>
+      <p>• Celková hybnost izolované soustavy se nemění: \(m_1\boldsymbol{v}_1 + m_2\boldsymbol{v}_2 = m_1\boldsymbol{v}'_1 + m_2\boldsymbol{v}'_2\).</p>
+      <p>• Při řešení zvolte kladný směr; rychlosti opačného směru mají záporné znaménko.</p>
+    </div>
+  </div>
+
+  <!-- ============ APLET ============ -->
+  <div id="aplet-section" class="tab-section" hidden>
+    <div class="card applet-card" id="applet-card">
+      <div class="applet-head">
+        <div class="applet-head-text">
+          <span class="cat-tag">Aplet</span>
+          <h2>Srážky vozíků</h2>
+          <p class="desc">Dva vozíky jedou po vodorovné dráze bez tření. Nastavte jejich hmotnosti a rychlosti, vyberte druh srážky a sledujte hybnosti obou vozíků i jejich součet před srážkou a po ní.</p>
+        </div>
+      </div>
+
+      <div class="mode-row slider-row">
+        <label class="mode-row-label" for="sl-m1">Vozík 1: <i>m</i><sub>1</sub></label>
+        <input type="range" id="sl-m1" min="0.2" max="2" step="0.1" value="1">
+        <span class="slider-val" id="out-m1" aria-live="polite"></span>
+      </div>
+      <div class="mode-row slider-row">
+        <label class="mode-row-label" for="sl-v1">Vozík 1: <i>v</i><sub>1</sub></label>
+        <input type="range" id="sl-v1" min="-1" max="1" step="0.05" value="0.6">
+        <span class="slider-val" id="out-v1" aria-live="polite"></span>
+      </div>
+      <div class="mode-row slider-row">
+        <label class="mode-row-label" for="sl-m2">Vozík 2: <i>m</i><sub>2</sub></label>
+        <input type="range" id="sl-m2" min="0.2" max="2" step="0.1" value="0.5">
+        <span class="slider-val" id="out-m2" aria-live="polite"></span>
+      </div>
+      <div class="mode-row slider-row">
+        <label class="mode-row-label" for="sl-v2">Vozík 2: <i>v</i><sub>2</sub></label>
+        <input type="range" id="sl-v2" min="-1" max="1" step="0.05" value="0">
+        <span class="slider-val" id="out-v2" aria-live="polite"></span>
+      </div>
+      <div class="mode-row">
+        <span class="mode-row-label" id="lbl-kind">Druh srážky</span>
+        <div class="seg" id="kind-seg" role="group" aria-labelledby="lbl-kind">
+          <button class="chip accented on" type="button" data-kind="nepruzna" aria-pressed="true">Nepružná (vozíky se spojí)</button>
+          <button class="chip accented" type="button" data-kind="pruzna" aria-pressed="false">Pružná (vozíky se odrazí)</button>
+        </div>
+      </div>
+
+      <div class="canvas-wrap">
+        <svg class="scene" id="col-svg" viewBox="0 0 640 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Dva vozíky na dráze a sloupcový diagram jejich hybností a celkové hybnosti."></svg>
+        <div class="legend">
+          <span><span class="sw ar" style="background:var(--accent)"></span><span>hybnost vozíku 1</span></span>
+          <span><span class="sw ar" style="background:var(--focus)"></span><span>hybnost vozíku 2</span></span>
+          <span><span class="sw ar" style="background:var(--ink)"></span><span>celková hybnost</span></span>
+        </div>
+      </div>
+
+      <div class="mode-row">
+        <span class="mode-row-label">Pokus</span>
+        <div class="btn-row">
+          <button class="btn primary" id="btn-play" type="button">Spustit</button>
+          <button class="btn ghost" id="btn-reset" type="button">Vynulovat</button>
+        </div>
+      </div>
+
+      <div class="qtable-wrap">
+        <table class="qtable">
+          <thead><tr><th></th><th>před srážkou</th><th>po srážce</th></tr></thead>
+          <tbody>
+            <tr><th><i>v</i><sub>1</sub></th><td id="t-v1a"></td><td id="t-v1b"></td></tr>
+            <tr><th><i>v</i><sub>2</sub></th><td id="t-v2a"></td><td id="t-v2b"></td></tr>
+            <tr><th><i>p</i><sub>1</sub> = <i>m</i><sub>1</sub><i>v</i><sub>1</sub></th><td id="t-p1a"></td><td id="t-p1b"></td></tr>
+            <tr><th><i>p</i><sub>2</sub> = <i>m</i><sub>2</sub><i>v</i><sub>2</sub></th><td id="t-p2a"></td><td id="t-p2b"></td></tr>
+            <tr><th><i>p</i> = <i>p</i><sub>1</sub> + <i>p</i><sub>2</sub></th><td class="sum" id="t-pa"></td><td class="sum" id="t-pb"></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="comment" id="col-comment"></div>
+
+      <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint">Posuvníky nastavte hmotnosti (0,2–2&nbsp;kg) a rychlosti vozíků; kladná rychlost míří doprava, záporná doleva. Vyberte druh srážky a stiskněte Spustit. Šipky pod dráhou ukazují hybnosti obou vozíků a jejich součet ve stejném měřítku; horní řada platí pro okamžik před srážkou, spodní pro aktuální stav. Hodnoty po srážce aplet spočítá předem, takže je můžete porovnat s vlastním výpočtem. Změna posuvníku pokus vynuluje. Tření ani odpor vzduchu aplet nepočítá.</p>
+      </details>
+    </div>
+  </div>
+
+  <!-- ============ TRÉNINK ============ -->
+  <div id="trenink-section" class="tab-section" hidden>
+
+    <div class="panel">
+      <div class="section-block">
+        <div class="panel-title">Typ úlohy</div>
+        <div class="row" id="type-row"></div>
+      </div>
+      <div class="settings-foot" style="justify-content:flex-end;">
+        <button class="linklike" id="reset-stats">vynulovat statistiku</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="cat-tag" id="cat-tag">Úloha</span>
+      <p class="task-text" id="task-text"></p>
+      <p class="task-rule">Počítejte s&nbsp;<i>g</i>&nbsp;=&nbsp;10&nbsp;m·s⁻². Výsledek zaokrouhlete na 3 platné číslice; uznává se odchylka do 1&nbsp;%.</p>
+      <div class="equation" id="equation">
+        <span id="eq-given"></span>
+        <span class="eq">=</span>
+        <span class="answer-slot" id="slot-single">
+          <input class="answer-input" id="answer" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="?" aria-label="odpověď">
+        </span>
+        <span class="unit" id="eq-unit"></span>
+      </div>
+      <div class="actions">
+        <button class="btn primary" id="btn-check">Zkontrolovat</button>
+        <button class="btn ghost" id="btn-skip">Nevím / Zobrazit řešení</button>
+      </div>
+      <div class="feedback" id="feedback" hidden>
+        <div class="headline" id="feedback-headline"></div>
+        <div class="steps" id="feedback-steps"></div>
+        <div class="tip" id="feedback-tip" hidden></div>
+      </div>
+      <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint">Výsledek zapište do rámečku a potvrďte tlačítkem Zkontrolovat nebo klávesou Enter; dalším Enterem přejdete na další příklad. Desetinnou čárku i tečku lze zadat obojí. Typ úloh vyberete nahoře; po kontrole se zobrazí celý postup řešení.</p>
+      </details>
+    </div>
+
+  </div>
+
+  <footer>Fyzika — Kvinta/1. ročník</footer>
+</div>
+
+<script src="../spolecne/reseni.js?v=1"></script>
+<script src="../spolecne/spolecne.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  // ---- záložky: tlačítko .toptab[data-tab="x"] ↔ sekce #x-section (Teorie = #theory-section) ----
+  var tabs = {}, sections = {}, tabHooks = {};
+  Array.prototype.forEach.call(document.querySelectorAll('.toptab[data-tab]'), function(btn){
+    var name = btn.getAttribute('data-tab');
+    tabs[name] = btn;
+    sections[name] = document.getElementById(name === 'teorie' ? 'theory-section' : name + '-section');
+  });
+  function showTab(name){
+    for(var k in tabs){
+      tabs[k].classList.toggle('on', k === name);
+      if(sections[k]) sections[k].hidden = k !== name;
+    }
+    // skóre, série a úspěšnost v hlavičce jen u tréninku
+    var readout = document.getElementById('header-readout');
+    if(readout) readout.hidden = name !== 'trenink';
+    if(tabHooks[name]) setTimeout(tabHooks[name], 0);
+  }
+  Object.keys(tabs).forEach(function(k){ tabs[k].addEventListener('click', function(){ showTab(k); }); });
+
+  // ---- příklady: postupně odemykané steppery ----
+  Array.prototype.forEach.call(document.querySelectorAll('.stepper'), function(wrap){
+    var steps = Array.prototype.slice.call(wrap.querySelectorAll('.step'));
+    var unlockedUpTo = 1;
+
+    function refreshLocks(){
+      steps.forEach(function(st){
+        var idx = parseInt(st.getAttribute('data-step'), 10);
+        var locked = idx > unlockedUpTo;
+        st.classList.toggle('locked', locked);
+        st.classList.toggle('unlocked', !locked && !st.classList.contains('done'));
+        st.querySelector('.step-head').setAttribute('aria-disabled', locked ? 'true' : 'false');
+      });
+    }
+
+    steps.forEach(function(st){
+      var idx = parseInt(st.getAttribute('data-step'), 10);
+      var head = st.querySelector('.step-head');
+      var body = st.querySelector('.step-body');
+      head.addEventListener('click', function(){
+        if(idx > unlockedUpTo) return;
+        var wasOpen = st.classList.contains('open');
+        st.classList.toggle('open', !wasOpen);
+        body.hidden = wasOpen;
+        head.setAttribute('aria-expanded', (!wasOpen).toString());
+        if(!wasOpen){
+          st.classList.add('done');
+          if(idx === unlockedUpTo && unlockedUpTo < steps.length){ unlockedUpTo++; }
+          refreshLocks();
+        }
+      });
+    });
+
+    var resetBtn = document.getElementById(wrap.getAttribute('data-reset'));
+    if(resetBtn){
+      resetBtn.addEventListener('click', function(){
+        unlockedUpTo = 1;
+        steps.forEach(function(st){
+          st.classList.remove('open', 'done');
+          st.querySelector('.step-body').hidden = true;
+          st.querySelector('.step-head').setAttribute('aria-expanded', 'false');
+        });
+        refreshLocks();
+      });
+    }
+
+    refreshLocks();
+  });
+
+  // ================= POMOCNÉ FUNKCE (čísla, TeX) =================
+  var G = 10;   // tíhové zrychlení v úlohách tréninku (m·s⁻²), stejně jako v přípravách
+  function tex(t){
+    // bez zalomení řádků: FyzikaReseni dělí řádky řešení podle \n (KaTeX má \n uvnitř SVG odmocniny)
+    try{ return window.katex ? katex.renderToString(t, {throwOnError:false}).replace(/\n/g, ' ') : t; }catch(e){ return t; }
+  }
+  function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+  // náhodné číslo z intervalu <a, b> s krokem step (hodnoty jsou „hezké“ a přesně ty, které žák vidí)
+  function rnd(a, b, step){
+    var n = Math.round((b - a)/step);
+    return roundTo(a + step*Math.floor(Math.random()*(n + 1)), 6);
+  }
+  // seskupení tisíců: sep = '\\,' (TeX) nebo '&nbsp;' (HTML)
+  function groupInt(s, sep){
+    if(s.length < 4) return s;
+    return s.replace(/\B(?=(\d{3})+(?!\d))/g, '#').replace(/#/g, sep);
+  }
+  function numParts(x, dec){
+    var s = Math.abs(roundTo(x, dec)).toFixed(dec);
+    var p = s.split('.');
+    return { neg: roundTo(x, dec) < 0, i: p[0], d: p[1] || '' };
+  }
+  // číslo zadání (bez zbytečných nul) a výsledek na sig platných číslic
+  function natDec(x){
+    for(var d = 0; d < 6; d++){ if(Math.abs(roundTo(x, d) - x) < 1e-9) return d; }
+    return 6;
+  }
+  function fmt(x, dec, mode){
+    var p = numParts(x, dec);
+    var tx = mode === 'tex';
+    var s = groupInt(p.i, tx ? '\\,' : '&nbsp;') + (p.d ? (tx ? '{,}' : ',') + p.d : '');
+    return (p.neg ? (tx ? '-' : '−') : '') + s;
+  }
+  function T(x){ return fmt(x, natDec(x), 'tex'); }                // TeX, zadaná hodnota
+  function H(x){ return fmt(x, natDec(x), 'html'); }               // HTML, zadaná hodnota
+  function TS(x, sig){ var r = roundSig(x, sig || 3); return fmt(r, decimalsForSig(r, sig || 3), 'tex'); }
+  function HS(x, sig){ var r = roundSig(x, sig || 3); return fmt(r, decimalsForSig(r, sig || 3), 'html'); }
+  // hodnota s jednotkou v TeXu
+  function U(x, unit){ return T(x) + '\\ \\mathrm{' + unit + '}'; }
+  function US(x, unit, sig){ return TS(x, sig) + '\\ \\mathrm{' + unit + '}'; }
+  // rovná se, nebo přibližně rovná se?
+  function eqs(x, sig){ return Math.abs(roundSig(x, sig || 3) - x) <= 1e-9*Math.max(1, Math.abs(x)) ? '=' : '\\doteq'; }
+  function parseNum(str){
+    if(!str) return NaN;
+    str = str.trim().replace(/[−–]/g, '-').replace(',', '.').replace(/\s+/g, '');
+    return /^-?\d*\.?\d+$|^-?\d+\.$/.test(str) ? parseFloat(str) : NaN;
+  }
+  // text do apletů: číslo s desetinnou čárkou na dec desetinných míst
+  function cz(x, dec){ return fmt(x, dec, 'html'); }
+  function kmh(v){ return v/3.6; }
+
+  // ---- kreslení do SVG apletů (šipky bez <marker>, aby se nepletla id) ----
+  function svgArrow(x1, y1, x2, y2, color, w, dash){
+    var dx = x2 - x1, dy = y2 - y1, L = Math.sqrt(dx*dx + dy*dy);
+    if(L < 2) return '';
+    w = w || 3;
+    var hl = Math.min(12, 0.45*L + 4), hw = hl*0.45, ux = dx/L, uy = dy/L;
+    var bx = x2 - ux*hl, by = y2 - uy*hl;
+    return '<line x1="' + x1.toFixed(1) + '" y1="' + y1.toFixed(1) + '" x2="' + bx.toFixed(1) + '" y2="' + by.toFixed(1) +
+      '" stroke="' + color + '" stroke-width="' + w + '"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + ' stroke-linecap="round"/>' +
+      '<path d="M' + x2.toFixed(1) + ',' + y2.toFixed(1) + ' L' + (bx - uy*hw).toFixed(1) + ',' + (by + ux*hw).toFixed(1) +
+      ' L' + (bx + uy*hw).toFixed(1) + ',' + (by - ux*hw).toFixed(1) + ' Z" fill="' + color + '"/>';
+  }
+  // popisek síly: F s indexem (kurzíva, tučně), volitelně s čárkou
+  function svgForceLabel(x, y, sub, color, anchor, size){
+    size = size || 14;
+    return '<text x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" text-anchor="' + (anchor || 'start') + '" font-size="' + size + '" fill="' + color + '">' +
+      '<tspan font-weight="700" font-style="italic">F</tspan><tspan font-size="' + Math.round(size*0.7) + '" dy="3">' + sub + '</tspan></text>';
+  }
+  function svgText(x, y, txt, opt){
+    opt = opt || {};
+    return '<text x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" text-anchor="' + (opt.anchor || 'start') + '" font-size="' + (opt.size || 12) +
+      '" fill="' + (opt.color || 'var(--ink)') + '"' + (opt.weight ? ' font-weight="' + opt.weight + '"' : '') + '>' + txt + '</text>';
+  }
+  function setChips(seg, attr, val){
+    Array.prototype.forEach.call(seg.querySelectorAll('[data-' + attr + ']'), function(b){
+      var on = b.getAttribute('data-' + attr) === String(val);
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+  }
+
+  var STATS_KEY = 'fyzika:hybnost:stats';
+
+  // ================= APLET: SRÁŽKY VOZÍKŮ =================
+  (function(){
+    var L = 3, X0 = 20, X1 = 620, K = (X1 - X0)/L, TY = 120;   // dráha 3 m
+    var PX = 320, KP = 100;                                      // osa a měřítko diagramu hybností (px na kg·m·s⁻¹)
+    var svg = document.getElementById('col-svg');
+    var ids = ['m1', 'v1', 'm2', 'v2'], sl = {}, out = {};
+    ids.forEach(function(k){ sl[k] = document.getElementById('sl-' + k); out[k] = document.getElementById('out-' + k); });
+    var btnPlay = document.getElementById('btn-play');
+    var kind = 'nepruzna', sim;
+
+    function W(m){ return 0.25 + 0.15*m; }
+    function P(){ return { m1:+sl.m1.value, v1:+sl.v1.value, m2:+sl.m2.value, v2:+sl.v2.value }; }
+    function predict(p){
+      if(p.v1 <= p.v2) return { hit:false, v1:p.v1, v2:p.v2 };
+      if(kind === 'nepruzna'){ var v = (p.m1*p.v1 + p.m2*p.v2)/(p.m1 + p.m2); return { hit:true, v1:v, v2:v }; }
+      return { hit:true,
+        v1:((p.m1 - p.m2)*p.v1 + 2*p.m2*p.v2)/(p.m1 + p.m2),
+        v2:((p.m2 - p.m1)*p.v2 + 2*p.m1*p.v1)/(p.m1 + p.m2) };
+    }
+    function reset(){
+      var p = P();
+      sim = { t:0, c1:0.75, c2:2.25, v1:p.v1, v2:p.v2, collided:false, running:false, done:false, last:null };
+      btnPlay.textContent = 'Spustit';
+      draw();
+    }
+    function step(dt){
+      var p = P();
+      sim.c1 += sim.v1*dt; sim.c2 += sim.v2*dt; sim.t += dt;
+      var gap = (sim.c2 - W(p.m2)/2) - (sim.c1 + W(p.m1)/2);
+      if(!sim.collided && gap <= 0 && sim.v1 > sim.v2){
+        var r = predict(p);
+        sim.c1 += gap/2; sim.c2 -= gap/2;
+        sim.v1 = r.v1; sim.v2 = r.v2; sim.collided = true;
+      }
+      if(sim.c1 - W(p.m1)/2 <= 0 || sim.c2 + W(p.m2)/2 >= L || sim.c1 + W(p.m1)/2 >= L || sim.c2 - W(p.m2)/2 <= 0 || sim.t > 15){
+        sim.running = false; sim.done = true; btnPlay.textContent = 'Spustit';
+      }
+    }
+    function frame(ts){
+      if(!sim.running){ sim.last = null; return; }
+      if(sim.last === null) sim.last = ts;
+      var dt = Math.min(0.05, (ts - sim.last)/1000); sim.last = ts;
+      var n = Math.max(1, Math.ceil(dt/0.002));
+      for(var i = 0; i < n && sim.running; i++) step(dt/n);
+      draw();
+      if(sim.running) window.requestAnimationFrame(frame);
+    }
+    function cart(c, m, color, label){
+      var w = W(m)*K, h = 20 + 10*m, x = X0 + c*K - w/2, s = '';
+      s += '<rect x="' + x.toFixed(1) + '" y="' + (TY - 10 - h).toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + h.toFixed(1) + '" rx="3" fill="' + color + '" fill-opacity="0.18" stroke="' + color + '" stroke-width="2"/>';
+      s += '<circle cx="' + (x + w*0.25).toFixed(1) + '" cy="' + (TY - 6) + '" r="5" fill="var(--surface)" stroke="var(--ink)" stroke-width="1.3"/>';
+      s += '<circle cx="' + (x + w*0.75).toFixed(1) + '" cy="' + (TY - 6) + '" r="5" fill="var(--surface)" stroke="var(--ink)" stroke-width="1.3"/>';
+      s += svgText(x + w/2, TY - 14 - h/2 + 4, label, {anchor:'middle', size:12, weight:700, color:color});
+      return s;
+    }
+    function pRow(y, p1, p2, title){
+      var s = svgText(14, y + 18, title, {size:12, color:'var(--ink-soft)', weight:600});
+      [[p1, 'var(--accent)', 'p<tspan font-size="9" dy="3">1</tspan>'], [p2, 'var(--focus)', 'p<tspan font-size="9" dy="3">2</tspan>'], [p1 + p2, 'var(--ink)', 'p']].forEach(function(r, i){
+        var yy = y + i*16;
+        if(Math.abs(r[0]) > 0.004) s += svgArrow(PX, yy, PX + r[0]*KP, yy, r[1], 3.2);
+        else s += '<circle cx="' + PX + '" cy="' + yy + '" r="3" fill="' + r[1] + '"/>';
+        var tx = PX + r[0]*KP + (r[0] >= 0 ? 6 : -6);
+        s += '<text x="' + tx.toFixed(1) + '" y="' + (yy + 4) + '" text-anchor="' + (r[0] >= 0 ? 'start' : 'end') + '" font-size="11.5" fill="' + r[1] + '"><tspan font-weight="700" font-style="italic">' + r[2] + '</tspan><tspan dy="' + (i < 2 ? -3 : 0) + '"> = ' + cz(r[0], 2) + '</tspan></text>';
+      });
+      return s;
+    }
+    function draw(){
+      var p = P(), s = '';
+      s += '<line x1="' + X0 + '" y1="' + TY + '" x2="' + X1 + '" y2="' + TY + '" stroke="var(--ink-soft)" stroke-width="2"/>';
+      for(var m = 0; m <= L; m += 0.5){
+        var xx = X0 + m*K;
+        s += '<line x1="' + xx + '" y1="' + TY + '" x2="' + xx + '" y2="' + (TY + 6) + '" stroke="var(--ink-soft)" stroke-width="1"/>';
+        s += svgText(xx, TY + 20, cz(m, 1) + '&#160;m', {anchor:'middle', size:10.5, color:'var(--ink-soft)'});
+      }
+      s += cart(sim.c1, p.m1, 'var(--accent)', '1') + cart(sim.c2, p.m2, 'var(--focus)', '2');
+      // šipky rychlostí nad vozíky
+      [[sim.c1, sim.v1, p.m1, 'var(--accent)'], [sim.c2, sim.v2, p.m2, 'var(--focus)']].forEach(function(r){
+        if(Math.abs(r[1]) < 0.004) return;
+        var x = X0 + r[0]*K, y = TY - 24 - (20 + 10*r[2]);
+        s += svgArrow(x, y, x + r[1]*90, y, r[3], 2.4);
+        s += svgText(x + r[1]*90 + (r[1] > 0 ? 5 : -5), y + 4, '<tspan font-style="italic" font-weight="700">v</tspan>', {anchor:r[1] > 0 ? 'start' : 'end', size:12, color:r[3]});
+      });
+      // diagram hybností (měřítko podle největší hybnosti, stejné pro obě řady)
+      var rr = predict(p), mx = 0.2;
+      [p.m1*p.v1, p.m2*p.v2, p.m1*p.v1 + p.m2*p.v2, p.m1*rr.v1, p.m2*rr.v2].forEach(function(x){ mx = Math.max(mx, Math.abs(x)); });
+      KP = Math.min(160, 250/mx);
+      s += svgText(626, 162, 'hybnost v kg·m·s⁻¹', {anchor:'end', size:11, color:'var(--ink-soft)'});
+      s += '<line x1="' + PX + '" y1="168" x2="' + PX + '" y2="318" stroke="var(--line)" stroke-width="1.5"/>';
+      s += svgText(PX, 162, '<tspan font-style="italic">p</tspan> = 0', {anchor:'middle', size:11, color:'var(--ink-soft)'});
+      s += pRow(184, p.m1*p.v1, p.m2*p.v2, 'před srážkou');
+      s += pRow(260, p.m1*sim.v1, p.m2*sim.v2, 'nyní');
+      svg.innerHTML = s;
+
+      out.m1.innerHTML = '<i>m</i><sub>1</sub> = ' + cz(p.m1, 1) + '&nbsp;kg';
+      out.m2.innerHTML = '<i>m</i><sub>2</sub> = ' + cz(p.m2, 1) + '&nbsp;kg';
+      out.v1.innerHTML = '<i>v</i><sub>1</sub> = ' + cz(p.v1, 2) + '&nbsp;m·s⁻¹';
+      out.v2.innerHTML = '<i>v</i><sub>2</sub> = ' + cz(p.v2, 2) + '&nbsp;m·s⁻¹';
+      var r = predict(p), u = '&nbsp;m·s⁻¹', pu = '&nbsp;kg·m·s⁻¹';
+      var set = function(id, v, unit){ document.getElementById(id).innerHTML = cz(v, unit === u ? 2 : 3) + unit; };
+      set('t-v1a', p.v1, u); set('t-v2a', p.v2, u); set('t-v1b', r.v1, u); set('t-v2b', r.v2, u);
+      set('t-p1a', p.m1*p.v1, pu); set('t-p2a', p.m2*p.v2, pu); set('t-p1b', p.m1*r.v1, pu); set('t-p2b', p.m2*r.v2, pu);
+      set('t-pa', p.m1*p.v1 + p.m2*p.v2, pu); set('t-pb', p.m1*r.v1 + p.m2*r.v2, pu);
+      var c = '';
+      if(!r.hit) c = '<p>Vozík 1 nejede rychleji než vozík 2, vozíky se k sobě nepřibližují a nesrazí se. Nastavte rychlosti tak, aby <i>v</i><sub>1</sub> &gt; <i>v</i><sub>2</sub>.</p>';
+      else if(kind === 'nepruzna') c = '<p>Při nepružné srážce se vozíky spojí a jedou společnou rychlostí <i>v</i>′ = (<i>m</i><sub>1</sub><i>v</i><sub>1</sub> + <i>m</i><sub>2</sub><i>v</i><sub>2</sub>)/(<i>m</i><sub>1</sub> + <i>m</i><sub>2</sub>) = ' + cz(r.v1, 2) + '&nbsp;m·s⁻¹. Hybnosti jednotlivých vozíků se změní, jejich součet zůstane ' + cz(p.m1*p.v1 + p.m2*p.v2, 3) + '&nbsp;kg·m·s⁻¹.</p>';
+      else c = '<p>Při pružné srážce se vozíky odrazí. Vozík 1 změní hybnost o ' + cz(p.m1*(r.v1 - p.v1), 3) + '&nbsp;kg·m·s⁻¹, vozík 2 o ' + cz(p.m2*(r.v2 - p.v2), 3) + '&nbsp;kg·m·s⁻¹: co jeden získá, druhý ztratí. Celková hybnost zůstane ' + cz(p.m1*p.v1 + p.m2*p.v2, 3) + '&nbsp;kg·m·s⁻¹.' + (Math.abs(p.m1 - p.m2) < 1e-9 && Math.abs(p.v2) < 1e-9 ? ' Stejně těžké vozíky si rychlosti vymění, jako kuličky Newtonovy kolébky.' : '') + '</p>';
+      if(sim.done) c += '<p>Vozík dojel na konec dráhy. Stiskněte Vynulovat nebo změňte nastavení.</p>';
+      document.getElementById('col-comment').innerHTML = c;
+    }
+
+    ids.forEach(function(k){ sl[k].addEventListener('input', reset); });
+    var seg = document.getElementById('kind-seg');
+    seg.addEventListener('click', function(e){
+      var b = e.target.closest('[data-kind]'); if(!b) return;
+      kind = b.getAttribute('data-kind'); setChips(seg, 'kind', kind); reset();
+    });
+    btnPlay.addEventListener('click', function(){
+      if(sim.done) reset();
+      sim.running = !sim.running;
+      btnPlay.textContent = sim.running ? 'Pozastavit' : 'Spustit';
+      if(sim.running) window.requestAnimationFrame(frame);
+    });
+    document.getElementById('btn-reset').addEventListener('click', reset);
+    reset();
+  })();
+
+  // ================= TRÉNINK: TYPY ÚLOH =================
+  var PU = 'kg\\cdot m\\cdot s^{-1}', VU = 'm\\cdot s^{-1}';
+  var TASKS = [
+    { key:'hybnost', name:'Hybnost', gen:function(){
+        var sc = pick(['auto', 'bezec', 'strela', 'kamion']), m, v, txt, mu = 'kg', vu = VU, mkg, vms;
+        if(sc === 'auto'){ m = rnd(900, 2000, 50); v = rnd(30, 130, 10); vu = 'km\\cdot h^{-1}';
+          txt = 'Jak velkou hybnost má osobní auto o hmotnosti ' + H(m) + '&nbsp;kg jedoucí rychlostí ' + H(v) + '&nbsp;km·h⁻¹?'; }
+        else if(sc === 'bezec'){ m = rnd(55, 90, 1); v = rnd(3, 9, 0.5);
+          txt = 'Jak velkou hybnost má běžec o hmotnosti ' + H(m) + '&nbsp;kg, který běží rychlostí ' + H(v) + '&nbsp;m·s⁻¹?'; }
+        else if(sc === 'strela'){ m = rnd(5, 15, 1); v = rnd(300, 900, 50); mu = 'g';
+          txt = 'Jak velkou hybnost má střela o hmotnosti ' + H(m) + '&nbsp;g letící rychlostí ' + H(v) + '&nbsp;m·s⁻¹?'; }
+        else { m = rnd(12, 40, 1); v = rnd(50, 90, 5); mu = 't'; vu = 'km\\cdot h^{-1}';
+          txt = 'Jak velkou hybnost má kamion o hmotnosti ' + H(m) + '&nbsp;t jedoucí rychlostí ' + H(v) + '&nbsp;km·h⁻¹?'; }
+        mkg = mu === 'g' ? m/1000 : mu === 't' ? m*1000 : m;
+        vms = vu === VU ? v : v/3.6;
+        var p = mkg*vms;
+        var given = ['m = ' + U(m, mu) + (mu !== 'kg' ? ' = ' + U(mkg, 'kg') : ''), 'v = ' + U(v, vu) + (vu !== VU ? ' ' + eqs(vms, 4) + ' ' + US(vms, VU, 4) : '')];
+        return { tag:'Hybnost tělesa', text:txt, sym:'p', unit:PU, exact:p, given:given, find:['p = {?}'],
+          steps:['p = m v = ' + U(mkg, 'kg') + '\\cdot ' + (vu === VU ? U(v, VU) : US(vms, VU, 4)) + ' ' + eqs(p, 3) + ' ' + US(p, PU, 3)],
+          note:vu !== VU ? 'Rychlost v km·h⁻¹ převedeme na m·s⁻¹ dělením 3,6.' : '' };
+      } },
+    { key:'odraz', name:'Odraz a síla', gen:function(){
+        var b = pick([{n:'Tenisový míček', m:57}, {n:'Volejbalový míč', m:270}, {n:'Fotbalový míč', m:430}, {n:'Hokejový puk', m:170}]);
+        var v1 = rnd(10, 30, 1), v2 = rnd(8, 25, 1), t = rnd(5, 25, 1), m = b.m/1000;
+        var dp = m*(v1 + v2), F = dp/(t/1000);
+        var txt = b.n + ' o hmotnosti ' + H(b.m) + '&nbsp;g narazí rychlostí ' + H(v1) + '&nbsp;m·s⁻¹ kolmo na překážku a odrazí se zpět rychlostí ' + H(v2) + '&nbsp;m·s⁻¹. Náraz trvá ' + H(t) + '&nbsp;ms. Jak velkou průměrnou silou působila překážka na ' + (b.n === 'Hokejový puk' ? 'puk' : 'míč') + '?';
+        return { tag:'Změna hybnosti', text:txt, sym:'F', unit:'N', exact:F,
+          given:['m = ' + U(b.m, 'g') + ' = ' + U(m, 'kg'), 'v_1 = ' + U(-v1, VU), 'v_2 = ' + U(v2, VU), '\\Delta t = ' + U(t, 'ms') + ' = ' + U(t/1000, 's')],
+          find:['F = {?}'],
+          steps:['\\Delta p = m v_2 - m(-v_1) = m\\,(v_1 + v_2) = ' + U(m, 'kg') + '\\cdot ' + U(v1 + v2, VU) + ' ' + eqs(dp, 4) + ' ' + US(dp, PU, 4),
+                 'F = \\dfrac{\\Delta p}{\\Delta t} = \\dfrac{' + US(dp, PU, 4) + '}{' + U(t/1000, 's') + '} ' + eqs(F, 3) + ' ' + US(F, 'N', 3)],
+          note:'Kladný směr volíme ve směru odrazu; rychlost před nárazem je pak záporná, a proto se velikosti rychlostí sčítají.' };
+      } },
+    { key:'spojeni', name:'Spojení — stejný směr', gen:function(){
+        var sc = pick(['vagony', 'vozik', 'bruslari']), m1, v1, m2, v2, mu, txt, n;
+        if(sc === 'vagony'){ m1 = rnd(20, 60, 2); m2 = rnd(20, 60, 2); v1 = rnd(0.5, 2, 0.1); v2 = rnd(0, v1 - 0.2, 0.1); mu = 't';
+          txt = 'Vagon o hmotnosti ' + H(m1) + '&nbsp;t jede rychlostí ' + H(v1) + '&nbsp;m·s⁻¹ a narazí do vagonu o hmotnosti ' + H(m2) + '&nbsp;t, který ' + (v2 === 0 ? 'stojí' : 'jede stejným směrem rychlostí ' + H(v2) + '&nbsp;m·s⁻¹') + '. Vagony se spojí. Jakou rychlostí jedou dál?'; }
+        else if(sc === 'vozik'){ m1 = rnd(40, 80, 1); v1 = rnd(3, 7, 0.5); m2 = rnd(10, 40, 1); v2 = 0; mu = 'kg';
+          txt = 'Chlapec o hmotnosti ' + H(m1) + '&nbsp;kg běží rychlostí ' + H(v1) + '&nbsp;m·s⁻¹ a naskočí na stojící vozík o hmotnosti ' + H(m2) + '&nbsp;kg. Jakou rychlostí se vozík s chlapcem rozjede? Tření zanedbejte.'; }
+        else { m1 = rnd(60, 95, 1); m2 = rnd(40, 65, 1); v1 = rnd(2, 6, 0.5); v2 = rnd(0.5, v1 - 0.5, 0.5); mu = 'kg';
+          txt = 'Bruslař o hmotnosti ' + H(m1) + '&nbsp;kg jede rychlostí ' + H(v1) + '&nbsp;m·s⁻¹ a dohoní bruslařku o hmotnosti ' + H(m2) + '&nbsp;kg, která jede stejným směrem rychlostí ' + H(v2) + '&nbsp;m·s⁻¹. Chytí ji a jedou dál spolu. Jakou rychlostí?'; }
+        var p = m1*v1 + m2*v2, v = p/(m1 + m2);
+        return { tag:'Nepružná srážka', text:txt, sym:"v'", unit:VU, exact:v,
+          given:['m_1 = ' + U(m1, mu), 'v_1 = ' + U(v1, VU), 'm_2 = ' + U(m2, mu), 'v_2 = ' + U(v2, VU)], find:["v' = {?}"],
+          steps:["m_1 v_1 + m_2 v_2 = (m_1 + m_2)\\,v'",
+                 "v' = \\dfrac{m_1 v_1 + m_2 v_2}{m_1 + m_2} = \\dfrac{" + U(m1, mu) + '\\cdot ' + U(v1, VU) + ' + ' + U(m2, mu) + '\\cdot ' + U(v2, VU) + '}{' + U(m1 + m2, mu) + '} ' + eqs(v, 3) + ' ' + US(v, VU, 3)],
+          note:mu === 't' ? 'Hmotnosti v tunách není nutné převádět: v čitateli i jmenovateli je stejná jednotka a zkrátí se.' : '' };
+      } },
+    { key:'proti', name:'Srážka proti sobě', gen:function(){
+        var m1, v1, m2, v2, v, mu, txt, tries = 0, sc = pick(['vagony', 'auta']);
+        do{
+          if(sc === 'vagony'){ m1 = rnd(20, 60, 2); m2 = rnd(20, 60, 2); v1 = rnd(0.5, 2, 0.1); v2 = rnd(0.3, 2, 0.1); mu = 't'; }
+          else { m1 = rnd(800, 2000, 50); m2 = rnd(800, 2000, 50); v1 = rnd(3, 15, 1); v2 = rnd(3, 15, 1); mu = 'kg'; }
+          v = (m1*v1 - m2*v2)/(m1 + m2); tries++;
+        }while(Math.abs(v) < 0.08*Math.max(v1, v2) && tries < 50);
+        if(sc === 'vagony') txt = 'Vagon o hmotnosti ' + H(m1) + '&nbsp;t jede rychlostí ' + H(v1) + '&nbsp;m·s⁻¹ proti vagonu o hmotnosti ' + H(m2) + '&nbsp;t, který jede rychlostí ' + H(v2) + '&nbsp;m·s⁻¹. Vagony se spojí.';
+        else txt = 'Auto o hmotnosti ' + H(m1) + '&nbsp;kg jede rychlostí ' + H(v1) + '&nbsp;m·s⁻¹ a čelně se srazí s autem o hmotnosti ' + H(m2) + '&nbsp;kg, které jelo proti němu rychlostí ' + H(v2) + '&nbsp;m·s⁻¹. Auta se zaklesnou do sebe.';
+        txt += ' Určete jejich společnou rychlost. Kladný směr je směr pohybu prvního ' + (sc === 'vagony' ? 'vagonu' : 'auta') + '; vyjde-li rychlost záporná, zapište ji se znaménkem minus.';
+        return { tag:'Nepružná srážka', text:txt, sym:"v'", unit:VU, exact:v,
+          given:['m_1 = ' + U(m1, mu), 'v_1 = ' + U(v1, VU), 'm_2 = ' + U(m2, mu), 'v_2 = ' + U(-v2, VU)], find:["v' = {?}"],
+          steps:["m_1 v_1 + m_2 v_2 = (m_1 + m_2)\\,v'",
+                 "v' = \\dfrac{" + U(m1, mu) + '\\cdot ' + U(v1, VU) + ' + ' + U(m2, mu) + '\\cdot(' + U(-v2, VU) + ')}{' + U(m1 + m2, mu) + '} ' + eqs(v, 3) + ' ' + US(v, VU, 3)],
+          note:v < 0 ? 'Záporná rychlost znamená, že se spojená tělesa pohybují ve směru druhého tělesa.' : 'Kladná rychlost znamená, že se spojená tělesa pohybují ve směru prvního tělesa.' };
+      } },
+    { key:'raz', name:'Zpětný ráz a odstrčení', gen:function(){
+        var sc = pick(['puska', 'delo', 'lodka']), m1, m2, v2, txt, u1 = 'kg', u2 = 'kg', m1kg, m2kg;
+        if(sc === 'puska'){ m1 = rnd(3, 5, 0.5); m2 = rnd(8, 15, 1); v2 = rnd(600, 900, 50); u2 = 'g'; m1kg = m1; m2kg = m2/1000;
+          txt = 'Z pušky o hmotnosti ' + H(m1) + '&nbsp;kg vyletí střela o hmotnosti ' + H(m2) + '&nbsp;g rychlostí ' + H(v2) + '&nbsp;m·s⁻¹. Jak velkou rychlostí se puška pohne zpět?'; }
+        else if(sc === 'delo'){ m1 = rnd(1, 3, 0.1); m2 = rnd(5, 15, 1); v2 = rnd(300, 500, 10); u1 = 't'; m1kg = m1*1000; m2kg = m2;
+          txt = 'Z volně postaveného děla o hmotnosti ' + H(m1) + '&nbsp;t vyletí vodorovně koule o hmotnosti ' + H(m2) + '&nbsp;kg rychlostí ' + H(v2) + '&nbsp;m·s⁻¹. Jak velkou rychlostí se dělo začne pohybovat zpět?'; }
+        else { m1 = rnd(80, 150, 5); m2 = rnd(3, 10, 1); v2 = rnd(3, 8, 0.5); m1kg = m1; m2kg = m2;
+          txt = 'Z loďky stojící na klidné vodě (loďka s rybářem ' + H(m1) + '&nbsp;kg) vyhodí rybář vodorovně dozadu batoh o hmotnosti ' + H(m2) + '&nbsp;kg rychlostí ' + H(v2) + '&nbsp;m·s⁻¹. Jak velkou rychlostí se loďka rozjede dopředu? Odpor vody zanedbejte.'; }
+        var v1 = m2kg*v2/m1kg;
+        return { tag:'Zákon zachování hybnosti', text:txt, sym:"v'_1", unit:VU, exact:v1,
+          given:['m_1 = ' + U(m1, u1) + (u1 !== 'kg' ? ' = ' + U(m1kg, 'kg') : ''), 'm_2 = ' + U(m2, u2) + (u2 !== 'kg' ? ' = ' + U(m2kg, 'kg') : ''), "v'_2 = " + U(v2, VU)],
+          find:["v'_1 = {?}"],
+          steps:["0 = m_1 v'_1 + m_2 v'_2 \\;\\Rightarrow\\; |v'_1| = \\dfrac{m_2 v'_2}{m_1}",
+                 "|v'_1| = \\dfrac{" + U(m2kg, 'kg') + '\\cdot ' + U(v2, VU) + '}{' + U(m1kg, 'kg') + '} ' + eqs(v1, 3) + ' ' + US(v1, VU, 3)],
+          note:'Před dějem je soustava v klidu, celková hybnost je nulová. Proto se obě tělesa pohybují opačnými směry se stejně velkými hybnostmi.' };
+      } }
+  ];
+
+  // ================= TRÉNINK (číselná odpověď) =================
+  // Každý typ úlohy (TASKS) má gen(), která vrátí objekt:
+  //   tag, text (HTML zadání), sym (TeX levé strany), unit (TeX jednotky),
+  //   exact (přesný výsledek ze zadaných hodnot), sig (platné číslice výsledku),
+  //   given/find/steps (řádky řešení v TeXu), note (volitelná poznámka, HTML).
+  // Odpověď se uznává, liší-li se od přesné hodnoty nejvýše o 1 % (zaokrouhlené mezivýsledky).
+  var state = {
+    type:'all', score:0, streak:0, bestStreak:0,
+    answered:0, correct:0, current:null, lastKey:'', locked:false, touched:false
+  };
+  var TOL = 0.01;
+
+  function loadStats(){
+    try{ var raw = localStorage.getItem(STATS_KEY); if(raw){ state.bestStreak = JSON.parse(raw).bestStreak || 0; } }catch(e){}
+  }
+  function saveStats(){
+    try{ localStorage.setItem(STATS_KEY, JSON.stringify({bestStreak: state.bestStreak})); }catch(e){}
+  }
+
+  function generateQuestion(){
+    var pool = state.type === 'all' ? TASKS : TASKS.filter(function(t){ return t.key === state.type; });
+    var q, tries = 0;
+    do{
+      var t = pick(pool);
+      q = t.gen();
+      q.key = t.key + '|' + q.text;
+      tries++;
+    }while(q.key === state.lastKey && tries < 20);
+    if(!q.sig) q.sig = 3;
+    state.current = q;
+    state.lastKey = q.key;
+    state.locked = false; state.touched = false;
+    renderQuestion();
+  }
+
+  function renderQuestion(){
+    var q = state.current;
+    document.getElementById('cat-tag').textContent = q.tag;
+    document.getElementById('task-text').innerHTML = q.text;
+    document.getElementById('eq-given').innerHTML = tex(q.sym);
+    document.getElementById('eq-unit').innerHTML = q.unit ? tex('\\mathrm{' + q.unit + '}') : '';
+    var el = document.getElementById('answer');
+    el.value = ''; el.disabled = false; el.classList.remove('correct', 'wrong');
+    var fb = document.getElementById('feedback');
+    fb.hidden = true; fb.classList.remove('ok', 'bad', 'sol');
+    document.getElementById('feedback-tip').hidden = true;
+    document.getElementById('btn-check').textContent = 'Zkontrolovat';
+    el.focus({preventScroll:true});
+  }
+
+  function isAnswerEmpty(){ return isNaN(parseNum(document.getElementById('answer').value)); }
+  function lockUI(){
+    document.getElementById('answer').disabled = true;
+    state.locked = true;
+    var b = document.getElementById('btn-check');
+    b.textContent = 'Další příklad →';
+    b.focus({preventScroll:true});
+    updateStats();
+  }
+  function showSolution(){
+    var q = state.current;
+    var fin = q.sym + ' ' + eqs(q.exact, q.sig) + ' ' + TS(q.exact, q.sig) + (q.unit ? '\\ \\mathrm{' + q.unit + '}' : '');
+    FyzikaReseni.show(document.getElementById('feedback'), document.getElementById('feedback-steps'), {
+      raw:true,
+      given:(q.given || []).map(tex),
+      find:(q.find || []).map(tex),
+      steps:q.steps.map(tex),
+      final:tex(fin),
+      note:q.note || ''
+    });
+  }
+
+  function checkAnswer(){
+    if(state.locked){ generateQuestion(); return; }
+    var q = state.current;
+    var v = parseNum(document.getElementById('answer').value);
+    var ok = !isNaN(v) && Math.abs(v - q.exact) <= TOL*Math.abs(q.exact) + 1e-12;
+    var tipText = '';
+    if(!ok && !isNaN(v) && Math.abs(v + q.exact) <= TOL*Math.abs(q.exact)) tipText = 'Velikost sedí, ale znaménko ne. Zkontrolujte zvolený kladný směr.';
+    else if(!ok && !isNaN(v) && v !== 0){
+      var ratio = Math.abs(q.exact/v), k = Math.round(Math.log10(ratio));
+      if(k !== 0 && Math.abs(Math.log10(ratio) - k) < 0.005) tipText = 'Číslice sedí, ale řád ne. Zkontrolujte převody jednotek.';
+    }
+    state.answered++;
+    var fb = document.getElementById('feedback'), head = document.getElementById('feedback-headline'), tip = document.getElementById('feedback-tip');
+    fb.hidden = false; tip.hidden = !tipText; tip.textContent = tipText;
+    var el = document.getElementById('answer');
+    if(ok){
+      state.score += 10; state.streak++; state.correct++;
+      if(state.streak > state.bestStreak){
+        state.bestStreak = state.streak; saveStats();
+        if(window.FyzikaScores) FyzikaScores.report('serie', state.bestStreak, false);
+      }
+      el.classList.add('correct'); fb.classList.add('ok'); fb.classList.remove('bad');
+      head.textContent = 'Správně!';
+    } else {
+      state.streak = 0; el.classList.add('wrong'); fb.classList.add('bad'); fb.classList.remove('ok');
+      head.textContent = isAnswerEmpty() ? 'Doplňte odpověď.' : 'Bohužel špatně.';
+    }
+    showSolution(); lockUI();
+  }
+  function skip(){
+    if(state.locked){ generateQuestion(); return; }
+    state.streak = 0; state.answered++;
+    var fb = document.getElementById('feedback');
+    fb.hidden = false; fb.classList.add('bad'); fb.classList.remove('ok');
+    document.getElementById('feedback-tip').hidden = true;
+    document.getElementById('feedback-headline').textContent = 'Správný postup:';
+    showSolution(); lockUI();
+  }
+  function updateStats(){
+    document.getElementById('stat-score').textContent = state.score;
+    document.getElementById('stat-streak').textContent = state.streak + (state.bestStreak > 0 ? ' / ' + state.bestStreak : '');
+    document.getElementById('stat-accuracy').textContent = state.answered === 0 ? '—' : Math.round(100*state.correct/state.answered) + ' %';
+  }
+
+  // Vyhodnotí rozdělanou úlohu před změnou typu úlohy (stejná logika jako settleCurrentQuestion()
+  // ve spolecne.js; vlastní jméno, protože globální verze vidí jen globální `state`).
+  function settleQuestion(){
+    if(state.locked) return 'locked';
+    if(!state.touched) return 'untouched';
+    if(isAnswerEmpty() && !confirm('Odpověď není vyplněná. Opravdu chcete změnit nastavení?')) return 'cancelled';
+    checkAnswer();
+    return 'settled';
+  }
+
+  (function buildTypeRow(){
+    var row = document.getElementById('type-row');
+    var items = [{key:'all', name:'Vše'}].concat(TASKS.map(function(t){ return {key:t.key, name:t.name}; }));
+    items.forEach(function(d){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip accented' + (d.key === state.type ? ' on' : '');
+      b.setAttribute('aria-pressed', d.key === state.type ? 'true' : 'false');
+      b.textContent = d.name;
+      b.addEventListener('click', function(){
+        if(d.key === state.type) return;
+        var res = settleQuestion();
+        if(res === 'cancelled') return;
+        state.type = d.key;
+        Array.prototype.forEach.call(row.children, function(el, i){
+          var on = items[i].key === state.type;
+          el.classList.toggle('on', on);
+          el.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        if(res === 'locked' || res === 'untouched'){ generateQuestion(); }
+      });
+      row.appendChild(b);
+    });
+  })();
+
+  function tryCheck(){
+    if(state.locked){ generateQuestion(); return; }
+    if(isAnswerEmpty() && !confirm('Odpověď není vyplněná. Opravdu chcete zkontrolovat?')) return;
+    checkAnswer();
+  }
+  function trySkip(){
+    if(state.locked){ generateQuestion(); return; }
+    skip();
+  }
+  document.getElementById('btn-check').addEventListener('click', tryCheck);
+  document.getElementById('btn-skip').addEventListener('click', trySkip);
+  (function(){
+    var el = document.getElementById('answer');
+    sanitizeNumericInput(el, true);
+    el.addEventListener('input', function(){ state.touched = true; });
+    el.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); tryCheck(); } });
+  })();
+  document.getElementById('reset-stats').addEventListener('click', function(){
+    state.score = 0; state.streak = 0; state.answered = 0; state.correct = 0; state.bestStreak = 0;
+    try{ localStorage.removeItem(STATS_KEY); }catch(e){}
+    updateStats();
+  });
+  document.addEventListener('fyzika:scores-updated', function(){ state.bestStreak = 0; loadStats(); updateStats(); });
+
+  loadStats();
+  updateStats();
+  generateQuestion();
+  window.scrollTo(0, 0);
+
+  // ---- vzorce (KaTeX) ----
+  if(window.renderMathInElement){
+    ['theory-section', 'aplet-section'].forEach(function(id){
+      try{
+        renderMathInElement(document.getElementById(id), {
+          delimiters: [{left:'\\(', right:'\\)', display:false}, {left:'\\[', right:'\\]', display:true}]
+        });
+      }catch(e){}
+    });
+  }
+
+  // ---- sbalovací panely v teorii ----
+  try{ makePanelsCollapsible(document.getElementById('theory-section')); }catch(e){}
+
+  // ---- otevření záložky odkazem (…/stranka.html#trenink) ----
+  var hash = location.hash.replace('#', '');
+  if(hash && tabs[hash]) showTab(hash);
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Neinerciální vztažné soustavy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../spolecne/config.js"></script>
+<script src="../spolecne/auth.js"></script>
+<script src="../spolecne/zalozky.js?v=3"></script>
+<link rel="stylesheet" href="../spolecne/styl.css">
+<link rel="stylesheet" href="../spolecne/reseni.css?v=1">
+<style>
+:root{
+  --paper:#f5f0e3;
+  --surface:#fffcf5;
+  --surface-2:#ece4d1;
+  --ink:#212b34;
+  --ink-soft:#5d6b76;
+  --line:rgba(33,43,52,0.12);
+  --accent:#c9581f;
+  --accent-ink:#fff8f0;
+  --success:#28794f;
+  --success-bg:#e3efe0;
+  --danger:#b3392b;
+  --danger-bg:#f5e4de;
+  --focus:#1e6f66;
+  --shadow:0 1px 0 rgba(33,43,52,0.06);
+}
+
+.panel{ margin-bottom:22px; }
+.panel-title{ margin-bottom:8px; }
+.panel p{
+  margin:0 0 8px;
+  font-size:0.9rem;
+  line-height:1.55;
+}
+.panel p:last-child{ margin-bottom:0; }
+.panel b{ color:var(--ink); }
+.panel ul, .panel ol{ margin:0 0 8px; padding-left:22px; font-size:0.9rem; line-height:1.55; }
+.panel li{ margin-bottom:4px; }
+.panel h3{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.05rem;
+  letter-spacing:0.01em;
+  margin:16px 0 6px;
+}
+.panel h3:first-child{ margin-top:0; }
+
+.card{ padding:26px 26px 28px; text-align:left; margin-bottom:24px; }
+.cat-tag{ margin-bottom:10px; }
+.card h2{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.6rem;
+  letter-spacing:0.02em;
+  color:var(--ink);
+  text-transform:none;
+  margin-bottom:6px;
+}
+.card .desc{
+  font-size:0.86rem;
+  color:var(--ink-soft);
+  line-height:1.5;
+  margin:0 0 14px;
+}
+
+.katex{ font-size:1.05em; }
+.formula-box{
+  background:var(--surface-2);
+  border-radius:8px;
+  padding:12px 16px;
+  margin:10px 0;
+  font-size:1.1rem;
+  text-align:center;
+}
+.formula-line{
+  text-align:center;
+  font-size:1.1rem;
+  color:var(--ink);
+  line-height:1.8;
+}
+.line-scroll{
+  position:relative;
+  white-space:nowrap;
+  overflow-x:auto;
+  overflow-y:hidden;
+  padding:2px 0 4px;
+}
+.given-data{
+  font-size:0.9rem;
+  line-height:1.55;
+  color:var(--ink-soft);
+  margin-bottom:20px;
+}
+
+.theory-table-wrap{ overflow-x:auto; margin:6px 0 4px; }
+.theory-table{
+  border-collapse:collapse;
+  font-size:0.88rem;
+  width:100%;
+  min-width:320px;
+}
+.theory-table th, .theory-table td{
+  border:1px solid var(--line);
+  padding:8px 12px;
+  text-align:left;
+}
+.theory-table thead th{
+  background:var(--surface-2);
+  color:var(--ink-soft);
+  font-weight:600;
+  font-size:0.72rem;
+  text-transform:uppercase;
+  letter-spacing:0.05em;
+}
+.theory-table thead th i{ text-transform:none; }
+.theory-table td.mono, .theory-table th.mono{
+  font-family:'IBM Plex Mono', monospace;
+  font-variant-numeric:tabular-nums;
+  text-align:center;
+}
+.theory-table tbody tr:nth-child(even) td{ background:rgba(0,0,0,0.02); }
+
+.theory-fig{
+  margin:12px 0 10px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:10px 12px 8px;
+}
+.theory-fig svg{ display:block; width:100%; max-width:560px; height:auto; margin:0 auto; }
+.theory-fig svg text{ font-family:'Work Sans', sans-serif; }
+.theory-fig figcaption{
+  font-size:0.8rem;
+  color:var(--ink-soft);
+  line-height:1.45;
+  text-align:center;
+  margin-top:4px;
+}
+
+.example-grid{ display:flex; flex-direction:column; gap:12px; margin-top:6px; }
+.example-item{
+  background:var(--surface-2);
+  border-radius:10px;
+  padding:12px 14px;
+}
+.example-tag{
+  font-size:0.66rem;
+  text-transform:uppercase;
+  letter-spacing:0.06em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-bottom:6px;
+  display:block;
+}
+.example-eq{
+  font-size:1.05rem;
+  margin-bottom:4px;
+}
+.example-note{ font-size:0.82rem; color:var(--ink-soft); line-height:1.45; }
+
+.links{ margin-top:14px; display:flex; flex-wrap:wrap; gap:10px; justify-content:center; }
+a.btn-link{
+  display:inline-block;
+  font-weight:600;
+  font-size:0.95rem;
+  padding:10px 22px;
+  border-radius:8px;
+  background:var(--accent);
+  color:var(--accent-ink);
+  text-decoration:none;
+}
+a.btn-link:hover{ filter:brightness(1.06); }
+a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+
+@media (max-width:520px){
+  .card{ padding:20px 16px 22px; }
+}
+
+/* ---- Trénink (číselná odpověď; stejná stavba jako Pohyb po kružnici) ---- */
+.section-block{ margin-bottom:16px; }
+.section-block:last-child{ margin-bottom:0; }
+.chip.accented.on{ background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+.equation{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:600;
+  font-size:clamp(1.3rem, 4.4vw, 2.1rem);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:0.4em;
+  flex-wrap:wrap;
+  font-variant-numeric:tabular-nums;
+}
+.equation .unit{ color:var(--ink-soft); font-size:0.8em; margin-left:0.1em; }
+.equation .eq{ color:var(--ink-soft); margin:0 0.1em; }
+.equation .katex{ font-size:1em; }
+.equation .answer-input{ width:4.6em; }
+.feedback .tip{ font-size:0.78rem; color:var(--ink); opacity:0.75; margin-top:6px; font-style:italic; }
+.task-text{ font-size:0.95rem; color:var(--ink); line-height:1.55; text-align:center; margin:0 auto 16px; max-width:56ch; }
+.task-rule{ font-size:0.8rem; color:var(--ink-soft); line-height:1.5; text-align:center; margin:-8px auto 14px; max-width:56ch; }
+@media (max-width:520px){
+  .card{ padding:26px 16px 24px; }
+  .readout .cell{ min-width:64px; padding:6px 8px; }
+}
+
+/* ---- aplet: karta, řádky ovládání (stejná stavba jako Pohyb po kružnici) ---- */
+.applet-head .cat-tag{ margin-bottom:10px; }
+.mode-row{
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+  margin-top:16px; padding-top:14px; border-top:1px solid var(--line);
+}
+.mode-row[hidden]{ display:none; }
+.mode-row-label{
+  font-size:0.68rem; text-transform:uppercase; letter-spacing:0.1em;
+  color:var(--ink-soft); font-weight:600; margin-right:2px; flex:0 0 150px;
+}
+.mode-row-label i{ text-transform:none; font-family:'STIX Two Text', Georgia, serif; font-size:1.15em; letter-spacing:0; }
+.seg{ display:flex; gap:6px; flex-wrap:wrap; }
+.chip{ font-size:0.82rem; gap:7px; }
+.chip:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+.slider-row input[type=range]{ flex:1 1 220px; min-width:0; height:34px; margin:0; accent-color:var(--accent); cursor:pointer; }
+.slider-row input[type=range]:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+.slider-val{
+  flex:0 0 150px; width:150px; font-weight:600; font-size:0.95rem;
+  font-variant-numeric:tabular-nums; white-space:nowrap;
+}
+.slider-val i, .qtable i{ font-family:'STIX Two Text', Georgia, serif; font-size:1.08em; }
+.canvas-wrap{
+  position:relative; margin:18px auto 0; max-width:680px;
+  background:var(--surface); border:1px solid var(--line); border-radius:10px; overflow:hidden;
+}
+svg.scene{ width:100%; height:auto; display:block; user-select:none; -webkit-user-select:none; }
+svg.scene text{ font-family:'Work Sans', sans-serif; }
+.legend{
+  display:flex; flex-wrap:wrap; gap:6px 18px; padding:10px 14px;
+  border-top:1px solid var(--line); font-size:0.8rem; color:var(--ink-soft);
+}
+.legend > span{ display:inline-flex; align-items:center; gap:7px; }
+.legend .sw{ width:12px; height:12px; border-radius:50%; flex:none; }
+.legend .sw.ar{ width:20px; height:4px; border-radius:2px; }
+.btn-row{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+.btn-row button.btn{ min-height:44px; }
+.qtable-wrap{ overflow-x:auto; margin-top:16px; }
+.qtable{ border-collapse:collapse; width:100%; font-size:0.9rem; min-width:300px; }
+.qtable th, .qtable td{ border:1px solid var(--line); padding:7px 10px; text-align:left; vertical-align:top; }
+.qtable thead th i{ text-transform:none; }
+.qtable thead th{
+  background:var(--surface-2); color:var(--ink-soft); font-weight:600;
+  font-size:0.72rem; text-transform:uppercase; letter-spacing:0.05em;
+}
+.qtable tbody th{ font-weight:600; white-space:nowrap; width:1%; background:rgba(0,0,0,0.02); }
+.qtable td{ font-variant-numeric:tabular-nums; }
+.comment{
+  margin-top:14px; background:var(--surface-2); border-radius:10px; padding:12px 14px;
+  font-size:0.9rem; line-height:1.55;
+}
+.comment p{ margin:0 0 8px; }
+.comment p:last-child{ margin-bottom:0; }
+.comment.warn{ background:var(--danger-bg); }
+.comment.good{ background:var(--success-bg); }
+@media (max-width:720px){
+  .mode-row-label{ flex-basis:100%; }
+}
+
+/* ================= tato stránka ================= */
+/* Dva pohledy na vagon */
+.applet-card .qtable td{ white-space:nowrap; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <a class="back-link" href="../rozcestniky/kvinta.html">← Zpět na Kvinta/1. ročník</a>
+
+  <div class="brand">
+    <div class="brand-lockup">
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <line x1="2" y1="33" x2="38" y2="33" stroke="var(--ink-soft)" stroke-width="1.4"/>
+        <rect x="5" y="12" width="28" height="17" rx="2" stroke="var(--ink)" stroke-width="1.6"/>
+        <circle cx="11" cy="31" r="2" stroke="var(--ink)" stroke-width="1.3"/>
+        <circle cx="27" cy="31" r="2" stroke="var(--ink)" stroke-width="1.3"/>
+        <line x1="19" y1="12" x2="15.5" y2="21" stroke="var(--ink-soft)" stroke-width="1.2"/>
+        <circle cx="15" cy="22.5" r="2.2" fill="var(--ink)"/>
+        <circle cx="26" cy="26" r="2.4" fill="var(--accent)"/>
+        <line x1="23" y1="26" x2="18" y2="26" stroke="var(--danger)" stroke-width="1.8" stroke-dasharray="2 1.5"/>
+        <line x1="28" y1="7" x2="35" y2="7" stroke="var(--focus)" stroke-width="2" stroke-linecap="round"/>
+        <path d="M38,7 L34,4.5 V9.5 Z" fill="var(--focus)"/>
+      </svg>
+      <div class="brand-text">
+        <h1>Neinerciální vztažné soustavy</h1>
+        <p>Galileův princip relativity, setrvačná a odstředivá síla</p>
+      </div>
+    </div>
+    <div class="readout" id="header-readout" hidden>
+      <div class="cell"><span class="label">Skóre</span><span class="value" id="stat-score">0</span></div>
+      <div class="cell"><span class="label">Série</span><span class="value" id="stat-streak">0</span></div>
+      <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="stat-accuracy">—</span></div>
+    </div>
+  </div>
+
+  <div class="top-tabs">
+    <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+    <button class="toptab" id="top-tab-aplet" data-tab="aplet">Dva pohledy na vagon</button>
+    <button class="toptab" id="top-tab-trenink" data-tab="trenink">Trénink</button>
+  </div>
+
+  <!-- ============ TEORIE ============ -->
+  <div id="theory-section" class="tab-section">
+    <div class="panel">
+      <div class="panel-title">Inerciální vztažné soustavy</div>
+      <p>Pohyb tělesa vždy popisujeme vzhledem k nějaké vztažné soustavě. Soustava, ve které platí zákon setrvačnosti, je <b>inerciální vztažná soustava</b>: těleso s nulovou výslednicí sil je v ní v klidu, nebo se pohybuje rovnoměrně přímočaře.</p>
+      <p>Za inerciální považujeme soustavu spojenou s povrchem Země. Inerciální je pak i každá soustava, která se vůči ní pohybuje <b>rovnoměrně přímočaře</b>, například vlak jedoucí stálou rychlostí po rovné trati nebo letadlo v klidném letu.</p>
+      <div class="links">
+        <a class="btn-link" href="newtonovy-zakony.html">Newtonovy zákony →</a>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Galileův princip relativity</div>
+      <p>Sedíte ve vlaku se zatemněnými okny, který jede rovnoměrně po rovné trati. Upustíte-li klíče, spadnou vám k nohám stejně jako na nástupišti. Míček vyhozený svisle vzhůru vám spadne zpět do ruky. Žádným takovým pokusem nepoznáte, zda vlak stojí, nebo jede.</p>
+      <div class="formula-box">Ve všech inerciálních vztažných soustavách probíhají mechanické děje stejně a platí v nich stejné zákony mechaniky. Žádným mechanickým pokusem uvnitř soustavy nelze zjistit, zda je soustava v klidu, nebo se pohybuje rovnoměrně přímočaře.</div>
+      <p>Mezi inerciálními soustavami se rychlosti sčítají: jde-li průvodčí ve vlaku dopředu rychlostí \(v' = 1{,}5\ \mathrm{m\cdot s^{-1}}\) a vlak jede vůči nástupišti rychlostí \(u = 20\ \mathrm{m\cdot s^{-1}}\), pohybuje se průvodčí vůči nástupišti rychlostí</p>
+      <div class="formula-line">\(v = v' + u = 1{,}5\ \mathrm{m\cdot s^{-1}} + 20\ \mathrm{m\cdot s^{-1}} = 21{,}5\ \mathrm{m\cdot s^{-1}}\)</div>
+      <p>Einstein později ukázal, že princip relativity platí pro všechny fyzikální děje, nejen mechanické; pak se ale rychlosti blízké rychlosti světla takto jednoduše sčítat nedají. To poznáte ve vyšším ročníku.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Neinerciální vztažné soustavy</div>
+      <p>Soustava, která se vůči inerciální soustavě pohybuje <b>se zrychlením</b> (rozjíždí se, brzdí nebo se otáčí), je <b>neinerciální</b>. Zákon setrvačnosti v ní neplatí: tělesa se v ní mohou dát do pohybu, i když na ně žádné jiné těleso nepůsobí.</p>
+      <h3>Kulička v rozjíždějícím se vagonu</h3>
+      <p>Na hladké podlaze vagonu leží kulička (tření zanedbáme). Vlak se rozjede se zrychlením \(\boldsymbol{a}\).</p>
+      <ul>
+        <li><b>Pozorovatel na nástupišti</b> (inerciální soustava): na kuličku působí jen tíhová síla a tlaková síla podlahy, které se ruší. Kulička proto podle zákona setrvačnosti zůstává v klidu a vagon se pod ní rozjíždí, až ji dožene zadní stěna.</li>
+        <li><b>Cestující ve vagonu</b> (neinerciální soustava): kulička se sama od sebe rozjíždí dozadu se zrychlením \(-\boldsymbol{a}\). Aby mohl i on používat Newtonovy zákony, musí přidat sílu, která to „způsobuje“.</li>
+      </ul>
+      <figure class="theory-fig">
+        <svg viewBox="0 0 540 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Vlevo pohled z nástupiště: vagon zrychluje doprava, na kuličku působí jen tíhová a tlaková síla. Vpravo pohled z vagonu: na kuličku navíc působí setrvačná síla dozadu.">
+          <g font-size="12.5" fill="var(--ink)" font-weight="600">
+            <text x="130" y="18" text-anchor="middle">pohled z nástupiště</text>
+            <text x="410" y="18" text-anchor="middle">pohled z vagonu</text>
+          </g>
+          <line x1="270" y1="28" x2="270" y2="190" stroke="var(--line)" stroke-width="1.5"/>
+          <rect x="20" y="50" width="220" height="100" rx="4" fill="none" stroke="var(--ink)" stroke-width="1.6"/>
+          <rect x="300" y="50" width="220" height="100" rx="4" fill="none" stroke="var(--ink)" stroke-width="1.6"/>
+          <line x1="10" y1="164" x2="260" y2="164" stroke="var(--ink-soft)" stroke-width="1.4"/>
+          <line x1="290" y1="164" x2="530" y2="164" stroke="var(--ink-soft)" stroke-width="1.4"/>
+          <g fill="var(--surface)" stroke="var(--ink)" stroke-width="1.3">
+            <circle cx="55" cy="157" r="7"/><circle cx="205" cy="157" r="7"/><circle cx="335" cy="157" r="7"/><circle cx="485" cy="157" r="7"/>
+          </g>
+          <line x1="150" y1="40" x2="216" y2="40" stroke="var(--accent)" stroke-width="2.6"/><path d="M230,40 L216,34 V46 Z" fill="var(--accent)"/>
+          <text x="196" y="34" font-size="14" fill="var(--accent)" font-weight="700" font-style="italic">a</text>
+          <circle cx="130" cy="140" r="10" fill="var(--accent)"/>
+          <circle cx="410" cy="140" r="10" fill="var(--accent)"/>
+          <line x1="128" y1="140" x2="128" y2="182" stroke="var(--ink)" stroke-width="2.6"/><path d="M128,194 L123,182 H133 Z" fill="var(--ink)"/>
+          <line x1="132" y1="140" x2="132" y2="98" stroke="var(--focus)" stroke-width="2.6"/><path d="M132,86 L127,98 H137 Z" fill="var(--focus)"/>
+          <line x1="408" y1="140" x2="408" y2="182" stroke="var(--ink)" stroke-width="2.6"/><path d="M408,194 L403,182 H413 Z" fill="var(--ink)"/>
+          <line x1="412" y1="140" x2="412" y2="98" stroke="var(--focus)" stroke-width="2.6"/><path d="M412,86 L407,98 H417 Z" fill="var(--focus)"/>
+          <line x1="400" y1="140" x2="356" y2="140" stroke="var(--danger)" stroke-width="2.6" stroke-dasharray="6 4"/><path d="M344,140 L356,134 V146 Z" fill="var(--danger)"/>
+          <g font-size="13">
+            <text x="138" y="96" fill="var(--focus)"><tspan font-weight="700" font-style="italic">F</tspan><tspan font-size="9" dy="3">N</tspan></text>
+            <text x="108" y="190" fill="var(--ink)"><tspan font-weight="700" font-style="italic">F</tspan><tspan font-size="9" dy="3">G</tspan></text>
+            <text x="418" y="96" fill="var(--focus)"><tspan font-weight="700" font-style="italic">F</tspan><tspan font-size="9" dy="3">N</tspan></text>
+            <text x="388" y="190" fill="var(--ink)"><tspan font-weight="700" font-style="italic">F</tspan><tspan font-size="9" dy="3">G</tspan></text>
+            <text x="350" y="130" fill="var(--danger)"><tspan font-weight="700" font-style="italic">F</tspan><tspan font-size="9" dy="3">s</tspan></text>
+          </g>
+          <g font-size="11" fill="var(--ink-soft)">
+            <text x="130" y="72" text-anchor="middle">kulička zůstává v klidu,</text>
+            <text x="130" y="86" text-anchor="middle">vagon ujíždí</text>
+            <text x="410" y="72" text-anchor="middle">kulička zrychluje</text>
+            <text x="410" y="86" text-anchor="middle">dozadu</text>
+          </g>
+        </svg>
+        <figcaption>Tutéž situaci popisují dva pozorovatelé. V neinerciální soustavě vagonu se objeví setrvačná síla \(\boldsymbol{F}_\mathrm{s}\) (čárkovaně), která nemá žádného původce.</figcaption>
+      </figure>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Setrvačná síla</div>
+      <p>V neinerciální soustavě, která se pohybuje se zrychlením \(\boldsymbol{a}\), zavádíme na každé těleso o hmotnosti \(m\) <b>setrvačnou sílu</b></p>
+      <div class="formula-box">\[\boldsymbol{F}_\mathrm{s} = -m\,\boldsymbol{a}\]</div>
+      <p>Setrvačná síla má opačný směr než zrychlení soustavy. Je <b>zdánlivá</b>: nezpůsobuje ji žádné těleso, nemá reakci a pozorovatel v inerciální soustavě ji vůbec nepotřebuje. Je jen projevem setrvačnosti těles, „viděné“ ze zrychlující soustavy. Zato ji cítíme na vlastním těle: při rozjezdu nás tlačí do sedadla, při brzdění dopředu do pásů.</p>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M9 2.5 L16 15.5 H2 Z" stroke="var(--danger)" stroke-width="1.4" stroke-linejoin="round"/>
+          <line x1="9" y1="7" x2="9" y2="11.5" stroke="var(--danger)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="13.6" r="1" fill="var(--danger)"/>
+        </svg>
+        <p>Než začnete kreslit síly, rozhodněte, ze které soustavy situaci popisujete. Setrvačnou sílu kreslíme <b>jen</b> v neinerciální soustavě. V inerciální soustavě ji nikdy nekreslíme.</p>
+      </div>
+      <div class="example-grid">
+        <div class="example-item">
+          <span class="example-tag">Kufr v brzdícím autobusu</span>
+          <div class="example-eq">\[a = \frac{\Delta v}{\Delta t} = \frac{13{,}9\ \mathrm{m\cdot s^{-1}}}{5\ \mathrm{s}} \doteq 2{,}8\ \mathrm{m\cdot s^{-2}},\qquad F_\mathrm{s} = m a = 20\ \mathrm{kg}\cdot 2{,}78\ \mathrm{m\cdot s^{-2}} \doteq 56\ \mathrm{N}\]</div>
+          <div class="example-note">Autobus zabrzdí z \(50\ \mathrm{km\cdot h^{-1}}\) (\(13{,}9\ \mathrm{m\cdot s^{-1}}\)) na nulu za \(5\ \mathrm{s}\). Z pohledu cestujících působí na kufr o hmotnosti \(20\ \mathrm{kg}\) setrvačná síla asi \(56\ \mathrm{N}\) dopředu. Nedrží-li kufr tření nebo popruh, rozjede se uličkou dopředu.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Výtah a kosmická loď</div>
+      <p>Ve výtahu, který se rozjíždí <b>nahoru</b> se zrychlením \(a\), působí na nás z pohledu výtahu kromě tíhové síly ještě setrvačná síla <b>dolů</b>. Podlaha (nebo osobní váha) nás proto musí tlačit silou</p>
+      <div class="formula-line">\(F = m\,(g + a)\)</div>
+      <p>Když výtah při jízdě nahoru brzdí nebo se rozjíždí dolů, míří zrychlení dolů a tlačíme na podlahu menší silou \(F = m\,(g - a)\). Kdyby lano prasklo a výtah volně padal (\(a = g\)), byla by síla nulová: <b>stav beztíže</b>. Ten zažívají i kosmonauti na oběžné dráze, protože stanice s nimi neustále „padá“ kolem Země.</p>
+      <div class="theory-table-wrap">
+        <table class="theory-table">
+          <thead>
+            <tr><th>Výtah</th><th>Zrychlení výtahu</th><th class="mono">Síla na podlahu</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>stojí nebo jede rovnoměrně</td><td>nulové</td><td class="mono">\(m g\)</td></tr>
+            <tr><td>rozjíždí se nahoru / brzdí při jízdě dolů</td><td>nahoru</td><td class="mono">\(m(g + a)\)</td></tr>
+            <tr><td>rozjíždí se dolů / brzdí při jízdě nahoru</td><td>dolů</td><td class="mono">\(m(g - a)\)</td></tr>
+            <tr><td>volně padá</td><td>\(g\) dolů</td><td class="mono">\(0\)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="example-grid">
+        <div class="example-item">
+          <span class="example-tag">Kosmonaut při startu</span>
+          <div class="example-eq">\[F = m\,(g + a) = 80\ \mathrm{kg}\cdot(10 + 30)\ \mathrm{m\cdot s^{-2}} = 3\,200\ \mathrm{N}\]</div>
+          <div class="example-note">Raketa startuje svisle se zrychlením \(30\ \mathrm{m\cdot s^{-2}}\). Kosmonaut (i se skafandrem \(80\ \mathrm{kg}\)) je tlačen do sedadla silou čtyřikrát větší, než je jeho tíha na Zemi. Říkáme, že je vystaven přetížení \(4g\).</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="cat-tag">Příklad z praxe</span>
+      <h2>Osobní váha ve výtahu</h2>
+      <p class="desc">Rozklikejte si postup krok po kroku — další krok se odemkne, jakmile otevřete ten předchozí.</p>
+      <div class="given-data">
+        <div class="given-line">Zadáno: žák o hmotnosti \(60\ \mathrm{kg}\) stojí ve výtahu na osobní váze. Výtah se rozjíždí nahoru se zrychlením \(1{,}5\ \mathrm{m\cdot s^{-2}}\), pak jede rovnoměrně a nakonec zastavuje se zrychlením stejné velikosti. Jakou silou žák tlačí na váhu v jednotlivých fázích jízdy? \(g = 10\ \mathrm{m\cdot s^{-2}}\).</div>
+      </div>
+      <div class="stepper" data-reset="reset-vytah">
+        <div class="step" data-step="1">
+          <div class="step-connector"></div>
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">1</span>
+            <span class="step-title">Rozjezd nahoru</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <p>Zrychlení výtahu míří nahoru, setrvačná síla dolů a sčítá se s tíhovou silou:</p>
+            <div class="step-result"><div class="line-scroll">\(F_1 = m\,(g + a) = 60\ \mathrm{kg}\cdot(10 + 1{,}5)\ \mathrm{m\cdot s^{-2}} = 690\ \mathrm{N}\)</div></div>
+          </div>
+        </div>
+        <div class="step" data-step="2">
+          <div class="step-connector"></div>
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">2</span>
+            <span class="step-title">Rovnoměrná jízda</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <p>Výtah je inerciální soustava, setrvačná síla nepůsobí:</p>
+            <div class="step-result"><div class="line-scroll">\(F_2 = m g = 60\ \mathrm{kg}\cdot 10\ \mathrm{m\cdot s^{-2}} = 600\ \mathrm{N}\)</div></div>
+          </div>
+        </div>
+        <div class="step" data-step="3">
+          <div class="step-connector"></div>
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">3</span>
+            <span class="step-title">Zastavování</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <p>Výtah jedoucí nahoru zpomaluje, jeho zrychlení míří dolů a setrvačná síla nahoru:</p>
+            <div class="step-result"><div class="line-scroll">\(F_3 = m\,(g - a) = 60\ \mathrm{kg}\cdot(10 - 1{,}5)\ \mathrm{m\cdot s^{-2}} = 510\ \mathrm{N}\)</div></div>
+          </div>
+        </div>
+        <div class="step" data-step="4">
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">4</span>
+            <span class="step-title">Zapište výsledek a zkontrolujte ho</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <div class="result-box"><div class="line-scroll">\(F_1 = 690\ \mathrm{N}\), \(F_2 = 600\ \mathrm{N}\), \(F_3 = 510\ \mathrm{N}\)</div></div>
+            <p>Váha cejchovaná v kilogramech by ukázala postupně \(69\ \mathrm{kg}\), \(60\ \mathrm{kg}\) a \(51\ \mathrm{kg}\). Kontrola z inerciální soustavy (budovy): při rozjezdu musí výslednice \(F_1 - m g = 90\ \mathrm{N}\) udělit žákovi zrychlení \(90\ \mathrm{N} / 60\ \mathrm{kg} = 1{,}5\ \mathrm{m\cdot s^{-2}}\) nahoru. Souhlasí.</p>
+          </div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn ghost" id="reset-vytah">Zopakovat postup od začátku</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Odstředivá síla</div>
+      <p>Projíždíte-li autem zatáčku, tlačí vás něco ke dveřím na vnější straně. Z pohledu chodce na chodníku (inerciální soustava) je to jen setrvačnost: vaše tělo by jelo rovně a sedadlo s dveřmi mu musí dodat dostředivou sílu, aby zatáčelo s autem. Z pohledu cestujícího (otáčející se, neinerciální soustava) jste ale v klidu, a výslednice sil na vás proto musí být nulová. Cestující tak zavádí setrvačnou <b>odstředivou sílu</b>, která míří <b>od středu</b> otáčení:</p>
+      <div class="formula-box">\[F_\mathrm{o} = m\,\frac{v^2}{r} = m\,\omega^2 r\]</div>
+      <p>Odstředivá síla je stejně velká jako dostředivá, ale má opačný směr a patří do jiného popisu. Nikdy je nekreslíme do jednoho obrázku: inerciální pozorovatel vidí jen dostředivou sílu, neinerciální navíc odstředivou sílu, která ji právě vyrovná.</p>
+      <div class="example-grid">
+        <div class="example-item">
+          <span class="example-tag">Dítě na kolotoči</span>
+          <div class="example-eq">\[F_\mathrm{o} = m\,\omega^2 r = m\left(\frac{2\pi}{T}\right)^2 r = 30\ \mathrm{kg}\cdot\left(\frac{2\pi}{4\ \mathrm{s}}\right)^2\cdot 5\ \mathrm{m} \doteq 370\ \mathrm{N}\]</div>
+          <div class="example-note">Kolotoč se otočí jednou za \(4\ \mathrm{s}\), dítě (\(30\ \mathrm{kg}\)) sedí \(5\ \mathrm{m}\) od osy. Z jeho pohledu ho odstředivá síla asi \(370\ \mathrm{N}\) táhne ven; sedačka a řetězy ho drží stejně velkou silou dovnitř.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Je Země inerciální soustava?</div>
+      <p>Přesně ne. Země se otáčí kolem své osy, takže každý bod povrchu (mimo póly) se pohybuje po kružnici a má dostředivé zrychlení. V soustavě spojené s povrchem proto na každé těleso působí i malá odstředivá síla, kolmá na zemskou osu.</p>
+      <figure class="theory-fig">
+        <svg viewBox="0 0 320 220" style="max-width:340px" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Země s osou otáčení. Na člověka v mírných zeměpisných šířkách působí gravitační síla do středu Země a odstředivá síla kolmo od osy. Jejich výslednice je tíhová síla, která nemíří přesně do středu Země.">
+          <circle cx="150" cy="115" r="85" fill="var(--surface-2)" stroke="var(--ink)" stroke-width="1.5"/>
+          <line x1="150" y1="14" x2="150" y2="216" stroke="var(--ink-soft)" stroke-width="1.2" stroke-dasharray="6 4"/>
+          <line x1="65" y1="115" x2="235" y2="115" stroke="var(--ink-soft)" stroke-width="0.8"/>
+          <circle cx="150" cy="115" r="2.5" fill="var(--ink)"/>
+          <circle cx="210.1" cy="54.9" r="4" fill="var(--accent)"/>
+          <line x1="210.1" y1="54.9" x2="165" y2="100" stroke="var(--ink-soft)" stroke-width="2.6"/><path d="M158,107 L161.4,94.1 L170.9,103.6 Z" fill="var(--ink-soft)"/>
+          <line x1="210.1" y1="54.9" x2="226" y2="54.9" stroke="var(--danger)" stroke-width="2.6" stroke-dasharray="5 3"/><path d="M238,54.9 L226,49.9 V59.9 Z" fill="var(--danger)"/>
+          <line x1="210.1" y1="54.9" x2="191" y2="96.1" stroke="var(--ink)" stroke-width="2.6"/><path d="M185.9,107 L186.5,94 L195.5,98.2 Z" fill="var(--ink)"/>
+          <line x1="238" y1="54.9" x2="185.9" y2="107" stroke="var(--ink-soft)" stroke-width="0.9" stroke-dasharray="3 3"/>
+          <line x1="158" y1="107" x2="185.9" y2="107" stroke="var(--ink-soft)" stroke-width="0.9" stroke-dasharray="3 3"/>
+          <g font-size="13">
+            <text x="134" y="100" fill="var(--ink-soft)"><tspan font-weight="700" font-style="italic">F</tspan><tspan font-size="9" dy="3">g</tspan></text>
+            <text x="242" y="50" fill="var(--danger)"><tspan font-weight="700" font-style="italic">F</tspan><tspan font-size="9" dy="3">o</tspan></text>
+            <text x="198" y="122" fill="var(--ink)"><tspan font-weight="700" font-style="italic">F</tspan><tspan font-size="9" dy="3">G</tspan></text>
+            <text x="156" y="24" fill="var(--ink-soft)" font-size="11">osa otáčení</text>
+          </g>
+        </svg>
+        <figcaption>Tíhová síla \(\boldsymbol{F}_\mathrm{G}\) je výslednicí gravitační síly \(\boldsymbol{F}_\mathrm{g}\) a odstředivé síly \(\boldsymbol{F}_\mathrm{o}\). Odstředivá síla je v obrázku mnohonásobně zvětšená.</figcaption>
+      </figure>
+      <p>Na rovníku se odstředivá síla od gravitační přímo odečítá. Bod rovníku obíhá rychlostí asi \(465\ \mathrm{m\cdot s^{-1}}\) po kružnici o poloměru \(6\,378\ \mathrm{km}\). Pro člověka o hmotnosti \(70\ \mathrm{kg}\), na kterého Země působí gravitační silou asi \(687\ \mathrm{N}\), je</p>
+      <div class="formula-line">\(F_\mathrm{o} = m\,\dfrac{v^2}{R} = 70\ \mathrm{kg}\cdot\dfrac{(465\ \mathrm{m\cdot s^{-1}})^2}{6\,378\,000\ \mathrm{m}} \doteq 2{,}4\ \mathrm{N},\qquad F_\mathrm{G} = F_\mathrm{g} - F_\mathrm{o} \doteq 684\ \mathrm{N}\)</div>
+      <p>Rozdíl je jen asi \(0{,}35\ \%\), proto soustavu spojenou se Zemí pro běžné úlohy považujeme za inerciální. Otáčení Země se ale projevuje například stáčením větrů a mořských proudů; způsobuje ho další setrvačná síla, <b>Coriolisova síla</b>, která působí na tělesa pohybující se v otáčející se soustavě.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Inerciální, nebo neinerciální?</div>
+      <p>Předpokládejte, že soustava spojená se Zemí je inerciální, a u každé soustavy rozhodněte. Řešení si zobrazte v kroku níže.</p>
+      <ol>
+        <li>budova školy,</li>
+        <li>auto, které brzdí před semaforem,</li>
+        <li>vlak jedoucí stálou rychlostí po rovné trati,</li>
+        <li>vlak projíždějící stálou rychlostí obloukem,</li>
+        <li>eskalátor jedoucí stálou rychlostí,</li>
+        <li>výtah, který se rozjíždí,</li>
+        <li>raketa letící daleko ve vesmíru s vypnutými motory.</li>
+      </ol>
+      <div class="stepper" data-reset="reset-soustavy">
+        <div class="step" data-step="1">
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">1</span>
+            <span class="step-title">Zobrazit řešení</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <p>Inerciální: 1, 3, 5, 7 (jsou v klidu nebo se pohybují rovnoměrně přímočaře). Neinerciální: 2 (zpomaluje), 4 (mění směr rychlosti, má dostředivé zrychlení, i když jede stálou rychlostí), 6 (zrychluje).</p>
+          </div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn ghost" id="reset-soustavy">Skrýt řešení</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Shrnutí</div>
+      <p>• Inerciální soustava je v klidu nebo se pohybuje rovnoměrně přímočaře vůči jiné inerciální soustavě; platí v ní zákon setrvačnosti.</p>
+      <p>• Galileův princip relativity: ve všech inerciálních soustavách platí stejné zákony mechaniky; rychlosti se sčítají \(v = v' + u\).</p>
+      <p>• V neinerciální soustavě se zrychlením \(\boldsymbol{a}\) zavádíme zdánlivou setrvačnou sílu \(\boldsymbol{F}_\mathrm{s} = -m\boldsymbol{a}\); nemá původce ani reakci.</p>
+      <p>• Výtah se zrychlením nahoru: \(F = m(g + a)\), dolů: \(F = m(g - a)\), volný pád: beztíže.</p>
+      <p>• V otáčející se soustavě působí odstředivá síla \(F_\mathrm{o} = m v^2/r = m\omega^2 r\) směrem od osy.</p>
+      <p>• Tíhová síla je výslednicí gravitační a odstředivé síly; Země je inerciální soustava jen přibližně.</p>
+    </div>
+  </div>
+
+  <!-- ============ APLET ============ -->
+  <div id="aplet-section" class="tab-section" hidden>
+    <div class="card applet-card" id="applet-card">
+      <div class="applet-head">
+        <div class="applet-head-text">
+          <span class="cat-tag">Aplet</span>
+          <h2>Dva pohledy na vagon</h2>
+          <p class="desc">Vagon se z klidu rozjíždí se stálým zrychlením. Na hladké podlaze leží kulička, ze stropu visí olovnice. Pusťte pokus jednou z pohledu nástupiště a jednou z pohledu vagonu a porovnejte, jaké síly na kuličku každý pozorovatel kreslí.</p>
+        </div>
+      </div>
+
+      <div class="mode-row">
+        <span class="mode-row-label" id="lbl-view">Pozorovatel</span>
+        <div class="seg" id="view-seg" role="group" aria-labelledby="lbl-view">
+          <button class="chip accented on" type="button" data-view="nastupiste" aria-pressed="true">Na nástupišti (inerciální)</button>
+          <button class="chip accented" type="button" data-view="vagon" aria-pressed="false">Ve vagonu (neinerciální)</button>
+        </div>
+      </div>
+      <div class="mode-row slider-row">
+        <label class="mode-row-label" for="sl-a">Zrychlení vagonu <i>a</i></label>
+        <input type="range" id="sl-a" min="0.5" max="5" step="0.5" value="2">
+        <span class="slider-val" id="out-a" aria-live="polite"></span>
+      </div>
+
+      <div class="canvas-wrap">
+        <svg class="scene" id="wag-svg" viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Rozjíždějící se vagon s kuličkou na podlaze a olovnicí, se silami působícími na kuličku podle zvoleného pozorovatele."></svg>
+        <div class="legend">
+          <span><span class="sw ar" style="background:var(--ink)"></span><span>tíhová síla <i>F</i><sub>G</sub></span></span>
+          <span><span class="sw ar" style="background:var(--focus)"></span><span>tlaková síla podlahy <i>F</i><sub>N</sub></span></span>
+          <span><span class="sw ar" style="background:var(--danger)"></span><span>setrvačná síla <i>F</i><sub>s</sub> (jen ve vagonu)</span></span>
+        </div>
+      </div>
+
+      <div class="mode-row">
+        <span class="mode-row-label">Pokus</span>
+        <div class="btn-row">
+          <button class="btn primary" id="btn-play" type="button">Spustit</button>
+          <button class="btn ghost" id="btn-reset" type="button">Vynulovat</button>
+        </div>
+      </div>
+
+      <div class="qtable-wrap">
+        <table class="qtable">
+          <thead><tr><th>Veličina</th><th>Hodnota</th></tr></thead>
+          <tbody>
+            <tr><th>čas <i>t</i></th><td id="q-t"></td></tr>
+            <tr><th>rychlost vagonu vůči nástupišti</th><td id="q-vw"></td></tr>
+            <tr><th>rychlost kuličky vůči nástupišti</th><td id="q-vb"></td></tr>
+            <tr><th>rychlost kuličky vůči vagonu</th><td id="q-vr"></td></tr>
+            <tr><th>setrvačná síla na kuličku 0,2&nbsp;kg: <i>F</i><sub>s</sub> = <i>m a</i></th><td id="q-Fs"></td></tr>
+            <tr><th>odklon olovnice: tg&nbsp;<i>α</i> = <i>a</i>/<i>g</i></th><td id="q-al"></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="comment" id="wag-comment"></div>
+
+      <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint">Vyberte pozorovatele a posuvníkem zrychlení vagonu, pak stiskněte Spustit. Na nástupišti je kamera v klidu vůči zemi, ve vagonu jede kamera s vagonem (ubíhají sloupky nástupiště). Šipky sil na kuličku mají správný poměr velikostí. Tření mezi kuličkou a podlahou zanedbáváme; olovnice je nakreslena v ustálené poloze, ve které se při rozjezdu odkloní dozadu. Pokus skončí chvíli poté, co kuličku dožene zadní stěna. <i>g</i>&nbsp;=&nbsp;9,81&nbsp;m·s⁻².</p>
+      </details>
+    </div>
+  </div>
+
+  <!-- ============ TRÉNINK ============ -->
+  <div id="trenink-section" class="tab-section" hidden>
+
+    <div class="panel">
+      <div class="section-block">
+        <div class="panel-title">Typ úlohy</div>
+        <div class="row" id="type-row"></div>
+      </div>
+      <div class="settings-foot" style="justify-content:flex-end;">
+        <button class="linklike" id="reset-stats">vynulovat statistiku</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="cat-tag" id="cat-tag">Úloha</span>
+      <p class="task-text" id="task-text"></p>
+      <p class="task-rule">Počítejte s&nbsp;<i>g</i>&nbsp;=&nbsp;10&nbsp;m·s⁻². Výsledek zaokrouhlete na 3 platné číslice; uznává se odchylka do 1&nbsp;%.</p>
+      <div class="equation" id="equation">
+        <span id="eq-given"></span>
+        <span class="eq">=</span>
+        <span class="answer-slot" id="slot-single">
+          <input class="answer-input" id="answer" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="?" aria-label="odpověď">
+        </span>
+        <span class="unit" id="eq-unit"></span>
+      </div>
+      <div class="actions">
+        <button class="btn primary" id="btn-check">Zkontrolovat</button>
+        <button class="btn ghost" id="btn-skip">Nevím / Zobrazit řešení</button>
+      </div>
+      <div class="feedback" id="feedback" hidden>
+        <div class="headline" id="feedback-headline"></div>
+        <div class="steps" id="feedback-steps"></div>
+        <div class="tip" id="feedback-tip" hidden></div>
+      </div>
+      <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint">Výsledek zapište do rámečku a potvrďte tlačítkem Zkontrolovat nebo klávesou Enter; dalším Enterem přejdete na další příklad. Desetinnou čárku i tečku lze zadat obojí. Typ úloh vyberete nahoře; po kontrole se zobrazí celý postup řešení.</p>
+      </details>
+    </div>
+
+  </div>
+
+  <footer>Fyzika — Kvinta/1. ročník</footer>
+</div>
+
+<script src="../spolecne/reseni.js?v=1"></script>
+<script src="../spolecne/spolecne.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  // ---- záložky: tlačítko .toptab[data-tab="x"] ↔ sekce #x-section (Teorie = #theory-section) ----
+  var tabs = {}, sections = {}, tabHooks = {};
+  Array.prototype.forEach.call(document.querySelectorAll('.toptab[data-tab]'), function(btn){
+    var name = btn.getAttribute('data-tab');
+    tabs[name] = btn;
+    sections[name] = document.getElementById(name === 'teorie' ? 'theory-section' : name + '-section');
+  });
+  function showTab(name){
+    for(var k in tabs){
+      tabs[k].classList.toggle('on', k === name);
+      if(sections[k]) sections[k].hidden = k !== name;
+    }
+    // skóre, série a úspěšnost v hlavičce jen u tréninku
+    var readout = document.getElementById('header-readout');
+    if(readout) readout.hidden = name !== 'trenink';
+    if(tabHooks[name]) setTimeout(tabHooks[name], 0);
+  }
+  Object.keys(tabs).forEach(function(k){ tabs[k].addEventListener('click', function(){ showTab(k); }); });
+
+  // ---- příklady: postupně odemykané steppery ----
+  Array.prototype.forEach.call(document.querySelectorAll('.stepper'), function(wrap){
+    var steps = Array.prototype.slice.call(wrap.querySelectorAll('.step'));
+    var unlockedUpTo = 1;
+
+    function refreshLocks(){
+      steps.forEach(function(st){
+        var idx = parseInt(st.getAttribute('data-step'), 10);
+        var locked = idx > unlockedUpTo;
+        st.classList.toggle('locked', locked);
+        st.classList.toggle('unlocked', !locked && !st.classList.contains('done'));
+        st.querySelector('.step-head').setAttribute('aria-disabled', locked ? 'true' : 'false');
+      });
+    }
+
+    steps.forEach(function(st){
+      var idx = parseInt(st.getAttribute('data-step'), 10);
+      var head = st.querySelector('.step-head');
+      var body = st.querySelector('.step-body');
+      head.addEventListener('click', function(){
+        if(idx > unlockedUpTo) return;
+        var wasOpen = st.classList.contains('open');
+        st.classList.toggle('open', !wasOpen);
+        body.hidden = wasOpen;
+        head.setAttribute('aria-expanded', (!wasOpen).toString());
+        if(!wasOpen){
+          st.classList.add('done');
+          if(idx === unlockedUpTo && unlockedUpTo < steps.length){ unlockedUpTo++; }
+          refreshLocks();
+        }
+      });
+    });
+
+    var resetBtn = document.getElementById(wrap.getAttribute('data-reset'));
+    if(resetBtn){
+      resetBtn.addEventListener('click', function(){
+        unlockedUpTo = 1;
+        steps.forEach(function(st){
+          st.classList.remove('open', 'done');
+          st.querySelector('.step-body').hidden = true;
+          st.querySelector('.step-head').setAttribute('aria-expanded', 'false');
+        });
+        refreshLocks();
+      });
+    }
+
+    refreshLocks();
+  });
+
+  // ================= POMOCNÉ FUNKCE (čísla, TeX) =================
+  var G = 10;   // tíhové zrychlení v úlohách tréninku (m·s⁻²), stejně jako v přípravách
+  function tex(t){
+    // bez zalomení řádků: FyzikaReseni dělí řádky řešení podle \n (KaTeX má \n uvnitř SVG odmocniny)
+    try{ return window.katex ? katex.renderToString(t, {throwOnError:false}).replace(/\n/g, ' ') : t; }catch(e){ return t; }
+  }
+  function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+  // náhodné číslo z intervalu <a, b> s krokem step (hodnoty jsou „hezké“ a přesně ty, které žák vidí)
+  function rnd(a, b, step){
+    var n = Math.round((b - a)/step);
+    return roundTo(a + step*Math.floor(Math.random()*(n + 1)), 6);
+  }
+  // seskupení tisíců: sep = '\\,' (TeX) nebo '&nbsp;' (HTML)
+  function groupInt(s, sep){
+    if(s.length < 4) return s;
+    return s.replace(/\B(?=(\d{3})+(?!\d))/g, '#').replace(/#/g, sep);
+  }
+  function numParts(x, dec){
+    var s = Math.abs(roundTo(x, dec)).toFixed(dec);
+    var p = s.split('.');
+    return { neg: roundTo(x, dec) < 0, i: p[0], d: p[1] || '' };
+  }
+  // číslo zadání (bez zbytečných nul) a výsledek na sig platných číslic
+  function natDec(x){
+    for(var d = 0; d < 6; d++){ if(Math.abs(roundTo(x, d) - x) < 1e-9) return d; }
+    return 6;
+  }
+  function fmt(x, dec, mode){
+    var p = numParts(x, dec);
+    var tx = mode === 'tex';
+    var s = groupInt(p.i, tx ? '\\,' : '&nbsp;') + (p.d ? (tx ? '{,}' : ',') + p.d : '');
+    return (p.neg ? (tx ? '-' : '−') : '') + s;
+  }
+  function T(x){ return fmt(x, natDec(x), 'tex'); }                // TeX, zadaná hodnota
+  function H(x){ return fmt(x, natDec(x), 'html'); }               // HTML, zadaná hodnota
+  function TS(x, sig){ var r = roundSig(x, sig || 3); return fmt(r, decimalsForSig(r, sig || 3), 'tex'); }
+  function HS(x, sig){ var r = roundSig(x, sig || 3); return fmt(r, decimalsForSig(r, sig || 3), 'html'); }
+  // hodnota s jednotkou v TeXu
+  function U(x, unit){ return T(x) + '\\ \\mathrm{' + unit + '}'; }
+  function US(x, unit, sig){ return TS(x, sig) + '\\ \\mathrm{' + unit + '}'; }
+  // rovná se, nebo přibližně rovná se?
+  function eqs(x, sig){ return Math.abs(roundSig(x, sig || 3) - x) <= 1e-9*Math.max(1, Math.abs(x)) ? '=' : '\\doteq'; }
+  function parseNum(str){
+    if(!str) return NaN;
+    str = str.trim().replace(/[−–]/g, '-').replace(',', '.').replace(/\s+/g, '');
+    return /^-?\d*\.?\d+$|^-?\d+\.$/.test(str) ? parseFloat(str) : NaN;
+  }
+  // text do apletů: číslo s desetinnou čárkou na dec desetinných míst
+  function cz(x, dec){ return fmt(x, dec, 'html'); }
+  function kmh(v){ return v/3.6; }
+
+  // ---- kreslení do SVG apletů (šipky bez <marker>, aby se nepletla id) ----
+  function svgArrow(x1, y1, x2, y2, color, w, dash){
+    var dx = x2 - x1, dy = y2 - y1, L = Math.sqrt(dx*dx + dy*dy);
+    if(L < 2) return '';
+    w = w || 3;
+    var hl = Math.min(12, 0.45*L + 4), hw = hl*0.45, ux = dx/L, uy = dy/L;
+    var bx = x2 - ux*hl, by = y2 - uy*hl;
+    return '<line x1="' + x1.toFixed(1) + '" y1="' + y1.toFixed(1) + '" x2="' + bx.toFixed(1) + '" y2="' + by.toFixed(1) +
+      '" stroke="' + color + '" stroke-width="' + w + '"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + ' stroke-linecap="round"/>' +
+      '<path d="M' + x2.toFixed(1) + ',' + y2.toFixed(1) + ' L' + (bx - uy*hw).toFixed(1) + ',' + (by + ux*hw).toFixed(1) +
+      ' L' + (bx + uy*hw).toFixed(1) + ',' + (by - ux*hw).toFixed(1) + ' Z" fill="' + color + '"/>';
+  }
+  // popisek síly: F s indexem (kurzíva, tučně), volitelně s čárkou
+  function svgForceLabel(x, y, sub, color, anchor, size){
+    size = size || 14;
+    return '<text x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" text-anchor="' + (anchor || 'start') + '" font-size="' + size + '" fill="' + color + '">' +
+      '<tspan font-weight="700" font-style="italic">F</tspan><tspan font-size="' + Math.round(size*0.7) + '" dy="3">' + sub + '</tspan></text>';
+  }
+  function svgText(x, y, txt, opt){
+    opt = opt || {};
+    return '<text x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" text-anchor="' + (opt.anchor || 'start') + '" font-size="' + (opt.size || 12) +
+      '" fill="' + (opt.color || 'var(--ink)') + '"' + (opt.weight ? ' font-weight="' + opt.weight + '"' : '') + '>' + txt + '</text>';
+  }
+  function setChips(seg, attr, val){
+    Array.prototype.forEach.call(seg.querySelectorAll('[data-' + attr + ']'), function(b){
+      var on = b.getAttribute('data-' + attr) === String(val);
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+  }
+
+  var STATS_KEY = 'fyzika:neinercialni-soustavy:stats';
+
+  // ================= APLET: DVA POHLEDY NA VAGON =================
+  (function(){
+    var GA = 9.81, K = 24, X0 = 20, WL = 10, D0 = 7, RB = 0.35, FY = 210, MB = 0.2;   // px/m, délka vagonu (m), poloha kuličky od zadní stěny (m), poloměr kuličky (m), hmotnost (kg)
+    var svg = document.getElementById('wag-svg'), sla = document.getElementById('sl-a'), btn = document.getElementById('btn-play');
+    var view = 'nastupiste', sim;
+
+    function reset(){ sim = { t:0, running:false, done:false, last:null }; btn.textContent = 'Spustit'; draw(); }
+    function state(){
+      var a = +sla.value, t = sim.t, sw = 0.5*a*t*t, th = Math.sqrt(2*(D0 - RB)/a), hit = t >= th;
+      var xbG = hit ? sw + RB : D0;                  // poloha kuličky vůči nástupišti (m), měřeno od výchozí polohy zadní stěny
+      return { a:a, t:t, sw:sw, hit:hit, th:th, vw:a*t, vb:hit ? a*t : 0, xbG:xbG, xbR:xbG - sw };
+    }
+    function frame(ts){
+      if(!sim.running){ sim.last = null; return; }
+      if(sim.last === null) sim.last = ts;
+      var dt = Math.min(0.05, (ts - sim.last)/1000); sim.last = ts;
+      sim.t += dt;
+      var s = state();
+      if(s.t >= s.th + 0.8){ sim.running = false; sim.done = true; btn.textContent = 'Spustit'; }
+      draw();
+      if(sim.running) window.requestAnimationFrame(frame);
+    }
+    function draw(){
+      var st = state(), s = '', inert = view === 'nastupiste';
+      var XV = 200, wx = inert ? X0 + st.sw*K : XV;   // zadní stěna vagonu v px (ve vagonu je vagon uprostřed)
+      var shift = inert ? 0 : -st.sw*K;               // posun nástupiště v px
+      // nástupiště a sloupky
+      s += '<rect x="0" y="232" width="640" height="68" fill="var(--surface-2)"/>';
+      s += '<line x1="0" y1="232" x2="640" y2="232" stroke="var(--ink-soft)" stroke-width="2"/>';
+      var p0 = Math.floor(-shift/(2*K)) - 1;
+      for(var i = p0; i < p0 + 16; i++){
+        var px = X0 + i*2*K + shift;
+        if(px < -10 || px > 650) continue;
+        s += '<line x1="' + px.toFixed(1) + '" y1="70" x2="' + px.toFixed(1) + '" y2="232" stroke="var(--line)" stroke-width="5"/>';
+        s += '<line x1="' + px.toFixed(1) + '" y1="232" x2="' + px.toFixed(1) + '" y2="244" stroke="var(--ink-soft)" stroke-width="1.5"/>';
+      }
+      s += svgText(626, 262, 'nástupiště', {anchor:'end', size:11, color:'var(--ink-soft)'});
+      // vagon
+      var W = WL*K;
+      s += '<rect x="' + wx.toFixed(1) + '" y="96" width="' + W + '" height="' + (FY - 96) + '" rx="5" fill="var(--surface)" fill-opacity="0.85" stroke="var(--ink)" stroke-width="2"/>';
+      s += '<line x1="' + wx.toFixed(1) + '" y1="' + FY + '" x2="' + (wx + W).toFixed(1) + '" y2="' + FY + '" stroke="var(--ink)" stroke-width="3"/>';
+      [0.18, 0.82].forEach(function(f){ s += '<circle cx="' + (wx + W*f).toFixed(1) + '" cy="222" r="10" fill="var(--surface)" stroke="var(--ink)" stroke-width="1.6"/>'; });
+      // olovnice (ustálená poloha)
+      var al = Math.atan(st.t > 0 || sim.running ? st.a/GA : 0), pvx = wx + W*0.35, pvy = 96, L = 70;
+      var bx = pvx - L*Math.sin(al), by = pvy + L*Math.cos(al);
+      s += '<line x1="' + pvx.toFixed(1) + '" y1="' + pvy + '" x2="' + bx.toFixed(1) + '" y2="' + by.toFixed(1) + '" stroke="var(--ink-soft)" stroke-width="1.4"/>';
+      s += '<line x1="' + pvx.toFixed(1) + '" y1="' + pvy + '" x2="' + pvx.toFixed(1) + '" y2="' + (pvy + L + 6) + '" stroke="var(--line)" stroke-width="1" stroke-dasharray="3 3"/>';
+      s += '<circle cx="' + bx.toFixed(1) + '" cy="' + by.toFixed(1) + '" r="6" fill="var(--ink)"/>';
+      // kulička a síly na ni
+      var cx = inert ? X0 + st.xbG*K : XV + st.xbR*K, cy = FY - RB*K;
+      var kG = 46;
+      s += svgArrow(cx - 3, cy, cx - 3, cy + kG, 'var(--ink)', 2.8);
+      s += svgForceLabel(cx - 8, cy + kG + 4, 'G', 'var(--ink)', 'end', 13);
+      s += svgArrow(cx + 3, cy, cx + 3, cy - kG, 'var(--focus)', 2.8);
+      s += svgForceLabel(cx + 8, cy - kG + 10, 'N', 'var(--focus)', 'start', 13);
+      if(!inert && !st.hit){
+        var Ls = kG*st.a/GA;
+        s += svgArrow(cx - RB*K, cy, cx - RB*K - Ls, cy, 'var(--danger)', 2.8, '5 3');
+        s += svgForceLabel(cx - RB*K - Ls - 4, cy - 6, 's', 'var(--danger)', 'end', 13);
+      }
+      s += '<circle cx="' + cx.toFixed(1) + '" cy="' + cy.toFixed(1) + '" r="' + (RB*K) + '" fill="var(--accent)"/>';
+      // šipky rychlosti / zrychlení
+      if(inert){
+        s += svgArrow(wx + W/2 - 20, 80, wx + W/2 + 30, 80, 'var(--accent)', 2.6);
+        s += svgText(wx + W/2 + 36, 85, '<tspan font-style="italic" font-weight="700">a</tspan>', {size:14, color:'var(--accent)'});
+        if(st.vw > 0.01){
+          s += svgArrow(wx + W/2 - 20, 60, wx + W/2 - 20 + st.vw*8, 60, 'var(--focus)', 2.2);
+          s += svgText(wx + W/2 - 24, 64, '<tspan font-style="italic" font-weight="700">v</tspan>', {anchor:'end', size:13, color:'var(--focus)'});
+        }
+        s += svgText(14, 26, 'Kamera stojí na nástupišti.', {size:12, color:'var(--ink-soft)', weight:600});
+      } else {
+        if(st.vw > 0.01){
+          s += svgArrow(420, 280, 420 - st.vw*8, 280, 'var(--focus)', 2.2);
+          s += svgText(426, 284, 'nástupiště ubíhá', {size:11, color:'var(--focus)'});
+        }
+        s += svgText(14, 26, 'Kamera jede s vagonem, vagon je v této soustavě v klidu.', {size:12, color:'var(--ink-soft)', weight:600});
+      }
+      svg.innerHTML = s;
+
+      document.getElementById('out-a').innerHTML = '<i>a</i> = ' + cz(st.a, 1) + '&nbsp;m·s⁻²';
+      document.getElementById('q-t').innerHTML = cz(st.t, 2) + '&nbsp;s';
+      document.getElementById('q-vw').innerHTML = cz(st.vw, 2) + '&nbsp;m·s⁻¹';
+      document.getElementById('q-vb').innerHTML = cz(st.vb, 2) + '&nbsp;m·s⁻¹';
+      document.getElementById('q-vr').innerHTML = cz(st.vb - st.vw, 2) + '&nbsp;m·s⁻¹';
+      document.getElementById('q-Fs').innerHTML = cz(MB*st.a, 2) + '&nbsp;N (dozadu)';
+      document.getElementById('q-al').innerHTML = cz(Math.atan(st.a/GA)*180/Math.PI, 1) + '°';
+      var c;
+      if(!sim.running && st.t === 0) c = '<p>Stiskněte Spustit. Tipněte si předem, co uvidí každý z pozorovatelů.</p>';
+      else if(st.hit) c = '<p>Zadní stěna dohnala kuličku a od té chvíle ji tlačí s sebou. ' + (inert ? 'Z nástupiště: na kuličku teď působí i stěna, a proto kulička zrychluje spolu s vagonem.' : 'Z vagonu: kulička je opět v klidu, setrvačnou sílu vyrovnává tlaková síla stěny.') + '</p>';
+      else if(inert) c = '<p><b>Inerciální soustava:</b> na kuličku působí jen tíhová síla a tlaková síla podlahy, které se ruší. Kulička proto zůstává v klidu (rychlost 0 vůči nástupišti) a vagon se pod ní rozjíždí. Žádná síla „dozadu“ tu není.</p>';
+      else c = '<p><b>Neinerciální soustava:</b> kulička se rozjíždí dozadu se zrychlením ' + cz(st.a, 1) + '&nbsp;m·s⁻², i když ji nic netlačí. Pozorovatel ve vagonu to vysvětlí setrvačnou silou <i>F</i><sub>s</sub> = <i>m a</i> = ' + cz(MB*st.a, 2) + '&nbsp;N proti směru zrychlení vagonu. Tato síla nemá původce.</p>';
+      document.getElementById('wag-comment').innerHTML = c;
+    }
+    var seg = document.getElementById('view-seg');
+    seg.addEventListener('click', function(e){
+      var b = e.target.closest('[data-view]'); if(!b) return;
+      view = b.getAttribute('data-view'); setChips(seg, 'view', view); draw();
+    });
+    sla.addEventListener('input', function(){ if(!sim.running) reset(); });
+    btn.addEventListener('click', function(){
+      if(sim.done) reset();
+      sim.running = !sim.running;
+      btn.textContent = sim.running ? 'Pozastavit' : 'Spustit';
+      if(sim.running) window.requestAnimationFrame(frame);
+    });
+    document.getElementById('btn-reset').addEventListener('click', reset);
+    reset();
+  })();
+
+  // ================= TRÉNINK: TYPY ÚLOH =================
+  var TASKS = [
+    { key:'vytah', name:'Výtah', gen:function(){
+        var m = rnd(40, 95, 1), a = rnd(0.5, 3, 0.1);
+        var cs = pick([{t:'se rozjíždí směrem nahoru', up:true}, {t:'jede nahoru a zastavuje', up:false}, {t:'se rozjíždí směrem dolů', up:false}, {t:'jede dolů a zastavuje', up:true}]);
+        var F = cs.up ? m*(G + a) : m*(G - a);
+        return { tag:'Výtah', text:'Člověk o hmotnosti ' + H(m) + '&nbsp;kg stojí ve výtahu, který ' + cs.t + ' se zrychlením o velikosti ' + H(a) + '&nbsp;m·s⁻². Jak velkou silou tlačí na podlahu výtahu?',
+          sym:'F', unit:'N', exact:F,
+          given:['m = ' + U(m, 'kg'), 'a = ' + U(a, 'm\\cdot s^{-2}') + (cs.up ? '\\ \\uparrow' : '\\ \\downarrow'), 'g = 10\\ \\mathrm{m\\cdot s^{-2}}'], find:['F = {?}'],
+          steps:['F = m\\,(g ' + (cs.up ? '+' : '-') + ' a) = ' + U(m, 'kg') + '\\cdot(10 ' + (cs.up ? '+' : '-') + ' ' + T(a) + ')\\ \\mathrm{m\\cdot s^{-2}} ' + eqs(F, 3) + ' ' + US(F, 'N', 3)],
+          note:cs.up ? 'Zrychlení výtahu míří nahoru (rozjezd nahoru nebo brzdění při jízdě dolů), setrvačná síla proto míří dolů a sčítá se s tíhovou silou.' : 'Zrychlení výtahu míří dolů (rozjezd dolů nebo brzdění při jízdě nahoru), setrvačná síla proto míří nahoru a od tíhové síly se odečítá.' };
+      } },
+    { key:'setrvacna', name:'Setrvačná síla', gen:function(){
+        var sc = pick(['autobus', 'auto', 'vlak']), m, v, t, txt, what, dir;
+        if(sc === 'autobus'){ m = rnd(5, 25, 1); v = rnd(30, 60, 5); t = rnd(3, 8, 0.5); what = 'batoh'; dir = 'brzdí z';
+          txt = 'Autobus rovnoměrně zabrzdí z rychlosti ' + H(v) + '&nbsp;km·h⁻¹ do zastavení za ' + H(t) + '&nbsp;s. Jak velká setrvačná síla působí z pohledu cestujících na batoh o hmotnosti ' + H(m) + '&nbsp;kg?'; }
+        else if(sc === 'auto'){ m = rnd(1, 5, 0.5); v = rnd(50, 100, 10); t = rnd(5, 12, 1);
+          txt = 'Auto se rovnoměrně rozjede z klidu na ' + H(v) + '&nbsp;km·h⁻¹ za ' + H(t) + '&nbsp;s. Jak velká setrvačná síla působí z pohledu řidiče na tašku o hmotnosti ' + H(m) + '&nbsp;kg na zadním sedadle?'; }
+        else { m = rnd(0.2, 1, 0.1); v = rnd(36, 72, 9); t = rnd(20, 60, 5);
+          txt = 'Vlak se rovnoměrně rozjede z klidu na ' + H(v) + '&nbsp;km·h⁻¹ za ' + H(t) + '&nbsp;s. Jak velká setrvačná síla působí z pohledu cestujících na láhev o hmotnosti ' + H(m) + '&nbsp;kg na stolku?'; }
+        var vms = v/3.6, a = vms/t, F = m*a;
+        return { tag:'Setrvačná síla', text:txt, sym:'F_\\mathrm{s}', unit:'N', exact:F,
+          given:['\\Delta v = ' + U(v, 'km\\cdot h^{-1}') + ' ' + eqs(vms, 4) + ' ' + US(vms, 'm\\cdot s^{-1}', 4), '\\Delta t = ' + U(t, 's'), 'm = ' + U(m, 'kg')],
+          find:['F_\\mathrm{s} = {?}'],
+          steps:['a = \\dfrac{\\Delta v}{\\Delta t} = \\dfrac{' + TS(vms, 4) + '\\ \\mathrm{m\\cdot s^{-1}}}{' + U(t, 's') + '} ' + eqs(a, 4) + ' ' + US(a, 'm\\cdot s^{-2}', 4),
+                 'F_\\mathrm{s} = m a = ' + U(m, 'kg') + '\\cdot ' + US(a, 'm\\cdot s^{-2}', 4) + ' ' + eqs(F, 3) + ' ' + US(F, 'N', 3)],
+          note:'Setrvačná síla míří proti zrychlení vozidla: při rozjezdu dozadu, při brzdění dopředu.' };
+      } },
+    { key:'odstrediva', name:'Odstředivá síla', gen:function(){
+        var sc = pick(['kolotoc', 'centrifuga', 'zatacka']), m, r, txt, F, given, steps;
+        if(sc === 'zatacka'){ var v, vms; do{ m = rnd(50, 95, 1); r = rnd(50, 300, 10); v = rnd(40, 100, 10); vms = v/3.6; }while(vms*vms/r > 6); F = m*vms*vms/r;
+          txt = 'Auto projíždí zatáčkou o poloměru ' + H(r) + '&nbsp;m rychlostí ' + H(v) + '&nbsp;km·h⁻¹. Jak velká odstředivá síla působí z pohledu řidiče na řidiče o hmotnosti ' + H(m) + '&nbsp;kg?';
+          given = ['m = ' + U(m, 'kg'), 'r = ' + U(r, 'm'), 'v = ' + U(v, 'km\\cdot h^{-1}') + ' ' + eqs(vms, 4) + ' ' + US(vms, 'm\\cdot s^{-1}', 4)];
+          steps = ['F_\\mathrm{o} = m\\,\\dfrac{v^2}{r} = ' + U(m, 'kg') + '\\cdot\\dfrac{(' + TS(vms, 4) + '\\ \\mathrm{m\\cdot s^{-1}})^2}{' + U(r, 'm') + '} ' + eqs(F, 3) + ' ' + US(F, 'N', 3)]; }
+        else {
+          var T0;
+          if(sc === 'kolotoc'){ m = rnd(20, 60, 1); r = rnd(3, 7, 0.5); T0 = rnd(4, 10, 0.5);
+            txt = 'Dítě o hmotnosti ' + H(m) + '&nbsp;kg sedí na kolotoči ' + H(r) + '&nbsp;m od osy. Kolotoč se otočí jednou za ' + H(T0) + '&nbsp;s. Jak velká odstředivá síla působí na dítě z jeho pohledu?'; }
+          else { do{ m = rnd(60, 90, 1); r = rnd(6, 10, 0.5); T0 = rnd(2, 4, 0.1); }while(4*Math.PI*Math.PI*r/(T0*T0) > 90);
+            txt = 'Pilot o hmotnosti ' + H(m) + '&nbsp;kg trénuje v kabině centrifugy ' + H(r) + '&nbsp;m od osy. Centrifuga se otočí jednou za ' + H(T0) + '&nbsp;s. Jak velkou odstředivou silou je pilot z jeho pohledu tlačen do sedadla? Výsledek zapište v kilonewtonech.'; }
+          F = m*4*Math.PI*Math.PI*r/(T0*T0);
+          given = ['m = ' + U(m, 'kg'), 'r = ' + U(r, 'm'), 'T = ' + U(T0, 's')];
+          steps = ['F_\\mathrm{o} = m\\,\\omega^2 r = m\\,\\dfrac{4\\pi^2 r}{T^2} = ' + U(m, 'kg') + '\\cdot\\dfrac{4\\pi^2\\cdot ' + U(r, 'm') + '}{(' + U(T0, 's') + ')^2} ' + eqs(F, 3) + ' ' + US(F, 'N', 3)];
+        }
+        var kN = sc === 'centrifuga';
+        return { tag:'Odstředivá síla', text:txt, sym:'F_\\mathrm{o}', unit:kN ? 'kN' : 'N', exact:kN ? F/1000 : F, given:given, find:['F_\\mathrm{o} = {?}'], steps:steps,
+          note:'Odstředivá síla je setrvačná síla v otáčející se soustavě; je stejně velká jako dostředivá síla, ale míří od osy.' };
+      } },
+    { key:'start', name:'Přetížení při startu', gen:function(){
+        var m = rnd(70, 110, 1), a = rnd(15, 40, 1), F = m*(G + a), n = (G + a)/G;
+        return { tag:'Neinerciální soustava rakety', text:'Raketa startuje svisle vzhůru se zrychlením ' + H(a) + '&nbsp;m·s⁻². Jak velkou silou tlačí kosmonaut (i se skafandrem ' + H(m) + '&nbsp;kg) na sedadlo? Výsledek zapište v kilonewtonech.',
+          sym:'F', unit:'kN', exact:F/1000,
+          given:['m = ' + U(m, 'kg'), 'a = ' + U(a, 'm\\cdot s^{-2}'), 'g = 10\\ \\mathrm{m\\cdot s^{-2}}'], find:['F = {?}'],
+          steps:['F = F_\\mathrm{G} + F_\\mathrm{s} = m g + m a = m\\,(g + a)',
+                 'F = ' + U(m, 'kg') + '\\cdot(10 + ' + T(a) + ')\\ \\mathrm{m\\cdot s^{-2}} = ' + U(F, 'N') + ' ' + eqs(F/1000, 3) + ' ' + US(F/1000, 'kN', 3)],
+          note:'Síla je ' + cz(n, 1) + 'krát větší než tíha kosmonauta na Zemi (přetížení ' + cz(n, 1) + '&nbsp;g).' };
+      } },
+    { key:'olovnice', name:'Odklon olovnice', gen:function(){
+        var sc = pick(['vlak', 'auto']), v, t, txt;
+        if(sc === 'vlak'){ v = rnd(36, 90, 9); t = rnd(15, 60, 5); txt = 'Ve vagonu visí na niti kulička. Vlak se rovnoměrně rozjíždí z klidu na ' + H(v) + '&nbsp;km·h⁻¹ za ' + H(t) + '&nbsp;s. O jaký úhel se nit odkloní od svislého směru?'; }
+        else { v = rnd(50, 100, 10); t = rnd(5, 12, 1); txt = 'Na zpětném zrcátku auta visí přívěšek. Auto se rovnoměrně rozjíždí z klidu na ' + H(v) + '&nbsp;km·h⁻¹ za ' + H(t) + '&nbsp;s. O jaký úhel se šňůrka přívěšku odkloní od svislého směru?'; }
+        var vms = v/3.6, a = vms/t, al = Math.atan(a/G)*180/Math.PI;
+        return { tag:'Setrvačná síla', text:txt + ' Výsledek zapište ve stupních.', sym:'\\alpha', unit:'^\\circ', exact:al,
+          given:['\\Delta v = ' + U(v, 'km\\cdot h^{-1}') + ' ' + eqs(vms, 4) + ' ' + US(vms, 'm\\cdot s^{-1}', 4), '\\Delta t = ' + U(t, 's'), 'g = 10\\ \\mathrm{m\\cdot s^{-2}}'],
+          find:['\\alpha = {?}'],
+          steps:['a = \\dfrac{\\Delta v}{\\Delta t} ' + eqs(a, 4) + ' ' + US(a, 'm\\cdot s^{-2}', 4),
+                 '\\mathrm{tg}\\,\\alpha = \\dfrac{F_\\mathrm{s}}{F_\\mathrm{G}} = \\dfrac{m a}{m g} = \\dfrac{a}{g} ' + eqs(a/G, 4) + ' ' + TS(a/G, 4),
+                 '\\alpha ' + eqs(al, 3) + ' ' + TS(al, 3) + '^\\circ'],
+          note:'Ve vozidle se kulička ustálí tam, kde výslednice tíhové a setrvačné síly míří podél niti. Nit se odkloní dozadu, proti směru zrychlení.' };
+      } }
+  ];
+
+  // ================= TRÉNINK (číselná odpověď) =================
+  // Každý typ úlohy (TASKS) má gen(), která vrátí objekt:
+  //   tag, text (HTML zadání), sym (TeX levé strany), unit (TeX jednotky),
+  //   exact (přesný výsledek ze zadaných hodnot), sig (platné číslice výsledku),
+  //   given/find/steps (řádky řešení v TeXu), note (volitelná poznámka, HTML).
+  // Odpověď se uznává, liší-li se od přesné hodnoty nejvýše o 1 % (zaokrouhlené mezivýsledky).
+  var state = {
+    type:'all', score:0, streak:0, bestStreak:0,
+    answered:0, correct:0, current:null, lastKey:'', locked:false, touched:false
+  };
+  var TOL = 0.01;
+
+  function loadStats(){
+    try{ var raw = localStorage.getItem(STATS_KEY); if(raw){ state.bestStreak = JSON.parse(raw).bestStreak || 0; } }catch(e){}
+  }
+  function saveStats(){
+    try{ localStorage.setItem(STATS_KEY, JSON.stringify({bestStreak: state.bestStreak})); }catch(e){}
+  }
+
+  function generateQuestion(){
+    var pool = state.type === 'all' ? TASKS : TASKS.filter(function(t){ return t.key === state.type; });
+    var q, tries = 0;
+    do{
+      var t = pick(pool);
+      q = t.gen();
+      q.key = t.key + '|' + q.text;
+      tries++;
+    }while(q.key === state.lastKey && tries < 20);
+    if(!q.sig) q.sig = 3;
+    state.current = q;
+    state.lastKey = q.key;
+    state.locked = false; state.touched = false;
+    renderQuestion();
+  }
+
+  function renderQuestion(){
+    var q = state.current;
+    document.getElementById('cat-tag').textContent = q.tag;
+    document.getElementById('task-text').innerHTML = q.text;
+    document.getElementById('eq-given').innerHTML = tex(q.sym);
+    document.getElementById('eq-unit').innerHTML = q.unit ? tex('\\mathrm{' + q.unit + '}') : '';
+    var el = document.getElementById('answer');
+    el.value = ''; el.disabled = false; el.classList.remove('correct', 'wrong');
+    var fb = document.getElementById('feedback');
+    fb.hidden = true; fb.classList.remove('ok', 'bad', 'sol');
+    document.getElementById('feedback-tip').hidden = true;
+    document.getElementById('btn-check').textContent = 'Zkontrolovat';
+    el.focus({preventScroll:true});
+  }
+
+  function isAnswerEmpty(){ return isNaN(parseNum(document.getElementById('answer').value)); }
+  function lockUI(){
+    document.getElementById('answer').disabled = true;
+    state.locked = true;
+    var b = document.getElementById('btn-check');
+    b.textContent = 'Další příklad →';
+    b.focus({preventScroll:true});
+    updateStats();
+  }
+  function showSolution(){
+    var q = state.current;
+    var fin = q.sym + ' ' + eqs(q.exact, q.sig) + ' ' + TS(q.exact, q.sig) + (q.unit ? '\\ \\mathrm{' + q.unit + '}' : '');
+    FyzikaReseni.show(document.getElementById('feedback'), document.getElementById('feedback-steps'), {
+      raw:true,
+      given:(q.given || []).map(tex),
+      find:(q.find || []).map(tex),
+      steps:q.steps.map(tex),
+      final:tex(fin),
+      note:q.note || ''
+    });
+  }
+
+  function checkAnswer(){
+    if(state.locked){ generateQuestion(); return; }
+    var q = state.current;
+    var v = parseNum(document.getElementById('answer').value);
+    var ok = !isNaN(v) && Math.abs(v - q.exact) <= TOL*Math.abs(q.exact) + 1e-12;
+    var tipText = '';
+    if(!ok && !isNaN(v) && Math.abs(v + q.exact) <= TOL*Math.abs(q.exact)) tipText = 'Velikost sedí, ale znaménko ne. Zkontrolujte zvolený kladný směr.';
+    else if(!ok && !isNaN(v) && v !== 0){
+      var ratio = Math.abs(q.exact/v), k = Math.round(Math.log10(ratio));
+      if(k !== 0 && Math.abs(Math.log10(ratio) - k) < 0.005) tipText = 'Číslice sedí, ale řád ne. Zkontrolujte převody jednotek.';
+    }
+    state.answered++;
+    var fb = document.getElementById('feedback'), head = document.getElementById('feedback-headline'), tip = document.getElementById('feedback-tip');
+    fb.hidden = false; tip.hidden = !tipText; tip.textContent = tipText;
+    var el = document.getElementById('answer');
+    if(ok){
+      state.score += 10; state.streak++; state.correct++;
+      if(state.streak > state.bestStreak){
+        state.bestStreak = state.streak; saveStats();
+        if(window.FyzikaScores) FyzikaScores.report('serie', state.bestStreak, false);
+      }
+      el.classList.add('correct'); fb.classList.add('ok'); fb.classList.remove('bad');
+      head.textContent = 'Správně!';
+    } else {
+      state.streak = 0; el.classList.add('wrong'); fb.classList.add('bad'); fb.classList.remove('ok');
+      head.textContent = isAnswerEmpty() ? 'Doplňte odpověď.' : 'Bohužel špatně.';
+    }
+    showSolution(); lockUI();
+  }
+  function skip(){
+    if(state.locked){ generateQuestion(); return; }
+    state.streak = 0; state.answered++;
+    var fb = document.getElementById('feedback');
+    fb.hidden = false; fb.classList.add('bad'); fb.classList.remove('ok');
+    document.getElementById('feedback-tip').hidden = true;
+    document.getElementById('feedback-headline').textContent = 'Správný postup:';
+    showSolution(); lockUI();
+  }
+  function updateStats(){
+    document.getElementById('stat-score').textContent = state.score;
+    document.getElementById('stat-streak').textContent = state.streak + (state.bestStreak > 0 ? ' / ' + state.bestStreak : '');
+    document.getElementById('stat-accuracy').textContent = state.answered === 0 ? '—' : Math.round(100*state.correct/state.answered) + ' %';
+  }
+
+  // Vyhodnotí rozdělanou úlohu před změnou typu úlohy (stejná logika jako settleCurrentQuestion()
+  // ve spolecne.js; vlastní jméno, protože globální verze vidí jen globální `state`).
+  function settleQuestion(){
+    if(state.locked) return 'locked';
+    if(!state.touched) return 'untouched';
+    if(isAnswerEmpty() && !confirm('Odpověď není vyplněná. Opravdu chcete změnit nastavení?')) return 'cancelled';
+    checkAnswer();
+    return 'settled';
+  }
+
+  (function buildTypeRow(){
+    var row = document.getElementById('type-row');
+    var items = [{key:'all', name:'Vše'}].concat(TASKS.map(function(t){ return {key:t.key, name:t.name}; }));
+    items.forEach(function(d){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip accented' + (d.key === state.type ? ' on' : '');
+      b.setAttribute('aria-pressed', d.key === state.type ? 'true' : 'false');
+      b.textContent = d.name;
+      b.addEventListener('click', function(){
+        if(d.key === state.type) return;
+        var res = settleQuestion();
+        if(res === 'cancelled') return;
+        state.type = d.key;
+        Array.prototype.forEach.call(row.children, function(el, i){
+          var on = items[i].key === state.type;
+          el.classList.toggle('on', on);
+          el.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        if(res === 'locked' || res === 'untouched'){ generateQuestion(); }
+      });
+      row.appendChild(b);
+    });
+  })();
+
+  function tryCheck(){
+    if(state.locked){ generateQuestion(); return; }
+    if(isAnswerEmpty() && !confirm('Odpověď není vyplněná. Opravdu chcete zkontrolovat?')) return;
+    checkAnswer();
+  }
+  function trySkip(){
+    if(state.locked){ generateQuestion(); return; }
+    skip();
+  }
+  document.getElementById('btn-check').addEventListener('click', tryCheck);
+  document.getElementById('btn-skip').addEventListener('click', trySkip);
+  (function(){
+    var el = document.getElementById('answer');
+    sanitizeNumericInput(el, true);
+    el.addEventListener('input', function(){ state.touched = true; });
+    el.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); tryCheck(); } });
+  })();
+  document.getElementById('reset-stats').addEventListener('click', function(){
+    state.score = 0; state.streak = 0; state.answered = 0; state.correct = 0; state.bestStreak = 0;
+    try{ localStorage.removeItem(STATS_KEY); }catch(e){}
+    updateStats();
+  });
+  document.addEventListener('fyzika:scores-updated', function(){ state.bestStreak = 0; loadStats(); updateStats(); });
+
+  loadStats();
+  updateStats();
+  generateQuestion();
+  window.scrollTo(0, 0);
+
+  // ---- vzorce (KaTeX) ----
+  if(window.renderMathInElement){
+    ['theory-section', 'aplet-section'].forEach(function(id){
+      try{
+        renderMathInElement(document.getElementById(id), {
+          delimiters: [{left:'\\(', right:'\\)', display:false}, {left:'\\[', right:'\\]', display:true}]
+        });
+      }catch(e){}
+    });
+  }
+
+  // ---- sbalovací panely v teorii ----
+  try{ makePanelsCollapsible(document.getElementById('theory-section')); }catch(e){}
+
+  // ---- otevření záložky odkazem (…/stranka.html#trenink) ----
+  var hash = location.hash.replace('#', '');
+  if(hash && tabs[hash]) showTab(hash);
+})();
+</script>
+
+</body>
+</html>
