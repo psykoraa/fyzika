@@ -176,6 +176,30 @@ table.grid tr.other-row-sep td{ padding-top:16px; border-bottom:none; color:var(
 .card p{ margin:0; color:var(--ink); font-size:0.95rem; }
 footer{ margin-top:40px; }
 
+/* ---- Stránky ---- */
+.pg-summary{ display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:10px; margin-bottom:14px; }
+.pg-summary .kpi.bad .value{ color:var(--danger); }
+.pg-summary .kpi.ok .value{ color:var(--success); }
+.pg-help{ margin-bottom:14px; font-size:0.84rem; line-height:1.5; color:var(--ink-soft); }
+.pg-help summary{ cursor:pointer; font-weight:600; color:var(--ink); width:max-content; }
+.pg-help p{ margin:8px 0 0; max-width:80ch; }
+table.grid.pages th.sw, table.grid.pages td.sw{ width:150px; white-space:nowrap; }
+table.grid.pages td.title-cell .pg-file{ display:block; font-family:'IBM Plex Mono', monospace; font-size:0.72rem; color:var(--ink-soft); font-weight:400; margin-top:1px; }
+table.grid.pages tr.hub-row td{ background:var(--surface-2); border-top:2px solid var(--line); }
+table.grid.pages tr.hub-row td.title-cell{ font-weight:700; }
+table.grid.pages tr.hub-row .pg-count{ margin-left:8px; font-size:0.74rem; font-weight:600; color:var(--ink-soft); }
+table.grid.pages tr.lvl-1:not(.hub-row) td.title-cell{ padding-left:40px; }
+table.grid.pages tr.lvl-1:not(.hub-row) td.title-cell::before{ left:20px; }
+table.grid.pages tr.inactive td.title-cell, table.grid.pages tr.inactive td.sw{ opacity:.6; }
+table.grid.pages tr:not(.hub-row):hover td{ background:rgba(30,95,168,.05); }
+table.grid.pages tr.tab-row td.title-cell{ padding-left:calc(var(--tab-indent, 34px) + 26px); }
+.pg-hint{ color:var(--ink-soft); font-size:0.78rem; }
+@media (max-width:640px){
+  table.grid.pages td.sw, table.grid.pages th.sw{ width:auto; }
+  .switch span:last-child{ font-size:0.76rem; }
+  .pg-btns{ display:none; }
+}
+
 /* ---- Provoz ---- */
 .tr-note{ margin:4px 0 0; font-size:0.8rem; line-height:1.5; color:var(--ink-soft); }
 .tr-kpis{ display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:10px; margin-bottom:18px; }
@@ -304,19 +328,32 @@ footer{ margin-top:40px; }
 
     <!-- Stránky -->
     <section id="tab-pages" hidden>
-      <div class="note">
-        <span aria-hidden="true">ⓘ</span>
+      <div class="pg-summary" id="pg-summary"></div>
+      <details class="pg-help">
+        <summary>Jak to funguje</summary>
         <p><b>Jde o „měkké“ skrytí.</b> Skrytá stránka zmizí z odkazů a při otevření přesměruje na rozcestník,
         ale HTML je na GitHub Pages veřejné — kdo zná přesnou adresu a vypne JavaScript nebo si stáhne zdroj,
         obsah uvidí. Nepoužívejte to pro nic tajného (např. řešení písemek). Totéž platí pro „vyžaduje přihlášení“.
-        Změna se u studentů projeví nejpozději do minuty.
-        U každé stránky lze po rozbalení „záložky“ vypnout i jednotlivé záložky (Teorie, Trénink, Hra…); skrytá stránka skrývá všechny své záložky.
-        Stránky jsou seřazené podle toho, kam patří — zapnutí nebo vypnutí rozcestníku (např. Měření
-        nebo Kvinta) automaticky zapne/vypne i všechny stránky, na které odkazuje. Šipka u rozcestníku
-        sbalí nebo rozbalí jeho podstránky.</p>
-      </div>
+        Změna se u studentů projeví nejpozději do minuty.</p>
+        <p>Zapnutí nebo vypnutí rozcestníku (Měření, Kvinta, Oktáva) automaticky zapne/vypne i všechny jeho stránky.
+        Šipka u rozcestníku sbalí nebo rozbalí jeho podstránky. U každé stránky lze po rozbalení „záložek“ vypnout i jednotlivé
+        záložky (Teorie, Trénink, Hra…); skrytá stránka skrývá všechny své záložky.</p>
+      </details>
       <div class="panel">
-        <div class="panel-title"><span>Viditelnost stránek pro studenty</span></div>
+        <div class="panel-title">
+          <span>Viditelnost stránek pro studenty</span>
+          <div class="toolbar">
+            <input type="search" id="pg-filter" placeholder="Hledat stránku…" aria-label="Hledat stránku">
+            <select id="pg-mode" aria-label="Zobrazit">
+              <option value="">Všechny stránky</option>
+              <option value="hidden">Jen skryté</option>
+              <option value="visible">Jen viditelné</option>
+              <option value="login">Jen s přihlášením</option>
+            </select>
+            <button class="btn" type="button" id="pg-collapse">Sbalit vše</button>
+            <button class="btn" type="button" id="pg-expand">Rozbalit vše</button>
+          </div>
+        </div>
         <div class="table-scroll" id="pages-box"><div class="empty">Načítám…</div></div>
       </div>
     </section>
@@ -789,9 +826,11 @@ footer{ margin-top:40px; }
     var row = tb.insertRow();
     row.className = 'tab-row' + (p.visible ? '' : ' page-off');
     row.style.setProperty('--tab-indent', (level*26 + 8) + 'px');
-    row.appendChild(el('td', 'title-cell', 'Záložka: ' + t.title));
-    var f = row.insertCell(); f.className = 'mono'; f.textContent = t.tab;
-    row.insertCell().appendChild(makeSwitch(t.visible, t.visible ? 'viditelná' : 'skrytá', function(inp){
+    var tc = el('td', 'title-cell', 'Záložka: ' + t.title);
+    tc.appendChild(el('span', 'pg-file', t.tab));
+    row.appendChild(tc);
+    var c = row.insertCell(); c.className = 'sw';
+    c.appendChild(makeSwitch(t.visible, t.visible ? 'viditelná' : 'skrytá', function(inp){
       updateTab(p, t, inp.checked, inp);
     }));
     row.insertCell();
@@ -809,12 +848,25 @@ footer{ margin-top:40px; }
       handleError(err);
     });
   }
-  function pageRow(tb, p, level, isHub){
+  var pgFilter = { q:'', mode:'' };
+  function pageMatches(p){
+    if(pgFilter.q && (p.title + ' ' + p.file).toLowerCase().indexOf(pgFilter.q) < 0) return false;
+    if(pgFilter.mode==='hidden') return !p.visible;
+    if(pgFilter.mode==='visible') return p.visible;
+    if(pgFilter.mode==='login') return !!p.requiresLogin;
+    return true;
+  }
+  function filterActive(){ return !!(pgFilter.q || pgFilter.mode); }
+  // Pomocné: existující (backendem známé) podstránky uzlu
+  function childPages(node){
+    return treeDescendantFiles(node).map(findPage).filter(Boolean);
+  }
+  function pageRow(tb, p, level, isHub, node){
     var row = tb.insertRow();
-    row.className = 'lvl-' + level + (isHub ? ' hub-row' : '');
+    row.className = 'lvl-' + level + (isHub ? ' hub-row' : '') + (p.visible ? '' : ' inactive');
     var titleCell = el('td', 'title-cell');
+    var collapsed = isHub && !filterActive() && !!collapsedHubs[p.file];
     if(isHub){
-      var collapsed = !!collapsedHubs[p.file];
       var toggle = el('button', 'tree-toggle', collapsed ? '▸' : '▾');
       toggle.type = 'button';
       toggle.setAttribute('aria-expanded', String(!collapsed));
@@ -827,15 +879,11 @@ footer{ margin-top:40px; }
     }
     var a = el('a', null, p.title); a.href = p.file;
     titleCell.appendChild(a);
-    if(isHub) titleCell.appendChild(el('span','badge','rozcestník'));
-    row.appendChild(titleCell);
-    var f = row.insertCell(); f.className = 'mono'; f.textContent = p.file;
-    row.insertCell().appendChild(makeSwitch(p.visible, p.visible ? 'viditelná' : 'skrytá', function(inp){
-      update(p, { viditelna: inp.checked }, inp);
-    }));
-    row.insertCell().appendChild(makeSwitch(p.requiresLogin, p.requiresLogin ? 'vyžaduje' : 'nevyžaduje', function(inp){
-      update(p, { vyzadujePrihlaseni: inp.checked }, inp);
-    }));
+    if(isHub && node){
+      var kids = childPages(node);
+      var on = kids.filter(function(k){ return k.visible; }).length;
+      titleCell.appendChild(el('span', 'pg-count', on + ' / ' + kids.length + ' viditelných'));
+    }
     var tabs = tabsOf(p.file);
     if(tabs.length){
       var open = !!openTabs[p.file];
@@ -846,26 +894,43 @@ footer{ margin-top:40px; }
       tg.addEventListener('click', function(){ openTabs[p.file] = !openTabs[p.file]; renderPages(); });
       titleCell.appendChild(document.createTextNode(' '));
       titleCell.appendChild(tg);
-      if(open) tabs.forEach(function(t){ tabRow(tb, p, t, level + 1); });
     }
+    titleCell.appendChild(el('span', 'pg-file', p.file));
+    row.appendChild(titleCell);
+    var c1 = row.insertCell(); c1.className = 'sw';
+    c1.appendChild(makeSwitch(p.visible, p.visible ? 'viditelná' : 'skrytá', function(inp){
+      update(p, { viditelna: inp.checked }, inp);
+    }));
+    var c2 = row.insertCell(); c2.className = 'sw';
+    c2.appendChild(makeSwitch(p.requiresLogin, p.requiresLogin ? 'vyžaduje' : 'nevyžaduje', function(inp){
+      update(p, { vyzadujePrihlaseni: inp.checked }, inp);
+    }));
+    if(tabs.length && !!openTabs[p.file]) tabs.forEach(function(t){ tabRow(tb, p, t, level + 1); });
   }
   function rootRow(tb, node){
     var row = tb.insertRow();
     row.className = 'lvl-0 root-row';
-    var titleCell = el('td', 'title-cell', 'Rozcestník (index.html)');
+    var titleCell = el('td', 'title-cell', 'Rozcestník');
+    titleCell.appendChild(el('span', 'pg-file', node.file));
     row.appendChild(titleCell);
-    var f = row.insertCell(); f.className = 'mono'; f.textContent = node.file;
-    row.insertCell().appendChild(el('span','badge ok','vždy viditelná'));
+    var c = row.insertCell(); c.className = 'sw';
+    c.appendChild(el('span','badge ok','vždy viditelná'));
     row.insertCell();
   }
   function renderTree(nodes, level, tb, seen){
     nodes.forEach(function(node){
       seen[node.file] = true;
       var p = findPage(node.file);
-      if(p) pageRow(tb, p, level, !!node.hub);
-      else if(node.root) rootRow(tb, node);
       var children = node.children || [];
-      if(node.hub && collapsedHubs[node.file]){
+      var fa = filterActive();
+      if(fa && !node.root){
+        // Při filtrování: stránku ukaž, jen když sama (nebo některá z podstránek) vyhovuje.
+        var any = (p && pageMatches(p)) || childPages(node).some(pageMatches);
+        if(!any){ markSeen(children, seen); return; }
+      }
+      if(p && (!fa || pageMatches(p) || node.hub)) pageRow(tb, p, level, !!node.hub, node);
+      else if(node.root && !fa) rootRow(tb, node);
+      if(node.hub && !fa && collapsedHubs[node.file]){
         // Sbalený rozcestník: podstránky se nekreslí, ale pořád se počítají jako "známé"
         // (aby se neobjevily dole v „Ostatní stránky“).
         markSeen(children, seen);
@@ -875,25 +940,52 @@ footer{ margin-top:40px; }
       }
     });
   }
+  function renderPageSummary(){
+    var box = $('pg-summary');
+    box.innerHTML = '';
+    var all = pageCfg.pages, total = all.length;
+    var vis = all.filter(function(p){ return p.visible; }).length;
+    var login = all.filter(function(p){ return p.requiresLogin; }).length;
+    function kpi(cls, label, value, sub){
+      var k = el('div', 'kpi ' + cls);
+      k.appendChild(el('span','label',label));
+      k.appendChild(el('span','value',String(value)));
+      if(sub) k.appendChild(el('span','sub',sub));
+      box.appendChild(k);
+    }
+    kpi('', 'Stránek celkem', total);
+    kpi('ok', 'Viditelné', vis, 'pro studenty');
+    kpi(total - vis ? 'bad' : '', 'Skryté', total - vis, total - vis ? 'studenti je nevidí' : 'nic není skryto');
+    kpi('', 'Vyžadují přihlášení', login);
+  }
   function renderPages(){
     var box = $('pages-box');
     box.innerHTML = '';
+    renderPageSummary();
     if(!pageCfg.pages.length){ box.appendChild(el('div','empty','Žádné stránky v konfiguraci.')); return; }
-    var t = el('table','grid');
+    var t = el('table','grid pages');
     var hr = t.createTHead().insertRow();
-    ['Stránka','Soubor','Viditelnost','Přihlášení'].forEach(function(h){ hr.appendChild(el('th', null, h)); });
+    [['Stránka',''],['Viditelnost','sw'],['Přihlášení','sw']].forEach(function(h){ hr.appendChild(el('th', h[1] || null, h[0])); });
     var tb = t.createTBody();
     var seen = {};
     renderTree(PAGE_TREE, 0, tb, seen);
-    var rest = pageCfg.pages.filter(function(p){ return !seen[p.file]; })
+    var rest = pageCfg.pages.filter(function(p){ return !seen[p.file] && pageMatches(p); })
       .sort(function(a,b){ return a.title.localeCompare(b.title, 'cs'); });
     if(rest.length){
       var sepRow = tb.insertRow(); sepRow.className = 'other-row-sep';
-      var sepCell = sepRow.insertCell(); sepCell.colSpan = 4; sepCell.textContent = 'Ostatní stránky';
-      rest.forEach(function(p){ pageRow(tb, p, 0, false); });
+      var sepCell = sepRow.insertCell(); sepCell.colSpan = 3; sepCell.textContent = 'Ostatní stránky';
+      rest.forEach(function(p){ pageRow(tb, p, 0, false, null); });
     }
+    if(!tb.rows.length){ box.appendChild(el('div','empty','Filtru nic neodpovídá.')); return; }
     box.appendChild(t);
   }
+  $('pg-filter').addEventListener('input', function(){ pgFilter.q = this.value.trim().toLowerCase(); renderPages(); });
+  $('pg-mode').addEventListener('change', function(){ pgFilter.mode = this.value; renderPages(); });
+  $('pg-collapse').addEventListener('click', function(){
+    PAGE_TREE[0].children.forEach(function(n){ if(n.hub) collapsedHubs[n.file] = true; });
+    renderPages();
+  });
+  $('pg-expand').addEventListener('click', function(){ collapsedHubs = {}; renderPages(); });
   function applyPageConfig(res){
     pageCfg = { pages: res.pages || [], tabs: res.tabs || [], disciplines: res.disciplines || pageCfg.disciplines };
     try{ localStorage.setItem('fyzika-page-config', JSON.stringify({ t: Date.now(), cfg: pageCfg })); }catch(e){}
