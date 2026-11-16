@@ -1,0 +1,1733 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spektrum elektromagnetického záření</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../spolecne/config.js"></script>
+<script src="../spolecne/auth.js"></script>
+<script src="../spolecne/zalozky.js?v=3"></script>
+<link rel="stylesheet" href="../spolecne/styl.css">
+<link rel="stylesheet" href="../spolecne/reseni.css?v=1">
+<style>
+:root{
+  --paper:#eff1f8;
+  --surface:#fcfdff;
+  --surface-2:#dde1f1;
+  --ink:#1d2340;
+  --ink-soft:#5b6282;
+  --line:rgba(29,35,64,0.12);
+  --accent:#2e3f8f;
+  --accent-ink:#f5f7ff;
+  --success:#28794f;
+  --success-bg:#e3efe0;
+  --danger:#b3392b;
+  --danger-bg:#f5e4de;
+  --focus:#1e6f66;
+  --shadow:0 1px 0 rgba(29,35,64,0.06);
+
+  /* barvy druhů záření v pásu spektra (jen na stránkách o elektromagnetickém záření) */
+  --em-gama:#b77cc9;
+  --em-rtg:#6f8fd8;
+  --em-uv:#9d86e3;
+  --em-ir:#e3895b;
+  --em-mw:#d8b24a;
+  --em-radio:#82b36c;
+  --medium:rgba(46,63,143,0.10);
+}
+
+.panel{ margin-bottom:22px; }
+.panel-title{ margin-bottom:8px; }
+.panel p{
+  margin:0 0 8px;
+  font-size:0.9rem;
+  line-height:1.55;
+}
+.panel p:last-child{ margin-bottom:0; }
+.panel b{ color:var(--ink); }
+.panel ul, .panel ol{ margin:0 0 8px; padding-left:22px; font-size:0.9rem; line-height:1.55; }
+.panel li{ margin-bottom:4px; }
+.panel h3{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.05rem;
+  letter-spacing:0.01em;
+  margin:16px 0 6px;
+}
+.panel h3:first-child{ margin-top:0; }
+
+.card{ padding:26px 26px 28px; text-align:left; margin-bottom:24px; }
+.cat-tag{ margin-bottom:10px; }
+.card h2{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.6rem;
+  letter-spacing:0.02em;
+  color:var(--ink);
+  text-transform:none;
+  margin-bottom:6px;
+}
+.card .desc{
+  font-size:0.86rem;
+  color:var(--ink-soft);
+  line-height:1.5;
+  margin:0 0 14px;
+}
+
+.katex{ font-size:1.05em; }
+.formula-box{
+  background:var(--surface-2);
+  border-radius:8px;
+  padding:12px 16px;
+  margin:10px 0;
+  font-size:1.1rem;
+  text-align:center;
+}
+.formula-line{
+  text-align:center;
+  font-size:1.1rem;
+  color:var(--ink);
+  line-height:1.8;
+}
+.line-scroll{
+  position:relative;
+  white-space:nowrap;
+  overflow-x:auto;
+  overflow-y:hidden;
+  padding:2px 0 4px;
+}
+.given-data{
+  font-size:clamp(0.9rem, 2.4vw, 1.05rem);
+  color:var(--ink-soft);
+  margin-bottom:20px;
+}
+
+.theory-table-wrap{ overflow-x:auto; margin:6px 0 4px; }
+.theory-table{
+  border-collapse:collapse;
+  font-size:0.88rem;
+  width:100%;
+  min-width:320px;
+}
+.theory-table th, .theory-table td{
+  border:1px solid var(--line);
+  padding:8px 12px;
+  text-align:left;
+}
+.theory-table thead th{
+  background:var(--surface-2);
+  color:var(--ink-soft);
+  font-weight:600;
+  font-size:0.72rem;
+  text-transform:uppercase;
+  letter-spacing:0.05em;
+}
+/* značky veličin v záhlaví nesmí převést na velká písmena (λ → Λ) */
+.theory-table thead th .katex{ text-transform:none; letter-spacing:0; font-size:1.25em; }
+.theory-table td.mono, .theory-table th.mono{
+  font-family:'IBM Plex Mono', monospace;
+  font-variant-numeric:tabular-nums;
+  text-align:center;
+}
+.theory-table tbody tr:nth-child(even) td{ background:rgba(0,0,0,0.02); }
+
+.theory-fig{
+  margin:12px 0 10px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:10px 12px 8px;
+}
+.theory-fig svg{ display:block; width:100%; max-width:560px; height:auto; margin:0 auto; }
+.theory-fig figcaption{
+  font-size:0.8rem;
+  color:var(--ink-soft);
+  line-height:1.45;
+  text-align:center;
+  margin-top:4px;
+}
+
+.example-grid{ display:flex; flex-direction:column; gap:12px; margin-top:6px; }
+.example-item{
+  background:var(--surface-2);
+  border-radius:10px;
+  padding:12px 14px;
+}
+.example-tag{
+  font-size:0.66rem;
+  text-transform:uppercase;
+  letter-spacing:0.06em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-bottom:6px;
+  display:block;
+}
+.example-eq{
+  font-size:1.05rem;
+  margin-bottom:4px;
+}
+.example-note{ font-size:0.82rem; color:var(--ink-soft); line-height:1.45; }
+
+.links{ margin-top:14px; display:flex; flex-wrap:wrap; gap:10px; justify-content:center; }
+a.btn-link{
+  display:inline-block;
+  font-weight:600;
+  font-size:0.95rem;
+  padding:10px 22px;
+  border-radius:8px;
+  background:var(--accent);
+  color:var(--accent-ink);
+  text-decoration:none;
+}
+a.btn-link:hover{ filter:brightness(1.06); }
+a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+
+.credit{
+  margin-top:24px;
+  font-size:0.8rem;
+  line-height:1.5;
+  color:var(--ink-soft);
+  text-align:center;
+}
+.credit a{ color:inherit; }
+
+/* ---- aplety: řádky ovládání (jako na stránce Polarizace světla) ---- */
+.mode-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:16px;
+  padding-top:14px;
+  border-top:1px solid var(--line);
+}
+.mode-row[hidden]{ display:none; }
+.mode-row-label{
+  font-size:0.68rem;
+  text-transform:uppercase;
+  letter-spacing:0.1em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-right:2px;
+  flex:0 0 120px;   /* stejná šířka ve všech řádcích */
+}
+.seg{ display:flex; gap:6px; flex-wrap:wrap; }
+.chip{ font-size:0.82rem; gap:7px; }
+.chip.accented.on{
+  background:var(--accent);
+  color:var(--accent-ink);
+  border-color:var(--accent);
+}
+.chip:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+.slider-row input[type=range]{ flex:1 1 220px; min-width:0; height:34px; margin:0; accent-color:var(--accent); cursor:pointer; }
+.slider-row input[type=range]:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+.slider-val{
+  flex:0 0 140px;
+  font-weight:600;
+  font-size:0.95rem;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+}
+
+/* ---- aplet: hlavička s tlačítkem na celou obrazovku ---- */
+.applet-head{ display:flex; gap:16px; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; }
+.applet-head-text{ flex:1 1 360px; }
+.applet-head .cat-tag{ margin-bottom:10px; }
+button.btn.fs-btn{ display:inline-flex; align-items:center; gap:8px; flex:none; padding:9px 16px; font-size:0.86rem; }
+button.btn.fs-btn svg{ flex:none; }
+.applet-stage .theory-fig{ margin-top:4px; }
+
+/* ---- celá obrazovka: nahoře pruh s ovládáním, pod ním obrázek přes zbytek plochy ---- */
+.applet-card.is-full{
+  position:fixed;
+  inset:0;
+  z-index:1000;
+  margin:0;
+  border-radius:0;
+  border:0;
+  overflow:hidden;
+  padding:0;
+  background:var(--surface);
+  display:flex;
+  flex-direction:column;
+}
+.applet-card:fullscreen{ width:100%; height:100%; }
+.applet-card.is-full .applet-head{
+  flex:none; flex-wrap:nowrap; align-items:center;
+  padding:8px 14px 0; background:var(--surface); order:0;
+}
+.applet-card.is-full .applet-head-text{ flex:1 1 auto; }
+.applet-card.is-full .applet-head{ justify-content:space-between; }
+.applet-card.is-full .applet-controls{
+  flex:none; display:flex; flex-wrap:wrap; align-items:center; gap:0 26px;
+  padding:0 14px 8px; background:var(--surface); border-bottom:1px solid var(--line); order:1;
+}
+.applet-card.is-full .mode-row{ margin:0; padding:4px 0 0; border-top:0; flex-wrap:nowrap; }
+.applet-card.is-full .mode-row-label{ flex:none; }
+.applet-card.is-full .slider-row{ flex:1 1 380px; }
+.applet-card.is-full .slider-row input[type=range]{ height:28px; }
+.applet-card.is-full details.navod,
+.applet-card.is-full figcaption,
+.applet-card.is-full .desc,
+.applet-card.is-full .cat-tag{ display:none; }
+.applet-card.is-full h2{ font-size:1.25rem; margin:0; }
+.applet-card.is-full .applet-stage{ flex:1 1 auto; min-height:0; position:relative; margin:0; order:2; }
+.applet-card.is-full .theory-fig{
+  position:absolute; inset:0; margin:0; padding:0; border:0; border-radius:0;
+  display:flex; flex-direction:column;
+}
+.applet-card.is-full .theory-fig svg{ flex:1 1 auto; min-height:0; width:100%; max-width:none; height:100%; margin:0; }
+/* telefon na výšku, který neumí zamknout orientaci (např. iPhone): karta se otočí o 90° */
+.applet-card.is-full.rotated{
+  inset:auto; top:0; left:0;
+  width:100vh; height:100vw;
+  width:100dvh; height:100dvw;
+  transform-origin:top left;
+  transform:translateX(100vw) rotate(90deg);
+}
+/* telefon na šířku (zamčený i otočený): kompaktní pruh, ať je obrázek co největší */
+.applet-card.is-full.rotated .applet-head-text{ display:none; }
+@media (max-height:500px) and (orientation:landscape){
+  .applet-card.is-full .applet-head-text{ display:none; }
+}
+
+/* ---- širší obrázky a delší výpis hodnot ---- */
+.fs-hint{ display:none; margin:8px 0 0; text-align:center; }
+.applet-card.is-full .fs-hint{ display:none; }
+.applet-card:not(.is-full) .theory-fig svg.wide{ max-width:760px; }
+.slider-val.wide{ flex:1 1 240px; white-space:normal; }
+
+@media (max-width:520px){
+  .card{ padding:20px 16px 22px; }
+  .top-tabs{ flex-wrap:wrap; }
+  .toptab{ flex:1 1 auto; padding:13px 8px; }
+  .fs-hint{ display:block; }
+}
+
+/* ---- trénink: zadání, odpověď a výběr z možností (podle stránek Kulová zrcadla a Převody jednotek) ---- */
+.task-banner{
+  display:flex;
+  align-items:baseline;
+  gap:6px 12px;
+  flex-wrap:wrap;
+  margin-top:14px;
+  background:var(--surface-2);
+  border:1px solid var(--line);
+  border-left:4px solid var(--accent);
+  border-radius:8px;
+  padding:11px 16px;
+}
+.task-banner-label{
+  font-size:0.78rem;
+  text-transform:uppercase;
+  letter-spacing:0.08em;
+  color:var(--ink-soft);
+  font-weight:600;
+}
+.task-text{ font-size:1rem; line-height:1.55; color:var(--ink); flex:1 1 100%; }
+.task-text .katex{ font-size:1.05em; }
+.task-fig{ margin-top:12px; }
+.equation{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:600;
+  font-size:clamp(1.2rem, 4vw, 1.8rem);
+  display:flex;
+  align-items:baseline;
+  justify-content:center;
+  gap:0.4em;
+  flex-wrap:wrap;
+  margin-top:18px;
+  font-variant-numeric:tabular-nums;
+}
+.equation .lhs .katex{ font-size:0.95em; }
+.equation .unit{ color:var(--ink-soft); font-size:0.7em; margin-left:0.1em; }
+.equation .eq{ color:var(--ink-soft); margin:0 0.1em; }
+.answer-input{ width:5.2em; }
+.answer-input.sci-mantissa{ width:3.6em; }
+.sci-group{ display:inline-flex; align-items:baseline; gap:0.12em; }
+.sci-times{ font-size:0.65em; color:var(--ink-soft); margin:0 0.02em; }
+.sci-exp{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:600;
+  width:2.4em;
+  text-align:center;
+  border:none;
+  border-bottom:2px solid var(--ink-soft);
+  background:transparent;
+  color:var(--ink);
+  font-size:0.55em;
+  vertical-align:top;
+  padding:0 0.05em;
+}
+.sci-exp:focus{ outline:none; border-color:var(--focus); }
+.sci-exp.correct{ border-color:var(--success); color:var(--success); }
+.sci-exp.wrong{ border-color:var(--danger); color:var(--danger); }
+.opt-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:8px; margin-top:16px; }
+.opt-grid.wide-opts{ grid-template-columns:1fr; }
+.opt-btn{
+  font-family:'Work Sans', sans-serif;
+  font-size:0.92rem;
+  font-weight:500;
+  text-align:left;
+  line-height:1.35;
+  min-height:44px;
+  padding:10px 14px;
+  border-radius:10px;
+  border:1px solid var(--line);
+  background:var(--surface);
+  color:var(--ink);
+  cursor:pointer;
+  transition:transform .05s ease, background .12s, border-color .12s, box-shadow .12s;
+}
+.opt-btn:hover:not(:disabled){ border-color:var(--accent); }
+.opt-btn:active:not(:disabled){ transform:translateY(1px); }
+.opt-btn:disabled{ cursor:default; }
+.opt-btn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+.opt-btn.selected{ border-color:var(--ink); box-shadow:0 0 0 2px var(--ink); background:var(--surface-2); }
+.opt-btn.correct{ border-color:var(--success); box-shadow:0 0 0 2px var(--success); background:var(--success-bg); }
+.opt-btn.wrong{ border-color:var(--danger); box-shadow:0 0 0 2px var(--danger); background:var(--danger-bg); }
+.opt-btn.missed{ border-color:var(--success); border-style:dashed; }
+.trainer-card .actions{ margin-top:18px; gap:8px; }
+.trainer-card .feedback .steps{ font-size:0.88rem; line-height:1.6; margin-top:4px; }
+.trainer-card .feedback .tip{ font-size:0.84rem; }
+
+@media (max-width:520px){
+  .opt-grid{ grid-template-columns:1fr 1fr; }
+  .readout .cell{ min-width:64px; padding:6px 8px; }
+}
+.equation[hidden], .opt-grid[hidden], .task-fig[hidden]{ display:none; }
+
+/* ---- posuvník po spektru: výpis údajů pod obrázkem ---- */
+.sp-info{
+  display:grid;
+  grid-template-columns:150px 1fr;
+  gap:6px 14px;
+  margin-top:16px;
+  padding:14px 16px;
+  background:var(--surface-2);
+  border-radius:10px;
+  font-size:0.9rem;
+  line-height:1.5;
+  text-align:left;
+}
+.sp-info .k{
+  font-size:0.68rem;
+  text-transform:uppercase;
+  letter-spacing:0.1em;
+  color:var(--ink-soft);
+  font-weight:600;
+  padding-top:3px;
+}
+.sp-info .v b{ color:var(--accent); }
+.sp-swatch{ display:inline-block; width:14px; height:14px; border-radius:3px; vertical-align:-2px; margin-right:6px; border:1px solid var(--line); }
+svg.sp-band-svg{ touch-action:none; }
+/* aplety vložené přímo do panelů teorie */
+.inline-applet{ margin:14px 0; padding:16px 18px 18px; border:1px solid var(--line); border-radius:12px; background:var(--surface); }
+.inline-applet .applet-head h2{ font-family:'Big Shoulders Display', sans-serif; font-weight:700; font-size:1.3rem; letter-spacing:0.02em; color:var(--ink); margin:0 0 4px; }
+.inline-applet.is-full{ padding:0; border-radius:0; }
+/* příklady zdrojů v tabulce spektra */
+.ex-cell{ min-width:180px; }
+.ex-chips{ display:flex; flex-wrap:wrap; gap:6px; }
+.ex-chips .chip{ font-size:0.78rem; padding:5px 10px; }
+.ex-chips .chip.on{ background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+@media (max-width:520px){ .inline-applet{ padding:12px 10px 14px; } }
+.spec-table td.mono{ white-space:nowrap; }
+/* na úzkém displeji: každý druh záření jako blok (název, λ a f vedle sebe, příklady pod nimi) */
+@media (max-width:560px){
+  .spec-table{ min-width:0; }
+  .spec-table thead{ display:none; }
+  .spec-table tr{ display:grid; grid-template-columns:1fr 1fr; border:1px solid var(--line); border-top:0; }
+  .spec-table tr:first-child{ border-top:1px solid var(--line); }
+  .spec-table td{ border:0; padding:4px 10px; }
+  .spec-table td:first-child{ grid-column:1 / -1; font-weight:600; padding-top:10px; }
+  .spec-table td.mono{ text-align:left; white-space:normal; }
+  .spec-table td.mono::before{ content:attr(data-label) " = "; font-family:'Work Sans', sans-serif; font-style:italic; color:var(--ink-soft); }
+  .spec-table td.ex-cell{ grid-column:1 / -1; min-width:0; padding-bottom:10px; }
+  .spec-table tbody tr:nth-child(even) td{ background:transparent; }
+  .spec-table tbody tr:nth-child(even){ background:rgba(0,0,0,0.02); }
+}
+.applet-card.is-full .sp-info{ display:none; }
+@media (max-width:520px){
+  .sp-info{ grid-template-columns:1fr; gap:2px; }
+  .sp-info .k{ padding-top:8px; }
+}
+/* dlouhé slovo „elektromagnetického“ se na úzkém telefonu do řádku nevejde */
+@media (max-width:420px){ .brand-text h1{ font-size:2.1rem; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <a class="back-link" href="../rozcestniky/oktava.html">← Zpět na Oktáva/4. ročník</a>
+
+  <div class="brand">
+    <div class="brand-lockup">
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect x="3" y="25" width="34" height="9" rx="2" fill="var(--surface-2)" stroke="var(--ink)" stroke-width="1.8"/>
+        <line x1="18" y1="25" x2="18" y2="34" stroke="var(--accent)" stroke-width="3"/>
+        <path d="M3,14 Q5,6 7,14 T11,14 T15,14 T19,14" stroke="var(--ink-soft)" stroke-width="1.6" fill="none"/>
+        <path d="M19,14 Q23,4 27,14 T35,14" stroke="var(--accent)" stroke-width="2" fill="none"/>
+      </svg>
+      <div class="brand-text">
+        <h1>Spektrum elektromagnetického záření</h1>
+        <p>Druhy záření, vlnová délka a frekvence</p>
+      </div>
+    </div>
+    <div class="readout" id="header-readout" hidden>
+      <div class="cell"><span class="label">Skóre</span><span class="value" id="stat-score">0</span></div>
+      <div class="cell"><span class="label">Série</span><span class="value" id="stat-streak">0</span></div>
+      <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="stat-accuracy">—</span></div>
+    </div>
+  </div>
+
+  <div class="top-tabs">
+    <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+    <button class="toptab" id="top-tab-trenink" data-tab="trenink">Trénink</button>
+    <button class="toptab" id="top-tab-hra" data-tab="hra">Hra na čas</button>
+  </div>
+
+  <!-- ============ TEORIE ============ -->
+  <div id="theory-section" class="tab-section">
+
+    <div class="panel">
+      <div class="panel-title">Světlo není jediné záření</div>
+      <p>Už víme, že světlo je <b>elektromagnetické vlnění</b>. Oko ho vnímá jen v úzkém rozmezí vlnových délek: ve vakuu přibližně od 390&nbsp;nm (fialová) do 760&nbsp;nm (červená). Vzniká tak, že atomy a molekuly svítícího tělesa získají energii (například při vyšší teplotě) a potom ji vyzáří.</p>
+      <p>Stejnou podstatu má i vlnění, které vysílá anténa rozhlasového vysílače. Od světla se liší hlavně tím, že jeho vlnová délka je mnohem větší. Právě <b>vlnová délka</b> rozhoduje o tom, jak se dané vlnění chová a k čemu se hodí. Elektromagnetickému vlnění libovolné vlnové délky budeme říkat <b>elektromagnetické záření</b>.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Vlnová délka a frekvence</div>
+      <p>Za jednu periodu \(T\) urazí vlna právě jednu vlnovou délku \(\lambda\). Stejně jako u rovnoměrného pohybu tedy platí \(\lambda = c\,T\), a protože \(T = 1/f\):</p>
+      <div class="formula-box">\[ \lambda = \frac{c}{f} \qquad\text{neboli}\qquad c = \lambda f \]</div>
+      <p>kde \(c = 3{,}00 \cdot 10^{8}\ \mathrm{m\cdot s^{-1}}\) je rychlost světla ve vakuu a \(f\) frekvence záření. Čím kratší je vlnová délka, tím vyšší je frekvence; obě veličiny jsou nepřímo úměrné.</p>
+      <div class="example-grid">
+        <div class="example-item">
+          <span class="example-tag">Rozhlasová stanice FM</span>
+          <div class="example-eq">\[ \lambda = \frac{c}{f} = \frac{3{,}00 \cdot 10^{8}}{100 \cdot 10^{6}}\ \mathrm{m} = \mathbf{3{,}00\ \mathrm{m}} \]</div>
+          <div class="example-note">Vysílání na 100&nbsp;MHz má vlnovou délku zhruba jako výška místnosti — jde o rádiové záření.</div>
+        </div>
+        <div class="example-item">
+          <span class="example-tag">Rentgenový snímek</span>
+          <div class="example-eq">\[ f = \frac{c}{\lambda} = \frac{3{,}00 \cdot 10^{8}}{0{,}5 \cdot 10^{-9}}\ \mathrm{Hz} = \mathbf{6 \cdot 10^{17}\ \mathrm{Hz}} \]</div>
+          <div class="example-note">Záření o vlnové délce 0,5&nbsp;nm vykoná za jedinou sekundu 6&nbsp;·&nbsp;10¹⁷ kmitů — jde o rentgenové záření.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Spektrum elektromagnetického záření</div>
+      <p>Záření všech vlnových délek dohromady tvoří <b>spektrum elektromagnetického záření</b>. Podle vlnové délky (a tedy i podle vlastností a využití) v něm rozlišujeme sedm druhů. Od nejkratších vlnových délek k nejdelším jsou to záření <b>gama</b>, <b>rentgenové</b>, <b>ultrafialové</b>, <b>světlo</b>, <b>infračervené</b>, <b>mikrovlny</b> a <b>rádiové</b> záření.</p>
+      <div class="applet-card inline-applet" id="sp-card">
+        <div class="applet-head">
+          <div class="applet-head-text">
+            <span class="cat-tag">Aplet</span>
+            <h2>Posuvník po spektru</h2>
+          </div>
+          <button class="btn ghost fs-btn" id="sp-fs" type="button" aria-pressed="false">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path id="sp-fs-icon" d="M1.5 5.5V1.5H5.5M10.5 1.5H14.5V5.5M14.5 10.5V14.5H10.5M5.5 14.5H1.5V10.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span id="sp-fs-label">Celá obrazovka</span>
+          </button>
+        </div>
+        <div class="applet-stage">
+          <figure class="theory-fig">
+            <svg id="sp-svg" class="wide" viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pás spektra elektromagnetického záření s logaritmickou osou vlnové délky od deseti na minus čtrnáctou metru do deseti kilometrů a s posuvnou značkou. Zleva gama, rentgenové, ultrafialové, úzký pás světla, infračervené, mikrovlny a rádiové záření. Pod pásem je osa frekvence a zvětšená viditelná oblast od 390 do 760 nanometrů, pod ní údaje o vlnové délce, frekvenci a druhu záření."></svg>
+            <figcaption id="sp-caption">Osa je logaritmická: každý dílek znamená desetkrát větší vlnovou délku. Viditelné světlo je jen nepatrný proužek, proto je dole zvětšené. Značku můžete táhnout po pásu spektra.</figcaption>
+          </figure>
+          <p class="hint fs-hint">Pro čitelnost popisků otevřete aplet na celou obrazovku.</p>
+        </div>
+        <div class="applet-controls">
+          <div class="mode-row slider-row">
+            <label class="mode-row-label" for="sp-sl">Vlnová délka</label>
+            <input type="range" id="sp-sl" min="-14" max="4" step="0.001" value="-6.3">
+            <span class="slider-val" id="sp-out-l" aria-live="polite"></span>
+          </div>
+        </div>
+        <div class="sp-info" id="sp-info" aria-live="polite"></div>
+        <details class="navod">
+          <summary>Návod</summary>
+          <p class="hint">Posuvník mění vlnovou délku ve vakuu od \(10^{-14}\ \mathrm{m}\) do \(10^{4}\ \mathrm{m}\). Stupnice je logaritmická: posun o jeden dílek znamená desetinásobek vlnové délky. Značku lze také táhnout myší nebo prstem přímo po pásu spektra. Kliknutím na příklad v tabulce pod apletem se nastaví vlnová délka daného zdroje. Pod pásem se průběžně dopočítává frekvence \(f = c/\lambda\) a vypisuje se druh záření, jeho typické zdroje a využití. V místech, kde se oblasti překrývají nebo kde se hranice v různých zdrojích liší, se vypíší oba druhy. Údaj <i>Srovnatelná velikost</i> přiřazuje vlnové délce předmět podobné velikosti (jen řádově).</p>
+        </details>
+      </div>
+      <div class="theory-table-wrap">
+        <table class="theory-table spec-table">
+          <thead>
+            <tr><th>Druh záření</th><th class="mono">Vlnová délka \(\lambda\)</th><th class="mono">Frekvence \(f\)</th><th>Příklady (klikněte)</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>rádiové záření</td><td class="mono" data-label="λ">10&nbsp;km až 10&nbsp;mm</td><td class="mono" data-label="f">30&nbsp;kHz až 30&nbsp;GHz</td><td class="ex-cell"><div class="ex-chips"><button class="chip sp-ex" type="button" data-l="300" aria-pressed="false">rozhlas AM 1&nbsp;MHz</button><button class="chip sp-ex" type="button" data-l="3" aria-pressed="false">rozhlas FM 100&nbsp;MHz</button></div></td></tr>
+            <tr><td>mikrovlny</td><td class="mono" data-label="λ">10&nbsp;mm až 1&nbsp;mm</td><td class="mono" data-label="f">30&nbsp;GHz až 300&nbsp;GHz</td><td class="ex-cell"><div class="ex-chips"><button class="chip sp-ex" type="button" data-l="1.87e-3" aria-pressed="false">reliktní záření 160&nbsp;GHz</button><button class="chip sp-ex" type="button" data-l="3.9e-3" aria-pressed="false">radar v autě 77&nbsp;GHz</button></div></td></tr>
+            <tr><td>infračervené záření</td><td class="mono" data-label="λ">1&nbsp;mm až 760&nbsp;nm</td><td class="mono" data-label="f">300&nbsp;GHz až 395&nbsp;THz</td><td class="ex-cell"><div class="ex-chips"><button class="chip sp-ex" type="button" data-l="9.4e-6" aria-pressed="false">lidské tělo</button><button class="chip sp-ex" type="button" data-l="9.4e-7" aria-pressed="false">dálkový ovladač</button></div></td></tr>
+            <tr><td>světlo</td><td class="mono" data-label="λ">760&nbsp;nm až 390&nbsp;nm</td><td class="mono" data-label="f">395&nbsp;THz až 769&nbsp;THz</td><td class="ex-cell"><div class="ex-chips"><button class="chip sp-ex" type="button" data-l="6.5e-7" aria-pressed="false">červený laser</button><button class="chip sp-ex" type="button" data-l="5.32e-7" aria-pressed="false">zelený laser</button></div></td></tr>
+            <tr><td>ultrafialové záření</td><td class="mono" data-label="λ">390&nbsp;nm až 10&nbsp;nm</td><td class="mono" data-label="f">769&nbsp;THz až 30&nbsp;PHz</td><td class="ex-cell"><div class="ex-chips"><button class="chip sp-ex" type="button" data-l="3.65e-7" aria-pressed="false">UV lampa na bankovky</button><button class="chip sp-ex" type="button" data-l="2.537e-7" aria-pressed="false">germicidní lampa</button></div></td></tr>
+            <tr><td>rentgenové záření</td><td class="mono" data-label="λ">10&nbsp;nm až 1&nbsp;pm</td><td class="mono" data-label="f">30&nbsp;PHz až 300&nbsp;EHz</td><td class="ex-cell"><div class="ex-chips"><button class="chip sp-ex" type="button" data-l="1.54e-10" aria-pressed="false">strukturní analýza (Cu)</button><button class="chip sp-ex" type="button" data-l="3e-11" aria-pressed="false">rentgen v nemocnici</button></div></td></tr>
+            <tr><td>záření gama</td><td class="mono" data-label="λ">menší než 100&nbsp;pm</td><td class="mono" data-label="f">větší než 3&nbsp;EHz</td><td class="ex-cell"><div class="ex-chips"><button class="chip sp-ex" type="button" data-l="9.3e-13" aria-pressed="false">kobalt 60</button></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Frekvence jsou spočtené ze vztahu \(f = c/\lambda\). Předpony: tera- (T) = 10¹², peta- (P) = 10¹⁵, exa- (E) = 10¹⁸.</p>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="9" cy="9" r="7.5" stroke="var(--focus)" stroke-width="1.6"/>
+          <line x1="9" y1="8" x2="9" y2="13" stroke="var(--focus)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="5.2" r="1" fill="var(--focus)"/>
+        </svg>
+        <p>Ostré hranice mezi druhy záření neexistují: přechody jsou plynulé a rentgenové záření se se zářením gama dokonce překrývá (rozlišují se podle vzniku, ne podle vlnové délky). Hranice v tabulce jsou podle učebnice; jiné zdroje kladou hranici mezi rádiovým zářením a mikrovlnami k 10&nbsp;cm nebo i k 1&nbsp;m. Proto se například záření mikrovlnné trouby (2,45&nbsp;GHz, \(\lambda \approx 12\ \mathrm{cm}\)) běžně nazývá mikrovlnné, ačkoli podle tabulky výše patří ještě k rádiovému.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Vlnová délka, nebo frekvence?</div>
+      <p>Vlnové délky v tabulce platí pro vakuum (ve vzduchu jsou prakticky stejné). V jiném prostředí se záření šíří pomaleji, rychlostí \(v = c/n\), kde \(n\) je index lomu. Frekvenci ale určuje zdroj, a ta se při přechodu do jiného prostředí <b>nemění</b>: kolik kmitů za sekundu do rozhraní přijde, tolik jich z něj musí odejít. Zkrátí se tedy vlnová délka:</p>
+      <div class="formula-box">\[ \lambda_n = \frac{v}{f} = \frac{c}{n f} = \frac{\lambda}{n} \]</div>
+      <p>Údaj o vlnové délce proto bez dodatku „ve vakuu“ nestačí, kdežto frekvence platí v každém prostředí. Proto je vhodnější charakterizovat záření frekvencí. Také barva světla je dána frekvencí: zelené světlo zůstane zelené i ve vodě nebo ve skle.</p>
+      <div class="applet-card inline-applet" id="pr-card">
+        <div class="applet-head">
+          <div class="applet-head-text">
+            <span class="cat-tag">Animace</span>
+            <h2>Vlna v různých prostředích</h2>
+          </div>
+          <button class="btn ghost fs-btn" id="pr-fs" type="button" aria-pressed="false">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path id="pr-fs-icon" d="M1.5 5.5V1.5H5.5M10.5 1.5H14.5V5.5M14.5 10.5V14.5H10.5M5.5 14.5H1.5V10.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span id="pr-fs-label">Celá obrazovka</span>
+          </button>
+        </div>
+        <div class="applet-stage">
+          <figure class="theory-fig">
+            <svg id="pr-svg" class="wide" viewBox="0 0 640 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Animace vlny, která přechází zleva ze vzduchu přes svislé rozhraní do prostředí s větším indexem lomu. V prostředí má vlna kratší vlnovou délku. Dva body na vlně, jeden v každém prostředí, kmitají nahoru a dolů a počítadla ukazují, že oba vykonají stejný počet kmitů."></svg>
+          <figcaption>Vlnová délka se v optičtěji hustším prostředí zkrátí \(n\)krát, frekvence (počet kmitů za sekundu) zůstane stejná.</figcaption>
+          </figure>
+          <p class="hint fs-hint">Pro čitelnost popisků otevřete animaci na celou obrazovku.</p>
+        </div>
+        <div class="applet-controls">
+        <div class="mode-row slider-row">
+          <label class="mode-row-label" for="pr-sl-n">Index lomu</label>
+          <input type="range" id="pr-sl-n" min="100" max="250" step="1" value="133">
+          <span class="slider-val" id="pr-out-n" aria-live="polite"></span>
+        </div>
+        <div class="mode-row">
+          <span class="mode-row-label">Prostředí</span>
+          <div class="seg" id="pr-presets" role="group" aria-label="Volba prostředí">
+            <button class="chip accented" type="button" data-n="100" aria-pressed="false">vzduch</button>
+            <button class="chip accented on" type="button" data-n="133" aria-pressed="true">voda</button>
+            <button class="chip accented" type="button" data-n="150" aria-pressed="false">sklo</button>
+            <button class="chip accented" type="button" data-n="242" aria-pressed="false">diamant</button>
+          </div>
+        </div>
+        <div class="mode-row slider-row">
+          <label class="mode-row-label" for="pr-sl-l">Vlnová délka ve vzduchu</label>
+          <input type="range" id="pr-sl-l" min="390" max="760" step="5" value="650">
+          <span class="slider-val" id="pr-out-l" aria-live="polite"></span>
+        </div>
+        <div class="mode-row">
+          <span class="mode-row-label">Údaje</span>
+          <span class="slider-val wide" id="pr-out-v" aria-live="polite"></span>
+        </div>
+        <div class="mode-row">
+          <span class="mode-row-label">Animace</span>
+          <div class="seg">
+            <button class="chip" id="pr-play" type="button">Pozastavit</button>
+            <button class="chip" id="pr-zero" type="button">Vynulovat počítadla</button>
+          </div>
+        </div>
+      </div>
+        <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint">Vlna se šíří zleva doprava. Vlevo je vzduch (\(n = 1{,}00\)), vpravo za svislým rozhraním prostředí s indexem lomu nastaveným posuvníkem nebo tlačítky. Dva body (jeden ve vzduchu, jeden v prostředí) kmitají nahoru a dolů; počítadla nad nimi ukazují, kolik kmitů od vynulování vykonaly (kmit se započítá, když bod projde horní polohou; protože body nekmitají ve stejné fázi, může se jedno počítadlo krátce o jedničku předbíhat). Oba body kmitají stejně rychle, takže frekvence je v obou prostředích stejná, ale hřebeny vln jsou v prostředí blíž u sebe. Kóty ukazují vlnovou délku v obou prostředích. Animace je zpomalená (skutečné světlo kmitá stovky bilionůkrát za sekundu) a vlnová délka je v obrázku zvětšená. Barva vlny odpovídá zvolené vlnové délce ve vzduchu a v prostředí se nemění. Odraz na rozhraní a pohlcování světla animace zanedbává.</p>
+      </details>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="cat-tag">Řešený příklad</span>
+      <h2>Laserové ukazovátko pod vodou</h2>
+      <p class="desc">Rozklikejte si postup krok po kroku — další krok se odemkne, jakmile otevřete ten předchozí.</p>
+      <div class="given-data">
+        <div class="given-line">Červené laserové ukazovátko svítí ve vzduchu světlem o vlnové délce \(\lambda = 650\ \mathrm{nm}\). Svazek míří do akvária s vodou (\(n = 1{,}33\)). Určete frekvenci světla a jeho vlnovou délku ve vodě.</div>
+      </div>
+      <div class="stepper" data-reset="reset-laser">
+        <div class="step" data-step="1">
+          <div class="step-connector"></div>
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">1</span>
+            <span class="step-title">Převeďte vlnovou délku na metry</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <div class="step-result">\(\lambda = 650\ \mathrm{nm} = 650 \cdot 10^{-9}\ \mathrm{m} = 6{,}50 \cdot 10^{-7}\ \mathrm{m}\)</div>
+          </div>
+        </div>
+        <div class="step" data-step="2">
+          <div class="step-connector"></div>
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">2</span>
+            <span class="step-title">Spočtěte frekvenci \(f\)</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <div class="step-result"><div class="line-scroll">\(f = \dfrac{c}{\lambda} = \dfrac{3{,}00 \cdot 10^{8}\ \mathrm{m\cdot s^{-1}}}{6{,}50 \cdot 10^{-7}\ \mathrm{m}} \doteq 4{,}62 \cdot 10^{14}\ \mathrm{Hz} = 462\ \mathrm{THz}\)</div></div>
+            <p>Jednotky: \(\mathrm{m\cdot s^{-1}}/\mathrm{m} = \mathrm{s^{-1}} = \mathrm{Hz}\).</p>
+          </div>
+        </div>
+        <div class="step" data-step="3">
+          <div class="step-connector"></div>
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">3</span>
+            <span class="step-title">Určete vlnovou délku ve vodě</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <p>Frekvence zůstává stejná, mění se rychlost:</p>
+            <div class="step-result"><div class="line-scroll">\(\lambda_n = \dfrac{\lambda}{n} = \dfrac{650\ \mathrm{nm}}{1{,}33} \doteq 489\ \mathrm{nm}\)</div></div>
+            <p>Kontrola jinou cestou: \(v = c/n \doteq 2{,}26 \cdot 10^{8}\ \mathrm{m\cdot s^{-1}}\) a \(\lambda_n = v/f \doteq 489\ \mathrm{nm}\).</p>
+          </div>
+        </div>
+        <div class="step" data-step="4">
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">4</span>
+            <span class="step-title">Zapište výsledek</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <div class="result-box"><div class="line-scroll">\(f \doteq 4{,}62 \cdot 10^{14}\ \mathrm{Hz}\), \(\lambda_n \doteq 489\ \mathrm{nm}\)</div></div>
+            <p>Vlnová délka 489&nbsp;nm by ve vzduchu odpovídala modrozelenému světlu, přesto svazek ve vodě zůstává červený: barvu určuje frekvence, a ta se nezměnila.</p>
+          </div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn ghost" id="reset-laser">Zopakovat postup od začátku</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Shrnutí</div>
+      <p>• Elektromagnetické záření různých vlnových délek tvoří spektrum: gama, rentgenové, ultrafialové, světlo, infračervené, mikrovlny, rádiové (od nejkratší vlnové délky).</p>
+      <p>• Vlnová délka a frekvence souvisejí vztahem \(\lambda = c/f\), kde \(c = 3{,}00 \cdot 10^{8}\ \mathrm{m\cdot s^{-1}}\).</p>
+      <p>• Hranice mezi druhy záření nejsou ostré, oblasti se mohou překrývat.</p>
+      <p>• Vlnová délka udávaná v tabulkách platí ve vakuu; frekvence je stejná ve všech prostředích, proto je výhodnější ji uvádět.</p>
+    </div>
+  </div>
+
+  <!-- ============ TRÉNINK ============ -->
+  <div id="trenink-section" class="tab-section" hidden>
+    <div class="card trainer-card">
+      <span class="cat-tag">Trénink</span>
+      <h2>Vlnová délka, frekvence a druh záření</h2>
+      <p class="desc">Převádějte vlnovou délku na frekvenci a naopak, nebo určete druh záření. Počítejte s \(c = 3{,}00 \cdot 10^{8}\ \mathrm{m\cdot s^{-1}}\), číselné výsledky zapište ve tvaru \(a \cdot 10^{n}\) se třemi platnými číslicemi.</p>
+      <div class="mode-row">
+        <span class="mode-row-label">Úlohy</span>
+        <div class="seg" id="tr-mode" role="group" aria-label="Druh úloh">
+          <button class="chip accented on" type="button" data-mode="random" aria-pressed="true">Náhodně</button>
+          <button class="chip accented" type="button" data-mode="l2f" aria-pressed="false">\(\lambda \to f\)</button>
+          <button class="chip accented" type="button" data-mode="f2l" aria-pressed="false">\(f \to \lambda\)</button>
+          <button class="chip accented" type="button" data-mode="druh" aria-pressed="false">Druh záření</button>
+        </div>
+        <button class="linklike" id="tr-reset-stats" type="button">vynulovat statistiku</button>
+      </div>
+      <div id="tr-area"></div>
+      <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint">Číselnou odpověď zapište jako mantisu \(a\) a exponent \(n\) (například \(4{,}62 \cdot 10^{14}\) zapíšete jako 4,62 a 14). Uznává se odchylka v poslední platné číslici. U úloh na druh záření vyberte jednu možnost a potvrďte tlačítkem Zkontrolovat; hodnoty jsou voleny tak, aby ležely uvnitř oblasti jednoho druhu (hranice podle tabulky v teorii). Klávesa Enter potvrzuje odpověď a posouvá na další příklad.</p>
+      </details>
+    </div>
+  </div>
+
+  <!-- ============ HRA NA ČAS ============ -->
+  <div id="hra-section" class="tab-section" hidden>
+
+    <div id="game-intro">
+      <div class="panel" id="game-rules-panel">
+        <div class="panel-title">Pravidla hry</div>
+        <p class="game-rules">Na čas budete určovat druh elektromagnetického záření podle zadané vlnové délky nebo frekvence. Za správnou odpověď ze zadané vlnové délky dostanete <strong>5 bodů</strong>, ze zadané frekvence (kterou je potřeba převést) <strong>7 bodů</strong>. Za špatnou odpověď (i za odpověď „Nevím“) se strhává <strong>5 bodů</strong>. Hranice druhů záření jsou podle tabulky v teorii; zadané hodnoty vždy leží uvnitř oblasti jednoho druhu. Po vypršení zvoleného času se hra ukončí.</p>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Délka hry</div>
+        <div class="row" id="game-duration-row"></div>
+      </div>
+      <div class="panel" id="game-start-panel">
+        <div class="settings-foot">
+          <span class="hint" id="game-best-hint">Nejlepší skóre: —</span>
+          <button class="btn primary" id="btn-game-start" type="button">Spustit hru</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="game-play" hidden>
+      <div class="game-header">
+        <div class="game-timer" id="game-timer">2:00</div>
+        <div class="readout">
+          <div class="cell"><span class="label">Body</span><span class="value" id="game-score">0</span></div>
+          <div class="cell"><span class="label">Nejlepší</span><span class="value" id="game-best-live">0</span></div>
+        </div>
+      </div>
+      <div class="card trainer-card">
+        <span class="cat-tag" id="game-cat-tag"></span>
+        <span class="points-badge" id="game-points-badge">+5 b</span>
+        <div class="task-banner"><div class="task-text" id="game-text"></div></div>
+        <div class="opt-grid" id="game-opts"></div>
+        <div class="feedback" id="game-feedback" hidden>
+          <div class="headline" id="game-feedback-headline"></div>
+          <div class="steps" id="game-feedback-steps"></div>
+        </div>
+        <div class="actions">
+          <button class="btn ghost" id="btn-game-skip" type="button">Nevím / Další</button>
+          <button class="btn primary" id="btn-game-next" type="button" hidden>Další příklad →</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="game-over" hidden>
+      <span class="cat-tag">Konec hry</span>
+      <div class="game-final-score" id="game-final-score">0 bodů</div>
+      <div class="hint" id="game-final-detail"></div>
+      <div class="actions">
+        <button class="btn primary" id="btn-game-restart" type="button">Hrát znovu</button>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>Fyzika — Oktáva/4. ročník</footer>
+</div>
+
+<script src="../spolecne/reseni.js?v=1"></script>
+<script src="../spolecne/spolecne.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  // ---- záložky: tlačítko .toptab[data-tab="x"] ↔ sekce #x-section (Teorie = #theory-section) ----
+  // Opuštění běžící hry na čas přepnutím záložky se potvrzuje (tabGuard nastaví hra).
+  var tabs = {}, sections = {}, tabGuard = null, currentTab = 'teorie';
+  Array.prototype.forEach.call(document.querySelectorAll('.toptab[data-tab]'), function(btn){
+    var name = btn.getAttribute('data-tab');
+    tabs[name] = btn;
+    sections[name] = document.getElementById(name === 'teorie' ? 'theory-section' : name + '-section');
+  });
+  function showTab(name){
+    if(tabGuard && name !== currentTab && !tabGuard(currentTab, name)) return;
+    currentTab = name;
+    for(var k in tabs){
+      tabs[k].classList.toggle('on', k === name);
+      if(sections[k]) sections[k].hidden = k !== name;
+    }
+    // skóre, série a úspěšnost v hlavičce jen u tréninku
+    var readout = document.getElementById('header-readout');
+    if(readout) readout.hidden = name !== 'trenink';
+  }
+  Object.keys(tabs).forEach(function(k){ tabs[k].addEventListener('click', function(){ showTab(k); }); });
+  var hash = location.hash.replace('#', '');
+  if(hash && tabs[hash]) showTab(hash);
+
+  // ---- příklady: postupně odemykané steppery ----
+  Array.prototype.forEach.call(document.querySelectorAll('.stepper'), function(wrap){
+    var steps = Array.prototype.slice.call(wrap.querySelectorAll('.step'));
+    var unlockedUpTo = 1;
+
+    function refreshLocks(){
+      steps.forEach(function(st){
+        var idx = parseInt(st.getAttribute('data-step'), 10);
+        var locked = idx > unlockedUpTo;
+        st.classList.toggle('locked', locked);
+        st.classList.toggle('unlocked', !locked && !st.classList.contains('done'));
+        st.querySelector('.step-head').setAttribute('aria-disabled', locked ? 'true' : 'false');
+      });
+    }
+
+    steps.forEach(function(st){
+      var idx = parseInt(st.getAttribute('data-step'), 10);
+      var head = st.querySelector('.step-head');
+      var body = st.querySelector('.step-body');
+      head.addEventListener('click', function(){
+        if(idx > unlockedUpTo) return;
+        var wasOpen = st.classList.contains('open');
+        st.classList.toggle('open', !wasOpen);
+        body.hidden = wasOpen;
+        head.setAttribute('aria-expanded', (!wasOpen).toString());
+        if(!wasOpen){
+          st.classList.add('done');
+          if(idx === unlockedUpTo && unlockedUpTo < steps.length){ unlockedUpTo++; }
+          refreshLocks();
+        }
+      });
+    });
+
+    var resetBtn = document.getElementById(wrap.getAttribute('data-reset'));
+    if(resetBtn){
+      resetBtn.addEventListener('click', function(){
+        unlockedUpTo = 1;
+        steps.forEach(function(st){
+          st.classList.remove('open', 'done');
+          st.querySelector('.step-body').hidden = true;
+          st.querySelector('.step-head').setAttribute('aria-expanded', 'false');
+        });
+        refreshLocks();
+      });
+    }
+
+    refreshLocks();
+  });
+
+  // ---- pomocné funkce pro kreslení a výpis čísel ----
+  var NS = 'http://www.w3.org/2000/svg';
+  var NB = ' ';
+  function mk(tag, attrs, parent){
+    var el = document.createElementNS(NS, tag), k;
+    for(k in attrs){ if(attrs.hasOwnProperty(k)) el.setAttribute(k, attrs[k]); }
+    if(parent) parent.appendChild(el);
+    return el;
+  }
+  function f1(x){ return (Math.round(x * 10) / 10).toString(); }
+  // číslo s desetinnou čárkou na daný počet desetinných míst
+  function fmt(x, dec){ return roundTo(x, dec).toFixed(dec).replace('.', ',').replace('-', '−'); }
+  // tisíce oddělené pevnou mezerou (2 400, 12 500)
+  function fmtThousands(str){
+    var parts = str.split(','), s = parts[0], neg = s.charAt(0) === '−';
+    if(neg) s = s.slice(1);
+    if(s.length > 3) s = s.replace(/\B(?=(\d{3})+(?!\d))/g, NB);
+    return (neg ? '−' : '') + s + (parts.length > 1 ? ',' + parts[1] : '');
+  }
+  // rozklad na mantisu a exponent: x = m · 10^e, 1 ≤ |m| < 10, m zaokrouhlená na sig platných číslic
+  function sciParts(x, sig){
+    if(x === 0) return { m:0, e:0 };
+    var e = Math.floor(Math.log10(Math.abs(x)));
+    var m = roundSig(x / Math.pow(10, e), sig);
+    if(Math.abs(m) >= 10){ m = roundSig(m / 10, sig); e++; }
+    return { m:m, e:e };
+  }
+  var SUP = { '0':'⁰', '1':'¹', '2':'²', '3':'³', '4':'⁴', '5':'⁵', '6':'⁶', '7':'⁷', '8':'⁸', '9':'⁹', '-':'⁻' };
+  function supStr(n){ return String(n).split('').map(function(c){ return SUP[c]; }).join(''); }
+  // text „4,62 · 10¹⁴“ (s pevnými mezerami)
+  function sciText(x, sig){
+    var p = sciParts(x, sig);
+    if(p.e === 0) return fmt(p.m, sig - 1);
+    return fmt(p.m, sig - 1) + NB + '·' + NB + '10' + supStr(p.e);
+  }
+  // totéž pro KaTeX: 4{,}62 \cdot 10^{14}
+  function sciTex(x, sig){
+    var p = sciParts(x, sig);
+    var m = fmt(p.m, sig - 1).replace('−', '-').replace(',', '{,}');
+    if(p.e === 0) return m;
+    return m + ' \\cdot 10^{' + p.e + '}';
+  }
+  function texNum(x, dec){ return fmtThousands(fmt(x, dec)).replace(',', '{,}').replace(/\u00a0/g, '\\,').replace('−', '-'); }
+  // Text s matematikou mezi $…$ (vysází KaTeX) jako HTML.
+  function esc(t){ return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function mathHtml(str){
+    return String(str).split('$').map(function(part, i){
+      if(i % 2 === 0) return part;
+      if(window.katex){ try{ return katex.renderToString(part, { throwOnError:false }); }catch(e){} }
+      return esc(part);
+    }).join('');
+  }
+  function setChips(btns, on){
+    Array.prototype.forEach.call(btns, function(b, i){ b.classList.toggle('on', i === on); b.setAttribute('aria-pressed', i === on ? 'true' : 'false'); });
+  }
+  function setToggle(btn, on){ btn.classList.toggle('on', on); btn.setAttribute('aria-pressed', on ? 'true' : 'false'); }
+  function randInt(a, b){ return a + Math.floor(Math.random() * (b - a + 1)); }
+  function pick(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+  function shuffle(arr){
+    var a = arr.slice(), i, j, t;
+    for(i = a.length - 1; i > 0; i--){ j = Math.floor(Math.random() * (i + 1)); t = a[i]; a[i] = a[j]; a[j] = t; }
+    return a;
+  }
+  var reduceMotion = false;
+  try{ reduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches); }catch(e){}
+
+  // ---- barva světla dané vlnové délky (nm) pro kreslení spekter; mimo 380–780 nm černá ----
+  // Přibližný převod podle D. Bruton; na okrajích viditelné oblasti jas klesá (oko je tam málo citlivé).
+  function wlRGB(nm){
+    var r = 0, g = 0, b = 0, k;
+    if(nm >= 380 && nm < 440){ r = -(nm - 440) / 60; b = 1; }
+    else if(nm >= 440 && nm < 490){ g = (nm - 440) / 50; b = 1; }
+    else if(nm >= 490 && nm < 510){ g = 1; b = -(nm - 510) / 20; }
+    else if(nm >= 510 && nm < 580){ r = (nm - 510) / 70; g = 1; }
+    else if(nm >= 580 && nm < 645){ r = 1; g = -(nm - 645) / 65; }
+    else if(nm >= 645 && nm <= 780){ r = 1; }
+    if(nm >= 380 && nm < 420) k = 0.3 + 0.7 * (nm - 380) / 40;
+    else if(nm >= 420 && nm <= 700) k = 1;
+    else if(nm > 700 && nm <= 780) k = 0.3 + 0.7 * (780 - nm) / 80;
+    else k = 0;
+    function c(v){ return v <= 0 ? 0 : Math.round(255 * Math.pow(v * k, 0.8)); }
+    return [c(r), c(g), c(b)];
+  }
+  function wlColor(nm){ var c = wlRGB(nm); return 'rgb(' + c[0] + ',' + c[1] + ',' + c[2] + ')'; }
+
+  // ---- celá obrazovka (stejně jako na stránce Polarizace světla) ----
+  function initFullscreen(cardId, btnId, labelId, iconId){
+    var card = document.getElementById(cardId), fsBtn = document.getElementById(btnId), fsLabel = document.getElementById(labelId), fsIcon = document.getElementById(iconId);
+    if(!card || !fsBtn) return;
+    var ICON_ENTER = 'M1.5 5.5V1.5H5.5M10.5 1.5H14.5V5.5M14.5 10.5V14.5H10.5M5.5 14.5H1.5V10.5';
+    var ICON_EXIT = 'M5.5 1.5V5.5H1.5M14.5 5.5H10.5V1.5M10.5 14.5V10.5H14.5M1.5 10.5H5.5V14.5';
+    var isPhone = window.matchMedia && matchMedia('(pointer:coarse)').matches && Math.min(screen.width, screen.height) < 600;
+    var portraitMq = window.matchMedia ? matchMedia('(orientation:portrait)') : null;
+    var orientLocked = false, keepFull = false;
+    function fsElement(){ return document.fullscreenElement || document.webkitFullscreenElement || null; }
+    function updateRotated(){
+      var on = card.classList.contains('is-full') && isPhone && !orientLocked && !!portraitMq && portraitMq.matches;
+      if(on === card.classList.contains('rotated')) return;
+      card.classList.toggle('rotated', on);
+    }
+    if(portraitMq){
+      if(portraitMq.addEventListener) portraitMq.addEventListener('change', updateRotated);
+      else if(portraitMq.addListener) portraitMq.addListener(updateRotated);
+    }
+    function lockFailed(){
+      if(isPhone && portraitMq && portraitMq.matches && fsElement()){
+        keepFull = true;
+        try{ (document.exitFullscreen || document.webkitExitFullscreen).call(document); }catch(e){ keepFull = false; }
+      }
+      updateRotated();
+    }
+    function lockLandscape(){
+      var so = screen.orientation;
+      if(!isPhone){ updateRotated(); return; }
+      if(!so || !so.lock){ lockFailed(); return; }
+      try{ so.lock('landscape').then(function(){ orientLocked = true; updateRotated(); }, lockFailed); }catch(e){ lockFailed(); }
+    }
+    function setFullClass(on){
+      card.classList.toggle('is-full', on);
+      if(!on){
+        if(orientLocked){ try{ screen.orientation.unlock(); }catch(e){} }
+        orientLocked = false;
+      }
+      updateRotated();
+      document.documentElement.style.overflow = on ? 'hidden' : '';
+      fsLabel.textContent = on ? 'Zavřít celou obrazovku' : 'Celá obrazovka';
+      fsIcon.setAttribute('d', on ? ICON_EXIT : ICON_ENTER);
+      fsBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    }
+    fsBtn.addEventListener('click', function(){
+      if(card.classList.contains('is-full')){
+        if(fsElement()){ (document.exitFullscreen || document.webkitExitFullscreen).call(document); }
+        else setFullClass(false);
+        return;
+      }
+      var req = card.requestFullscreen || card.webkitRequestFullscreen;
+      setFullClass(true);
+      if(req){
+        try{
+          var pr0 = req.call(card);
+          if(pr0 && pr0.then) pr0.then(lockLandscape, lockLandscape);
+          else lockLandscape();
+        }catch(e){ lockLandscape(); }
+      } else lockLandscape();
+    });
+    function onFsChange(){
+      if(fsElement()) return;
+      if(keepFull){ keepFull = false; return; }
+      if(card.classList.contains('is-full')) setFullClass(false);
+    }
+    document.addEventListener('fullscreenchange', onFsChange);
+    document.addEventListener('webkitfullscreenchange', onFsChange);
+    document.addEventListener('keydown', function(e){
+      if(e.key === 'Escape' && card.classList.contains('is-full') && !fsElement()) setFullClass(false);
+    });
+  }
+
+  // ================= TRÉNINK =================
+  // Úloha q = { tag, text, kind:'num'|'sci'|'choice'|'multi', lhs, unit, answer, tol (absolutní, u 'sci' relativní),
+  //   choices:[html], correct:index | [indexy], given:[], find:[], steps:[], final, tip }.
+  // Texty mohou obsahovat matematiku mezi $…$ (vysází KaTeX).
+  function makeTrainer(cfg){
+    var P = cfg.prefix || 'tr';
+    var area = document.getElementById(P + '-area');
+    if(!area) return null;
+    var state = { mode:cfg.defaultMode || 'random', q:null, revealed:false, touched:false, sel:[], lastKey:null,
+      score:0, streak:0, bestStreak:0, answered:0, correct:0 };
+
+    area.innerHTML =
+      '<div class="task-banner"><span class="task-banner-label" id="' + P + '-tag"></span><div class="task-text" id="' + P + '-text"></div></div>' +
+      '<div class="task-fig" id="' + P + '-fig" hidden></div>' +
+      '<div class="equation" id="' + P + '-eq" hidden>' +
+        '<span class="lhs" id="' + P + '-lhs"></span><span class="eq">=</span>' +
+        '<span class="answer-slot" id="' + P + '-num-wrap"><input class="answer-input" id="' + P + '-num" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="?" aria-label="Odpověď"></span>' +
+        '<span class="answer-slot sci-group" id="' + P + '-sci-wrap" hidden>' +
+          '<input class="answer-input sci-mantissa" id="' + P + '-man" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="a" aria-label="Mantisa a">' +
+          '<span class="sci-times">· 10</span>' +
+          '<input class="sci-exp" id="' + P + '-exp" inputmode="text" enterkeyhint="done" autocomplete="off" spellcheck="false" placeholder="n" aria-label="Exponent n">' +
+        '</span>' +
+        '<span class="unit" id="' + P + '-unit"></span>' +
+      '</div>' +
+      '<div class="opt-grid" id="' + P + '-opts" hidden></div>' +
+      '<div class="feedback" id="' + P + '-feedback" hidden><div class="headline" id="' + P + '-fb-head"></div><div class="steps" id="' + P + '-fb-steps"></div><div class="tip" id="' + P + '-fb-tip" hidden></div></div>' +
+      '<div class="actions">' +
+        '<button class="btn primary" id="' + P + '-check" type="button">Zkontrolovat</button>' +
+        '<button class="btn ghost" id="' + P + '-skip" type="button">Nevím / Zobrazit řešení</button>' +
+      '</div>';
+
+    function $(id){ return document.getElementById(P + '-' + id); }
+    var inNum = $('num'), inMan = $('man'), inExp = $('exp');
+    sanitizeNumericInput(inNum, true); sanitizeNumericInput(inMan, true); sanitizeNumericInput(inExp, false);
+    [inNum, inMan, inExp].forEach(function(el){ el.addEventListener('input', function(){ state.touched = el.value.trim() !== '' || state.touched; }); });
+
+    function parseNum(str){
+      var s = String(str).trim().replace(/[−–]/g, '-').replace(',', '.').replace(/\s+/g, '');
+      if(s === '' || s === '-' || s === '.') return NaN;
+      return parseFloat(s);
+    }
+
+    function newTask(){
+      var q, guard = 0;
+      do { q = cfg.gen(state.mode); guard++; } while(guard < 20 && q.key && q.key === state.lastKey);
+      state.lastKey = q.key || null;
+      state.q = q; state.revealed = false; state.touched = false; state.sel = [];
+      $('tag').textContent = q.tag || 'Úloha';
+      $('text').innerHTML = mathHtml(q.text);
+      var fig = $('fig');
+      if(q.fig){ fig.hidden = false; fig.innerHTML = ''; q.fig(fig); } else { fig.hidden = true; fig.innerHTML = ''; }
+      var isInput = q.kind === 'num' || q.kind === 'sci';
+      $('eq').hidden = !isInput;
+      $('num-wrap').hidden = q.kind !== 'num';
+      $('sci-wrap').hidden = q.kind !== 'sci';
+      [inNum, inMan, inExp].forEach(function(el){ el.value = ''; el.disabled = false; el.classList.remove('correct', 'wrong'); });
+      if(isInput){
+        $('lhs').innerHTML = mathHtml(q.lhs || '');
+        $('unit').innerHTML = mathHtml(q.unit || '');
+      }
+      var opts = $('opts');
+      opts.innerHTML = '';
+      opts.hidden = !(q.kind === 'choice' || q.kind === 'multi');
+      opts.classList.toggle('wide-opts', !!q.wideOpts);
+      if(!opts.hidden){
+        q.choices.forEach(function(c, i){
+          var b = document.createElement('button');
+          b.type = 'button'; b.className = 'opt-btn';
+          b.innerHTML = mathHtml(c);
+          b.setAttribute('aria-pressed', 'false');
+          b.addEventListener('click', function(){
+            if(state.revealed) return;
+            state.touched = true;
+            if(q.kind === 'choice'){
+              state.sel = [i];
+            } else {
+              var at = state.sel.indexOf(i);
+              if(at >= 0) state.sel.splice(at, 1); else state.sel.push(i);
+            }
+            Array.prototype.forEach.call(opts.children, function(o, j){
+              var on = state.sel.indexOf(j) >= 0;
+              o.classList.toggle('selected', on); o.setAttribute('aria-pressed', on ? 'true' : 'false');
+            });
+          });
+          opts.appendChild(b);
+        });
+      }
+      var fb = $('feedback'); fb.hidden = true; fb.className = 'feedback';
+      $('fb-tip').hidden = true;
+      $('check').textContent = 'Zkontrolovat';
+      if(q.kind === 'num'){ try{ inNum.focus({ preventScroll:true }); }catch(e){} }
+      else if(q.kind === 'sci'){ try{ inMan.focus({ preventScroll:true }); }catch(e){} }
+    }
+
+    function userValue(){
+      var q = state.q;
+      if(q.kind === 'num') return parseNum(inNum.value);
+      if(q.kind === 'sci'){
+        var m = parseNum(inMan.value), e = parseInt(String(inExp.value).replace(/[−–]/g, '-').replace(/\s+/g, ''), 10);
+        if(isNaN(m)) return NaN;
+        if(isNaN(e)) e = 0;
+        return m * Math.pow(10, e);
+      }
+      return NaN;
+    }
+
+    function isCorrect(){
+      var q = state.q, v;
+      if(q.kind === 'num'){ v = userValue(); return !isNaN(v) && Math.abs(v - q.answer) <= q.tol + 1e-12 * Math.abs(q.answer); }
+      if(q.kind === 'sci'){ v = userValue(); return !isNaN(v) && Math.abs(v - q.answer) <= q.tol * Math.abs(q.answer); }
+      if(q.kind === 'choice') return state.sel.length === 1 && state.sel[0] === q.correct;
+      var want = q.correct.slice().sort().join(','), got = state.sel.slice().sort().join(',');
+      return want === got;
+    }
+
+    function evaluate(bySkip){
+      if(state.revealed) return;
+      var q = state.q, ok = !bySkip && isCorrect();
+      state.revealed = true;
+      state.answered++;
+      if(ok){
+        state.score += 10; state.streak++; state.correct++;
+        if(state.streak > state.bestStreak){
+          state.bestStreak = state.streak; saveStats();
+          if(window.FyzikaScores) FyzikaScores.report('serie', state.bestStreak, false);
+        }
+      } else state.streak = 0;
+      var cls = ok ? 'correct' : 'wrong';
+      if(q.kind === 'num') inNum.classList.add(cls);
+      if(q.kind === 'sci'){ inMan.classList.add(cls); inExp.classList.add(cls); }
+      [inNum, inMan, inExp].forEach(function(el){ el.disabled = true; });
+      if(q.kind === 'choice' || q.kind === 'multi'){
+        var corr = q.kind === 'choice' ? [q.correct] : q.correct;
+        Array.prototype.forEach.call($('opts').children, function(o, j){
+          o.disabled = true;
+          var isC = corr.indexOf(j) >= 0, isS = state.sel.indexOf(j) >= 0;
+          o.classList.remove('selected');
+          if(isC && isS) o.classList.add('correct');
+          else if(isC) o.classList.add(bySkip || q.kind === 'choice' ? 'correct' : 'missed');
+          else if(isS) o.classList.add('wrong');
+        });
+      }
+      var fb = $('feedback');
+      fb.hidden = false;
+      if(bySkip){ fb.className = 'feedback neutral'; $('fb-head').textContent = 'Řešení'; }
+      else if(ok){ fb.className = 'feedback ok'; $('fb-head').textContent = 'Správně!'; }
+      else { fb.className = 'feedback bad'; $('fb-head').textContent = state.touched ? 'Bohužel, špatně.' : 'Nezadali jste odpověď.'; }
+      var tip = $('fb-tip');
+      tip.hidden = true;
+      if(ok && q.kind === 'sci'){
+        var m = Math.abs(parseNum(inMan.value));
+        if(!(m >= 1 && m < 10)){ tip.hidden = false; tip.textContent = 'Číselně správně — v normalizovaném zápisu má ale platit 1 ≤ a < 10.'; }
+      }
+      FyzikaReseni.show(fb, $('fb-steps'), {
+        given:(q.given || []).map(mathHtml), find:(q.find || []).map(mathHtml),
+        steps:(q.steps || []).map(mathHtml), final:q.final ? mathHtml(q.final) : '', note:q.note ? mathHtml(q.note) : '', raw:true
+      });
+      $('check').textContent = 'Další příklad →';
+      try{ $('check').focus({ preventScroll:true }); }catch(e){}
+      updateStats();
+    }
+
+    $('check').addEventListener('click', function(){
+      if(state.revealed){ newTask(); return; }
+      evaluate(false);
+    });
+    $('skip').addEventListener('click', function(){
+      if(state.revealed){ newTask(); return; }
+      evaluate(true);
+    });
+    // Enter potvrzuje odpověď a posouvá na další příklad
+    area.addEventListener('keydown', function(e){
+      if(e.key !== 'Enter') return;
+      var tg = e.target && e.target.tagName;
+      if(tg === 'BUTTON') return;
+      e.preventDefault();
+      if(state.revealed) newTask(); else evaluate(false);
+    });
+    document.addEventListener('keydown', function(e){
+      if(e.key !== 'Enter' || !state.revealed) return;
+      var sec = area.closest('.tab-section');
+      if(sec && sec.hidden) return;
+      var tg = e.target && e.target.tagName;
+      if(tg === 'BUTTON' || tg === 'INPUT') return;
+      e.preventDefault(); newTask();
+    });
+
+    // Přepnutí druhu úloh uprostřed rozepsaného příkladu: odpověď se nejdřív vyhodnotí
+    // (aby se přepínáním nedalo vyhnout špatné odpovědi), jinak rovnou nový příklad.
+    var modeBtns = document.querySelectorAll('#' + P + '-mode .chip');
+    Array.prototype.forEach.call(modeBtns, function(b, i){
+      b.addEventListener('click', function(){
+        setChips(modeBtns, i);
+        state.mode = b.getAttribute('data-mode');
+        if(!state.revealed && state.touched){ evaluate(false); return; }
+        newTask();
+      });
+    });
+
+    // ---- statistika ----
+    var STATS_KEY = cfg.statsKey;
+    function loadStats(){
+      try{ var raw = localStorage.getItem(STATS_KEY); if(raw) state.bestStreak = JSON.parse(raw).bestStreak || 0; }catch(e){}
+    }
+    function saveStats(){
+      try{ localStorage.setItem(STATS_KEY, JSON.stringify({ bestStreak:state.bestStreak })); }catch(e){}
+    }
+    function updateStats(){
+      var s = document.getElementById('stat-score'), st = document.getElementById('stat-streak'), a = document.getElementById('stat-accuracy');
+      if(s) s.textContent = state.score;
+      if(st) st.textContent = state.streak + (state.bestStreak > 0 ? ' / ' + state.bestStreak : '');
+      if(a) a.textContent = state.answered === 0 ? '—' : Math.round(100 * state.correct / state.answered) + ' %';
+    }
+    var rs = document.getElementById(P + '-reset-stats');
+    if(rs) rs.addEventListener('click', function(){
+      state.score = 0; state.streak = 0; state.answered = 0; state.correct = 0; state.bestStreak = 0;
+      try{ localStorage.removeItem(STATS_KEY); }catch(e){}
+      updateStats();
+    });
+    // Po synchronizaci s cloudem (auth.js) znovu načíst nejlepší sérii.
+    document.addEventListener('fyzika:scores-updated', function(){ state.bestStreak = 0; loadStats(); updateStats(); });
+
+    loadStats(); updateStats(); newTask();
+    return { newTask:newTask, state:state };
+  }
+
+  // ================= HRA NA ČAS =================
+  // Otázka g = { tag, text, choices:[html], correct, points, steps:[] }; odpovídá se kliknutím na možnost.
+  function makeGame(cfg){
+    var DURATIONS = [{ key:60, name:'1 min' }, { key:120, name:'2 min' }, { key:180, name:'3 min' }, { key:300, name:'5 min' }];
+    var gs = { duration:120, running:false, timeLeft:120, timerId:null, score:0, correct:0, wrong:0, q:null, locked:false, bests:{}, lastKey:null };
+    function $(id){ return document.getElementById(id); }
+    function loadBests(){ try{ var raw = localStorage.getItem(cfg.bestsKey); if(raw) gs.bests = JSON.parse(raw) || {}; }catch(e){} }
+    function saveBests(){ try{ localStorage.setItem(cfg.bestsKey, JSON.stringify(gs.bests)); }catch(e){} }
+    function currentBest(){ return gs.bests[gs.duration] || 0; }
+    function updateBestHint(){ $('game-best-hint').textContent = 'Nejlepší skóre: ' + (currentBest() || '—'); }
+    function pointWord(n){ var a = Math.abs(n); return a === 1 ? 'bod' : (a >= 2 && a <= 4 ? 'body' : 'bodů'); }
+
+    function nextQuestion(){
+      var q, guard = 0;
+      do { q = cfg.gen(); guard++; } while(guard < 20 && q.key && q.key === gs.lastKey);
+      gs.lastKey = q.key || null;
+      gs.q = q; gs.locked = false;
+      $('game-cat-tag').textContent = q.tag;
+      $('game-points-badge').textContent = '+' + q.points + ' b';
+      $('game-text').innerHTML = mathHtml(q.text);
+      var opts = $('game-opts');
+      opts.innerHTML = '';
+      q.choices.forEach(function(c, i){
+        var b = document.createElement('button');
+        b.type = 'button'; b.className = 'opt-btn'; b.innerHTML = mathHtml(c);
+        b.addEventListener('click', function(){ answer(i); });
+        opts.appendChild(b);
+      });
+      $('game-feedback').hidden = true;
+      $('btn-game-next').hidden = true;
+      $('btn-game-skip').hidden = false;
+    }
+    function reveal(chosen){
+      var q = gs.q, fb = $('game-feedback');
+      Array.prototype.forEach.call($('game-opts').children, function(o, j){
+        o.disabled = true;
+        if(j === q.correct) o.classList.add('correct');
+        else if(j === chosen) o.classList.add('wrong');
+      });
+      fb.hidden = false;
+      FyzikaReseni.show(fb, $('game-feedback-steps'), { steps:(q.steps || []).map(mathHtml), raw:true, title:'' });
+      gs.locked = true;
+      $('btn-game-skip').hidden = true;
+      $('btn-game-next').hidden = false;
+      try{ $('btn-game-next').focus({ preventScroll:true }); }catch(e){}
+      $('game-score').textContent = gs.score;
+    }
+    function answer(i){
+      if(!gs.running || gs.locked) return;
+      var q = gs.q, fb = $('game-feedback');
+      if(i === q.correct){
+        gs.score += q.points; gs.correct++;
+        fb.className = 'feedback ok'; $('game-feedback-headline').textContent = 'Správně! +' + q.points + ' b';
+      } else {
+        gs.score -= 5; gs.wrong++;
+        fb.className = 'feedback bad'; $('game-feedback-headline').textContent = 'Bohužel špatně. −5 b';
+      }
+      reveal(i);
+    }
+    function skip(){
+      if(!gs.running || gs.locked) return;
+      gs.score -= 5; gs.wrong++;
+      var fb = $('game-feedback');
+      fb.className = 'feedback bad'; $('game-feedback-headline').textContent = 'Správná odpověď: −5 b';
+      reveal(-1);
+    }
+    function tick(){
+      gs.timeLeft--;
+      var t = $('game-timer');
+      t.textContent = formatGameTime(Math.max(0, gs.timeLeft));
+      t.classList.toggle('low-time', gs.timeLeft <= 20 && gs.timeLeft > 0);
+      if(gs.timeLeft <= 0) endGame();
+    }
+    function startGame(){
+      gs.running = true; gs.timeLeft = gs.duration; gs.score = 0; gs.correct = 0; gs.wrong = 0;
+      $('game-score').textContent = 0;
+      $('game-timer').textContent = formatGameTime(gs.duration);
+      $('game-timer').classList.remove('low-time');
+      $('game-best-live').textContent = currentBest();
+      $('game-intro').hidden = true; $('game-over').hidden = true; $('game-play').hidden = false;
+      nextQuestion();
+      if(gs.timerId) clearInterval(gs.timerId);
+      gs.timerId = setInterval(tick, 1000);
+    }
+    function endGame(){
+      gs.running = false;
+      clearInterval(gs.timerId); gs.timerId = null;
+      if(gs.score > currentBest()){ gs.bests[gs.duration] = gs.score; saveBests(); }
+      if(window.FyzikaScores) FyzikaScores.report('hra-' + gs.duration + 's', gs.score, true);
+      $('game-play').hidden = true; $('game-over').hidden = false;
+      // Po konci hry zůstane nabídka délky hry nad výsledkem; pravidla a „Spustit hru“ se skryjí.
+      $('game-rules-panel').hidden = true; $('game-start-panel').hidden = true; $('game-intro').hidden = false;
+      $('game-final-score').textContent = gs.score + ' ' + pointWord(gs.score);
+      $('game-final-detail').textContent = 'Správně: ' + gs.correct + ' · Špatně: ' + gs.wrong + ' · Nejlepší skóre: ' + currentBest();
+      updateBestHint();
+    }
+    var row = $('game-duration-row');
+    DURATIONS.forEach(function(d){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip' + (d.key === gs.duration ? ' on' : '');
+      b.textContent = d.name;
+      b.addEventListener('click', function(){
+        if(gs.running) return;
+        gs.duration = d.key;
+        Array.prototype.forEach.call(row.children, function(el, i){ el.classList.toggle('on', DURATIONS[i].key === gs.duration); });
+        updateBestHint();
+      });
+      row.appendChild(b);
+    });
+    $('btn-game-start').addEventListener('click', startGame);
+    $('btn-game-restart').addEventListener('click', startGame);
+    $('btn-game-skip').addEventListener('click', skip);
+    $('btn-game-next').addEventListener('click', function(){ if(gs.running) nextQuestion(); });
+    document.addEventListener('keydown', function(e){
+      if(e.key === 'Enter' && gs.running && gs.locked && e.target && e.target.tagName !== 'BUTTON'){ e.preventDefault(); nextQuestion(); }
+    });
+    // Opuštění běžící hry přepnutím záložky se potvrzuje.
+    tabGuard = function(from, to){
+      if(from !== 'hra' || !gs.running) return true;
+      if(!confirm('Hra ještě běží. Opravdu ji chcete ukončit?')) return false;
+      endGame();
+      return true;
+    };
+    document.addEventListener('fyzika:scores-updated', function(){ loadBests(); updateBestHint(); });
+    loadBests(); updateBestHint();
+  }
+
+  // ================= DATA: DRUHY ZÁŘENÍ (hranice podle učebnice, log10 vlnové délky v metrech) =================
+  var C = 3.00e8;
+  var LV1 = Math.log10(390e-9), LV2 = Math.log10(760e-9);
+  var TYPES = [
+    { key:'gama', name:'záření gama', label:'gama', lo:-14, hi:-10, col:'var(--em-gama)',
+      src:'radioaktivní přeměny atomových jader, vesmír', use:'ozařování nádorů, sterilizace zdravotnického materiálu (podrobněji v jaderné fyzice)', range:'menší než 100 pm' },
+    { key:'rtg', name:'rentgenové záření', label:'rentgenové', lo:-12, hi:-8, col:'var(--em-rtg)',
+      src:'rentgenka (prudce bržděné elektrony), vesmír', use:'rentgenová diagnostika a CT, defektoskopie, kontrola zavazadel', range:'10 nm až 1 pm' },
+    { key:'uv', name:'ultrafialové záření', label:'ultrafialové', lo:-8, hi:LV1, col:'var(--em-uv)',
+      src:'Slunce, elektrický oblouk, rtuťové výbojky', use:'sterilizace, ochranné prvky bankovek; vyvolává opálení a tvorbu vitaminu D', range:'390 nm až 10 nm' },
+    { key:'svetlo', name:'světlo', label:'světlo', lo:LV1, hi:LV2, col:'var(--ink)',
+      src:'Slunce, žárovka, LED, plamen', use:'vidění, osvětlení, fotografie, fotosyntéza', range:'760 nm až 390 nm' },
+    { key:'ir', name:'infračervené záření', label:'infračervené', lo:LV2, hi:-3, col:'var(--em-ir)',
+      src:'zahřátá tělesa (i lidské tělo), infračervené diody', use:'termovize, infrazářiče, dálkové ovládání', range:'1 mm až 760 nm' },
+    { key:'mw', name:'mikrovlny', label:'mikrovlny', lo:-3, hi:-2, col:'var(--em-mw)',
+      src:'speciální elektronky a obvody (např. magnetron), vesmír', use:'radary, družicové spoje, radioastronomie', range:'10 mm až 1 mm' },
+    { key:'radio', name:'rádiové záření', label:'rádiové', lo:-2, hi:4, col:'var(--em-radio)',
+      src:'antény vysílačů, vesmír', use:'rozhlas, televize, mobilní sítě, Wi-Fi', range:'10 km až 10 mm' }
+  ];
+  function typesAt(L){ return TYPES.filter(function(t){ return L >= t.lo - 1e-9 && L <= t.hi + 1e-9; }); }
+
+  // přibližné velikosti předmětů pro srovnání (jen řádově)
+  var SIZES = [
+    [-14, 'atomové jádro'], [-10, 'atom'], [-9, 'molekula'], [-7, 'virus'], [-6, 'bakterie'], [-5, 'buňka'],
+    [-4, 'tloušťka vlasu'], [-3, 'zrnko písku'], [-2, 'mince'], [-1, 'dlaň'], [0, 'člověk'], [1, 'dům'],
+    [2, 'fotbalové hřiště'], [3, 'vesnice'], [4, 'město']
+  ];
+  function sizeAt(L){
+    var best = SIZES[0], i;
+    for(i = 0; i < SIZES.length; i++){ if(Math.abs(SIZES[i][0] - L) < Math.abs(best[0] - L)) best = SIZES[i]; }
+    return best[1];
+  }
+  function colorName(nm){
+    if(nm < 450) return 'fialová'; if(nm < 490) return 'modrá'; if(nm < 560) return 'zelená';
+    if(nm < 590) return 'žlutá'; if(nm < 630) return 'oranžová'; return 'červená';
+  }
+
+  // délka s předponou: 650 nm, 2,5 mm, 3,0 km … (sig platných číslic)
+  var LEN_P = [[-15, 'fm'], [-12, 'pm'], [-9, 'nm'], [-6, 'µm'], [-3, 'mm'], [0, 'm'], [3, 'km']];
+  var FREQ_P = [[0, 'Hz'], [3, 'kHz'], [6, 'MHz'], [9, 'GHz'], [12, 'THz'], [15, 'PHz'], [18, 'EHz']];
+  function withPrefix(x, sig, table){
+    var v = roundSig(x, sig), i, p = table[0];
+    for(i = 0; i < table.length; i++){ if(Math.abs(v) >= Math.pow(10, table[i][0]) * 0.9999999) p = table[i]; }
+    var n = roundSig(v / Math.pow(10, p[0]), sig);
+    var dec = decimalsForSig(n, sig);
+    return { num:fmtThousands(fmt(n, dec)), unit:p[1], tex:texNum(n, dec) + '\\ ' + (p[1].charAt(0) === 'µ' ? '\\text{µ}\\mathrm{' + p[1].slice(1) + '}' : '\\mathrm{' + p[1] + '}') };
+  }
+  function lenText(m, sig){ var w = withPrefix(m, sig, LEN_P); return w.num + NB + w.unit; }
+  function freqText(f, sig){
+    if(f >= 1e21) return sciText(f, sig) + NB + 'Hz';
+    var w = withPrefix(f, sig, FREQ_P); return w.num + NB + w.unit;
+  }
+
+  // ================= PÁS SPEKTRA (teorie i aplet) =================
+  function drawSpectrum(svg, o){
+    var X0 = o.x0, X1 = o.x1, Y = o.y, H = o.h, L0 = -14, L1 = 4;
+    function lx(L){ return X0 + (L - L0) / (L1 - L0) * (X1 - X0); }
+    var defs = mk('defs', {}, svg), id = svg.id, i, nm;
+    var gv = mk('linearGradient', { id:id + '-vis', x1:'0', x2:'1', y1:'0', y2:'0' }, defs);
+    for(nm = 390; nm <= 760; nm += 10) mk('stop', { offset:((nm - 390) / 370).toFixed(3), 'stop-color':wlColor(nm) }, gv);
+    var go = mk('linearGradient', { id:id + '-ov', x1:'0', x2:'1', y1:'0', y2:'0' }, defs);
+    mk('stop', { offset:'0', 'stop-color':'var(--em-gama)' }, go); mk('stop', { offset:'1', 'stop-color':'var(--em-rtg)' }, go);
+    // pruhy jednotlivých druhů (gama a rentgenové se v oblasti 1 pm až 100 pm překrývají: přechod barvy)
+    var segs = [[-14, -12, 'var(--em-gama)'], [-12, -10, 'url(#' + id + '-ov)'], [-10, -8, 'var(--em-rtg)'], [-8, LV1, 'var(--em-uv)'],
+      [LV1, LV2, 'url(#' + id + '-vis)'], [LV2, -3, 'var(--em-ir)'], [-3, -2, 'var(--em-mw)'], [-2, 4, 'var(--em-radio)']];
+    segs.forEach(function(s){ mk('rect', { x:f1(lx(s[0])), y:Y, width:f1(lx(s[1]) - lx(s[0]) + 0.3), height:H, fill:s[2] }, svg); });
+    mk('rect', { x:X0, y:Y, width:X1 - X0, height:H, fill:'none', stroke:'var(--ink)', 'stroke-width':'1.2', rx:'2' }, svg);
+    // popisky druhů: dvě řady nad pásem
+    var lab = [[-13, 'gama', 1], [-9.3, 'rentgenové', 1], [-7.0, 'ultrafialové', 1], [-4.5, 'infračervené', 1], [1, 'rádiové', 1], [(LV1 + LV2) / 2, 'světlo', 2], [-2.5, 'mikrovlny', 2]];
+    lab.forEach(function(l){
+      var x = lx(l[0]), yy = l[2] === 1 ? Y - 7 : Y - 24;
+      var t = mk('text', { x:f1(x), y:yy, 'text-anchor':'middle', 'font-size':o.fs || 11.5, 'font-family':'Work Sans, sans-serif', fill:'var(--ink)' }, svg);
+      t.textContent = l[1];
+      if(l[2] === 2) mk('line', { x1:f1(x), y1:yy + 3, x2:f1(x), y2:Y, stroke:'var(--ink-soft)', 'stroke-width':'1' }, svg);
+    });
+    // osa vlnové délky (pod pásem) a osa frekvence (pod ní)
+    var ya = Y + H, L, t;
+    for(L = L0; L <= L1; L++){
+      mk('line', { x1:f1(lx(L)), y1:ya, x2:f1(lx(L)), y2:ya + (L % 2 === 0 ? 6 : 3.5), stroke:'var(--ink)', 'stroke-width':'1' }, svg);
+      if(L % 2 === 0){
+        t = mk('text', { x:f1(lx(L)), y:ya + 18, 'text-anchor':'middle', 'font-size':'10.5', 'font-family':"'IBM Plex Mono', monospace", fill:'var(--ink-soft)' }, svg);
+        t.textContent = L === 0 ? '1 m' : '10' + supStr(L);
+      }
+    }
+    t = mk('text', { x:X1 + 20, y:ya + 18, 'font-size':'11', 'font-style':'italic', 'font-family':'Work Sans, sans-serif', fill:'var(--ink-soft)' }, svg); t.innerHTML = 'λ <tspan font-style="normal">(m)</tspan>';
+    var yf = ya + 26, LC = Math.log10(C), n;
+    mk('line', { x1:X0, y1:yf, x2:X1, y2:yf, stroke:'var(--ink-soft)', 'stroke-width':'0.8' }, svg);
+    var FL = { 6:'1 MHz', 9:'1 GHz', 12:'1 THz', 15:'1 PHz', 18:'1 EHz', 21:'10²¹ Hz' };
+    for(n = 5; n <= 22; n++){
+      L = LC - n; if(L < L0 || L > L1) continue;
+      mk('line', { x1:f1(lx(L)), y1:yf, x2:f1(lx(L)), y2:yf + (FL[n] ? 6 : 3), stroke:'var(--ink-soft)', 'stroke-width':'1' }, svg);
+      if(FL[n]){ t = mk('text', { x:f1(lx(L)), y:yf + 18, 'text-anchor':'middle', 'font-size':'10.5', 'font-family':"'IBM Plex Mono', monospace", fill:'var(--ink-soft)' }, svg); t.textContent = FL[n]; }
+    }
+    t = mk('text', { x:X1 + 20, y:yf + 18, 'font-size':'11', 'font-style':'italic', 'font-family':'Work Sans, sans-serif', fill:'var(--ink-soft)' }, svg); t.innerHTML = 'f';
+    // zvětšená viditelná oblast
+    var zx0 = o.zx0, zx1 = o.zx1, zy = o.zy, zh = 22;
+    function zx(nm){ return zx0 + (nm - 390) / 370 * (zx1 - zx0); }
+    mk('path', { d:'M' + f1(lx(LV1)) + ',' + (yf + 24) + ' L' + zx0 + ',' + zy + ' M' + f1(lx(LV2)) + ',' + (yf + 24) + ' L' + zx1 + ',' + zy, stroke:'var(--ink-soft)', 'stroke-width':'0.9', 'stroke-dasharray':'3 3', fill:'none' }, svg);
+    mk('line', { x1:f1(lx(LV1)), y1:Y + H, x2:f1(lx(LV1)), y2:yf + 24, stroke:'var(--ink-soft)', 'stroke-width':'0.9', 'stroke-dasharray':'3 3' }, svg);
+    mk('line', { x1:f1(lx(LV2)), y1:Y + H, x2:f1(lx(LV2)), y2:yf + 24, stroke:'var(--ink-soft)', 'stroke-width':'0.9', 'stroke-dasharray':'3 3' }, svg);
+    mk('rect', { x:zx0, y:zy, width:zx1 - zx0, height:zh, fill:'url(#' + id + '-vis)', stroke:'var(--ink)', 'stroke-width':'1' }, svg);
+    for(nm = 400; nm <= 700; nm += 100){
+      mk('line', { x1:f1(zx(nm)), y1:zy + zh, x2:f1(zx(nm)), y2:zy + zh + 5, stroke:'var(--ink)', 'stroke-width':'1' }, svg);
+      t = mk('text', { x:f1(zx(nm)), y:zy + zh + 17, 'text-anchor':'middle', 'font-size':'10.5', 'font-family':"'IBM Plex Mono', monospace", fill:'var(--ink-soft)' }, svg); t.textContent = nm;
+    }
+    t = mk('text', { x:zx1 + 6, y:zy + zh + 17, 'font-size':'11', 'font-family':'Work Sans, sans-serif', fill:'var(--ink-soft)' }, svg); t.innerHTML = '<tspan font-style="italic">λ</tspan> (nm)';
+    return { lx:lx, zx:zx, Y:Y, H:H, X0:X0, X1:X1, zy:zy, zh:zh };
+  }
+
+  // staré odkazy na zrušené záložky (#spektrum, #prostredi) vedou na aplet v teorii
+  (function(){
+    var target = { spektrum:'sp-card', prostredi:'pr-card' }[location.hash.replace('#', '')];
+    if(target) setTimeout(function(){ var el = document.getElementById(target); if(el) el.scrollIntoView(); }, 0);
+  })();
+
+  // ================= APLET: POSUVNÍK PO SPEKTRU =================
+  (function(){
+    var svg = document.getElementById('sp-svg');
+    if(!svg) return;
+    svg.classList.add('sp-band-svg');
+    var g = drawSpectrum(svg, { x0:40, x1:566, y:46, h:40, zx0:150, zx1:470, zy:170 });
+    var marker = mk('g', {}, svg);
+    var mLine = mk('line', { y1:g.Y - 6, y2:g.Y + g.H + 6, stroke:'var(--ink)', 'stroke-width':'2.4' }, marker);
+    var mTri = mk('path', { fill:'var(--ink)' }, marker);
+    var zMark = mk('line', { y1:g.zy - 5, y2:g.zy + g.zh + 5, stroke:'var(--ink)', 'stroke-width':'2.4' }, svg);
+    var hit = mk('rect', { x:g.X0 - 6, y:g.Y - 30, width:g.X1 - g.X0 + 12, height:g.H + 60, fill:'transparent', style:'cursor:ew-resize' }, svg);
+    var tL = mk('text', { x:40, y:236, 'font-size':'14', 'font-family':'Work Sans, sans-serif', fill:'var(--ink)' }, svg);
+    var tF = mk('text', { x:40, y:258, 'font-size':'14', 'font-family':'Work Sans, sans-serif', fill:'var(--ink)' }, svg);
+    var tT = mk('text', { x:40, y:282, 'font-size':'14', 'font-weight':'700', 'font-family':'Work Sans, sans-serif', fill:'var(--accent)' }, svg);
+    var sl = document.getElementById('sp-sl'), outL = document.getElementById('sp-out-l'), info = document.getElementById('sp-info');
+    var presets = document.querySelectorAll('.sp-ex');
+
+    function render(){
+      var L = parseFloat(sl.value), lam = Math.pow(10, L), f = C / lam, x = g.lx(L), ts = typesAt(L);
+      mLine.setAttribute('x1', f1(x)); mLine.setAttribute('x2', f1(x));
+      mTri.setAttribute('d', 'M' + f1(x - 7) + ',' + (g.Y - 16) + ' L' + f1(x + 7) + ',' + (g.Y - 16) + ' L' + f1(x) + ',' + (g.Y - 6) + ' z');
+      var nm = lam * 1e9, inVis = nm >= 390 && nm <= 760;
+      zMark.style.display = inVis ? '' : 'none';
+      if(inVis){ zMark.setAttribute('x1', f1(g.zx(nm))); zMark.setAttribute('x2', f1(g.zx(nm))); }
+      outL.textContent = lenText(lam, 3);
+      tL.innerHTML = '<tspan font-style="italic">λ</tspan> = ' + lenText(lam, 3) + '  (' + sciText(lam, 3) + NB + 'm)';
+      tF.innerHTML = '<tspan font-style="italic">f</tspan> = <tspan font-style="italic">c</tspan>/<tspan font-style="italic">λ</tspan> = ' + freqText(f, 3) + (f < 1e21 ? '  (' + sciText(f, 3) + NB + 'Hz)' : '');
+      var names = ts.map(function(t){ return t.name; });
+      var alt = '';
+      if(L > -2 && L < -1) alt = 'podle jiných zdrojů už mikrovlny (hranice 10 cm)';
+      else if(L >= -1 && L < 0) alt = 'některé zdroje řadí k mikrovlnám (hranice 1 m)';
+      tT.textContent = names.join(' nebo ') + (ts.length > 1 ? ' (oblasti se překrývají)' : '');
+      var html = '<div class="k">Vlnová délka</div><div class="v"><i>λ</i> = ' + lenText(lam, 3) + ' = ' + sciText(lam, 3) + NB + 'm</div>' +
+        '<div class="k">Frekvence</div><div class="v"><i>f</i> = ' + freqText(f, 3) + (f < 1e21 ? ' = ' + sciText(f, 3) + NB + 'Hz' : '') + '</div>' +
+        '<div class="k">Druh záření</div><div class="v"><b>' + names.join('</b> nebo <b>') + '</b>' + (ts.length > 1 ? ' — na hranici nebo v překryvu oblastí' : '') + (alt ? ' (' + alt + ')' : '') + '</div>';
+      if(inVis) html += '<div class="k">Barva</div><div class="v"><span class="sp-swatch" style="background:' + wlColor(nm) + '"></span>' + colorName(nm) + ' (přibližně)</div>';
+      html += '<div class="k">Typické zdroje</div><div class="v">' + ts.map(function(t){ return t.src; }).join('; ') + '</div>' +
+        '<div class="k">Využití</div><div class="v">' + ts.map(function(t){ return t.use; }).join('; ') + '</div>' +
+        '<div class="k">Srovnatelná velikost</div><div class="v">' + sizeAt(L) + '</div>';
+      info.innerHTML = html;
+      Array.prototype.forEach.call(presets, function(b){
+        var on = Math.abs(Math.log10(parseFloat(b.getAttribute('data-l'))) - L) < 0.006;
+        b.classList.toggle('on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+    }
+    sl.addEventListener('input', render);
+    Array.prototype.forEach.call(presets, function(b){
+      b.addEventListener('click', function(){
+        sl.value = Math.log10(parseFloat(b.getAttribute('data-l'))).toFixed(3); render();
+        try{ svg.scrollIntoView({ behavior:reduceMotion ? 'auto' : 'smooth', block:'center' }); }catch(e){ svg.scrollIntoView(); }
+      });
+    });
+    // tažení značky po pásu
+    var dragging = false;
+    function setFromEvent(e){
+      var pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+      var m = svg.getScreenCTM(); if(!m) return;
+      var p = pt.matrixTransform(m.inverse());
+      var L = -14 + (p.x - g.X0) / (g.X1 - g.X0) * 18;
+      sl.value = Math.max(-14, Math.min(4, L)).toFixed(3); render();
+    }
+    hit.addEventListener('pointerdown', function(e){ dragging = true; try{ hit.setPointerCapture(e.pointerId); }catch(er){} setFromEvent(e); });
+    hit.addEventListener('pointermove', function(e){ if(dragging) setFromEvent(e); });
+    hit.addEventListener('pointerup', function(){ dragging = false; });
+    hit.addEventListener('pointercancel', function(){ dragging = false; });
+    render();
+    initFullscreen('sp-card', 'sp-fs', 'sp-fs-label', 'sp-fs-icon');
+  })();
+
+  // ================= ANIMACE: VLNA V RŮZNÝCH PROSTŘEDÍCH =================
+  (function(){
+    var svg = document.getElementById('pr-svg');
+    if(!svg) return;
+    var XL = 20, XB = 300, XR = 620, YC = 160, A = 46, OMEGA = 2 * Math.PI / 1.6;
+    var st = { n:1.33, lam:650, running:!reduceMotion, th:0, th0:0 };
+    mk('rect', { x:XB, y:40, width:XR - XB, height:220, fill:'var(--medium)', stroke:'none' }, svg);
+    mk('line', { x1:XB, y1:40, x2:XB, y2:260, stroke:'var(--ink-soft)', 'stroke-width':'1.5', 'stroke-dasharray':'5 4' }, svg);
+    mk('line', { x1:XL, y1:YC, x2:XR, y2:YC, stroke:'var(--line)', 'stroke-width':'1' }, svg);
+    var tA = mk('text', { x:30, y:30, 'font-size':'13', 'font-family':'Work Sans, sans-serif', fill:'var(--ink)' }, svg);
+    tA.innerHTML = 'vzduch, <tspan font-style="italic">n</tspan> = 1,00';
+    var tB = mk('text', { x:XB + 10, y:30, 'font-size':'13', 'font-family':'Work Sans, sans-serif', fill:'var(--ink)' }, svg);
+    var wave = mk('polyline', { fill:'none', 'stroke-width':'3', 'stroke-linejoin':'round' }, svg);
+    var dimA = mk('g', {}, svg), dimB = mk('g', {}, svg);
+    var dotA = mk('circle', { r:7, fill:'var(--surface)', stroke:'var(--ink)', 'stroke-width':'2.2' }, svg);
+    var dotB = mk('circle', { r:7, fill:'var(--surface)', stroke:'var(--ink)', 'stroke-width':'2.2' }, svg);
+    var cA = mk('text', { 'text-anchor':'middle', 'font-size':'12.5', 'font-family':"'IBM Plex Mono', monospace", fill:'var(--ink)' }, svg);
+    var cB = mk('text', { 'text-anchor':'middle', 'font-size':'12.5', 'font-family':"'IBM Plex Mono', monospace", fill:'var(--ink)' }, svg);
+    var XA = 150, XBp = 470;
+    function lamPx(){ return 0.17 * st.lam; }
+    function phase(x){ var l = lamPx(); return x <= XB ? 2 * Math.PI * (x - XL) / l : 2 * Math.PI * ((XB - XL) / l + st.n * (x - XB) / l); }
+    function yAt(x){ return YC - A * Math.sin(st.th - phase(x)); }
+    function dim(gEl, x1, x2, y, label){
+      while(gEl.firstChild) gEl.removeChild(gEl.firstChild);
+      mk('line', { x1:f1(x1), y1:y, x2:f1(x2), y2:y, stroke:'var(--ink)', 'stroke-width':'1.2' }, gEl);
+      mk('line', { x1:f1(x1), y1:y - 5, x2:f1(x1), y2:y + 5, stroke:'var(--ink)', 'stroke-width':'1.2' }, gEl);
+      mk('line', { x1:f1(x2), y1:y - 5, x2:f1(x2), y2:y + 5, stroke:'var(--ink)', 'stroke-width':'1.2' }, gEl);
+      var t = mk('text', { x:f1((x1 + x2) / 2), y:y + 18, 'text-anchor':'middle', 'font-size':'12.5', 'font-family':'Work Sans, sans-serif', fill:'var(--ink)' }, gEl);
+      t.innerHTML = label;
+    }
+    function count(x){ return Math.floor((st.th - phase(x)) / (2 * Math.PI)) - Math.floor((st.th0 - phase(x)) / (2 * Math.PI)); }
+    function render(){
+      var pts = [], x;
+      for(x = XL; x <= XR; x += 1) pts.push(x + ',' + f1(yAt(x)));
+      wave.setAttribute('points', pts.join(' '));
+      wave.setAttribute('stroke', wlColor(st.lam));
+      dotA.setAttribute('cx', XA); dotA.setAttribute('cy', f1(yAt(XA)));
+      dotB.setAttribute('cx', XBp); dotB.setAttribute('cy', f1(yAt(XBp)));
+      cA.setAttribute('x', XA); cA.setAttribute('y', 72); cA.textContent = 'kmitů: ' + Math.max(0, count(XA));
+      cB.setAttribute('x', XBp); cB.setAttribute('y', 72); cB.textContent = 'kmitů: ' + Math.max(0, count(XBp));
+    }
+    var slN = document.getElementById('pr-sl-n'), slL = document.getElementById('pr-sl-l');
+    var outN = document.getElementById('pr-out-n'), outL = document.getElementById('pr-out-l'), outV = document.getElementById('pr-out-v');
+    var presets = document.querySelectorAll('#pr-presets .chip'), btnPlay = document.getElementById('pr-play');
+    function updateUI(){
+      var l = lamPx(), lamN = st.lam / st.n, f = C / (st.lam * 1e-9);
+      outN.innerHTML = '<i>n</i> = ' + fmt(st.n, 2);
+      outL.innerHTML = '<i>λ</i> = ' + st.lam + NB + 'nm';
+      outV.innerHTML = '<i>f</i> = ' + sciText(f, 3) + NB + 'Hz v obou prostředích, <i>v</i> = <i>c</i>/<i>n</i> = ' + sciText(C / st.n, 3) + NB + 'm·s⁻¹, <i>λ</i><sub>n</sub> = <i>λ</i>/<i>n</i> = ' + fmt(lamN, 0) + NB + 'nm';
+      var name = { '1.00':'vzduch', '1.33':'voda', '1.50':'sklo', '2.42':'diamant' }[st.n.toFixed(2)];
+      tB.innerHTML = (name ? name + ', ' : '') + '<tspan font-style="italic">n</tspan> = ' + fmt(st.n, 2);
+      Array.prototype.forEach.call(presets, function(b){
+        var on = parseInt(b.getAttribute('data-n'), 10) === Math.round(st.n * 100);
+        b.classList.toggle('on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+      dim(dimA, 60, 60 + l, 240, '<tspan font-style="italic">λ</tspan> = ' + st.lam + ' nm');
+      dim(dimB, 340, 340 + l / st.n, 240, '<tspan font-style="italic">λ</tspan><tspan font-size="9" dy="3">n</tspan><tspan dy="-3"> = ' + fmt(lamN, 0) + ' nm</tspan>');
+      btnPlay.textContent = st.running ? 'Pozastavit' : 'Spustit';
+    }
+    slN.addEventListener('input', function(){ st.n = parseInt(slN.value, 10) / 100; updateUI(); render(); });
+    slL.addEventListener('input', function(){ st.lam = parseInt(slL.value, 10); updateUI(); render(); });
+    Array.prototype.forEach.call(presets, function(b){
+      b.addEventListener('click', function(){ slN.value = b.getAttribute('data-n'); st.n = parseInt(slN.value, 10) / 100; updateUI(); render(); });
+    });
+    btnPlay.addEventListener('click', function(){ st.running = !st.running; updateUI(); });
+    document.getElementById('pr-zero').addEventListener('click', function(){ st.th0 = st.th; render(); });
+    var lastTs = null;
+    function frame(ts){
+      if(lastTs === null) lastTs = ts;
+      var dt = Math.min(0.1, (ts - lastTs) / 1000);
+      lastTs = ts;
+      if(st.running && svg.getBoundingClientRect().width > 0){ st.th += OMEGA * dt; render(); }
+      window.requestAnimationFrame(frame);
+    }
+    updateUI(); render();
+    window.requestAnimationFrame(frame);
+    initFullscreen('pr-card', 'pr-fs', 'pr-fs-label', 'pr-fs-icon');
+  })();
+
+  // ================= GENERÁTORY ÚLOH =================
+  // „bezpečné“ rozsahy log10 λ uvnitř jednoho druhu (shodně podle učebnice i podle hranic 10 cm a 1 m mezi rádiovým zářením a mikrovlnami)
+  var SAFE = { gama:[-13.7, -12.3], rtg:[-9.7, -8.4], uv:[-7.7, -6.5], svetlo:null, ir:[-5.9, -3.4], mw:[-2.75, -2.3], radio:[0.05, 3.5] };
+  // tolerance „odchylka v poslední platné číslici“: relativně 1 jednotka třetí platné číslice mantisy
+  function tolSci(x){ return 0.0101 / Math.abs(sciParts(x, 3).m); }
+  function randLambda(key){
+    var lam;
+    if(key === 'svetlo') lam = randInt(40, 74) * 1e-8;          // 400 nm až 740 nm
+    else { var r = SAFE[key]; lam = Math.pow(10, r[0] + Math.random() * (r[1] - r[0])); }
+    return roundSig(lam, 2);
+  }
+  function typeByKey(k){ for(var i = 0; i < TYPES.length; i++) if(TYPES[i].key === k) return TYPES[i]; return null; }
+  function lamTexM(lam){ return sciTex(lam, 2) + '\\ \\mathrm{m}'; }
+  function lamGivenTex(lam){ return '\\lambda = ' + withPrefix(lam, 2, LEN_P).tex; }
+  function classifySteps(t, lam, fromF, f){
+    var s = [];
+    if(fromF) s.push('$\\lambda = \\dfrac{c}{f} = \\dfrac{3{,}00 \\cdot 10^{8}\\ \\mathrm{m\\cdot s^{-1}}}{' + sciTex(f, 2) + '\\ \\mathrm{Hz}} \\doteq ' + sciTex(C / f, 2) + '\\ \\mathrm{m} = ' + withPrefix(C / f, 2, LEN_P).tex + '$');
+    s.push('Vlnová délka leží v oblasti ' + t.range.replace(/ (?=[a-zµ]?m\b)/g, NB) + ', jde tedy o ' + (t.key === 'svetlo' ? 'světlo' : t.name) + '.');
+    return s;
+  }
+  var TYPE_CHOICES = TYPES.map(function(t){ return t.name; });
+
+  function genTask(mode){
+    if(mode === 'random') mode = pick(['l2f', 'f2l', 'druh']);
+    var t = pick(TYPES), lam = randLambda(t.key), f, fg;
+    if(mode === 'l2f'){
+      f = C / lam;
+      return { key:'l2f' + lam, tag:'Vlnová délka → frekvence', kind:'sci',
+        text:'Záření má ve vakuu vlnovou délku $' + lamGivenTex(lam) + '$. Určete jeho frekvenci.',
+        lhs:'$f$', unit:'$\\mathrm{Hz}$', answer:roundSig(f, 3), tol:tolSci(f),
+        given:['$' + lamGivenTex(lam) + ' = ' + lamTexM(lam) + '$', '$c = 3{,}00 \\cdot 10^{8}\\ \\mathrm{m\\cdot s^{-1}}$'], find:['$f = {?}$'],
+        steps:['$f = \\dfrac{c}{\\lambda} = \\dfrac{3{,}00 \\cdot 10^{8}\\ \\mathrm{m\\cdot s^{-1}}}{' + lamTexM(lam) + '} \\doteq ' + sciTex(f, 3) + '\\ \\mathrm{Hz}$',
+          'Jednotky: $\\mathrm{m\\cdot s^{-1} / m = s^{-1} = Hz}$. Jde o ' + (t.key === 'svetlo' ? 'světlo' : t.name) + '.'],
+        final:'$f \\doteq ' + sciTex(f, 3) + '\\ \\mathrm{Hz}$' };
+    }
+    if(mode === 'f2l'){
+      fg = roundSig(C / lam, 2);
+      var l2 = C / fg;
+      return { key:'f2l' + fg, tag:'Frekvence → vlnová délka', kind:'sci',
+        text:'Záření má frekvenci $f = ' + sciTex(fg, 2) + '\\ \\mathrm{Hz}$. Určete jeho vlnovou délku ve vakuu (v metrech).',
+        lhs:'$\\lambda$', unit:'$\\mathrm{m}$', answer:roundSig(l2, 3), tol:tolSci(l2),
+        given:['$f = ' + sciTex(fg, 2) + '\\ \\mathrm{Hz}$', '$c = 3{,}00 \\cdot 10^{8}\\ \\mathrm{m\\cdot s^{-1}}$'], find:['$\\lambda = {?}$'],
+        steps:['$\\lambda = \\dfrac{c}{f} = \\dfrac{3{,}00 \\cdot 10^{8}\\ \\mathrm{m\\cdot s^{-1}}}{' + sciTex(fg, 2) + '\\ \\mathrm{Hz}} \\doteq ' + sciTex(l2, 3) + '\\ \\mathrm{m}$',
+          'To je $' + withPrefix(l2, 3, LEN_P).tex + '$, tedy ' + (t.key === 'svetlo' ? 'světlo' : t.name) + '.'],
+        final:'$\\lambda \\doteq ' + sciTex(l2, 3) + '\\ \\mathrm{m}$' };
+    }
+    // druh záření: zadaná vlnová délka, nebo frekvence
+    var useF = Math.random() < 0.5, idx = TYPES.indexOf(t);
+    fg = roundSig(C / lam, 2);
+    return { key:'druh' + t.key + (useF ? 'f' : 'l'), tag:'Druh záření', kind:'choice',
+      text:useF ? 'Záření má frekvenci $f = ' + sciTex(fg, 2) + '\\ \\mathrm{Hz}$. O jaký druh elektromagnetického záření jde?'
+                : 'Záření má ve vakuu vlnovou délku $' + lamGivenTex(lam) + '$. O jaký druh elektromagnetického záření jde?',
+      choices:TYPE_CHOICES, correct:idx,
+      steps:classifySteps(t, useF ? C / fg : lam, useF, fg),
+      final:'Správná odpověď: ' + t.name };
+  }
+  makeTrainer({ prefix:'tr', statsKey:'fyzika:spektrum-em-zareni:stats', gen:genTask });
+
+  makeGame({ bestsKey:'fyzika:spektrum-em-zareni:game-bests', gen:function(){
+    var t = pick(TYPES), lam = randLambda(t.key), useF = Math.random() < 0.5, f = roundSig(C / lam, 2), idx = TYPES.indexOf(t);
+    var fTex = f < 1e21 ? withPrefix(f, 2, FREQ_P).tex : sciTex(f, 2) + '\\ \\mathrm{Hz}';
+    return { key:t.key + (useF ? 'f' : 'l'), tag:useF ? 'Z frekvence' : 'Z vlnové délky', points:useF ? 7 : 5,
+      text:useF ? 'Jaký druh záření má frekvenci $f = ' + fTex + '$?' : 'Jaký druh záření má vlnovou délku $' + lamGivenTex(lam) + '$?',
+      choices:TYPE_CHOICES, correct:idx, steps:classifySteps(t, useF ? C / f : lam, useF, f) };
+  } });
+
+  // ---- vzorce (KaTeX) ----
+  if(window.renderMathInElement){
+    ['theory-section', 'trenink-section', 'hra-section'].forEach(function(id){
+      try{
+        renderMathInElement(document.getElementById(id), {
+          delimiters: [{left:'\\(', right:'\\)', display:false}, {left:'\\[', right:'\\]', display:true}]
+        });
+      }catch(e){}
+    });
+  }
+
+  // ---- sbalovací panely v teorii ----
+  try{ makePanelsCollapsible(document.getElementById('theory-section')); }catch(e){}
+})();
+</script>
+</body>
+</html>
