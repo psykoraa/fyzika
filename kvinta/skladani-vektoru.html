@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Skládání vektorů</title>
+<title>Skládání vektorů — Fyzika</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
@@ -12,6 +12,7 @@
 <script src="../spolecne/zalozky.js?v=3"></script>
 <link rel="stylesheet" href="../spolecne/styl.css">
 <link rel="stylesheet" href="../spolecne/reseni.css?v=1">
+<link rel="stylesheet" href="../spolecne/komponenty.css?v=1">
 <style>
 :root{
   --paper:#f5f0e3;
@@ -34,15 +35,8 @@
   --vres:#b3392b;
 }
 
-
 .panel{ margin-bottom:22px; }
 .panel-title{ margin-bottom:8px; display:block; }
-.panel p{
-  margin:0 0 8px;
-  font-size:0.9rem;
-  line-height:1.55;
-}
-.panel p:last-child{ margin-bottom:0; }
 .panel b{ color:var(--ink); }
 
 .card{ padding:26px 26px 28px; text-align:left; margin-bottom:24px; }
@@ -59,7 +53,7 @@
   color:var(--ink-soft);
   line-height:1.5;
   max-width:60ch;
-  margin-top:2px;
+  margin:2px 0 1em;
 }
 
 .task-banner{
@@ -74,13 +68,6 @@
   border-radius:8px;
   padding:11px 16px;
 }
-.task-banner-label{
-  font-size:0.78rem;
-  text-transform:uppercase;
-  letter-spacing:0.08em;
-  color:var(--ink-soft);
-  font-weight:600;
-}
 .task-banner-op{
   font-family:'IBM Plex Mono', monospace;
   font-weight:700;
@@ -89,9 +76,7 @@
   color:var(--accent);
 }
 
-
 @keyframes pulse{ 0%,100%{ opacity:1; } 50%{ opacity:0.6; } }
-
 
 .choice-grid{
   display:grid;
@@ -113,9 +98,6 @@
   text-align:center;
   transition:transform .05s ease, background .12s, border-color .12s;
 }
-.choice-btn:hover:not(:disabled){ border-color:var(--accent); }
-.choice-btn:active:not(:disabled){ transform:translateY(1px); }
-.choice-btn:disabled{ cursor:not-allowed; }
 .choice-btn.selected{ background:var(--ink); border-color:var(--ink); color:var(--paper); }
 .choice-btn.correct{ background:var(--success-bg); border-color:var(--success); color:var(--success); }
 .choice-btn.wrong{ background:var(--danger-bg); border-color:var(--danger); color:var(--danger); }
@@ -123,15 +105,6 @@
   .choice-grid{ grid-template-columns:1fr; }
 }
 
-.mode-row{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  flex-wrap:wrap;
-  margin-top:16px;
-  padding-top:14px;
-  border-top:1px solid var(--line);
-}
 .mode-row-label{
   font-size:0.68rem;
   text-transform:uppercase;
@@ -139,18 +112,15 @@
   color:var(--ink-soft);
   font-weight:600;
   margin-right:2px;
+  flex:0 1 auto;
 }
 .mode-row .linklike{ margin-left:auto; }
-.seg{ display:flex; gap:6px; flex-wrap:wrap; }
-
 
 .chip{ font-size:0.82rem; }
-
 
 .chip[hidden]{ display:none; }
 .chip:disabled{ opacity:0.45; cursor:not-allowed; }
 .chip:disabled:hover{ border-color:var(--line); }
-
 
 .settings-foot .hint{ margin-top:0; }
 
@@ -159,8 +129,7 @@
   background:var(--surface);
   border:1px solid var(--line);
   border-radius:10px;
-  overflow:hidden;
-}
+  overflow:hidden; position:static; }
 svg.vec-canvas{
   width:100%;
   height:auto;
@@ -273,7 +242,6 @@ svg.vec-canvas{
 
 .feedback{ margin-top:16px; }
 
-
 .feedback.neutral{ background:var(--surface-2); color:var(--ink); }
 
 .feedback .steps{
@@ -287,10 +255,8 @@ svg.vec-canvas{
 .actions{ margin-top:16px; gap:8px; justify-content:normal; }
 button.btn{ font-size:0.84rem; padding:9px 16px; }
 
-
 @media (max-width:520px){
   .card{ padding:20px 16px 22px; }
-  .chip.para{ margin-left:0; }
   .readout .cell{ min-width:64px; padding:6px 8px; }
 }
 </style>
@@ -318,7 +284,7 @@ button.btn{ font-size:0.84rem; padding:9px 16px; }
       </svg>
       <div class="brand-text">
         <h1>Skládání vektorů</h1>
-        <p>skládání dvou a tří vektorů</p>
+        <p>úvod do fyziky — skládání dvou a tří vektorů</p>
       </div>
     </div>
     <div class="readout" id="header-readout" hidden>
@@ -390,7 +356,7 @@ button.btn{ font-size:0.84rem; padding:9px 16px; }
     </div>
     <details class="navod">
       <summary>Návod</summary>
-      <p class="hint">Konce vektorů přetáhněte myší nebo prstem.</p>
+      <p class="hint">Konce vektorů přetáhněte myší nebo prstem. Panel pod diagramem ukazuje u každého vektoru jeho velikost |<i>v</i>| a úhel φ od vodorovné osy.</p>
     </details>
 
     <div class="vecstats">
@@ -447,7 +413,7 @@ button.btn{ font-size:0.84rem; padding:9px 16px; }
     </div>
     <details class="navod">
       <summary>Návod</summary>
-      <p class="hint">Konce vektorů přetáhněte myší nebo prstem.</p>
+      <p class="hint">Konce vektorů přetáhněte myší nebo prstem. Panel pod diagramem ukazuje u každého vektoru jeho velikost |<i>v</i>| a úhel φ od vodorovné osy.</p>
     </details>
 
     <div class="vecstats">
@@ -626,7 +592,7 @@ button.btn{ font-size:0.84rem; padding:9px 16px; }
 
   </div>
 
-  <footer>Souřadnice ukazuje panel pod diagramem — |v| je velikost vektoru, φ úhel od vodorovné osy.</footer>
+  <footer>Fyzika — Kvinta/1. ročník</footer>
 </div>
 
 <svg width="0" height="0" style="position:absolute">
