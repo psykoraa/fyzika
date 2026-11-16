@@ -587,7 +587,7 @@ button.btn.fs-btn svg{ flex:none; }
       </div>
       <details class="navod">
         <summary>Návod</summary>
-        <p class="hint">Nahoře je emisní (čárové) spektrum světla, které zvolený plyn vyzařuje. Dole je absorpční spektrum: bílé světlo se spojitým spektrem prošlo stejným, ale chladným plynem a na místech, kde plyn pohltil určité vlnové délky, jsou tmavé čáry. Přepínačem <i>Zobrazit</i> volíte jeden nebo oba řádky, přepínačem <i>Plyn</i> prvek. Vpravo je model energetických hladin atomu (svislá osa je energie v eV nad základním stavem; u většiny atomů je přerušená, vidíme jen hladiny, které se podílejí na viditelných čarách). Barevný puntík s mínusem je elektron. <b>Při pohlcení</b> k elektronu na nižší hladině přiletí vlnící se foton, elektron ho pohltí (záblesk) a teprve potom přeskočí na vyšší hladinu. <b>Při vyzáření</b> elektron na vyšší hladině nejprve foton vyzáří (foton odletí doprava) a potom klesne na nižší hladinu. Barva fotonu odpovídá jeho vlnové délce, rámeček ve spektru ukazuje čáru, která právě vzniká nebo zaniká; energie fotonu je rozdíl energií obou hladin, \(E_\mathrm{f} = hc/\lambda\). Označení hladin (např. 3³D) jsou spektroskopické symboly, jejich význam je nad rámec této kapitoly. U sodíku je rozštěp hladiny 3p zveličen, aby byly obě hladiny vidět (ve skutečnosti 0,002 eV). U neonu je schéma zjednodušené: hladiny 3s a 3p jsou ve skutečnosti skupiny mnoha blízkých hladin a přechody jsou kresleny jen přibližně. Absorbovat může jen elektron na hladině, která je v plynu právě obsazená; v chladném plynu je to většinou jen základní hladina (u sodíku D-čáry), jinak je potřeba plyn zahřát nebo vybudit výbojem. Jas čar je orientační.</p>
+        <p class="hint">Nahoře je emisní (čárové) spektrum světla, které zvolený plyn vyzařuje. Dole je absorpční spektrum: bílé světlo se spojitým spektrem prošlo stejným, ale chladným plynem a na místech, kde plyn pohltil určité vlnové délky, jsou tmavé čáry. Přepínačem <i>Zobrazit</i> volíte jeden nebo oba řádky, přepínačem <i>Plyn</i> prvek. <b>Kliknutím na čáru</b> v emisním nebo absorpčním spektru vyberete přechod, který se ukáže v modelu atomu; vybraná čára je v rámečku a animace se opakuje, dokud nevyberete jinou. U blízkých čar (dublet sodíku, neon) klikejte opakovaně na stejné místo, vybírá se postupně každá z nich. Čáru lze vybrat i šipkami doleva a doprava, když je spektrum označené klávesnicí (Tab). Vpravo je model energetických hladin atomu (svislá osa je energie v eV nad základním stavem; u většiny atomů je přerušená, vidíme jen hladiny, které se podílejí na viditelných čarách). Barevný puntík s mínusem je elektron. <b>Při pohlcení</b> k elektronu na nižší hladině přiletí vlnící se foton, elektron ho pohltí (záblesk) a teprve potom přeskočí na vyšší hladinu. <b>Při vyzáření</b> elektron na vyšší hladině nejprve foton vyzáří (foton odletí doprava) a potom klesne na nižší hladinu. Barva fotonu odpovídá jeho vlnové délce, rámeček ve spektru ukazuje čáru, která právě vzniká nebo zaniká; energie fotonu je rozdíl energií obou hladin, \(E_\mathrm{f} = hc/\lambda\). Označení hladin (např. 3³D) jsou spektroskopické symboly, jejich význam je nad rámec této kapitoly. U sodíku je rozštěp hladiny 3p zveličen, aby byly obě hladiny vidět (ve skutečnosti 0,002 eV). U neonu je schéma zjednodušené: hladiny 3s a 3p jsou ve skutečnosti skupiny mnoha blízkých hladin a přechody jsou kresleny jen přibližně. Absorbovat může jen elektron na hladině, která je v plynu právě obsazená; v chladném plynu je to většinou jen základní hladina (u sodíku D-čáry), jinak je potřeba plyn zahřát nebo vybudit výbojem. Jas čar je orientační.</p>
       </details>
     </div>
   </div>
@@ -1173,7 +1173,7 @@ button.btn.fs-btn svg{ flex:none; }
   (function(){
     var svg = document.getElementById('ea-svg');
     if(!svg) return;
-    var st = { mode:2, el:'H', running:!reduceMotion, t:0, ev:null, cur:null, lastType:null, lastTr:null };
+    var st = { mode:2, el:'H', running:!reduceMotion, t:0, ev:null, cur:null, lastType:null, sel:null };
     // dva proužky spekter nad sebou a vpravo model energetických hladin zvoleného atomu
     var SX = 20, SW = 330, SH = 46, TOPY = 62, BOTY = 210;
     var gTop = mk('g', {}, svg), gBot = mk('g', {}, svg), gAtom = mk('g', {}, svg);
@@ -1245,8 +1245,14 @@ button.btn.fs-btn svg{ flex:none; }
       stripBot = drawStrip(gBot, SX, BOTY, SW, SH, 'absorpce', el.lines);
       drawAxisNm(gBot, SX, BOTY + SH, SW);
       prepare();
+      if(st.sel === null) st.sel = defaultNm();
+      addHit(gTop, stripTop, TOPY);
+      addHit(gBot, stripBot, BOTY);
+      label(gBot, SX, 302, 'Kliknutím na čáru ve spektru vyberete přechod,', { 'font-size':'11', fill:'var(--ink-soft)' });
+      label(gBot, SX, 316, 'který se ukáže v modelu atomu.', { 'font-size':'11', fill:'var(--ink-soft)' });
       drawAtom();
       updateUI();
+      setHighlight(st.sel);
       if(!st.running) showStatic();
     }
 
@@ -1292,6 +1298,41 @@ button.btn.fs-btn svg{ flex:none; }
       photon.style.display = 'none'; halo.style.display = 'none'; elec.style.display = 'none';
     }
 
+    // ---- výběr čáry kliknutím (nebo šipkami) ----
+    function defaultNm(){
+      var best = EL[st.el].lines[0];
+      EL[st.el].lines.forEach(function(l){ if(l[1] > best[1]) best = l; });
+      return best[0];
+    }
+    function selectNm(nm){
+      st.sel = nm; st.ev = null; st.lastType = null;
+      setHighlight(nm);
+      if(!st.running) showStatic();
+    }
+    // plocha nad proužkem: klik vybere nejbližší čáru, u blízkých čar (dublet sodíku, neon) další klik vybere sousední
+    function addHit(g, strip, y){
+      var hit = mk('rect', { x:SX, y:y, width:SW, height:SH, fill:'transparent', tabindex:'0', role:'button',
+        'aria-label':'Čáry spektra: kliknutím nebo šipkami doleva a doprava vyberte přechod' }, g);
+      hit.style.cursor = 'pointer';
+      hit.addEventListener('click', function(e){
+        var m = svg.getScreenCTM(); if(!m) return;
+        var px = (e.clientX - m.e) / m.a, lines = EL[st.el].lines, near = [];
+        lines.forEach(function(l){ var d = Math.abs(strip.sx(l[0]) - px); if(d <= 6) near.push([d, l[0]]); });
+        if(!near.length){ lines.forEach(function(l){ near.push([Math.abs(strip.sx(l[0]) - px), l[0]]); }); near.sort(function(a, b){ return a[0] - b[0]; }); near = [near[0]]; }
+        else near.sort(function(a, b){ return a[1] - b[1]; });
+        var i = -1; near.forEach(function(n, k){ if(n[1] === st.sel) i = k; });
+        selectNm(near.length > 1 && i >= 0 ? near[(i + 1) % near.length][1] : (near.length > 1 ? near[0][1] : near[0][1]));
+      });
+      hit.addEventListener('keydown', function(e){
+        var lines = EL[st.el].lines.map(function(l){ return l[0]; }).sort(function(a, b){ return a - b; }), i = lines.indexOf(st.sel);
+        if(e.key === 'ArrowRight' || e.key === 'ArrowLeft'){
+          e.preventDefault();
+          i = Math.max(0, Math.min(lines.length - 1, i + (e.key === 'ArrowRight' ? 1 : -1)));
+          selectNm(lines[i]);
+        } else if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); }
+      });
+    }
+
     // ---- zvýraznění čáry ve spektru ----
     var hl = [];
     function setHighlight(nm){
@@ -1300,7 +1341,8 @@ button.btn.fs-btn svg{ flex:none; }
       [[stripTop, TOPY, gTop, st.mode !== 1], [stripBot, BOTY, gBot, st.mode !== 0]].forEach(function(s){
         if(!s[3]) return;
         var xx = s[0].sx(nm);
-        hl.push(mk('rect', { x:f1(xx - 5), y:s[1] - 4, width:10, height:SH + 8, fill:'none', stroke:'var(--accent)', 'stroke-width':'2', rx:2 }, s[2]));
+        var r = mk('rect', { x:f1(xx - 5), y:s[1] - 4, width:10, height:SH + 8, fill:'none', stroke:'var(--accent)', 'stroke-width':'2', rx:2 }, s[2]);
+        r.style.pointerEvents = 'none'; hl.push(r);
       });
     }
 
@@ -1309,13 +1351,13 @@ button.btn.fs-btn svg{ flex:none; }
     // pohlcení: elektron na dolní hladině → doletí k němu foton a zanikne → elektron vyskočí na horní hladinu
     function newEvent(){
       var type = st.mode === 0 ? 'emit' : st.mode === 1 ? 'abs' : (st.lastType === 'emit' ? 'abs' : 'emit');
-      var cand = A.tr.filter(function(t){ return (type === 'emit' ? t[0] : t[1]) === st.cur; }), fade = false;
-      if(!cand.length){ cand = A.tr.slice(); fade = true; }   // elektron není na vhodné hladině: nový elektron se objeví na správném místě
-      if(cand.length > 1 && st.lastTr) cand = cand.filter(function(t){ return t !== st.lastTr; });
-      var t = pick(cand), up = lvById[t[0]], low = lvById[t[1]];
+      var t = null;
+      A.tr.forEach(function(x){ if(x[2] === st.sel) t = x; });
+      if(!t) t = A.tr[0];
+      var up = lvById[t[0]], low = lvById[t[1]], fade = st.cur !== (type === 'emit' ? up.id : low.id);   // elektron není na správné hladině: objeví se tam
       var ev = { type:type, tr:t, from:type === 'emit' ? up : low, to:type === 'emit' ? low : up, t:0, fade:fade, d:{ hold:0.7, ph:1.5, jump:0.8, end:0.9 } };
       st.cur = ev.to.id;
-      setHighlight(t[2]);
+      setHighlight(st.sel);
       Object.keys(segEls).forEach(function(id){ segEls[id].setAttribute('stroke', (id === up.id || id === low.id) ? 'var(--accent)' : 'var(--ink)'); });
       tName.innerHTML = (type === 'emit' ? 'vyzáření: ' : 'pohlcení: ') + (ev.from.sh || ev.from.lab) + ' → ' + (ev.to.sh || ev.to.lab);
       tLine.innerHTML = '<tspan font-style="italic">λ</tspan> = ' + fmt(t[2], 1) + NB + 'nm, <tspan font-style="italic">E</tspan><tspan font-size="9" dy="2">f</tspan><tspan dy="-2"> = ' + fmt(HC / t[2], 2) + NB + 'eV</tspan>';
@@ -1371,7 +1413,7 @@ button.btn.fs-btn svg{ flex:none; }
       if(!st.ev) st.ev = newEvent();
       var d = st.ev.d;
       st.ev.t += dt;
-      if(st.ev.t >= d.hold + d.ph + d.jump + d.end){ st.lastType = st.ev.type; st.lastTr = st.ev.tr; st.ev = newEvent(); }
+      if(st.ev.t >= d.hold + d.ph + d.jump + d.end){ st.lastType = st.ev.type; st.ev = newEvent(); }
       render(st.ev);
     }
     // jeden snímek při pozastavení (nebo při omezeném pohybu): foton uprostřed letu
@@ -1381,7 +1423,7 @@ button.btn.fs-btn svg{ flex:none; }
       render(st.ev);
     }
     function restart(){
-      st.ev = null; st.lastType = null; st.lastTr = null; setHighlight(null);
+      st.ev = null; st.lastType = null; setHighlight(st.sel);
       if(!st.running) showStatic();
     }
 
@@ -1390,7 +1432,7 @@ button.btn.fs-btn svg{ flex:none; }
       var b = document.createElement('button');
       b.type = 'button'; b.className = 'chip accented' + (k === st.el ? ' on' : ''); b.setAttribute('aria-pressed', k === st.el ? 'true' : 'false');
       b.textContent = EL[k].name;
-      b.addEventListener('click', function(){ st.el = k; st.cur = null; st.ev = null; st.lastType = null; st.lastTr = null; setHighlight(null); build(); });
+      b.addEventListener('click', function(){ st.el = k; st.cur = null; st.ev = null; st.lastType = null; st.sel = null; setHighlight(null); build(); });
       elRow.appendChild(b);
     });
     function updateUI(){
