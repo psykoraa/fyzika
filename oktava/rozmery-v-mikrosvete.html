@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rozměry v mikrosvětě</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../spolecne/config.js"></script>
+<script src="../spolecne/auth.js"></script>
+<script src="../spolecne/zalozky.js?v=3"></script>
+<link rel="stylesheet" href="../spolecne/styl.css">
+<link rel="stylesheet" href="../spolecne/reseni.css?v=1">
+<style>
+:root{
+  --paper:#eff1f8;
+  --surface:#fcfdff;
+  --surface-2:#dde1f1;
+  --ink:#1d2340;
+  --ink-soft:#5b6282;
+  --line:rgba(29,35,64,0.12);
+  --accent:#2e3f8f;
+  --accent-ink:#f5f7ff;
+  --success:#28794f;
+  --success-bg:#e3efe0;
+  --danger:#b3392b;
+  --danger-bg:#f5e4de;
+  --focus:#1e6f66;
+  --shadow:0 1px 0 rgba(29,35,64,0.06);
+  /* barvy objektů v apletu Zoom do mikrosvěta */
+  --obj-red:#c2402f;
+  --obj-green:#3d8a4a;
+  --obj-brown:#8a5a33;
+  --obj-blue:#2f6fd0;
+  --proton:#d23f24;
+  --neutron:#8d86a3;
+}
+
+.panel{ margin-bottom:22px; }
+.panel-title{ margin-bottom:8px; }
+.panel p{
+  margin:0 0 8px;
+  font-size:0.9rem;
+  line-height:1.55;
+}
+.panel p:last-child{ margin-bottom:0; }
+.panel b{ color:var(--ink); }
+.panel ul, .panel ol{ margin:0 0 8px; padding-left:22px; font-size:0.9rem; line-height:1.55; }
+.panel li{ margin-bottom:4px; }
+.panel h3{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.05rem;
+  letter-spacing:0.01em;
+  margin:16px 0 6px;
+}
+.panel h3:first-child{ margin-top:0; }
+
+.card{ padding:26px 26px 28px; text-align:left; margin-bottom:24px; }
+.cat-tag{ margin-bottom:10px; }
+.card h2{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.6rem;
+  letter-spacing:0.02em;
+  color:var(--ink);
+  text-transform:none;
+  margin-bottom:6px;
+}
+.card .desc{
+  font-size:0.86rem;
+  color:var(--ink-soft);
+  line-height:1.5;
+  margin:0 0 14px;
+}
+
+.katex{ font-size:1.05em; }
+.formula-box{
+  background:var(--surface-2);
+  border-radius:8px;
+  padding:12px 16px;
+  margin:10px 0;
+  font-size:1.1rem;
+  text-align:center;
+}
+.formula-line{
+  text-align:center;
+  font-size:1.1rem;
+  color:var(--ink);
+  line-height:1.8;
+}
+.line-scroll{
+  position:relative;
+  white-space:nowrap;
+  overflow-x:auto;
+  overflow-y:hidden;
+  padding:2px 0 4px;
+}
+.step-result{ max-width:100%; }
+.step-result > .line-scroll{ min-width:0; max-width:100%; }
+.given-data{
+  font-size:clamp(0.9rem, 2.4vw, 1.05rem);
+  color:var(--ink-soft);
+  margin-bottom:20px;
+}
+
+.theory-table-wrap{ overflow-x:auto; margin:6px 0 4px; }
+.theory-table{
+  border-collapse:collapse;
+  font-size:0.88rem;
+  width:100%;
+  min-width:320px;
+}
+.theory-table th, .theory-table td{
+  border:1px solid var(--line);
+  padding:8px 12px;
+  text-align:left;
+}
+.theory-table thead th{
+  background:var(--surface-2);
+  color:var(--ink-soft);
+  font-weight:600;
+  font-size:0.72rem;
+  text-transform:uppercase;
+  letter-spacing:0.05em;
+}
+.theory-table td.mono, .theory-table th.mono{
+  font-family:'IBM Plex Mono', monospace;
+  font-variant-numeric:tabular-nums;
+  text-align:center;
+}
+.theory-table tbody tr:nth-child(even) td{ background:rgba(0,0,0,0.02); }
+
+.theory-fig{
+  margin:12px 0 10px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:10px 12px 8px;
+}
+.theory-fig svg{ display:block; width:100%; max-width:560px; height:auto; margin:0 auto; }
+.theory-fig figcaption{
+  font-size:0.8rem;
+  color:var(--ink-soft);
+  line-height:1.45;
+  text-align:center;
+  margin-top:4px;
+}
+
+.example-grid{ display:flex; flex-direction:column; gap:12px; margin-top:6px; }
+.example-item{
+  background:var(--surface-2);
+  border-radius:10px;
+  padding:12px 14px;
+}
+.example-tag{
+  font-size:0.66rem;
+  text-transform:uppercase;
+  letter-spacing:0.06em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-bottom:6px;
+  display:block;
+}
+.example-eq{
+  font-size:1.05rem;
+  margin-bottom:4px;
+}
+.example-note{ font-size:0.82rem; color:var(--ink-soft); line-height:1.45; }
+
+.links{ margin-top:14px; display:flex; flex-wrap:wrap; gap:10px; justify-content:center; }
+a.btn-link{
+  display:inline-block;
+  font-weight:600;
+  font-size:0.95rem;
+  padding:10px 22px;
+  border-radius:8px;
+  background:var(--accent);
+  color:var(--accent-ink);
+  text-decoration:none;
+}
+a.btn-link:hover{ filter:brightness(1.06); }
+a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+
+.credit{
+  margin-top:24px;
+  font-size:0.8rem;
+  line-height:1.5;
+  color:var(--ink-soft);
+  text-align:center;
+}
+.credit a{ color:inherit; }
+
+
+/* ---- aplety: karta, řádky ovládání, kreslicí plocha, výstupy ---- */
+.applet-head .cat-tag{ margin-bottom:10px; }
+.mode-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:16px;
+  padding-top:14px;
+  border-top:1px solid var(--line);
+}
+.mode-row-label{
+  font-size:0.68rem;
+  text-transform:uppercase;
+  letter-spacing:0.1em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-right:2px;
+  flex:0 0 170px;
+}
+.seg{ display:flex; gap:6px; flex-wrap:wrap; }
+.chip{ font-size:0.82rem; gap:7px; }
+.chip.accented.on{ background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+.chip:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+.slider-wrap{ display:flex; align-items:center; gap:12px; flex:1 1 260px; min-width:0; }
+.slider-wrap input[type=range]{ flex:1 1 auto; min-width:0; accent-color:var(--accent); height:28px; }
+.slider-val{ font-family:'IBM Plex Mono', monospace; font-weight:600; font-size:0.92rem; white-space:nowrap; min-width:6.5em; text-align:right; }
+.canvas-wrap{
+  position:relative;
+  margin-top:18px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:10px;
+  overflow:hidden;
+}
+svg.scene{ width:100%; height:auto; display:block; background:var(--surface); user-select:none; -webkit-user-select:none; touch-action:manipulation; }
+svg.scene text{ font-family:'Work Sans', sans-serif; }
+.legend{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 18px;
+  padding:10px 14px;
+  border-top:1px solid var(--line);
+  font-size:0.78rem;
+  color:var(--ink-soft);
+}
+.legend span{ display:inline-flex; align-items:center; gap:7px; }
+.legend i{ font-style:normal; display:inline-block; width:12px; height:12px; border-radius:50%; background:var(--c); }
+.applet-out{
+  display:flex; flex-wrap:wrap; gap:8px 22px; margin-top:14px;
+  font-size:0.92rem; line-height:1.5;
+}
+.applet-out b{ font-variant-numeric:tabular-nums; }
+.applet-note{ font-size:0.86rem; color:var(--ink-soft); margin:10px 0 0; line-height:1.5; }
+.applet-actions{ display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+.applet-card + .applet-card{ margin-top:4px; }
+.nw{ white-space:nowrap; }
+@media (max-width:720px){
+  .mode-row-label{ flex-basis:100%; }
+}
+
+/* ---- trénink s číselnou odpovědí ---- */
+.section-block{ margin-bottom:16px; }
+.section-block:last-child{ margin-bottom:0; }
+.task-text{ font-size:0.92rem; color:var(--ink); line-height:1.55; text-align:center; margin:4px 0 18px; }
+.equation{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:600;
+  font-size:clamp(1.25rem, 4.2vw, 1.9rem);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:0.35em;
+  flex-wrap:wrap;
+  font-variant-numeric:tabular-nums;
+}
+.equation .unit{ color:var(--ink-soft); font-size:0.7em; margin-left:0.1em; }
+.equation .eq{ color:var(--ink-soft); margin:0 0.1em; }
+.equation .katex{ font-size:1em; }
+.equation .answer-input{ width:5.2em; }
+.answer-input.sci-mantissa{ width:3.6em; }
+.sci-group{ display:inline-flex; align-items:baseline; gap:0.12em; }
+.sci-times{ font-size:0.65em; color:var(--ink-soft); margin:0 0.02em; }
+.sci-exp{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:600;
+  width:2.4em;
+  text-align:center;
+  border:none;
+  border-bottom:2px solid var(--ink-soft);
+  background:transparent;
+  color:var(--ink);
+  font-size:0.55em;
+  vertical-align:top;
+  padding:0 0.05em;
+}
+.sci-exp:focus{ outline:none; border-color:var(--focus); }
+.sci-exp.correct{ border-color:var(--success); color:var(--success); }
+.sci-exp.wrong{ border-color:var(--danger); color:var(--danger); }
+.const-box{ font-size:0.82rem; color:var(--ink-soft); line-height:1.6; margin:0; }
+.feedback .tip{ font-size:0.78rem; color:var(--ink); opacity:0.75; margin-top:6px; font-style:italic; }
+
+@media (max-width:520px){
+  .card{ padding:20px 16px 22px; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <a class="back-link" href="../rozcestniky/oktava.html">← Zpět na Oktáva/4. ročník</a>
+
+  <div class="brand">
+    <div class="brand-lockup">
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <circle cx="20" cy="20" r="16" stroke="var(--ink-soft)" stroke-width="1.2" stroke-dasharray="2.5 3"/>
+        <circle cx="20" cy="20" r="9" stroke="var(--ink-soft)" stroke-width="1" stroke-dasharray="2 3"/>
+        <circle cx="20" cy="20" r="2.6" fill="var(--accent)"/>
+        <circle cx="33.5" cy="11.5" r="2" fill="var(--focus)"/>
+      </svg>
+      <div class="brand-text">
+        <h1>Rozměry v mikrosvětě</h1>
+        <p>atomová a částicová fyzika — stavba atomu</p>
+      </div>
+    </div>
+    <div class="readout" id="header-readout" hidden>
+      <div class="cell"><span class="label">Skóre</span><span class="value" id="stat-score">0</span></div>
+      <div class="cell"><span class="label">Série</span><span class="value" id="stat-streak">0</span></div>
+      <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="stat-accuracy">—</span></div>
+    </div>
+  </div>
+
+  <div class="top-tabs">
+    <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+    <button class="toptab" id="top-tab-aplet" data-tab="aplet">Zoom do mikrosvěta</button>
+    <button class="toptab" id="top-tab-trenink" data-tab="trenink">Trénink</button>
+  </div>
+
+  <!-- ============ TEORIE ============ -->
+  <div id="theory-section" class="tab-section">
+
+    <div class="panel">
+      <div class="panel-title">Makrosvět a mikrosvět</div>
+      <p>Svět, který vnímáme smysly, má rozměry od zlomků milimetru po tisíce kilometrů, děje v něm trvají od desetin sekundy po roky. Fyzikové mu říkají <b>makrosvět</b> a popisuje ho klasická fyzika: Newtonovy zákony, termodynamika, elektromagnetismus.</p>
+      <p><b>Mikrosvět</b> je svět molekul, atomů, atomových jader a částic. Zajímají nás v něm vzdálenosti od \(10^{-9}\ \mathrm{m}\) až po \(10^{-18}\ \mathrm{m}\). V tak malých rozměrech už neplatí naše běžné představy a pohyb se řídí zákony <b>kvantové fyziky</b>, která vznikla na počátku 20. století.</p>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="9" cy="9" r="7.5" stroke="var(--focus)" stroke-width="1.6"/>
+          <line x1="9" y1="8" x2="9" y2="13" stroke="var(--focus)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="5.2" r="1" fill="var(--focus)"/>
+        </svg>
+        <p>Mikrosvět není jen zmenšená kopie našeho světa. Atom si nelze představit jako malou kuličku ani jako sluneční soustavu v miniatuře; každý takový obrázek je jen pomůcka.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Velikost atomu a jádra</div>
+      <p>Atom se skládá z kladně nabitého <b>jádra</b> a ze záporně nabitého <b>elektronového obalu</b>. Řádové velikosti jsou:</p>
+      <div class="formula-box">\[ r_\mathrm{a} \approx 10^{-10}\ \mathrm{m} = 0{,}1\ \mathrm{nm}, \qquad r_\mathrm{j} \approx 10^{-15}\ \mathrm{m} = 1\ \mathrm{fm} \]</div>
+      <p>kde \(r_\mathrm{a}\) je poloměr atomu a \(r_\mathrm{j}\) poloměr jádra.</p>
+      <p>Jednotka <b>femtometr</b> (\(1\ \mathrm{fm} = 10^{-15}\ \mathrm{m}\)) je pro jádra tak typická, že se jí někdy říká „fermi“. Pro atomy se dříve používal <b>ångström</b>, \(1\ \text{Å} = 10^{-10}\ \mathrm{m}\).</p>
+      <p>Jádro je tedy asi stotisíckrát menší než celý atom. Kdyby mělo jádro velikost makového zrnka (průměr asi 1&nbsp;mm), měl by atom průměr kolem 100&nbsp;m — jako fotbalové hřiště i s tribunami.</p>
+      <figure class="theory-fig">
+        <svg viewBox="0 0 440 150" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Porovnání velikosti atomu a jádra: kdyby bylo jádro velké jako makové zrnko, byl by atom velký jako fotbalový stadion.">
+          <rect x="18" y="20" width="250" height="110" rx="55" fill="var(--surface-2)" stroke="var(--ink-soft)" stroke-width="1.2" stroke-dasharray="5 4"/>
+          <rect x="48" y="44" width="190" height="62" fill="none" stroke="var(--obj-green)" stroke-width="1.5"/>
+          <line x1="143" y1="44" x2="143" y2="106" stroke="var(--obj-green)" stroke-width="1.2"/>
+          <circle cx="143" cy="75" r="11" fill="none" stroke="var(--obj-green)" stroke-width="1.2"/>
+          <circle cx="143" cy="75" r="1.6" fill="var(--accent)"/>
+          <line x1="18" y1="142" x2="268" y2="142" stroke="var(--ink)" stroke-width="1.2"/>
+          <line x1="18" y1="137" x2="18" y2="147" stroke="var(--ink)" stroke-width="1.2"/>
+          <line x1="268" y1="137" x2="268" y2="147" stroke="var(--ink)" stroke-width="1.2"/>
+          <text x="143" y="14" text-anchor="middle" font-family="Work Sans, sans-serif" font-size="12" fill="var(--ink-soft)">atom ≈ fotbalový stadion</text>
+          <line x1="150" y1="72" x2="300" y2="48" stroke="var(--accent)" stroke-width="1"/>
+          <text x="304" y="44" font-family="Work Sans, sans-serif" font-size="12" fill="var(--accent)">jádro ≈ makové zrnko</text>
+          <text x="304" y="62" font-family="Work Sans, sans-serif" font-size="11" fill="var(--ink-soft)">(uprostřed hřiště)</text>
+          <text x="304" y="98" font-family="IBM Plex Mono, monospace" font-size="12" fill="var(--ink)">poměr průměrů</text>
+          <text x="304" y="116" font-family="IBM Plex Mono, monospace" font-size="12" fill="var(--ink)">≈ 100 000 : 1</text>
+        </svg>
+        <figcaption>Obrázek není v měřítku — tečka jádra je nakreslená mnohem větší, jinak by nebyla vidět.</figcaption>
+      </figure>
+    </div>
+
+    <div class="card">
+      <span class="cat-tag">Příklad</span>
+      <h2>Kolik místa v atomu zabírá jádro?</h2>
+      <p class="desc">Atom i jádro považujte za koule. Rozklikejte si postup krok po kroku — další krok se odemkne, jakmile otevřete ten předchozí.</p>
+      <div class="given-data">
+        <div class="given-line">Zadáno: \(r_\mathrm{a} = 10^{-10}\ \mathrm{m}\), \(r_\mathrm{j} = 10^{-15}\ \mathrm{m}\); hledáme podíl objemů \(V_\mathrm{j}/V_\mathrm{a}\) v procentech.</div>
+      </div>
+      <div class="stepper" data-reset="reset-objem">
+        <div class="step" data-step="1">
+          <div class="step-connector"></div>
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">1</span>
+            <span class="step-title">Zapište oba objemy</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <div class="step-result">\(V_\mathrm{a} = \tfrac{4}{3}\pi r_\mathrm{a}^3, \qquad V_\mathrm{j} = \tfrac{4}{3}\pi r_\mathrm{j}^3\)</div>
+          </div>
+        </div>
+        <div class="step" data-step="2">
+          <div class="step-connector"></div>
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">2</span>
+            <span class="step-title">Vydělte je — konstanta \(\tfrac{4}{3}\pi\) se zkrátí</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <div class="step-result"><div class="line-scroll">\(\dfrac{V_\mathrm{j}}{V_\mathrm{a}} = \left(\dfrac{r_\mathrm{j}}{r_\mathrm{a}}\right)^{3} = \left(\dfrac{10^{-15}\ \mathrm{m}}{10^{-10}\ \mathrm{m}}\right)^{3} = \left(10^{-5}\right)^{3} = 10^{-15}\)</div></div>
+          </div>
+        </div>
+        <div class="step" data-step="3">
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">3</span>
+            <span class="step-title">Převeďte na procenta</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <div class="result-box"><div class="line-scroll">\(\dfrac{V_\mathrm{j}}{V_\mathrm{a}} = 10^{-15} \cdot 100\ \% = 10^{-13}\ \% = 0{,}000\,000\,000\,000\,1\ \%\)</div></div>
+            <p>Téměř celý objem atomu je „prázdný“ — v něm se jen s určitou pravděpodobností vyskytují elektrony.</p>
+          </div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn ghost" id="reset-objem">Zopakovat postup od začátku</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Elektron, proton a neutron</div>
+      <p>Atomy jsou postavené ze tří druhů částic. Jádro tvoří <b>protony</b> a <b>neutrony</b> (společně <b>nukleony</b>), obal tvoří <b>elektrony</b>.</p>
+      <div class="theory-table-wrap">
+        <table class="theory-table">
+          <thead>
+            <tr><th>Částice</th><th>Značka</th><th class="mono">Náboj</th><th class="mono">Hmotnost (kg)</th><th class="mono">Hmotnost (MeV/<i>c</i>²)</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>proton</td><td>\(\mathrm{p}\)</td><td class="mono">+<i>e</i></td><td class="mono">1,673·10⁻²⁷</td><td class="mono">938,3</td></tr>
+            <tr><td>neutron</td><td>\(\mathrm{n}\)</td><td class="mono">0</td><td class="mono">1,675·10⁻²⁷</td><td class="mono">939,6</td></tr>
+            <tr><td>elektron</td><td>\(\mathrm{e}^-\)</td><td class="mono">−<i>e</i></td><td class="mono">9,11·10⁻³¹</td><td class="mono">0,511</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Elementární náboj je \(e = 1{,}602 \cdot 10^{-19}\ \mathrm{C}\). Proton a neutron mají skoro stejnou hmotnost (neutron je nepatrně těžší), elektron je asi 1&nbsp;836krát lehčí než proton. Jednotku MeV/<i>c</i>² vysvětlíme níže v panelu o jednotkách.</p>
+      <p>Elektron je podle dnešních znalostí <b>elementární</b> částice — nemá žádnou vnitřní strukturu. Proton a neutron elementární nejsou, skládají se z menších částic, <b>kvarků</b>.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Protonové, neutronové a nukleonové číslo</div>
+      <p>Složení jádra popisují tři celá čísla:</p>
+      <ul>
+        <li><b>protonové číslo</b> \(Z\) — počet protonů (zároveň pořadí prvku v periodické soustavě),</li>
+        <li><b>neutronové číslo</b> \(N\) — počet neutronů,</li>
+        <li><b>nukleonové číslo</b> \(A\) — počet všech nukleonů.</li>
+      </ul>
+      <div class="formula-box">\[ A = Z + N \qquad\qquad {}^{A}_{Z}\mathrm{X} \]</div>
+      <p>Neutrální atom má v obalu stejně elektronů jako protonů v jádře, tedy \(Z\). Iont má elektronů méně (kladný iont) nebo více (záporný iont).</p>
+      <div class="example-grid">
+        <div class="example-item">
+          <span class="example-tag">Helium</span>
+          <div class="example-eq">\[ {}^{4}_{2}\mathrm{He}:\quad Z = 2,\ \ N = 4 - 2 = 2,\ \ 2\ \text{elektrony} \]</div>
+        </div>
+        <div class="example-item">
+          <span class="example-tag">Železo</span>
+          <div class="example-eq">\[ {}^{56}_{26}\mathrm{Fe}:\quad Z = 26,\ \ N = 56 - 26 = 30,\ \ 26\ \text{elektronů} \]</div>
+        </div>
+        <div class="example-item">
+          <span class="example-tag">Iont železa</span>
+          <div class="example-eq">\[ {}^{56}_{26}\mathrm{Fe}^{3+}:\quad 26\ \text{protonů},\ 30\ \text{neutronů},\ 26 - 3 = 23\ \text{elektronů} \]</div>
+          <div class="example-note">Náboj iontu +3<i>e</i> znamená, že atomu chybějí tři elektrony; jádro se nezměnilo.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Chemický prvek, nuklid, izotop</div>
+      <p><b>Chemický prvek</b> tvoří atomy se stejným protonovým číslem \(Z\) — počet neutronů se může lišit. Chemické vlastnosti určuje obal, a ten závisí jen na \(Z\).</p>
+      <p><b>Nuklid</b> je přesnější pojem: všechny jeho atomy mají stejné \(Z\) i stejné \(A\) (tedy i \(N\)). Nuklidy téhož prvku se nazývají <b>izotopy</b> — v periodické soustavě patří na stejné místo (řecky <i>isos</i> = stejný, <i>topos</i> = místo).</p>
+      <div class="theory-table-wrap">
+        <table class="theory-table">
+          <thead>
+            <tr><th>Izotop vodíku</th><th>Zápis</th><th class="mono"><i>Z</i></th><th class="mono"><i>N</i></th><th class="mono"><i>A</i></th></tr>
+          </thead>
+          <tbody>
+            <tr><td>lehký vodík (protium)</td><td>\({}^{1}_{1}\mathrm{H}\)</td><td class="mono">1</td><td class="mono">0</td><td class="mono">1</td></tr>
+            <tr><td>deuterium (těžký vodík)</td><td>\({}^{2}_{1}\mathrm{H}\)</td><td class="mono">1</td><td class="mono">1</td><td class="mono">2</td></tr>
+            <tr><td>tritium</td><td>\({}^{3}_{1}\mathrm{H}\)</td><td class="mono">1</td><td class="mono">2</td><td class="mono">3</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M9 2.5 L16 15.5 H2 Z" stroke="var(--danger)" stroke-width="1.4" stroke-linejoin="round"/>
+          <line x1="9" y1="7" x2="9" y2="11.5" stroke="var(--danger)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="13.6" r="1" fill="var(--danger)"/>
+        </svg>
+        <p>Izotopy téhož prvku nelze rozlišit chemicky — reagují stejně. Oddělit je jde jen fyzikálními metodami, které využívají jejich různou hmotnost (např. hmotnostní spektrometr nebo odstředivky).</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Kde je soustředěna hmotnost atomu</div>
+      <p>Protože je elektron velmi lehký, nese jádro téměř celou hmotnost atomu, i když zabírá nepatrnou část jeho objemu.</p>
+    </div>
+
+    <div class="card">
+      <span class="cat-tag">Příklad</span>
+      <h2>Hmotnost jádra atomu železa</h2>
+      <p class="desc">Kolik procent hmotnosti atomu \({}^{56}_{26}\mathrm{Fe}\) připadá na jádro? Vazebnou energii zatím zanedbejte (o ní je stránka Vazebná energie).</p>
+      <div class="given-data">
+        <div class="given-line">Zadáno: \(Z = 26\), \(N = 30\), \(m_\mathrm{p} = 1{,}673\cdot 10^{-27}\ \mathrm{kg}\), \(m_\mathrm{n} = 1{,}675\cdot 10^{-27}\ \mathrm{kg}\), \(m_\mathrm{e} = 9{,}11\cdot 10^{-31}\ \mathrm{kg}\)</div>
+      </div>
+      <div class="stepper" data-reset="reset-fe">
+        <div class="step" data-step="1">
+          <div class="step-connector"></div>
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">1</span>
+            <span class="step-title">Hmotnost jádra</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <div class="step-result"><div class="line-scroll">\(m_\mathrm{j} = 26 \cdot 1{,}673\cdot 10^{-27}\ \mathrm{kg} + 30 \cdot 1{,}675\cdot 10^{-27}\ \mathrm{kg} = 9{,}375\cdot 10^{-26}\ \mathrm{kg}\)</div></div>
+          </div>
+        </div>
+        <div class="step" data-step="2">
+          <div class="step-connector"></div>
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">2</span>
+            <span class="step-title">Hmotnost elektronového obalu</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <div class="step-result"><div class="line-scroll">\(m_\mathrm{obal} = 26 \cdot 9{,}11\cdot 10^{-31}\ \mathrm{kg} = 2{,}37\cdot 10^{-29}\ \mathrm{kg}\)</div></div>
+          </div>
+        </div>
+        <div class="step" data-step="3">
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">3</span>
+            <span class="step-title">Podíl jádra na hmotnosti atomu</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <div class="result-box"><div class="line-scroll">\(\dfrac{m_\mathrm{j}}{m_\mathrm{j} + m_\mathrm{obal}} = \dfrac{9{,}375\cdot 10^{-26}}{9{,}375\cdot 10^{-26} + 0{,}00237\cdot 10^{-26}} \doteq 0{,}9997 = 99{,}97\ \%\)</div></div>
+            <p>Na elektrony připadají jen asi tři setiny procenta hmotnosti atomu.</p>
+          </div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn ghost" id="reset-fe">Zopakovat postup od začátku</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Hustota jaderné hmoty</div>
+      <p>Odhadněme hustotu látky uvnitř jádra. Jeden nukleon má hmotnost asi \(1{,}67\cdot 10^{-27}\ \mathrm{kg}\) a poloměr řádově \(10^{-15}\ \mathrm{m}\):</p>
+      <p class="formula-line">\[ \varrho \approx \frac{m}{\tfrac{4}{3}\pi r^3} = \frac{1{,}67\cdot 10^{-27}\ \mathrm{kg}}{\tfrac{4}{3}\pi\,(10^{-15}\ \mathrm{m})^3} \doteq 4\cdot 10^{17}\ \mathrm{kg\cdot m^{-3}} \]</p>
+      <p>Krychlička jaderné hmoty o objemu 1&nbsp;cm³ by vážila asi \(4\cdot 10^{11}\ \mathrm{kg}\), tedy 400 milionů tun. Běžná látka (voda má 1&nbsp;000&nbsp;kg·m⁻³) je proti tomu skoro prázdný prostor. Takto hustá je látka ve vesmíru jen v <b>neutronových hvězdách</b>.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Jednotky v mikrosvětě: elektronvolt</div>
+      <p>Energie v mikrosvětě jsou v joulech nepohodlně malé. Proto se používá <b>elektronvolt</b>: je to energie, kterou získá částice s elementárním nábojem \(e\), když ji urychlí napětí 1&nbsp;V.</p>
+      <div class="formula-box">\[ 1\ \mathrm{eV} = e \cdot 1\ \mathrm{V} = 1{,}602\cdot 10^{-19}\ \mathrm{J} \]</div>
+      <p>Používají se i násobky: \(1\ \mathrm{keV} = 10^{3}\ \mathrm{eV}\), \(1\ \mathrm{MeV} = 10^{6}\ \mathrm{eV}\), \(1\ \mathrm{GeV} = 10^{9}\ \mathrm{eV}\), \(1\ \mathrm{TeV} = 10^{12}\ \mathrm{eV}\). Chemické vazby mají energie řádově jednotek eV, jaderné děje milionů eV (MeV).</p>
+      <div class="example-grid">
+        <div class="example-item">
+          <span class="example-tag">eV → J (násobíme)</span>
+          <div class="example-eq">\[ 4{,}8\ \mathrm{MeV} = 4{,}8\cdot 10^{6} \cdot 1{,}602\cdot 10^{-19}\ \mathrm{J} \doteq \mathbf{7{,}7\cdot 10^{-13}\ \mathrm{J}} \]</div>
+        </div>
+        <div class="example-item">
+          <span class="example-tag">J → eV (dělíme)</span>
+          <div class="example-eq">\[ 3{,}0\cdot 10^{-19}\ \mathrm{J} = \frac{3{,}0\cdot 10^{-19}}{1{,}602\cdot 10^{-19}}\ \mathrm{eV} \doteq \mathbf{1{,}9\ \mathrm{eV}} \]</div>
+          <div class="example-note">Tolik energie má jeden foton červeného světla.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Hmotnost v jednotkách MeV/<i>c</i>²</div>
+      <p>Ze speciální teorie relativity víme, že hmotnosti \(m\) odpovídá klidová energie \(E = mc^2\). Hmotnost tedy můžeme vyjádřit jako energii dělenou \(c^2\):</p>
+      <div class="formula-box">\[ m = \frac{E}{c^2} \quad\Rightarrow\quad [m] = \mathrm{\frac{MeV}{\mathit{c}^2}} \]</div>
+      <p>Za \(c\) se přitom číselná hodnota nedosazuje, \(c^2\) zůstává součástí jednotky. Proton má hmotnost 938,3&nbsp;MeV/<i>c</i>², což znamená, že jeho klidová energie je 938,3&nbsp;MeV. Částicoví fyzikové často kladou \(c = 1\) a píší hmotnost prostě v MeV.</p>
+      <p>V chemii a jaderné fyzice se používá i <b>atomová hmotnostní jednotka</b> \(1\ \mathrm{u} = 1{,}661\cdot 10^{-27}\ \mathrm{kg}\) (dvanáctina hmotnosti atomu \({}^{12}\mathrm{C}\)); odpovídá jí energie 931,5&nbsp;MeV.</p>
+      <div class="example-grid">
+        <div class="example-item">
+          <span class="example-tag">Ověření pro proton</span>
+          <div class="example-eq">\[ m_\mathrm{p} = \frac{938{,}27\cdot 10^{6}\cdot 1{,}6022\cdot 10^{-19}\ \mathrm{J}}{(2{,}9979\cdot 10^{8}\ \mathrm{m\cdot s^{-1}})^2} \doteq 1{,}673\cdot 10^{-27}\ \mathrm{kg} \]</div>
+          <div class="example-note">Jednotky: J/(m²·s⁻²) = kg·m²·s⁻²/(m²·s⁻²) = kg.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Jak mikrosvět pozorovat</div>
+      <p>Oko rozliší na vzdálenost 25&nbsp;cm podrobnosti asi do 0,07&nbsp;mm. <b>Optický mikroskop</b> se dostane dál, ale jen do určité meze: kvůli ohybu světla (difrakci) nerozliší předměty menší než přibližně polovinu vlnové délky světla, tedy asi 200&nbsp;nm. Bakterie v něm uvidíme, viry a molekuly už ne.</p>
+      <p>Menší rozměry se zkoumají svazky částic, které mají vlnovou délku mnohem kratší než světlo:</p>
+      <ul>
+        <li><b>elektronový mikroskop</b> — vzorek se místo světlem „osvětluje“ urychlenými elektrony; rastrovací elektronový mikroskop (SEM) skládá obraz povrchu z elektronů, které se od vzorku odrazí nebo které vzorek vyrazí;</li>
+        <li><b>rastrovací tunelový mikroskop</b> (STM) — těsně nad povrchem vodivého vzorku přejíždí velmi ostrý hrot a snímá elektrony; rozliší jednotlivé atomy (asi 0,2&nbsp;nm) a dokáže s nimi i posouvat;</li>
+        <li><b>rozptylové experimenty</b> — do nitra atomů a jader „nahlížíme“ tak, že je ostřelujeme rychlými částicemi z urychlovačů a sledujeme, jak se rozptýlí.</li>
+      </ul>
+      <div class="theory-table-wrap">
+        <table class="theory-table">
+          <thead>
+            <tr><th>Objekt</th><th class="mono">Rozměr řádově</th><th>Čím ho pozorujeme</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>lidský vlas (tloušťka)</td><td class="mono">10⁻⁴ m</td><td>oko, lupa</td></tr>
+            <tr><td>bakterie</td><td class="mono">10⁻⁶ m</td><td>optický mikroskop</td></tr>
+            <tr><td>virus</td><td class="mono">10⁻⁷ m</td><td>elektronový mikroskop</td></tr>
+            <tr><td>atom</td><td class="mono">10⁻¹⁰ m</td><td>tunelový mikroskop</td></tr>
+            <tr><td>atomové jádro</td><td class="mono">10⁻¹⁵ až 10⁻¹⁴ m</td><td>rozptylové experimenty</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="9" cy="9" r="7.5" stroke="var(--focus)" stroke-width="1.6"/>
+          <line x1="9" y1="8" x2="9" y2="13" stroke="var(--focus)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="5.2" r="1" fill="var(--focus)"/>
+        </svg>
+        <p>Elektronové mikroskopy se vyrábějí i u nás, hlavně v Brně; z Česka pochází přibližně třetina elektronových mikroskopů na světě.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Shrnutí</div>
+      <p>• Atom má poloměr řádově \(10^{-10}\ \mathrm{m}\), jádro \(10^{-15}\ \mathrm{m}\); jádro zabírá jen asi \(10^{-13}\ \%\) objemu atomu.</p>
+      <p>• Jádro tvoří protony a neutrony (nukleony), obal elektrony; elektron je asi 1&nbsp;836krát lehčí než proton, proto jádro nese přes 99,9&nbsp;% hmotnosti atomu.</p>
+      <p>• \(A = Z + N\); prvek = stejné \(Z\), nuklid = stejné \(Z\) i \(A\), izotopy = nuklidy téhož prvku.</p>
+      <p>• Energii v mikrosvětě měříme v eV (\(1\ \mathrm{eV} = 1{,}602\cdot 10^{-19}\ \mathrm{J}\)), hmotnost v MeV/<i>c</i>².</p>
+      <p>• Optický mikroskop končí kolem 200&nbsp;nm; menší objekty pozorujeme elektronovým a tunelovým mikroskopem, nitro jader rozptylovými experimenty.</p>
+    </div>
+
+  </div>
+
+  <!-- ============ APLET: ZOOM DO MIKROSVĚTA ============ -->
+  <div id="aplet-section" class="tab-section" hidden>
+    <div class="card applet-card">
+      <div class="applet-head">
+        <span class="cat-tag">Aplet</span>
+        <h2>Zoom do mikrosvěta</h2>
+        <p class="desc">Posuvníkem zmenšujte šířku záběru od centimetrů až po femtometry a sledujte, co se objeví a čím by se to dalo ještě pozorovat.</p>
+      </div>
+      <div class="mode-row">
+        <label class="mode-row-label" for="zoom">Šířka záběru</label>
+        <div class="slider-wrap">
+          <input type="range" id="zoom" min="0" max="13" step="0.02" value="0" aria-describedby="zoom-val">
+          <span class="slider-val" id="zoom-val"></span>
+        </div>
+      </div>
+      <div class="applet-actions">
+        <button class="btn ghost" type="button" id="zoom-out">← Oddálit 10×</button>
+        <button class="btn ghost" type="button" id="zoom-in">Přiblížit 10× →</button>
+      </div>
+      <div class="canvas-wrap">
+        <svg class="scene" id="zoom-svg" viewBox="0 0 600 340" role="img" aria-label="Záběr do mikrosvěta se stupnicí; podle zvolené šířky záběru se zobrazují objekty od makového zrnka po proton."></svg>
+      </div>
+      <div class="applet-out" aria-live="polite">
+        <span>Šířka záběru: <b id="out-w"></b></span>
+        <span>Pozorujeme: <b id="out-tool"></b></span>
+      </div>
+      <p class="applet-note" id="out-note"></p>
+      <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint">Táhněte posuvníkem nebo použijte tlačítka (desetkrát přiblížit / oddálit); na klávesnici fungují šipky. Každý dílek posuvníku zmenší záběr desetkrát — stupnice je logaritmická. Objekty jsou nakreslené ve skutečném poměru velikostí, ale jen schematicky; Údaj „pozorujeme“ říká, jakým přístrojem by šel celý záběr ještě rozlišit. Elektronový obal atomu je naznačený jako mlhavý obláček, protože elektron nemá v atomu přesnou polohu.</p>
+      </details>
+    </div>
+  </div>
+
+  <!-- ============ TRÉNINK ============ -->
+  <div id="trenink-section" class="tab-section" hidden>
+
+    <div class="panel">
+      <div class="section-block">
+        <div class="panel-title">Typ příkladů</div>
+        <div class="row" id="type-row"></div>
+      </div>
+      <div class="section-block">
+        <p class="const-box">Konstanty: \(e = 1{,}60\cdot 10^{-19}\ \mathrm{C}\) (tedy \(1\ \mathrm{eV} = 1{,}60\cdot 10^{-19}\ \mathrm{J}\)), \(c = 3{,}00\cdot 10^{8}\ \mathrm{m\cdot s^{-1}}\).</p>
+      </div>
+      <div class="settings-foot" style="justify-content:flex-end;">
+        <button class="linklike" id="reset-stats">vynulovat statistiku</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="cat-tag" id="cat-tag">Trénink</span>
+      <p class="task-text" id="task-text"></p>
+      <div class="equation" id="equation">
+        <span id="eq-given"></span>
+        <span class="eq">=</span>
+        <span class="answer-slot" id="slot-dec">
+          <input class="answer-input" id="answer" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="?" aria-label="odpověď">
+        </span>
+        <span class="answer-slot sci-group" id="slot-sci" hidden>
+          <input class="answer-input sci-mantissa" id="answer-m" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="a" aria-label="mantisa">
+          <span class="sci-times">·10</span>
+          <input class="sci-exp" id="answer-e" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="n" aria-label="exponent">
+        </span>
+        <span class="unit" id="eq-unit"></span>
+      </div>
+      <div class="actions">
+        <button class="btn primary" id="btn-check">Zkontrolovat</button>
+        <button class="btn ghost" id="btn-skip">Nevím / Zobrazit řešení</button>
+      </div>
+      <div class="feedback" id="feedback" hidden>
+        <div class="headline" id="feedback-headline"></div>
+        <div class="steps" id="feedback-steps"></div>
+        <div class="tip" id="feedback-tip" hidden></div>
+      </div>
+      <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint">Výsledek zapište do rámečku; čárku i tečku lze zadat obojí. Velmi malá a velmi velká čísla se zadávají ve tvaru <i>a</i>·10<sup><i>n</i></sup> — do prvního pole mantisu <i>a</i>, do malého pole exponent <i>n</i> (i záporný). Uznává se odchylka do 1&nbsp;% od přesné hodnoty, takže stačí počítat s konstantami uvedenými výše a výsledek zaokrouhlit na 3 platné číslice. Enter potvrdí odpověď i přejde na další příklad.</p>
+      </details>
+    </div>
+
+  </div>
+
+  <footer>Fyzika — Oktáva/4. ročník</footer>
+</div>
+
+<script src="../spolecne/reseni.js?v=1"></script>
+<script src="../spolecne/spolecne.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  // ---- záložky: tlačítko .toptab[data-tab="x"] ↔ sekce #x-section (Teorie = #theory-section) ----
+  var tabs = {}, sections = {};
+  Array.prototype.forEach.call(document.querySelectorAll('.toptab[data-tab]'), function(btn){
+    var name = btn.getAttribute('data-tab');
+    tabs[name] = btn;
+    sections[name] = document.getElementById(name === 'teorie' ? 'theory-section' : name + '-section');
+  });
+  function showTab(name){
+    for(var k in tabs){
+      tabs[k].classList.toggle('on', k === name);
+      if(sections[k]) sections[k].hidden = k !== name;
+    }
+    // skóre, série a úspěšnost v hlavičce jen u tréninku
+    var readout = document.getElementById('header-readout');
+    if(readout) readout.hidden = name !== 'trenink';
+  }
+  Object.keys(tabs).forEach(function(k){ tabs[k].addEventListener('click', function(){ showTab(k); }); });
+  var hash = location.hash.replace('#', '');
+  if(hash && tabs[hash]) showTab(hash);
+
+  // ---- příklady v teorii: postupně odemykané steppery ----
+  Array.prototype.forEach.call(document.querySelectorAll('.stepper'), function(wrap){
+    var steps = Array.prototype.slice.call(wrap.querySelectorAll('.step'));
+    var unlockedUpTo = 1;
+
+    function refreshLocks(){
+      steps.forEach(function(st){
+        var idx = parseInt(st.getAttribute('data-step'), 10);
+        var locked = idx > unlockedUpTo;
+        st.classList.toggle('locked', locked);
+        st.classList.toggle('unlocked', !locked && !st.classList.contains('done'));
+        st.querySelector('.step-head').setAttribute('aria-disabled', locked ? 'true' : 'false');
+      });
+    }
+
+    steps.forEach(function(st){
+      var idx = parseInt(st.getAttribute('data-step'), 10);
+      var head = st.querySelector('.step-head');
+      var body = st.querySelector('.step-body');
+      head.addEventListener('click', function(){
+        if(idx > unlockedUpTo) return;
+        var wasOpen = st.classList.contains('open');
+        st.classList.toggle('open', !wasOpen);
+        body.hidden = wasOpen;
+        head.setAttribute('aria-expanded', (!wasOpen).toString());
+        if(!wasOpen){
+          st.classList.add('done');
+          if(idx === unlockedUpTo && unlockedUpTo < steps.length){ unlockedUpTo++; }
+          refreshLocks();
+        }
+      });
+    });
+
+    var resetBtn = document.getElementById(wrap.getAttribute('data-reset'));
+    if(resetBtn){
+      resetBtn.addEventListener('click', function(){
+        unlockedUpTo = 1;
+        steps.forEach(function(st){
+          st.classList.remove('open', 'done');
+          st.querySelector('.step-body').hidden = true;
+          st.querySelector('.step-head').setAttribute('aria-expanded', 'false');
+        });
+        refreshLocks();
+      });
+    }
+
+    refreshLocks();
+  });
+
+  // ---- vzorce (KaTeX) ----
+  var KATEX_DELIMS = [{left:'\\(', right:'\\)', display:false}, {left:'\\[', right:'\\]', display:true}];
+  if(window.renderMathInElement){
+    Array.prototype.forEach.call(document.querySelectorAll('.tab-section'), function(sec){
+      try{ renderMathInElement(sec, { delimiters: KATEX_DELIMS }); }catch(e){}
+    });
+  }
+
+  // ---- sbalovací panely v teorii ----
+  try{ makePanelsCollapsible(document.getElementById('theory-section')); }catch(e){}
+
+  // ---- pomocné funkce pro aplety a tréninky ----
+  var NB = '\u00a0';
+  function tex(t){
+    try{ return window.katex ? katex.renderToString(t, {throwOnError:false}) : t; }catch(e){ return t; }
+  }
+  // číslo s daným počtem desetinných míst, desetinnou čárkou a mezerami mezi tisíci
+  function cz(n, dec){
+    var s = roundTo(n, dec).toFixed(dec);
+    var neg = s.charAt(0) === '-';
+    if(neg) s = s.slice(1);
+    var parts = s.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, NB);
+    return (neg ? '−' : '') + parts.join(',');
+  }
+  // totéž v TeXu (mezera mezi tisíci = \,, desetinná čárka = {,})
+  function czTex(n, dec){ return cz(n, dec).replace('−', '-').replace(',', '{,}').replace(/\u00a0/g, '\\,'); }
+  // číslo na `sig` platných číslic (desetinný zápis)
+  function czSig(x, sig){ var r = roundSig(x, sig); return cz(r, decimalsForSig(r, sig)); }
+  // rozklad na mantisu a exponent: x = m · 10^e, 1 ≤ |m| < 10 (po zaokrouhlení na sig číslic)
+  function sciParts(x, sig){
+    if(x === 0) return { m:0, e:0 };
+    var e = Math.floor(Math.log10(Math.abs(x)));
+    var m = roundSig(x / Math.pow(10, e), sig);
+    if(Math.abs(m) >= 10){ m = roundSig(m / 10, sig); e++; }
+    return { m:m, e:e };
+  }
+  // TeX zápis čísla: desetinně pro 0,001 ≤ |x| < 100 000, jinak a·10^n
+  function numTex(x, sig, forceSci){
+    var r = roundSig(x, sig), a = Math.abs(r);
+    if(!forceSci && (a === 0 || (a >= 1e-3 && a < 1e5))){
+      return czSig(x, sig).replace('−', '-').replace(',', '{,}').replace(/\u00a0/g, '\\,');
+    }
+    var p = sciParts(x, sig);
+    return cz(p.m, sig - 1).replace('−', '-').replace(',', '{,}') + '\\cdot 10^{' + p.e + '}';
+  }
+  // totéž jako prostý text do HTML
+  function numTxt(x, sig, forceSci){
+    var r = roundSig(x, sig), a = Math.abs(r);
+    if(!forceSci && (a === 0 || (a >= 1e-3 && a < 1e5))) return czSig(x, sig);
+    var p = sciParts(x, sig);
+    return cz(p.m, sig - 1) + '·10<sup>' + String(p.e).replace('-', '−') + '</sup>';
+  }
+  function randInt(a, b){ return a + Math.floor(Math.random() * (b - a + 1)); }
+  function pick(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+  function svgEl(name, attrs, parent){
+    var n = document.createElementNS('http://www.w3.org/2000/svg', name);
+    for(var k in attrs){ if(attrs.hasOwnProperty(k)) n.setAttribute(k, attrs[k]); }
+    if(parent) parent.appendChild(n);
+    return n;
+  }
+  function clearEl(n){ while(n.firstChild) n.removeChild(n.firstChild); }
+  function setPressed(group, btn){
+    Array.prototype.forEach.call(group.querySelectorAll('button'), function(b){
+      var on = b === btn;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+  }
+
+  // ================= APLET: ZOOM DO MIKROSVĚTA =================
+  (function(){
+    var svg = document.getElementById('zoom-svg');
+    var slider = document.getElementById('zoom');
+    var W = 600, H = 340, CX = 300, CY = 170;
+    // průměr (m), popisek, druh kresby
+    var OBJ = [
+      { d:1e-3,   name:'makové zrnko', size:'≈ 1 mm', kind:'seed' },
+      { d:7e-5,   name:'lidský vlas', size:'tloušťka ≈ 70 µm', kind:'hair' },
+      { d:7e-6,   name:'červená krvinka', size:'≈ 7 µm', kind:'cell' },
+      { d:2e-6,   name:'bakterie', size:'≈ 2 µm', kind:'bact' },
+      { d:1e-7,   name:'virus', size:'≈ 100 nm', kind:'virus' },
+      { d:2e-10,  name:'atom', size:'≈ 0,2 nm', kind:'atom' },
+      { d:1.5e-14, name:'jádro atomu uranu', size:'≈ 15 fm', kind:'nucleus' },
+      { d:1.7e-15, name:'proton', size:'≈ 1,7 fm', kind:'proton' }
+    ];
+    var PREF = [ [1, 'm'], [1e-3, 'mm'], [1e-6, 'µm'], [1e-9, 'nm'], [1e-12, 'pm'], [1e-15, 'fm'] ];
+    function lenTxt(x){
+      for(var i = 0; i < PREF.length; i++){
+        if(x >= PREF[i][0] * 0.999 || i === PREF.length - 1){
+          var v = x / PREF[i][0];
+          return czSig(v, v >= 100 ? 3 : 2).replace(/,0+$/, '') + NB + PREF[i][1];
+        }
+      }
+    }
+    function viewWidth(){ return Math.pow(10, -2 - parseFloat(slider.value)); }
+    function opacity(D){
+      var a = Math.min(1, Math.max(0, (D - 3) / 9));
+      var b = Math.min(1, Math.max(0, (1800 - D) / 900));
+      return a * b;
+    }
+    var defs = svgEl('defs', {}, svg);
+    var g = svgEl('radialGradient', { id:'zm-cloud' }, defs);
+    svgEl('stop', { offset:'0%', 'stop-color':'var(--obj-blue)', 'stop-opacity':'0.55' }, g);
+    svgEl('stop', { offset:'60%', 'stop-color':'var(--obj-blue)', 'stop-opacity':'0.22' }, g);
+    svgEl('stop', { offset:'100%', 'stop-color':'var(--obj-blue)', 'stop-opacity':'0' }, g);
+    var layer = svgEl('g', {}, svg);
+
+    function draw(o, D, op, parent){
+      var r = D / 2, gr = svgEl('g', { opacity:op.toFixed(3) }, parent), i, a;
+      if(o.kind === 'seed'){
+        svgEl('ellipse', { cx:CX, cy:CY, rx:r, ry:r * 0.86, fill:'var(--ink-soft)', 'fill-opacity':'0.55', stroke:'var(--ink)', 'stroke-width':1.5 }, gr);
+        if(D < 700) for(i = 0; i < 14; i++){ a = i * 2.4; svgEl('circle', { cx:CX + Math.cos(a) * r * 0.5 * ((i % 3) / 3 + 0.3), cy:CY + Math.sin(a) * r * 0.42 * ((i % 4) / 4 + 0.3), r:Math.max(0.6, r * 0.05), fill:'var(--ink)', 'fill-opacity':'0.35' }, gr); }
+      } else if(o.kind === 'hair'){
+        svgEl('rect', { x:-50, y:CY - r, width:W + 100, height:D, fill:'var(--obj-brown)', 'fill-opacity':'0.55', stroke:'var(--obj-brown)', 'stroke-width':1.5 }, gr);
+        for(i = 0; i < 6; i++){ svgEl('line', { x1:i * 110 + 10, y1:CY - r * 0.9, x2:i * 110 + 70, y2:CY + r * 0.9, stroke:'var(--obj-brown)', 'stroke-opacity':'0.5', 'stroke-width':Math.max(0.5, r * 0.04) }, gr); }
+      } else if(o.kind === 'cell'){
+        svgEl('circle', { cx:CX, cy:CY, r:r, fill:'var(--obj-red)', 'fill-opacity':'0.75' }, gr);
+        svgEl('circle', { cx:CX, cy:CY, r:r * 0.45, fill:'var(--obj-red)', 'fill-opacity':'0.35' }, gr);
+      } else if(o.kind === 'bact'){
+        svgEl('rect', { x:CX - r, y:CY - r * 0.36, width:D, height:r * 0.72, rx:r * 0.36, fill:'var(--obj-green)', 'fill-opacity':'0.8' }, gr);
+        svgEl('path', { d:'M' + (CX + r) + ',' + CY + ' q' + (r * 0.3) + ',' + (-r * 0.25) + ' ' + (r * 0.6) + ',0 t' + (r * 0.6) + ',0', fill:'none', stroke:'var(--obj-green)', 'stroke-width':Math.max(0.6, r * 0.04) }, gr);
+      } else if(o.kind === 'virus'){
+        for(i = 0; i < 14; i++){
+          a = i * Math.PI * 2 / 14;
+          svgEl('line', { x1:CX + Math.cos(a) * r * 0.8, y1:CY + Math.sin(a) * r * 0.8, x2:CX + Math.cos(a) * r, y2:CY + Math.sin(a) * r, stroke:'var(--accent)', 'stroke-width':Math.max(0.6, r * 0.06) }, gr);
+          svgEl('circle', { cx:CX + Math.cos(a) * r, cy:CY + Math.sin(a) * r, r:Math.max(0.6, r * 0.07), fill:'var(--accent)' }, gr);
+        }
+        svgEl('circle', { cx:CX, cy:CY, r:r * 0.8, fill:'var(--accent)', 'fill-opacity':'0.35', stroke:'var(--accent)', 'stroke-width':1.5 }, gr);
+      } else if(o.kind === 'atom'){
+        svgEl('circle', { cx:CX, cy:CY, r:r, fill:'url(#zm-cloud)' }, gr);
+      } else if(o.kind === 'nucleus'){
+        var n = 0;
+        for(i = 0; i < 40; i++){
+          var rr = r * 0.82 * Math.sqrt((i + 0.5) / 40), aa = i * 2.39996;
+          svgEl('circle', { cx:CX + Math.cos(aa) * rr, cy:CY + Math.sin(aa) * rr, r:r * 0.2, fill:(i % 5 < 2 ? 'var(--proton)' : 'var(--neutron)'), stroke:'var(--surface)', 'stroke-width':Math.max(0.3, r * 0.015) }, gr);
+          n++;
+        }
+      } else if(o.kind === 'proton'){
+        svgEl('circle', { cx:CX, cy:CY, r:r, fill:'var(--proton)', 'fill-opacity':'0.25', stroke:'var(--proton)', 'stroke-width':1.5 }, gr);
+        var q = [['u', -0.35, -0.25], ['u', 0.35, -0.25], ['d', 0, 0.38]];
+        q.forEach(function(k){
+          svgEl('circle', { cx:CX + k[1] * r, cy:CY + k[2] * r, r:r * 0.12, fill:'var(--proton)' }, gr);
+          var t = svgEl('text', { x:CX + k[1] * r, y:CY + k[2] * r - r * 0.18, 'text-anchor':'middle', 'font-size':Math.max(8, Math.min(18, r * 0.16)), fill:'var(--ink)' }, gr);
+          t.textContent = k[0];
+        });
+      }
+    }
+
+    function niceBar(w){
+      var target = w / 4, k = Math.pow(10, Math.floor(Math.log10(target))), best = k;
+      [1, 2, 5].forEach(function(f){ if(f * k <= target) best = f * k; });
+      return best;
+    }
+
+    function render(){
+      var w = viewWidth();
+      clearEl(layer);
+      var big = [], small = [], k;
+      for(k = 0; k < OBJ.length; k++){
+        var o = OBJ[k], D = o.d / w * W, op = opacity(D);
+        if(op <= 0.01) continue;
+        draw(o, D, op, layer);
+        var lab = o.name + ' ' + o.size;
+        if(o.kind !== 'hair' && D / 2 + 22 < H - CY){
+          small.push({ t:lab, op:op, y:CY + D / 2 + 16 });
+        } else {
+          big.push({ t:lab, op:op });
+        }
+      }
+      small.sort(function(a, b){ return a.y - b.y; });
+      for(k = 1; k < small.length; k++){ if(small[k].y < small[k - 1].y + 17) small[k].y = small[k - 1].y + 17; }
+      small.forEach(function(b){
+        var t = svgEl('text', { x:CX, y:b.y, 'text-anchor':'middle', 'font-size':13, fill:'var(--ink)', opacity:b.op.toFixed(3), 'paint-order':'stroke', stroke:'var(--surface)', 'stroke-width':3 }, layer);
+        t.textContent = b.t;
+      });
+      big.forEach(function(b, i){
+        var t = svgEl('text', { x:12, y:22 + i * 18, 'font-size':13, fill:'var(--ink)', opacity:b.op.toFixed(3), 'paint-order':'stroke', stroke:'var(--surface)', 'stroke-width':3 }, layer);
+        t.textContent = b.t;
+      });
+      // měřítko
+      var L = niceBar(w), Lpx = L / w * W, x0 = W - 24 - Lpx, y0 = H - 22;
+      svgEl('rect', { x:x0 - 8, y:y0 - 22, width:Lpx + 16, height:32, fill:'var(--surface)', 'fill-opacity':'0.85', rx:6 }, layer);
+      svgEl('line', { x1:x0, y1:y0, x2:x0 + Lpx, y2:y0, stroke:'var(--ink)', 'stroke-width':3 }, layer);
+      svgEl('line', { x1:x0, y1:y0 - 6, x2:x0, y2:y0 + 6, stroke:'var(--ink)', 'stroke-width':2 }, layer);
+      svgEl('line', { x1:x0 + Lpx, y1:y0 - 6, x2:x0 + Lpx, y2:y0 + 6, stroke:'var(--ink)', 'stroke-width':2 }, layer);
+      var tl = svgEl('text', { x:x0 + Lpx / 2, y:y0 - 9, 'text-anchor':'middle', 'font-size':13, 'font-family':"'IBM Plex Mono', monospace", fill:'var(--ink)' }, layer);
+      tl.textContent = lenTxt(L);
+      // výstupy
+      var tool, note;
+      if(w > 2e-4){ tool = 'pouhým okem nebo lupou'; note = 'Oko rozliší na vzdálenost 25 cm podrobnosti asi do 0,07 mm.'; }
+      else if(w > 2e-6){ tool = 'optickým mikroskopem'; note = 'Optický mikroskop rozliší podrobnosti asi do 200 nm — omezuje ho ohyb světla.'; }
+      else if(w > 2e-9){ tool = 'elektronovým mikroskopem'; note = 'Viry jsou na světlo příliš malé; elektronový mikroskop používá elektrony, které mají mnohem kratší vlnovou délku.'; }
+      else if(w > 5e-11){ tool = 'rastrovacím tunelovým mikroskopem'; note = 'Jednotlivé atomy na povrchu látky zobrazí tunelový mikroskop, rozliší asi 0,2 nm.'; }
+      else { tool = 'rozptylovými experimenty na urychlovačích'; note = 'Dovnitř atomu žádný mikroskop nedohlédne. Strukturu jádra a nukleonů zkoumáme ostřelováním rychlými částicemi.'; }
+      if(w <= 5e-11 && w > 2e-13) note += ' V záběru je téměř prázdný prostor: jádro je asi stotisíckrát menší než atom.';
+      document.getElementById('out-w').textContent = lenTxt(w);
+      document.getElementById('zoom-val').textContent = lenTxt(w);
+      document.getElementById('out-tool').textContent = tool;
+      document.getElementById('out-note').textContent = note;
+      slider.setAttribute('aria-valuetext', 'šířka záběru ' + lenTxt(w));
+    }
+    slider.addEventListener('input', render);
+    document.getElementById('zoom-in').addEventListener('click', function(){ slider.value = Math.min(13, parseFloat(slider.value) + 1); render(); });
+    document.getElementById('zoom-out').addEventListener('click', function(){ slider.value = Math.max(0, parseFloat(slider.value) - 1); render(); });
+    render();
+  })();
+
+  // ================= TRÉNINK: typy příkladů =================
+  var EV = 1.60e-19, C = 3.00e8;
+  var PREFIX = [ { p:'', f:1 }, { p:'k', f:1e3 }, { p:'M', f:1e6 }, { p:'G', f:1e9 } ];
+  var NUCLIDES = [
+    ['H', 1, 2, 'deuteria'], ['H', 1, 3, 'tritia'], ['He', 2, 4, 'helia'], ['Li', 3, 7, 'lithia'], ['C', 6, 12, 'uhlíku'], ['C', 6, 14, 'uhlíku'],
+    ['O', 8, 16, 'kyslíku'], ['Na', 11, 23, 'sodíku'], ['Al', 13, 27, 'hliníku'], ['K', 19, 40, 'draslíku'], ['Fe', 26, 56, 'železa'],
+    ['Co', 27, 60, 'kobaltu'], ['Cu', 29, 63, 'mědi'], ['Sr', 38, 90, 'stroncia'], ['Ag', 47, 107, 'stříbra'], ['I', 53, 131, 'jodu'],
+    ['Cs', 55, 137, 'cesia'], ['Au', 79, 197, 'zlata'], ['Pb', 82, 208, 'olova'], ['Rn', 86, 222, 'radonu'], ['Ra', 88, 226, 'radia'],
+    ['U', 92, 235, 'uranu'], ['U', 92, 238, 'uranu'], ['Pu', 94, 239, 'plutonia']
+  ];
+  var PARTICLES = [ ['Mion', 105.7], ['Pion π⁺', 139.6], ['Kaon K⁺', 493.7], ['Proton', 938.3], ['Neutron', 939.6], ['Tauon', 1777] ];
+  function nuclTex(n, charge){ return '{}^{' + n[2] + '}_{' + n[1] + '}\\mathrm{' + n[0] + '}' + (charge ? '^{' + charge + '+}' : ''); }
+
+  var TR_TYPES = [
+    { key:'evj', name:'eV → J', gen:function(){
+      var pr = pick(PREFIX), v = randInt(10, 99) / 10;
+      if(pr.p === '' && Math.random() < 0.3) v = pick([13.6, 4.9, 2.1, 1.8]);
+      var E = v * pr.f * EV, vt = czTex(v, v % 1 === 0 ? 0 : 1);
+      return { cat:'Převod eV → J', signature:'evj' + v + pr.p,
+        task:'Převeďte energii ' + tex(vt + '\\ \\mathrm{' + pr.p + 'eV}') + ' na jouly.',
+        lhs:'E', unit:'\\mathrm{J}', sci:true, exact:E,
+        given:['E = ' + vt + '\\ \\mathrm{' + pr.p + 'eV}', '1\\ \\mathrm{eV} = 1{,}60\\cdot 10^{-19}\\ \\mathrm{J}'], find:['E\\ \\text{v J}'],
+        steps:['E = ' + vt + (pr.f > 1 ? '\\cdot 10^{' + Math.round(Math.log10(pr.f)) + '}' : '') + '\\cdot 1{,}60\\cdot 10^{-19}\\ \\mathrm{J}'],
+        final:'E \\doteq ' + numTex(E, 3, true) + '\\ \\mathrm{J}' };
+    }},
+    { key:'jev', name:'J → eV', gen:function(){
+      var e = randInt(-19, -11), m = randInt(12, 98) / 10, E = m * Math.pow(10, e), eV = E / EV;
+      var pr = eV >= 1e9 ? PREFIX[3] : eV >= 1e6 ? PREFIX[2] : eV >= 1e3 ? PREFIX[1] : PREFIX[0];
+      var val = eV / pr.f, Et = numTex(E, 2, true);
+      return { cat:'Převod J → eV', signature:'jev' + E,
+        task:'Částice má energii ' + tex(Et + '\\ \\mathrm{J}') + '. Vyjádřete ji v ' + tex('\\mathrm{' + pr.p + 'eV}') + '.',
+        lhs:'E', unit:'\\mathrm{' + pr.p + 'eV}', sci:false, exact:val,
+        given:['E = ' + Et + '\\ \\mathrm{J}', '1\\ \\mathrm{eV} = 1{,}60\\cdot 10^{-19}\\ \\mathrm{J}'], find:['E\\ \\text{v ' + pr.p + 'eV}'],
+        steps:['E = \\dfrac{' + Et + '}{1{,}60\\cdot 10^{-19}}\\ \\mathrm{eV} \\doteq ' + numTex(eV, 3, eV >= 1e5) + '\\ \\mathrm{eV}'],
+        final:'E \\doteq ' + numTex(val, 3) + '\\ \\mathrm{' + pr.p + 'eV}' };
+    }},
+    { key:'slozeni', name:'Složení atomu', gen:function(){
+      var n = pick(NUCLIDES), ask = pick(['n', 'p', 'e', 'nuk']), ion = 0;
+      if(ask === 'e' && Math.random() < 0.5 && n[1] > 3) ion = randInt(1, Math.min(3, n[1] - 1));
+      var Z = n[1], A = n[2], N = A - Z, ans, what, step;
+      if(ask === 'n'){ ans = N; what = 'neutronů v jádře'; step = 'N = A - Z = ' + A + ' - ' + Z + ' = ' + N; }
+      else if(ask === 'p'){ ans = Z; what = 'protonů v jádře'; step = 'Z = ' + Z + '\\ \\text{(dolní index)}'; }
+      else if(ask === 'nuk'){ ans = A; what = 'nukleonů v jádře'; step = 'A = ' + A + '\\ \\text{(horní index)}'; }
+      else { ans = Z - ion; what = 'elektronů v obalu'; step = ion ? '\\text{počet elektronů} = Z - ' + ion + ' = ' + Z + ' - ' + ion + ' = ' + (Z - ion) : '\\text{neutrální atom: počet elektronů} = Z = ' + Z; }
+      var lhsMap = { n:'N', p:'Z', nuk:'A', e:'\\text{počet}' };
+      return { cat:'Složení atomu', signature:'s' + n[0] + A + ask + ion,
+        task:'Kolik ' + what + ' má ' + (ion ? 'iont ' : 'atom ') + tex(nuclTex(n, ion)) + (ion ? '' : ' (' + n[3] + ')') + '?',
+        lhs:lhsMap[ask], unit:'', sci:false, integer:true, exact:ans,
+        given:[nuclTex(n, ion) + ':\\ A = ' + A + ',\\ Z = ' + Z], find:[what.indexOf('elektron') === 0 ? '\\text{počet elektronů}' : lhsMap[ask]],
+        steps:[step], final:(ask === 'e' ? '\\text{počet elektronů}' : lhsMap[ask]) + ' = ' + ans };
+    }},
+    { key:'hmotnost', name:'Hmotnost z MeV/c²', gen:function(){
+      var p = pick(PARTICLES), E = p[1] * 1e6 * EV, m = E / (C * C), Et = czTex(p[1], p[1] % 1 === 0 ? 0 : 1);
+      return { cat:'Hmotnost a klidová energie', signature:'m' + p[0],
+        task:p[0] + ' má hmotnost ' + tex(Et + '\\ \\mathrm{MeV}/c^2') + '. Vyjádřete ji v kilogramech.',
+        lhs:'m', unit:'\\mathrm{kg}', sci:true, exact:m,
+        given:['m = ' + Et + '\\ \\mathrm{MeV}/c^2', 'c = 3{,}00\\cdot 10^{8}\\ \\mathrm{m\\cdot s^{-1}}'], find:['m\\ \\text{v kg}'],
+        steps:['E = ' + Et + '\\cdot 10^{6}\\cdot 1{,}60\\cdot 10^{-19}\\ \\mathrm{J} \\doteq ' + numTex(E, 3, true) + '\\ \\mathrm{J}',
+               'm = \\dfrac{E}{c^2} = \\dfrac{' + numTex(E, 3, true) + '}{(3{,}00\\cdot 10^{8})^2}\\ \\mathrm{kg}'],
+        final:'m \\doteq ' + numTex(m, 3, true) + '\\ \\mathrm{kg}' };
+    }}
+  ];
+
+  // ================= TRÉNINK (číselná odpověď) =================
+  // Typy příkladů definuje stránka v poli TR_TYPES: { key, name, gen } — gen() vrátí úlohu
+  // { cat, task, lhs, unit, sci, exact, sig, tol, integer, given[], find[], steps[], final }.
+  var trState = {
+    type:'all', score:0, streak:0, bestStreak:0, answered:0, correct:0,
+    current:null, lastSig:'', locked:false, touched:false
+  };
+  var TR_STATS_KEY = 'fyzika:rozmery-v-mikrosvete:stats';
+  var trInputs = ['answer', 'answer-m', 'answer-e'];
+
+  function trLoadStats(){
+    try{ var raw = localStorage.getItem(TR_STATS_KEY); if(raw){ trState.bestStreak = JSON.parse(raw).bestStreak || 0; } }catch(e){}
+  }
+  function trSaveStats(){
+    try{ localStorage.setItem(TR_STATS_KEY, JSON.stringify({bestStreak: trState.bestStreak})); }catch(e){}
+  }
+  function trParse(str){
+    if(!str) return NaN;
+    str = str.trim().replace(/[−–]/g, '-').replace(',', '.').replace(/\s+/g, '');
+    return /^-?\d*\.?\d+$|^-?\d+\.$/.test(str) ? parseFloat(str) : NaN;
+  }
+  function trGenerate(){
+    var list = trState.type === 'all' ? TR_TYPES : TR_TYPES.filter(function(t){ return t.key === trState.type; });
+    var q = pick(list).gen(), tries = 0;
+    while(q.signature && q.signature === trState.lastSig && tries < 20){ q = pick(list).gen(); tries++; }
+    trState.lastSig = q.signature || '';
+    trState.current = q;
+    trState.locked = false; trState.touched = false;
+    trRender();
+  }
+  function trRender(){
+    var q = trState.current;
+    document.getElementById('cat-tag').textContent = q.cat;
+    document.getElementById('task-text').innerHTML = q.task;
+    document.getElementById('eq-given').innerHTML = tex(q.lhs);
+    document.getElementById('eq-unit').innerHTML = q.unit ? tex(q.unit) : '';
+    document.getElementById('slot-sci').hidden = !q.sci;
+    document.getElementById('slot-dec').hidden = !!q.sci;
+    trInputs.forEach(function(id){
+      var el = document.getElementById(id);
+      el.value = ''; el.disabled = false; el.classList.remove('correct', 'wrong');
+    });
+    var fb = document.getElementById('feedback');
+    fb.hidden = true; fb.classList.remove('ok', 'bad', 'sol');
+    document.getElementById('feedback-tip').hidden = true;
+    document.getElementById('btn-check').textContent = 'Zkontrolovat';
+    var first = document.getElementById(q.sci ? 'answer-m' : 'answer');
+    if(!document.getElementById('trenink-section').hidden) first.focus();
+  }
+  function trUserValue(){
+    var q = trState.current;
+    if(q.sci){
+      var m = trParse(document.getElementById('answer-m').value);
+      var es = document.getElementById('answer-e').value.trim().replace(/[−–]/g, '-');
+      var e = es === '' ? 0 : parseInt(es, 10);
+      if(isNaN(m) || isNaN(e)) return NaN;
+      return m * Math.pow(10, e);
+    }
+    return trParse(document.getElementById('answer').value);
+  }
+  function trIsEmpty(){ return isNaN(trUserValue()); }
+  function trMark(cls){
+    (trState.current.sci ? ['answer-m', 'answer-e'] : ['answer']).forEach(function(id){ document.getElementById(id).classList.add(cls); });
+  }
+  function trLock(){
+    trInputs.forEach(function(id){ document.getElementById(id).disabled = true; });
+    trState.locked = true;
+    var b = document.getElementById('btn-check');
+    b.textContent = 'Další příklad →';
+    b.focus();
+    trUpdateStats();
+  }
+  function trShowSolution(){
+    var q = trState.current;
+    // KaTeX vkládá do cest SVG (odmocnina) zalomení řádků; FyzikaReseni dělí řádky podle \n, proto je odstraníme
+    function t1(s){ return tex(s).replace(/\n/g, ' '); }
+    FyzikaReseni.show(document.getElementById('feedback'), document.getElementById('feedback-steps'), {
+      raw:true,
+      given:(q.given || []).map(t1),
+      find:(q.find || []).map(t1),
+      steps:(q.steps || []).map(t1),
+      final:q.final ? t1(q.final) : '',
+      note:q.note || ''
+    });
+  }
+  function trIsCorrect(v){
+    var q = trState.current;
+    if(isNaN(v)) return false;
+    if(q.integer) return Math.abs(v - q.exact) < 1e-9;
+    var tol = q.tol === undefined ? 0.01 : q.tol;
+    return Math.abs(v - q.exact) <= tol * Math.abs(q.exact) + 1e-300;
+  }
+  function trCheck(){
+    if(trState.locked){ trGenerate(); return; }
+    var v = trUserValue(), ok = trIsCorrect(v), q = trState.current;
+    trState.answered++;
+    var fb = document.getElementById('feedback'), head = document.getElementById('feedback-headline');
+    var tip = document.getElementById('feedback-tip');
+    fb.hidden = false; tip.hidden = true;
+    if(ok){
+      trState.score += 10; trState.streak++; trState.correct++;
+      if(trState.streak > trState.bestStreak){
+        trState.bestStreak = trState.streak; trSaveStats();
+        if(window.FyzikaScores) FyzikaScores.report('serie', trState.bestStreak, false);
+      }
+      trMark('correct'); fb.classList.add('ok'); fb.classList.remove('bad');
+      head.textContent = 'Správně!';
+    } else {
+      trState.streak = 0; trMark('wrong'); fb.classList.add('bad'); fb.classList.remove('ok');
+      head.textContent = isNaN(v) ? 'Doplňte odpověď.' : 'Bohužel špatně.';
+      if(!isNaN(v) && q.sci && !isNaN(q.exact) && q.exact !== 0){
+        var r = v / q.exact, lg = Math.log10(Math.abs(r));
+        if(Math.abs(lg - Math.round(lg)) < 0.005 && Math.round(lg) !== 0){
+          tip.hidden = false;
+          tip.textContent = 'Mantisa je správně, chyba je v exponentu (o ' + Math.abs(Math.round(lg)) + ' řád' + (Math.abs(Math.round(lg)) === 1 ? '' : Math.abs(Math.round(lg)) < 5 ? 'y' : 'ů') + ').';
+        }
+      }
+    }
+    trShowSolution(); trLock();
+  }
+  function trSkip(){
+    if(trState.locked){ trGenerate(); return; }
+    trState.streak = 0; trState.answered++;
+    var fb = document.getElementById('feedback');
+    fb.hidden = false; fb.classList.add('bad'); fb.classList.remove('ok');
+    document.getElementById('feedback-tip').hidden = true;
+    document.getElementById('feedback-headline').textContent = 'Správný postup:';
+    trShowSolution(); trLock();
+  }
+  function trUpdateStats(){
+    document.getElementById('stat-score').textContent = trState.score;
+    document.getElementById('stat-streak').textContent = trState.streak + (trState.bestStreak > 0 ? ' / ' + trState.bestStreak : '');
+    document.getElementById('stat-accuracy').textContent = trState.answered === 0 ? '—' : Math.round(100 * trState.correct / trState.answered) + ' %';
+  }
+  // Rozdělanou úlohu před změnou nastavení nejdřív vyhodnotí (stejná logika jako na ostatních stránkách).
+  function trSettle(){
+    if(trState.locked) return 'locked';
+    if(!trState.touched) return 'untouched';
+    if(trIsEmpty() && !confirm('Odpověď není vyplněná. Opravdu chcete změnit nastavení?')) return 'cancelled';
+    trCheck();
+    return 'settled';
+  }
+  (function(){
+    var row = document.getElementById('type-row');
+    var items = [{ key:'all', name:'Vše' }].concat(TR_TYPES);
+    items.forEach(function(d){
+      var b = document.createElement('button');
+      b.className = 'chip accented' + (d.key === trState.type ? ' on' : '');
+      b.type = 'button';
+      b.setAttribute('aria-pressed', d.key === trState.type ? 'true' : 'false');
+      b.textContent = d.name;
+      b.addEventListener('click', function(){
+        if(d.key === trState.type) return;
+        var res = trSettle();
+        if(res === 'cancelled') return;
+        trState.type = d.key;
+        setPressed(row, b);
+        if(res === 'locked' || res === 'untouched'){ trGenerate(); }
+      });
+      row.appendChild(b);
+    });
+  })();
+  function tryCheck(){
+    if(trState.locked){ trGenerate(); return; }
+    if(trIsEmpty() && !confirm('Odpověď není vyplněná. Opravdu chcete zkontrolovat?')) return;
+    trCheck();
+  }
+  function trySkip(){
+    if(trState.locked){ trGenerate(); return; }
+    trSkip();
+  }
+  document.getElementById('btn-check').addEventListener('click', tryCheck);
+  document.getElementById('btn-skip').addEventListener('click', trySkip);
+  trInputs.forEach(function(id){
+    var el = document.getElementById(id);
+    sanitizeNumericInput(el, id !== 'answer-e');
+    el.addEventListener('input', function(){ trState.touched = true; });
+    el.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); tryCheck(); } });
+  });
+  document.getElementById('reset-stats').addEventListener('click', function(){
+    trState.score = 0; trState.streak = 0; trState.answered = 0; trState.correct = 0; trState.bestStreak = 0;
+    try{ localStorage.removeItem(TR_STATS_KEY); }catch(e){}
+    trUpdateStats();
+  });
+  document.addEventListener('fyzika:scores-updated', function(){ trState.bestStreak = 0; trLoadStats(); trUpdateStats(); });
+  document.getElementById('top-tab-trenink').addEventListener('click', function(){
+    setTimeout(function(){ if(!trState.locked){ var q = trState.current; document.getElementById(q.sci ? 'answer-m' : 'answer').focus(); } }, 0);
+  });
+
+  trLoadStats();
+  trUpdateStats();
+  trGenerate();
+})();
+</script>
+</body>
+</html>

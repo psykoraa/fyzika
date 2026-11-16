@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Laser</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../spolecne/config.js"></script>
+<script src="../spolecne/auth.js"></script>
+<script src="../spolecne/zalozky.js?v=3"></script>
+<link rel="stylesheet" href="../spolecne/styl.css">
+<link rel="stylesheet" href="../spolecne/reseni.css?v=1">
+<style>
+:root{
+  --paper:#eff1f8;
+  --surface:#fcfdff;
+  --surface-2:#dde1f1;
+  --ink:#1d2340;
+  --ink-soft:#5b6282;
+  --line:rgba(29,35,64,0.12);
+  --accent:#2e3f8f;
+  --accent-ink:#f5f7ff;
+  --success:#28794f;
+  --success-bg:#e3efe0;
+  --danger:#b3392b;
+  --danger-bg:#f5e4de;
+  --focus:#1e6f66;
+  --shadow:0 1px 0 rgba(29,35,64,0.06);
+  /* barvy v apletu: hladiny E1, E2, E3 a laserový svazek */
+  --lev1:#5b6282;
+  --lev2:#d23f24;
+  --lev3:#c77c0e;
+  --beam:#e0262b;
+}
+
+.panel{ margin-bottom:22px; }
+.panel-title{ margin-bottom:8px; }
+.panel p{
+  margin:0 0 8px;
+  font-size:0.9rem;
+  line-height:1.55;
+}
+.panel p:last-child{ margin-bottom:0; }
+.panel b{ color:var(--ink); }
+.panel ul, .panel ol{ margin:0 0 8px; padding-left:22px; font-size:0.9rem; line-height:1.55; }
+.panel li{ margin-bottom:4px; }
+.panel h3{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.05rem;
+  letter-spacing:0.01em;
+  margin:16px 0 6px;
+}
+.panel h3:first-child{ margin-top:0; }
+
+.card{ padding:26px 26px 28px; text-align:left; margin-bottom:24px; }
+.cat-tag{ margin-bottom:10px; }
+.card h2{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.6rem;
+  letter-spacing:0.02em;
+  color:var(--ink);
+  text-transform:none;
+  margin-bottom:6px;
+}
+.card .desc{
+  font-size:0.86rem;
+  color:var(--ink-soft);
+  line-height:1.5;
+  margin:0 0 14px;
+}
+
+.katex{ font-size:1.05em; }
+.formula-box{
+  background:var(--surface-2);
+  border-radius:8px;
+  padding:12px 16px;
+  margin:10px 0;
+  font-size:1.1rem;
+  text-align:center;
+}
+.formula-line{
+  text-align:center;
+  font-size:1.1rem;
+  color:var(--ink);
+  line-height:1.8;
+}
+.line-scroll{
+  position:relative;
+  white-space:nowrap;
+  overflow-x:auto;
+  overflow-y:hidden;
+  padding:2px 0 4px;
+}
+.step-result{ max-width:100%; }
+.step-result > .line-scroll{ min-width:0; max-width:100%; }
+.given-data{
+  font-size:clamp(0.9rem, 2.4vw, 1.05rem);
+  color:var(--ink-soft);
+  margin-bottom:20px;
+}
+
+.theory-table-wrap{ overflow-x:auto; margin:6px 0 4px; }
+.theory-table{
+  border-collapse:collapse;
+  font-size:0.88rem;
+  width:100%;
+  min-width:320px;
+}
+.theory-table th, .theory-table td{
+  border:1px solid var(--line);
+  padding:8px 12px;
+  text-align:left;
+}
+.theory-table thead th{
+  background:var(--surface-2);
+  color:var(--ink-soft);
+  font-weight:600;
+  font-size:0.72rem;
+  text-transform:uppercase;
+  letter-spacing:0.05em;
+}
+.theory-table td.mono, .theory-table th.mono{
+  font-family:'IBM Plex Mono', monospace;
+  font-variant-numeric:tabular-nums;
+  text-align:center;
+}
+.theory-table tbody tr:nth-child(even) td{ background:rgba(0,0,0,0.02); }
+
+.theory-fig{
+  margin:12px 0 10px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:10px 12px 8px;
+}
+.theory-fig svg{ display:block; width:100%; max-width:560px; height:auto; margin:0 auto; }
+.theory-fig figcaption{
+  font-size:0.8rem;
+  color:var(--ink-soft);
+  line-height:1.45;
+  text-align:center;
+  margin-top:4px;
+}
+
+.example-grid{ display:flex; flex-direction:column; gap:12px; margin-top:6px; }
+.example-item{
+  background:var(--surface-2);
+  border-radius:10px;
+  padding:12px 14px;
+}
+.example-tag{
+  font-size:0.66rem;
+  text-transform:uppercase;
+  letter-spacing:0.06em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-bottom:6px;
+  display:block;
+}
+.example-eq{
+  font-size:1.05rem;
+  margin-bottom:4px;
+}
+.example-note{ font-size:0.82rem; color:var(--ink-soft); line-height:1.45; }
+
+.links{ margin-top:14px; display:flex; flex-wrap:wrap; gap:10px; justify-content:center; }
+a.btn-link{
+  display:inline-block;
+  font-weight:600;
+  font-size:0.95rem;
+  padding:10px 22px;
+  border-radius:8px;
+  background:var(--accent);
+  color:var(--accent-ink);
+  text-decoration:none;
+}
+a.btn-link:hover{ filter:brightness(1.06); }
+a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+
+.credit{
+  margin-top:24px;
+  font-size:0.8rem;
+  line-height:1.5;
+  color:var(--ink-soft);
+  text-align:center;
+}
+.credit a{ color:inherit; }
+
+
+/* ---- aplety: karta, řádky ovládání, kreslicí plocha, výstupy ---- */
+.applet-head .cat-tag{ margin-bottom:10px; }
+.mode-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:16px;
+  padding-top:14px;
+  border-top:1px solid var(--line);
+}
+.mode-row-label{
+  font-size:0.68rem;
+  text-transform:uppercase;
+  letter-spacing:0.1em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-right:2px;
+  flex:0 0 170px;
+}
+.seg{ display:flex; gap:6px; flex-wrap:wrap; }
+.chip{ font-size:0.82rem; gap:7px; }
+.chip.accented.on{ background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+.chip:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+.slider-wrap{ display:flex; align-items:center; gap:12px; flex:1 1 260px; min-width:0; }
+.slider-wrap input[type=range]{ flex:1 1 auto; min-width:0; accent-color:var(--accent); height:28px; }
+.slider-val{ font-family:'IBM Plex Mono', monospace; font-weight:600; font-size:0.92rem; white-space:nowrap; min-width:6.5em; text-align:right; }
+.canvas-wrap{
+  position:relative;
+  margin-top:18px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:10px;
+  overflow:hidden;
+}
+svg.scene{ width:100%; height:auto; display:block; background:var(--surface); user-select:none; -webkit-user-select:none; touch-action:manipulation; }
+svg.scene text{ font-family:'Work Sans', sans-serif; }
+.legend{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 18px;
+  padding:10px 14px;
+  border-top:1px solid var(--line);
+  font-size:0.78rem;
+  color:var(--ink-soft);
+}
+.legend span{ display:inline-flex; align-items:center; gap:7px; }
+.legend i{ font-style:normal; display:inline-block; width:12px; height:12px; border-radius:50%; background:var(--c); }
+.applet-out{
+  display:flex; flex-wrap:wrap; gap:8px 22px; margin-top:14px;
+  font-size:0.92rem; line-height:1.5;
+}
+.applet-out b{ font-variant-numeric:tabular-nums; }
+.applet-note{ font-size:0.86rem; color:var(--ink-soft); margin:10px 0 0; line-height:1.5; }
+.applet-actions{ display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+.applet-card + .applet-card{ margin-top:4px; }
+.nw{ white-space:nowrap; }
+@media (max-width:720px){
+  .mode-row-label{ flex-basis:100%; }
+}
+.mode-row-label i{ text-transform:none; }
+
+/* ---- trénink s číselnou odpovědí ---- */
+.section-block{ margin-bottom:16px; }
+.section-block:last-child{ margin-bottom:0; }
+.task-text{ font-size:0.92rem; color:var(--ink); line-height:1.55; text-align:center; margin:4px 0 18px; }
+.equation{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:600;
+  font-size:clamp(1.25rem, 4.2vw, 1.9rem);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:0.35em;
+  flex-wrap:wrap;
+  font-variant-numeric:tabular-nums;
+}
+.equation .unit{ color:var(--ink-soft); font-size:0.7em; margin-left:0.1em; }
+.equation .eq{ color:var(--ink-soft); margin:0 0.1em; }
+.equation .katex{ font-size:1em; }
+.equation .answer-input{ width:5.2em; }
+.answer-input.sci-mantissa{ width:3.6em; }
+.sci-group{ display:inline-flex; align-items:baseline; gap:0.12em; }
+.sci-times{ font-size:0.65em; color:var(--ink-soft); margin:0 0.02em; }
+.sci-exp{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:600;
+  width:2.4em;
+  text-align:center;
+  border:none;
+  border-bottom:2px solid var(--ink-soft);
+  background:transparent;
+  color:var(--ink);
+  font-size:0.55em;
+  vertical-align:top;
+  padding:0 0.05em;
+}
+.sci-exp:focus{ outline:none; border-color:var(--focus); }
+.sci-exp.correct{ border-color:var(--success); color:var(--success); }
+.sci-exp.wrong{ border-color:var(--danger); color:var(--danger); }
+.const-box{ font-size:0.82rem; color:var(--ink-soft); line-height:1.6; margin:0; }
+.feedback .tip{ font-size:0.78rem; color:var(--ink); opacity:0.75; margin-top:6px; font-style:italic; }
+
+@media (max-width:520px){
+  .card{ padding:20px 16px 22px; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <a class="back-link" href="../rozcestniky/oktava.html">← Zpět na Oktáva/4. ročník</a>
+
+  <div class="brand">
+    <div class="brand-lockup">
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect x="6" y="14" width="20" height="12" rx="2" fill="var(--surface-2)" stroke="var(--ink)" stroke-width="1.6"/>
+        <line x1="4" y1="12" x2="4" y2="28" stroke="var(--ink)" stroke-width="2.2"/>
+        <line x1="28" y1="12" x2="28" y2="28" stroke="var(--ink-soft)" stroke-width="2.2"/>
+        <line x1="28" y1="20" x2="38" y2="20" stroke="var(--beam)" stroke-width="3"/>
+      </svg>
+      <div class="brand-text">
+        <h1>Laser</h1>
+        <p>atomová a částicová fyzika — emise a absorpce světla</p>
+      </div>
+    </div>
+    <div class="readout" id="header-readout" hidden>
+      <div class="cell"><span class="label">Skóre</span><span class="value" id="stat-score">0</span></div>
+      <div class="cell"><span class="label">Série</span><span class="value" id="stat-streak">0</span></div>
+      <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="stat-accuracy">—</span></div>
+    </div>
+  </div>
+
+  <div class="top-tabs">
+    <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+    <button class="toptab" id="top-tab-aplet" data-tab="aplet">Tříhladinový laser</button>
+    <button class="toptab" id="top-tab-trenink" data-tab="trenink">Trénink</button>
+  </div>
+
+  <!-- ============ TEORIE ============ -->
+  <div id="theory-section" class="tab-section">
+
+    <div class="panel">
+      <div class="panel-title">Tři děje mezi dvěma hladinami</div>
+      <p>Uvažujme atom se dvěma energetickými hladinami \(E_1 < E_2\). Při přechodu mezi nimi se vyzáří nebo pohltí foton o energii</p>
+      <div class="formula-box">\[ hf = E_2 - E_1 \]</div>
+      <ul>
+        <li><b>Absorpce:</b> atom na nižší hladině \(E_1\) pohltí foton a přejde na hladinu \(E_2\).</li>
+        <li><b>Spontánní emise:</b> atom na vyšší hladině dříve či později <i>sám od sebe</i>, v náhodném okamžiku, přejde na nižší hladinu a vyzáří foton. Atomy přitom vyzařují nezávisle na sobě, různými směry a s různou fází — záření je <b>nekoherentní</b>. Tak svítí žárovka, zářivka i Slunce.</li>
+        <li><b>Stimulovaná (vynucená) emise:</b> foton o energii \(E_2 - E_1\) narazí na atom, který už je na vyšší hladině, a přiměje ho přejít dolů. Původní foton se nepohltí a k němu přibude druhý — se <b>stejnou frekvencí, fází i směrem</b>. Světlo se tak zesílí. Tento děj předpověděl A. Einstein v roce 1916.</li>
+      </ul>
+      <figure class="theory-fig">
+        <svg viewBox="0 0 440 150" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Absorpce: foton zmizí a atom přejde nahoru. Spontánní emise: atom sám přejde dolů a vyzáří foton náhodným směrem. Stimulovaná emise: dopadající foton vyvolá přechod dolů a odletí dva stejné fotony.">
+          <defs><marker id="ls-a" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink)"/></marker></defs>
+          <g stroke="var(--ink)" stroke-width="1.6">
+            <line x1="40" y1="40" x2="110" y2="40"/><line x1="40" y1="100" x2="110" y2="100"/>
+            <line x1="185" y1="40" x2="255" y2="40"/><line x1="185" y1="100" x2="255" y2="100"/>
+            <line x1="330" y1="40" x2="400" y2="40"/><line x1="330" y1="100" x2="400" y2="100"/>
+          </g>
+          <g font-family="Work Sans, sans-serif" font-size="10" fill="var(--ink-soft)"><text x="113" y="43">E₂</text><text x="113" y="103">E₁</text></g>
+          <line x1="75" y1="96" x2="75" y2="46" stroke="var(--focus)" stroke-width="1.6" marker-end="url(#ls-a)"/>
+          <path d="M8,70 q4,-6 8,0 t8,0 t8,0 t8,0" fill="none" stroke="var(--beam)" stroke-width="1.8"/>
+          <circle cx="75" cy="40" r="5" fill="var(--lev2)"/>
+          <line x1="220" y1="44" x2="220" y2="94" stroke="var(--ink)" stroke-width="1.6" marker-end="url(#ls-a)"/>
+          <circle cx="220" cy="100" r="5" fill="var(--lev1)"/>
+          <path d="M228,70 q4,-6 8,0 t8,0 t8,0" fill="none" stroke="var(--beam)" stroke-width="1.8" transform="rotate(-30 228 70)"/>
+          <line x1="365" y1="44" x2="365" y2="94" stroke="var(--ink)" stroke-width="1.6" marker-end="url(#ls-a)"/>
+          <circle cx="365" cy="100" r="5" fill="var(--lev1)"/>
+          <path d="M300,70 q4,-6 8,0 t8,0 t8,0 t8,0" fill="none" stroke="var(--beam)" stroke-width="1.8"/>
+          <path d="M378,64 q4,-6 8,0 t8,0 t8,0 t8,0" fill="none" stroke="var(--beam)" stroke-width="1.8"/>
+          <path d="M378,78 q4,-6 8,0 t8,0 t8,0 t8,0" fill="none" stroke="var(--beam)" stroke-width="1.8"/>
+          <g font-family="Work Sans, sans-serif" font-size="12" fill="var(--ink)" text-anchor="middle">
+            <text x="75" y="130">absorpce</text><text x="220" y="130">spontánní emise</text><text x="365" y="130">stimulovaná emise</text>
+          </g>
+        </svg>
+        <figcaption>Při stimulované emisi z jednoho fotonu vzniknou dva totožné.</figcaption>
+      </figure>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Populační inverze</div>
+      <p>Absorpce a stimulovaná emise jsou stejně pravděpodobné. Projde-li světlo látkou, záleží tedy na tom, kterých atomů je víc: jsou-li atomy převážně na nižší hladině, světlo se pohlcuje; jsou-li převážně na vyšší, světlo se zesiluje.</p>
+      <p>V běžné (třeba zahřáté) látce je vždy víc atomů na nižších hladinách. Stav, kdy je na některé vyšší hladině víc atomů než na nižší, se nazývá <b>populační inverze</b>. Látka v tomto stavu je <b>aktivní prostředí</b> — světlo příslušné frekvence se v ní zesiluje.</p>
+      <p>Populační inverzi vytvoříme tak, že látce dodáváme energii jinak než ohřevem — světlem výbojky, elektrickým výbojem nebo proudem. Tomu se říká <b>čerpání</b>. Pomáhají <b>metastabilní hladiny</b>, na nichž atom vydrží poměrně dlouho, než spontánně vyzáří (místo obvyklých \(10^{-8}\ \mathrm{s}\) třeba tisícinu sekundy), takže se na nich atomy mohou nahromadit.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Jak funguje laser</div>
+      <p>Aktivní prostředí je umístěné mezi dvěma rovnoběžnými zrcadly; jedno odráží úplně, druhé je <b>polopropustné</b> (část světla propustí ven). Několik spontánně vyzářených fotonů, které náhodou letí kolmo k zrcadlům, se mezi nimi mnohokrát odráží a při každém průchodu vyvolá další stimulované emise. Vznikne lavina fotonů se stejnou frekvencí, fází a směrem. Fotony letící šikmo z prostředí uniknou, zesílí se jen svazek kolmý k zrcadlům. Polopropustným zrcadlem vychází úzký svazek.</p>
+      <p>Název <b>laser</b> je zkratka anglického <i>Light Amplification by Stimulated Emission of Radiation</i> — zesilování světla stimulovanou emisí záření. První laser (rubínový) sestrojil <b>T. Maiman</b> v roce 1960.</p>
+      <figure class="theory-fig">
+        <svg viewBox="0 0 440 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Laser: aktivní prostředí mezi úplně odrazným a polopropustným zrcadlem, čerpání energie výbojkou, výstupní svazek; vpravo schéma tří hladin s čerpáním, nezářivým přechodem a laserovým přechodem.">
+          <defs><marker id="ls-b" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink)"/></marker></defs>
+          <rect x="40" y="60" width="150" height="40" rx="6" fill="var(--surface-2)" stroke="var(--ink)" stroke-width="1.4"/>
+          <rect x="26" y="48" width="8" height="64" fill="var(--ink)"/>
+          <rect x="196" y="48" width="8" height="64" fill="var(--ink-soft)" fill-opacity="0.6"/>
+          <line x1="40" y1="80" x2="190" y2="80" stroke="var(--beam)" stroke-width="2" stroke-dasharray="6 4"/>
+          <line x1="204" y1="80" x2="250" y2="80" stroke="var(--beam)" stroke-width="4"/>
+          <path d="M70,135 l6,-14 l6,14 l6,-14 l6,14 l6,-14 l6,14 l6,-14 l6,14 l6,-14 l6,14" fill="none" stroke="var(--lev3)" stroke-width="1.6"/>
+          <line x1="115" y1="118" x2="115" y2="104" stroke="var(--lev3)" stroke-width="1.4" marker-end="url(#ls-b)"/>
+          <g font-family="Work Sans, sans-serif" font-size="10.5" fill="var(--ink)" text-anchor="middle">
+            <text x="30" y="40">zrcadlo</text><text x="200" y="40">polopropustné</text><text x="115" y="54">aktivní prostředí</text><text x="115" y="152">čerpání</text><text x="232" y="98">svazek</text>
+          </g>
+          <g stroke="var(--ink)" stroke-width="1.8">
+            <line x1="300" y1="30" x2="400" y2="30"/><line x1="300" y1="70" x2="400" y2="70"/><line x1="300" y1="140" x2="400" y2="140"/>
+          </g>
+          <g font-family="IBM Plex Mono, monospace" font-size="11" fill="var(--ink)"><text x="404" y="34">E₃</text><text x="404" y="74">E₂</text><text x="404" y="144">E₁</text></g>
+          <line x1="315" y1="136" x2="315" y2="36" stroke="var(--lev3)" stroke-width="2" marker-end="url(#ls-b)"/>
+          <path d="M335,34 Q345,50 340,66" fill="none" stroke="var(--ink-soft)" stroke-width="1.6" stroke-dasharray="3 3" marker-end="url(#ls-b)"/>
+          <line x1="375" y1="74" x2="375" y2="134" stroke="var(--beam)" stroke-width="2.4" marker-end="url(#ls-b)"/>
+          <g font-family="Work Sans, sans-serif" font-size="9.5" fill="var(--ink-soft)">
+            <text x="282" y="100" transform="rotate(-90 282 100)">čerpání</text>
+            <text x="346" y="48">nezářivě</text>
+            <text x="383" y="104">laser</text>
+            <text x="383" y="115">(metastabilní E₂)</text>
+          </g>
+        </svg>
+        <figcaption>Vlevo: hlavní části laseru. Vpravo: tříhladinový laser — čerpání převádí atomy na \(E_3\), odtud rychle přecházejí na metastabilní hladinu \(E_2\) a laserový přechod probíhá mezi \(E_2\) a \(E_1\).</figcaption>
+      </figure>
+      <p>Na tříhladinovém principu pracuje rubínový laser. Účinnější jsou <b>čtyřhladinové lasery</b> (např. neodymový), u nichž se dolní laserová hladina rychle vyprazdňuje, takže inverze vzniká snáz. V helium-neonovém laseru (červený paprsek 632,8&nbsp;nm) předávají energii atomům neonu atomy helia vybuzené elektrickým výbojem. Nejrozšířenější jsou dnes lasery <b>polovodičové</b> — v ukazovátkách, čtečkách čárových kódů, optických mechanikách nebo tiskárnách. V Praze pracuje velký výzkumný jodový laser PALS.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Vlastnosti a využití laserového světla</div>
+      <ul>
+        <li><b>monofrekvenční</b> — prakticky jediná frekvence (barva); ve spektrometru dává laser jedinou úzkou čáru, žárovka spojité spektrum;</li>
+        <li><b>koherentní</b> — vlny mají stálý fázový rozdíl, proto spolu dobře interferují (holografie);</li>
+        <li><b>málo rozbíhavé</b> — stopa ukazovátka je i na zdi vzdálené 8&nbsp;m jen milimetrová až centimetrová, světlo lampy se rozptýlí po celé zdi;</li>
+        <li>lze ho soustředit do velmi malé plochy a do velmi krátkých pulzů s obrovským výkonem.</li>
+      </ul>
+      <p>Využití: měření vzdáleností a vytyčování, optické komunikace (světlovody), čtení a zápis dat, řezání a svařování, medicína (laserový skalpel, oční chirurgie), holografie, výzkum.</p>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M9 2.5 L16 15.5 H2 Z" stroke="var(--danger)" stroke-width="1.4" stroke-linejoin="round"/>
+          <line x1="9" y1="7" x2="9" y2="11.5" stroke="var(--danger)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="13.6" r="1" fill="var(--danger)"/>
+        </svg>
+        <p>Laserovým paprskem nikdy nesviťte nikomu do očí — oko ho soustředí do malého bodu na sítnici a může ji trvale poškodit, i když jde jen o ukazovátko.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="cat-tag">Příklad</span>
+      <h2>Kolik fotonů vyšle zelené ukazovátko?</h2>
+      <p class="desc">Zelené laserové ukazovátko svítí na vlnové délce 532&nbsp;nm s výkonem 5,0&nbsp;mW. Jakou energii má jeden foton a kolik fotonů ukazovátko vyšle za sekundu?</p>
+      <div class="stepper" data-reset="reset-ukaz">
+        <div class="step" data-step="1">
+          <div class="step-connector"></div>
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">1</span>
+            <span class="step-title">Energie jednoho fotonu</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <div class="step-result"><div class="line-scroll">\(E = \dfrac{hc}{\lambda} = \dfrac{6{,}626\cdot 10^{-34}\cdot 2{,}998\cdot 10^{8}}{532\cdot 10^{-9}}\ \mathrm{J} \doteq 3{,}73\cdot 10^{-19}\ \mathrm{J} \doteq 2{,}33\ \mathrm{eV}\)</div></div>
+          </div>
+        </div>
+        <div class="step" data-step="2">
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">2</span>
+            <span class="step-title">Počet fotonů za 1&nbsp;s</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <div class="result-box"><div class="line-scroll">\(N = \dfrac{Pt}{E} = \dfrac{5{,}0\cdot 10^{-3}\ \mathrm{W}\cdot 1\ \mathrm{s}}{3{,}73\cdot 10^{-19}\ \mathrm{J}} \doteq 1{,}3\cdot 10^{16}\)</div></div>
+            <p>Asi 13 biliard fotonů za sekundu — proto se nám světlo jeví jako spojitý proud.</p>
+          </div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn ghost" id="reset-ukaz">Zopakovat postup od začátku</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Výkon laserového pulzu</div>
+      <div class="example-grid">
+        <div class="example-item">
+          <span class="example-tag">Pulz 0,20&nbsp;J trvající 5&nbsp;ns</span>
+          <div class="example-eq">\[ P = \frac{E}{t} = \frac{0{,}20\ \mathrm{J}}{5\cdot 10^{-9}\ \mathrm{s}} = 4\cdot 10^{7}\ \mathrm{W} = 40\ \mathrm{MW} \]</div>
+          <div class="example-note">Malá energie, ale soustředěná do nepatrného času — výkon jako menší elektrárna. Ještě kratší pulzy (pikosekundy, femtosekundy) dosahují výkonů až terawattů.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Shrnutí</div>
+      <p>• Mezi hladinami probíhá absorpce, spontánní emise a stimulovaná emise; při stimulované emisi vzniká foton stejné frekvence, fáze i směru.</p>
+      <p>• Laser potřebuje populační inverzi v aktivním prostředí (čerpání, metastabilní hladina) a zrcadla, mezi nimiž se světlo zesiluje.</p>
+      <p>• Laserové světlo je monofrekvenční, koherentní a málo rozbíhavé.</p>
+    </div>
+
+  </div>
+
+  <!-- ============ APLET: TŘÍHLADINOVÝ LASER ============ -->
+  <div id="aplet-section" class="tab-section" hidden>
+    <div class="card applet-card">
+      <div class="applet-head">
+        <span class="cat-tag">Aplet</span>
+        <h2>Tříhladinový laser</h2>
+        <p class="desc">Zvyšujte čerpání a sledujte, kolik atomů je na které hladině. Laser se rozsvítí, až když převáží atomy na metastabilní hladině.</p>
+      </div>
+      <div class="mode-row">
+        <label class="mode-row-label" for="las-p">Čerpání</label>
+        <div class="slider-wrap">
+          <input type="range" id="las-p" min="0" max="100" step="1" value="20">
+          <span class="slider-val" id="las-p-val"></span>
+        </div>
+      </div>
+      <div class="applet-actions">
+        <button class="btn ghost" type="button" id="las-reset">Začít znovu (všechny atomy dole)</button>
+      </div>
+      <div class="canvas-wrap">
+        <svg class="scene" id="las-svg" viewBox="0 0 600 300" role="img" aria-label="Rezonátor laseru s atomy zbarvenými podle hladiny, fotony mezi zrcadly a výstupní svazek; vpravo sloupcový graf obsazení hladin."></svg>
+        <div class="legend">
+          <span><i style="--c:var(--lev1)"></i>atom na hladině E₁ (základní)</span>
+          <span><i style="--c:var(--lev2)"></i>atom na hladině E₂ (metastabilní)</span>
+          <span><i style="--c:var(--lev3)"></i>atom na hladině E₃</span>
+        </div>
+      </div>
+      <div class="applet-out" id="las-out" aria-live="polite"></div>
+      <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint">Posuvníkem nastavte, jak silně čerpání převádí atomy ze základní hladiny \(E_1\) na hladinu \(E_3\). Odtud atomy rychle (bez vyzáření) padají na metastabilní hladinu \(E_2\), na níž vydrží dlouho. Sloupcový graf ukazuje, kolik atomů je na které hladině. Dokud je na \(E_2\) málo atomů, vznikají jen ojedinělé spontánní fotony. Po dosažení populační inverze (a překročení prahu, kdy zesílení převýší ztráty světla polopropustným zrcadlem) se rozběhne lavina stimulované emise a z rezonátoru vyjde svazek. Aplet počítá zjednodušený model se 100 atomy; časy a pravděpodobnosti jsou zvolené tak, aby byl děj dobře vidět.</p>
+      </details>
+    </div>
+  </div>
+
+  <!-- ============ TRÉNINK ============ -->
+  <div id="trenink-section" class="tab-section" hidden>
+
+    <div class="panel">
+      <div class="section-block">
+        <div class="panel-title">Typ příkladů</div>
+        <div class="row" id="type-row"></div>
+      </div>
+      <div class="section-block">
+        <p class="const-box">Konstanty: \(h = 6{,}63\cdot 10^{-34}\ \mathrm{J\cdot s}\), \(c = 3{,}00\cdot 10^{8}\ \mathrm{m\cdot s^{-1}}\), \(1\ \mathrm{eV} = 1{,}60\cdot 10^{-19}\ \mathrm{J}\).</p>
+      </div>
+      <div class="settings-foot" style="justify-content:flex-end;">
+        <button class="linklike" id="reset-stats">vynulovat statistiku</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="cat-tag" id="cat-tag">Trénink</span>
+      <p class="task-text" id="task-text"></p>
+      <div class="equation" id="equation">
+        <span id="eq-given"></span>
+        <span class="eq">=</span>
+        <span class="answer-slot" id="slot-dec">
+          <input class="answer-input" id="answer" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="?" aria-label="odpověď">
+        </span>
+        <span class="answer-slot sci-group" id="slot-sci" hidden>
+          <input class="answer-input sci-mantissa" id="answer-m" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="a" aria-label="mantisa">
+          <span class="sci-times">·10</span>
+          <input class="sci-exp" id="answer-e" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="n" aria-label="exponent">
+        </span>
+        <span class="unit" id="eq-unit"></span>
+      </div>
+      <div class="actions">
+        <button class="btn primary" id="btn-check">Zkontrolovat</button>
+        <button class="btn ghost" id="btn-skip">Nevím / Zobrazit řešení</button>
+      </div>
+      <div class="feedback" id="feedback" hidden>
+        <div class="headline" id="feedback-headline"></div>
+        <div class="steps" id="feedback-steps"></div>
+        <div class="tip" id="feedback-tip" hidden></div>
+      </div>
+      <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint">Výsledek zapište do rámečku; čárku i tečku lze zadat obojí. Velmi malá a velmi velká čísla se zadávají ve tvaru <i>a</i>·10<sup><i>n</i></sup> — do prvního pole mantisu <i>a</i>, do malého pole exponent <i>n</i> (i záporný). Uznává se odchylka do 1&nbsp;% od přesné hodnoty, takže stačí počítat s konstantami uvedenými výše a výsledek zaokrouhlit na 3 platné číslice. Enter potvrdí odpověď i přejde na další příklad.</p>
+      </details>
+    </div>
+
+  </div>
+
+  <footer>Fyzika — Oktáva/4. ročník</footer>
+</div>
+
+<script src="../spolecne/reseni.js?v=1"></script>
+<script src="../spolecne/spolecne.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  // ---- záložky: tlačítko .toptab[data-tab="x"] ↔ sekce #x-section (Teorie = #theory-section) ----
+  var tabs = {}, sections = {};
+  Array.prototype.forEach.call(document.querySelectorAll('.toptab[data-tab]'), function(btn){
+    var name = btn.getAttribute('data-tab');
+    tabs[name] = btn;
+    sections[name] = document.getElementById(name === 'teorie' ? 'theory-section' : name + '-section');
+  });
+  function showTab(name){
+    for(var k in tabs){
+      tabs[k].classList.toggle('on', k === name);
+      if(sections[k]) sections[k].hidden = k !== name;
+    }
+    // skóre, série a úspěšnost v hlavičce jen u tréninku
+    var readout = document.getElementById('header-readout');
+    if(readout) readout.hidden = name !== 'trenink';
+  }
+  Object.keys(tabs).forEach(function(k){ tabs[k].addEventListener('click', function(){ showTab(k); }); });
+  var hash = location.hash.replace('#', '');
+  if(hash && tabs[hash]) showTab(hash);
+
+  // ---- příklady v teorii: postupně odemykané steppery ----
+  Array.prototype.forEach.call(document.querySelectorAll('.stepper'), function(wrap){
+    var steps = Array.prototype.slice.call(wrap.querySelectorAll('.step'));
+    var unlockedUpTo = 1;
+
+    function refreshLocks(){
+      steps.forEach(function(st){
+        var idx = parseInt(st.getAttribute('data-step'), 10);
+        var locked = idx > unlockedUpTo;
+        st.classList.toggle('locked', locked);
+        st.classList.toggle('unlocked', !locked && !st.classList.contains('done'));
+        st.querySelector('.step-head').setAttribute('aria-disabled', locked ? 'true' : 'false');
+      });
+    }
+
+    steps.forEach(function(st){
+      var idx = parseInt(st.getAttribute('data-step'), 10);
+      var head = st.querySelector('.step-head');
+      var body = st.querySelector('.step-body');
+      head.addEventListener('click', function(){
+        if(idx > unlockedUpTo) return;
+        var wasOpen = st.classList.contains('open');
+        st.classList.toggle('open', !wasOpen);
+        body.hidden = wasOpen;
+        head.setAttribute('aria-expanded', (!wasOpen).toString());
+        if(!wasOpen){
+          st.classList.add('done');
+          if(idx === unlockedUpTo && unlockedUpTo < steps.length){ unlockedUpTo++; }
+          refreshLocks();
+        }
+      });
+    });
+
+    var resetBtn = document.getElementById(wrap.getAttribute('data-reset'));
+    if(resetBtn){
+      resetBtn.addEventListener('click', function(){
+        unlockedUpTo = 1;
+        steps.forEach(function(st){
+          st.classList.remove('open', 'done');
+          st.querySelector('.step-body').hidden = true;
+          st.querySelector('.step-head').setAttribute('aria-expanded', 'false');
+        });
+        refreshLocks();
+      });
+    }
+
+    refreshLocks();
+  });
+
+  // ---- vzorce (KaTeX) ----
+  var KATEX_DELIMS = [{left:'\\(', right:'\\)', display:false}, {left:'\\[', right:'\\]', display:true}];
+  if(window.renderMathInElement){
+    Array.prototype.forEach.call(document.querySelectorAll('.tab-section'), function(sec){
+      try{ renderMathInElement(sec, { delimiters: KATEX_DELIMS }); }catch(e){}
+    });
+  }
+
+  // ---- sbalovací panely v teorii ----
+  try{ makePanelsCollapsible(document.getElementById('theory-section')); }catch(e){}
+
+  // ---- pomocné funkce pro aplety a tréninky ----
+  var NB = '\u00a0';
+  function tex(t){
+    try{ return window.katex ? katex.renderToString(t, {throwOnError:false}) : t; }catch(e){ return t; }
+  }
+  // číslo s daným počtem desetinných míst, desetinnou čárkou a mezerami mezi tisíci
+  function cz(n, dec){
+    var s = roundTo(n, dec).toFixed(dec);
+    var neg = s.charAt(0) === '-';
+    if(neg) s = s.slice(1);
+    var parts = s.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, NB);
+    return (neg ? '−' : '') + parts.join(',');
+  }
+  // totéž v TeXu (mezera mezi tisíci = \,, desetinná čárka = {,})
+  function czTex(n, dec){ return cz(n, dec).replace('−', '-').replace(',', '{,}').replace(/\u00a0/g, '\\,'); }
+  // číslo na `sig` platných číslic (desetinný zápis)
+  function czSig(x, sig){ var r = roundSig(x, sig); return cz(r, decimalsForSig(r, sig)); }
+  // rozklad na mantisu a exponent: x = m · 10^e, 1 ≤ |m| < 10 (po zaokrouhlení na sig číslic)
+  function sciParts(x, sig){
+    if(x === 0) return { m:0, e:0 };
+    var e = Math.floor(Math.log10(Math.abs(x)));
+    var m = roundSig(x / Math.pow(10, e), sig);
+    if(Math.abs(m) >= 10){ m = roundSig(m / 10, sig); e++; }
+    return { m:m, e:e };
+  }
+  // TeX zápis čísla: desetinně pro 0,001 ≤ |x| < 100 000, jinak a·10^n
+  function numTex(x, sig, forceSci){
+    var r = roundSig(x, sig), a = Math.abs(r);
+    if(!forceSci && (a === 0 || (a >= 1e-3 && a < 1e5))){
+      return czSig(x, sig).replace('−', '-').replace(',', '{,}').replace(/\u00a0/g, '\\,');
+    }
+    var p = sciParts(x, sig);
+    return cz(p.m, sig - 1).replace('−', '-').replace(',', '{,}') + '\\cdot 10^{' + p.e + '}';
+  }
+  // totéž jako prostý text do HTML
+  function numTxt(x, sig, forceSci){
+    var r = roundSig(x, sig), a = Math.abs(r);
+    if(!forceSci && (a === 0 || (a >= 1e-3 && a < 1e5))) return czSig(x, sig);
+    var p = sciParts(x, sig);
+    return cz(p.m, sig - 1) + '·10<sup>' + String(p.e).replace('-', '−') + '</sup>';
+  }
+  function randInt(a, b){ return a + Math.floor(Math.random() * (b - a + 1)); }
+  function pick(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+  function svgEl(name, attrs, parent){
+    var n = document.createElementNS('http://www.w3.org/2000/svg', name);
+    for(var k in attrs){ if(attrs.hasOwnProperty(k)) n.setAttribute(k, attrs[k]); }
+    if(parent) parent.appendChild(n);
+    return n;
+  }
+  function clearEl(n){ while(n.firstChild) n.removeChild(n.firstChild); }
+  function setPressed(group, btn){
+    Array.prototype.forEach.call(group.querySelectorAll('button'), function(b){
+      var on = b === btn;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+  }
+
+  // ================= APLET: TŘÍHLADINOVÝ LASER =================
+  (function(){
+    var svg = document.getElementById('las-svg'), pIn = document.getElementById('las-p');
+    // zjednodušené rychlostní rovnice: N1, N2, N3 = počty atomů, q = fotony v rezonátoru
+    var NA = 100, K32 = 30, A21 = 0.5, B = 0.1, TAU = 0.5, SEED = 0.002, PMAX = 3;
+    var st = { N1:NA, N2:0, N3:0, q:0, out:0, last:0, running:false, photons:[] };
+    var CX0 = 50, CX1 = 330, CY0 = 70, CY1 = 230;          // rezonátor
+    var atoms = [];
+    for(var i = 0; i < NA; i++){ atoms.push({ x:CX0 + 14 + (i % 20) * 13.4 + ((i / 20 | 0) % 2) * 6, y:CY0 + 18 + (i / 20 | 0) * 30 }); }
+    var g = svgEl('g', {}, svg);
+    function P(){ return parseFloat(pIn.value) / 100 * PMAX; }
+    function step(dt){
+      var p = P(), n = Math.ceil(dt / 0.002), h = dt / n;
+      for(var k = 0; k < n; k++){
+        var gain = B * st.q * (st.N2 - st.N1);
+        var d3 = p * st.N1 - K32 * st.N3, d2 = K32 * st.N3 - A21 * st.N2 - gain, d1 = -p * st.N1 + A21 * st.N2 + gain;
+        var dq = gain - st.q / TAU + SEED * A21 * st.N2;
+        st.N1 += d1 * h; st.N2 += d2 * h; st.N3 += d3 * h; st.q = Math.max(0, st.q + dq * h);
+      }
+      st.out = st.q / TAU;
+    }
+    function render(){
+      clearEl(g);
+      var t, k;
+      // zrcadla a prostředí
+      svgEl('rect', { x:CX0, y:CY0, width:CX1 - CX0, height:CY1 - CY0, rx:8, fill:'var(--surface-2)', stroke:'var(--ink)', 'stroke-width':1.4 }, g);
+      svgEl('rect', { x:CX0 - 14, y:CY0 - 10, width:9, height:CY1 - CY0 + 20, fill:'var(--ink)' }, g);
+      svgEl('rect', { x:CX1 + 5, y:CY0 - 10, width:9, height:CY1 - CY0 + 20, fill:'var(--ink-soft)', 'fill-opacity':0.6 }, g);
+      t = svgEl('text', { x:CX0 - 10, y:CY0 - 18, 'text-anchor':'middle', 'font-size':11, fill:'var(--ink)' }, g); t.textContent = 'zrcadlo';
+      t = svgEl('text', { x:CX1 + 10, y:CY0 - 18, 'text-anchor':'middle', 'font-size':11, fill:'var(--ink)' }, g); t.textContent = 'polopropustné';
+      // obsazení: prvních N3 atomů na E3, dalších N2 na E2, zbytek E1 (náhodné pořadí je pevné)
+      var n3 = Math.round(st.N3), n2 = Math.round(st.N2);
+      atoms.forEach(function(a, i){
+        var j = order[i], col = j < n3 ? 'var(--lev3)' : j < n3 + n2 ? 'var(--lev2)' : 'var(--lev1)';
+        svgEl('circle', { cx:a.x, cy:a.y, r:4.5, fill:col }, g);
+      });
+      // fotony v rezonátoru (počet ~ q, nejvýše 60)
+      var nph = Math.min(60, Math.round(st.q * 1.5));
+      for(k = 0; k < nph; k++){
+        var ph = st.photons[k] || (st.photons[k] = { x:CX0 + Math.random() * (CX1 - CX0), y:CY0 + 8 + Math.random() * (CY1 - CY0 - 16), d:Math.random() < 0.5 ? -1 : 1 });
+        svgEl('line', { x1:ph.x, y1:ph.y, x2:ph.x + 7 * ph.d, y2:ph.y, stroke:'var(--beam)', 'stroke-width':2 }, g);
+      }
+      // ojedinělé spontánní fotony různými směry (pod prahem)
+      if(nph < 3 && st.N2 > 5){
+        for(k = 0; k < Math.min(6, Math.round(st.N2 / 12)); k++){
+          var a = atoms[(k * 17 + Math.floor(Date.now() / 300)) % NA], ang = (k * 2.1 + Date.now() / 900) % (2 * Math.PI);
+          svgEl('line', { x1:a.x, y1:a.y, x2:a.x + 12 * Math.cos(ang), y2:a.y + 12 * Math.sin(ang), stroke:'var(--beam)', 'stroke-width':1.6, opacity:0.7 }, g);
+        }
+      }
+      // výstupní svazek
+      var w = Math.min(14, st.out / 6);
+      if(w > 0.4) svgEl('rect', { x:CX1 + 14, y:(CY0 + CY1) / 2 - w / 2, width:600 - CX1 - 14 - 150, height:w, fill:'var(--beam)', opacity:0.85 }, g);
+      // sloupcový graf
+      var BX = 470, BY = 240, BH = 170;
+      [['E₁', st.N1, 'var(--lev1)'], ['E₂', st.N2, 'var(--lev2)'], ['E₃', st.N3, 'var(--lev3)']].forEach(function(b, i){
+        var h = b[1] / NA * BH;
+        svgEl('rect', { x:BX + i * 40, y:BY - h, width:28, height:h, fill:b[2] }, g);
+        t = svgEl('text', { x:BX + i * 40 + 14, y:BY + 16, 'text-anchor':'middle', 'font-size':12, fill:'var(--ink)' }, g); t.textContent = b[0];
+        t = svgEl('text', { x:BX + i * 40 + 14, y:BY - h - 5, 'text-anchor':'middle', 'font-size':11, 'font-family':"'IBM Plex Mono', monospace", fill:'var(--ink)' }, g); t.textContent = Math.round(b[1]);
+      });
+      svgEl('line', { x1:BX - 6, y1:BY, x2:BX + 114, y2:BY, stroke:'var(--ink)' }, g);
+      t = svgEl('text', { x:BX + 54, y:BY - BH - 22, 'text-anchor':'middle', 'font-size':11, fill:'var(--ink-soft)' }, g); t.textContent = 'počet atomů';
+      var stav = st.N2 <= st.N1 ? 'bez populační inverze — převládá absorpce, jen ojedinělé spontánní fotony'
+        : st.out < 1 ? 'populační inverze, ale zesílení zatím nepřevýšilo ztráty' : 'laser svítí — lavina stimulované emise';
+      document.getElementById('las-out').innerHTML = '<span>Na <i>E</i><sub>2</sub>: <b>' + Math.round(st.N2) + '</b>, na <i>E</i><sub>1</sub>: <b>' + Math.round(st.N1) + '</b></span>' +
+        '<span>Výkon svazku (relativně): <b>' + Math.round(st.out) + '</b></span><span>Stav: <b>' + stav + '</b></span>';
+      document.getElementById('las-p-val').textContent = pIn.value + NB + '%';
+    }
+    var order = []; for(i = 0; i < NA; i++) order.push(i);
+    for(i = NA - 1; i > 0; i--){ var j = Math.floor(Math.random() * (i + 1)), tmp = order[i]; order[i] = order[j]; order[j] = tmp; }
+    function frame(ts){
+      var dt = st.last ? Math.min(0.05, (ts - st.last) / 1000) : 0.016; st.last = ts;
+      step(dt);
+      st.photons.forEach(function(ph){ ph.x += ph.d * 260 * dt; if(ph.x > CX1 - 8){ ph.x = CX1 - 8; ph.d = -1; } if(ph.x < CX0 + 2){ ph.x = CX0 + 2; ph.d = 1; } });
+      render();
+      if(!document.getElementById('aplet-section').hidden) requestAnimationFrame(frame); else { st.running = false; st.last = 0; }
+    }
+    function start(){ if(st.running) return; st.running = true; st.last = 0; requestAnimationFrame(frame); }
+    document.getElementById('top-tab-aplet').addEventListener('click', function(){ setTimeout(start, 0); });
+    if(!document.getElementById('aplet-section').hidden) start();
+    pIn.addEventListener('input', function(){ if(!st.running) render(); });
+    document.getElementById('las-reset').addEventListener('click', function(){ st.N1 = NA; st.N2 = 0; st.N3 = 0; st.q = 0; st.out = 0; st.photons = []; render(); });
+    render();
+  })();
+
+  // ================= TRÉNINK: typy příkladů =================
+  var H_ = 6.63e-34, C = 3.00e8, EV = 1.60e-19;
+  var LASERS = [ ['fialového polovodičového laseru', '405', 405, 'fialový polovodičový laser'], ['zeleného ukazovátka', '532', 532, 'zelené ukazovátko'], ['helium-neonového laseru', '632{,}8', 632.8, 'helium-neonový laser'],
+    ['červeného ukazovátka', '650', 650, 'červené ukazovátko'], ['neodymového laseru', '1\\,064', 1064, 'neodymový laser'], ['laseru v optické mechanice CD', '780', 780, 'laser v optické mechanice CD'] ];
+  // pulzy dávají jen pulzní lasery (ukazovátko ani He-Ne laser joulové pulzy nevyšle)
+  var PULSED = [ ['neodymového laseru', '1\\,064', 1064], ['rubínového laseru', '694{,}3', 694.3] ];
+  var TIMES = [ ['ms', 1e-3], ['µs', 1e-6], ['ns', 1e-9], ['ps', 1e-12], ['fs', 1e-15] ];
+  var TR_TYPES = [
+    { key:'foton', name:'Energie fotonu', gen:function(){
+      var L = pick(LASERS), E = H_ * C / (L[2] * 1e-9), ev = Math.random() < 0.5;
+      return { cat:'Energie fotonu laseru', signature:'e' + L[1] + ev,
+        task:'Jakou energii ' + (ev ? 'v elektronvoltech ' : '') + 'má jeden foton ' + L[0] + ' (' + tex(L[1] + '\\ \\mathrm{nm}') + ')?',
+        lhs:'E', unit:ev ? '\\mathrm{eV}' : '\\mathrm{J}', sci:!ev, exact:ev ? E / EV : E,
+        given:['\\lambda = ' + L[1] + '\\ \\mathrm{nm}'], find:['E'],
+        steps:['E = \\dfrac{hc}{\\lambda} = \\dfrac{6{,}63\\cdot 10^{-34}\\cdot 3{,}00\\cdot 10^{8}}{' + L[1] + '\\cdot 10^{-9}}\\ \\mathrm{J} \\doteq ' + numTex(E, 3, true) + '\\ \\mathrm{J}'].concat(ev ? ['E = \\dfrac{' + numTex(E, 3, true) + '}{1{,}60\\cdot 10^{-19}}\\ \\mathrm{eV}'] : []),
+        final:'E \\doteq ' + (ev ? numTex(E / EV, 3) + '\\ \\mathrm{eV}' : numTex(E, 3, true) + '\\ \\mathrm{J}') };
+    }},
+    { key:'pocet', name:'Počet fotonů za sekundu', gen:function(){
+      var L = pick(LASERS), Pm = pick([0.5, 1, 1.5, 2, 3, 4, 5, 10, 20]), E = H_ * C / (L[2] * 1e-9), N = Pm * 1e-3 / E;
+      return { cat:'Počet fotonů', signature:'n' + L[1] + Pm,
+        task:'Kolik fotonů vyšle za 1 sekundu ' + L[3] + ' (' + tex(L[1] + '\\ \\mathrm{nm}') + ') o výkonu ' + tex(czTex(Pm, Pm % 1 ? 1 : 0) + '\\ \\mathrm{mW}') + '?',
+        lhs:'N', unit:'', sci:true, exact:N,
+        given:['\\lambda = ' + L[1] + '\\ \\mathrm{nm}', 'P = ' + czTex(Pm, Pm % 1 ? 1 : 0) + '\\ \\mathrm{mW}', 't = 1\\ \\mathrm{s}'], find:['N'],
+        steps:['E = \\dfrac{hc}{\\lambda} \\doteq ' + numTex(E, 3, true) + '\\ \\mathrm{J}', 'N = \\dfrac{Pt}{E} = \\dfrac{' + numTex(Pm * 1e-3, 3, true) + '\\cdot 1}{' + numTex(E, 3, true) + '}'],
+        final:'N \\doteq ' + numTex(N, 3, true) };
+    }},
+    { key:'vykon', name:'Výkon pulzu', gen:function(){
+      var T, tv, Ej, t, P;
+      // jen reálné pulzy: výkon nejvýše 1 PW (nejsilnější lasery dosahují jednotek PW)
+      do{ T = pick(TIMES.slice(1)); tv = pick([1, 2, 5, 10, 20, 50, 100]); Ej = pick([0.001, 0.01, 0.05, 0.1, 0.5, 1, 2, 10]); t = tv * T[1]; P = Ej / t; }while(P > 1e15);
+      var Et = numTex(Ej, 2);
+      return { cat:'Výkon laserového pulzu', signature:'p' + T[0] + tv + Ej,
+        task:'Laser vyzáří energii ' + tex(Et + '\\ \\mathrm{J}') + ' v pulzu trvajícím ' + tex(tv + '\\ \\mathrm{' + T[0].replace('µ', '\\mu ') + '}') + '. Jaký je výkon pulzu?',
+        lhs:'P', unit:'\\mathrm{W}', sci:true, exact:P,
+        given:['E = ' + Et + '\\ \\mathrm{J}', 't = ' + tv + '\\ \\mathrm{' + T[0].replace('µ', '\\mu ') + '} = ' + numTex(t, 2, true) + '\\ \\mathrm{s}'], find:['P'],
+        steps:['P = \\dfrac{E}{t} = \\dfrac{' + Et + '}{' + numTex(t, 2, true) + '}\\ \\mathrm{W}'],
+        final:'P \\doteq ' + numTex(P, 3, true) + '\\ \\mathrm{W}' };
+    }},
+    { key:'pulz-fotony', name:'Fotony v pulzu', gen:function(){
+      var L = pick(PULSED), Ej = pick([0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1]), E = H_ * C / (L[2] * 1e-9), N = Ej / E;
+      return { cat:'Počet fotonů v pulzu', signature:'f' + L[1] + Ej,
+        task:'Pulz ' + L[0] + ' (' + tex(L[1] + '\\ \\mathrm{nm}') + ') nese energii ' + tex(numTex(Ej, 2) + '\\ \\mathrm{J}') + '. Kolik obsahuje fotonů?',
+        lhs:'N', unit:'', sci:true, exact:N,
+        given:['\\lambda = ' + L[1] + '\\ \\mathrm{nm}', 'E_\\mathrm{p} = ' + numTex(Ej, 2) + '\\ \\mathrm{J}'], find:['N'],
+        steps:['E = \\dfrac{hc}{\\lambda} \\doteq ' + numTex(E, 3, true) + '\\ \\mathrm{J}', 'N = \\dfrac{E_\\mathrm{p}}{E} = \\dfrac{' + numTex(Ej, 2) + '}{' + numTex(E, 3, true) + '}'],
+        final:'N \\doteq ' + numTex(N, 3, true) };
+    }}
+  ];
+
+  // ================= TRÉNINK (číselná odpověď) =================
+  // Typy příkladů definuje stránka v poli TR_TYPES: { key, name, gen } — gen() vrátí úlohu
+  // { cat, task, lhs, unit, sci, exact, sig, tol, integer, given[], find[], steps[], final }.
+  var trState = {
+    type:'all', score:0, streak:0, bestStreak:0, answered:0, correct:0,
+    current:null, lastSig:'', locked:false, touched:false
+  };
+  var TR_STATS_KEY = 'fyzika:laser:stats';
+  var trInputs = ['answer', 'answer-m', 'answer-e'];
+
+  function trLoadStats(){
+    try{ var raw = localStorage.getItem(TR_STATS_KEY); if(raw){ trState.bestStreak = JSON.parse(raw).bestStreak || 0; } }catch(e){}
+  }
+  function trSaveStats(){
+    try{ localStorage.setItem(TR_STATS_KEY, JSON.stringify({bestStreak: trState.bestStreak})); }catch(e){}
+  }
+  function trParse(str){
+    if(!str) return NaN;
+    str = str.trim().replace(/[−–]/g, '-').replace(',', '.').replace(/\s+/g, '');
+    return /^-?\d*\.?\d+$|^-?\d+\.$/.test(str) ? parseFloat(str) : NaN;
+  }
+  function trGenerate(){
+    var list = trState.type === 'all' ? TR_TYPES : TR_TYPES.filter(function(t){ return t.key === trState.type; });
+    var q = pick(list).gen(), tries = 0;
+    while(q.signature && q.signature === trState.lastSig && tries < 20){ q = pick(list).gen(); tries++; }
+    trState.lastSig = q.signature || '';
+    trState.current = q;
+    trState.locked = false; trState.touched = false;
+    trRender();
+  }
+  function trRender(){
+    var q = trState.current;
+    document.getElementById('cat-tag').textContent = q.cat;
+    document.getElementById('task-text').innerHTML = q.task;
+    document.getElementById('eq-given').innerHTML = tex(q.lhs);
+    document.getElementById('eq-unit').innerHTML = q.unit ? tex(q.unit) : '';
+    document.getElementById('slot-sci').hidden = !q.sci;
+    document.getElementById('slot-dec').hidden = !!q.sci;
+    trInputs.forEach(function(id){
+      var el = document.getElementById(id);
+      el.value = ''; el.disabled = false; el.classList.remove('correct', 'wrong');
+    });
+    var fb = document.getElementById('feedback');
+    fb.hidden = true; fb.classList.remove('ok', 'bad', 'sol');
+    document.getElementById('feedback-tip').hidden = true;
+    document.getElementById('btn-check').textContent = 'Zkontrolovat';
+    var first = document.getElementById(q.sci ? 'answer-m' : 'answer');
+    if(!document.getElementById('trenink-section').hidden) first.focus();
+  }
+  function trUserValue(){
+    var q = trState.current;
+    if(q.sci){
+      var m = trParse(document.getElementById('answer-m').value);
+      var es = document.getElementById('answer-e').value.trim().replace(/[−–]/g, '-');
+      var e = es === '' ? 0 : parseInt(es, 10);
+      if(isNaN(m) || isNaN(e)) return NaN;
+      return m * Math.pow(10, e);
+    }
+    return trParse(document.getElementById('answer').value);
+  }
+  function trIsEmpty(){ return isNaN(trUserValue()); }
+  function trMark(cls){
+    (trState.current.sci ? ['answer-m', 'answer-e'] : ['answer']).forEach(function(id){ document.getElementById(id).classList.add(cls); });
+  }
+  function trLock(){
+    trInputs.forEach(function(id){ document.getElementById(id).disabled = true; });
+    trState.locked = true;
+    var b = document.getElementById('btn-check');
+    b.textContent = 'Další příklad →';
+    b.focus();
+    trUpdateStats();
+  }
+  function trShowSolution(){
+    var q = trState.current;
+    // KaTeX vkládá do cest SVG (odmocnina) zalomení řádků; FyzikaReseni dělí řádky podle \n, proto je odstraníme
+    function t1(s){ return tex(s).replace(/\n/g, ' '); }
+    FyzikaReseni.show(document.getElementById('feedback'), document.getElementById('feedback-steps'), {
+      raw:true,
+      given:(q.given || []).map(t1),
+      find:(q.find || []).map(t1),
+      steps:(q.steps || []).map(t1),
+      final:q.final ? t1(q.final) : '',
+      note:q.note || ''
+    });
+  }
+  function trIsCorrect(v){
+    var q = trState.current;
+    if(isNaN(v)) return false;
+    if(q.integer) return Math.abs(v - q.exact) < 1e-9;
+    var tol = q.tol === undefined ? 0.01 : q.tol;
+    return Math.abs(v - q.exact) <= tol * Math.abs(q.exact) + 1e-300;
+  }
+  function trCheck(){
+    if(trState.locked){ trGenerate(); return; }
+    var v = trUserValue(), ok = trIsCorrect(v), q = trState.current;
+    trState.answered++;
+    var fb = document.getElementById('feedback'), head = document.getElementById('feedback-headline');
+    var tip = document.getElementById('feedback-tip');
+    fb.hidden = false; tip.hidden = true;
+    if(ok){
+      trState.score += 10; trState.streak++; trState.correct++;
+      if(trState.streak > trState.bestStreak){
+        trState.bestStreak = trState.streak; trSaveStats();
+        if(window.FyzikaScores) FyzikaScores.report('serie', trState.bestStreak, false);
+      }
+      trMark('correct'); fb.classList.add('ok'); fb.classList.remove('bad');
+      head.textContent = 'Správně!';
+    } else {
+      trState.streak = 0; trMark('wrong'); fb.classList.add('bad'); fb.classList.remove('ok');
+      head.textContent = isNaN(v) ? 'Doplňte odpověď.' : 'Bohužel špatně.';
+      if(!isNaN(v) && q.sci && !isNaN(q.exact) && q.exact !== 0){
+        var r = v / q.exact, lg = Math.log10(Math.abs(r));
+        if(Math.abs(lg - Math.round(lg)) < 0.005 && Math.round(lg) !== 0){
+          tip.hidden = false;
+          tip.textContent = 'Mantisa je správně, chyba je v exponentu (o ' + Math.abs(Math.round(lg)) + ' řád' + (Math.abs(Math.round(lg)) === 1 ? '' : Math.abs(Math.round(lg)) < 5 ? 'y' : 'ů') + ').';
+        }
+      }
+    }
+    trShowSolution(); trLock();
+  }
+  function trSkip(){
+    if(trState.locked){ trGenerate(); return; }
+    trState.streak = 0; trState.answered++;
+    var fb = document.getElementById('feedback');
+    fb.hidden = false; fb.classList.add('bad'); fb.classList.remove('ok');
+    document.getElementById('feedback-tip').hidden = true;
+    document.getElementById('feedback-headline').textContent = 'Správný postup:';
+    trShowSolution(); trLock();
+  }
+  function trUpdateStats(){
+    document.getElementById('stat-score').textContent = trState.score;
+    document.getElementById('stat-streak').textContent = trState.streak + (trState.bestStreak > 0 ? ' / ' + trState.bestStreak : '');
+    document.getElementById('stat-accuracy').textContent = trState.answered === 0 ? '—' : Math.round(100 * trState.correct / trState.answered) + ' %';
+  }
+  // Rozdělanou úlohu před změnou nastavení nejdřív vyhodnotí (stejná logika jako na ostatních stránkách).
+  function trSettle(){
+    if(trState.locked) return 'locked';
+    if(!trState.touched) return 'untouched';
+    if(trIsEmpty() && !confirm('Odpověď není vyplněná. Opravdu chcete změnit nastavení?')) return 'cancelled';
+    trCheck();
+    return 'settled';
+  }
+  (function(){
+    var row = document.getElementById('type-row');
+    var items = [{ key:'all', name:'Vše' }].concat(TR_TYPES);
+    items.forEach(function(d){
+      var b = document.createElement('button');
+      b.className = 'chip accented' + (d.key === trState.type ? ' on' : '');
+      b.type = 'button';
+      b.setAttribute('aria-pressed', d.key === trState.type ? 'true' : 'false');
+      b.textContent = d.name;
+      b.addEventListener('click', function(){
+        if(d.key === trState.type) return;
+        var res = trSettle();
+        if(res === 'cancelled') return;
+        trState.type = d.key;
+        setPressed(row, b);
+        if(res === 'locked' || res === 'untouched'){ trGenerate(); }
+      });
+      row.appendChild(b);
+    });
+  })();
+  function tryCheck(){
+    if(trState.locked){ trGenerate(); return; }
+    if(trIsEmpty() && !confirm('Odpověď není vyplněná. Opravdu chcete zkontrolovat?')) return;
+    trCheck();
+  }
+  function trySkip(){
+    if(trState.locked){ trGenerate(); return; }
+    trSkip();
+  }
+  document.getElementById('btn-check').addEventListener('click', tryCheck);
+  document.getElementById('btn-skip').addEventListener('click', trySkip);
+  trInputs.forEach(function(id){
+    var el = document.getElementById(id);
+    sanitizeNumericInput(el, id !== 'answer-e');
+    el.addEventListener('input', function(){ trState.touched = true; });
+    el.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); tryCheck(); } });
+  });
+  document.getElementById('reset-stats').addEventListener('click', function(){
+    trState.score = 0; trState.streak = 0; trState.answered = 0; trState.correct = 0; trState.bestStreak = 0;
+    try{ localStorage.removeItem(TR_STATS_KEY); }catch(e){}
+    trUpdateStats();
+  });
+  document.addEventListener('fyzika:scores-updated', function(){ trState.bestStreak = 0; trLoadStats(); trUpdateStats(); });
+  document.getElementById('top-tab-trenink').addEventListener('click', function(){
+    setTimeout(function(){ if(!trState.locked){ var q = trState.current; document.getElementById(q.sci ? 'answer-m' : 'answer').focus(); } }, 0);
+  });
+
+  trLoadStats();
+  trUpdateStats();
+  trGenerate();
+})();
+</script>
+</body>
+</html>

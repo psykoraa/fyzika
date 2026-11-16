@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bohrův model atomu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../spolecne/config.js"></script>
+<script src="../spolecne/auth.js"></script>
+<script src="../spolecne/zalozky.js?v=3"></script>
+<link rel="stylesheet" href="../spolecne/styl.css">
+<link rel="stylesheet" href="../spolecne/reseni.css?v=1">
+<style>
+:root{
+  --paper:#eff1f8;
+  --surface:#fcfdff;
+  --surface-2:#dde1f1;
+  --ink:#1d2340;
+  --ink-soft:#5b6282;
+  --line:rgba(29,35,64,0.12);
+  --accent:#2e3f8f;
+  --accent-ink:#f5f7ff;
+  --success:#28794f;
+  --success-bg:#e3efe0;
+  --danger:#b3392b;
+  --danger-bg:#f5e4de;
+  --focus:#1e6f66;
+  --shadow:0 1px 0 rgba(29,35,64,0.06);
+  /* barvy v apletu: emise, absorpce */
+  --emis:#d23f24;
+  --absorb:#2f6fd0;
+}
+
+.panel{ margin-bottom:22px; }
+.panel-title{ margin-bottom:8px; }
+.panel p{
+  margin:0 0 8px;
+  font-size:0.9rem;
+  line-height:1.55;
+}
+.panel p:last-child{ margin-bottom:0; }
+.panel b{ color:var(--ink); }
+.panel ul, .panel ol{ margin:0 0 8px; padding-left:22px; font-size:0.9rem; line-height:1.55; }
+.panel li{ margin-bottom:4px; }
+.panel h3{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.05rem;
+  letter-spacing:0.01em;
+  margin:16px 0 6px;
+}
+.panel h3:first-child{ margin-top:0; }
+
+.card{ padding:26px 26px 28px; text-align:left; margin-bottom:24px; }
+.cat-tag{ margin-bottom:10px; }
+.card h2{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.6rem;
+  letter-spacing:0.02em;
+  color:var(--ink);
+  text-transform:none;
+  margin-bottom:6px;
+}
+.card .desc{
+  font-size:0.86rem;
+  color:var(--ink-soft);
+  line-height:1.5;
+  margin:0 0 14px;
+}
+
+.katex{ font-size:1.05em; }
+.formula-box{
+  background:var(--surface-2);
+  border-radius:8px;
+  padding:12px 16px;
+  margin:10px 0;
+  font-size:1.1rem;
+  text-align:center;
+}
+.formula-line{
+  text-align:center;
+  font-size:1.1rem;
+  color:var(--ink);
+  line-height:1.8;
+}
+.line-scroll{
+  position:relative;
+  white-space:nowrap;
+  overflow-x:auto;
+  overflow-y:hidden;
+  padding:2px 0 4px;
+}
+.step-result{ max-width:100%; }
+.step-result > .line-scroll{ min-width:0; max-width:100%; }
+.given-data{
+  font-size:clamp(0.9rem, 2.4vw, 1.05rem);
+  color:var(--ink-soft);
+  margin-bottom:20px;
+}
+
+.theory-table-wrap{ overflow-x:auto; margin:6px 0 4px; }
+.theory-table{
+  border-collapse:collapse;
+  font-size:0.88rem;
+  width:100%;
+  min-width:320px;
+}
+.theory-table th, .theory-table td{
+  border:1px solid var(--line);
+  padding:8px 12px;
+  text-align:left;
+}
+.theory-table thead th{
+  background:var(--surface-2);
+  color:var(--ink-soft);
+  font-weight:600;
+  font-size:0.72rem;
+  text-transform:uppercase;
+  letter-spacing:0.05em;
+}
+.theory-table td.mono, .theory-table th.mono{
+  font-family:'IBM Plex Mono', monospace;
+  font-variant-numeric:tabular-nums;
+  text-align:center;
+}
+.theory-table tbody tr:nth-child(even) td{ background:rgba(0,0,0,0.02); }
+
+.theory-fig{
+  margin:12px 0 10px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:10px 12px 8px;
+}
+.theory-fig svg{ display:block; width:100%; max-width:560px; height:auto; margin:0 auto; }
+.theory-fig figcaption{
+  font-size:0.8rem;
+  color:var(--ink-soft);
+  line-height:1.45;
+  text-align:center;
+  margin-top:4px;
+}
+
+.example-grid{ display:flex; flex-direction:column; gap:12px; margin-top:6px; }
+.example-item{
+  background:var(--surface-2);
+  border-radius:10px;
+  padding:12px 14px;
+}
+.example-tag{
+  font-size:0.66rem;
+  text-transform:uppercase;
+  letter-spacing:0.06em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-bottom:6px;
+  display:block;
+}
+.example-eq{
+  font-size:1.05rem;
+  margin-bottom:4px;
+}
+.example-note{ font-size:0.82rem; color:var(--ink-soft); line-height:1.45; }
+
+.links{ margin-top:14px; display:flex; flex-wrap:wrap; gap:10px; justify-content:center; }
+a.btn-link{
+  display:inline-block;
+  font-weight:600;
+  font-size:0.95rem;
+  padding:10px 22px;
+  border-radius:8px;
+  background:var(--accent);
+  color:var(--accent-ink);
+  text-decoration:none;
+}
+a.btn-link:hover{ filter:brightness(1.06); }
+a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+
+.credit{
+  margin-top:24px;
+  font-size:0.8rem;
+  line-height:1.5;
+  color:var(--ink-soft);
+  text-align:center;
+}
+.credit a{ color:inherit; }
+
+
+/* ---- aplety: karta, řádky ovládání, kreslicí plocha, výstupy ---- */
+.applet-head .cat-tag{ margin-bottom:10px; }
+.mode-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:16px;
+  padding-top:14px;
+  border-top:1px solid var(--line);
+}
+.mode-row-label{
+  font-size:0.68rem;
+  text-transform:uppercase;
+  letter-spacing:0.1em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-right:2px;
+  flex:0 0 170px;
+}
+.seg{ display:flex; gap:6px; flex-wrap:wrap; }
+.chip{ font-size:0.82rem; gap:7px; }
+.chip.accented.on{ background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+.chip:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+.slider-wrap{ display:flex; align-items:center; gap:12px; flex:1 1 260px; min-width:0; }
+.slider-wrap input[type=range]{ flex:1 1 auto; min-width:0; accent-color:var(--accent); height:28px; }
+.slider-val{ font-family:'IBM Plex Mono', monospace; font-weight:600; font-size:0.92rem; white-space:nowrap; min-width:6.5em; text-align:right; }
+.canvas-wrap{
+  position:relative;
+  margin-top:18px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:10px;
+  overflow:hidden;
+}
+svg.scene{ width:100%; height:auto; display:block; background:var(--surface); user-select:none; -webkit-user-select:none; touch-action:manipulation; }
+svg.scene text{ font-family:'Work Sans', sans-serif; }
+.legend{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 18px;
+  padding:10px 14px;
+  border-top:1px solid var(--line);
+  font-size:0.78rem;
+  color:var(--ink-soft);
+}
+.legend span{ display:inline-flex; align-items:center; gap:7px; }
+.legend i{ font-style:normal; display:inline-block; width:12px; height:12px; border-radius:50%; background:var(--c); }
+.applet-out{
+  display:flex; flex-wrap:wrap; gap:8px 22px; margin-top:14px;
+  font-size:0.92rem; line-height:1.5;
+}
+.applet-out b{ font-variant-numeric:tabular-nums; }
+.applet-note{ font-size:0.86rem; color:var(--ink-soft); margin:10px 0 0; line-height:1.5; }
+.applet-actions{ display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+.applet-card + .applet-card{ margin-top:4px; }
+.nw{ white-space:nowrap; }
+@media (max-width:720px){
+  .mode-row-label{ flex-basis:100%; }
+}
+.mode-row-label i{ text-transform:none; }
+
+/* ---- trénink s číselnou odpovědí ---- */
+.section-block{ margin-bottom:16px; }
+.section-block:last-child{ margin-bottom:0; }
+.task-text{ font-size:0.92rem; color:var(--ink); line-height:1.55; text-align:center; margin:4px 0 18px; }
+.equation{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:600;
+  font-size:clamp(1.25rem, 4.2vw, 1.9rem);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:0.35em;
+  flex-wrap:wrap;
+  font-variant-numeric:tabular-nums;
+}
+.equation .unit{ color:var(--ink-soft); font-size:0.7em; margin-left:0.1em; }
+.equation .eq{ color:var(--ink-soft); margin:0 0.1em; }
+.equation .katex{ font-size:1em; }
+.equation .answer-input{ width:5.2em; }
+.answer-input.sci-mantissa{ width:3.6em; }
+.sci-group{ display:inline-flex; align-items:baseline; gap:0.12em; }
+.sci-times{ font-size:0.65em; color:var(--ink-soft); margin:0 0.02em; }
+.sci-exp{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:600;
+  width:2.4em;
+  text-align:center;
+  border:none;
+  border-bottom:2px solid var(--ink-soft);
+  background:transparent;
+  color:var(--ink);
+  font-size:0.55em;
+  vertical-align:top;
+  padding:0 0.05em;
+}
+.sci-exp:focus{ outline:none; border-color:var(--focus); }
+.sci-exp.correct{ border-color:var(--success); color:var(--success); }
+.sci-exp.wrong{ border-color:var(--danger); color:var(--danger); }
+.const-box{ font-size:0.82rem; color:var(--ink-soft); line-height:1.6; margin:0; }
+.feedback .tip{ font-size:0.78rem; color:var(--ink); opacity:0.75; margin-top:6px; font-style:italic; }
+
+@media (max-width:520px){
+  .card{ padding:20px 16px 22px; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <a class="back-link" href="../rozcestniky/oktava.html">← Zpět na Oktáva/4. ročník</a>
+
+  <div class="brand">
+    <div class="brand-lockup">
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <line x1="4" y1="34" x2="26" y2="34" stroke="var(--ink)" stroke-width="2"/>
+        <line x1="4" y1="18" x2="26" y2="18" stroke="var(--ink)" stroke-width="2"/>
+        <line x1="4" y1="10" x2="26" y2="10" stroke="var(--ink)" stroke-width="1.6"/>
+        <line x1="4" y1="6" x2="26" y2="6" stroke="var(--ink)" stroke-width="1.2"/>
+        <path d="M15,10 L15,31" stroke="var(--accent)" stroke-width="2"/>
+        <path d="M11,27 L15,33 L19,27" stroke="var(--accent)" stroke-width="2" fill="none"/>
+        <path d="M27,22 q2,-3 4,0 t4,0" stroke="var(--focus)" stroke-width="1.6" fill="none"/>
+      </svg>
+      <div class="brand-text">
+        <h1>Bohrův model atomu</h1>
+        <p>atomová a částicová fyzika — foton, energetické hladiny vodíku</p>
+      </div>
+    </div>
+    <div class="readout" id="header-readout" hidden>
+      <div class="cell"><span class="label">Skóre</span><span class="value" id="stat-score">0</span></div>
+      <div class="cell"><span class="label">Série</span><span class="value" id="stat-streak">0</span></div>
+      <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="stat-accuracy">—</span></div>
+    </div>
+  </div>
+
+  <div class="top-tabs">
+    <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+    <button class="toptab" id="top-tab-aplet" data-tab="aplet">Hladiny a spektrum</button>
+    <button class="toptab" id="top-tab-trenink" data-tab="trenink">Trénink</button>
+  </div>
+
+  <!-- ============ TEORIE ============ -->
+  <div id="theory-section" class="tab-section">
+
+    <div class="panel">
+      <div class="panel-title">Kvantová hypotéza</div>
+      <p>Na konci 19. století nedokázala fyzika vysvětlit, jak závisí záření zahřátého tělesa (tzv. absolutně černého tělesa) na vlnové délce. Podařilo se to až <b>M. Planckovi</b> v prosinci 1900. Předpokládal, že atomy nevyzařují ani nepohlcují libovolné množství energie, ale jen celé <b>dávky — kvanta</b>. Energie jednoho kvanta je úměrná frekvenci záření:</p>
+      <div class="formula-box">\[ E = hf, \qquad h = 6{,}626\cdot 10^{-34}\ \mathrm{J\cdot s} \]</div>
+      <p>Konstanta \(h\) se nazývá <b>Planckova konstanta</b>; její jednotka plyne ze vztahu \(h = E/f\): \(\mathrm{J}/\mathrm{Hz} = \mathrm{J\cdot s}\). Sám Planck považoval kvanta zpočátku jen za početní trik. Dnes víme, že světlo se opravdu skládá z částic — <b>fotonů</b>.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Energie fotonu</div>
+      <p>Protože pro světlo platí \(c = \lambda f\), můžeme energii fotonu vyjádřit i pomocí vlnové délky:</p>
+      <div class="formula-box">\[ E = hf = \frac{hc}{\lambda} \]</div>
+      <p>Čím kratší vlnová délka (vyšší frekvence), tím větší energie fotonu. Fialový foton má proto větší energii než červený.</p>
+      <div class="example-grid">
+        <div class="example-item">
+          <span class="example-tag">Červený okraj spektra, 700 nm</span>
+          <div class="example-eq">\[ E = \frac{6{,}626\cdot 10^{-34}\cdot 2{,}998\cdot 10^{8}}{700\cdot 10^{-9}}\ \mathrm{J} \doteq 2{,}84\cdot 10^{-19}\ \mathrm{J} \doteq 1{,}77\ \mathrm{eV} \]</div>
+        </div>
+        <div class="example-item">
+          <span class="example-tag">Fialový okraj spektra, 400 nm</span>
+          <div class="example-eq">\[ E = \frac{6{,}626\cdot 10^{-34}\cdot 2{,}998\cdot 10^{8}}{400\cdot 10^{-9}}\ \mathrm{J} \doteq 4{,}97\cdot 10^{-19}\ \mathrm{J} \doteq 3{,}10\ \mathrm{eV} \]</div>
+          <div class="example-note">Fotony viditelného světla mají tedy energii asi od 1,8&nbsp;eV do 3,1&nbsp;eV.</div>
+        </div>
+      </div>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="9" cy="9" r="7.5" stroke="var(--focus)" stroke-width="1.6"/>
+          <line x1="9" y1="8" x2="9" y2="13" stroke="var(--focus)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="5.2" r="1" fill="var(--focus)"/>
+        </svg>
+        <p>Užitečná zkratka: \(hc \doteq 1\,240\ \mathrm{eV\cdot nm}\). Energie fotonu v eV je pak \(E \doteq 1\,240/\lambda\), dosadíme-li \(\lambda\) v nanometrech.</p>
+      </div>
+      <p>Světlo dané vlnové délky tedy může předávat energii jen po celých násobcích energie jednoho fotonu — například červené světlo 700&nbsp;nm jen po 1,77&nbsp;eV.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Bohrovy postuláty (1913)</div>
+      <p>Problém stability atomu a čárových spekter vyřešil v roce 1913 sedmadvacetiletý <b>N. Bohr</b>. Z Rutherfordova modelu ponechal jádro a elektrony, ale přidal tři předpoklady (postuláty), které z klasické fyziky neplynou:</p>
+      <ol>
+        <li><b>Stacionární stavy.</b> Elektron se může pohybovat jen po určitých drahách, na nichž nevyzařuje a neztrácí energii. Atom je v takovém stavu stálý.</li>
+        <li><b>Přechody.</b> Při přechodu elektronu z dráhy s energií \(E_n\) na dráhu s nižší energií \(E_m\) se vyzáří právě jeden foton; při pohlcení takového fotonu proběhne přechod opačně:
+          <p class="formula-line">\[ hf = E_n - E_m \]</p></li>
+        <li><b>Kvantovací podmínka.</b> Dovolené jsou jen dráhy, na nichž má elektron moment hybnosti \(L = n\hbar\), kde \(n\) je přirozené číslo a \(\hbar = h/(2\pi)\) je redukovaná Planckova konstanta.</li>
+      </ol>
+      <p>První postulát byl nejvíc kritizován: Bohr neměl žádné vysvětlení, proč by elektron na některých drahách neměl vyzařovat. Model ale fungoval — a to velmi přesně.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Energetické hladiny vodíku</div>
+      <p>Každé dovolené dráze odpovídá určitá energie atomu; mluvíme o <b>energetických hladinách</b>. Vynásobíme-li Rydbergovu formuli Planckovou konstantou, dostaneme vlevo energii fotonu a vpravo rozdíl dvou hladin:</p>
+      <p class="formula-line">\[ hf = hR_f\left(\frac{1}{m^2} - \frac{1}{n^2}\right) = \left(-\frac{hR_f}{n^2}\right) - \left(-\frac{hR_f}{m^2}\right) \]</p>
+      <p>Energie \(n\)-té hladiny atomu vodíku tedy je</p>
+      <div class="formula-box">\[ E_n = -\frac{hR_f}{n^2} = -\frac{13{,}6\ \mathrm{eV}}{n^2}, \qquad n = 1, 2, 3, \dots \]</div>
+      <p>Číslo \(n\) se nazývá <b>hlavní kvantové číslo</b>. Stav s \(n = 1\) je <b>základní stav</b> (nejnižší energie), stavy s \(n > 1\) jsou <b>excitované</b> (vybuzené).</p>
+      <figure class="theory-fig">
+        <svg viewBox="0 0 440 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Energetické hladiny atomu vodíku od základního stavu −13,6 eV po nulu. Šipky dolů na hladinu 1 tvoří Lymanovu sérii, šipky na hladinu 2 Balmerovu sérii.">
+          <defs><marker id="bm-arr" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--emis)"/></marker></defs>
+          <g stroke="var(--ink)" stroke-width="1.6">
+            <line x1="40" y1="220" x2="330" y2="220"/><line x1="40" y1="120" x2="330" y2="120"/><line x1="40" y1="86.7" x2="330" y2="86.7"/>
+            <line x1="40" y1="70" x2="330" y2="70"/><line x1="40" y1="60" x2="330" y2="60"/>
+          </g>
+          <line x1="40" y1="20" x2="330" y2="20" stroke="var(--ink-soft)" stroke-width="1.2" stroke-dasharray="5 4"/>
+          <g font-family="IBM Plex Mono, monospace" font-size="11" fill="var(--ink)">
+            <text x="336" y="224">n = 1  −13,6 eV</text><text x="336" y="124">n = 2  −3,40 eV</text><text x="336" y="90">n = 3  −1,51 eV</text>
+            <text x="336" y="71">n = 4  −0,85 eV</text><text x="336" y="56">n = 5  −0,54 eV</text><text x="336" y="24">n → ∞  0 eV</text>
+          </g>
+          <g stroke="var(--emis)" stroke-width="1.6" marker-end="url(#bm-arr)">
+            <line x1="70" y1="120" x2="70" y2="216"/><line x1="90" y1="86.7" x2="90" y2="216"/><line x1="110" y1="70" x2="110" y2="216"/><line x1="130" y1="60" x2="130" y2="216"/>
+            <line x1="200" y1="86.7" x2="200" y2="116"/><line x1="220" y1="70" x2="220" y2="116"/><line x1="240" y1="60" x2="240" y2="116"/>
+            <line x1="290" y1="70" x2="290" y2="82.7"/><line x1="305" y1="60" x2="305" y2="82.7"/>
+          </g>
+          <g font-family="Work Sans, sans-serif" font-size="11" fill="var(--ink)" text-anchor="middle">
+            <text x="100" y="240">Lyman (UV)</text><text x="220" y="140">Balmer (viditelná)</text><text x="298" y="104">Paschen (IR)</text>
+          </g>
+        </svg>
+        <figcaption>Hladiny jsou kreslené v nelineárním měřítku (jinak by se u nuly slily). Vyšší hladiny se k nule zhušťují.</figcaption>
+      </figure>
+      <p>Energie hladin jsou záporné. To vyjadřuje, že atom je stabilní soustava: abychom elektron vytrhli a <b>ionizovali</b> atom, musíme mu dodat energii. Z hladiny \(n\) je to \(|E_n|\), ze základního stavu tedy <b>13,6&nbsp;eV</b> (ionizační energie vodíku). Volný elektron (\(E \geq 0\)) už může mít libovolnou energii.</p>
+      <p>Bohrův model dává i poloměr dráhy v základním stavu, tzv. <b>Bohrův poloměr</b> \(r_\mathrm{B} \doteq 0{,}053\ \mathrm{nm}\), který dobře odpovídá skutečné velikosti atomu vodíku.</p>
+    </div>
+
+    <div class="card">
+      <span class="cat-tag">Příklad</span>
+      <h2>Přechod z hladiny 3 na hladinu 2</h2>
+      <p class="desc">Elektron v atomu vodíku přejde z hladiny \(n = 3\) na hladinu \(n = 2\). Jakou energii má vyzářený foton a jakou vlnovou délku?</p>
+      <div class="stepper" data-reset="reset-32">
+        <div class="step" data-step="1">
+          <div class="step-connector"></div>
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">1</span>
+            <span class="step-title">Rozdíl energií hladin</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <div class="step-result"><div class="line-scroll">\(\Delta E = E_3 - E_2 = -\dfrac{13{,}6}{9}\ \mathrm{eV} - \left(-\dfrac{13{,}6}{4}\ \mathrm{eV}\right) = 13{,}6\cdot\left(\dfrac{1}{4} - \dfrac{1}{9}\right)\mathrm{eV} \doteq 1{,}89\ \mathrm{eV}\)</div></div>
+          </div>
+        </div>
+        <div class="step" data-step="2">
+          <div class="step-connector"></div>
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">2</span>
+            <span class="step-title">Převeďte na jouly</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <div class="step-result">\(\Delta E = 1{,}889\cdot 1{,}602\cdot 10^{-19}\ \mathrm{J} \doteq 3{,}03\cdot 10^{-19}\ \mathrm{J}\)</div>
+          </div>
+        </div>
+        <div class="step" data-step="3">
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">3</span>
+            <span class="step-title">Vlnová délka fotonu</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <div class="result-box"><div class="line-scroll">\(\lambda = \dfrac{hc}{\Delta E} = \dfrac{6{,}626\cdot 10^{-34}\ \mathrm{J\cdot s}\cdot 2{,}998\cdot 10^{8}\ \mathrm{m\cdot s^{-1}}}{3{,}03\cdot 10^{-19}\ \mathrm{J}} \doteq 6{,}56\cdot 10^{-7}\ \mathrm{m} = 656\ \mathrm{nm}\)</div></div>
+            <p>Je to červená čára H<sub>α</sub> Balmerovy série — Bohrův model ji předpovídá správně. Kontrola zkratkou: \(1\,240/1{,}89 \doteq 656\ \mathrm{nm}\).</p>
+          </div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn ghost" id="reset-32">Zopakovat postup od začátku</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Vyzáření, pohlcení a ionizace</div>
+      <div class="example-grid">
+        <div class="example-item">
+          <span class="example-tag">Pohlcení fotonu (1 → 3)</span>
+          <div class="example-eq">\[ \Delta E = 13{,}6\left(1 - \tfrac{1}{9}\right)\mathrm{eV} \doteq 12{,}1\ \mathrm{eV}, \qquad \lambda = \frac{1\,240\ \mathrm{eV\cdot nm}}{12{,}09\ \mathrm{eV}} \doteq 103\ \mathrm{nm} \]</div>
+          <div class="example-note">Atom v základním stavu pohltí jen ultrafialový foton přesně této energie (Lymanova série). Foton, jehož energie neodpovídá rozdílu žádných dvou hladin a nestačí ani k ionizaci, atom nepohltí.</div>
+        </div>
+        <div class="example-item">
+          <span class="example-tag">Ionizace z hladiny 2</span>
+          <div class="example-eq">\[ E_\mathrm{i} = |E_2| = 3{,}40\ \mathrm{eV}, \qquad \lambda_\mathrm{max} = \frac{1\,240\ \mathrm{eV\cdot nm}}{3{,}40\ \mathrm{eV}} \doteq 365\ \mathrm{nm} \]</div>
+          <div class="example-note">K ionizaci stačí jakýkoli foton s vlnovou délkou kratší než 365&nbsp;nm; přebytek energie odnese uvolněný elektron. Hodnota odpovídá hraně Balmerovy série.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Franckův–Hertzův pokus</div>
+      <p>Že energie atomu je opravdu kvantovaná, potvrdili přímo <b>J. Franck</b> a <b>G. Hertz</b> (1912 až 1914). Ve trubici se zředěnými parami rtuti urychlovali elektrony a měřili proud, který prošel k anodě. Proud náhle klesal vždy, když elektrony získaly energii 4,9&nbsp;eV (a její násobky): právě tolik atom rtuti přijme, aby přešel do prvního excitovaného stavu. Elektrony s menší energií se od atomů jen pružně odrážely. Excitované atomy pak vyzařovaly ultrafialové světlo o vlnové délce asi 254&nbsp;nm, což odpovídá \(1\,240/4{,}9 \doteq 253\ \mathrm{nm}\).</p>
+      <p>Pokus ukazuje, že atom přijímá energii jen po kvantech — a to bez ohledu na to, zda ji dostane od fotonu, nebo srážkou s elektronem.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Kde Bohrův model selhává</div>
+      <p>Bohrův model je kombinací klasické a kvantové fyziky. Přesně popíše vodík (a ionty s jediným elektronem), ale nedokáže vysvětlit atomy s více elektrony ani chemické vazby. Navíc atom vodíku je kulově souměrný, kdežto elektron na kruhové dráze by tvořil plochý útvar. Do poloviny 20. let 20. století to byl nejlepší model atomu; v roce 1927 ale <b>W. Heisenberg</b> ukázal, že představa elektronu na přesné dráze nemůže být správná. Model nahradila kvantová mechanika.</p>
+      <div class="links"><a class="btn-link" href="kvantova-mechanika.html">Kvantová mechanika →</a></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Shrnutí</div>
+      <p>• Energie fotonu \(E = hf = hc/\lambda\), \(h = 6{,}626\cdot 10^{-34}\ \mathrm{J\cdot s}\); zkratka \(E[\mathrm{eV}] \doteq 1\,240/\lambda[\mathrm{nm}]\).</p>
+      <p>• Bohrovy postuláty: stacionární dráhy bez vyzařování; přechod = jeden foton \(hf = E_n - E_m\); \(L = n\hbar\).</p>
+      <p>• Hladiny vodíku \(E_n = -13{,}6\ \mathrm{eV}/n^2\); \(n\) je hlavní kvantové číslo; ionizační energie z hladiny \(n\) je \(|E_n|\).</p>
+      <p>• Kvantování energie atomů potvrdil Franckův–Hertzův pokus.</p>
+    </div>
+
+  </div>
+
+  <!-- ============ APLET: HLADINY A SPEKTRUM ============ -->
+  <div id="aplet-section" class="tab-section" hidden>
+    <div class="card applet-card">
+      <div class="applet-head">
+        <span class="cat-tag">Aplet</span>
+        <h2>Hladiny a spektrum vodíku</h2>
+        <p class="desc">Zvolte počáteční a koncovou hladinu elektronu. Aplet nakreslí přechod, spočítá energii fotonu a rozsvítí čáru ve spektru.</p>
+      </div>
+      <div class="mode-row">
+        <span class="mode-row-label" id="lbl-from">Z hladiny <i>n</i></span>
+        <div class="seg" id="from-seg" role="group" aria-labelledby="lbl-from"></div>
+      </div>
+      <div class="mode-row">
+        <span class="mode-row-label" id="lbl-to">Na hladinu <i>m</i></span>
+        <div class="seg" id="to-seg" role="group" aria-labelledby="lbl-to"></div>
+      </div>
+      <div class="mode-row">
+        <span class="mode-row-label" id="lbl-series">Celá série</span>
+        <div class="seg" id="series-seg" role="group" aria-labelledby="lbl-series">
+          <button class="chip accented" type="button" data-series="0" aria-pressed="true">Jen zvolený přechod</button>
+          <button class="chip accented" type="button" data-series="1" aria-pressed="false">Lymanova</button>
+          <button class="chip accented" type="button" data-series="2" aria-pressed="false">Balmerova</button>
+          <button class="chip accented" type="button" data-series="3" aria-pressed="false">Paschenova</button>
+        </div>
+      </div>
+      <div class="canvas-wrap">
+        <svg class="scene" id="lev-svg" viewBox="0 0 600 400" role="img" aria-label="Energetické hladiny atomu vodíku a spektrum od ultrafialové po infračervenou oblast."></svg>
+      </div>
+      <div class="applet-out" id="lev-out" aria-live="polite"></div>
+      <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint">Hladiny volte tlačítky nebo kliknutím do diagramu: první klik vybere počáteční hladinu, druhý koncovou. Přechod dolů znamená vyzáření fotonu (červená šipka), přechod nahoru jeho pohlcení (modrá šipka). Tlačítka „celá série“ ukážou všechny přechody na hladinu 1, 2 nebo 3 (z hladin až do 7). Svislá osa diagramu je nelineární, jinak by se vyšší hladiny u nuly slily; spektrum dole má logaritmickou stupnici vlnových délek, barvy čar jsou jen přibližné. Počítá se s \(E_n = -13{,}6\ \mathrm{eV}/n^2\) a \(hc = 1\,240\ \mathrm{eV\cdot nm}\).</p>
+      </details>
+    </div>
+  </div>
+
+  <!-- ============ TRÉNINK ============ -->
+  <div id="trenink-section" class="tab-section" hidden>
+
+    <div class="panel">
+      <div class="section-block">
+        <div class="panel-title">Typ příkladů</div>
+        <div class="row" id="type-row"></div>
+      </div>
+      <div class="section-block">
+        <p class="const-box">Konstanty: \(h = 6{,}63\cdot 10^{-34}\ \mathrm{J\cdot s}\), \(c = 3{,}00\cdot 10^{8}\ \mathrm{m\cdot s^{-1}}\), \(1\ \mathrm{eV} = 1{,}60\cdot 10^{-19}\ \mathrm{J}\), \(E_n = -13{,}6\ \mathrm{eV}/n^2\).</p>
+      </div>
+      <div class="settings-foot" style="justify-content:flex-end;">
+        <button class="linklike" id="reset-stats">vynulovat statistiku</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="cat-tag" id="cat-tag">Trénink</span>
+      <p class="task-text" id="task-text"></p>
+      <div class="equation" id="equation">
+        <span id="eq-given"></span>
+        <span class="eq">=</span>
+        <span class="answer-slot" id="slot-dec">
+          <input class="answer-input" id="answer" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="?" aria-label="odpověď">
+        </span>
+        <span class="answer-slot sci-group" id="slot-sci" hidden>
+          <input class="answer-input sci-mantissa" id="answer-m" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="a" aria-label="mantisa">
+          <span class="sci-times">·10</span>
+          <input class="sci-exp" id="answer-e" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="n" aria-label="exponent">
+        </span>
+        <span class="unit" id="eq-unit"></span>
+      </div>
+      <div class="actions">
+        <button class="btn primary" id="btn-check">Zkontrolovat</button>
+        <button class="btn ghost" id="btn-skip">Nevím / Zobrazit řešení</button>
+      </div>
+      <div class="feedback" id="feedback" hidden>
+        <div class="headline" id="feedback-headline"></div>
+        <div class="steps" id="feedback-steps"></div>
+        <div class="tip" id="feedback-tip" hidden></div>
+      </div>
+      <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint">Výsledek zapište do rámečku; čárku i tečku lze zadat obojí. Velmi malá a velmi velká čísla se zadávají ve tvaru <i>a</i>·10<sup><i>n</i></sup> — do prvního pole mantisu <i>a</i>, do malého pole exponent <i>n</i> (i záporný). Uznává se odchylka do 1&nbsp;% od přesné hodnoty, takže stačí počítat s konstantami uvedenými výše a výsledek zaokrouhlit na 3 platné číslice. Enter potvrdí odpověď i přejde na další příklad.</p>
+      </details>
+    </div>
+
+  </div>
+
+  <footer>Fyzika — Oktáva/4. ročník</footer>
+</div>
+
+<script src="../spolecne/reseni.js?v=1"></script>
+<script src="../spolecne/spolecne.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  // ---- záložky: tlačítko .toptab[data-tab="x"] ↔ sekce #x-section (Teorie = #theory-section) ----
+  var tabs = {}, sections = {};
+  Array.prototype.forEach.call(document.querySelectorAll('.toptab[data-tab]'), function(btn){
+    var name = btn.getAttribute('data-tab');
+    tabs[name] = btn;
+    sections[name] = document.getElementById(name === 'teorie' ? 'theory-section' : name + '-section');
+  });
+  function showTab(name){
+    for(var k in tabs){
+      tabs[k].classList.toggle('on', k === name);
+      if(sections[k]) sections[k].hidden = k !== name;
+    }
+    // skóre, série a úspěšnost v hlavičce jen u tréninku
+    var readout = document.getElementById('header-readout');
+    if(readout) readout.hidden = name !== 'trenink';
+  }
+  Object.keys(tabs).forEach(function(k){ tabs[k].addEventListener('click', function(){ showTab(k); }); });
+  var hash = location.hash.replace('#', '');
+  if(hash && tabs[hash]) showTab(hash);
+
+  // ---- příklady v teorii: postupně odemykané steppery ----
+  Array.prototype.forEach.call(document.querySelectorAll('.stepper'), function(wrap){
+    var steps = Array.prototype.slice.call(wrap.querySelectorAll('.step'));
+    var unlockedUpTo = 1;
+
+    function refreshLocks(){
+      steps.forEach(function(st){
+        var idx = parseInt(st.getAttribute('data-step'), 10);
+        var locked = idx > unlockedUpTo;
+        st.classList.toggle('locked', locked);
+        st.classList.toggle('unlocked', !locked && !st.classList.contains('done'));
+        st.querySelector('.step-head').setAttribute('aria-disabled', locked ? 'true' : 'false');
+      });
+    }
+
+    steps.forEach(function(st){
+      var idx = parseInt(st.getAttribute('data-step'), 10);
+      var head = st.querySelector('.step-head');
+      var body = st.querySelector('.step-body');
+      head.addEventListener('click', function(){
+        if(idx > unlockedUpTo) return;
+        var wasOpen = st.classList.contains('open');
+        st.classList.toggle('open', !wasOpen);
+        body.hidden = wasOpen;
+        head.setAttribute('aria-expanded', (!wasOpen).toString());
+        if(!wasOpen){
+          st.classList.add('done');
+          if(idx === unlockedUpTo && unlockedUpTo < steps.length){ unlockedUpTo++; }
+          refreshLocks();
+        }
+      });
+    });
+
+    var resetBtn = document.getElementById(wrap.getAttribute('data-reset'));
+    if(resetBtn){
+      resetBtn.addEventListener('click', function(){
+        unlockedUpTo = 1;
+        steps.forEach(function(st){
+          st.classList.remove('open', 'done');
+          st.querySelector('.step-body').hidden = true;
+          st.querySelector('.step-head').setAttribute('aria-expanded', 'false');
+        });
+        refreshLocks();
+      });
+    }
+
+    refreshLocks();
+  });
+
+  // ---- vzorce (KaTeX) ----
+  var KATEX_DELIMS = [{left:'\\(', right:'\\)', display:false}, {left:'\\[', right:'\\]', display:true}];
+  if(window.renderMathInElement){
+    Array.prototype.forEach.call(document.querySelectorAll('.tab-section'), function(sec){
+      try{ renderMathInElement(sec, { delimiters: KATEX_DELIMS }); }catch(e){}
+    });
+  }
+
+  // ---- sbalovací panely v teorii ----
+  try{ makePanelsCollapsible(document.getElementById('theory-section')); }catch(e){}
+
+  // ---- pomocné funkce pro aplety a tréninky ----
+  var NB = '\u00a0';
+  function tex(t){
+    try{ return window.katex ? katex.renderToString(t, {throwOnError:false}) : t; }catch(e){ return t; }
+  }
+  // číslo s daným počtem desetinných míst, desetinnou čárkou a mezerami mezi tisíci
+  function cz(n, dec){
+    var s = roundTo(n, dec).toFixed(dec);
+    var neg = s.charAt(0) === '-';
+    if(neg) s = s.slice(1);
+    var parts = s.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, NB);
+    return (neg ? '−' : '') + parts.join(',');
+  }
+  // totéž v TeXu (mezera mezi tisíci = \,, desetinná čárka = {,})
+  function czTex(n, dec){ return cz(n, dec).replace('−', '-').replace(',', '{,}').replace(/\u00a0/g, '\\,'); }
+  // číslo na `sig` platných číslic (desetinný zápis)
+  function czSig(x, sig){ var r = roundSig(x, sig); return cz(r, decimalsForSig(r, sig)); }
+  // rozklad na mantisu a exponent: x = m · 10^e, 1 ≤ |m| < 10 (po zaokrouhlení na sig číslic)
+  function sciParts(x, sig){
+    if(x === 0) return { m:0, e:0 };
+    var e = Math.floor(Math.log10(Math.abs(x)));
+    var m = roundSig(x / Math.pow(10, e), sig);
+    if(Math.abs(m) >= 10){ m = roundSig(m / 10, sig); e++; }
+    return { m:m, e:e };
+  }
+  // TeX zápis čísla: desetinně pro 0,001 ≤ |x| < 100 000, jinak a·10^n
+  function numTex(x, sig, forceSci){
+    var r = roundSig(x, sig), a = Math.abs(r);
+    if(!forceSci && (a === 0 || (a >= 1e-3 && a < 1e5))){
+      return czSig(x, sig).replace('−', '-').replace(',', '{,}').replace(/\u00a0/g, '\\,');
+    }
+    var p = sciParts(x, sig);
+    return cz(p.m, sig - 1).replace('−', '-').replace(',', '{,}') + '\\cdot 10^{' + p.e + '}';
+  }
+  // totéž jako prostý text do HTML
+  function numTxt(x, sig, forceSci){
+    var r = roundSig(x, sig), a = Math.abs(r);
+    if(!forceSci && (a === 0 || (a >= 1e-3 && a < 1e5))) return czSig(x, sig);
+    var p = sciParts(x, sig);
+    return cz(p.m, sig - 1) + '·10<sup>' + String(p.e).replace('-', '−') + '</sup>';
+  }
+  function randInt(a, b){ return a + Math.floor(Math.random() * (b - a + 1)); }
+  function pick(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+  function svgEl(name, attrs, parent){
+    var n = document.createElementNS('http://www.w3.org/2000/svg', name);
+    for(var k in attrs){ if(attrs.hasOwnProperty(k)) n.setAttribute(k, attrs[k]); }
+    if(parent) parent.appendChild(n);
+    return n;
+  }
+  function clearEl(n){ while(n.firstChild) n.removeChild(n.firstChild); }
+  function setPressed(group, btn){
+    Array.prototype.forEach.call(group.querySelectorAll('button'), function(b){
+      var on = b === btn;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+  }
+
+  // ================= APLET: HLADINY A SPEKTRUM =================
+  // barva viditelného světla (přibližně) pro vlnovou délku v nm
+  function lambdaColor(l){
+    var r = 0, g = 0, b = 0;
+    if(l < 380 || l > 750) return null;
+    if(l < 440){ r = (440 - l) / 60; b = 1; }
+    else if(l < 490){ g = (l - 440) / 50; b = 1; }
+    else if(l < 510){ g = 1; b = (510 - l) / 20; }
+    else if(l < 580){ r = (l - 510) / 70; g = 1; }
+    else if(l < 645){ r = 1; g = (645 - l) / 65; }
+    else { r = 1; }
+    var f = l < 420 ? 0.4 + 0.6 * (l - 380) / 40 : l > 700 ? 0.4 + 0.6 * (750 - l) / 50 : 1;
+    function c(x){ return Math.round(255 * Math.pow(x * f, 0.8)); }
+    return 'rgb(' + c(r) + ',' + c(g) + ',' + c(b) + ')';
+  }
+  (function(){
+    var svg = document.getElementById('lev-svg');
+    var NMAX = 7, HC = 1240, E1 = 13.6;
+    var X0 = 60, X1 = 400, TOP = 30, H = 250;          // diagram hladin
+    var SX0 = 30, SX1 = 570, SY = 330, SH = 30;        // spektrum
+    var LMIN = 80, LMAX = 2500;
+    var st = { from:3, to:2, series:0, pick:null };
+    function yOf(n){ return TOP + H / n; }               // nelineární osa: y ~ 1/n
+    function E(n){ return -E1 / (n * n); }
+    function xOfL(l){ return SX0 + (Math.log(l) - Math.log(LMIN)) / (Math.log(LMAX) - Math.log(LMIN)) * (SX1 - SX0); }
+    var defs = svgEl('defs', {}, svg);
+    function marker(id, col){
+      var m = svgEl('marker', { id:id, viewBox:'0 0 10 10', refX:'8.5', refY:'5', markerWidth:'5', markerHeight:'5', orient:'auto' }, defs);
+      svgEl('path', { d:'M0,0 L10,5 L0,10 z', fill:col }, m);
+    }
+    marker('lv-em', 'var(--emis)'); marker('lv-ab', 'var(--absorb)');
+    var grad = svgEl('linearGradient', { id:'lv-vis', x1:'0', x2:'1', y1:'0', y2:'0' }, defs);
+    for(var l = 380; l <= 750; l += 10){ svgEl('stop', { offset:((l - 380) / 370).toFixed(3), 'stop-color':lambdaColor(l), 'stop-opacity':'0.28' }, grad); }
+    var g = svgEl('g', {}, svg);
+
+    function transitions(){
+      if(st.series){ var out = []; for(var n = st.series + 1; n <= NMAX; n++) out.push([n, st.series]); return out; }
+      return st.from === st.to ? [] : [[st.from, st.to]];
+    }
+    function render(){
+      clearEl(g);
+      var i, n, t;
+      // hladiny
+      svgEl('line', { x1:X0, y1:TOP, x2:X1, y2:TOP, stroke:'var(--ink-soft)', 'stroke-width':1.2, 'stroke-dasharray':'5 4' }, g);
+      t = svgEl('text', { x:X1 + 8, y:TOP + 4, 'font-size':12, 'font-family':"'IBM Plex Mono', monospace", fill:'var(--ink-soft)' }, g); t.textContent = 'n → ∞   0 eV';
+      for(n = 1; n <= NMAX; n++){
+        var sel = (!st.series && (n === st.from || n === st.to)) || st.pick === n;
+        svgEl('line', { x1:X0, y1:yOf(n), x2:X1, y2:yOf(n), stroke:sel ? 'var(--accent)' : 'var(--ink)', 'stroke-width':sel ? 2.6 : 1.6 }, g);
+        if(n <= 5 || n === NMAX){
+          t = svgEl('text', { x:X1 + 8, y:yOf(n) + 4, 'font-size':12, 'font-family':"'IBM Plex Mono', monospace", fill:'var(--ink)' }, g);
+          t.textContent = 'n = ' + n + '   ' + cz(E(n), n === 1 ? 1 : 2) + ' eV';
+        }
+        var hit = svgEl('rect', { x:X0, y:yOf(n) - (n < 4 ? 10 : 3.5), width:X1 - X0, height:n < 4 ? 20 : 7, fill:'transparent', style:'cursor:pointer' }, g);
+        hit.addEventListener('click', (function(k){ return function(){ clickLevel(k); }; })(n));
+      }
+      // spektrum
+      svgEl('rect', { x:SX0, y:SY, width:SX1 - SX0, height:SH, fill:'#12141f' }, g);
+      svgEl('rect', { x:xOfL(380), y:SY, width:xOfL(750) - xOfL(380), height:SH, fill:'url(#lv-vis)' }, g);
+      [[LMIN, 380, 'UV'], [380, 750, 'viditelné'], [750, LMAX, 'IR']].forEach(function(z){
+        t = svgEl('text', { x:(xOfL(z[0]) + xOfL(z[1])) / 2, y:SY - 6, 'text-anchor':'middle', 'font-size':11, fill:'var(--ink-soft)' }, g); t.textContent = z[2];
+      });
+      [100, 200, 500, 1000, 2000].forEach(function(l){
+        svgEl('line', { x1:xOfL(l), y1:SY + SH, x2:xOfL(l), y2:SY + SH + 5, stroke:'var(--ink)' }, g);
+        t = svgEl('text', { x:xOfL(l), y:SY + SH + 18, 'text-anchor':'middle', 'font-size':11, 'font-family':"'IBM Plex Mono', monospace", fill:'var(--ink)' }, g);
+        t.textContent = String(l).replace(/(\d)(\d{3})$/, '$1' + NB + '$2');
+      });
+      t = svgEl('text', { x:SX1, y:SY + SH + 34, 'text-anchor':'end', 'font-size':11, fill:'var(--ink-soft)' }, g); t.textContent = 'vlnová délka λ (nm)';
+      // přechody
+      var tr = transitions(), out = [];
+      tr.forEach(function(p, k){
+        var up = p[1] > p[0], dE = Math.abs(E(p[0]) - E(p[1])), lam = HC / dE;
+        var x = st.series ? X0 + 30 + k * 34 : (X0 + X1) / 2;
+        var col = up ? 'var(--absorb)' : 'var(--emis)';
+        svgEl('line', { x1:x, y1:yOf(p[0]), x2:x, y2:yOf(p[1]) + (up ? 6 : -6), stroke:col, 'stroke-width':2.2, 'marker-end':'url(#' + (up ? 'lv-ab' : 'lv-em') + ')' }, g);
+        var lc = lambdaColor(lam) || 'var(--surface)';
+        if(lam >= LMIN && lam <= LMAX){
+          svgEl('line', { x1:xOfL(lam), y1:SY, x2:xOfL(lam), y2:SY + SH, stroke:lc, 'stroke-width':3 }, g);
+          if(!lambdaColor(lam)) svgEl('line', { x1:xOfL(lam), y1:SY, x2:xOfL(lam), y2:SY + SH, stroke:'var(--ink-soft)', 'stroke-width':1, 'stroke-dasharray':'2 2' }, g);
+        }
+        out.push({ p:p, up:up, dE:dE, lam:lam });
+      });
+      // výstup
+      var box = document.getElementById('lev-out');
+      if(!out.length){ box.innerHTML = '<span>Počáteční a koncová hladina jsou stejné — žádný přechod.</span>'; return; }
+      if(st.series){
+        box.innerHTML = '<span>' + ['', 'Lymanova', 'Balmerova', 'Paschenova'][st.series] + ' série (přechody na <i>m</i>&nbsp;=&nbsp;' + st.series + '): ' +
+          out.map(function(o){ return '<b>' + czSig(o.lam, 3) + NB + 'nm</b>'; }).join(', ') + '</span>';
+        return;
+      }
+      var o = out[0], zone = o.lam < 380 ? 'ultrafialová' : o.lam <= 750 ? 'viditelná' : 'infračervená';
+      box.innerHTML = '<span>' + (o.up ? 'Pohlcení' : 'Vyzáření') + ' fotonu: <i>n</i>&nbsp;=&nbsp;' + o.p[0] + ' → ' + o.p[1] + '</span>' +
+        '<span>Δ<i>E</i>&nbsp;=&nbsp;<b>' + czSig(o.dE, 3) + NB + 'eV</b></span>' +
+        '<span><i>λ</i>&nbsp;=&nbsp;<b>' + czSig(o.lam, 3) + NB + 'nm</b></span>' +
+        '<span><i>f</i>&nbsp;=&nbsp;<b>' + numTxt(3e17 / o.lam, 3, true) + NB + 'Hz</b></span>' +
+        '<span>oblast: <b>' + zone + '</b></span>';
+    }
+    function buildSeg(id, key){
+      var seg = document.getElementById(id);
+      for(var n = 1; n <= NMAX; n++){
+        var b = document.createElement('button');
+        b.type = 'button'; b.className = 'chip accented'; b.textContent = n; b.setAttribute('data-n', n);
+        b.addEventListener('click', (function(k, btn){ return function(){ st[key] = k; st.series = 0; st.pick = null; sync(); render(); }; })(n, b));
+        seg.appendChild(b);
+      }
+    }
+    function sync(){
+      [['from-seg', 'from'], ['to-seg', 'to']].forEach(function(p){
+        Array.prototype.forEach.call(document.getElementById(p[0]).querySelectorAll('button'), function(b){
+          var on = !st.series && parseInt(b.getAttribute('data-n'), 10) === st[p[1]];
+          b.classList.toggle('on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+      });
+      Array.prototype.forEach.call(document.getElementById('series-seg').querySelectorAll('button'), function(b){
+        var on = parseInt(b.getAttribute('data-series'), 10) === st.series;
+        b.classList.toggle('on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+    }
+    function clickLevel(n){
+      if(st.pick === null){ st.pick = n; st.series = 0; }
+      else { st.from = st.pick; st.to = n; st.pick = null; }
+      sync(); render();
+    }
+    buildSeg('from-seg', 'from'); buildSeg('to-seg', 'to');
+    Array.prototype.forEach.call(document.getElementById('series-seg').querySelectorAll('button'), function(b){
+      b.addEventListener('click', function(){ st.series = parseInt(b.getAttribute('data-series'), 10); st.pick = null; sync(); render(); });
+    });
+    sync(); render();
+  })();
+
+  // ================= TRÉNINK: typy příkladů =================
+  var H_ = 6.63e-34, C = 3.00e8, EV = 1.60e-19, E1 = 13.6;
+  var TR_TYPES = [
+    { key:'foton-ev', name:'Energie fotonu v eV', gen:function(){
+      var lam = randInt(10, 200) * 5, E = H_ * C / (lam * 1e-9), Eev = E / EV;
+      return { cat:'Energie fotonu', signature:'e' + lam,
+        task:'Jakou energii v elektronvoltech má foton záření o vlnové délce ' + tex(lam + '\\ \\mathrm{nm}') + '?',
+        lhs:'E', unit:'\\mathrm{eV}', sci:false, exact:Eev,
+        given:['\\lambda = ' + lam + '\\ \\mathrm{nm} = ' + numTex(lam * 1e-9, 3, true) + '\\ \\mathrm{m}'], find:['E\\ \\text{v eV}'],
+        steps:['E = \\dfrac{hc}{\\lambda} = \\dfrac{6{,}63\\cdot 10^{-34}\\cdot 3{,}00\\cdot 10^{8}}{' + numTex(lam * 1e-9, 3, true) + '}\\ \\mathrm{J} \\doteq ' + numTex(E, 3, true) + '\\ \\mathrm{J}',
+               'E = \\dfrac{' + numTex(E, 3, true) + '}{1{,}60\\cdot 10^{-19}}\\ \\mathrm{eV}'],
+        final:'E \\doteq ' + numTex(Eev, 3) + '\\ \\mathrm{eV}' };
+    }},
+    { key:'foton-j', name:'Energie fotonu v J', gen:function(){
+      var f = randInt(20, 300) / 10 * 1e14, E = H_ * f;
+      return { cat:'Energie fotonu', signature:'j' + f,
+        task:'Jakou energii má foton elektromagnetického záření o frekvenci ' + tex(numTex(f, 3, true) + '\\ \\mathrm{Hz}') + '?',
+        lhs:'E', unit:'\\mathrm{J}', sci:true, exact:E,
+        given:['f = ' + numTex(f, 3, true) + '\\ \\mathrm{Hz}'], find:['E'],
+        steps:['E = hf = 6{,}63\\cdot 10^{-34}\\cdot ' + numTex(f, 3, true) + '\\ \\mathrm{J}'],
+        final:'E \\doteq ' + numTex(E, 3, true) + '\\ \\mathrm{J}' };
+    }},
+    { key:'prechod', name:'Přechod mezi hladinami', gen:function(){
+      var m = randInt(1, 3), n = m + randInt(1, 4), dE = E1 * (1 / (m * m) - 1 / (n * n)), lam = H_ * C / (dE * EV) * 1e9;
+      var em = Math.random() < 0.7;
+      return { cat:'Přechod mezi hladinami', signature:'p' + m + n + em,
+        task:(em ? 'Elektron v atomu vodíku přejde z hladiny ' + tex('n = ' + n) + ' na hladinu ' + tex('n = ' + m) + '. Jakou vlnovou délku má vyzářený foton?'
+                 : 'Atom vodíku pohltí foton a elektron přejde z hladiny ' + tex('n = ' + m) + ' na hladinu ' + tex('n = ' + n) + '. Jakou vlnovou délku měl foton?'),
+        lhs:'\\lambda', unit:'\\mathrm{nm}', sci:false, exact:lam,
+        given:[(em ? 'n_1 = ' + n + ',\\ n_2 = ' + m : 'n_1 = ' + m + ',\\ n_2 = ' + n), 'E_n = -\\dfrac{13{,}6\\ \\mathrm{eV}}{n^2}'], find:['\\lambda'],
+        steps:['\\Delta E = 13{,}6\\cdot\\left(\\dfrac{1}{' + m + '^2} - \\dfrac{1}{' + n + '^2}\\right)\\ \\mathrm{eV} \\doteq ' + numTex(dE, 3) + '\\ \\mathrm{eV} \\doteq ' + numTex(dE * EV, 3, true) + '\\ \\mathrm{J}',
+               '\\lambda = \\dfrac{hc}{\\Delta E} = \\dfrac{6{,}63\\cdot 10^{-34}\\cdot 3{,}00\\cdot 10^{8}}{' + numTex(dE * EV, 3, true) + '}\\ \\mathrm{m} \\doteq ' + numTex(lam * 1e-9, 3, true) + '\\ \\mathrm{m}'],
+        final:'\\lambda \\doteq ' + numTex(lam, 3) + '\\ \\mathrm{nm}' };
+    }},
+    { key:'hladina', name:'Energie hladiny', gen:function(){
+      var n = randInt(1, 8), En = -E1 / (n * n);
+      return { cat:'Energetické hladiny vodíku', signature:'h' + n,
+        task:'Jakou energii má atom vodíku, je-li elektron na hladině ' + tex('n = ' + n) + '? (Zadejte i se znaménkem.)',
+        lhs:'E_{' + n + '}', unit:'\\mathrm{eV}', sci:false, exact:En,
+        given:['n = ' + n], find:['E_{' + n + '}'],
+        steps:['E_{' + n + '} = -\\dfrac{13{,}6\\ \\mathrm{eV}}{' + n + '^2} = -\\dfrac{13{,}6}{' + (n * n) + '}\\ \\mathrm{eV}'],
+        final:'E_{' + n + '} \\doteq ' + numTex(En, 3) + '\\ \\mathrm{eV}' };
+    }},
+    { key:'ionizace', name:'Ionizace', gen:function(){
+      var n = randInt(1, 5), Ei = E1 / (n * n), lam = H_ * C / (Ei * EV) * 1e9;
+      return { cat:'Ionizace atomu vodíku', signature:'i' + n,
+        task:'Jakou největší vlnovou délku může mít foton, který ionizuje atom vodíku s elektronem na hladině ' + tex('n = ' + n) + '?',
+        lhs:'\\lambda_\\mathrm{max}', unit:'\\mathrm{nm}', sci:false, exact:lam,
+        given:['n = ' + n], find:['\\lambda_\\mathrm{max}'],
+        steps:['E_\\mathrm{i} = |E_{' + n + '}| = \\dfrac{13{,}6}{' + (n * n) + '}\\ \\mathrm{eV} \\doteq ' + numTex(Ei, 3) + '\\ \\mathrm{eV} \\doteq ' + numTex(Ei * EV, 3, true) + '\\ \\mathrm{J}',
+               '\\lambda_\\mathrm{max} = \\dfrac{hc}{E_\\mathrm{i}} = \\dfrac{6{,}63\\cdot 10^{-34}\\cdot 3{,}00\\cdot 10^{8}}{' + numTex(Ei * EV, 3, true) + '}\\ \\mathrm{m}'],
+        final:'\\lambda_\\mathrm{max} \\doteq ' + numTex(lam, 3) + '\\ \\mathrm{nm}' };
+    }}
+  ];
+
+  // ================= TRÉNINK (číselná odpověď) =================
+  // Typy příkladů definuje stránka v poli TR_TYPES: { key, name, gen } — gen() vrátí úlohu
+  // { cat, task, lhs, unit, sci, exact, sig, tol, integer, given[], find[], steps[], final }.
+  var trState = {
+    type:'all', score:0, streak:0, bestStreak:0, answered:0, correct:0,
+    current:null, lastSig:'', locked:false, touched:false
+  };
+  var TR_STATS_KEY = 'fyzika:bohruv-model:stats';
+  var trInputs = ['answer', 'answer-m', 'answer-e'];
+
+  function trLoadStats(){
+    try{ var raw = localStorage.getItem(TR_STATS_KEY); if(raw){ trState.bestStreak = JSON.parse(raw).bestStreak || 0; } }catch(e){}
+  }
+  function trSaveStats(){
+    try{ localStorage.setItem(TR_STATS_KEY, JSON.stringify({bestStreak: trState.bestStreak})); }catch(e){}
+  }
+  function trParse(str){
+    if(!str) return NaN;
+    str = str.trim().replace(/[−–]/g, '-').replace(',', '.').replace(/\s+/g, '');
+    return /^-?\d*\.?\d+$|^-?\d+\.$/.test(str) ? parseFloat(str) : NaN;
+  }
+  function trGenerate(){
+    var list = trState.type === 'all' ? TR_TYPES : TR_TYPES.filter(function(t){ return t.key === trState.type; });
+    var q = pick(list).gen(), tries = 0;
+    while(q.signature && q.signature === trState.lastSig && tries < 20){ q = pick(list).gen(); tries++; }
+    trState.lastSig = q.signature || '';
+    trState.current = q;
+    trState.locked = false; trState.touched = false;
+    trRender();
+  }
+  function trRender(){
+    var q = trState.current;
+    document.getElementById('cat-tag').textContent = q.cat;
+    document.getElementById('task-text').innerHTML = q.task;
+    document.getElementById('eq-given').innerHTML = tex(q.lhs);
+    document.getElementById('eq-unit').innerHTML = q.unit ? tex(q.unit) : '';
+    document.getElementById('slot-sci').hidden = !q.sci;
+    document.getElementById('slot-dec').hidden = !!q.sci;
+    trInputs.forEach(function(id){
+      var el = document.getElementById(id);
+      el.value = ''; el.disabled = false; el.classList.remove('correct', 'wrong');
+    });
+    var fb = document.getElementById('feedback');
+    fb.hidden = true; fb.classList.remove('ok', 'bad', 'sol');
+    document.getElementById('feedback-tip').hidden = true;
+    document.getElementById('btn-check').textContent = 'Zkontrolovat';
+    var first = document.getElementById(q.sci ? 'answer-m' : 'answer');
+    if(!document.getElementById('trenink-section').hidden) first.focus();
+  }
+  function trUserValue(){
+    var q = trState.current;
+    if(q.sci){
+      var m = trParse(document.getElementById('answer-m').value);
+      var es = document.getElementById('answer-e').value.trim().replace(/[−–]/g, '-');
+      var e = es === '' ? 0 : parseInt(es, 10);
+      if(isNaN(m) || isNaN(e)) return NaN;
+      return m * Math.pow(10, e);
+    }
+    return trParse(document.getElementById('answer').value);
+  }
+  function trIsEmpty(){ return isNaN(trUserValue()); }
+  function trMark(cls){
+    (trState.current.sci ? ['answer-m', 'answer-e'] : ['answer']).forEach(function(id){ document.getElementById(id).classList.add(cls); });
+  }
+  function trLock(){
+    trInputs.forEach(function(id){ document.getElementById(id).disabled = true; });
+    trState.locked = true;
+    var b = document.getElementById('btn-check');
+    b.textContent = 'Další příklad →';
+    b.focus();
+    trUpdateStats();
+  }
+  function trShowSolution(){
+    var q = trState.current;
+    // KaTeX vkládá do cest SVG (odmocnina) zalomení řádků; FyzikaReseni dělí řádky podle \n, proto je odstraníme
+    function t1(s){ return tex(s).replace(/\n/g, ' '); }
+    FyzikaReseni.show(document.getElementById('feedback'), document.getElementById('feedback-steps'), {
+      raw:true,
+      given:(q.given || []).map(t1),
+      find:(q.find || []).map(t1),
+      steps:(q.steps || []).map(t1),
+      final:q.final ? t1(q.final) : '',
+      note:q.note || ''
+    });
+  }
+  function trIsCorrect(v){
+    var q = trState.current;
+    if(isNaN(v)) return false;
+    if(q.integer) return Math.abs(v - q.exact) < 1e-9;
+    var tol = q.tol === undefined ? 0.01 : q.tol;
+    return Math.abs(v - q.exact) <= tol * Math.abs(q.exact) + 1e-300;
+  }
+  function trCheck(){
+    if(trState.locked){ trGenerate(); return; }
+    var v = trUserValue(), ok = trIsCorrect(v), q = trState.current;
+    trState.answered++;
+    var fb = document.getElementById('feedback'), head = document.getElementById('feedback-headline');
+    var tip = document.getElementById('feedback-tip');
+    fb.hidden = false; tip.hidden = true;
+    if(ok){
+      trState.score += 10; trState.streak++; trState.correct++;
+      if(trState.streak > trState.bestStreak){
+        trState.bestStreak = trState.streak; trSaveStats();
+        if(window.FyzikaScores) FyzikaScores.report('serie', trState.bestStreak, false);
+      }
+      trMark('correct'); fb.classList.add('ok'); fb.classList.remove('bad');
+      head.textContent = 'Správně!';
+    } else {
+      trState.streak = 0; trMark('wrong'); fb.classList.add('bad'); fb.classList.remove('ok');
+      head.textContent = isNaN(v) ? 'Doplňte odpověď.' : 'Bohužel špatně.';
+      if(!isNaN(v) && q.sci && !isNaN(q.exact) && q.exact !== 0){
+        var r = v / q.exact, lg = Math.log10(Math.abs(r));
+        if(Math.abs(lg - Math.round(lg)) < 0.005 && Math.round(lg) !== 0){
+          tip.hidden = false;
+          tip.textContent = 'Mantisa je správně, chyba je v exponentu (o ' + Math.abs(Math.round(lg)) + ' řád' + (Math.abs(Math.round(lg)) === 1 ? '' : Math.abs(Math.round(lg)) < 5 ? 'y' : 'ů') + ').';
+        }
+      }
+    }
+    trShowSolution(); trLock();
+  }
+  function trSkip(){
+    if(trState.locked){ trGenerate(); return; }
+    trState.streak = 0; trState.answered++;
+    var fb = document.getElementById('feedback');
+    fb.hidden = false; fb.classList.add('bad'); fb.classList.remove('ok');
+    document.getElementById('feedback-tip').hidden = true;
+    document.getElementById('feedback-headline').textContent = 'Správný postup:';
+    trShowSolution(); trLock();
+  }
+  function trUpdateStats(){
+    document.getElementById('stat-score').textContent = trState.score;
+    document.getElementById('stat-streak').textContent = trState.streak + (trState.bestStreak > 0 ? ' / ' + trState.bestStreak : '');
+    document.getElementById('stat-accuracy').textContent = trState.answered === 0 ? '—' : Math.round(100 * trState.correct / trState.answered) + ' %';
+  }
+  // Rozdělanou úlohu před změnou nastavení nejdřív vyhodnotí (stejná logika jako na ostatních stránkách).
+  function trSettle(){
+    if(trState.locked) return 'locked';
+    if(!trState.touched) return 'untouched';
+    if(trIsEmpty() && !confirm('Odpověď není vyplněná. Opravdu chcete změnit nastavení?')) return 'cancelled';
+    trCheck();
+    return 'settled';
+  }
+  (function(){
+    var row = document.getElementById('type-row');
+    var items = [{ key:'all', name:'Vše' }].concat(TR_TYPES);
+    items.forEach(function(d){
+      var b = document.createElement('button');
+      b.className = 'chip accented' + (d.key === trState.type ? ' on' : '');
+      b.type = 'button';
+      b.setAttribute('aria-pressed', d.key === trState.type ? 'true' : 'false');
+      b.textContent = d.name;
+      b.addEventListener('click', function(){
+        if(d.key === trState.type) return;
+        var res = trSettle();
+        if(res === 'cancelled') return;
+        trState.type = d.key;
+        setPressed(row, b);
+        if(res === 'locked' || res === 'untouched'){ trGenerate(); }
+      });
+      row.appendChild(b);
+    });
+  })();
+  function tryCheck(){
+    if(trState.locked){ trGenerate(); return; }
+    if(trIsEmpty() && !confirm('Odpověď není vyplněná. Opravdu chcete zkontrolovat?')) return;
+    trCheck();
+  }
+  function trySkip(){
+    if(trState.locked){ trGenerate(); return; }
+    trSkip();
+  }
+  document.getElementById('btn-check').addEventListener('click', tryCheck);
+  document.getElementById('btn-skip').addEventListener('click', trySkip);
+  trInputs.forEach(function(id){
+    var el = document.getElementById(id);
+    sanitizeNumericInput(el, id !== 'answer-e');
+    el.addEventListener('input', function(){ trState.touched = true; });
+    el.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); tryCheck(); } });
+  });
+  document.getElementById('reset-stats').addEventListener('click', function(){
+    trState.score = 0; trState.streak = 0; trState.answered = 0; trState.correct = 0; trState.bestStreak = 0;
+    try{ localStorage.removeItem(TR_STATS_KEY); }catch(e){}
+    trUpdateStats();
+  });
+  document.addEventListener('fyzika:scores-updated', function(){ trState.bestStreak = 0; trLoadStats(); trUpdateStats(); });
+  document.getElementById('top-tab-trenink').addEventListener('click', function(){
+    setTimeout(function(){ if(!trState.locked){ var q = trState.current; document.getElementById(q.sci ? 'answer-m' : 'answer').focus(); } }, 0);
+  });
+
+  trLoadStats();
+  trUpdateStats();
+  trGenerate();
+})();
+</script>
+</body>
+</html>

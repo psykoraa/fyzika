@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fotoelektrický jev</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../spolecne/config.js"></script>
+<script src="../spolecne/auth.js"></script>
+<script src="../spolecne/zalozky.js?v=3"></script>
+<link rel="stylesheet" href="../spolecne/styl.css">
+<link rel="stylesheet" href="../spolecne/reseni.css?v=1">
+<style>
+:root{
+  --paper:#eff1f8;
+  --surface:#fcfdff;
+  --surface-2:#dde1f1;
+  --ink:#1d2340;
+  --ink-soft:#5b6282;
+  --line:rgba(29,35,64,0.12);
+  --accent:#2e3f8f;
+  --accent-ink:#f5f7ff;
+  --success:#28794f;
+  --success-bg:#e3efe0;
+  --danger:#b3392b;
+  --danger-bg:#f5e4de;
+  --focus:#1e6f66;
+  --shadow:0 1px 0 rgba(29,35,64,0.06);
+  /* barvy v apletu: elektrony, kovová destička */
+  --electron:#2f6fd0;
+  --metal:#9c97ab;
+}
+
+.panel{ margin-bottom:22px; }
+.panel-title{ margin-bottom:8px; }
+.panel p{
+  margin:0 0 8px;
+  font-size:0.9rem;
+  line-height:1.55;
+}
+.panel p:last-child{ margin-bottom:0; }
+.panel b{ color:var(--ink); }
+.panel ul, .panel ol{ margin:0 0 8px; padding-left:22px; font-size:0.9rem; line-height:1.55; }
+.panel li{ margin-bottom:4px; }
+.panel h3{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.05rem;
+  letter-spacing:0.01em;
+  margin:16px 0 6px;
+}
+.panel h3:first-child{ margin-top:0; }
+
+.card{ padding:26px 26px 28px; text-align:left; margin-bottom:24px; }
+.cat-tag{ margin-bottom:10px; }
+.card h2{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.6rem;
+  letter-spacing:0.02em;
+  color:var(--ink);
+  text-transform:none;
+  margin-bottom:6px;
+}
+.card .desc{
+  font-size:0.86rem;
+  color:var(--ink-soft);
+  line-height:1.5;
+  margin:0 0 14px;
+}
+
+.katex{ font-size:1.05em; }
+.formula-box{
+  background:var(--surface-2);
+  border-radius:8px;
+  padding:12px 16px;
+  margin:10px 0;
+  font-size:1.1rem;
+  text-align:center;
+}
+.formula-line{
+  text-align:center;
+  font-size:1.1rem;
+  color:var(--ink);
+  line-height:1.8;
+}
+.line-scroll{
+  position:relative;
+  white-space:nowrap;
+  overflow-x:auto;
+  overflow-y:hidden;
+  padding:2px 0 4px;
+}
+.step-result{ max-width:100%; }
+.step-result > .line-scroll{ min-width:0; max-width:100%; }
+.given-data{
+  font-size:clamp(0.9rem, 2.4vw, 1.05rem);
+  color:var(--ink-soft);
+  margin-bottom:20px;
+}
+
+.theory-table-wrap{ overflow-x:auto; margin:6px 0 4px; }
+.theory-table{
+  border-collapse:collapse;
+  font-size:0.88rem;
+  width:100%;
+  min-width:320px;
+}
+.theory-table th, .theory-table td{
+  border:1px solid var(--line);
+  padding:8px 12px;
+  text-align:left;
+}
+.theory-table thead th{
+  background:var(--surface-2);
+  color:var(--ink-soft);
+  font-weight:600;
+  font-size:0.72rem;
+  text-transform:uppercase;
+  letter-spacing:0.05em;
+}
+.theory-table td.mono, .theory-table th.mono{
+  font-family:'IBM Plex Mono', monospace;
+  font-variant-numeric:tabular-nums;
+  text-align:center;
+}
+.theory-table tbody tr:nth-child(even) td{ background:rgba(0,0,0,0.02); }
+
+.theory-fig{
+  margin:12px 0 10px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:10px 12px 8px;
+}
+.theory-fig svg{ display:block; width:100%; max-width:560px; height:auto; margin:0 auto; }
+.theory-fig figcaption{
+  font-size:0.8rem;
+  color:var(--ink-soft);
+  line-height:1.45;
+  text-align:center;
+  margin-top:4px;
+}
+
+.example-grid{ display:flex; flex-direction:column; gap:12px; margin-top:6px; }
+.example-item{
+  background:var(--surface-2);
+  border-radius:10px;
+  padding:12px 14px;
+}
+.example-tag{
+  font-size:0.66rem;
+  text-transform:uppercase;
+  letter-spacing:0.06em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-bottom:6px;
+  display:block;
+}
+.example-eq{
+  font-size:1.05rem;
+  margin-bottom:4px;
+}
+.example-note{ font-size:0.82rem; color:var(--ink-soft); line-height:1.45; }
+
+.links{ margin-top:14px; display:flex; flex-wrap:wrap; gap:10px; justify-content:center; }
+a.btn-link{
+  display:inline-block;
+  font-weight:600;
+  font-size:0.95rem;
+  padding:10px 22px;
+  border-radius:8px;
+  background:var(--accent);
+  color:var(--accent-ink);
+  text-decoration:none;
+}
+a.btn-link:hover{ filter:brightness(1.06); }
+a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+
+.credit{
+  margin-top:24px;
+  font-size:0.8rem;
+  line-height:1.5;
+  color:var(--ink-soft);
+  text-align:center;
+}
+.credit a{ color:inherit; }
+
+
+/* ---- aplety: karta, řádky ovládání, kreslicí plocha, výstupy ---- */
+.applet-head .cat-tag{ margin-bottom:10px; }
+.mode-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:16px;
+  padding-top:14px;
+  border-top:1px solid var(--line);
+}
+.mode-row-label{
+  font-size:0.68rem;
+  text-transform:uppercase;
+  letter-spacing:0.1em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-right:2px;
+  flex:0 0 170px;
+}
+.seg{ display:flex; gap:6px; flex-wrap:wrap; }
+.chip{ font-size:0.82rem; gap:7px; }
+.chip.accented.on{ background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+.chip:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+.slider-wrap{ display:flex; align-items:center; gap:12px; flex:1 1 260px; min-width:0; }
+.slider-wrap input[type=range]{ flex:1 1 auto; min-width:0; accent-color:var(--accent); height:28px; }
+.slider-val{ font-family:'IBM Plex Mono', monospace; font-weight:600; font-size:0.92rem; white-space:nowrap; min-width:6.5em; text-align:right; }
+.canvas-wrap{
+  position:relative;
+  margin-top:18px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:10px;
+  overflow:hidden;
+}
+svg.scene{ width:100%; height:auto; display:block; background:var(--surface); user-select:none; -webkit-user-select:none; touch-action:manipulation; }
+svg.scene text{ font-family:'Work Sans', sans-serif; }
+.legend{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 18px;
+  padding:10px 14px;
+  border-top:1px solid var(--line);
+  font-size:0.78rem;
+  color:var(--ink-soft);
+}
+.legend span{ display:inline-flex; align-items:center; gap:7px; }
+.legend i{ font-style:normal; display:inline-block; width:12px; height:12px; border-radius:50%; background:var(--c); }
+.applet-out{
+  display:flex; flex-wrap:wrap; gap:8px 22px; margin-top:14px;
+  font-size:0.92rem; line-height:1.5;
+}
+.applet-out b{ font-variant-numeric:tabular-nums; }
+.applet-note{ font-size:0.86rem; color:var(--ink-soft); margin:10px 0 0; line-height:1.5; }
+.applet-actions{ display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+.applet-card + .applet-card{ margin-top:4px; }
+.nw{ white-space:nowrap; }
+@media (max-width:720px){
+  .mode-row-label{ flex-basis:100%; }
+}
+.mode-row-label i{ text-transform:none; }
+
+/* ---- trénink s číselnou odpovědí ---- */
+.section-block{ margin-bottom:16px; }
+.section-block:last-child{ margin-bottom:0; }
+.task-text{ font-size:0.92rem; color:var(--ink); line-height:1.55; text-align:center; margin:4px 0 18px; }
+.equation{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:600;
+  font-size:clamp(1.25rem, 4.2vw, 1.9rem);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:0.35em;
+  flex-wrap:wrap;
+  font-variant-numeric:tabular-nums;
+}
+.equation .unit{ color:var(--ink-soft); font-size:0.7em; margin-left:0.1em; }
+.equation .eq{ color:var(--ink-soft); margin:0 0.1em; }
+.equation .katex{ font-size:1em; }
+.equation .answer-input{ width:5.2em; }
+.answer-input.sci-mantissa{ width:3.6em; }
+.sci-group{ display:inline-flex; align-items:baseline; gap:0.12em; }
+.sci-times{ font-size:0.65em; color:var(--ink-soft); margin:0 0.02em; }
+.sci-exp{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:600;
+  width:2.4em;
+  text-align:center;
+  border:none;
+  border-bottom:2px solid var(--ink-soft);
+  background:transparent;
+  color:var(--ink);
+  font-size:0.55em;
+  vertical-align:top;
+  padding:0 0.05em;
+}
+.sci-exp:focus{ outline:none; border-color:var(--focus); }
+.sci-exp.correct{ border-color:var(--success); color:var(--success); }
+.sci-exp.wrong{ border-color:var(--danger); color:var(--danger); }
+.const-box{ font-size:0.82rem; color:var(--ink-soft); line-height:1.6; margin:0; }
+.feedback .tip{ font-size:0.78rem; color:var(--ink); opacity:0.75; margin-top:6px; font-style:italic; }
+
+@media (max-width:520px){
+  .card{ padding:20px 16px 22px; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <a class="back-link" href="../rozcestniky/oktava.html">← Zpět na Oktáva/4. ročník</a>
+
+  <div class="brand">
+    <div class="brand-lockup">
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect x="4" y="30" width="32" height="6" rx="1" fill="var(--ink-soft)"/>
+        <path d="M6,4 q2,3 4,0 t4,0 t4,0" stroke="var(--accent)" stroke-width="1.6" fill="none" transform="rotate(50 12 8)"/>
+        <path d="M14,24 L14,28" stroke="var(--accent)" stroke-width="1.6"/>
+        <circle cx="26" cy="18" r="2.6" fill="var(--focus)"/>
+        <path d="M23,27 L32,9" stroke="var(--focus)" stroke-width="1.6"/>
+        <path d="M28.5,10 L32,9 L32.6,12.6" stroke="var(--focus)" stroke-width="1.6" fill="none"/>
+      </svg>
+      <div class="brand-text">
+        <h1>Fotoelektrický jev</h1>
+        <p>atomová a částicová fyzika — Einsteinova rovnice fotoefektu</p>
+      </div>
+    </div>
+    <div class="readout" id="header-readout" hidden>
+      <div class="cell"><span class="label">Skóre</span><span class="value" id="stat-score">0</span></div>
+      <div class="cell"><span class="label">Série</span><span class="value" id="stat-streak">0</span></div>
+      <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="stat-accuracy">—</span></div>
+    </div>
+  </div>
+
+  <div class="top-tabs">
+    <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+    <button class="toptab" id="top-tab-aplet" data-tab="aplet">Fotoefekt</button>
+    <button class="toptab" id="top-tab-trenink" data-tab="trenink">Trénink</button>
+  </div>
+
+  <!-- ============ TEORIE ============ -->
+  <div id="theory-section" class="tab-section">
+
+    <div class="panel">
+      <div class="panel-title">Pokus se zinkovou destičkou</div>
+      <p>Na elektroskop připevníme zinkovou destičku očištěnou smirkovým papírem a nabijeme ji záporně. Výchylka ručky elektroskopu ukazuje, že destička nese náboj.</p>
+      <ul>
+        <li>Posvítíme-li na destičku silnou lampou (viditelné světlo), elektroskop zůstane nabitý — <b>i když je světla hodně</b>.</li>
+        <li>Posvítíme-li na ni ultrafialovou rtuťovou výbojkou, elektroskop se během několika sekund vybije.</li>
+        <li>Vložíme-li mezi výbojku a destičku skleněnou desku, která ultrafialové záření pohlcuje, vybíjení ustane.</li>
+        <li>Kladně nabitá destička se při osvětlení nevybíjí vůbec.</li>
+      </ul>
+      <p>Vysvětlení: ultrafialové záření vytrhává z povrchu kovu elektrony. Ze záporně nabité destičky odlétají a náboj se zmenšuje; ke kladně nabité destičce se uvolněné elektrony hned zase přitáhnou. Tento jev se nazývá <b>fotoelektrický jev</b> (fotoefekt).</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Vnější a vnitřní fotoelektrický jev</div>
+      <p>Při <b>vnějším fotoefektu</b> elektrony z osvětlené látky úplně vyletí (fotoemise). Využívá se ve <b>fotonce</b> — vakuové baňce s fotokatodou (např. z cesia) a anodou; při osvětlení katody prochází obvodem proud.</p>
+      <p>Při <b>vnitřním fotoefektu</b> zůstávají uvolněné elektrony uvnitř látky, ale stanou se volnými a zvýší její vodivost. Na tom je založen <b>fotorezistor</b>: ve tmě má velký odpor (desítky až stovky kΩ), na světle jen jednotky kΩ. Polovodičové <b>fotodiody</b> a <b>fotočlánky</b> se při osvětlení samy stávají zdrojem napětí — tak fungují solární panely, čidla ve fotoaparátech, světelné závory nebo automatické rozsvěcování lamp.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Co pokusy ukázaly</div>
+      <p>Podrobné měření s fotonkou přineslo tři zákonitosti, které klasická vlnová teorie světla vysvětlit nedokázala:</p>
+      <ol>
+        <li>Pro každý kov existuje <b>mezní frekvence</b> \(f_0\) (a jí odpovídající <b>mezní vlnová délka</b> \(\lambda_0\)). Při nižší frekvenci fotoefekt nenastane, ať je záření jakkoli silné. Cesium uvolňuje elektrony už viditelným světlem (\(\lambda_0 = 642\ \mathrm{nm}\)), stříbro až ultrafialovým zářením (\(\lambda_0 = 264\ \mathrm{nm}\)).</li>
+        <li>Je-li frekvence větší než mezní, je fotoelektrický proud <b>úměrný intenzitě</b> záření.</li>
+        <li>Kinetická energie uvolněných elektronů <b>roste lineárně s frekvencí</b> záření a na intenzitě nezávisí.</li>
+      </ol>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M9 2.5 L16 15.5 H2 Z" stroke="var(--danger)" stroke-width="1.4" stroke-linejoin="round"/>
+          <line x1="9" y1="7" x2="9" y2="11.5" stroke="var(--danger)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="13.6" r="1" fill="var(--danger)"/>
+        </svg>
+        <p>Podle klasické fyziky by silná vlna měla elektronům předat víc energie než slabá — elektroskop by se měl vybíjet i silným viditelným světlem. Neděje se to.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Einsteinova rovnice fotoefektu</div>
+      <p><b>A. Einstein</b> vysvětlil fotoefekt v roce 1905 (dostal za to Nobelovu cenu). Vzal Planckova kvanta vážně: světlo se chová jako proud částic — fotonů o energii \(hf\). Jeden foton předá celou svou energii vždy <b>jednomu</b> elektronu. Část energie se spotřebuje na uvolnění elektronu z kovu (<b>výstupní práce</b> \(W_\mathrm{v}\)), zbytek si elektron odnese jako kinetickou energii:</p>
+      <div class="formula-box">\[ hf = W_\mathrm{v} + E_\mathrm{k} \]</div>
+      <p>Na mezní frekvenci vyletí elektron s nulovou kinetickou energií, proto</p>
+      <div class="formula-box">\[ hf_0 = W_\mathrm{v} \quad\Rightarrow\quad f_0 = \frac{W_\mathrm{v}}{h}, \qquad \lambda_0 = \frac{hc}{W_\mathrm{v}} \]</div>
+      <p>Tím jsou vysvětleny všechny tři zákonitosti: foton s energií menší než \(W_\mathrm{v}\) elektron neuvolní (a elektron nemůže „nastřádat“ energii z více fotonů); větší intenzita znamená víc fotonů, a tedy víc elektronů (větší proud); a \(E_\mathrm{k} = hf - W_\mathrm{v}\) je lineární funkce frekvence.</p>
+      <figure class="theory-fig">
+        <svg viewBox="0 0 440 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Graf kinetické energie elektronů v závislosti na frekvenci pro cesium a stříbro: dvě rovnoběžné přímky se směrnicí h, začínají na mezních frekvencích 467 THz a 1136 THz.">
+          <defs><marker id="fe-ax" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink)"/></marker></defs>
+          <g stroke="var(--line)" stroke-width="1">
+            <line x1="60" y1="155" x2="400" y2="155"/><line x1="60" y1="110" x2="400" y2="110"/><line x1="60" y1="65" x2="400" y2="65"/><line x1="60" y1="20" x2="400" y2="20"/>
+            <line x1="128" y1="20" x2="128" y2="200"/><line x1="196" y1="20" x2="196" y2="200"/><line x1="264" y1="20" x2="264" y2="200"/><line x1="332" y1="20" x2="332" y2="200"/><line x1="400" y1="20" x2="400" y2="200"/>
+          </g>
+          <line x1="60" y1="200" x2="418" y2="200" stroke="var(--ink)" stroke-width="1.5" marker-end="url(#fe-ax)"/>
+          <line x1="60" y1="200" x2="60" y2="8" stroke="var(--ink)" stroke-width="1.5" marker-end="url(#fe-ax)"/>
+          <line x1="123.5" y1="200" x2="386.5" y2="20" stroke="var(--focus)" stroke-width="2.6"/>
+          <line x1="214.5" y1="200" x2="400" y2="73.1" stroke="var(--accent)" stroke-width="2.6"/>
+          <circle cx="123.5" cy="200" r="3.5" fill="var(--focus)"/><circle cx="214.5" cy="200" r="3.5" fill="var(--accent)"/>
+          <g font-family="IBM Plex Mono, monospace" font-size="10" fill="var(--ink-soft)" text-anchor="middle">
+            <text x="128" y="214">0,5</text><text x="196" y="214">1,0</text><text x="264" y="214">1,5</text><text x="332" y="214">2,0</text><text x="400" y="214">2,5</text>
+          </g>
+          <g font-family="IBM Plex Mono, monospace" font-size="10" fill="var(--ink-soft)" text-anchor="end">
+            <text x="54" y="158">2</text><text x="54" y="113">4</text><text x="54" y="68">6</text><text x="54" y="23">8</text>
+          </g>
+          <text x="418" y="232" text-anchor="end" font-family="Work Sans, sans-serif" font-size="11" fill="var(--ink)"><tspan font-style="italic">f</tspan> (10¹⁵ Hz)</text>
+          <text x="66" y="12" font-family="Work Sans, sans-serif" font-size="11" fill="var(--ink)"><tspan font-style="italic">E</tspan><tspan font-size="8" dy="2">k</tspan><tspan dy="-2"> (eV)</tspan></text>
+          <text x="250" y="96" font-family="Work Sans, sans-serif" font-size="12" fill="var(--focus)">cesium</text>
+          <text x="330" y="150" font-family="Work Sans, sans-serif" font-size="12" fill="var(--accent)">stříbro</text>
+          <text x="118" y="190" text-anchor="end" font-family="Work Sans, sans-serif" font-size="11" fill="var(--focus)"><tspan font-style="italic">f</tspan><tspan font-size="8" dy="2">0</tspan></text>
+          <text x="209" y="190" text-anchor="end" font-family="Work Sans, sans-serif" font-size="11" fill="var(--accent)"><tspan font-style="italic">f</tspan><tspan font-size="8" dy="2">0</tspan></text>
+        </svg>
+        <figcaption>\(E_\mathrm{k} = hf - W_\mathrm{v}\): pro všechny kovy jsou to rovnoběžné přímky se směrnicí \(h\); liší se jen mezní frekvencí \(f_0 = W_\mathrm{v}/h\) (cesium 467&nbsp;THz, stříbro 1&nbsp;136&nbsp;THz).</figcaption>
+      </figure>
+      <p>Kinetickou energii elektronů lze změřit <b>brzdným napětím</b> \(U_0\), při kterém proud fotonkou právě klesne na nulu: \(eU_0 = E_\mathrm{k}\). Ze směrnice přímky \(U_0(f)\) změřil R. Millikan v roce 1916 Planckovu konstantu.</p>
+    </div>
+
+    <div class="card">
+      <span class="cat-tag">Příklad</span>
+      <h2>Proč zinek vybíjí ultrafialová výbojka a lampa ne?</h2>
+      <p class="desc">Výstupní práce zinku je asi 4,3&nbsp;eV. Rtuťová výbojka vyzařuje silně na vlnové délce 254&nbsp;nm. Nastane fotoefekt? Jakou rychlostí vyletují elektrony? A co fialové světlo 400&nbsp;nm?</p>
+      <div class="given-data">
+        <div class="given-line">Zadáno: \(W_\mathrm{v} = 4{,}3\ \mathrm{eV}\), \(\lambda = 254\ \mathrm{nm}\), \(m_\mathrm{e} = 9{,}11\cdot 10^{-31}\ \mathrm{kg}\)</div>
+      </div>
+      <div class="stepper" data-reset="reset-zn">
+        <div class="step" data-step="1">
+          <div class="step-connector"></div>
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">1</span>
+            <span class="step-title">Energie fotonu výbojky</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <div class="step-result"><div class="line-scroll">\(E = \dfrac{hc}{\lambda} = \dfrac{6{,}626\cdot 10^{-34}\cdot 2{,}998\cdot 10^{8}}{254\cdot 10^{-9}}\ \mathrm{J} \doteq 7{,}82\cdot 10^{-19}\ \mathrm{J} \doteq 4{,}88\ \mathrm{eV}\)</div></div>
+            <p>\(4{,}88\ \mathrm{eV} > 4{,}3\ \mathrm{eV}\) — fotoefekt nastane.</p>
+          </div>
+        </div>
+        <div class="step" data-step="2">
+          <div class="step-connector"></div>
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">2</span>
+            <span class="step-title">Kinetická energie elektronů</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <div class="step-result"><div class="line-scroll">\(E_\mathrm{k} = E - W_\mathrm{v} = 4{,}88\ \mathrm{eV} - 4{,}3\ \mathrm{eV} \doteq 0{,}58\ \mathrm{eV} \doteq 9{,}3\cdot 10^{-20}\ \mathrm{J}\)</div></div>
+          </div>
+        </div>
+        <div class="step" data-step="3">
+          <div class="step-connector"></div>
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">3</span>
+            <span class="step-title">Rychlost elektronů</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <div class="step-result"><div class="line-scroll">\(v = \sqrt{\dfrac{2E_\mathrm{k}}{m_\mathrm{e}}} = \sqrt{\dfrac{2\cdot 9{,}3\cdot 10^{-20}\ \mathrm{J}}{9{,}11\cdot 10^{-31}\ \mathrm{kg}}} \doteq 4{,}5\cdot 10^{5}\ \mathrm{m\cdot s^{-1}}\)</div></div>
+            <p>Jednotky: \(\sqrt{\mathrm{J/kg}} = \sqrt{\mathrm{kg\cdot m^2\cdot s^{-2}/kg}} = \mathrm{m\cdot s^{-1}}\).</p>
+          </div>
+        </div>
+        <div class="step" data-step="4">
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">4</span>
+            <span class="step-title">A fialové světlo 400 nm?</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <div class="result-box"><div class="line-scroll">\(E = \dfrac{1\,240\ \mathrm{eV\cdot nm}}{400\ \mathrm{nm}} = 3{,}10\ \mathrm{eV} < 4{,}3\ \mathrm{eV}, \qquad \lambda_0 = \dfrac{1\,240\ \mathrm{eV\cdot nm}}{4{,}3\ \mathrm{eV}} \doteq 288\ \mathrm{nm}\)</div></div>
+            <p>Foton viditelného světla nemá na uvolnění elektronu ze zinku dost energie. Lampa může svítit sebesilněji — elektroskop se nevybije. Zinek reaguje jen na záření kratší než asi 288&nbsp;nm.</p>
+          </div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn ghost" id="reset-zn">Zopakovat postup od začátku</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Výstupní práce některých kovů</div>
+      <div class="theory-table-wrap">
+        <table class="theory-table">
+          <thead>
+            <tr><th>Kov</th><th class="mono"><i>W</i><sub>v</sub> (eV)</th><th class="mono"><i>λ</i><sub>0</sub> (nm)</th><th>Fotoefekt vyvolá</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>cesium</td><td class="mono">1,93</td><td class="mono">642</td><td>už červené světlo</td></tr>
+            <tr><td>sodík</td><td class="mono">2,28</td><td class="mono">544</td><td>zelené až fialové světlo</td></tr>
+            <tr><td>zinek</td><td class="mono">4,3</td><td class="mono">288</td><td>jen ultrafialové záření</td></tr>
+            <tr><td>stříbro</td><td class="mono">4,7</td><td class="mono">264</td><td>jen ultrafialové záření</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Proto se pro fotokatody používají alkalické kovy (cesium), které reagují na viditelné světlo.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Shrnutí</div>
+      <p>• Při vnějším fotoefektu elektrony látku opouštějí, při vnitřním zůstávají uvnitř jako volné a zvyšují vodivost.</p>
+      <p>• Jeden foton předá energii jednomu elektronu: \(hf = W_\mathrm{v} + E_\mathrm{k}\).</p>
+      <p>• Pod mezní frekvencí \(f_0 = W_\mathrm{v}/h\) (nad mezní vlnovou délkou \(\lambda_0 = hc/W_\mathrm{v}\)) fotoefekt nenastane, ať je světla jakkoli mnoho.</p>
+      <p>• Nad mezní frekvencí roste \(E_\mathrm{k}\) lineárně s frekvencí a proud je úměrný intenzitě záření.</p>
+    </div>
+
+  </div>
+
+  <!-- ============ APLET: FOTOEFEKT ============ -->
+  <div id="aplet-section" class="tab-section" hidden>
+    <div class="card applet-card">
+      <div class="applet-head">
+        <span class="cat-tag">Aplet</span>
+        <h2>Fotoefekt</h2>
+        <p class="desc">Svítíme na kovovou destičku. Měňte kov, vlnovou délku a intenzitu světla a sledujte, zda a jak rychle elektrony vyletují.</p>
+      </div>
+      <div class="mode-row">
+        <span class="mode-row-label" id="lbl-metal">Kov destičky</span>
+        <div class="seg" id="metal-seg" role="group" aria-labelledby="lbl-metal">
+          <button class="chip accented on" type="button" data-w="1.93" data-name="cesium" aria-pressed="true">cesium</button>
+          <button class="chip accented" type="button" data-w="2.28" data-name="sodík" aria-pressed="false">sodík</button>
+          <button class="chip accented" type="button" data-w="4.3" data-name="zinek" aria-pressed="false">zinek</button>
+          <button class="chip accented" type="button" data-w="4.7" data-name="stříbro" aria-pressed="false">stříbro</button>
+        </div>
+      </div>
+      <div class="mode-row">
+        <label class="mode-row-label" for="pe-lam">Vlnová délka <i>λ</i></label>
+        <div class="slider-wrap">
+          <input type="range" id="pe-lam" min="100" max="800" step="1" value="450">
+          <span class="slider-val" id="pe-lam-val"></span>
+        </div>
+      </div>
+      <div class="mode-row">
+        <label class="mode-row-label" for="pe-int">Intenzita světla</label>
+        <div class="slider-wrap">
+          <input type="range" id="pe-int" min="0" max="100" step="1" value="60">
+          <span class="slider-val" id="pe-int-val"></span>
+        </div>
+      </div>
+      <div class="canvas-wrap">
+        <svg class="scene" id="pe-svg" viewBox="0 0 600 300" role="img" aria-label="Vlevo lampa svítí na kovovou destičku, z níž vyletují elektrony; vpravo graf kinetické energie elektronů v závislosti na frekvenci pro čtyři kovy."></svg>
+      </div>
+      <div class="applet-out" id="pe-out" aria-live="polite"></div>
+      <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint">Tlačítky vyberte kov, posuvníky nastavte vlnovou délku (100 až 800&nbsp;nm, tedy od ultrafialového po červené světlo) a intenzitu. Barevné tečky letící k destičce jsou fotony, modré tečky se šipkou jsou uvolněné elektrony — délka šipky odpovídá jejich rychlosti a počet elektronů intenzitě světla. V grafu vpravo jsou přímky \(E_\mathrm{k} = hf - W_\mathrm{v}\) pro všechny čtyři kovy, puntík ukazuje současný stav. Výstupní práce zinku (4,3&nbsp;eV) je tabulková hodnota, ostatní odpovídají mezním vlnovým délkám z teorie. Počítá se s \(hc = 1\,240\ \mathrm{eV\cdot nm}\).</p>
+      </details>
+    </div>
+  </div>
+
+  <!-- ============ TRÉNINK ============ -->
+  <div id="trenink-section" class="tab-section" hidden>
+
+    <div class="panel">
+      <div class="section-block">
+        <div class="panel-title">Typ příkladů</div>
+        <div class="row" id="type-row"></div>
+      </div>
+      <div class="section-block">
+        <p class="const-box">Konstanty: \(h = 6{,}63\cdot 10^{-34}\ \mathrm{J\cdot s}\), \(c = 3{,}00\cdot 10^{8}\ \mathrm{m\cdot s^{-1}}\), \(e = 1{,}60\cdot 10^{-19}\ \mathrm{C}\), \(m_\mathrm{e} = 9{,}11\cdot 10^{-31}\ \mathrm{kg}\).</p>
+      </div>
+      <div class="settings-foot" style="justify-content:flex-end;">
+        <button class="linklike" id="reset-stats">vynulovat statistiku</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="cat-tag" id="cat-tag">Trénink</span>
+      <p class="task-text" id="task-text"></p>
+      <div class="equation" id="equation">
+        <span id="eq-given"></span>
+        <span class="eq">=</span>
+        <span class="answer-slot" id="slot-dec">
+          <input class="answer-input" id="answer" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="?" aria-label="odpověď">
+        </span>
+        <span class="answer-slot sci-group" id="slot-sci" hidden>
+          <input class="answer-input sci-mantissa" id="answer-m" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="a" aria-label="mantisa">
+          <span class="sci-times">·10</span>
+          <input class="sci-exp" id="answer-e" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="n" aria-label="exponent">
+        </span>
+        <span class="unit" id="eq-unit"></span>
+      </div>
+      <div class="actions">
+        <button class="btn primary" id="btn-check">Zkontrolovat</button>
+        <button class="btn ghost" id="btn-skip">Nevím / Zobrazit řešení</button>
+      </div>
+      <div class="feedback" id="feedback" hidden>
+        <div class="headline" id="feedback-headline"></div>
+        <div class="steps" id="feedback-steps"></div>
+        <div class="tip" id="feedback-tip" hidden></div>
+      </div>
+      <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint">Výsledek zapište do rámečku; čárku i tečku lze zadat obojí. Velmi malá a velmi velká čísla se zadávají ve tvaru <i>a</i>·10<sup><i>n</i></sup> — do prvního pole mantisu <i>a</i>, do malého pole exponent <i>n</i> (i záporný). Uznává se odchylka do 1&nbsp;% od přesné hodnoty (u energie, rychlosti elektronů a brzdného napětí do 2&nbsp;%, protože jde o rozdíl dvou čísel), takže stačí počítat s konstantami uvedenými výše a výsledek zaokrouhlit na 3 platné číslice. Enter potvrdí odpověď i přejde na další příklad.</p>
+      </details>
+    </div>
+
+  </div>
+
+  <footer>Fyzika — Oktáva/4. ročník</footer>
+</div>
+
+<script src="../spolecne/reseni.js?v=1"></script>
+<script src="../spolecne/spolecne.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  // ---- záložky: tlačítko .toptab[data-tab="x"] ↔ sekce #x-section (Teorie = #theory-section) ----
+  var tabs = {}, sections = {};
+  Array.prototype.forEach.call(document.querySelectorAll('.toptab[data-tab]'), function(btn){
+    var name = btn.getAttribute('data-tab');
+    tabs[name] = btn;
+    sections[name] = document.getElementById(name === 'teorie' ? 'theory-section' : name + '-section');
+  });
+  function showTab(name){
+    for(var k in tabs){
+      tabs[k].classList.toggle('on', k === name);
+      if(sections[k]) sections[k].hidden = k !== name;
+    }
+    // skóre, série a úspěšnost v hlavičce jen u tréninku
+    var readout = document.getElementById('header-readout');
+    if(readout) readout.hidden = name !== 'trenink';
+  }
+  Object.keys(tabs).forEach(function(k){ tabs[k].addEventListener('click', function(){ showTab(k); }); });
+  var hash = location.hash.replace('#', '');
+  if(hash && tabs[hash]) showTab(hash);
+
+  // ---- příklady v teorii: postupně odemykané steppery ----
+  Array.prototype.forEach.call(document.querySelectorAll('.stepper'), function(wrap){
+    var steps = Array.prototype.slice.call(wrap.querySelectorAll('.step'));
+    var unlockedUpTo = 1;
+
+    function refreshLocks(){
+      steps.forEach(function(st){
+        var idx = parseInt(st.getAttribute('data-step'), 10);
+        var locked = idx > unlockedUpTo;
+        st.classList.toggle('locked', locked);
+        st.classList.toggle('unlocked', !locked && !st.classList.contains('done'));
+        st.querySelector('.step-head').setAttribute('aria-disabled', locked ? 'true' : 'false');
+      });
+    }
+
+    steps.forEach(function(st){
+      var idx = parseInt(st.getAttribute('data-step'), 10);
+      var head = st.querySelector('.step-head');
+      var body = st.querySelector('.step-body');
+      head.addEventListener('click', function(){
+        if(idx > unlockedUpTo) return;
+        var wasOpen = st.classList.contains('open');
+        st.classList.toggle('open', !wasOpen);
+        body.hidden = wasOpen;
+        head.setAttribute('aria-expanded', (!wasOpen).toString());
+        if(!wasOpen){
+          st.classList.add('done');
+          if(idx === unlockedUpTo && unlockedUpTo < steps.length){ unlockedUpTo++; }
+          refreshLocks();
+        }
+      });
+    });
+
+    var resetBtn = document.getElementById(wrap.getAttribute('data-reset'));
+    if(resetBtn){
+      resetBtn.addEventListener('click', function(){
+        unlockedUpTo = 1;
+        steps.forEach(function(st){
+          st.classList.remove('open', 'done');
+          st.querySelector('.step-body').hidden = true;
+          st.querySelector('.step-head').setAttribute('aria-expanded', 'false');
+        });
+        refreshLocks();
+      });
+    }
+
+    refreshLocks();
+  });
+
+  // ---- vzorce (KaTeX) ----
+  var KATEX_DELIMS = [{left:'\\(', right:'\\)', display:false}, {left:'\\[', right:'\\]', display:true}];
+  if(window.renderMathInElement){
+    Array.prototype.forEach.call(document.querySelectorAll('.tab-section'), function(sec){
+      try{ renderMathInElement(sec, { delimiters: KATEX_DELIMS }); }catch(e){}
+    });
+  }
+
+  // ---- sbalovací panely v teorii ----
+  try{ makePanelsCollapsible(document.getElementById('theory-section')); }catch(e){}
+
+  // ---- pomocné funkce pro aplety a tréninky ----
+  var NB = '\u00a0';
+  function tex(t){
+    try{ return window.katex ? katex.renderToString(t, {throwOnError:false}) : t; }catch(e){ return t; }
+  }
+  // číslo s daným počtem desetinných míst, desetinnou čárkou a mezerami mezi tisíci
+  function cz(n, dec){
+    var s = roundTo(n, dec).toFixed(dec);
+    var neg = s.charAt(0) === '-';
+    if(neg) s = s.slice(1);
+    var parts = s.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, NB);
+    return (neg ? '−' : '') + parts.join(',');
+  }
+  // totéž v TeXu (mezera mezi tisíci = \,, desetinná čárka = {,})
+  function czTex(n, dec){ return cz(n, dec).replace('−', '-').replace(',', '{,}').replace(/\u00a0/g, '\\,'); }
+  // číslo na `sig` platných číslic (desetinný zápis)
+  function czSig(x, sig){ var r = roundSig(x, sig); return cz(r, decimalsForSig(r, sig)); }
+  // rozklad na mantisu a exponent: x = m · 10^e, 1 ≤ |m| < 10 (po zaokrouhlení na sig číslic)
+  function sciParts(x, sig){
+    if(x === 0) return { m:0, e:0 };
+    var e = Math.floor(Math.log10(Math.abs(x)));
+    var m = roundSig(x / Math.pow(10, e), sig);
+    if(Math.abs(m) >= 10){ m = roundSig(m / 10, sig); e++; }
+    return { m:m, e:e };
+  }
+  // TeX zápis čísla: desetinně pro 0,001 ≤ |x| < 100 000, jinak a·10^n
+  function numTex(x, sig, forceSci){
+    var r = roundSig(x, sig), a = Math.abs(r);
+    if(!forceSci && (a === 0 || (a >= 1e-3 && a < 1e5))){
+      return czSig(x, sig).replace('−', '-').replace(',', '{,}').replace(/\u00a0/g, '\\,');
+    }
+    var p = sciParts(x, sig);
+    return cz(p.m, sig - 1).replace('−', '-').replace(',', '{,}') + '\\cdot 10^{' + p.e + '}';
+  }
+  // totéž jako prostý text do HTML
+  function numTxt(x, sig, forceSci){
+    var r = roundSig(x, sig), a = Math.abs(r);
+    if(!forceSci && (a === 0 || (a >= 1e-3 && a < 1e5))) return czSig(x, sig);
+    var p = sciParts(x, sig);
+    return cz(p.m, sig - 1) + '·10<sup>' + String(p.e).replace('-', '−') + '</sup>';
+  }
+  function randInt(a, b){ return a + Math.floor(Math.random() * (b - a + 1)); }
+  function pick(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+  function svgEl(name, attrs, parent){
+    var n = document.createElementNS('http://www.w3.org/2000/svg', name);
+    for(var k in attrs){ if(attrs.hasOwnProperty(k)) n.setAttribute(k, attrs[k]); }
+    if(parent) parent.appendChild(n);
+    return n;
+  }
+  function clearEl(n){ while(n.firstChild) n.removeChild(n.firstChild); }
+  function setPressed(group, btn){
+    Array.prototype.forEach.call(group.querySelectorAll('button'), function(b){
+      var on = b === btn;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+  }
+
+  // ================= APLET: FOTOEFEKT =================
+  function lambdaColor(l){
+    var r = 0, g = 0, b = 0;
+    if(l < 380 || l > 750) return null;
+    if(l < 440){ r = (440 - l) / 60; b = 1; }
+    else if(l < 490){ g = (l - 440) / 50; b = 1; }
+    else if(l < 510){ g = 1; b = (510 - l) / 20; }
+    else if(l < 580){ r = (l - 510) / 70; g = 1; }
+    else if(l < 645){ r = 1; g = (645 - l) / 65; }
+    else { r = 1; }
+    var f = l < 420 ? 0.4 + 0.6 * (l - 380) / 40 : l > 700 ? 0.4 + 0.6 * (750 - l) / 50 : 1;
+    function c(x){ return Math.round(255 * Math.pow(x * f, 0.8)); }
+    return 'rgb(' + c(r) + ',' + c(g) + ',' + c(b) + ')';
+  }
+  (function(){
+    var svg = document.getElementById('pe-svg');
+    var lamIn = document.getElementById('pe-lam'), intIn = document.getElementById('pe-int');
+    var HC = 1240, HEV = 4.136e-15, ME = 9.11e-31, EV = 1.60e-19;
+    var METALS = [ ['cesium', 1.93], ['sodík', 2.28], ['zinek', 4.3], ['stříbro', 4.7] ];
+    var st = { W:1.93, name:'cesium' };
+    // scéna vlevo
+    var PLATE_Y = 250, PX0 = 40, PX1 = 270, LAMP = { x:40, y:40 };
+    var bg = svgEl('g', {}, svg), live = svgEl('g', {}, svg), graph = svgEl('g', {}, svg);
+    svgEl('rect', { x:PX0, y:PLATE_Y, width:PX1 - PX0, height:16, fill:'var(--metal)', stroke:'var(--ink-soft)' }, bg);
+    var plateTxt = svgEl('text', { x:(PX0 + PX1) / 2, y:PLATE_Y + 32, 'text-anchor':'middle', 'font-size':12, fill:'var(--ink)' }, bg);
+    svgEl('circle', { cx:LAMP.x, cy:LAMP.y, r:16, fill:'var(--surface-2)', stroke:'var(--ink)', 'stroke-width':1.5 }, bg);
+    var lampGlow = svgEl('circle', { cx:LAMP.x, cy:LAMP.y, r:9, fill:'var(--accent)' }, bg);
+    // graf vpravo
+    var GX0 = 360, GX1 = 585, GY0 = 250, GY1 = 30, FMAX = 3e15, EMAX = 10;
+    function gx(f){ return GX0 + f / FMAX * (GX1 - GX0); }
+    function gy(E){ return GY0 - E / EMAX * (GY0 - GY1); }
+    svgEl('line', { x1:GX0, y1:GY0, x2:GX1, y2:GY0, stroke:'var(--ink)', 'stroke-width':1.4 }, graph);
+    svgEl('line', { x1:GX0, y1:GY0, x2:GX0, y2:GY1 - 6, stroke:'var(--ink)', 'stroke-width':1.4 }, graph);
+    var i, t;
+    for(i = 1; i <= 3; i++){
+      svgEl('line', { x1:gx(i * 1e15), y1:GY0, x2:gx(i * 1e15), y2:GY0 + 5, stroke:'var(--ink)' }, graph);
+      t = svgEl('text', { x:gx(i * 1e15), y:GY0 + 18, 'text-anchor':'middle', 'font-size':11, 'font-family':"'IBM Plex Mono', monospace", fill:'var(--ink)' }, graph); t.textContent = i;
+    }
+    for(i = 2; i <= 10; i += 2){
+      svgEl('line', { x1:GX0 - 5, y1:gy(i), x2:GX0, y2:gy(i), stroke:'var(--ink)' }, graph);
+      t = svgEl('text', { x:GX0 - 8, y:gy(i) + 4, 'text-anchor':'end', 'font-size':11, 'font-family':"'IBM Plex Mono', monospace", fill:'var(--ink)' }, graph); t.textContent = i;
+    }
+    t = svgEl('text', { x:GX1, y:GY0 + 34, 'text-anchor':'end', 'font-size':11, fill:'var(--ink)' }, graph); t.textContent = 'f (10¹⁵ Hz)';
+    t = svgEl('text', { x:GX0 + 6, y:GY1 - 10, 'font-size':11, fill:'var(--ink)' }, graph); t.textContent = 'Eₖ (eV)';
+    var lines = {};
+    METALS.forEach(function(m){
+      var f0 = m[1] / HEV, f1 = Math.min(FMAX, (EMAX + m[1]) / HEV);
+      lines[m[0]] = svgEl('line', { x1:gx(f0), y1:gy(0), x2:gx(f1), y2:gy(HEV * f1 - m[1]), stroke:'var(--ink-soft)', 'stroke-width':1.4 }, graph);
+    });
+    var dot = svgEl('circle', { r:5, fill:'var(--accent)', stroke:'var(--surface)', 'stroke-width':1.5 }, graph);
+    var dotLabel = svgEl('text', { 'font-size':11, fill:'var(--accent)' }, graph);
+
+    var photons = [], electrons = [], last = 0, acc = 0;
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    function cur(){
+      var lam = parseFloat(lamIn.value), E = HC / lam, Ek = E - st.W, I = parseFloat(intIn.value);
+      var v = Ek > 0 ? Math.sqrt(2 * Ek * EV / ME) : 0;
+      return { lam:lam, E:E, Ek:Ek, I:I, v:v, f:3e17 / lam, col:lambdaColor(lam) };
+    }
+    function update(){
+      var c = cur();
+      document.getElementById('pe-lam-val').textContent = c.lam + NB + 'nm';
+      document.getElementById('pe-int-val').textContent = c.I + NB + '%';
+      plateTxt.textContent = st.name + ' (Wᵥ = ' + cz(st.W, st.W < 4 ? 2 : 1) + NB + 'eV)';
+      lampGlow.setAttribute('fill', c.col || (c.lam < 380 ? '#8f6cd8' : '#a33a2a'));
+      lampGlow.setAttribute('opacity', (0.25 + 0.75 * c.I / 100).toFixed(2));
+      METALS.forEach(function(m){
+        var on = m[0] === st.name;
+        lines[m[0]].setAttribute('stroke', on ? 'var(--accent)' : 'var(--ink-soft)');
+        lines[m[0]].setAttribute('stroke-width', on ? 2.6 : 1.2);
+        lines[m[0]].setAttribute('stroke-opacity', on ? 1 : 0.6);
+      });
+      var EkPlot = Math.max(0, c.Ek);
+      dot.setAttribute('cx', gx(c.f)); dot.setAttribute('cy', gy(Math.min(EMAX, EkPlot)));
+      dotLabel.setAttribute('x', Math.min(gx(c.f) + 8, GX1 - 40)); dotLabel.setAttribute('y', gy(Math.min(EMAX, EkPlot)) - 8);
+      dotLabel.textContent = c.Ek > 0 ? '' : 'Eₖ = 0';
+      var zone = c.lam < 380 ? 'ultrafialové' : 'viditelné';
+      var html = '<span>Foton: <b>' + czSig(c.E, 3) + NB + 'eV</b> (' + zone + ' záření, <i>f</i>&nbsp;=&nbsp;' + numTxt(c.f, 3, true) + NB + 'Hz)</span>' +
+        '<span>Mezní vlnová délka: <b>' + czSig(HC / st.W, 3) + NB + 'nm</b></span>';
+      if(c.Ek > 0){
+        html += '<span><b>Fotoefekt nastává.</b> <i>E</i><sub>k</sub>&nbsp;=&nbsp;<b>' + czSig(c.Ek, 3) + NB + 'eV</b>, <i>v</i>&nbsp;=&nbsp;<b>' + numTxt(c.v, 2, true) + NB + 'm·s⁻¹</b></span>' +
+          '<span>Proud (relativně): <b>' + c.I + NB + '%</b></span>';
+      } else {
+        html += '<span><b>Fotoefekt nenastává</b> — energie fotonu je menší než výstupní práce. Proud je nulový, i kdyby světlo svítilo sebesilněji.</span>';
+      }
+      document.getElementById('pe-out').innerHTML = html;
+      if(reduce) drawStatic(c);
+    }
+    function drawStatic(c){
+      clearEl(live);
+      for(var k = 0; k < Math.round(c.I / 12); k++){
+        var x = PX0 + 30 + k * 24;
+        svgEl('circle', { cx:x, cy:150, r:3, fill:c.col || 'var(--ink-soft)' }, live);
+        if(c.Ek > 0){ var len = 20 + c.v / 1.5e6 * 80; svgEl('line', { x1:x, y1:PLATE_Y - 4, x2:x + len * 0.4, y2:PLATE_Y - 4 - len, stroke:'var(--electron)', 'stroke-width':1.6 }, live); }
+      }
+    }
+    function step(ts){
+      var dt = last ? Math.min(0.05, (ts - last) / 1000) : 0.016; last = ts;
+      var c = cur();
+      acc += dt * c.I * 0.25;
+      while(acc >= 1){
+        acc -= 1;
+        var tx = PX0 + 20 + Math.random() * (PX1 - PX0 - 40);
+        photons.push({ x:LAMP.x, y:LAMP.y, tx:tx, t:0, col:c.col || (c.lam < 380 ? '#8f6cd8' : '#a33a2a') });
+      }
+      clearEl(live);
+      photons = photons.filter(function(p){
+        p.t += dt * 1.4;
+        if(p.t >= 1){
+          if(c.Ek > 0) electrons.push({ x:p.tx, y:PLATE_Y - 2, vx:(Math.random() - 0.5) * 0.6, vy:-1, sp:40 + c.v / 1.5e6 * 260, len:8 + c.v / 1.5e6 * 30 });
+          return false;
+        }
+        var x = LAMP.x + (p.tx - LAMP.x) * p.t, y = LAMP.y + (PLATE_Y - LAMP.y) * p.t;
+        svgEl('circle', { cx:x.toFixed(1), cy:y.toFixed(1), r:3, fill:p.col }, live);
+        return true;
+      });
+      electrons = electrons.filter(function(e){
+        var n = Math.sqrt(e.vx * e.vx + e.vy * e.vy);
+        e.x += e.vx / n * e.sp * dt; e.y += e.vy / n * e.sp * dt;
+        if(e.y < 0 || e.x < 0 || e.x > 320) return false;
+        svgEl('line', { x1:e.x.toFixed(1), y1:e.y.toFixed(1), x2:(e.x + e.vx / n * e.len).toFixed(1), y2:(e.y + e.vy / n * e.len).toFixed(1), stroke:'var(--electron)', 'stroke-width':1.6 }, live);
+        svgEl('circle', { cx:e.x.toFixed(1), cy:e.y.toFixed(1), r:3.2, fill:'var(--electron)' }, live);
+        return true;
+      });
+      if(!document.getElementById('aplet-section').hidden) requestAnimationFrame(step);
+      else { running = false; last = 0; }
+    }
+    var running = false;
+    function start(){ if(reduce || running) return; running = true; last = 0; requestAnimationFrame(step); }
+    document.getElementById('top-tab-aplet').addEventListener('click', function(){ setTimeout(start, 0); });
+    if(!document.getElementById('aplet-section').hidden) start();
+    var seg = document.getElementById('metal-seg');
+    Array.prototype.forEach.call(seg.querySelectorAll('button'), function(b){
+      b.addEventListener('click', function(){ st.W = parseFloat(b.getAttribute('data-w')); st.name = b.getAttribute('data-name'); setPressed(seg, b); update(); });
+    });
+    lamIn.addEventListener('input', update); intIn.addEventListener('input', update);
+    update();
+  })();
+
+  // ================= TRÉNINK: typy příkladů =================
+  var H_ = 6.63e-34, C = 3.00e8, EV = 1.60e-19, ME = 9.11e-31;
+  var KOVY = [ ['cesia', 1.93], ['sodíku', 2.28], ['draslíku', 2.30], ['zinku', 4.30], ['stříbra', 4.70] ];
+  function wTex(w){ return czTex(w, 2); }
+  // vlnová délka kratší než mezní (o 5 až 60 %)
+  function lamBelow(W){ var l0 = H_ * C / (W * EV) * 1e9; return Math.max(100, Math.round(l0 * (0.4 + Math.random() * 0.4) / 5) * 5); }
+  var TR_TYPES = [
+    { key:'l0', name:'Mezní vlnová délka', gen:function(){
+      var k = pick(KOVY), l0 = H_ * C / (k[1] * EV) * 1e9;
+      return { cat:'Mezní vlnová délka', signature:'l' + k[0],
+        task:'Výstupní práce ' + k[0] + ' je ' + tex(wTex(k[1]) + '\\ \\mathrm{eV}') + '. Určete mezní vlnovou délku fotoefektu.',
+        lhs:'\\lambda_0', unit:'\\mathrm{nm}', sci:false, exact:l0,
+        given:['W_\\mathrm{v} = ' + wTex(k[1]) + '\\ \\mathrm{eV} = ' + numTex(k[1] * EV, 3, true) + '\\ \\mathrm{J}'], find:['\\lambda_0'],
+        steps:['\\lambda_0 = \\dfrac{hc}{W_\\mathrm{v}} = \\dfrac{6{,}63\\cdot 10^{-34}\\cdot 3{,}00\\cdot 10^{8}}{' + numTex(k[1] * EV, 3, true) + '}\\ \\mathrm{m} \\doteq ' + numTex(l0 * 1e-9, 3, true) + '\\ \\mathrm{m}'],
+        final:'\\lambda_0 \\doteq ' + numTex(l0, 3) + '\\ \\mathrm{nm}' };
+    }},
+    { key:'wv', name:'Výstupní práce', gen:function(){
+      var l0 = randInt(50, 130) * 5, W = H_ * C / (l0 * 1e-9) / EV;
+      return { cat:'Výstupní práce', signature:'w' + l0,
+        task:'Mezní vlnová délka fotoefektu pro neznámý kov je ' + tex(l0 + '\\ \\mathrm{nm}') + '. Jaká je výstupní práce v elektronvoltech?',
+        lhs:'W_\\mathrm{v}', unit:'\\mathrm{eV}', sci:false, exact:W,
+        given:['\\lambda_0 = ' + l0 + '\\ \\mathrm{nm}'], find:['W_\\mathrm{v}'],
+        steps:['W_\\mathrm{v} = hf_0 = \\dfrac{hc}{\\lambda_0} = \\dfrac{6{,}63\\cdot 10^{-34}\\cdot 3{,}00\\cdot 10^{8}}{' + numTex(l0 * 1e-9, 3, true) + '}\\ \\mathrm{J} \\doteq ' + numTex(W * EV, 3, true) + '\\ \\mathrm{J}'],
+        final:'W_\\mathrm{v} \\doteq ' + numTex(W, 3) + '\\ \\mathrm{eV}' };
+    }},
+    { key:'ek', name:'Energie elektronů', gen:function(){
+      var k = pick(KOVY), lam = lamBelow(k[1]), E = H_ * C / (lam * 1e-9) / EV, Ek = E - k[1];
+      return { cat:'Einsteinova rovnice', signature:'e' + k[0] + lam,
+        task:'Na ' + (k[0] === 'zinku' ? 'zinkovou' : k[0] === 'stříbra' ? 'stříbrnou' : k[0] === 'sodíku' ? 'sodíkovou' : k[0] === 'cesia' ? 'cesiovou' : 'draslíkovou') + ' katodu (' + tex('W_\\mathrm{v} = ' + wTex(k[1]) + '\\ \\mathrm{eV}') + ') dopadá záření o vlnové délce ' + tex(lam + '\\ \\mathrm{nm}') + '. Jakou kinetickou energii v eV mají uvolněné elektrony?',
+        lhs:'E_\\mathrm{k}', unit:'\\mathrm{eV}', sci:false, exact:Ek, tol:0.02,
+        given:['W_\\mathrm{v} = ' + wTex(k[1]) + '\\ \\mathrm{eV}', '\\lambda = ' + lam + '\\ \\mathrm{nm}'], find:['E_\\mathrm{k}'],
+        steps:['E = \\dfrac{hc}{\\lambda} = \\dfrac{6{,}63\\cdot 10^{-34}\\cdot 3{,}00\\cdot 10^{8}}{' + numTex(lam * 1e-9, 3, true) + '}\\ \\mathrm{J} \\doteq ' + numTex(E * EV, 3, true) + '\\ \\mathrm{J} \\doteq ' + numTex(E, 3) + '\\ \\mathrm{eV}',
+               'E_\\mathrm{k} = E - W_\\mathrm{v} = ' + numTex(E, 3) + ' - ' + wTex(k[1]) + '\\ \\mathrm{eV}'],
+        final:'E_\\mathrm{k} \\doteq ' + numTex(Ek, 3) + '\\ \\mathrm{eV}' };
+    }},
+    { key:'v', name:'Rychlost elektronů', gen:function(){
+      var k = pick(KOVY), lam = lamBelow(k[1]), E = H_ * C / (lam * 1e-9) / EV, Ek = E - k[1], v = Math.sqrt(2 * Ek * EV / ME);
+      return { cat:'Rychlost fotoelektronů', signature:'v' + k[0] + lam,
+        task:'Povrch ' + k[0] + ' (' + tex('W_\\mathrm{v} = ' + wTex(k[1]) + '\\ \\mathrm{eV}') + ') osvětlíme zářením o vlnové délce ' + tex(lam + '\\ \\mathrm{nm}') + '. Jakou největší rychlostí vyletují elektrony?',
+        lhs:'v', unit:'\\mathrm{m\\cdot s^{-1}}', sci:true, exact:v, tol:0.02,
+        given:['W_\\mathrm{v} = ' + wTex(k[1]) + '\\ \\mathrm{eV}', '\\lambda = ' + lam + '\\ \\mathrm{nm}', 'm_\\mathrm{e} = 9{,}11\\cdot 10^{-31}\\ \\mathrm{kg}'], find:['v'],
+        steps:['E = \\dfrac{hc}{\\lambda} \\doteq ' + numTex(E, 3) + '\\ \\mathrm{eV}, \\qquad E_\\mathrm{k} = E - W_\\mathrm{v} \\doteq ' + numTex(Ek, 3) + '\\ \\mathrm{eV} \\doteq ' + numTex(Ek * EV, 3, true) + '\\ \\mathrm{J}',
+               'v = \\sqrt{\\dfrac{2E_\\mathrm{k}}{m_\\mathrm{e}}} = \\sqrt{\\dfrac{2\\cdot ' + numTex(Ek * EV, 3, true) + '}{9{,}11\\cdot 10^{-31}}}\\ \\mathrm{m\\cdot s^{-1}}'],
+        final:'v \\doteq ' + numTex(v, 3, true) + '\\ \\mathrm{m\\cdot s^{-1}}' };
+    }},
+    { key:'u0', name:'Brzdné napětí', gen:function(){
+      var k = pick(KOVY), lam = lamBelow(k[1]), E = H_ * C / (lam * 1e-9) / EV, U = E - k[1];
+      return { cat:'Brzdné napětí', signature:'u' + k[0] + lam,
+        task:'Fotokatodu z ' + k[0] + ' (' + tex('W_\\mathrm{v} = ' + wTex(k[1]) + '\\ \\mathrm{eV}') + ') osvětlujeme zářením ' + tex(lam + '\\ \\mathrm{nm}') + '. Jaké brzdné napětí zastaví i nejrychlejší elektrony?',
+        lhs:'U_0', unit:'\\mathrm{V}', sci:false, exact:U, tol:0.02,
+        given:['W_\\mathrm{v} = ' + wTex(k[1]) + '\\ \\mathrm{eV}', '\\lambda = ' + lam + '\\ \\mathrm{nm}'], find:['U_0'],
+        steps:['E_\\mathrm{k} = \\dfrac{hc}{\\lambda} - W_\\mathrm{v} \\doteq ' + numTex(E, 3) + ' - ' + wTex(k[1]) + ' = ' + numTex(U, 3) + '\\ \\mathrm{eV}',
+               'eU_0 = E_\\mathrm{k} \\ \\Rightarrow\\ U_0 = \\dfrac{E_\\mathrm{k}}{e} = \\dfrac{' + numTex(U * EV, 3, true) + '\\ \\mathrm{J}}{1{,}60\\cdot 10^{-19}\\ \\mathrm{C}}'],
+        final:'U_0 \\doteq ' + numTex(U, 3) + '\\ \\mathrm{V}' };
+    }}
+  ];
+
+  // ================= TRÉNINK (číselná odpověď) =================
+  // Typy příkladů definuje stránka v poli TR_TYPES: { key, name, gen } — gen() vrátí úlohu
+  // { cat, task, lhs, unit, sci, exact, sig, tol, integer, given[], find[], steps[], final }.
+  var trState = {
+    type:'all', score:0, streak:0, bestStreak:0, answered:0, correct:0,
+    current:null, lastSig:'', locked:false, touched:false
+  };
+  var TR_STATS_KEY = 'fyzika:fotoelektricky-jev:stats';
+  var trInputs = ['answer', 'answer-m', 'answer-e'];
+
+  function trLoadStats(){
+    try{ var raw = localStorage.getItem(TR_STATS_KEY); if(raw){ trState.bestStreak = JSON.parse(raw).bestStreak || 0; } }catch(e){}
+  }
+  function trSaveStats(){
+    try{ localStorage.setItem(TR_STATS_KEY, JSON.stringify({bestStreak: trState.bestStreak})); }catch(e){}
+  }
+  function trParse(str){
+    if(!str) return NaN;
+    str = str.trim().replace(/[−–]/g, '-').replace(',', '.').replace(/\s+/g, '');
+    return /^-?\d*\.?\d+$|^-?\d+\.$/.test(str) ? parseFloat(str) : NaN;
+  }
+  function trGenerate(){
+    var list = trState.type === 'all' ? TR_TYPES : TR_TYPES.filter(function(t){ return t.key === trState.type; });
+    var q = pick(list).gen(), tries = 0;
+    while(q.signature && q.signature === trState.lastSig && tries < 20){ q = pick(list).gen(); tries++; }
+    trState.lastSig = q.signature || '';
+    trState.current = q;
+    trState.locked = false; trState.touched = false;
+    trRender();
+  }
+  function trRender(){
+    var q = trState.current;
+    document.getElementById('cat-tag').textContent = q.cat;
+    document.getElementById('task-text').innerHTML = q.task;
+    document.getElementById('eq-given').innerHTML = tex(q.lhs);
+    document.getElementById('eq-unit').innerHTML = q.unit ? tex(q.unit) : '';
+    document.getElementById('slot-sci').hidden = !q.sci;
+    document.getElementById('slot-dec').hidden = !!q.sci;
+    trInputs.forEach(function(id){
+      var el = document.getElementById(id);
+      el.value = ''; el.disabled = false; el.classList.remove('correct', 'wrong');
+    });
+    var fb = document.getElementById('feedback');
+    fb.hidden = true; fb.classList.remove('ok', 'bad', 'sol');
+    document.getElementById('feedback-tip').hidden = true;
+    document.getElementById('btn-check').textContent = 'Zkontrolovat';
+    var first = document.getElementById(q.sci ? 'answer-m' : 'answer');
+    if(!document.getElementById('trenink-section').hidden) first.focus();
+  }
+  function trUserValue(){
+    var q = trState.current;
+    if(q.sci){
+      var m = trParse(document.getElementById('answer-m').value);
+      var es = document.getElementById('answer-e').value.trim().replace(/[−–]/g, '-');
+      var e = es === '' ? 0 : parseInt(es, 10);
+      if(isNaN(m) || isNaN(e)) return NaN;
+      return m * Math.pow(10, e);
+    }
+    return trParse(document.getElementById('answer').value);
+  }
+  function trIsEmpty(){ return isNaN(trUserValue()); }
+  function trMark(cls){
+    (trState.current.sci ? ['answer-m', 'answer-e'] : ['answer']).forEach(function(id){ document.getElementById(id).classList.add(cls); });
+  }
+  function trLock(){
+    trInputs.forEach(function(id){ document.getElementById(id).disabled = true; });
+    trState.locked = true;
+    var b = document.getElementById('btn-check');
+    b.textContent = 'Další příklad →';
+    b.focus();
+    trUpdateStats();
+  }
+  function trShowSolution(){
+    var q = trState.current;
+    // KaTeX vkládá do cest SVG (odmocnina) zalomení řádků; FyzikaReseni dělí řádky podle \n, proto je odstraníme
+    function t1(s){ return tex(s).replace(/\n/g, ' '); }
+    FyzikaReseni.show(document.getElementById('feedback'), document.getElementById('feedback-steps'), {
+      raw:true,
+      given:(q.given || []).map(t1),
+      find:(q.find || []).map(t1),
+      steps:(q.steps || []).map(t1),
+      final:q.final ? t1(q.final) : '',
+      note:q.note || ''
+    });
+  }
+  function trIsCorrect(v){
+    var q = trState.current;
+    if(isNaN(v)) return false;
+    if(q.integer) return Math.abs(v - q.exact) < 1e-9;
+    var tol = q.tol === undefined ? 0.01 : q.tol;
+    return Math.abs(v - q.exact) <= tol * Math.abs(q.exact) + 1e-300;
+  }
+  function trCheck(){
+    if(trState.locked){ trGenerate(); return; }
+    var v = trUserValue(), ok = trIsCorrect(v), q = trState.current;
+    trState.answered++;
+    var fb = document.getElementById('feedback'), head = document.getElementById('feedback-headline');
+    var tip = document.getElementById('feedback-tip');
+    fb.hidden = false; tip.hidden = true;
+    if(ok){
+      trState.score += 10; trState.streak++; trState.correct++;
+      if(trState.streak > trState.bestStreak){
+        trState.bestStreak = trState.streak; trSaveStats();
+        if(window.FyzikaScores) FyzikaScores.report('serie', trState.bestStreak, false);
+      }
+      trMark('correct'); fb.classList.add('ok'); fb.classList.remove('bad');
+      head.textContent = 'Správně!';
+    } else {
+      trState.streak = 0; trMark('wrong'); fb.classList.add('bad'); fb.classList.remove('ok');
+      head.textContent = isNaN(v) ? 'Doplňte odpověď.' : 'Bohužel špatně.';
+      if(!isNaN(v) && q.sci && !isNaN(q.exact) && q.exact !== 0){
+        var r = v / q.exact, lg = Math.log10(Math.abs(r));
+        if(Math.abs(lg - Math.round(lg)) < 0.005 && Math.round(lg) !== 0){
+          tip.hidden = false;
+          tip.textContent = 'Mantisa je správně, chyba je v exponentu (o ' + Math.abs(Math.round(lg)) + ' řád' + (Math.abs(Math.round(lg)) === 1 ? '' : Math.abs(Math.round(lg)) < 5 ? 'y' : 'ů') + ').';
+        }
+      }
+    }
+    trShowSolution(); trLock();
+  }
+  function trSkip(){
+    if(trState.locked){ trGenerate(); return; }
+    trState.streak = 0; trState.answered++;
+    var fb = document.getElementById('feedback');
+    fb.hidden = false; fb.classList.add('bad'); fb.classList.remove('ok');
+    document.getElementById('feedback-tip').hidden = true;
+    document.getElementById('feedback-headline').textContent = 'Správný postup:';
+    trShowSolution(); trLock();
+  }
+  function trUpdateStats(){
+    document.getElementById('stat-score').textContent = trState.score;
+    document.getElementById('stat-streak').textContent = trState.streak + (trState.bestStreak > 0 ? ' / ' + trState.bestStreak : '');
+    document.getElementById('stat-accuracy').textContent = trState.answered === 0 ? '—' : Math.round(100 * trState.correct / trState.answered) + ' %';
+  }
+  // Rozdělanou úlohu před změnou nastavení nejdřív vyhodnotí (stejná logika jako na ostatních stránkách).
+  function trSettle(){
+    if(trState.locked) return 'locked';
+    if(!trState.touched) return 'untouched';
+    if(trIsEmpty() && !confirm('Odpověď není vyplněná. Opravdu chcete změnit nastavení?')) return 'cancelled';
+    trCheck();
+    return 'settled';
+  }
+  (function(){
+    var row = document.getElementById('type-row');
+    var items = [{ key:'all', name:'Vše' }].concat(TR_TYPES);
+    items.forEach(function(d){
+      var b = document.createElement('button');
+      b.className = 'chip accented' + (d.key === trState.type ? ' on' : '');
+      b.type = 'button';
+      b.setAttribute('aria-pressed', d.key === trState.type ? 'true' : 'false');
+      b.textContent = d.name;
+      b.addEventListener('click', function(){
+        if(d.key === trState.type) return;
+        var res = trSettle();
+        if(res === 'cancelled') return;
+        trState.type = d.key;
+        setPressed(row, b);
+        if(res === 'locked' || res === 'untouched'){ trGenerate(); }
+      });
+      row.appendChild(b);
+    });
+  })();
+  function tryCheck(){
+    if(trState.locked){ trGenerate(); return; }
+    if(trIsEmpty() && !confirm('Odpověď není vyplněná. Opravdu chcete zkontrolovat?')) return;
+    trCheck();
+  }
+  function trySkip(){
+    if(trState.locked){ trGenerate(); return; }
+    trSkip();
+  }
+  document.getElementById('btn-check').addEventListener('click', tryCheck);
+  document.getElementById('btn-skip').addEventListener('click', trySkip);
+  trInputs.forEach(function(id){
+    var el = document.getElementById(id);
+    sanitizeNumericInput(el, id !== 'answer-e');
+    el.addEventListener('input', function(){ trState.touched = true; });
+    el.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); tryCheck(); } });
+  });
+  document.getElementById('reset-stats').addEventListener('click', function(){
+    trState.score = 0; trState.streak = 0; trState.answered = 0; trState.correct = 0; trState.bestStreak = 0;
+    try{ localStorage.removeItem(TR_STATS_KEY); }catch(e){}
+    trUpdateStats();
+  });
+  document.addEventListener('fyzika:scores-updated', function(){ trState.bestStreak = 0; trLoadStats(); trUpdateStats(); });
+  document.getElementById('top-tab-trenink').addEventListener('click', function(){
+    setTimeout(function(){ if(!trState.locked){ var q = trState.current; document.getElementById(q.sci ? 'answer-m' : 'answer').focus(); } }, 0);
+  });
+
+  trLoadStats();
+  trUpdateStats();
+  trGenerate();
+})();
+</script>
+</body>
+</html>
