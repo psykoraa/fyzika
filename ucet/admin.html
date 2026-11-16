@@ -194,6 +194,26 @@ table.grid.pages tr.inactive td.title-cell, table.grid.pages tr.inactive td.sw{ 
 table.grid.pages tr:not(.hub-row):hover td{ background:rgba(30,95,168,.05); }
 table.grid.pages tr.tab-row td.title-cell{ padding-left:calc(var(--tab-indent, 34px) + 26px); }
 .pg-hint{ color:var(--ink-soft); font-size:0.78rem; }
+table.grid.pages .sw-text{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+table.grid.pages th.sw, table.grid.pages td.sw{ width:96px; text-align:center; }
+table.grid.pages td.sw .switch{ justify-content:center; }
+table.grid.pages td{ padding:10px 8px; }
+table.grid.pages tbody tr:not(.hub-row):not(.tab-row):not(.other-row-sep):nth-child(even) td{ background:rgba(28,43,58,.025); }
+table.grid.pages tr.inactive td:first-child{ box-shadow:inset 3px 0 0 var(--danger); }
+table.grid.pages tr.inactive td.title-cell a{ text-decoration:line-through; text-decoration-color:rgba(179,57,43,.5); }
+table.grid.pages tr.hub-row td{ padding-top:14px; padding-bottom:14px; font-size:0.95rem; }
+table.grid.pages .badge.off{ background:var(--danger-bg); color:var(--danger); margin-left:8px; }
+.pg-tabs{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+.pg-tab{
+  font:inherit; font-size:0.76rem; font-weight:600; padding:3px 10px; border-radius:999px; cursor:pointer;
+  border:1px solid var(--success); background:var(--success-bg); color:var(--success);
+}
+.pg-tab.off{ border-color:var(--line); background:var(--surface-2); color:var(--ink-soft); text-decoration:line-through; }
+.pg-tab:hover{ filter:brightness(.96); }
+.pg-tab:disabled{ opacity:.5; cursor:wait; }
+.pg-tab:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+.pg-tab::before{ content:'✓ '; }
+.pg-tab.off::before{ content:'✕ '; }
 @media (max-width:640px){
   table.grid.pages td.sw, table.grid.pages th.sw{ width:auto; }
   .switch span:last-child{ font-size:0.76rem; }
@@ -813,7 +833,9 @@ table.grid.pages tr.tab-row td.title-cell{ padding-left:calc(var(--tab-indent, 3
     var inp = document.createElement('input'); inp.type = 'checkbox'; inp.checked = checked;
     lab.appendChild(inp);
     lab.appendChild(el('span','track'));
-    lab.appendChild(el('span', null, label));
+    var tx = el('span', 'sw-text', label);
+    lab.appendChild(tx);
+    lab.title = label;
     inp.addEventListener('change', function(){ onChange(inp); });
     return lab;
   }
@@ -895,7 +917,19 @@ table.grid.pages tr.tab-row td.title-cell{ padding-left:calc(var(--tab-indent, 3
       titleCell.appendChild(document.createTextNode(' '));
       titleCell.appendChild(tg);
     }
+    if(!p.visible) titleCell.appendChild(el('span', 'badge off', 'skrytá'));
     titleCell.appendChild(el('span', 'pg-file', p.file));
+    if(tabs.length && !!openTabs[p.file]){
+      var chips = el('div', 'pg-tabs');
+      tabs.forEach(function(t){
+        var b = el('button', 'pg-tab' + (t.visible ? '' : ' off'), t.title);
+        b.type = 'button';
+        b.title = t.visible ? 'Viditelná – kliknutím skryjete' : 'Skrytá – kliknutím zobrazíte';
+        b.addEventListener('click', function(){ updateTab(p, t, !t.visible, b); });
+        chips.appendChild(b);
+      });
+      titleCell.appendChild(chips);
+    }
     row.appendChild(titleCell);
     var c1 = row.insertCell(); c1.className = 'sw';
     c1.appendChild(makeSwitch(p.visible, p.visible ? 'viditelná' : 'skrytá', function(inp){
@@ -905,7 +939,6 @@ table.grid.pages tr.tab-row td.title-cell{ padding-left:calc(var(--tab-indent, 3
     c2.appendChild(makeSwitch(p.requiresLogin, p.requiresLogin ? 'vyžaduje' : 'nevyžaduje', function(inp){
       update(p, { vyzadujePrihlaseni: inp.checked }, inp);
     }));
-    if(tabs.length && !!openTabs[p.file]) tabs.forEach(function(t){ tabRow(tb, p, t, level + 1); });
   }
   function rootRow(tb, node){
     var row = tb.insertRow();
