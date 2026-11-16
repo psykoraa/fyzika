@@ -75,6 +75,9 @@
 
 @media (max-width:520px){
   .card{ padding:20px 16px 22px; }
+  /* tabulka hodnot apletu: na úzkém displeji se popisky veličin zalamují, aby byl vidět sloupec Hodnota */
+  .applet-card .qtable{ min-width:0; }
+  .applet-card .qtable tbody th{ white-space:normal; width:auto; }
 }
 
 /* ---- Trénink (číselná odpověď; stejná stavba jako Pohyb po kružnici) ---- */
@@ -893,7 +896,9 @@
       } },
     { key:'odraz', name:'Odraz a síla', gen:function(){
         var b = pick([{n:'Tenisový míček', m:57}, {n:'Volejbalový míč', m:270}, {n:'Fotbalový míč', m:430}, {n:'Hokejový puk', m:170}]);
-        var v1 = rnd(10, 30, 1), v2 = rnd(8, 25, 1), t = rnd(5, 25, 1), m = b.m/1000;
+        // odraz od pevné překážky: rychlost po odrazu musí být menší než před nárazem (část energie se ztratí)
+        var v1 = rnd(10, 30, 1), v2, t = rnd(5, 25, 1), m = b.m/1000;
+        do{ v2 = rnd(8, 25, 1); }while(v2 > 0.9*v1);
         var dp = m*(v1 + v2), F = dp/(t/1000);
         var txt = b.n + ' o hmotnosti ' + H(b.m) + '&nbsp;g narazí rychlostí ' + H(v1) + '&nbsp;m·s⁻¹ kolmo na překážku a odrazí se zpět rychlostí ' + H(v2) + '&nbsp;m·s⁻¹. Náraz trvá ' + H(t) + '&nbsp;ms. Jak velkou průměrnou silou působila překážka na ' + (b.n === 'Hokejový puk' ? 'puk' : 'míč') + '?';
         return { tag:'Změna hybnosti', text:txt, sym:'F', unit:'N', exact:F,

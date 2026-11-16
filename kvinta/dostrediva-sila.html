@@ -75,6 +75,9 @@
 
 @media (max-width:520px){
   .card{ padding:20px 16px 22px; }
+  /* tabulka hodnot apletu: na úzkém displeji se popisky veličin zalamují, aby byl vidět sloupec Hodnota */
+  .applet-card .qtable{ min-width:0; }
+  .applet-card .qtable tbody th{ white-space:normal; width:auto; }
 }
 
 /* ---- Trénink (číselná odpověď; stejná stavba jako Pohyb po kružnici) ---- */
@@ -843,7 +846,8 @@
         if(sc === 'centrifuga'){ m = rnd(5, 20, 1); r = rnd(0.08, 0.15, 0.01); var f = rnd(50, 100, 5); T0 = 1/f;
           txt = 'Zkumavka o hmotnosti ' + H(m) + '&nbsp;g obíhá v laboratorní odstředivce po kružnici o poloměru ' + H(r) + '&nbsp;m s&nbsp;frekvencí ' + H(f) + '&nbsp;Hz. Jak velká dostředivá síla na ni působí?';
           return mk(m/1000, r, T0, txt, ['m = ' + U(m, 'g') + ' = ' + U(m/1000, 'kg'), 'r = ' + U(r, 'm'), 'f = ' + U(f, 'Hz'), 'T = \\dfrac{1}{f} ' + eqs(T0, 4) + ' ' + US(T0, 's', 4)]); }
-        m = rnd(20, 60, 1); r = rnd(3, 6, 0.5); T0 = rnd(4, 10, 0.5);
+        // stejná mez jako u typu Dostředivá síla: zrychlení dítěte nejvýše 5 m·s⁻² (rychlost do asi 5 m·s⁻¹)
+        do{ m = rnd(20, 60, 1); r = rnd(3, 6, 0.5); T0 = rnd(4, 10, 0.5); }while(4*Math.PI*Math.PI*r/(T0*T0) > 5);
         txt = 'Dítě o hmotnosti ' + H(m) + '&nbsp;kg sedí na kolotoči ' + H(r) + '&nbsp;m od osy. Kolotoč se otočí jednou za ' + H(T0) + '&nbsp;s. Jak velká dostředivá síla na dítě působí?';
         return mk(m, r, T0, txt, ['m = ' + U(m, 'kg'), 'r = ' + U(r, 'm'), 'T = ' + U(T0, 's')]);
         function mk(m, r, T0, txt, given){
