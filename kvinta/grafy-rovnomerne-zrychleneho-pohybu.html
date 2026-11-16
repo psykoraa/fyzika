@@ -194,11 +194,11 @@
 
   <div class="top-tabs">
     <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
-    <button class="toptab" id="top-tab-trenink" data-tab="trenink">Trénink grafů</button>
+    <button class="toptab" id="top-tab-trenink" data-tab="trenink">Trénink</button>
     <button class="toptab" id="top-tab-priklady" data-tab="priklady">Příklady</button>
   </div>
 
-  <div id="view-theory">
+  <div id="theory-section" class="tab-section">
 
     <div class="panel">
       <div class="panel-title">Zrychlení</div>
@@ -409,7 +409,7 @@
 
   </div>
 
-  <div id="view-training" hidden>
+  <div id="trenink-section" class="tab-section" hidden>
     <div class="panel">
       <div class="section-block">
         <div class="panel-title">Obtížnost</div>
@@ -449,7 +449,7 @@
     </div>
   </div>
 
-  <div id="view-examples" hidden>
+  <div id="priklady-section" class="tab-section" hidden>
     <div class="panel">
       <div class="section-block">
         <div class="panel-title">Obtížnost</div>
@@ -2549,7 +2549,7 @@
     exUpdateStats();
   });
 
-  // ---- horní přepínač Teorie / Trénink grafů / Příklady ----
+  // ---- horní přepínač Teorie / Trénink / Příklady ----
   var tabTeorie = document.getElementById('top-tab-teorie');
   var tabTrenink = document.getElementById('top-tab-trenink');
   var tabPriklady = document.getElementById('top-tab-priklady');
@@ -2557,9 +2557,9 @@
     tabTeorie.classList.toggle('on', tab==='teorie');
     tabTrenink.classList.toggle('on', tab==='trenink');
     tabPriklady.classList.toggle('on', tab==='priklady');
-    document.getElementById('view-theory').hidden = tab!=='teorie';
-    document.getElementById('view-training').hidden = tab!=='trenink';
-    document.getElementById('view-examples').hidden = tab!=='priklady';
+    document.getElementById('theory-section').hidden = tab!=='teorie';
+    document.getElementById('trenink-section').hidden = tab!=='trenink';
+    document.getElementById('priklady-section').hidden = tab!=='priklady';
     document.getElementById('header-readout').hidden = tab==='teorie';
     document.getElementById('keys-footer').hidden = tab==='teorie';
     if(tab==='priklady') exUpdateStats(); else if(tab==='trenink') updateStats();
@@ -2582,19 +2582,19 @@
   renderVectorFig();
   if(window.renderMathInElement){
     try{
-      renderMathInElement(document.getElementById('view-theory'), {
+      renderMathInElement(document.getElementById('theory-section'), {
         delimiters: [{left:'\\(', right:'\\)', display:false}, {left:'\\[', right:'\\]', display:true}]
       });
     }catch(e){}
   }
   // Sbalení panelů teorie až po zapojení přepínání záložek — kdyby se tu (nečekaně)
   // něco pokazilo, přepínání záložek to nesmí strhnout s sebou.
-  try{ makePanelsCollapsible(document.getElementById('view-theory')); }catch(e){}
+  try{ makePanelsCollapsible(document.getElementById('theory-section')); }catch(e){}
 
   // Po synchronizaci s cloudem (auth.js) znovu načíst nejlepší sérii z localStorage.
   document.addEventListener('fyzika:scores-updated', function(){
-    state.bestStreak = 0; loadStats(); if(!document.getElementById('view-training').hidden) updateStats();
-    ex.bestStreak = 0; exLoadStats(); if(!document.getElementById('view-examples').hidden) exUpdateStats();
+    state.bestStreak = 0; loadStats(); if(!document.getElementById('trenink-section').hidden) updateStats();
+    ex.bestStreak = 0; exLoadStats(); if(!document.getElementById('priklady-section').hidden) exUpdateStats();
   });
 })();
 
