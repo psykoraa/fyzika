@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Žárovka v praxi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../spolecne/config.js"></script>
+<script src="../spolecne/auth.js"></script>
+<script src="../spolecne/zalozky.js?v=3"></script>
+<link rel="stylesheet" href="../spolecne/styl.css">
+<link rel="stylesheet" href="../spolecne/reseni.css?v=1">
+<style>
+:root{
+  --paper:#eff1f8;
+  --surface:#fcfdff;
+  --surface-2:#dde1f1;
+  --ink:#1d2340;
+  --ink-soft:#5b6282;
+  --line:rgba(29,35,64,0.12);
+  --accent:#2e3f8f;
+  --accent-ink:#f5f7ff;
+  --success:#28794f;
+  --success-bg:#e3efe0;
+  --danger:#b3392b;
+  --danger-bg:#f5e4de;
+  --focus:#1e6f66;
+  --shadow:0 1px 0 rgba(29,35,64,0.06);
+
+  /* barvy obrázků žárovky a apletu */
+  --box:#f4efe2;
+  --bulb-led:#f2e3a0;
+  --warm-white:#ffd9a0;
+  --led:#2e3f8f;
+  --fil:#c77c0e;
+  --light:#f6d55c;
+  --heat:#e7a08a;
+}
+
+.panel{ margin-bottom:22px; }
+.panel-title{ margin-bottom:8px; }
+.panel p{
+  margin:0 0 8px;
+  font-size:0.9rem;
+  line-height:1.55;
+}
+.panel p:last-child{ margin-bottom:0; }
+.panel b{ color:var(--ink); }
+.panel ul, .panel ol{ margin:0 0 8px; padding-left:22px; font-size:0.9rem; line-height:1.55; }
+.panel li{ margin-bottom:4px; }
+.panel h3{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.05rem;
+  letter-spacing:0.01em;
+  margin:16px 0 6px;
+}
+.panel h3:first-child{ margin-top:0; }
+
+.card{ padding:26px 26px 28px; text-align:left; margin-bottom:24px; }
+.cat-tag{ margin-bottom:10px; }
+.card h2{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.6rem;
+  letter-spacing:0.02em;
+  color:var(--ink);
+  text-transform:none;
+  margin-bottom:6px;
+}
+.card .desc{
+  font-size:0.86rem;
+  color:var(--ink-soft);
+  line-height:1.5;
+  margin:0 0 14px;
+}
+
+.katex{ font-size:1.05em; }
+.formula-box{
+  background:var(--surface-2);
+  border-radius:8px;
+  padding:12px 16px;
+  margin:10px 0;
+  font-size:1.1rem;
+  text-align:center;
+}
+.formula-line{
+  text-align:center;
+  font-size:1.1rem;
+  color:var(--ink);
+  line-height:1.8;
+}
+.line-scroll{
+  position:relative;
+  white-space:nowrap;
+  overflow-x:auto;
+  overflow-y:hidden;
+  padding:2px 0 4px;
+}
+.given-data{
+  font-size:clamp(0.9rem, 2.4vw, 1.05rem);
+  color:var(--ink-soft);
+  margin-bottom:20px;
+}
+
+.theory-table-wrap{ overflow-x:auto; margin:6px 0 4px; }
+.theory-table{
+  border-collapse:collapse;
+  font-size:0.88rem;
+  width:100%;
+  min-width:320px;
+}
+.theory-table th, .theory-table td{
+  border:1px solid var(--line);
+  padding:8px 12px;
+  text-align:left;
+}
+.theory-table thead th{
+  background:var(--surface-2);
+  color:var(--ink-soft);
+  font-weight:600;
+  font-size:0.72rem;
+  text-transform:uppercase;
+  letter-spacing:0.05em;
+}
+.theory-table td.mono, .theory-table th.mono{
+  font-family:'IBM Plex Mono', monospace;
+  font-variant-numeric:tabular-nums;
+  text-align:center;
+}
+.theory-table tbody tr:nth-child(even) td{ background:rgba(0,0,0,0.02); }
+
+.theory-fig{
+  margin:12px 0 10px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:10px 12px 8px;
+}
+.theory-fig svg{ display:block; width:100%; max-width:560px; height:auto; margin:0 auto; }
+.theory-fig figcaption{
+  font-size:0.8rem;
+  color:var(--ink-soft);
+  line-height:1.45;
+  text-align:center;
+  margin-top:4px;
+}
+
+.example-grid{ display:flex; flex-direction:column; gap:12px; margin-top:6px; }
+.example-item{
+  background:var(--surface-2);
+  border-radius:10px;
+  padding:12px 14px;
+}
+.example-tag{
+  font-size:0.66rem;
+  text-transform:uppercase;
+  letter-spacing:0.06em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-bottom:6px;
+  display:block;
+}
+.example-eq{
+  font-size:1.05rem;
+  margin-bottom:4px;
+}
+.example-note{ font-size:0.82rem; color:var(--ink-soft); line-height:1.45; }
+
+.links{ margin-top:14px; display:flex; flex-wrap:wrap; gap:10px; justify-content:center; }
+a.btn-link{
+  display:inline-block;
+  font-weight:600;
+  font-size:0.95rem;
+  padding:10px 22px;
+  border-radius:8px;
+  background:var(--accent);
+  color:var(--accent-ink);
+  text-decoration:none;
+}
+a.btn-link:hover{ filter:brightness(1.06); }
+a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+
+.credit{
+  margin-top:24px;
+  font-size:0.8rem;
+  line-height:1.5;
+  color:var(--ink-soft);
+  text-align:center;
+}
+.credit a{ color:inherit; }
+
+/* ---- aplety: řádky ovládání (jako na stránce Polarizace světla) ---- */
+.mode-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:16px;
+  padding-top:14px;
+  border-top:1px solid var(--line);
+}
+.mode-row[hidden]{ display:none; }
+.mode-row-label{
+  font-size:0.68rem;
+  text-transform:uppercase;
+  letter-spacing:0.1em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-right:2px;
+  flex:0 0 120px;   /* stejná šířka ve všech řádcích */
+}
+.seg{ display:flex; gap:6px; flex-wrap:wrap; }
+.chip{ font-size:0.82rem; gap:7px; }
+.chip.accented.on{
+  background:var(--accent);
+  color:var(--accent-ink);
+  border-color:var(--accent);
+}
+.chip:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+.slider-row input[type=range]{ flex:1 1 220px; min-width:0; height:34px; margin:0; accent-color:var(--accent); cursor:pointer; }
+.slider-row input[type=range]:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+.slider-val{
+  flex:0 0 140px;
+  font-weight:600;
+  font-size:0.95rem;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+}
+
+/* ---- aplet: hlavička s tlačítkem na celou obrazovku ---- */
+.applet-head{ display:flex; gap:16px; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; }
+.applet-head-text{ flex:1 1 360px; }
+.applet-head .cat-tag{ margin-bottom:10px; }
+button.btn.fs-btn{ display:inline-flex; align-items:center; gap:8px; flex:none; padding:9px 16px; font-size:0.86rem; }
+button.btn.fs-btn svg{ flex:none; }
+.applet-stage .theory-fig{ margin-top:4px; }
+
+/* ---- celá obrazovka: nahoře pruh s ovládáním, pod ním obrázek přes zbytek plochy ---- */
+.applet-card.is-full{
+  position:fixed;
+  inset:0;
+  z-index:1000;
+  margin:0;
+  border-radius:0;
+  border:0;
+  overflow:hidden;
+  padding:0;
+  background:var(--surface);
+  display:flex;
+  flex-direction:column;
+}
+.applet-card:fullscreen{ width:100%; height:100%; }
+.applet-card.is-full .applet-head{
+  flex:none; flex-wrap:nowrap; align-items:center;
+  padding:8px 14px 0; background:var(--surface); order:0;
+}
+.applet-card.is-full .applet-head-text{ flex:1 1 auto; }
+.applet-card.is-full .applet-head{ justify-content:space-between; }
+.applet-card.is-full .applet-controls{
+  flex:none; display:flex; flex-wrap:wrap; align-items:center; gap:0 26px;
+  padding:0 14px 8px; background:var(--surface); border-bottom:1px solid var(--line); order:1;
+}
+.applet-card.is-full .mode-row{ margin:0; padding:4px 0 0; border-top:0; flex-wrap:nowrap; }
+.applet-card.is-full .mode-row-label{ flex:none; }
+.applet-card.is-full .slider-row{ flex:1 1 380px; }
+.applet-card.is-full .slider-row input[type=range]{ height:28px; }
+.applet-card.is-full details.navod,
+.applet-card.is-full figcaption,
+.applet-card.is-full .desc,
+.applet-card.is-full .cat-tag{ display:none; }
+.applet-card.is-full h2{ font-size:1.25rem; margin:0; }
+.applet-card.is-full .applet-stage{ flex:1 1 auto; min-height:0; position:relative; margin:0; order:2; }
+.applet-card.is-full .theory-fig{
+  position:absolute; inset:0; margin:0; padding:0; border:0; border-radius:0;
+  display:flex; flex-direction:column;
+}
+.applet-card.is-full .theory-fig svg{ flex:1 1 auto; min-height:0; width:100%; max-width:none; height:100%; margin:0; }
+/* telefon na výšku, který neumí zamknout orientaci (např. iPhone): karta se otočí o 90° */
+.applet-card.is-full.rotated{
+  inset:auto; top:0; left:0;
+  width:100vh; height:100vw;
+  width:100dvh; height:100dvw;
+  transform-origin:top left;
+  transform:translateX(100vw) rotate(90deg);
+}
+/* telefon na šířku (zamčený i otočený): kompaktní pruh, ať je obrázek co největší */
+.applet-card.is-full.rotated .applet-head-text{ display:none; }
+@media (max-height:500px) and (orientation:landscape){
+  .applet-card.is-full .applet-head-text{ display:none; }
+}
+
+/* ---- širší obrázky a delší výpis hodnot ---- */
+.fs-hint{ display:none; margin:8px 0 0; text-align:center; }
+.applet-card.is-full .fs-hint{ display:none; }
+.applet-card:not(.is-full) .theory-fig svg.wide{ max-width:760px; }
+.slider-val.wide{ flex:1 1 240px; white-space:normal; }
+
+@media (max-width:520px){
+  .card{ padding:20px 16px 22px; }
+  .top-tabs{ flex-wrap:wrap; }
+  .toptab{ flex:1 1 auto; padding:13px 8px; }
+  .fs-hint{ display:block; }
+}
+
+/* ---- trénink: zadání, odpověď a výběr z možností (podle stránek Kulová zrcadla a Převody jednotek) ---- */
+.task-banner{
+  display:flex;
+  align-items:baseline;
+  gap:6px 12px;
+  flex-wrap:wrap;
+  margin-top:14px;
+  background:var(--surface-2);
+  border:1px solid var(--line);
+  border-left:4px solid var(--accent);
+  border-radius:8px;
+  padding:11px 16px;
+}
+.task-banner-label{
+  font-size:0.78rem;
+  text-transform:uppercase;
+  letter-spacing:0.08em;
+  color:var(--ink-soft);
+  font-weight:600;
+}
+.task-text{ font-size:1rem; line-height:1.55; color:var(--ink); flex:1 1 100%; }
+.task-text .katex{ font-size:1.05em; }
+.task-fig{ margin-top:12px; }
+.equation{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:600;
+  font-size:clamp(1.2rem, 4vw, 1.8rem);
+  display:flex;
+  align-items:baseline;
+  justify-content:center;
+  gap:0.4em;
+  flex-wrap:wrap;
+  margin-top:18px;
+  font-variant-numeric:tabular-nums;
+}
+.equation .lhs .katex{ font-size:0.95em; }
+.equation .unit{ color:var(--ink-soft); font-size:0.7em; margin-left:0.1em; }
+.equation .eq{ color:var(--ink-soft); margin:0 0.1em; }
+.answer-input{ width:5.2em; }
+.answer-input.sci-mantissa{ width:3.6em; }
+.sci-group{ display:inline-flex; align-items:baseline; gap:0.12em; }
+.sci-times{ font-size:0.65em; color:var(--ink-soft); margin:0 0.02em; }
+.sci-exp{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:600;
+  width:2.4em;
+  text-align:center;
+  border:none;
+  border-bottom:2px solid var(--ink-soft);
+  background:transparent;
+  color:var(--ink);
+  font-size:0.55em;
+  vertical-align:top;
+  padding:0 0.05em;
+}
+.sci-exp:focus{ outline:none; border-color:var(--focus); }
+.sci-exp.correct{ border-color:var(--success); color:var(--success); }
+.sci-exp.wrong{ border-color:var(--danger); color:var(--danger); }
+.opt-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:8px; margin-top:16px; }
+.opt-grid.wide-opts{ grid-template-columns:1fr; }
+.opt-btn{
+  font-family:'Work Sans', sans-serif;
+  font-size:0.92rem;
+  font-weight:500;
+  text-align:left;
+  line-height:1.35;
+  min-height:44px;
+  padding:10px 14px;
+  border-radius:10px;
+  border:1px solid var(--line);
+  background:var(--surface);
+  color:var(--ink);
+  cursor:pointer;
+  transition:transform .05s ease, background .12s, border-color .12s, box-shadow .12s;
+}
+.opt-btn:hover:not(:disabled){ border-color:var(--accent); }
+.opt-btn:active:not(:disabled){ transform:translateY(1px); }
+.opt-btn:disabled{ cursor:default; }
+.opt-btn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+.opt-btn.selected{ border-color:var(--ink); box-shadow:0 0 0 2px var(--ink); background:var(--surface-2); }
+.opt-btn.correct{ border-color:var(--success); box-shadow:0 0 0 2px var(--success); background:var(--success-bg); }
+.opt-btn.wrong{ border-color:var(--danger); box-shadow:0 0 0 2px var(--danger); background:var(--danger-bg); }
+.opt-btn.missed{ border-color:var(--success); border-style:dashed; }
+.trainer-card .actions{ margin-top:18px; gap:8px; }
+.trainer-card .feedback .steps{ font-size:0.88rem; line-height:1.6; margin-top:4px; }
+.trainer-card .feedback .tip{ font-size:0.84rem; }
+
+@media (max-width:520px){
+  .opt-grid{ grid-template-columns:1fr 1fr; }
+  .readout .cell{ min-width:64px; padding:6px 8px; }
+}
+.equation[hidden], .opt-grid[hidden], .task-fig[hidden]{ display:none; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <a class="back-link" href="../rozcestniky/oktava.html">← Zpět na Oktáva/4. ročník</a>
+
+  <div class="brand">
+    <div class="brand-lockup">
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M20,4 C11,4 8,14 13,20 C15,23 16,25 16,28 L24,28 C24,25 25,23 27,20 C32,14 29,4 20,4 Z" fill="var(--surface-2)" stroke="var(--ink)" stroke-width="1.8"/>
+        <line x1="16" y1="31" x2="24" y2="31" stroke="var(--ink-soft)" stroke-width="2"/>
+        <line x1="17" y1="34.5" x2="23" y2="34.5" stroke="var(--ink-soft)" stroke-width="2"/>
+        <path d="M17,18 L20,13 L23,18" stroke="var(--accent)" stroke-width="2" fill="none" stroke-linecap="round"/>
+      </svg>
+      <div class="brand-text">
+        <h1>Žárovka v praxi</h1>
+        <p>Energetický štítek, příkon, teplota chromatičnosti, světelný tok</p>
+      </div>
+    </div>
+    <div class="readout" id="header-readout" hidden>
+      <div class="cell"><span class="label">Skóre</span><span class="value" id="stat-score">0</span></div>
+      <div class="cell"><span class="label">Série</span><span class="value" id="stat-streak">0</span></div>
+      <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="stat-accuracy">—</span></div>
+    </div>
+  </div>
+
+  <div class="top-tabs">
+    <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+    <button class="toptab" id="top-tab-aplet" data-tab="aplet">Kolik stojí svícení</button>
+    <button class="toptab" id="top-tab-trenink" data-tab="trenink">Trénink</button>
+  </div>
+
+  <!-- ============ TEORIE ============ -->
+  <div id="theory-section" class="tab-section">
+
+    <div class="panel">
+      <div class="panel-title">Co najdeme na obalu žárovky</div>
+      <p>Na obalu běžné LED žárovky z obchodu je řada údajů, ve kterých se dá s fyzikou dobře vyznat. Projdeme je postupně na vymyšleném, ale realistickém obalu:</p>
+      <figure class="theory-fig">
+        <svg id="zp-obal" viewBox="0 0 560 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Nákres obalu LED žárovky. Vlevo obrázek žárovky se závitem E27, vpravo údaje: příkon 13,5 W, ekvivalent klasické žárovky 100 W, světelný tok 1 521 lm, teplota chromatičnosti 2 700 K teplá bílá, životnost 15 000 h a energetický štítek se spotřebou 14 kWh za 1 000 h."></svg>
+        <figcaption>Vymyšlený obal LED žárovky (údaje odpovídají běžným výrobkům).</figcaption>
+      </figure>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Energetický štítek a cena svícení</div>
+      <p>Nejdůležitější číslo na <b>energetickém štítku</b> je spotřeba elektrické energie za 1&nbsp;000 hodin svícení, například 14&nbsp;kWh/1&nbsp;000&nbsp;h. Z ní snadno spočteme energii \(W\) za libovolnou dobu a z ceny za kilowatthodinu i cenu provozu:</p>
+      <div class="formula-box">\[ W = \frac{\text{údaj ze štítku}}{1\,000\ \mathrm{h}} \cdot t, \qquad \text{cena} = W \cdot \text{cena za } 1\ \mathrm{kW\cdot h} \]</div>
+      <div class="example-grid">
+        <div class="example-item">
+          <span class="example-tag">10 hodin svícení, elektřina za 5 Kč/kWh</span>
+          <div class="example-eq">\[ W = \frac{14\ \mathrm{kW\cdot h}}{1\,000\ \mathrm{h}} \cdot 10\ \mathrm{h} = 0{,}14\ \mathrm{kW\cdot h}, \quad 0{,}14 \cdot 5\ \text{Kč} = \mathbf{0{,}70\ \text{Kč}} \]</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Příkon a ekvivalent</div>
+      <p>Na obalu bývají dva výkony: skutečný <b>příkon</b> žárovky (13,5&nbsp;W) a <b>ekvivalent</b> (100&nbsp;W) — příkon staré vláknové žárovky, která by svítila stejně. Ze skutečného příkonu \(P\) dostaneme energii jako \(W = P\,t\):</p>
+      <div class="formula-box">\[ W = 13{,}5\ \mathrm{W} \cdot 1\,000\ \mathrm{h} = 13\,500\ \mathrm{W\cdot h} = 13{,}5\ \mathrm{kW\cdot h} \]</div>
+      <p>Štítek uvádí 14&nbsp;kWh, tedy o 0,5&nbsp;kWh víc — údaj na štítku je zaokrouhlený na celé kilowatthodiny. Vláknová žárovka 100&nbsp;W by za 1&nbsp;000&nbsp;h spotřebovala 100&nbsp;kWh: při ceně 5&nbsp;Kč/kWh je to 500&nbsp;Kč proti 67,50&nbsp;Kč u LED žárovky.</p>
+    </div>
+
+    <div class="card">
+      <span class="cat-tag">Řešený příklad</span>
+      <h2>Noční lampička</h2>
+      <p class="desc">Rozklikejte si postup krok po kroku — další krok se odemkne, jakmile otevřete ten předchozí.</p>
+      <div class="given-data">
+        <div class="given-line">LED lampička v dětském pokoji má příkon 4,9&nbsp;W a na štítku 5&nbsp;kWh/1&nbsp;000&nbsp;h. Svítí 3 hodiny denně po celý rok. Kolik stojí její provoz při ceně elektřiny 6,20&nbsp;Kč/kWh? Kolik by stála vláknová žárovka 40&nbsp;W?</div>
+      </div>
+      <div class="stepper" data-reset="reset-lampicka">
+        <div class="step" data-step="1">
+          <div class="step-connector"></div>
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">1</span>
+            <span class="step-title">Celková doba svícení</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden><div class="step-result">\(t = 3\ \mathrm{h} \cdot 365 = 1\,095\ \mathrm{h}\)</div></div>
+        </div>
+        <div class="step" data-step="2">
+          <div class="step-connector"></div>
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">2</span>
+            <span class="step-title">Spotřebovaná energie podle štítku</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <div class="step-result"><div class="line-scroll">\(W = \dfrac{5\ \mathrm{kW\cdot h}}{1\,000\ \mathrm{h}} \cdot 1\,095\ \mathrm{h} \doteq 5{,}48\ \mathrm{kW\cdot h}\)</div></div>
+            <p>Kontrola z příkonu: \(W = P\,t = 4{,}9\ \mathrm{W} \cdot 1\,095\ \mathrm{h} \doteq 5\,370\ \mathrm{W\cdot h} = 5{,}37\ \mathrm{kW\cdot h}\) — štítek počítá se zaokrouhlenými 5&nbsp;W.</p>
+          </div>
+        </div>
+        <div class="step" data-step="3">
+          <div class="step-connector"></div>
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">3</span>
+            <span class="step-title">Cena za rok</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden><div class="step-result"><div class="line-scroll">\(5{,}48\ \mathrm{kW\cdot h} \cdot 6{,}20\ \text{Kč/kWh} \doteq 34\ \text{Kč}\)</div></div></div>
+        </div>
+        <div class="step" data-step="4">
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">4</span>
+            <span class="step-title">Srovnání s vláknovou žárovkou</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <div class="step-result"><div class="line-scroll">\(W = 40\ \mathrm{W} \cdot 1\,095\ \mathrm{h} = 43{,}8\ \mathrm{kW\cdot h}\), \(43{,}8 \cdot 6{,}20\ \text{Kč} \doteq 272\ \text{Kč}\)</div></div>
+            <div class="result-box">LED lampička stojí asi 34&nbsp;Kč za rok, vláknová žárovka asi 272&nbsp;Kč — osmkrát víc.</div>
+          </div>
+        </div>
+      </div>
+      <div class="actions"><button class="btn ghost" id="reset-lampicka">Zopakovat postup od začátku</button></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Teplota chromatičnosti</div>
+      <p>Údaj v kelvinech (například 2&nbsp;700&nbsp;K) je <b>teplota chromatičnosti</b>. Říká, že světlo žárovky má stejný barevný odstín jako absolutně černé těleso o této teplotě. Nižší teplota znamená žlutější, „teplou“ bílou (2&nbsp;700&nbsp;K až 3&nbsp;000&nbsp;K), vyšší teplota modřejší, „studenou“ bílou (kolem 6&nbsp;500&nbsp;K, podobně jako denní světlo).</p>
+      <p>Dosadíme-li teplotu chromatičnosti do Wienova zákona, zjistíme, kde by mělo maximum vyzařování srovnávací černé těleso:</p>
+      <div class="formula-box">\[ \lambda_\mathrm{max} = \frac{b}{T} = \frac{2{,}9 \cdot 10^{-3}\ \mathrm{m\cdot K}}{2\,700\ \mathrm{K}} \doteq 1{,}07 \cdot 10^{-6}\ \mathrm{m} \doteq 1{,}07\ \text{µ}\mathrm{m} \]</div>
+      <p>To je infračervená oblast, mimo viditelné světlo. Přesně tak vyzařuje vláknová žárovka: většinu energie vyzáří jako neviditelné infračervené záření, které jen hřeje.</p>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M9 2.5 L16 15.5 H2 Z" stroke="var(--danger)" stroke-width="1.4" stroke-linejoin="round"/>
+          <line x1="9" y1="7" x2="9" y2="11.5" stroke="var(--danger)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="13.6" r="1" fill="var(--danger)"/>
+        </svg>
+        <p>LED žárovka ale není tepelný zdroj — svítí luminiscencí a infračervené záření téměř nevyzařuje. Její světlo má jen <i>stejnou barvu</i> jako černé těleso o teplotě 2&nbsp;700&nbsp;K; vlákno ani nic jiného v ní tak horké není. Výpočet podle Wienova zákona se proto u LED týká srovnávacího černého tělesa, ne žárovky samotné.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Světelný tok</div>
+      <p><b>Světelný tok</b> se udává v <b>lumenech</b> (lm) a vyjadřuje, kolik světla zdroj vydává do všech směrů dohromady — je to „světelný výkon“ zdroje. Nevztahuje se na plochu. Čím víc lumenů, tím víc zdroj svítí. Naše žárovka má 1&nbsp;521&nbsp;lm, zhruba jako vláknová žárovka 100&nbsp;W.</p>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="9" cy="9" r="7.5" stroke="var(--focus)" stroke-width="1.6"/>
+          <line x1="9" y1="8" x2="9" y2="13" stroke="var(--focus)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="5.2" r="1" fill="var(--focus)"/>
+        </svg>
+        <p>Světelný tok se neměří ve wattech, protože bere v úvahu citlivost lidského oka: záření, které oko nevidí (infračervené, ultrafialové), do něj nepřispívá vůbec. Při výběru žárovky proto porovnávejte lumeny, ne watty.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Shrnutí</div>
+      <p>• Energetický štítek udává spotřebu za 1&nbsp;000&nbsp;h svícení; z ní spočteme spotřebu a cenu provozu za libovolnou dobu.</p>
+      <p>• Ze skutečného příkonu: \(W = P\,t\). Údaj na štítku je zaokrouhlený, proto se od \(P \cdot 1\,000\ \mathrm{h}\) může mírně lišit.</p>
+      <p>• Teplota chromatičnosti udává barvu světla; podle Wienova zákona leží maximum srovnávacího černého tělesa o teplotě 2&nbsp;700&nbsp;K v infračervené oblasti.</p>
+      <p>• Světelný tok v lumenech říká, kolik světla zdroj vydává.</p>
+    </div>
+  </div>
+
+  <!-- ============ APLET: KOLIK STOJÍ SVÍCENÍ ============ -->
+  <div id="aplet-section" class="tab-section" hidden>
+    <div class="card applet-card" id="kv-card">
+      <div class="applet-head">
+        <div class="applet-head-text">
+          <span class="cat-tag">Aplet</span>
+          <h2>Kolik stojí svícení</h2>
+          <p class="desc">Porovnejte provoz LED a vláknové žárovky. Dosaďte i vlastní čísla z domácího vyúčtování elektřiny.</p>
+        </div>
+        <button class="btn ghost fs-btn" id="kv-fs" type="button" aria-pressed="false">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path id="kv-fs-icon" d="M1.5 5.5V1.5H5.5M10.5 1.5H14.5V5.5M14.5 10.5V14.5H10.5M5.5 14.5H1.5V10.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="kv-fs-label">Celá obrazovka</span>
+        </button>
+      </div>
+      <div class="applet-stage">
+        <figure class="theory-fig">
+          <svg id="kv-svg" class="wide" viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Porovnání LED a vláknové žárovky: dva sloupce s cenou provozu za zvolenou dobu a dva koláčové grafy, které ukazují, jaká část příkonu odejde jako viditelné světlo a jaká jako teplo."></svg>
+          <figcaption>Sloupce: cena provozu za zvolenou dobu. Koláče: přibližný podíl příkonu, který odejde jako viditelné světlo.</figcaption>
+        </figure>
+        <p class="hint fs-hint">Pro čitelnost popisků otevřete aplet na celou obrazovku.</p>
+      </div>
+      <div class="applet-controls">
+        <div class="mode-row slider-row">
+          <label class="mode-row-label" for="kv-p1">Příkon LED</label>
+          <input type="range" id="kv-p1" min="1" max="25" step="0.5" value="13.5">
+          <span class="slider-val" id="kv-o1"></span>
+        </div>
+        <div class="mode-row slider-row">
+          <label class="mode-row-label" for="kv-p2">Příkon vláknové</label>
+          <input type="range" id="kv-p2" min="15" max="150" step="5" value="100">
+          <span class="slider-val" id="kv-o2"></span>
+        </div>
+        <div class="mode-row slider-row">
+          <label class="mode-row-label" for="kv-c">Cena elektřiny</label>
+          <input type="range" id="kv-c" min="2" max="10" step="0.1" value="5">
+          <span class="slider-val" id="kv-oc"></span>
+        </div>
+        <div class="mode-row slider-row">
+          <label class="mode-row-label" for="kv-h">Svícení denně</label>
+          <input type="range" id="kv-h" min="0.5" max="12" step="0.5" value="4">
+          <span class="slider-val" id="kv-oh"></span>
+        </div>
+        <div class="mode-row slider-row">
+          <label class="mode-row-label" for="kv-d">Počet dní</label>
+          <input type="range" id="kv-d" min="1" max="365" step="1" value="365">
+          <span class="slider-val" id="kv-od"></span>
+        </div>
+        <div class="mode-row">
+          <span class="mode-row-label">Výsledek</span>
+          <span class="slider-val wide" id="kv-out" aria-live="polite"></span>
+        </div>
+      </div>
+      <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint">Posuvníky nastavte příkon obou žárovek, cenu jedné kilowatthodiny, kolik hodin denně svítí a po kolik dní. Aplet spočte celkovou dobu svícení \(t\), spotřebovanou energii \(W = P\,t\) v kilowatthodinách a cenu provozu; sloupce cenu porovnávají. Koláčové grafy ukazují, jaká část příkonu se přemění na viditelné světlo a jaká odejde jako teplo (u vláknové žárovky hlavně infračerveným zářením). Podíly jsou jen orientační: u vláknové žárovky asi 5&nbsp;%, u LED žárovky asi 35&nbsp;%; skutečná hodnota závisí na konkrétním výrobku. Cenu žárovek samotných aplet nepočítá.</p>
+      </details>
+    </div>
+  </div>
+
+  <!-- ============ TRÉNINK ============ -->
+  <div id="trenink-section" class="tab-section" hidden>
+    <div class="card trainer-card">
+      <span class="cat-tag">Trénink</span>
+      <h2>Žárovka v praxi</h2>
+      <p class="desc">Počítejte spotřebu a cenu provozu žárovek a vlnovou délku maxima srovnávacího černého tělesa (\(b = 2{,}9 \cdot 10^{-3}\ \mathrm{m\cdot K}\)).</p>
+      <div class="mode-row">
+        <span class="mode-row-label">Úlohy</span>
+        <div class="seg" id="tr-mode" role="group" aria-label="Druh úloh">
+          <button class="chip accented on" type="button" data-mode="random" aria-pressed="true">Náhodně</button>
+          <button class="chip accented" type="button" data-mode="stitek" aria-pressed="false">Cena ze štítku</button>
+          <button class="chip accented" type="button" data-mode="prikon" aria-pressed="false">Spotřeba z příkonu</button>
+          <button class="chip accented" type="button" data-mode="uspora" aria-pressed="false">Úspora</button>
+          <button class="chip accented" type="button" data-mode="wien" aria-pressed="false">Teplota chromatičnosti</button>
+        </div>
+        <button class="linklike" id="tr-reset-stats" type="button">vynulovat statistiku</button>
+      </div>
+      <div id="tr-area"></div>
+      <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint">Zapište číselnou hodnotu v jednotce uvedené za polem (desetinnou čárku i tečku lze použít). Ceny se zaokrouhlují na haléře, uznává se odchylka do 1&nbsp;% (aspoň 1 haléř). Vlnovou délku zaokrouhlete na tři platné číslice. Klávesa Enter potvrzuje odpověď a posouvá na další příklad.</p>
+      </details>
+    </div>
+  </div>
+
+  <footer>Fyzika — Oktáva/4. ročník</footer>
+</div>
+
+<script src="../spolecne/reseni.js?v=1"></script>
+<script src="../spolecne/spolecne.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  // ---- záložky: tlačítko .toptab[data-tab="x"] ↔ sekce #x-section (Teorie = #theory-section) ----
+  // Opuštění běžící hry na čas přepnutím záložky se potvrzuje (tabGuard nastaví hra).
+  var tabs = {}, sections = {}, tabGuard = null, currentTab = 'teorie';
+  Array.prototype.forEach.call(document.querySelectorAll('.toptab[data-tab]'), function(btn){
+    var name = btn.getAttribute('data-tab');
+    tabs[name] = btn;
+    sections[name] = document.getElementById(name === 'teorie' ? 'theory-section' : name + '-section');
+  });
+  function showTab(name){
+    if(tabGuard && name !== currentTab && !tabGuard(currentTab, name)) return;
+    currentTab = name;
+    for(var k in tabs){
+      tabs[k].classList.toggle('on', k === name);
+      if(sections[k]) sections[k].hidden = k !== name;
+    }
+    // skóre, série a úspěšnost v hlavičce jen u tréninku
+    var readout = document.getElementById('header-readout');
+    if(readout) readout.hidden = name !== 'trenink';
+  }
+  Object.keys(tabs).forEach(function(k){ tabs[k].addEventListener('click', function(){ showTab(k); }); });
+  var hash = location.hash.replace('#', '');
+  if(hash && tabs[hash]) showTab(hash);
+
+  // ---- příklady: postupně odemykané steppery ----
+  Array.prototype.forEach.call(document.querySelectorAll('.stepper'), function(wrap){
+    var steps = Array.prototype.slice.call(wrap.querySelectorAll('.step'));
+    var unlockedUpTo = 1;
+
+    function refreshLocks(){
+      steps.forEach(function(st){
+        var idx = parseInt(st.getAttribute('data-step'), 10);
+        var locked = idx > unlockedUpTo;
+        st.classList.toggle('locked', locked);
+        st.classList.toggle('unlocked', !locked && !st.classList.contains('done'));
+        st.querySelector('.step-head').setAttribute('aria-disabled', locked ? 'true' : 'false');
+      });
+    }
+
+    steps.forEach(function(st){
+      var idx = parseInt(st.getAttribute('data-step'), 10);
+      var head = st.querySelector('.step-head');
+      var body = st.querySelector('.step-body');
+      head.addEventListener('click', function(){
+        if(idx > unlockedUpTo) return;
+        var wasOpen = st.classList.contains('open');
+        st.classList.toggle('open', !wasOpen);
+        body.hidden = wasOpen;
+        head.setAttribute('aria-expanded', (!wasOpen).toString());
+        if(!wasOpen){
+          st.classList.add('done');
+          if(idx === unlockedUpTo && unlockedUpTo < steps.length){ unlockedUpTo++; }
+          refreshLocks();
+        }
+      });
+    });
+
+    var resetBtn = document.getElementById(wrap.getAttribute('data-reset'));
+    if(resetBtn){
+      resetBtn.addEventListener('click', function(){
+        unlockedUpTo = 1;
+        steps.forEach(function(st){
+          st.classList.remove('open', 'done');
+          st.querySelector('.step-body').hidden = true;
+          st.querySelector('.step-head').setAttribute('aria-expanded', 'false');
+        });
+        refreshLocks();
+      });
+    }
+
+    refreshLocks();
+  });
+
+  // ---- pomocné funkce pro kreslení a výpis čísel ----
+  var NS = 'http://www.w3.org/2000/svg';
+  var NB = ' ';
+  function mk(tag, attrs, parent){
+    var el = document.createElementNS(NS, tag), k;
+    for(k in attrs){ if(attrs.hasOwnProperty(k)) el.setAttribute(k, attrs[k]); }
+    if(parent) parent.appendChild(el);
+    return el;
+  }
+  function f1(x){ return (Math.round(x * 10) / 10).toString(); }
+  // číslo s desetinnou čárkou na daný počet desetinných míst
+  function fmt(x, dec){ return roundTo(x, dec).toFixed(dec).replace('.', ',').replace('-', '−'); }
+  // tisíce oddělené pevnou mezerou (2 400, 12 500)
+  function fmtThousands(str){
+    var parts = str.split(','), s = parts[0], neg = s.charAt(0) === '−';
+    if(neg) s = s.slice(1);
+    if(s.length > 3) s = s.replace(/\B(?=(\d{3})+(?!\d))/g, NB);
+    return (neg ? '−' : '') + s + (parts.length > 1 ? ',' + parts[1] : '');
+  }
+  // rozklad na mantisu a exponent: x = m · 10^e, 1 ≤ |m| < 10, m zaokrouhlená na sig platných číslic
+  function sciParts(x, sig){
+    if(x === 0) return { m:0, e:0 };
+    var e = Math.floor(Math.log10(Math.abs(x)));
+    var m = roundSig(x / Math.pow(10, e), sig);
+    if(Math.abs(m) >= 10){ m = roundSig(m / 10, sig); e++; }
+    return { m:m, e:e };
+  }
+  var SUP = { '0':'⁰', '1':'¹', '2':'²', '3':'³', '4':'⁴', '5':'⁵', '6':'⁶', '7':'⁷', '8':'⁸', '9':'⁹', '-':'⁻' };
+  function supStr(n){ return String(n).split('').map(function(c){ return SUP[c]; }).join(''); }
+  // text „4,62 · 10¹⁴“ (s pevnými mezerami)
+  function sciText(x, sig){
+    var p = sciParts(x, sig);
+    if(p.e === 0) return fmt(p.m, sig - 1);
+    return fmt(p.m, sig - 1) + NB + '·' + NB + '10' + supStr(p.e);
+  }
+  // totéž pro KaTeX: 4{,}62 \cdot 10^{14}
+  function sciTex(x, sig){
+    var p = sciParts(x, sig);
+    var m = fmt(p.m, sig - 1).replace('−', '-').replace(',', '{,}');
+    if(p.e === 0) return m;
+    return m + ' \\cdot 10^{' + p.e + '}';
+  }
+  function texNum(x, dec){ return fmtThousands(fmt(x, dec)).replace(',', '{,}').replace(/\u00a0/g, '\\,').replace('−', '-'); }
+  // Text s matematikou mezi $…$ (vysází KaTeX) jako HTML.
+  function esc(t){ return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function mathHtml(str){
+    return String(str).split('$').map(function(part, i){
+      if(i % 2 === 0) return part;
+      if(window.katex){ try{ return katex.renderToString(part, { throwOnError:false }); }catch(e){} }
+      return esc(part);
+    }).join('');
+  }
+  function setChips(btns, on){
+    Array.prototype.forEach.call(btns, function(b, i){ b.classList.toggle('on', i === on); b.setAttribute('aria-pressed', i === on ? 'true' : 'false'); });
+  }
+  function setToggle(btn, on){ btn.classList.toggle('on', on); btn.setAttribute('aria-pressed', on ? 'true' : 'false'); }
+  function randInt(a, b){ return a + Math.floor(Math.random() * (b - a + 1)); }
+  function pick(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+  function shuffle(arr){
+    var a = arr.slice(), i, j, t;
+    for(i = a.length - 1; i > 0; i--){ j = Math.floor(Math.random() * (i + 1)); t = a[i]; a[i] = a[j]; a[j] = t; }
+    return a;
+  }
+  var reduceMotion = false;
+  try{ reduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches); }catch(e){}
+
+  // ---- celá obrazovka (stejně jako na stránce Polarizace světla) ----
+  function initFullscreen(cardId, btnId, labelId, iconId){
+    var card = document.getElementById(cardId), fsBtn = document.getElementById(btnId), fsLabel = document.getElementById(labelId), fsIcon = document.getElementById(iconId);
+    if(!card || !fsBtn) return;
+    var ICON_ENTER = 'M1.5 5.5V1.5H5.5M10.5 1.5H14.5V5.5M14.5 10.5V14.5H10.5M5.5 14.5H1.5V10.5';
+    var ICON_EXIT = 'M5.5 1.5V5.5H1.5M14.5 5.5H10.5V1.5M10.5 14.5V10.5H14.5M1.5 10.5H5.5V14.5';
+    var isPhone = window.matchMedia && matchMedia('(pointer:coarse)').matches && Math.min(screen.width, screen.height) < 600;
+    var portraitMq = window.matchMedia ? matchMedia('(orientation:portrait)') : null;
+    var orientLocked = false, keepFull = false;
+    function fsElement(){ return document.fullscreenElement || document.webkitFullscreenElement || null; }
+    function updateRotated(){
+      var on = card.classList.contains('is-full') && isPhone && !orientLocked && !!portraitMq && portraitMq.matches;
+      if(on === card.classList.contains('rotated')) return;
+      card.classList.toggle('rotated', on);
+    }
+    if(portraitMq){
+      if(portraitMq.addEventListener) portraitMq.addEventListener('change', updateRotated);
+      else if(portraitMq.addListener) portraitMq.addListener(updateRotated);
+    }
+    function lockFailed(){
+      if(isPhone && portraitMq && portraitMq.matches && fsElement()){
+        keepFull = true;
+        try{ (document.exitFullscreen || document.webkitExitFullscreen).call(document); }catch(e){ keepFull = false; }
+      }
+      updateRotated();
+    }
+    function lockLandscape(){
+      var so = screen.orientation;
+      if(!isPhone){ updateRotated(); return; }
+      if(!so || !so.lock){ lockFailed(); return; }
+      try{ so.lock('landscape').then(function(){ orientLocked = true; updateRotated(); }, lockFailed); }catch(e){ lockFailed(); }
+    }
+    function setFullClass(on){
+      card.classList.toggle('is-full', on);
+      if(!on){
+        if(orientLocked){ try{ screen.orientation.unlock(); }catch(e){} }
+        orientLocked = false;
+      }
+      updateRotated();
+      document.documentElement.style.overflow = on ? 'hidden' : '';
+      fsLabel.textContent = on ? 'Zavřít celou obrazovku' : 'Celá obrazovka';
+      fsIcon.setAttribute('d', on ? ICON_EXIT : ICON_ENTER);
+      fsBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    }
+    fsBtn.addEventListener('click', function(){
+      if(card.classList.contains('is-full')){
+        if(fsElement()){ (document.exitFullscreen || document.webkitExitFullscreen).call(document); }
+        else setFullClass(false);
+        return;
+      }
+      var req = card.requestFullscreen || card.webkitRequestFullscreen;
+      setFullClass(true);
+      if(req){
+        try{
+          var pr0 = req.call(card);
+          if(pr0 && pr0.then) pr0.then(lockLandscape, lockLandscape);
+          else lockLandscape();
+        }catch(e){ lockLandscape(); }
+      } else lockLandscape();
+    });
+    function onFsChange(){
+      if(fsElement()) return;
+      if(keepFull){ keepFull = false; return; }
+      if(card.classList.contains('is-full')) setFullClass(false);
+    }
+    document.addEventListener('fullscreenchange', onFsChange);
+    document.addEventListener('webkitfullscreenchange', onFsChange);
+    document.addEventListener('keydown', function(e){
+      if(e.key === 'Escape' && card.classList.contains('is-full') && !fsElement()) setFullClass(false);
+    });
+  }
+
+  // ================= TRÉNINK =================
+  // Úloha q = { tag, text, kind:'num'|'sci'|'choice'|'multi', lhs, unit, answer, tol (absolutní, u 'sci' relativní),
+  //   choices:[html], correct:index | [indexy], given:[], find:[], steps:[], final, tip }.
+  // Texty mohou obsahovat matematiku mezi $…$ (vysází KaTeX).
+  function makeTrainer(cfg){
+    var P = cfg.prefix || 'tr';
+    var area = document.getElementById(P + '-area');
+    if(!area) return null;
+    var state = { mode:cfg.defaultMode || 'random', q:null, revealed:false, touched:false, sel:[], lastKey:null,
+      score:0, streak:0, bestStreak:0, answered:0, correct:0 };
+
+    area.innerHTML =
+      '<div class="task-banner"><span class="task-banner-label" id="' + P + '-tag"></span><div class="task-text" id="' + P + '-text"></div></div>' +
+      '<div class="task-fig" id="' + P + '-fig" hidden></div>' +
+      '<div class="equation" id="' + P + '-eq" hidden>' +
+        '<span class="lhs" id="' + P + '-lhs"></span><span class="eq">=</span>' +
+        '<span class="answer-slot" id="' + P + '-num-wrap"><input class="answer-input" id="' + P + '-num" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="?" aria-label="Odpověď"></span>' +
+        '<span class="answer-slot sci-group" id="' + P + '-sci-wrap" hidden>' +
+          '<input class="answer-input sci-mantissa" id="' + P + '-man" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="a" aria-label="Mantisa a">' +
+          '<span class="sci-times">· 10</span>' +
+          '<input class="sci-exp" id="' + P + '-exp" inputmode="text" enterkeyhint="done" autocomplete="off" spellcheck="false" placeholder="n" aria-label="Exponent n">' +
+        '</span>' +
+        '<span class="unit" id="' + P + '-unit"></span>' +
+      '</div>' +
+      '<div class="opt-grid" id="' + P + '-opts" hidden></div>' +
+      '<div class="feedback" id="' + P + '-feedback" hidden><div class="headline" id="' + P + '-fb-head"></div><div class="steps" id="' + P + '-fb-steps"></div><div class="tip" id="' + P + '-fb-tip" hidden></div></div>' +
+      '<div class="actions">' +
+        '<button class="btn primary" id="' + P + '-check" type="button">Zkontrolovat</button>' +
+        '<button class="btn ghost" id="' + P + '-skip" type="button">Nevím / Zobrazit řešení</button>' +
+      '</div>';
+
+    function $(id){ return document.getElementById(P + '-' + id); }
+    var inNum = $('num'), inMan = $('man'), inExp = $('exp');
+    sanitizeNumericInput(inNum, true); sanitizeNumericInput(inMan, true); sanitizeNumericInput(inExp, false);
+    [inNum, inMan, inExp].forEach(function(el){ el.addEventListener('input', function(){ state.touched = el.value.trim() !== '' || state.touched; }); });
+
+    function parseNum(str){
+      var s = String(str).trim().replace(/[−–]/g, '-').replace(',', '.').replace(/\s+/g, '');
+      if(s === '' || s === '-' || s === '.') return NaN;
+      return parseFloat(s);
+    }
+
+    function newTask(){
+      var q, guard = 0;
+      do { q = cfg.gen(state.mode); guard++; } while(guard < 20 && q.key && q.key === state.lastKey);
+      state.lastKey = q.key || null;
+      state.q = q; state.revealed = false; state.touched = false; state.sel = [];
+      $('tag').textContent = q.tag || 'Úloha';
+      $('text').innerHTML = mathHtml(q.text);
+      var fig = $('fig');
+      if(q.fig){ fig.hidden = false; fig.innerHTML = ''; q.fig(fig); } else { fig.hidden = true; fig.innerHTML = ''; }
+      var isInput = q.kind === 'num' || q.kind === 'sci';
+      $('eq').hidden = !isInput;
+      $('num-wrap').hidden = q.kind !== 'num';
+      $('sci-wrap').hidden = q.kind !== 'sci';
+      [inNum, inMan, inExp].forEach(function(el){ el.value = ''; el.disabled = false; el.classList.remove('correct', 'wrong'); });
+      if(isInput){
+        $('lhs').innerHTML = mathHtml(q.lhs || '');
+        $('unit').innerHTML = mathHtml(q.unit || '');
+      }
+      var opts = $('opts');
+      opts.innerHTML = '';
+      opts.hidden = !(q.kind === 'choice' || q.kind === 'multi');
+      opts.classList.toggle('wide-opts', !!q.wideOpts);
+      if(!opts.hidden){
+        q.choices.forEach(function(c, i){
+          var b = document.createElement('button');
+          b.type = 'button'; b.className = 'opt-btn';
+          b.innerHTML = mathHtml(c);
+          b.setAttribute('aria-pressed', 'false');
+          b.addEventListener('click', function(){
+            if(state.revealed) return;
+            state.touched = true;
+            if(q.kind === 'choice'){
+              state.sel = [i];
+            } else {
+              var at = state.sel.indexOf(i);
+              if(at >= 0) state.sel.splice(at, 1); else state.sel.push(i);
+            }
+            Array.prototype.forEach.call(opts.children, function(o, j){
+              var on = state.sel.indexOf(j) >= 0;
+              o.classList.toggle('selected', on); o.setAttribute('aria-pressed', on ? 'true' : 'false');
+            });
+          });
+          opts.appendChild(b);
+        });
+      }
+      var fb = $('feedback'); fb.hidden = true; fb.className = 'feedback';
+      $('fb-tip').hidden = true;
+      $('check').textContent = 'Zkontrolovat';
+      if(q.kind === 'num'){ try{ inNum.focus({ preventScroll:true }); }catch(e){} }
+      else if(q.kind === 'sci'){ try{ inMan.focus({ preventScroll:true }); }catch(e){} }
+    }
+
+    function userValue(){
+      var q = state.q;
+      if(q.kind === 'num') return parseNum(inNum.value);
+      if(q.kind === 'sci'){
+        var m = parseNum(inMan.value), e = parseInt(String(inExp.value).replace(/[−–]/g, '-').replace(/\s+/g, ''), 10);
+        if(isNaN(m)) return NaN;
+        if(isNaN(e)) e = 0;
+        return m * Math.pow(10, e);
+      }
+      return NaN;
+    }
+
+    function isCorrect(){
+      var q = state.q, v;
+      if(q.kind === 'num'){ v = userValue(); return !isNaN(v) && Math.abs(v - q.answer) <= q.tol + 1e-12 * Math.abs(q.answer); }
+      if(q.kind === 'sci'){ v = userValue(); return !isNaN(v) && Math.abs(v - q.answer) <= q.tol * Math.abs(q.answer); }
+      if(q.kind === 'choice') return state.sel.length === 1 && state.sel[0] === q.correct;
+      var want = q.correct.slice().sort().join(','), got = state.sel.slice().sort().join(',');
+      return want === got;
+    }
+
+    function evaluate(bySkip){
+      if(state.revealed) return;
+      var q = state.q, ok = !bySkip && isCorrect();
+      state.revealed = true;
+      state.answered++;
+      if(ok){
+        state.score += 10; state.streak++; state.correct++;
+        if(state.streak > state.bestStreak){
+          state.bestStreak = state.streak; saveStats();
+          if(window.FyzikaScores) FyzikaScores.report('serie', state.bestStreak, false);
+        }
+      } else state.streak = 0;
+      var cls = ok ? 'correct' : 'wrong';
+      if(q.kind === 'num') inNum.classList.add(cls);
+      if(q.kind === 'sci'){ inMan.classList.add(cls); inExp.classList.add(cls); }
+      [inNum, inMan, inExp].forEach(function(el){ el.disabled = true; });
+      if(q.kind === 'choice' || q.kind === 'multi'){
+        var corr = q.kind === 'choice' ? [q.correct] : q.correct;
+        Array.prototype.forEach.call($('opts').children, function(o, j){
+          o.disabled = true;
+          var isC = corr.indexOf(j) >= 0, isS = state.sel.indexOf(j) >= 0;
+          o.classList.remove('selected');
+          if(isC && isS) o.classList.add('correct');
+          else if(isC) o.classList.add(bySkip || q.kind === 'choice' ? 'correct' : 'missed');
+          else if(isS) o.classList.add('wrong');
+        });
+      }
+      var fb = $('feedback');
+      fb.hidden = false;
+      if(bySkip){ fb.className = 'feedback neutral'; $('fb-head').textContent = 'Řešení'; }
+      else if(ok){ fb.className = 'feedback ok'; $('fb-head').textContent = 'Správně!'; }
+      else { fb.className = 'feedback bad'; $('fb-head').textContent = state.touched ? 'Bohužel, špatně.' : 'Nezadali jste odpověď.'; }
+      var tip = $('fb-tip');
+      tip.hidden = true;
+      if(ok && q.kind === 'sci'){
+        var m = Math.abs(parseNum(inMan.value));
+        if(!(m >= 1 && m < 10)){ tip.hidden = false; tip.textContent = 'Číselně správně — v normalizovaném zápisu má ale platit 1 ≤ a < 10.'; }
+      }
+      FyzikaReseni.show(fb, $('fb-steps'), {
+        given:(q.given || []).map(mathHtml), find:(q.find || []).map(mathHtml),
+        steps:(q.steps || []).map(mathHtml), final:q.final ? mathHtml(q.final) : '', note:q.note ? mathHtml(q.note) : '', raw:true
+      });
+      $('check').textContent = 'Další příklad →';
+      try{ $('check').focus({ preventScroll:true }); }catch(e){}
+      updateStats();
+    }
+
+    $('check').addEventListener('click', function(){
+      if(state.revealed){ newTask(); return; }
+      evaluate(false);
+    });
+    $('skip').addEventListener('click', function(){
+      if(state.revealed){ newTask(); return; }
+      evaluate(true);
+    });
+    // Enter potvrzuje odpověď a posouvá na další příklad
+    area.addEventListener('keydown', function(e){
+      if(e.key !== 'Enter') return;
+      var tg = e.target && e.target.tagName;
+      if(tg === 'BUTTON') return;
+      e.preventDefault();
+      if(state.revealed) newTask(); else evaluate(false);
+    });
+    document.addEventListener('keydown', function(e){
+      if(e.key !== 'Enter' || !state.revealed) return;
+      var sec = area.closest('.tab-section');
+      if(sec && sec.hidden) return;
+      var tg = e.target && e.target.tagName;
+      if(tg === 'BUTTON' || tg === 'INPUT') return;
+      e.preventDefault(); newTask();
+    });
+
+    // Přepnutí druhu úloh uprostřed rozepsaného příkladu: odpověď se nejdřív vyhodnotí
+    // (aby se přepínáním nedalo vyhnout špatné odpovědi), jinak rovnou nový příklad.
+    var modeBtns = document.querySelectorAll('#' + P + '-mode .chip');
+    Array.prototype.forEach.call(modeBtns, function(b, i){
+      b.addEventListener('click', function(){
+        setChips(modeBtns, i);
+        state.mode = b.getAttribute('data-mode');
+        if(!state.revealed && state.touched){ evaluate(false); return; }
+        newTask();
+      });
+    });
+
+    // ---- statistika ----
+    var STATS_KEY = cfg.statsKey;
+    function loadStats(){
+      try{ var raw = localStorage.getItem(STATS_KEY); if(raw) state.bestStreak = JSON.parse(raw).bestStreak || 0; }catch(e){}
+    }
+    function saveStats(){
+      try{ localStorage.setItem(STATS_KEY, JSON.stringify({ bestStreak:state.bestStreak })); }catch(e){}
+    }
+    function updateStats(){
+      var s = document.getElementById('stat-score'), st = document.getElementById('stat-streak'), a = document.getElementById('stat-accuracy');
+      if(s) s.textContent = state.score;
+      if(st) st.textContent = state.streak + (state.bestStreak > 0 ? ' / ' + state.bestStreak : '');
+      if(a) a.textContent = state.answered === 0 ? '—' : Math.round(100 * state.correct / state.answered) + ' %';
+    }
+    var rs = document.getElementById(P + '-reset-stats');
+    if(rs) rs.addEventListener('click', function(){
+      state.score = 0; state.streak = 0; state.answered = 0; state.correct = 0; state.bestStreak = 0;
+      try{ localStorage.removeItem(STATS_KEY); }catch(e){}
+      updateStats();
+    });
+    // Po synchronizaci s cloudem (auth.js) znovu načíst nejlepší sérii.
+    document.addEventListener('fyzika:scores-updated', function(){ state.bestStreak = 0; loadStats(); updateStats(); });
+
+    loadStats(); updateStats(); newTask();
+    return { newTask:newTask, state:state };
+  }
+
+  var B_WIEN = 2.9e-3;
+  function txt(parent, x, y, s, attrs){
+    var a = { x:x, y:y, 'font-size':'13', 'font-family':'Work Sans, sans-serif', fill:'var(--ink)' }, k;
+    for(k in (attrs || {})) a[k] = attrs[k];
+    var t = mk('text', a, parent); t.innerHTML = s; return t;
+  }
+  // číslo pro KaTeX s nejvýše dec desetinnými místy, bez koncových nul
+  function texTrim(x, dec){ var v = roundTo(x, dec), d = 0; while(d < dec && Math.abs(roundTo(v, d) - v) > 1e-9) d++; return texNum(v, d); }
+  function fmtKc(x){ return fmtThousands(fmt(x, 2)) + NB + 'Kč'; }
+
+  // ================= OBAL ŽÁROVKY (obrázek v teorii) =================
+  (function(){
+    var s = document.getElementById('zp-obal');
+    if(!s) return;
+    mk('rect', { x:10, y:10, width:540, height:280, rx:14, fill:'var(--box)', stroke:'var(--ink)', 'stroke-width':'1.6' }, s);
+    // žárovka
+    mk('path', { d:'M110,60 C60,60 50,120 80,150 C92,163 95,175 95,185 L125,185 C125,175 128,163 140,150 C170,120 160,60 110,60 Z', fill:'var(--surface)', stroke:'var(--ink)', 'stroke-width':'1.6' }, s);
+    var y;
+    for(y = 188; y <= 222; y += 8) mk('rect', { x:93, y:y, width:34, height:6, rx:2, fill:'var(--ink-soft)' }, s);
+    mk('path', { d:'M103,228 L117,228 L112,238 L108,238 Z', fill:'var(--ink)' }, s);
+    mk('rect', { x:96, y:120, width:28, height:12, rx:2, fill:'var(--bulb-led)', stroke:'var(--ink-soft)', 'stroke-width':'1' }, s);
+    txt(s, 110, 262, 'patice E27', { 'text-anchor':'middle', 'font-size':'12', fill:'var(--ink-soft)' });
+    // údaje
+    var X = 200;
+    txt(s, X, 48, 'LED žárovka', { 'font-size':'18', 'font-weight':'700' });
+    txt(s, X, 82, '13,5 W', { 'font-weight':'700', 'font-size':'22' });
+    txt(s, X + 80, 82, '≙ 100 W', { fill:'var(--ink-soft)' });
+    txt(s, X, 102, 'příkon', { 'font-size':'11', fill:'var(--ink-soft)' });
+    txt(s, X + 80, 102, 'ekvivalent vláknové žárovky', { 'font-size':'11', fill:'var(--ink-soft)' });
+    txt(s, X, 138, '<tspan font-weight="700" font-size="18">1 521 lm</tspan>', {});
+    txt(s, X, 156, 'světelný tok', { 'font-size':'11', fill:'var(--ink-soft)' });
+    mk('rect', { x:X, y:174, width:22, height:22, rx:4, fill:'var(--warm-white)', stroke:'var(--ink-soft)', 'stroke-width':'1' }, s);
+    txt(s, X + 30, 190, '<tspan font-weight="700">2 700 K</tspan> teplá bílá');
+    txt(s, X + 30, 208, 'teplota chromatičnosti', { 'font-size':'11', fill:'var(--ink-soft)' });
+    txt(s, X, 244, '<tspan font-weight="700">15 000 h</tspan>');
+    txt(s, X, 262, 'životnost', { 'font-size':'11', fill:'var(--ink-soft)' });
+    // energetický štítek
+    var LX = 420, LY = 40;
+    mk('rect', { x:LX, y:LY, width:110, height:230, rx:6, fill:'var(--surface)', stroke:'var(--ink)', 'stroke-width':'1.4' }, s);
+    txt(s, LX + 55, LY + 18, 'energetický štítek', { 'text-anchor':'middle', 'font-size':'10', 'font-weight':'600' });
+    var cls = ['A', 'B', 'C', 'D', 'E', 'F', 'G'], cols = ['#1a9850', '#66bd63', '#a6d96a', '#fee08b', '#fdae61', '#f46d43', '#d73027'];
+    cls.forEach(function(c, i){
+      var w = 34 + i * 7, yy = LY + 28 + i * 18;
+      mk('path', { d:'M' + (LX + 8) + ',' + yy + ' h' + w + ' l7,7 l-7,7 h' + (-w) + ' z', fill:cols[i] }, s);
+      txt(s, LX + 12, yy + 11, c, { 'font-size':'10.5', 'font-weight':'700', fill:'#fff' });
+    });
+    mk('path', { d:'M' + (LX + 102) + ',' + (LY + 28 + 4 * 18) + ' h-26 l-7,7 l7,7 h26 z', fill:'var(--ink)' }, s);
+    txt(s, LX + 88, LY + 28 + 4 * 18 + 11, 'E', { 'font-size':'11', 'font-weight':'700', fill:'#fff' });
+    txt(s, LX + 55, LY + 178, '<tspan font-weight="700" font-size="20">14</tspan>', { 'text-anchor':'middle' });
+    txt(s, LX + 55, LY + 196, 'kWh/1 000 h', { 'text-anchor':'middle', 'font-size':'11' });
+  })();
+
+  // ================= APLET: KOLIK STOJÍ SVÍCENÍ =================
+  (function(){
+    var svg = document.getElementById('kv-svg');
+    if(!svg) return;
+    var ETA_LED = 0.35, ETA_ZAR = 0.05;   // orientační podíl příkonu přeměněný na viditelné světlo
+    var BX0 = 70, BY0 = 250, BH = 190;
+    mk('line', { x1:BX0 - 10, y1:BY0, x2:330, y2:BY0, stroke:'var(--ink)', 'stroke-width':'1.4' }, svg);
+    var bar1 = mk('rect', { x:BX0 + 20, width:80, fill:'var(--led)' }, svg), bar2 = mk('rect', { x:BX0 + 150, width:80, fill:'var(--fil)' }, svg);
+    var l1 = txt(svg, BX0 + 60, 0, '', { 'text-anchor':'middle', 'font-size':'13', 'font-weight':'700' });
+    var l2 = txt(svg, BX0 + 190, 0, '', { 'text-anchor':'middle', 'font-size':'13', 'font-weight':'700' });
+    txt(svg, BX0 + 60, BY0 + 20, 'LED', { 'text-anchor':'middle', 'font-size':'12.5' });
+    txt(svg, BX0 + 190, BY0 + 20, 'vláknová', { 'text-anchor':'middle', 'font-size':'12.5' });
+    var e1 = txt(svg, BX0 + 60, BY0 + 38, '', { 'text-anchor':'middle', 'font-size':'11.5', fill:'var(--ink-soft)' });
+    var e2 = txt(svg, BX0 + 190, BY0 + 38, '', { 'text-anchor':'middle', 'font-size':'11.5', fill:'var(--ink-soft)' });
+    txt(svg, BX0 - 10, 30, 'cena provozu', { 'font-size':'12', fill:'var(--ink-soft)' });
+    function pie(cx, cy, r, eta, title){
+      mk('circle', { cx:cx, cy:cy, r:r, fill:'var(--heat)' }, svg);
+      var a = 2 * Math.PI * eta, x2 = cx + r * Math.sin(a), y2 = cy - r * Math.cos(a);
+      mk('path', { d:'M' + cx + ',' + cy + ' L' + cx + ',' + (cy - r) + ' A' + r + ',' + r + ' 0 ' + (eta > 0.5 ? 1 : 0) + ' 1 ' + f1(x2) + ',' + f1(y2) + ' Z', fill:'var(--light)' }, svg);
+      mk('circle', { cx:cx, cy:cy, r:r, fill:'none', stroke:'var(--ink)', 'stroke-width':'1.2' }, svg);
+      txt(svg, cx, cy - r - 12, title, { 'text-anchor':'middle', 'font-size':'12.5', 'font-weight':'600' });
+      txt(svg, cx, cy + r + 18, 'světlo asi ' + Math.round(eta * 100) + NB + '%', { 'text-anchor':'middle', 'font-size':'11.5' });
+    }
+    pie(430, 130, 52, ETA_LED, 'LED');
+    pie(560, 130, 52, ETA_ZAR, 'vláknová');
+    mk('rect', { x:390, y:236, width:14, height:14, fill:'var(--light)', stroke:'var(--ink)', 'stroke-width':'0.8' }, svg);
+    txt(svg, 410, 248, 'viditelné světlo', { 'font-size':'11.5' });
+    mk('rect', { x:510, y:236, width:14, height:14, fill:'var(--heat)', stroke:'var(--ink)', 'stroke-width':'0.8' }, svg);
+    txt(svg, 530, 248, 'teplo', { 'font-size':'11.5' });
+    var ids = ['p1', 'p2', 'c', 'h', 'd'], el = {};
+    ids.forEach(function(k){ el[k] = document.getElementById('kv-' + k); });
+    var out = document.getElementById('kv-out');
+    function render(){
+      var p1 = parseFloat(el.p1.value), p2 = parseFloat(el.p2.value), c = parseFloat(el.c.value), h = parseFloat(el.h.value), d = parseInt(el.d.value, 10);
+      var t = h * d, W1 = p1 * t / 1000, W2 = p2 * t / 1000, K1 = W1 * c, K2 = W2 * c, mx = Math.max(K1, K2) || 1;
+      document.getElementById('kv-o1').textContent = fmt(p1, 1) + NB + 'W';
+      document.getElementById('kv-o2').textContent = p2 + NB + 'W';
+      document.getElementById('kv-oc').textContent = fmt(c, 2) + NB + 'Kč/kWh';
+      document.getElementById('kv-oh').textContent = fmt(h, 1) + NB + 'h';
+      document.getElementById('kv-od').textContent = d + NB + (d === 1 ? 'den' : d < 5 ? 'dny' : 'dní');
+      var h1 = BH * K1 / mx, h2 = BH * K2 / mx;
+      bar1.setAttribute('y', f1(BY0 - h1)); bar1.setAttribute('height', f1(h1));
+      bar2.setAttribute('y', f1(BY0 - h2)); bar2.setAttribute('height', f1(h2));
+      l1.setAttribute('y', f1(BY0 - h1 - 6)); l1.textContent = fmtKc(K1);
+      l2.setAttribute('y', f1(BY0 - h2 - 6)); l2.textContent = fmtKc(K2);
+      e1.textContent = fmt(W1, 2) + NB + 'kWh'; e2.textContent = fmt(W2, 2) + NB + 'kWh';
+      out.innerHTML = '<i>t</i> = ' + fmtThousands(fmt(t, t % 1 ? 1 : 0)) + NB + 'h; LED: <i>W</i> = ' + fmt(W1, 2) + NB + 'kWh, ' + fmtKc(K1) + '; vláknová: <i>W</i> = ' + fmt(W2, 2) + NB + 'kWh, ' + fmtKc(K2) + '; úspora ' + fmtKc(K2 - K1);
+    }
+    ids.forEach(function(k){ el[k].addEventListener('input', render); });
+    render();
+    initFullscreen('kv-card', 'kv-fs', 'kv-fs-label', 'kv-fs-icon');
+  })();
+
+  // ================= TRÉNINK =================
+  var LEDS = [[4.9, 5], [5.5, 6], [7, 7], [8.5, 9], [9.5, 10], [11, 11], [13.5, 14], [15, 15]];   // [příkon W, štítek kWh/1000 h]
+  function priceTol(v){ return Math.max(0.01, 0.01 * Math.abs(v)); }
+  function genZ(mode){
+    if(mode === 'random') mode = pick(['stitek', 'prikon', 'uspora', 'wien']);
+    var L = pick(LEDS), c = randInt(45, 80) / 10, t, W, K;
+    if(mode === 'stitek'){
+      t = pick([10, 20, 50, 100, 250, 500, 730, 1500]);
+      W = L[1] * t / 1000; K = roundTo(W * c, 2);
+      return { key:'s' + L[1] + t, tag:'Cena ze štítku', kind:'num',
+        text:'Energetický štítek LED žárovky uvádí $' + L[1] + '\\ \\mathrm{kW\\cdot h}/1\\,000\\ \\mathrm{h}$. Kolik zaplatíme za $' + texNum(t, 0) + '\\ \\mathrm{h}$ svícení, stojí-li elektřina $' + texNum(c, 2) + '$ Kč/kWh?',
+        lhs:'cena', unit:'Kč', answer:K, tol:priceTol(K),
+        given:['štítek: $' + L[1] + '\\ \\mathrm{kW\\cdot h}/1\\,000\\ \\mathrm{h}$', '$t = ' + texNum(t, 0) + '\\ \\mathrm{h}$', 'cena: $' + texNum(c, 2) + '$ Kč/kWh'], find:['cena = ?'],
+        steps:['$W = \\dfrac{' + L[1] + '\\ \\mathrm{kW\\cdot h}}{1\\,000\\ \\mathrm{h}} \\cdot ' + texNum(t, 0) + '\\ \\mathrm{h} = ' + texTrim(W, 3) + '\\ \\mathrm{kW\\cdot h}$',
+          'cena $= ' + texTrim(W, 3) + '\\ \\mathrm{kW\\cdot h} \\cdot ' + texNum(c, 2) + '$ Kč/kWh $\\doteq ' + texNum(K, 2) + '$ Kč'],
+        final:'Svícení stojí asi ' + fmtKc(K) + '.' };
+    }
+    if(mode === 'prikon'){
+      t = pick([500, 1000, 2000, 3650]);
+      var P = pick([L[0], pick([25, 40, 60, 75, 100])]);
+      W = roundTo(P * t / 1000, 2);
+      return { key:'p' + P + t, tag:'Spotřeba z příkonu', kind:'num',
+        text:'Žárovka má příkon $' + texNum(P, P % 1 ? 1 : 0) + '\\ \\mathrm{W}$. Kolik elektrické energie spotřebuje za $' + texNum(t, 0) + '\\ \\mathrm{h}$ svícení? Výsledek uveďte v kilowatthodinách.',
+        lhs:'$W$', unit:'$\\mathrm{kW\\cdot h}$', answer:W, tol:Math.max(0.01, 0.005 * W),
+        given:['$P = ' + texNum(P, P % 1 ? 1 : 0) + '\\ \\mathrm{W} = ' + texTrim(P / 1000, 4) + '\\ \\mathrm{kW}$', '$t = ' + texNum(t, 0) + '\\ \\mathrm{h}$'], find:['$W = {?}$'],
+        steps:['$W = P\\,t = ' + texNum(P, P % 1 ? 1 : 0) + '\\ \\mathrm{W} \\cdot ' + texNum(t, 0) + '\\ \\mathrm{h} = ' + texNum(P * t, 0) + '\\ \\mathrm{W\\cdot h} = ' + texNum(W, 2) + '\\ \\mathrm{kW\\cdot h}$'],
+        final:'$W = ' + texNum(W, 2) + '\\ \\mathrm{kW\\cdot h}$' };
+    }
+    if(mode === 'uspora'){
+      var P2 = pick([40, 60, 75, 100]), hd = pick([2, 3, 4, 5, 6]), d = pick([30, 90, 180, 365]);
+      t = hd * d;
+      var W1 = L[0] * t / 1000, W2 = P2 * t / 1000; K = roundTo((W2 - W1) * c, 2);
+      return { key:'u' + L[0] + P2 + t, tag:'Úspora', kind:'num',
+        text:'Vláknovou žárovku $' + P2 + '\\ \\mathrm{W}$ nahradíme LED žárovkou $' + texNum(L[0], L[0] % 1 ? 1 : 0) + '\\ \\mathrm{W}$. Svítí $' + hd + '$ h denně po dobu $' + d + '$ dní, elektřina stojí $' + texNum(c, 2) + '$ Kč/kWh. Kolik ušetříme?',
+        lhs:'úspora', unit:'Kč', answer:K, tol:priceTol(K),
+        given:['$P_\\mathrm{LED} = ' + texNum(L[0], L[0] % 1 ? 1 : 0) + '\\ \\mathrm{W}$, $P_\\mathrm{vl} = ' + P2 + '\\ \\mathrm{W}$', '$t = ' + hd + '\\ \\mathrm{h} \\cdot ' + d + ' = ' + texNum(t, 0) + '\\ \\mathrm{h}$', 'cena: $' + texNum(c, 2) + '$ Kč/kWh'], find:['úspora = ?'],
+        steps:['$W_\\mathrm{vl} - W_\\mathrm{LED} = (P_\\mathrm{vl} - P_\\mathrm{LED})\\,t = ' + texNum(P2 - L[0], (P2 - L[0]) % 1 ? 1 : 0) + '\\ \\mathrm{W} \\cdot ' + texNum(t, 0) + '\\ \\mathrm{h} \\doteq ' + texNum((P2 - L[0]) * t / 1000, 2) + '\\ \\mathrm{kW\\cdot h}$',
+          'úspora $= ' + texNum((P2 - L[0]) * t / 1000, 2) + '\\ \\mathrm{kW\\cdot h} \\cdot ' + texNum(c, 2) + '$ Kč/kWh $\\doteq ' + texNum(K, 2) + '$ Kč'],
+        final:'Ušetříme asi ' + fmtKc(K) + '.' };
+    }
+    var T = pick([2700, 3000, 3500, 4000, 5000, 6500]), lm = roundSig(B_WIEN / T * 1e9, 3);
+    return { key:'w' + T, tag:'Teplota chromatičnosti', kind:'num',
+      text:'Na obalu LED žárovky je teplota chromatičnosti $' + texNum(T, 0) + '\\ \\mathrm{K}$. Na jaké vlnové délce by nejvíce vyzařovalo absolutně černé těleso téže barvy (téže teploty)?',
+      lhs:'$\\lambda_\\mathrm{max}$', unit:'$\\mathrm{nm}$', answer:lm, tol:Math.pow(10, Math.floor(Math.log10(lm)) - 2),
+      given:['$T = ' + texNum(T, 0) + '\\ \\mathrm{K}$', '$b = 2{,}9 \\cdot 10^{-3}\\ \\mathrm{m\\cdot K}$'], find:['$\\lambda_\\mathrm{max} = {?}$'],
+      steps:['$\\lambda_\\mathrm{max} = \\dfrac{b}{T} = \\dfrac{2{,}9 \\cdot 10^{-3}\\ \\mathrm{m\\cdot K}}{' + texNum(T, 0) + '\\ \\mathrm{K}} \\doteq ' + sciTex(lm * 1e-9, 3) + '\\ \\mathrm{m} = ' + texNum(lm, decimalsForSig(lm, 3)) + '\\ \\mathrm{nm}$',
+        lm > 760 ? 'To je infračervená oblast. (Samotná LED žárovka ale infračervené záření téměř nevyzařuje — svítí luminiscencí.)' : 'To je viditelná oblast spektra.'],
+      final:'$\\lambda_\\mathrm{max} \\doteq ' + texNum(lm, decimalsForSig(lm, 3)) + '\\ \\mathrm{nm}$' };
+  }
+  makeTrainer({ prefix:'tr', statsKey:'fyzika:zarovka-v-praxi:stats', gen:genZ });
+
+  // ---- vzorce (KaTeX) ----
+  if(window.renderMathInElement){
+    ['theory-section', 'aplet-section', 'trenink-section'].forEach(function(id){
+      try{
+        renderMathInElement(document.getElementById(id), {
+          delimiters: [{left:'\\(', right:'\\)', display:false}, {left:'\\[', right:'\\]', display:true}]
+        });
+      }catch(e){}
+    });
+  }
+
+  // ---- sbalovací panely v teorii ----
+  try{ makePanelsCollapsible(document.getElementById('theory-section')); }catch(e){}
+})();
+</script>
+</body>
+</html>

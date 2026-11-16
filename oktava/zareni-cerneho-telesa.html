@@ -1,0 +1,1287 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Záření černého tělesa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../spolecne/config.js"></script>
+<script src="../spolecne/auth.js"></script>
+<script src="../spolecne/zalozky.js?v=3"></script>
+<link rel="stylesheet" href="../spolecne/styl.css">
+<link rel="stylesheet" href="../spolecne/reseni.css?v=1">
+<style>
+:root{
+  --paper:#eff1f8;
+  --surface:#fcfdff;
+  --surface-2:#dde1f1;
+  --ink:#1d2340;
+  --ink-soft:#5b6282;
+  --line:rgba(29,35,64,0.12);
+  --accent:#2e3f8f;
+  --accent-ink:#f5f7ff;
+  --success:#28794f;
+  --success-bg:#e3efe0;
+  --danger:#b3392b;
+  --danger-bg:#f5e4de;
+  --focus:#1e6f66;
+  --shadow:0 1px 0 rgba(29,35,64,0.06);
+
+  /* barvy vyzařovacích křivek (nižší teplota → teplejší barva) */
+  --t1:#c0392b;
+  --t2:#c77c0e;
+  --t3:#2f6fd0;
+}
+
+.panel{ margin-bottom:22px; }
+.panel-title{ margin-bottom:8px; }
+.panel p{
+  margin:0 0 8px;
+  font-size:0.9rem;
+  line-height:1.55;
+}
+.panel p:last-child{ margin-bottom:0; }
+.panel b{ color:var(--ink); }
+.panel ul, .panel ol{ margin:0 0 8px; padding-left:22px; font-size:0.9rem; line-height:1.55; }
+.panel li{ margin-bottom:4px; }
+.panel h3{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.05rem;
+  letter-spacing:0.01em;
+  margin:16px 0 6px;
+}
+.panel h3:first-child{ margin-top:0; }
+
+.card{ padding:26px 26px 28px; text-align:left; margin-bottom:24px; }
+.cat-tag{ margin-bottom:10px; }
+.card h2{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.6rem;
+  letter-spacing:0.02em;
+  color:var(--ink);
+  text-transform:none;
+  margin-bottom:6px;
+}
+.card .desc{
+  font-size:0.86rem;
+  color:var(--ink-soft);
+  line-height:1.5;
+  margin:0 0 14px;
+}
+
+.katex{ font-size:1.05em; }
+.formula-box{
+  background:var(--surface-2);
+  border-radius:8px;
+  padding:12px 16px;
+  margin:10px 0;
+  font-size:1.1rem;
+  text-align:center;
+}
+.formula-line{
+  text-align:center;
+  font-size:1.1rem;
+  color:var(--ink);
+  line-height:1.8;
+}
+.line-scroll{
+  position:relative;
+  white-space:nowrap;
+  overflow-x:auto;
+  overflow-y:hidden;
+  padding:2px 0 4px;
+}
+.given-data{
+  font-size:clamp(0.9rem, 2.4vw, 1.05rem);
+  color:var(--ink-soft);
+  margin-bottom:20px;
+}
+
+.theory-table-wrap{ overflow-x:auto; margin:6px 0 4px; }
+.theory-table{
+  border-collapse:collapse;
+  font-size:0.88rem;
+  width:100%;
+  min-width:320px;
+}
+.theory-table th, .theory-table td{
+  border:1px solid var(--line);
+  padding:8px 12px;
+  text-align:left;
+}
+.theory-table thead th{
+  background:var(--surface-2);
+  color:var(--ink-soft);
+  font-weight:600;
+  font-size:0.72rem;
+  text-transform:uppercase;
+  letter-spacing:0.05em;
+}
+.theory-table td.mono, .theory-table th.mono{
+  font-family:'IBM Plex Mono', monospace;
+  font-variant-numeric:tabular-nums;
+  text-align:center;
+}
+.theory-table tbody tr:nth-child(even) td{ background:rgba(0,0,0,0.02); }
+
+.theory-fig{
+  margin:12px 0 10px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:10px 12px 8px;
+}
+.theory-fig svg{ display:block; width:100%; max-width:560px; height:auto; margin:0 auto; }
+.theory-fig figcaption{
+  font-size:0.8rem;
+  color:var(--ink-soft);
+  line-height:1.45;
+  text-align:center;
+  margin-top:4px;
+}
+
+.example-grid{ display:flex; flex-direction:column; gap:12px; margin-top:6px; }
+.example-item{
+  background:var(--surface-2);
+  border-radius:10px;
+  padding:12px 14px;
+}
+.example-tag{
+  font-size:0.66rem;
+  text-transform:uppercase;
+  letter-spacing:0.06em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-bottom:6px;
+  display:block;
+}
+.example-eq{
+  font-size:1.05rem;
+  margin-bottom:4px;
+}
+.example-note{ font-size:0.82rem; color:var(--ink-soft); line-height:1.45; }
+
+.links{ margin-top:14px; display:flex; flex-wrap:wrap; gap:10px; justify-content:center; }
+a.btn-link{
+  display:inline-block;
+  font-weight:600;
+  font-size:0.95rem;
+  padding:10px 22px;
+  border-radius:8px;
+  background:var(--accent);
+  color:var(--accent-ink);
+  text-decoration:none;
+}
+a.btn-link:hover{ filter:brightness(1.06); }
+a.btn-link:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+
+.credit{
+  margin-top:24px;
+  font-size:0.8rem;
+  line-height:1.5;
+  color:var(--ink-soft);
+  text-align:center;
+}
+.credit a{ color:inherit; }
+
+/* ---- aplety: řádky ovládání (jako na stránce Polarizace světla) ---- */
+.mode-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:16px;
+  padding-top:14px;
+  border-top:1px solid var(--line);
+}
+.mode-row[hidden]{ display:none; }
+.mode-row-label{
+  font-size:0.68rem;
+  text-transform:uppercase;
+  letter-spacing:0.1em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-right:2px;
+  flex:0 0 120px;   /* stejná šířka ve všech řádcích */
+}
+.seg{ display:flex; gap:6px; flex-wrap:wrap; }
+.chip{ font-size:0.82rem; gap:7px; }
+.chip.accented.on{
+  background:var(--accent);
+  color:var(--accent-ink);
+  border-color:var(--accent);
+}
+.chip:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+.slider-row input[type=range]{ flex:1 1 220px; min-width:0; height:34px; margin:0; accent-color:var(--accent); cursor:pointer; }
+.slider-row input[type=range]:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+.slider-val{
+  flex:0 0 140px;
+  font-weight:600;
+  font-size:0.95rem;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+}
+
+/* ---- aplet: hlavička s tlačítkem na celou obrazovku ---- */
+.applet-head{ display:flex; gap:16px; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; }
+.applet-head-text{ flex:1 1 360px; }
+.applet-head .cat-tag{ margin-bottom:10px; }
+button.btn.fs-btn{ display:inline-flex; align-items:center; gap:8px; flex:none; padding:9px 16px; font-size:0.86rem; }
+button.btn.fs-btn svg{ flex:none; }
+.applet-stage .theory-fig{ margin-top:4px; }
+
+/* ---- celá obrazovka: nahoře pruh s ovládáním, pod ním obrázek přes zbytek plochy ---- */
+.applet-card.is-full{
+  position:fixed;
+  inset:0;
+  z-index:1000;
+  margin:0;
+  border-radius:0;
+  border:0;
+  overflow:hidden;
+  padding:0;
+  background:var(--surface);
+  display:flex;
+  flex-direction:column;
+}
+.applet-card:fullscreen{ width:100%; height:100%; }
+.applet-card.is-full .applet-head{
+  flex:none; flex-wrap:nowrap; align-items:center;
+  padding:8px 14px 0; background:var(--surface); order:0;
+}
+.applet-card.is-full .applet-head-text{ flex:1 1 auto; }
+.applet-card.is-full .applet-head{ justify-content:space-between; }
+.applet-card.is-full .applet-controls{
+  flex:none; display:flex; flex-wrap:wrap; align-items:center; gap:0 26px;
+  padding:0 14px 8px; background:var(--surface); border-bottom:1px solid var(--line); order:1;
+}
+.applet-card.is-full .mode-row{ margin:0; padding:4px 0 0; border-top:0; flex-wrap:nowrap; }
+.applet-card.is-full .mode-row-label{ flex:none; }
+.applet-card.is-full .slider-row{ flex:1 1 380px; }
+.applet-card.is-full .slider-row input[type=range]{ height:28px; }
+.applet-card.is-full details.navod,
+.applet-card.is-full figcaption,
+.applet-card.is-full .desc,
+.applet-card.is-full .cat-tag{ display:none; }
+.applet-card.is-full h2{ font-size:1.25rem; margin:0; }
+.applet-card.is-full .applet-stage{ flex:1 1 auto; min-height:0; position:relative; margin:0; order:2; }
+.applet-card.is-full .theory-fig{
+  position:absolute; inset:0; margin:0; padding:0; border:0; border-radius:0;
+  display:flex; flex-direction:column;
+}
+.applet-card.is-full .theory-fig svg{ flex:1 1 auto; min-height:0; width:100%; max-width:none; height:100%; margin:0; }
+/* telefon na výšku, který neumí zamknout orientaci (např. iPhone): karta se otočí o 90° */
+.applet-card.is-full.rotated{
+  inset:auto; top:0; left:0;
+  width:100vh; height:100vw;
+  width:100dvh; height:100dvw;
+  transform-origin:top left;
+  transform:translateX(100vw) rotate(90deg);
+}
+/* telefon na šířku (zamčený i otočený): kompaktní pruh, ať je obrázek co největší */
+.applet-card.is-full.rotated .applet-head-text{ display:none; }
+@media (max-height:500px) and (orientation:landscape){
+  .applet-card.is-full .applet-head-text{ display:none; }
+}
+
+/* ---- širší obrázky a delší výpis hodnot ---- */
+.fs-hint{ display:none; margin:8px 0 0; text-align:center; }
+.applet-card.is-full .fs-hint{ display:none; }
+.applet-card:not(.is-full) .theory-fig svg.wide{ max-width:760px; }
+.slider-val.wide{ flex:1 1 240px; white-space:normal; }
+
+@media (max-width:520px){
+  .card{ padding:20px 16px 22px; }
+  .top-tabs{ flex-wrap:wrap; }
+  .toptab{ flex:1 1 auto; padding:13px 8px; }
+  .fs-hint{ display:block; }
+}
+
+/* ---- trénink: zadání, odpověď a výběr z možností (podle stránek Kulová zrcadla a Převody jednotek) ---- */
+.task-banner{
+  display:flex;
+  align-items:baseline;
+  gap:6px 12px;
+  flex-wrap:wrap;
+  margin-top:14px;
+  background:var(--surface-2);
+  border:1px solid var(--line);
+  border-left:4px solid var(--accent);
+  border-radius:8px;
+  padding:11px 16px;
+}
+.task-banner-label{
+  font-size:0.78rem;
+  text-transform:uppercase;
+  letter-spacing:0.08em;
+  color:var(--ink-soft);
+  font-weight:600;
+}
+.task-text{ font-size:1rem; line-height:1.55; color:var(--ink); flex:1 1 100%; }
+.task-text .katex{ font-size:1.05em; }
+.task-fig{ margin-top:12px; }
+.equation{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:600;
+  font-size:clamp(1.2rem, 4vw, 1.8rem);
+  display:flex;
+  align-items:baseline;
+  justify-content:center;
+  gap:0.4em;
+  flex-wrap:wrap;
+  margin-top:18px;
+  font-variant-numeric:tabular-nums;
+}
+.equation .lhs .katex{ font-size:0.95em; }
+.equation .unit{ color:var(--ink-soft); font-size:0.7em; margin-left:0.1em; }
+.equation .eq{ color:var(--ink-soft); margin:0 0.1em; }
+.answer-input{ width:5.2em; }
+.answer-input.sci-mantissa{ width:3.6em; }
+.sci-group{ display:inline-flex; align-items:baseline; gap:0.12em; }
+.sci-times{ font-size:0.65em; color:var(--ink-soft); margin:0 0.02em; }
+.sci-exp{
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:600;
+  width:2.4em;
+  text-align:center;
+  border:none;
+  border-bottom:2px solid var(--ink-soft);
+  background:transparent;
+  color:var(--ink);
+  font-size:0.55em;
+  vertical-align:top;
+  padding:0 0.05em;
+}
+.sci-exp:focus{ outline:none; border-color:var(--focus); }
+.sci-exp.correct{ border-color:var(--success); color:var(--success); }
+.sci-exp.wrong{ border-color:var(--danger); color:var(--danger); }
+.opt-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:8px; margin-top:16px; }
+.opt-grid.wide-opts{ grid-template-columns:1fr; }
+.opt-btn{
+  font-family:'Work Sans', sans-serif;
+  font-size:0.92rem;
+  font-weight:500;
+  text-align:left;
+  line-height:1.35;
+  min-height:44px;
+  padding:10px 14px;
+  border-radius:10px;
+  border:1px solid var(--line);
+  background:var(--surface);
+  color:var(--ink);
+  cursor:pointer;
+  transition:transform .05s ease, background .12s, border-color .12s, box-shadow .12s;
+}
+.opt-btn:hover:not(:disabled){ border-color:var(--accent); }
+.opt-btn:active:not(:disabled){ transform:translateY(1px); }
+.opt-btn:disabled{ cursor:default; }
+.opt-btn:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+.opt-btn.selected{ border-color:var(--ink); box-shadow:0 0 0 2px var(--ink); background:var(--surface-2); }
+.opt-btn.correct{ border-color:var(--success); box-shadow:0 0 0 2px var(--success); background:var(--success-bg); }
+.opt-btn.wrong{ border-color:var(--danger); box-shadow:0 0 0 2px var(--danger); background:var(--danger-bg); }
+.opt-btn.missed{ border-color:var(--success); border-style:dashed; }
+.trainer-card .actions{ margin-top:18px; gap:8px; }
+.trainer-card .feedback .steps{ font-size:0.88rem; line-height:1.6; margin-top:4px; }
+.trainer-card .feedback .tip{ font-size:0.84rem; }
+
+@media (max-width:520px){
+  .opt-grid{ grid-template-columns:1fr 1fr; }
+  .readout .cell{ min-width:64px; padding:6px 8px; }
+}
+.equation[hidden], .opt-grid[hidden], .task-fig[hidden]{ display:none; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <a class="back-link" href="../rozcestniky/oktava.html">← Zpět na Oktáva/4. ročník</a>
+
+  <div class="brand">
+    <div class="brand-lockup">
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <line x1="5" y1="35" x2="37" y2="35" stroke="var(--ink)" stroke-width="1.8"/>
+        <line x1="5" y1="35" x2="5" y2="4" stroke="var(--ink)" stroke-width="1.8"/>
+        <path d="M6,34 C10,33 11,8 15,8 C20,8 24,28 36,32" stroke="var(--accent)" stroke-width="2.2" fill="none"/>
+        <path d="M6,34 C11,34 14,20 19,20 C25,20 28,31 36,33" stroke="var(--ink-soft)" stroke-width="1.6" fill="none"/>
+        <line x1="15" y1="8" x2="15" y2="35" stroke="var(--accent)" stroke-width="1.2" stroke-dasharray="2 2"/>
+      </svg>
+      <div class="brand-text">
+        <h1>Záření černého tělesa</h1>
+        <p>Absolutně černé těleso, vyzařovací křivka, Wienův posunovací zákon</p>
+      </div>
+    </div>
+    <div class="readout" id="header-readout" hidden>
+      <div class="cell"><span class="label">Skóre</span><span class="value" id="stat-score">0</span></div>
+      <div class="cell"><span class="label">Série</span><span class="value" id="stat-streak">0</span></div>
+      <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="stat-accuracy">—</span></div>
+    </div>
+  </div>
+
+  <div class="top-tabs">
+    <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+    <button class="toptab" id="top-tab-aplet" data-tab="aplet">Vyzařovací křivka</button>
+    <button class="toptab" id="top-tab-trenink" data-tab="trenink">Trénink</button>
+  </div>
+
+  <!-- ============ TEORIE ============ -->
+  <div id="theory-section" class="tab-section">
+
+    <div class="panel">
+      <div class="panel-title">Absolutně černé těleso</div>
+      <p><b>Absolutně černé těleso</b> je těleso, které pohltí veškeré záření, jež na ně dopadne — nic neodrazí ani nepropustí. Je to idealizace. Dobrým modelem je dutina s malým otvorem: záření, které otvorem vnikne dovnitř, se uvnitř mnohokrát odrazí, až se úplně pohltí, a ven se už prakticky nedostane.</p>
+      <p>Napadne nás: když těleso všechno pohlcuje, nemělo by se ohřívat donekonečna? Nemělo. Těleso současně samo vyzařuje tepelné záření, a to tím víc, čím je teplejší. Ustálí se proto na teplotě, při které vyzáří stejně energie, kolik pohltí (rovnovážný stav).</p>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="9" cy="9" r="7.5" stroke="var(--focus)" stroke-width="1.6"/>
+          <line x1="9" y1="8" x2="9" y2="13" stroke="var(--focus)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="5.2" r="1" fill="var(--focus)"/>
+        </svg>
+        <p>„Černé“ neznamená, že těleso nesvítí. Rozžhavené absolutně černé těleso svítí červeně, žlutě i bíle — jen na něm nevidíme žádné odražené světlo. Přibližně jako absolutně černá tělesa se chovají například hvězdy včetně Slunce.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Vyzařovací křivka</div>
+      <p>Zahříváme-li kus kovu, mění se jeho barva od tmavě červené přes oranžovou a žlutou až k bílé. Jak absolutně černé těleso vyzařuje na jednotlivých vlnových délkách, ukazuje <b>vyzařovací křivka</b>:</p>
+      <figure class="theory-fig">
+        <svg id="ct-fig-krivky" class="wide" viewBox="0 0 640 290" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Graf intenzity vyzařování absolutně černého tělesa v závislosti na vlnové délce pro teploty 4 000 K, 5 000 K a 6 000 K. Křivka pro vyšší teplotu leží výš a její maximum je posunuté ke kratší vlnové délce. Čárkovaná čára spojuje maxima. Barevný pruh vyznačuje viditelnou oblast."></svg>
+        <figcaption>Vyzařovací křivky pro tři teploty. Čárkovaná čára spojuje maxima, barevný pruh je viditelné světlo (390&nbsp;nm až 760&nbsp;nm).</figcaption>
+      </figure>
+      <p>Z grafu vyčteme dvě věci:</p>
+      <ul>
+        <li>čím vyšší je teplota, tím <b>výš celá křivka leží</b> — těleso vyzařuje na všech vlnových délkách víc;</li>
+        <li>s rostoucí teplotou se <b>maximum posouvá ke kratším vlnovým délkám</b>. Proto rozžhavené těleso mění barvu od červené k bílé.</li>
+      </ul>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Wienův posunovací zákon</div>
+      <p>Vlnová délka \(\lambda_\mathrm{max}\), na které těleso vyzařuje nejvíce, je nepřímo úměrná jeho termodynamické teplotě \(T\) (<b>Wienův posunovací zákon</b>):</p>
+      <div class="formula-box">\[ \lambda_\mathrm{max} = \frac{b}{T}, \qquad b = 2{,}9 \cdot 10^{-3}\ \mathrm{m\cdot K} \]</div>
+      <p>Dvakrát vyšší teplota tedy znamená dvakrát kratší vlnovou délku maxima. Teplotu je nutné dosazovat v kelvinech.</p>
+      <div class="example-grid">
+        <div class="example-item">
+          <span class="example-tag">Slunce, povrch asi 5&nbsp;800&nbsp;K</span>
+          <div class="example-eq">\[ \lambda_\mathrm{max} = \frac{2{,}9 \cdot 10^{-3}\ \mathrm{m\cdot K}}{5\,800\ \mathrm{K}} = 5{,}0 \cdot 10^{-7}\ \mathrm{m} = \mathbf{500\ \mathrm{nm}} \]</div>
+          <div class="example-note">Maximum leží v zelené části spektra, uprostřed oblasti, na kterou je lidské oko citlivé.</div>
+        </div>
+        <div class="example-item">
+          <span class="example-tag">Vlákno žárovky, asi 2&nbsp;700&nbsp;K</span>
+          <div class="example-eq">\[ \lambda_\mathrm{max} = \frac{2{,}9 \cdot 10^{-3}\ \mathrm{m\cdot K}}{2\,700\ \mathrm{K}} \doteq 1{,}07 \cdot 10^{-6}\ \mathrm{m} \doteq \mathbf{1\,070\ \mathrm{nm}} \]</div>
+          <div class="example-note">Maximum je až v infračervené oblasti, do viditelné zasahuje jen okraj křivky. Žárovka proto víc hřeje, než svítí.</div>
+        </div>
+      </div>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="9" cy="9" r="7.5" stroke="var(--focus)" stroke-width="1.6"/>
+          <line x1="9" y1="8" x2="9" y2="13" stroke="var(--focus)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="5.2" r="1" fill="var(--focus)"/>
+        </svg>
+        <p>Na stejné myšlence pracuje <b>pyrometr</b>, který měří teplotu rozžhavených těles bezdotykově: z barvy (rozložení vyzařování) tělesa určí jeho teplotu. Přesnější hodnota konstanty je \(b \doteq 2{,}898 \cdot 10^{-3}\ \mathrm{m\cdot K}\).</p>
+      </div>
+      <div class="links"><a class="btn-link" href="#aplet" id="ct-link-aplet">Vyzkoušejte v apletu →</a></div>
+    </div>
+
+    <div class="card">
+      <span class="cat-tag">Řešený příklad</span>
+      <h2>Proč nás „vidí“ termokamera</h2>
+      <p class="desc">Rozklikejte si postup krok po kroku — další krok se odemkne, jakmile otevřete ten předchozí.</p>
+      <div class="given-data">
+        <div class="given-line">Povrch lidského těla má teplotu přibližně \(t = 37\ {}^{\circ}\mathrm{C}\). Na jaké vlnové délce vyzařuje nejvíce? Do které oblasti spektra tato vlnová délka patří?</div>
+      </div>
+      <div class="stepper" data-reset="reset-telo">
+        <div class="step" data-step="1">
+          <div class="step-connector"></div>
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">1</span>
+            <span class="step-title">Převeďte teplotu na kelviny</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden><div class="step-result">\(T = (37 + 273{,}15)\ \mathrm{K} \doteq 310\ \mathrm{K}\)</div></div>
+        </div>
+        <div class="step" data-step="2">
+          <div class="step-connector"></div>
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">2</span>
+            <span class="step-title">Dosaďte do Wienova zákona</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <div class="step-result"><div class="line-scroll">\(\lambda_\mathrm{max} = \dfrac{b}{T} = \dfrac{2{,}9 \cdot 10^{-3}\ \mathrm{m\cdot K}}{310\ \mathrm{K}} \doteq 9{,}4 \cdot 10^{-6}\ \mathrm{m} = 9{,}4\ \text{µ}\mathrm{m}\)</div></div>
+            <p>Jednotky: \(\mathrm{m\cdot K}/\mathrm{K} = \mathrm{m}\).</p>
+          </div>
+        </div>
+        <div class="step" data-step="3">
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-num">3</span>
+            <span class="step-title">Zařaďte do spektra</span>
+            <span class="step-chevron">▸</span>
+          </button>
+          <div class="step-body" hidden>
+            <div class="result-box">\(\lambda_\mathrm{max} \doteq 9{,}4\ \text{µ}\mathrm{m}\) — infračervené záření (1&nbsp;mm až 760&nbsp;nm).</div>
+            <p>Proto lidské tělo ve tmě nevidíme okem, ale termovizní kamera, která snímá infračervené záření, ano.</p>
+          </div>
+        </div>
+      </div>
+      <div class="actions"><button class="btn ghost" id="reset-telo">Zopakovat postup od začátku</button></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Shrnutí</div>
+      <p>• Absolutně černé těleso pohltí veškeré záření, které na ně dopadne; samo přitom vyzařuje tepelné záření.</p>
+      <p>• S rostoucí teplotou těleso vyzařuje víc na všech vlnových délkách a jeho barva se mění od červené k bílé.</p>
+      <p>• Wienův posunovací zákon: \(\lambda_\mathrm{max} = b/T\), \(b = 2{,}9 \cdot 10^{-3}\ \mathrm{m\cdot K}\) — nepřímá úměrnost.</p>
+      <p>• Slunce (asi 5&nbsp;800&nbsp;K) vyzařuje nejvíce kolem 500&nbsp;nm, žárovka (asi 2&nbsp;700&nbsp;K) v infračervené oblasti.</p>
+    </div>
+  </div>
+
+  <!-- ============ APLET: VYZAŘOVACÍ KŘIVKA ============ -->
+  <div id="aplet-section" class="tab-section" hidden>
+    <div class="card applet-card" id="ct-card">
+      <div class="applet-head">
+        <div class="applet-head-text">
+          <span class="cat-tag">Aplet</span>
+          <h2>Vyzařovací křivka černého tělesa</h2>
+          <p class="desc">Měňte teplotu tělesa a sledujte tvar křivky, polohu maxima a barvu tělesa.</p>
+        </div>
+        <button class="btn ghost fs-btn" id="ct-fs" type="button" aria-pressed="false">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path id="ct-fs-icon" d="M1.5 5.5V1.5H5.5M10.5 1.5H14.5V5.5M14.5 10.5V14.5H10.5M5.5 14.5H1.5V10.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="ct-fs-label">Celá obrazovka</span>
+        </button>
+      </div>
+      <div class="applet-stage">
+        <figure class="theory-fig">
+          <svg id="ct-svg" class="wide" viewBox="0 0 640 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Graf vyzařovací křivky absolutně černého tělesa pro nastavenou teplotu s vyznačeným maximem a viditelnou oblastí. Vpravo nahoře kruh v barvě, jakou má těleso při této teplotě."></svg>
+          <figcaption>Svislá čárkovaná čára označuje \(\lambda_\mathrm{max} = b/T\). Kruh vpravo nahoře ukazuje přibližnou barvu tělesa.</figcaption>
+        </figure>
+        <p class="hint fs-hint">Pro čitelnost popisků otevřete aplet na celou obrazovku.</p>
+      </div>
+      <div class="applet-controls">
+        <div class="mode-row slider-row">
+          <label class="mode-row-label" for="ct-sl">Teplota</label>
+          <input type="range" id="ct-sl" min="1000" max="10000" step="50" value="4000">
+          <span class="slider-val" id="ct-out-t" aria-live="polite"></span>
+        </div>
+        <div class="mode-row">
+          <span class="mode-row-label">Porovnat s</span>
+          <div class="seg" id="ct-cmp" role="group" aria-label="Srovnávací křivky">
+            <button class="chip accented" type="button" data-t="2700" aria-pressed="false">žárovka 2&nbsp;700&nbsp;K</button>
+            <button class="chip accented" type="button" data-t="5800" aria-pressed="false">Slunce 5&nbsp;800&nbsp;K</button>
+          </div>
+        </div>
+        <div class="mode-row">
+          <span class="mode-row-label">Údaje</span>
+          <span class="slider-val wide" id="ct-out-v" aria-live="polite"></span>
+        </div>
+      </div>
+      <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint">Posuvníkem nastavte termodynamickou teplotu tělesa od 1&nbsp;000&nbsp;K do 10&nbsp;000&nbsp;K. Graf ukazuje intenzitu vyzařování na jednotlivých vlnových délkách; svislá osa se přizpůsobuje největší zobrazené křivce, takže tvar křivek lze porovnat, ale absolutní výšku jen mezi křivkami v jednom grafu. Tlačítka <i>Porovnat s</i> přidají čárkovanou křivku žárovky nebo Slunce. Kruh vpravo nahoře ukazuje přibližnou barvu, jakou by těleso mělo pro oko (spočtenou z křivky). Údaj <i>ve viditelné oblasti</i> je podíl vyzářeného výkonu, který připadá na vlnové délky 390&nbsp;nm až 760&nbsp;nm. Křivky jsou spočtené podle Planckova vyzařovacího zákona, který je nad rámec učiva; poloha maxima odpovídá Wienovu zákonu. Zkuste najít, při jaké teplotě leží maximum právě na hranici viditelné oblasti.</p>
+      </details>
+    </div>
+  </div>
+
+  <!-- ============ TRÉNINK ============ -->
+  <div id="trenink-section" class="tab-section" hidden>
+    <div class="card trainer-card">
+      <span class="cat-tag">Trénink</span>
+      <h2>Wienův posunovací zákon</h2>
+      <p class="desc">Počítejte s \(b = 2{,}9 \cdot 10^{-3}\ \mathrm{m\cdot K}\) a \(T = t + 273{,}15\ \mathrm{K}\). Výsledek zaokrouhlete na tři platné číslice.</p>
+      <div class="mode-row">
+        <span class="mode-row-label">Úlohy</span>
+        <div class="seg" id="tr-mode" role="group" aria-label="Druh úloh">
+          <button class="chip accented on" type="button" data-mode="random" aria-pressed="true">Náhodně</button>
+          <button class="chip accented" type="button" data-mode="t2l" aria-pressed="false">\(T \to \lambda_\mathrm{max}\)</button>
+          <button class="chip accented" type="button" data-mode="c2l" aria-pressed="false">\(t\) ve °C \(\to \lambda_\mathrm{max}\)</button>
+          <button class="chip accented" type="button" data-mode="l2t" aria-pressed="false">\(\lambda_\mathrm{max} \to T\)</button>
+          <button class="chip accented" type="button" data-mode="oblast" aria-pressed="false">Oblast spektra</button>
+        </div>
+        <button class="linklike" id="tr-reset-stats" type="button">vynulovat statistiku</button>
+      </div>
+      <div id="tr-area"></div>
+      <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint">Zapište číselnou hodnotu v jednotce uvedené za polem (desetinnou čárku i tečku lze použít). Uznává se odchylka v poslední platné číslici. U úloh na oblast spektra vyberte jednu možnost. Klávesa Enter potvrzuje odpověď a posouvá na další příklad.</p>
+      </details>
+    </div>
+  </div>
+
+  <footer>Fyzika — Oktáva/4. ročník</footer>
+</div>
+
+<script src="../spolecne/reseni.js?v=1"></script>
+<script src="../spolecne/spolecne.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  // ---- záložky: tlačítko .toptab[data-tab="x"] ↔ sekce #x-section (Teorie = #theory-section) ----
+  // Opuštění běžící hry na čas přepnutím záložky se potvrzuje (tabGuard nastaví hra).
+  var tabs = {}, sections = {}, tabGuard = null, currentTab = 'teorie';
+  Array.prototype.forEach.call(document.querySelectorAll('.toptab[data-tab]'), function(btn){
+    var name = btn.getAttribute('data-tab');
+    tabs[name] = btn;
+    sections[name] = document.getElementById(name === 'teorie' ? 'theory-section' : name + '-section');
+  });
+  function showTab(name){
+    if(tabGuard && name !== currentTab && !tabGuard(currentTab, name)) return;
+    currentTab = name;
+    for(var k in tabs){
+      tabs[k].classList.toggle('on', k === name);
+      if(sections[k]) sections[k].hidden = k !== name;
+    }
+    // skóre, série a úspěšnost v hlavičce jen u tréninku
+    var readout = document.getElementById('header-readout');
+    if(readout) readout.hidden = name !== 'trenink';
+  }
+  Object.keys(tabs).forEach(function(k){ tabs[k].addEventListener('click', function(){ showTab(k); }); });
+  var hash = location.hash.replace('#', '');
+  if(hash && tabs[hash]) showTab(hash);
+
+  // ---- příklady: postupně odemykané steppery ----
+  Array.prototype.forEach.call(document.querySelectorAll('.stepper'), function(wrap){
+    var steps = Array.prototype.slice.call(wrap.querySelectorAll('.step'));
+    var unlockedUpTo = 1;
+
+    function refreshLocks(){
+      steps.forEach(function(st){
+        var idx = parseInt(st.getAttribute('data-step'), 10);
+        var locked = idx > unlockedUpTo;
+        st.classList.toggle('locked', locked);
+        st.classList.toggle('unlocked', !locked && !st.classList.contains('done'));
+        st.querySelector('.step-head').setAttribute('aria-disabled', locked ? 'true' : 'false');
+      });
+    }
+
+    steps.forEach(function(st){
+      var idx = parseInt(st.getAttribute('data-step'), 10);
+      var head = st.querySelector('.step-head');
+      var body = st.querySelector('.step-body');
+      head.addEventListener('click', function(){
+        if(idx > unlockedUpTo) return;
+        var wasOpen = st.classList.contains('open');
+        st.classList.toggle('open', !wasOpen);
+        body.hidden = wasOpen;
+        head.setAttribute('aria-expanded', (!wasOpen).toString());
+        if(!wasOpen){
+          st.classList.add('done');
+          if(idx === unlockedUpTo && unlockedUpTo < steps.length){ unlockedUpTo++; }
+          refreshLocks();
+        }
+      });
+    });
+
+    var resetBtn = document.getElementById(wrap.getAttribute('data-reset'));
+    if(resetBtn){
+      resetBtn.addEventListener('click', function(){
+        unlockedUpTo = 1;
+        steps.forEach(function(st){
+          st.classList.remove('open', 'done');
+          st.querySelector('.step-body').hidden = true;
+          st.querySelector('.step-head').setAttribute('aria-expanded', 'false');
+        });
+        refreshLocks();
+      });
+    }
+
+    refreshLocks();
+  });
+
+  // ---- pomocné funkce pro kreslení a výpis čísel ----
+  var NS = 'http://www.w3.org/2000/svg';
+  var NB = ' ';
+  function mk(tag, attrs, parent){
+    var el = document.createElementNS(NS, tag), k;
+    for(k in attrs){ if(attrs.hasOwnProperty(k)) el.setAttribute(k, attrs[k]); }
+    if(parent) parent.appendChild(el);
+    return el;
+  }
+  function f1(x){ return (Math.round(x * 10) / 10).toString(); }
+  // číslo s desetinnou čárkou na daný počet desetinných míst
+  function fmt(x, dec){ return roundTo(x, dec).toFixed(dec).replace('.', ',').replace('-', '−'); }
+  // tisíce oddělené pevnou mezerou (2 400, 12 500)
+  function fmtThousands(str){
+    var parts = str.split(','), s = parts[0], neg = s.charAt(0) === '−';
+    if(neg) s = s.slice(1);
+    if(s.length > 3) s = s.replace(/\B(?=(\d{3})+(?!\d))/g, NB);
+    return (neg ? '−' : '') + s + (parts.length > 1 ? ',' + parts[1] : '');
+  }
+  // rozklad na mantisu a exponent: x = m · 10^e, 1 ≤ |m| < 10, m zaokrouhlená na sig platných číslic
+  function sciParts(x, sig){
+    if(x === 0) return { m:0, e:0 };
+    var e = Math.floor(Math.log10(Math.abs(x)));
+    var m = roundSig(x / Math.pow(10, e), sig);
+    if(Math.abs(m) >= 10){ m = roundSig(m / 10, sig); e++; }
+    return { m:m, e:e };
+  }
+  var SUP = { '0':'⁰', '1':'¹', '2':'²', '3':'³', '4':'⁴', '5':'⁵', '6':'⁶', '7':'⁷', '8':'⁸', '9':'⁹', '-':'⁻' };
+  function supStr(n){ return String(n).split('').map(function(c){ return SUP[c]; }).join(''); }
+  // text „4,62 · 10¹⁴“ (s pevnými mezerami)
+  function sciText(x, sig){
+    var p = sciParts(x, sig);
+    if(p.e === 0) return fmt(p.m, sig - 1);
+    return fmt(p.m, sig - 1) + NB + '·' + NB + '10' + supStr(p.e);
+  }
+  // totéž pro KaTeX: 4{,}62 \cdot 10^{14}
+  function sciTex(x, sig){
+    var p = sciParts(x, sig);
+    var m = fmt(p.m, sig - 1).replace('−', '-').replace(',', '{,}');
+    if(p.e === 0) return m;
+    return m + ' \\cdot 10^{' + p.e + '}';
+  }
+  function texNum(x, dec){ return fmtThousands(fmt(x, dec)).replace(',', '{,}').replace(/\u00a0/g, '\\,').replace('−', '-'); }
+  // Text s matematikou mezi $…$ (vysází KaTeX) jako HTML.
+  function esc(t){ return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function mathHtml(str){
+    return String(str).split('$').map(function(part, i){
+      if(i % 2 === 0) return part;
+      if(window.katex){ try{ return katex.renderToString(part, { throwOnError:false }); }catch(e){} }
+      return esc(part);
+    }).join('');
+  }
+  function setChips(btns, on){
+    Array.prototype.forEach.call(btns, function(b, i){ b.classList.toggle('on', i === on); b.setAttribute('aria-pressed', i === on ? 'true' : 'false'); });
+  }
+  function setToggle(btn, on){ btn.classList.toggle('on', on); btn.setAttribute('aria-pressed', on ? 'true' : 'false'); }
+  function randInt(a, b){ return a + Math.floor(Math.random() * (b - a + 1)); }
+  function pick(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+  function shuffle(arr){
+    var a = arr.slice(), i, j, t;
+    for(i = a.length - 1; i > 0; i--){ j = Math.floor(Math.random() * (i + 1)); t = a[i]; a[i] = a[j]; a[j] = t; }
+    return a;
+  }
+  var reduceMotion = false;
+  try{ reduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches); }catch(e){}
+
+  // ---- barva světla dané vlnové délky (nm) pro kreslení spekter; mimo 380–780 nm černá ----
+  // Přibližný převod podle D. Bruton; na okrajích viditelné oblasti jas klesá (oko je tam málo citlivé).
+  function wlRGB(nm){
+    var r = 0, g = 0, b = 0, k;
+    if(nm >= 380 && nm < 440){ r = -(nm - 440) / 60; b = 1; }
+    else if(nm >= 440 && nm < 490){ g = (nm - 440) / 50; b = 1; }
+    else if(nm >= 490 && nm < 510){ g = 1; b = -(nm - 510) / 20; }
+    else if(nm >= 510 && nm < 580){ r = (nm - 510) / 70; g = 1; }
+    else if(nm >= 580 && nm < 645){ r = 1; g = -(nm - 645) / 65; }
+    else if(nm >= 645 && nm <= 780){ r = 1; }
+    if(nm >= 380 && nm < 420) k = 0.3 + 0.7 * (nm - 380) / 40;
+    else if(nm >= 420 && nm <= 700) k = 1;
+    else if(nm > 700 && nm <= 780) k = 0.3 + 0.7 * (780 - nm) / 80;
+    else k = 0;
+    function c(v){ return v <= 0 ? 0 : Math.round(255 * Math.pow(v * k, 0.8)); }
+    return [c(r), c(g), c(b)];
+  }
+  function wlColor(nm){ var c = wlRGB(nm); return 'rgb(' + c[0] + ',' + c[1] + ',' + c[2] + ')'; }
+
+  // ---- celá obrazovka (stejně jako na stránce Polarizace světla) ----
+  function initFullscreen(cardId, btnId, labelId, iconId){
+    var card = document.getElementById(cardId), fsBtn = document.getElementById(btnId), fsLabel = document.getElementById(labelId), fsIcon = document.getElementById(iconId);
+    if(!card || !fsBtn) return;
+    var ICON_ENTER = 'M1.5 5.5V1.5H5.5M10.5 1.5H14.5V5.5M14.5 10.5V14.5H10.5M5.5 14.5H1.5V10.5';
+    var ICON_EXIT = 'M5.5 1.5V5.5H1.5M14.5 5.5H10.5V1.5M10.5 14.5V10.5H14.5M1.5 10.5H5.5V14.5';
+    var isPhone = window.matchMedia && matchMedia('(pointer:coarse)').matches && Math.min(screen.width, screen.height) < 600;
+    var portraitMq = window.matchMedia ? matchMedia('(orientation:portrait)') : null;
+    var orientLocked = false, keepFull = false;
+    function fsElement(){ return document.fullscreenElement || document.webkitFullscreenElement || null; }
+    function updateRotated(){
+      var on = card.classList.contains('is-full') && isPhone && !orientLocked && !!portraitMq && portraitMq.matches;
+      if(on === card.classList.contains('rotated')) return;
+      card.classList.toggle('rotated', on);
+    }
+    if(portraitMq){
+      if(portraitMq.addEventListener) portraitMq.addEventListener('change', updateRotated);
+      else if(portraitMq.addListener) portraitMq.addListener(updateRotated);
+    }
+    function lockFailed(){
+      if(isPhone && portraitMq && portraitMq.matches && fsElement()){
+        keepFull = true;
+        try{ (document.exitFullscreen || document.webkitExitFullscreen).call(document); }catch(e){ keepFull = false; }
+      }
+      updateRotated();
+    }
+    function lockLandscape(){
+      var so = screen.orientation;
+      if(!isPhone){ updateRotated(); return; }
+      if(!so || !so.lock){ lockFailed(); return; }
+      try{ so.lock('landscape').then(function(){ orientLocked = true; updateRotated(); }, lockFailed); }catch(e){ lockFailed(); }
+    }
+    function setFullClass(on){
+      card.classList.toggle('is-full', on);
+      if(!on){
+        if(orientLocked){ try{ screen.orientation.unlock(); }catch(e){} }
+        orientLocked = false;
+      }
+      updateRotated();
+      document.documentElement.style.overflow = on ? 'hidden' : '';
+      fsLabel.textContent = on ? 'Zavřít celou obrazovku' : 'Celá obrazovka';
+      fsIcon.setAttribute('d', on ? ICON_EXIT : ICON_ENTER);
+      fsBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    }
+    fsBtn.addEventListener('click', function(){
+      if(card.classList.contains('is-full')){
+        if(fsElement()){ (document.exitFullscreen || document.webkitExitFullscreen).call(document); }
+        else setFullClass(false);
+        return;
+      }
+      var req = card.requestFullscreen || card.webkitRequestFullscreen;
+      setFullClass(true);
+      if(req){
+        try{
+          var pr0 = req.call(card);
+          if(pr0 && pr0.then) pr0.then(lockLandscape, lockLandscape);
+          else lockLandscape();
+        }catch(e){ lockLandscape(); }
+      } else lockLandscape();
+    });
+    function onFsChange(){
+      if(fsElement()) return;
+      if(keepFull){ keepFull = false; return; }
+      if(card.classList.contains('is-full')) setFullClass(false);
+    }
+    document.addEventListener('fullscreenchange', onFsChange);
+    document.addEventListener('webkitfullscreenchange', onFsChange);
+    document.addEventListener('keydown', function(e){
+      if(e.key === 'Escape' && card.classList.contains('is-full') && !fsElement()) setFullClass(false);
+    });
+  }
+
+  // ================= TRÉNINK =================
+  // Úloha q = { tag, text, kind:'num'|'sci'|'choice'|'multi', lhs, unit, answer, tol (absolutní, u 'sci' relativní),
+  //   choices:[html], correct:index | [indexy], given:[], find:[], steps:[], final, tip }.
+  // Texty mohou obsahovat matematiku mezi $…$ (vysází KaTeX).
+  function makeTrainer(cfg){
+    var P = cfg.prefix || 'tr';
+    var area = document.getElementById(P + '-area');
+    if(!area) return null;
+    var state = { mode:cfg.defaultMode || 'random', q:null, revealed:false, touched:false, sel:[], lastKey:null,
+      score:0, streak:0, bestStreak:0, answered:0, correct:0 };
+
+    area.innerHTML =
+      '<div class="task-banner"><span class="task-banner-label" id="' + P + '-tag"></span><div class="task-text" id="' + P + '-text"></div></div>' +
+      '<div class="task-fig" id="' + P + '-fig" hidden></div>' +
+      '<div class="equation" id="' + P + '-eq" hidden>' +
+        '<span class="lhs" id="' + P + '-lhs"></span><span class="eq">=</span>' +
+        '<span class="answer-slot" id="' + P + '-num-wrap"><input class="answer-input" id="' + P + '-num" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="?" aria-label="Odpověď"></span>' +
+        '<span class="answer-slot sci-group" id="' + P + '-sci-wrap" hidden>' +
+          '<input class="answer-input sci-mantissa" id="' + P + '-man" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="a" aria-label="Mantisa a">' +
+          '<span class="sci-times">· 10</span>' +
+          '<input class="sci-exp" id="' + P + '-exp" inputmode="text" enterkeyhint="done" autocomplete="off" spellcheck="false" placeholder="n" aria-label="Exponent n">' +
+        '</span>' +
+        '<span class="unit" id="' + P + '-unit"></span>' +
+      '</div>' +
+      '<div class="opt-grid" id="' + P + '-opts" hidden></div>' +
+      '<div class="feedback" id="' + P + '-feedback" hidden><div class="headline" id="' + P + '-fb-head"></div><div class="steps" id="' + P + '-fb-steps"></div><div class="tip" id="' + P + '-fb-tip" hidden></div></div>' +
+      '<div class="actions">' +
+        '<button class="btn primary" id="' + P + '-check" type="button">Zkontrolovat</button>' +
+        '<button class="btn ghost" id="' + P + '-skip" type="button">Nevím / Zobrazit řešení</button>' +
+      '</div>';
+
+    function $(id){ return document.getElementById(P + '-' + id); }
+    var inNum = $('num'), inMan = $('man'), inExp = $('exp');
+    sanitizeNumericInput(inNum, true); sanitizeNumericInput(inMan, true); sanitizeNumericInput(inExp, false);
+    [inNum, inMan, inExp].forEach(function(el){ el.addEventListener('input', function(){ state.touched = el.value.trim() !== '' || state.touched; }); });
+
+    function parseNum(str){
+      var s = String(str).trim().replace(/[−–]/g, '-').replace(',', '.').replace(/\s+/g, '');
+      if(s === '' || s === '-' || s === '.') return NaN;
+      return parseFloat(s);
+    }
+
+    function newTask(){
+      var q, guard = 0;
+      do { q = cfg.gen(state.mode); guard++; } while(guard < 20 && q.key && q.key === state.lastKey);
+      state.lastKey = q.key || null;
+      state.q = q; state.revealed = false; state.touched = false; state.sel = [];
+      $('tag').textContent = q.tag || 'Úloha';
+      $('text').innerHTML = mathHtml(q.text);
+      var fig = $('fig');
+      if(q.fig){ fig.hidden = false; fig.innerHTML = ''; q.fig(fig); } else { fig.hidden = true; fig.innerHTML = ''; }
+      var isInput = q.kind === 'num' || q.kind === 'sci';
+      $('eq').hidden = !isInput;
+      $('num-wrap').hidden = q.kind !== 'num';
+      $('sci-wrap').hidden = q.kind !== 'sci';
+      [inNum, inMan, inExp].forEach(function(el){ el.value = ''; el.disabled = false; el.classList.remove('correct', 'wrong'); });
+      if(isInput){
+        $('lhs').innerHTML = mathHtml(q.lhs || '');
+        $('unit').innerHTML = mathHtml(q.unit || '');
+      }
+      var opts = $('opts');
+      opts.innerHTML = '';
+      opts.hidden = !(q.kind === 'choice' || q.kind === 'multi');
+      opts.classList.toggle('wide-opts', !!q.wideOpts);
+      if(!opts.hidden){
+        q.choices.forEach(function(c, i){
+          var b = document.createElement('button');
+          b.type = 'button'; b.className = 'opt-btn';
+          b.innerHTML = mathHtml(c);
+          b.setAttribute('aria-pressed', 'false');
+          b.addEventListener('click', function(){
+            if(state.revealed) return;
+            state.touched = true;
+            if(q.kind === 'choice'){
+              state.sel = [i];
+            } else {
+              var at = state.sel.indexOf(i);
+              if(at >= 0) state.sel.splice(at, 1); else state.sel.push(i);
+            }
+            Array.prototype.forEach.call(opts.children, function(o, j){
+              var on = state.sel.indexOf(j) >= 0;
+              o.classList.toggle('selected', on); o.setAttribute('aria-pressed', on ? 'true' : 'false');
+            });
+          });
+          opts.appendChild(b);
+        });
+      }
+      var fb = $('feedback'); fb.hidden = true; fb.className = 'feedback';
+      $('fb-tip').hidden = true;
+      $('check').textContent = 'Zkontrolovat';
+      if(q.kind === 'num'){ try{ inNum.focus({ preventScroll:true }); }catch(e){} }
+      else if(q.kind === 'sci'){ try{ inMan.focus({ preventScroll:true }); }catch(e){} }
+    }
+
+    function userValue(){
+      var q = state.q;
+      if(q.kind === 'num') return parseNum(inNum.value);
+      if(q.kind === 'sci'){
+        var m = parseNum(inMan.value), e = parseInt(String(inExp.value).replace(/[−–]/g, '-').replace(/\s+/g, ''), 10);
+        if(isNaN(m)) return NaN;
+        if(isNaN(e)) e = 0;
+        return m * Math.pow(10, e);
+      }
+      return NaN;
+    }
+
+    function isCorrect(){
+      var q = state.q, v;
+      if(q.kind === 'num'){ v = userValue(); return !isNaN(v) && Math.abs(v - q.answer) <= q.tol + 1e-12 * Math.abs(q.answer); }
+      if(q.kind === 'sci'){ v = userValue(); return !isNaN(v) && Math.abs(v - q.answer) <= q.tol * Math.abs(q.answer); }
+      if(q.kind === 'choice') return state.sel.length === 1 && state.sel[0] === q.correct;
+      var want = q.correct.slice().sort().join(','), got = state.sel.slice().sort().join(',');
+      return want === got;
+    }
+
+    function evaluate(bySkip){
+      if(state.revealed) return;
+      var q = state.q, ok = !bySkip && isCorrect();
+      state.revealed = true;
+      state.answered++;
+      if(ok){
+        state.score += 10; state.streak++; state.correct++;
+        if(state.streak > state.bestStreak){
+          state.bestStreak = state.streak; saveStats();
+          if(window.FyzikaScores) FyzikaScores.report('serie', state.bestStreak, false);
+        }
+      } else state.streak = 0;
+      var cls = ok ? 'correct' : 'wrong';
+      if(q.kind === 'num') inNum.classList.add(cls);
+      if(q.kind === 'sci'){ inMan.classList.add(cls); inExp.classList.add(cls); }
+      [inNum, inMan, inExp].forEach(function(el){ el.disabled = true; });
+      if(q.kind === 'choice' || q.kind === 'multi'){
+        var corr = q.kind === 'choice' ? [q.correct] : q.correct;
+        Array.prototype.forEach.call($('opts').children, function(o, j){
+          o.disabled = true;
+          var isC = corr.indexOf(j) >= 0, isS = state.sel.indexOf(j) >= 0;
+          o.classList.remove('selected');
+          if(isC && isS) o.classList.add('correct');
+          else if(isC) o.classList.add(bySkip || q.kind === 'choice' ? 'correct' : 'missed');
+          else if(isS) o.classList.add('wrong');
+        });
+      }
+      var fb = $('feedback');
+      fb.hidden = false;
+      if(bySkip){ fb.className = 'feedback neutral'; $('fb-head').textContent = 'Řešení'; }
+      else if(ok){ fb.className = 'feedback ok'; $('fb-head').textContent = 'Správně!'; }
+      else { fb.className = 'feedback bad'; $('fb-head').textContent = state.touched ? 'Bohužel, špatně.' : 'Nezadali jste odpověď.'; }
+      var tip = $('fb-tip');
+      tip.hidden = true;
+      if(ok && q.kind === 'sci'){
+        var m = Math.abs(parseNum(inMan.value));
+        if(!(m >= 1 && m < 10)){ tip.hidden = false; tip.textContent = 'Číselně správně — v normalizovaném zápisu má ale platit 1 ≤ a < 10.'; }
+      }
+      FyzikaReseni.show(fb, $('fb-steps'), {
+        given:(q.given || []).map(mathHtml), find:(q.find || []).map(mathHtml),
+        steps:(q.steps || []).map(mathHtml), final:q.final ? mathHtml(q.final) : '', note:q.note ? mathHtml(q.note) : '', raw:true
+      });
+      $('check').textContent = 'Další příklad →';
+      try{ $('check').focus({ preventScroll:true }); }catch(e){}
+      updateStats();
+    }
+
+    $('check').addEventListener('click', function(){
+      if(state.revealed){ newTask(); return; }
+      evaluate(false);
+    });
+    $('skip').addEventListener('click', function(){
+      if(state.revealed){ newTask(); return; }
+      evaluate(true);
+    });
+    // Enter potvrzuje odpověď a posouvá na další příklad
+    area.addEventListener('keydown', function(e){
+      if(e.key !== 'Enter') return;
+      var tg = e.target && e.target.tagName;
+      if(tg === 'BUTTON') return;
+      e.preventDefault();
+      if(state.revealed) newTask(); else evaluate(false);
+    });
+    document.addEventListener('keydown', function(e){
+      if(e.key !== 'Enter' || !state.revealed) return;
+      var sec = area.closest('.tab-section');
+      if(sec && sec.hidden) return;
+      var tg = e.target && e.target.tagName;
+      if(tg === 'BUTTON' || tg === 'INPUT') return;
+      e.preventDefault(); newTask();
+    });
+
+    // Přepnutí druhu úloh uprostřed rozepsaného příkladu: odpověď se nejdřív vyhodnotí
+    // (aby se přepínáním nedalo vyhnout špatné odpovědi), jinak rovnou nový příklad.
+    var modeBtns = document.querySelectorAll('#' + P + '-mode .chip');
+    Array.prototype.forEach.call(modeBtns, function(b, i){
+      b.addEventListener('click', function(){
+        setChips(modeBtns, i);
+        state.mode = b.getAttribute('data-mode');
+        if(!state.revealed && state.touched){ evaluate(false); return; }
+        newTask();
+      });
+    });
+
+    // ---- statistika ----
+    var STATS_KEY = cfg.statsKey;
+    function loadStats(){
+      try{ var raw = localStorage.getItem(STATS_KEY); if(raw) state.bestStreak = JSON.parse(raw).bestStreak || 0; }catch(e){}
+    }
+    function saveStats(){
+      try{ localStorage.setItem(STATS_KEY, JSON.stringify({ bestStreak:state.bestStreak })); }catch(e){}
+    }
+    function updateStats(){
+      var s = document.getElementById('stat-score'), st = document.getElementById('stat-streak'), a = document.getElementById('stat-accuracy');
+      if(s) s.textContent = state.score;
+      if(st) st.textContent = state.streak + (state.bestStreak > 0 ? ' / ' + state.bestStreak : '');
+      if(a) a.textContent = state.answered === 0 ? '—' : Math.round(100 * state.correct / state.answered) + ' %';
+    }
+    var rs = document.getElementById(P + '-reset-stats');
+    if(rs) rs.addEventListener('click', function(){
+      state.score = 0; state.streak = 0; state.answered = 0; state.correct = 0; state.bestStreak = 0;
+      try{ localStorage.removeItem(STATS_KEY); }catch(e){}
+      updateStats();
+    });
+    // Po synchronizaci s cloudem (auth.js) znovu načíst nejlepší sérii.
+    document.addEventListener('fyzika:scores-updated', function(){ state.bestStreak = 0; loadStats(); updateStats(); });
+
+    loadStats(); updateStats(); newTask();
+    return { newTask:newTask, state:state };
+  }
+
+  var B_WIEN = 2.9e-3, C2 = 0.014388;            // b (m·K), druhá vyzařovací konstanta hc/k (m·K)
+  // Planckův zákon (relativní jednotky): intenzita vyzařování na vlnové délce nm při teplotě T
+  function planck(nm, T){ var l = nm * 1e-9; return 1e-30 / (Math.pow(l, 5) * (Math.exp(C2 / (l * T)) - 1)); }
+  // podíl vyzářeného výkonu v intervalu 390–760 nm (Simpsonovo pravidlo / celkový výkon σT⁴ přes vzorec)
+  function visibleFraction(T){
+    var n = 200, a = 390, bb = 760, h = (bb - a) / n, s = planck(a, T) + planck(bb, T), i;
+    for(i = 1; i < n; i++) s += (i % 2 ? 4 : 2) * planck(a + i * h, T);
+    var vis = s * h / 3 * 1e-9;                    // integrál přes λ v metrech
+    var tot = 1e-30 * Math.pow(Math.PI, 4) / 15 * Math.pow(T / C2, 4);   // ∫ dλ / (λ⁵(e^{C2/λT} − 1)) = (π⁴/15)(T/C2)⁴
+    return vis / tot;
+  }
+  // barva tělesa: CIE 1931 (analytická aproximace Wyman, Sloan, Shirley 2013) → sRGB, normováno na nejjasnější složku
+  function gpart(x, mu, s1, s2){ var t = (x - mu) / (x < mu ? s1 : s2); return Math.exp(-0.5 * t * t); }
+  function bodyColor(T){
+    var X = 0, Y = 0, Z = 0, nm, p;
+    for(nm = 380; nm <= 780; nm += 5){
+      p = planck(nm, T);
+      X += p * (1.056 * gpart(nm, 599.8, 37.9, 31.0) + 0.362 * gpart(nm, 442.0, 16.0, 26.7) - 0.065 * gpart(nm, 501.1, 20.4, 26.2));
+      Y += p * (0.821 * gpart(nm, 568.8, 46.9, 40.5) + 0.286 * gpart(nm, 530.9, 16.3, 31.1));
+      Z += p * (1.217 * gpart(nm, 437.0, 11.8, 36.0) + 0.681 * gpart(nm, 459.0, 26.0, 13.8));
+    }
+    var r = 3.2406 * X - 1.5372 * Y - 0.4986 * Z, g = -0.9689 * X + 1.8758 * Y + 0.0415 * Z, b = 0.0557 * X - 0.2040 * Y + 1.0570 * Z;
+    r = Math.max(0, r); g = Math.max(0, g); b = Math.max(0, b);
+    var m = Math.max(r, g, b) || 1;
+    function gam(v){ v = v / m; v = v <= 0.0031308 ? 12.92 * v : 1.055 * Math.pow(v, 1 / 2.4) - 0.055; return Math.round(255 * Math.min(1, v)); }
+    return 'rgb(' + gam(r) + ',' + gam(g) + ',' + gam(b) + ')';
+  }
+
+  // společné kreslení grafu: osy, viditelná oblast, křivky
+  function plotFrame(svg, o){
+    var X0 = o.x0, X1 = o.x1, Y0 = o.y0, Y1 = o.y1, NMAX = o.nmax, defs = mk('defs', {}, svg), nm, t;
+    function gx(nm){ return X0 + nm / NMAX * (X1 - X0); }
+    var gid = svg.id + '-vis', g = mk('linearGradient', { id:gid, x1:'0', x2:'1', y1:'0', y2:'0' }, defs);
+    for(nm = 390; nm <= 760; nm += 10) mk('stop', { offset:((nm - 390) / 370).toFixed(3), 'stop-color':wlColor(nm) }, g);
+    mk('rect', { x:f1(gx(390)), y:Y1, width:f1(gx(760) - gx(390)), height:Y0 - Y1, fill:'url(#' + gid + ')', opacity:'0.22' }, svg);
+    for(nm = 0; nm <= NMAX; nm += 250){
+      mk('line', { x1:f1(gx(nm)), y1:Y0, x2:f1(gx(nm)), y2:Y0 + (nm % 500 === 0 ? 6 : 3), stroke:'var(--ink)', 'stroke-width':'1' }, svg);
+      if(nm % 500 === 0 && nm < NMAX){ t = mk('text', { x:f1(gx(nm)), y:Y0 + 19, 'text-anchor':'middle', 'font-size':'11', 'font-family':"'IBM Plex Mono', monospace", fill:'var(--ink-soft)' }, svg); t.textContent = fmtThousands(String(nm)); }
+    }
+    mk('line', { x1:X0, y1:Y0, x2:X1 + 10, y2:Y0, stroke:'var(--ink)', 'stroke-width':'1.4', 'marker-end':'url(#' + svg.id + '-ar)' }, svg);
+    mk('line', { x1:X0, y1:Y0, x2:X0, y2:Y1 - 10, stroke:'var(--ink)', 'stroke-width':'1.4', 'marker-end':'url(#' + svg.id + '-ar)' }, svg);
+    var m = mk('marker', { id:svg.id + '-ar', viewBox:'0 0 10 10', refX:'8.5', refY:'5', markerWidth:'7', markerHeight:'7', markerUnits:'userSpaceOnUse', orient:'auto' }, defs);
+    mk('path', { d:'M0,0 L10,5 L0,10 z', fill:'var(--ink)' }, m);
+    t = mk('text', { x:X1 + 4, y:Y0 + 19, 'font-size':'11.5', 'font-family':'Work Sans, sans-serif', fill:'var(--ink-soft)' }, svg); t.innerHTML = '<tspan font-style="italic">λ</tspan> (nm)';
+    t = mk('text', { x:X0 + 8, y:Y1 - 2, 'font-size':'11.5', 'font-family':'Work Sans, sans-serif', fill:'var(--ink-soft)' }, svg); t.textContent = 'intenzita vyzařování';
+    return gx;
+  }
+  function curvePoints(gx, T, nmax, scale, Y0){
+    var pts = [], nm;
+    for(nm = 50; nm <= nmax; nm += 10) pts.push(f1(gx(nm)) + ',' + f1(Y0 - planck(nm, T) * scale));
+    return pts.join(' ');
+  }
+
+  // ---- obrázek v teorii: 4 000 K, 5 000 K, 6 000 K ----
+  (function(){
+    var svg = document.getElementById('ct-fig-krivky');
+    var X0 = 60, X1 = 590, Y0 = 250, Y1 = 30, NMAX = 2500;
+    var gx = plotFrame(svg, { x0:X0, x1:X1, y0:Y0, y1:Y1, nmax:NMAX });
+    var scale = (Y0 - Y1 - 12) / planck(B_WIEN / 6000 * 1e9, 6000), Ts = [4000, 5000, 6000], peaks = [];
+    Ts.forEach(function(T, i){
+      mk('polyline', { points:curvePoints(gx, T, NMAX, scale, Y0), fill:'none', stroke:['var(--t1)', 'var(--t2)', 'var(--t3)'][i], 'stroke-width':'2.4' }, svg);
+      var lm = B_WIEN / T * 1e9, py = Y0 - planck(lm, T) * scale;
+      peaks.push([gx(lm), py]);
+      var t = mk('text', { x:f1(gx(lm) + 10), y:f1(py - 4), 'font-size':'12', 'font-family':'Work Sans, sans-serif', fill:['var(--t1)', 'var(--t2)', 'var(--t3)'][i] }, svg);
+      t.textContent = fmtThousands(String(T)) + ' K';
+    });
+    // čárkovaná čára přes maxima (pro spojitou teplotu)
+    var pts = [], T;
+    for(T = 3600; T <= 6300; T += 50){ var lm = B_WIEN / T * 1e9; pts.push(f1(gx(lm)) + ',' + f1(Y0 - planck(lm, T) * scale)); }
+    mk('polyline', { points:pts.join(' '), fill:'none', stroke:'var(--ink-soft)', 'stroke-width':'1.3', 'stroke-dasharray':'5 4' }, svg);
+    peaks.forEach(function(p){ mk('circle', { cx:f1(p[0]), cy:f1(p[1]), r:3.2, fill:'var(--ink)' }, svg); });
+    var lab = mk('text', { x:f1(gx(B_WIEN / 3700 * 1e9) + 6), y:f1(Y0 - planck(B_WIEN / 3700 * 1e9, 3700) * scale - 8), 'font-size':'12', 'font-family':'Work Sans, sans-serif', fill:'var(--ink-soft)' }, svg);
+    lab.innerHTML = '<tspan font-style="italic">λ</tspan><tspan font-size="9" dy="3">max</tspan>';
+  })();
+
+  var linkAp = document.getElementById('ct-link-aplet');
+  if(linkAp) linkAp.addEventListener('click', function(e){ e.preventDefault(); showTab('aplet'); window.scrollTo(0, 0); });
+
+  // ================= APLET =================
+  (function(){
+    var svg = document.getElementById('ct-svg');
+    if(!svg) return;
+    var X0 = 60, X1 = 585, Y0 = 280, Y1 = 34, NMAX = 3000;
+    var gx = plotFrame(svg, { x0:X0, x1:X1, y0:Y0, y1:Y1, nmax:NMAX });
+    var cmpLines = {}, cmpLabels = {};
+    [2700, 5800].forEach(function(T){
+      cmpLines[T] = mk('polyline', { fill:'none', stroke:T === 2700 ? 'var(--t1)' : 'var(--t3)', 'stroke-width':'1.8', 'stroke-dasharray':'6 4' }, svg);
+      cmpLabels[T] = mk('text', { 'font-size':'11.5', 'font-family':'Work Sans, sans-serif', fill:T === 2700 ? 'var(--t1)' : 'var(--t3)' }, svg);
+    });
+    var curve = mk('polyline', { fill:'none', stroke:'var(--accent)', 'stroke-width':'2.8' }, svg);
+    var vline = mk('line', { stroke:'var(--accent)', 'stroke-width':'1.3', 'stroke-dasharray':'4 3' }, svg);
+    var dot = mk('circle', { r:4, fill:'var(--accent)' }, svg);
+    var vlab = mk('text', { 'font-size':'12.5', 'font-family':'Work Sans, sans-serif', fill:'var(--accent)' }, svg);
+    var disc = mk('circle', { cx:560, cy:62, r:22, stroke:'var(--ink)', 'stroke-width':'1.2' }, svg);
+    var discLab = mk('text', { x:530, y:62, 'text-anchor':'end', 'font-size':'11.5', 'font-family':'Work Sans, sans-serif', fill:'var(--ink-soft)' }, svg);
+    discLab.textContent = 'barva tělesa';
+    var sl = document.getElementById('ct-sl'), outT = document.getElementById('ct-out-t'), outV = document.getElementById('ct-out-v');
+    var cmpBtns = document.querySelectorAll('#ct-cmp .chip'), cmpOn = { 2700:false, 5800:false };
+    function region(nm){ return nm < 390 ? 'ultrafialová oblast' : nm <= 760 ? 'viditelná oblast' : 'infračervená oblast'; }
+    function render(){
+      var T = parseInt(sl.value, 10), lm = B_WIEN / T * 1e9;
+      var maxv = planck(B_WIEN / T * 1e9, T);
+      [2700, 5800].forEach(function(k){ if(cmpOn[k]) maxv = Math.max(maxv, planck(B_WIEN / k * 1e9, k)); });
+      var scale = (Y0 - Y1 - 14) / maxv;
+      curve.setAttribute('points', curvePoints(gx, T, NMAX, scale, Y0));
+      [2700, 5800].forEach(function(k){
+        cmpLines[k].style.display = cmpLabels[k].style.display = cmpOn[k] ? '' : 'none';
+        if(cmpOn[k]){
+          cmpLines[k].setAttribute('points', curvePoints(gx, k, NMAX, scale, Y0));
+          var l2 = B_WIEN / k * 1e9, y2 = Y0 - planck(l2, k) * scale;
+          cmpLabels[k].setAttribute('x', f1(gx(l2) + 8)); cmpLabels[k].setAttribute('y', f1(Math.max(Y1 + 10, y2 - 6)));
+          cmpLabels[k].textContent = fmtThousands(String(k)) + ' K';
+        }
+      });
+      var x = gx(Math.min(lm, NMAX)), py = Y0 - planck(lm, T) * scale;
+      vline.setAttribute('x1', f1(x)); vline.setAttribute('x2', f1(x)); vline.setAttribute('y1', Y0); vline.setAttribute('y2', f1(py));
+      dot.setAttribute('cx', f1(x)); dot.setAttribute('cy', f1(py));
+      vlab.setAttribute('x', f1(x + (x > 470 ? -8 : 8))); vlab.setAttribute('y', f1(Math.max(Y1 + 14, py - 10)));
+      vlab.setAttribute('text-anchor', x > 470 ? 'end' : 'start');
+      vlab.innerHTML = '<tspan font-style="italic">λ</tspan><tspan font-size="9" dy="3">max</tspan><tspan dy="-3"> = ' + fmtThousands(fmt(lm, 0)) + ' nm</tspan>';
+      disc.setAttribute('fill', bodyColor(T));
+      outT.innerHTML = '<i>T</i> = ' + fmtThousands(String(T)) + NB + 'K';
+      outV.innerHTML = '<i>λ</i><sub>max</sub> = <i>b</i>/<i>T</i> = ' + fmtThousands(fmt(lm, 0)) + NB + 'nm (' + region(lm) + '), ve viditelné oblasti ' + (100 * visibleFraction(T) < 0.05 ? 'méně než 0,1' : fmt(100 * visibleFraction(T), 1)) + NB + '% vyzářeného výkonu';
+      Array.prototype.forEach.call(cmpBtns, function(b){ setToggle(b, cmpOn[b.getAttribute('data-t')]); });
+    }
+    sl.addEventListener('input', render);
+    Array.prototype.forEach.call(cmpBtns, function(b){
+      b.addEventListener('click', function(){ var k = b.getAttribute('data-t'); cmpOn[k] = !cmpOn[k]; render(); });
+    });
+    render();
+    initFullscreen('ct-card', 'ct-fs', 'ct-fs-label', 'ct-fs-icon');
+  })();
+
+  // ================= TRÉNINK =================
+  var OBJ_T = [['rozžhavené uhlíky v ohništi', 1000], ['tekoucí láva', 1400], ['vlákno halogenové žárovky', 3000], ['vlákno žárovky', 2700],
+    ['povrch hvězdy Betelgeuse', 3600], ['povrch Slunce', 5800], ['povrch hvězdy Sirius', 9900], ['povrch hvězdy Rigel', 12100],
+    ['povrch Země (průměrně)', 288], ['kostka ledu', 273]];
+  var OBJ_C = [['plotýnka vařiče, která začíná rudě žhnout,', 700], ['vlákno svítící červeně', 900], ['vlákno svítící oranžově', 1100], ['vlákno svítící žlutě', 1300],
+    ['tavicí pec na sklo', 1500], ['horký čaj', 80], ['lidské tělo', 37], ['radiátor ústředního topení', 60]];
+  function lamAnswer(lm){   // lm v metrech → odpověď v nm (do 2 000 nm) nebo v µm
+    if(lm < 2e-6){ var v = roundSig(lm * 1e9, 3); return { v:v, unit:'$\\mathrm{nm}$', tex:texNum(v, decimalsForSig(v, 3)) + '\\ \\mathrm{nm}', tol:Math.pow(10, Math.floor(Math.log10(v)) - 2) }; }
+    var w = roundSig(lm * 1e6, 3); return { v:w, unit:'$\\text{µ}\\mathrm{m}$', tex:texNum(w, decimalsForSig(w, 3)) + '\\ \\text{µ}\\mathrm{m}', tol:Math.pow(10, Math.floor(Math.log10(w)) - 2) };
+  }
+  function regionOf(nm){ return nm < 390 ? 0 : nm <= 760 ? 1 : 2; }
+  var REG = ['ultrafialové záření', 'světlo (viditelná oblast)', 'infračervené záření'];
+  function genWien(mode){
+    if(mode === 'random') mode = pick(['t2l', 'c2l', 'l2t', 'oblast']);
+    var o, T, lm, a;
+    if(mode === 't2l'){
+      o = pick(OBJ_T); T = o[1]; lm = B_WIEN / T; a = lamAnswer(lm);
+      return { key:'t' + T, tag:'Teplota → vlnová délka', kind:'num',
+        text:o[0][0].toUpperCase() + o[0].slice(1) + ' má teplotu $T = ' + texNum(T, 0) + '\\ \\mathrm{K}$. Na jaké vlnové délce vyzařuje nejvíce? (Považujte těleso za absolutně černé.)',
+        lhs:'$\\lambda_\\mathrm{max}$', unit:a.unit, answer:a.v, tol:a.tol,
+        given:['$T = ' + texNum(T, 0) + '\\ \\mathrm{K}$', '$b = 2{,}9 \\cdot 10^{-3}\\ \\mathrm{m\\cdot K}$'], find:['$\\lambda_\\mathrm{max} = {?}$'],
+        steps:['$\\lambda_\\mathrm{max} = \\dfrac{b}{T} = \\dfrac{2{,}9 \\cdot 10^{-3}\\ \\mathrm{m\\cdot K}}{' + texNum(T, 0) + '\\ \\mathrm{K}} \\doteq ' + sciTex(lm, 3) + '\\ \\mathrm{m} = ' + a.tex + '$',
+          'To je ' + ['ultrafialová', 'viditelná', 'infračervená'][regionOf(lm * 1e9)] + ' oblast spektra.'],
+        final:'$\\lambda_\\mathrm{max} \\doteq ' + a.tex + '$' };
+    }
+    if(mode === 'c2l'){
+      o = pick(OBJ_C); T = o[1] + 273.15; lm = B_WIEN / T; a = lamAnswer(lm);
+      return { key:'c' + o[1], tag:'Teplota ve °C → vlnová délka', kind:'num',
+        text:o[0][0].toUpperCase() + o[0].slice(1) + ' má teplotu $t = ' + texNum(o[1], 0) + '\\ {}^{\\circ}\\mathrm{C}$. Na jaké vlnové délce vyzařuje nejvíce? (Považujte těleso za absolutně černé.)',
+        lhs:'$\\lambda_\\mathrm{max}$', unit:a.unit, answer:a.v, tol:a.tol,
+        given:['$t = ' + texNum(o[1], 0) + '\\ {}^{\\circ}\\mathrm{C}$', '$b = 2{,}9 \\cdot 10^{-3}\\ \\mathrm{m\\cdot K}$'], find:['$\\lambda_\\mathrm{max} = {?}$'],
+        steps:['$T = (' + texNum(o[1], 0) + ' + 273{,}15)\\ \\mathrm{K} = ' + texNum(T, 2) + '\\ \\mathrm{K}$',
+          '$\\lambda_\\mathrm{max} = \\dfrac{b}{T} = \\dfrac{2{,}9 \\cdot 10^{-3}\\ \\mathrm{m\\cdot K}}{' + texNum(T, 2) + '\\ \\mathrm{K}} \\doteq ' + sciTex(lm, 3) + '\\ \\mathrm{m} = ' + a.tex + '$'],
+        final:'$\\lambda_\\mathrm{max} \\doteq ' + a.tex + '$' };
+    }
+    if(mode === 'l2t'){
+      T = randInt(30, 250) * 100; var lnm = roundSig(B_WIEN / T * 1e9, 3), T2 = B_WIEN / (lnm * 1e-9), Ta = roundSig(T2, 3);
+      return { key:'l' + lnm, tag:'Vlnová délka → teplota', kind:'num',
+        text:'Hvězda vyzařuje nejvíce na vlnové délce $\\lambda_\\mathrm{max} = ' + texNum(lnm, decimalsForSig(lnm, 3)) + '\\ \\mathrm{nm}$. Jakou teplotu má její povrch?',
+        lhs:'$T$', unit:'$\\mathrm{K}$', answer:Ta, tol:Math.pow(10, Math.floor(Math.log10(Ta)) - 2),
+        given:['$\\lambda_\\mathrm{max} = ' + texNum(lnm, decimalsForSig(lnm, 3)) + '\\ \\mathrm{nm} = ' + sciTex(lnm * 1e-9, 3) + '\\ \\mathrm{m}$', '$b = 2{,}9 \\cdot 10^{-3}\\ \\mathrm{m\\cdot K}$'], find:['$T = {?}$'],
+        steps:['$\\lambda_\\mathrm{max} = \\dfrac{b}{T} \\;\\Rightarrow\\; T = \\dfrac{b}{\\lambda_\\mathrm{max}}$',
+          '$T = \\dfrac{2{,}9 \\cdot 10^{-3}\\ \\mathrm{m\\cdot K}}{' + sciTex(lnm * 1e-9, 3) + '\\ \\mathrm{m}} \\doteq ' + texNum(Ta, 0) + '\\ \\mathrm{K}$'],
+        final:'$T \\doteq ' + texNum(Ta, 0) + '\\ \\mathrm{K}$' };
+    }
+    // oblast spektra: teploty dostatečně daleko od hranic (maximum mimo ±6 % od 390 nm a 760 nm)
+    do { T = randInt(10, 200) * 100; lm = B_WIEN / T * 1e9; } while(Math.abs(lm / 390 - 1) < 0.06 || Math.abs(lm / 760 - 1) < 0.06);
+    var r = regionOf(lm);
+    return { key:'o' + T, tag:'Oblast spektra', kind:'choice',
+      text:'Absolutně černé těleso má teplotu $T = ' + texNum(T, 0) + '\\ \\mathrm{K}$. Do které oblasti spektra spadá vlnová délka, na které vyzařuje nejvíce?',
+      choices:REG, correct:r,
+      steps:['$\\lambda_\\mathrm{max} = \\dfrac{b}{T} = \\dfrac{2{,}9 \\cdot 10^{-3}\\ \\mathrm{m\\cdot K}}{' + texNum(T, 0) + '\\ \\mathrm{K}} \\doteq ' + texNum(roundSig(lm, 3), decimalsForSig(roundSig(lm, 3), 3)) + '\\ \\mathrm{nm}$',
+        'Viditelné světlo má vlnové délky 390 nm až 760 nm.'],
+      final:'Správně: ' + REG[r] };
+  }
+  makeTrainer({ prefix:'tr', statsKey:'fyzika:zareni-cerneho-telesa:stats', gen:genWien });
+
+  // ---- vzorce (KaTeX) ----
+  if(window.renderMathInElement){
+    ['theory-section', 'aplet-section', 'trenink-section'].forEach(function(id){
+      try{
+        renderMathInElement(document.getElementById(id), {
+          delimiters: [{left:'\\(', right:'\\)', display:false}, {left:'\\[', right:'\\]', display:true}]
+        });
+      }catch(e){}
+    });
+  }
+
+  // ---- sbalovací panely v teorii ----
+  try{ makePanelsCollapsible(document.getElementById('theory-section')); }catch(e){}
+})();
+</script>
+</body>
+</html>
