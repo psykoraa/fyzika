@@ -1,0 +1,1253 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1. Newtonův zákon — Fyzika</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../spolecne/config.js"></script>
+<script src="../spolecne/auth.js"></script>
+<script src="../spolecne/zalozky.js?v=3"></script>
+<link rel="stylesheet" href="../spolecne/styl.css">
+<link rel="stylesheet" href="../spolecne/reseni.css?v=1">
+<link rel="stylesheet" href="../spolecne/komponenty.css?v=1">
+<style>
+:root{
+  --paper:#f5f0e3;
+  --surface:#fffcf5;
+  --surface-2:#ece4d1;
+  --ink:#212b34;
+  --ink-soft:#5d6b76;
+  --line:rgba(33,43,52,0.12);
+  --accent:#c9581f;
+  --accent-ink:#fff8f0;
+  --success:#28794f;
+  --success-bg:#e3efe0;
+  --danger:#b3392b;
+  --danger-bg:#f5e4de;
+  --focus:#1e6f66;
+  --shadow:0 1px 0 rgba(33,43,52,0.06);
+}
+
+.panel{ margin-bottom:22px; }
+.panel-title{ margin-bottom:8px; }
+
+.panel b{ color:var(--ink); }
+.panel ul, .panel ol{ margin:0 0 8px; padding-left:22px; font-size:0.9rem; line-height:1.55; }
+
+.card{ padding:26px 26px 28px; text-align:left; margin-bottom:24px; }
+.cat-tag{ margin-bottom:10px; }
+.card h2{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.6rem;
+  letter-spacing:0.02em;
+  color:var(--ink);
+  text-transform:none;
+  margin-bottom:6px;
+}
+
+.katex{ font-size:1.05em; }
+
+.theory-table thead th{
+  background:var(--surface-2);
+  color:var(--ink-soft);
+  font-weight:600;
+  font-size:0.72rem;
+  text-transform:uppercase;
+  letter-spacing:0.05em;
+}
+.theory-table thead th i{ text-transform:none; }
+.theory-table td.mono, .theory-table th.mono{
+  font-family:'IBM Plex Mono', monospace;
+  font-variant-numeric:tabular-nums;
+  text-align:center;
+}
+.theory-table tbody tr:nth-child(even) td{ background:rgba(0,0,0,0.02); }
+
+.theory-fig svg{ display:block; width:100%; max-width:560px; height:auto; margin:0 auto; }
+.theory-fig svg text{ font-family:'Work Sans', sans-serif; }
+
+@media (max-width:520px){
+  .card{ padding:20px 16px 22px; }
+}
+
+/* ---- Trénink (číselná odpověď; stejná stavba jako Pohyb po kružnici) ---- */
+
+.equation .katex{ font-size:1em; }
+.equation .answer-input{ width:4.6em; }
+.feedback .tip{ font-size:0.78rem; color:var(--ink); opacity:0.75; margin-top:6px; font-style:italic; }
+.task-text{ font-size:0.95rem; color:var(--ink); line-height:1.55; text-align:center; margin:0 auto 16px; max-width:56ch; }
+.task-rule{ font-size:0.8rem; color:var(--ink-soft); line-height:1.5; text-align:center; margin:-8px auto 14px; max-width:56ch; }
+@media (max-width:520px){
+  .card{ padding:26px 16px 24px; }
+  .readout .cell{ min-width:64px; padding:6px 8px; }
+}
+
+/* ---- aplet: karta, řádky ovládání (stejná stavba jako Pohyb po kružnici) ---- */
+
+.mode-row[hidden]{ display:none; }
+
+.chip{ font-size:0.82rem; gap:7px; }
+.chip:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+
+.slider-val{
+  flex:0 0 150px; width:150px; font-weight:600; font-size:0.95rem;
+  font-variant-numeric:tabular-nums; white-space:nowrap;
+}
+.slider-val i, .qtable i{ font-family:'STIX Two Text', Georgia, serif; font-size:1.08em; }
+
+.legend > span{ display:inline-flex; align-items:center; gap:7px; }
+.legend .sw{ width:12px; height:12px; border-radius:50%; flex:none; }
+.legend .sw.ar{ width:20px; height:4px; border-radius:2px; }
+.btn-row{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+.btn-row button.btn{ min-height:44px; }
+.qtable-wrap{ overflow-x:auto; margin-top:16px; }
+.qtable{ border-collapse:collapse; width:100%; font-size:0.9rem; min-width:300px; }
+.qtable th, .qtable td{ border:1px solid var(--line); padding:7px 10px; text-align:left; vertical-align:top; }
+.qtable thead th i{ text-transform:none; }
+.qtable thead th{
+  background:var(--surface-2); color:var(--ink-soft); font-weight:600;
+  font-size:0.72rem; text-transform:uppercase; letter-spacing:0.05em;
+}
+.qtable tbody th{ font-weight:600; white-space:nowrap; width:1%; background:rgba(0,0,0,0.02); }
+.qtable td{ font-variant-numeric:tabular-nums; }
+.comment{
+  margin-top:14px; background:var(--surface-2); border-radius:10px; padding:12px 14px;
+  font-size:0.9rem; line-height:1.55;
+}
+.comment p{ margin:0 0 8px; }
+.comment p:last-child{ margin-bottom:0; }
+.comment.warn{ background:var(--danger-bg); }
+.comment.good{ background:var(--success-bg); }
+@media (max-width:720px){
+  .mode-row-label{ flex-basis:100%; }
+}
+
+/* obrázek k zadání úlohy v tréninku */
+.task-fig{ margin:0 auto 14px; max-width:460px; }
+.task-fig svg{ display:block; width:100%; height:auto; }
+.task-fig svg text{ font-family:'Work Sans', sans-serif; }
+
+/* ================= tato stránka ================= */
+/* Setrvačnost v situacích */
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <a class="back-link" href="../rozcestniky/kvinta.html">← Zpět na Kvinta/1. ročník</a>
+
+  <div class="brand">
+    <div class="brand-lockup">
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <line x1="2" y1="30" x2="38" y2="30" stroke="var(--ink-soft)" stroke-width="1.4"/>
+        <circle cx="12" cy="24" r="5.5" fill="var(--accent)"/>
+        <line x1="20" y1="24" x2="32" y2="24" stroke="var(--focus)" stroke-width="2.2" stroke-dasharray="3 2.5"/>
+        <path d="M36,24 L31.5,21 V27 Z" fill="var(--focus)"/>
+        <path d="M3,13 h6 M3,18 h4" stroke="var(--ink-soft)" stroke-width="1.4" stroke-linecap="round"/>
+      </svg>
+      <div class="brand-text">
+        <h1>1. Newtonův zákon</h1>
+        <p>dynamika — zákon setrvačnosti, inerciální vztažná soustava</p>
+      </div>
+    </div>
+    <div class="readout" id="header-readout" hidden>
+      <div class="cell"><span class="label">Skóre</span><span class="value" id="stat-score">0</span></div>
+      <div class="cell"><span class="label">Série</span><span class="value" id="stat-streak">0</span></div>
+      <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="stat-accuracy">—</span></div>
+    </div>
+  </div>
+
+  <div class="top-tabs">
+    <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+    <button class="toptab" id="top-tab-aplet" data-tab="aplet">Setrvačnost v situacích</button>
+    <button class="toptab" id="top-tab-trenink" data-tab="trenink">Trénink</button>
+  </div>
+
+  <!-- ============ TEORIE ============ -->
+  <div id="theory-section" class="tab-section">
+    <div class="panel">
+      <div class="panel-title">Tři zákony klasické mechaniky</div>
+      <p>V kapitole o síle jsme poznali, že síla popisuje vzájemné působení těles. Teď se podíváme, <b>jak síla mění pohyb</b>. Odpověď dávají tři pohybové zákony, které v roce 1687 sepsal Isaac Newton v knize <i>Matematické principy přírodní filozofie</i>. Každému z nich je věnována jedna stránka; tato je o prvním z nich.</p>
+      <p>Zákony platí pro tělesa, jejichž rychlost je mnohem menší než rychlost světla, a pro pozorovatele v <b>inerciální vztažné soustavě</b> (vysvětlíme níže). Tělesa opět nahrazujeme hmotnými body.</p>
+      <div class="links">
+        <a class="btn-link" href="sila.html">Síla a její účinky →</a>
+        <a class="btn-link" href="druhy-newtonuv-zakon.html">2. Newtonův zákon →</a>
+        <a class="btn-link" href="treti-newtonuv-zakon.html">3. Newtonův zákon →</a>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Od Aristotela ke Galileovi</div>
+      <p>Po dva tisíce let se věřilo Aristotelovi: těleso se pohybuje, jen dokud ho něco pohání, a když síla přestane působit, těleso se samo zastaví. Zkušenost tomu zdánlivě odpovídá: kolo, které přestaneme šlapat, zastaví; strčená kniha se zastaví.</p>
+      <p>Galileo Galilei si všiml, že zastavení má vždy příčinu: tření a odpor vzduchu. Provedl myšlenkový pokus se dvěma nakloněnými rovinami proti sobě. Kulička puštěná z jedné vyjede po druhé téměř do stejné výšky. Čím mírnější je druhá rovina, tím dál kulička dojede, než této výšky dosáhne. Je-li druhá rovina vodorovná, nedosáhne výšky nikdy a bez tření by jela pořád.</p>
+      <figure class="theory-fig">
+        <svg viewBox="0 0 540 190" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Galileův myšlenkový pokus: kulička z levé nakloněné roviny vyjede po pravé rovině do stejné výšky; čím mírnější pravá rovina, tím dál dojede; po vodorovné rovině jede stále.">
+          <line x1="20" y1="34" x2="520" y2="34" stroke="var(--ink-soft)" stroke-width="1" stroke-dasharray="5 5"/>
+          <text x="22" y="26" font-size="11.5" fill="var(--ink-soft)">výchozí výška</text>
+          <path d="M40,34 L190,160" fill="none" stroke="var(--ink)" stroke-width="2.4"/>
+          <path d="M190,160 L265,34" fill="none" stroke="var(--focus)" stroke-width="2" opacity="0.9"/>
+          <path d="M190,160 L360,34" fill="none" stroke="var(--focus)" stroke-width="2" opacity="0.75"/>
+          <path d="M190,160 L470,34" fill="none" stroke="var(--focus)" stroke-width="2" opacity="0.6"/>
+          <path d="M190,160 H520" fill="none" stroke="var(--accent)" stroke-width="2.4"/>
+          <line x1="20" y1="166" x2="520" y2="166" stroke="var(--line)" stroke-width="6"/>
+          <circle cx="48" cy="26" r="8" fill="var(--ink)"/>
+          <circle cx="262" cy="28" r="7" fill="var(--focus)" opacity="0.9"/>
+          <circle cx="356" cy="28" r="7" fill="var(--focus)" opacity="0.75"/>
+          <circle cx="466" cy="28" r="7" fill="var(--focus)" opacity="0.6"/>
+          <circle cx="440" cy="152" r="8" fill="var(--accent)"/>
+          <line x1="452" y1="152" x2="508" y2="152" stroke="var(--accent)" stroke-width="2.4" stroke-dasharray="6 4"/>
+          <path d="M520,152 L507,146 V158 Z" fill="var(--accent)"/>
+          <text x="440" y="184" font-size="12" fill="var(--accent)" text-anchor="middle">vodorovně: jede stále</text>
+        </svg>
+        <figcaption>Galileův myšlenkový pokus (tření zanedbáno). Kulička se snaží vystoupat do původní výšky; po vodorovné rovině proto jede pořád stejnou rychlostí.</figcaption>
+      </figure>
+      <p>Newton z této myšlenky udělal první ze svých zákonů.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">1. Newtonův zákon — zákon setrvačnosti</div>
+      <p>Pustíme kuličku z nakloněné roviny na vodorovnou plochu. Na koberci se zastaví brzy, na stole dál, na skle ještě dál. Čím menší je tření, tím déle si kulička udrží svou rychlost. Kdyby se tření i odpor vzduchu podařilo odstranit úplně, nic by kuličku nezpomalovalo a jela by stále stejnou rychlostí po přímce.</p>
+      <figure class="theory-fig">
+        <svg viewBox="0 0 520 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Tři dráhy: kulička z nakloněné roviny dojede na drsném povrchu nejkratší vzdálenost, na hladším dál a na dokonale hladkém povrchu by jela pořád.">
+          <defs><marker id="nz-a" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4.2" markerHeight="4.2" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/></marker></defs>
+          <g stroke="var(--ink-soft)" stroke-width="1.6" fill="none">
+            <path d="M20,22 L80,62 H500"/>
+            <path d="M20,92 L80,132 H500"/>
+            <path d="M20,162 L80,202 H500" stroke-dasharray="0"/>
+          </g>
+          <g fill="var(--accent)">
+            <circle cx="170" cy="54" r="8"/>
+            <circle cx="300" cy="124" r="8"/>
+            <circle cx="400" cy="194" r="8"/>
+          </g>
+          <line x1="412" y1="194" x2="490" y2="194" stroke="var(--accent)" stroke-width="2.4" stroke-dasharray="6 4" marker-end="url(#nz-a)"/>
+          <g font-size="12.5" fill="var(--ink)">
+            <text x="200" y="46">drsný povrch (koberec)</text>
+            <text x="330" y="116">hladší povrch (sklo)</text>
+            <text x="150" y="186">bez tření (myšlenkový pokus)</text>
+          </g>
+        </svg>
+        <figcaption>Čím hladší povrch, tím dál kulička dojede. Bez tření by se pohybovala rovnoměrně přímočaře „donekonečna“.</figcaption>
+      </figure>
+      <div class="formula-box">Těleso setrvává v klidu nebo v rovnoměrném přímočarém pohybu, dokud je výslednice sil, které na něj působí, nulová.</div>
+      <p>Vlastnost tělesa udržovat si svůj pohybový stav nazýváme <b>setrvačnost</b>. Klid je jen zvláštní případ rovnoměrného přímočarého pohybu — pohyb nulovou rychlostí.</p>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M9 2.5 L16 15.5 H2 Z" stroke="var(--danger)" stroke-width="1.4" stroke-linejoin="round"/>
+          <line x1="9" y1="7" x2="9" y2="11.5" stroke="var(--danger)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="13.6" r="1" fill="var(--danger)"/>
+        </svg>
+        <p>K udržení pohybu síla <b>potřeba není</b>, síla je potřeba ke <b>změně</b> pohybu. Setrvačnost není síla: nemá žádného původce a nelze u ní říct „kdo na koho působí“.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Projevy setrvačnosti</div>
+      <ul>
+        <li>Autobus se prudce rozjede a cestující se zakloní dozadu. Jejich tělo si setrvačností udržuje klid, zatímco autobus pod nimi zrychluje.</li>
+        <li>Při prudkém brzdění se tělo pohybuje dál dopředu. Proto se v autě poutáme: pás dodá tělu sílu, která ho zabrzdí spolu s autem.</li>
+        <li>Na sklenici leží kartička a na ní mince. Kartičku rychle cvrnkneme do strany, mince se téměř nepohne a spadne do sklenice.</li>
+        <li>Zmokřený pes se oklepe: srst se zastaví, kapky vody pokračují v pohybu a odletí.</li>
+      </ul>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Inerciální vztažná soustava</div>
+      <p>Pohyb vždy popisujeme vzhledem k nějaké vztažné soustavě. Soustavu, ve které platí zákon setrvačnosti, nazýváme <b>inerciální vztažná soustava</b>. Těleso, na které nepůsobí žádná výsledná síla, je v ní v klidu, nebo se pohybuje rovnoměrně přímočaře.</p>
+      <p>Soustavu spojenou s povrchem Země obvykle považujeme za inerciální. Přesně inerciální není, protože se Země otáčí, ale pro běžné pokusy je odchylka zanedbatelná. Inerciální je i každá soustava, která se vůči ní pohybuje rovnoměrně přímočaře (například rovnoměrně jedoucí vlak). Soustavy, které zrychlují, brzdí nebo se otáčejí, inerciální nejsou.</p>
+      <div class="links">
+        <a class="btn-link" href="neinercialni-soustavy.html">Neinerciální vztažné soustavy →</a>
+      </div>
+    </div>
+
+
+    <div class="panel">
+      <div class="panel-title">Žádná „síla pohybu“ neexistuje</div>
+      <p>Nejčastější chyba při kreslení sil je přidat tělesu sílu „ve směru pohybu“, která by ho udržovala v pohybu. Taková síla neexistuje. U každé síly musíme umět říct, které těleso ji způsobuje.</p>
+      <figure class="theory-fig">
+        <svg viewBox="0 0 540 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Tři situace: kulička na stole v klidu má tíhovou a tlakovou sílu; kulička, do které strkáme prstem, má navíc sílu prstu; kulička, která se po strčení pohybuje sama, má tíhovou, tlakovou a slabou třecí sílu proti pohybu, ale žádnou sílu ve směru pohybu.">
+          <g font-size="12" fill="var(--ink)" font-weight="600" text-anchor="middle">
+            <text x="90" y="18">v klidu</text><text x="270" y="18">strkáme prstem</text><text x="450" y="18">po strčení</text>
+          </g>
+          <g stroke="var(--line)" stroke-width="1.5"><line x1="180" y1="26" x2="180" y2="196"/><line x1="360" y1="26" x2="360" y2="196"/></g>
+          <g stroke="var(--ink-soft)" stroke-width="2"><line x1="20" y1="122" x2="160" y2="122"/><line x1="200" y1="122" x2="340" y2="122"/><line x1="380" y1="122" x2="520" y2="122"/></g>
+          <g fill="var(--accent)"><circle cx="90" cy="110" r="12"/><circle cx="270" cy="110" r="12"/><circle cx="450" cy="110" r="12"/></g>
+          <g stroke-width="2.8">
+            <line x1="88" y1="110" x2="88" y2="166" stroke="var(--ink)"/><line x1="92" y1="110" x2="92" y2="54" stroke="var(--focus)"/>
+            <line x1="268" y1="110" x2="268" y2="166" stroke="var(--ink)"/><line x1="272" y1="110" x2="272" y2="54" stroke="var(--focus)"/>
+            <line x1="270" y1="110" x2="318" y2="110" stroke="var(--danger)"/>
+            <line x1="448" y1="110" x2="448" y2="166" stroke="var(--ink)"/><line x1="452" y1="110" x2="452" y2="54" stroke="var(--focus)"/>
+            <line x1="438" y1="116" x2="414" y2="116" stroke="var(--ink-soft)"/>
+          </g>
+          <g>
+            <path d="M88,178 L83,164 H93 Z M268,178 L263,164 H273 Z M448,178 L443,164 H453 Z" fill="var(--ink)"/>
+            <path d="M92,42 L87,56 H97 Z M272,42 L267,56 H277 Z M452,42 L447,56 H457 Z" fill="var(--focus)"/>
+            <path d="M330,110 L316,105 V115 Z" fill="var(--danger)"/>
+            <path d="M404,116 L416,111 V121 Z" fill="var(--ink-soft)"/>
+          </g>
+          <path d="M230,104 q10,-6 20,0 l6,2" fill="none" stroke="var(--ink)" stroke-width="1.6"/>
+          <g font-size="12.5">
+            <text x="98" y="52" fill="var(--focus)"><tspan font-weight="700" font-style="italic">F</tspan><tspan font-size="9" dy="3">N</tspan></text>
+            <text x="64" y="180" fill="var(--ink)"><tspan font-weight="700" font-style="italic">F</tspan><tspan font-size="9" dy="3">G</tspan></text>
+            <text x="278" y="52" fill="var(--focus)"><tspan font-weight="700" font-style="italic">F</tspan><tspan font-size="9" dy="3">N</tspan></text>
+            <text x="244" y="180" fill="var(--ink)"><tspan font-weight="700" font-style="italic">F</tspan><tspan font-size="9" dy="3">G</tspan></text>
+            <text x="300" y="100" fill="var(--danger)"><tspan font-weight="700" font-style="italic">F</tspan><tspan font-size="9" dy="3">p</tspan></text>
+            <text x="458" y="52" fill="var(--focus)"><tspan font-weight="700" font-style="italic">F</tspan><tspan font-size="9" dy="3">N</tspan></text>
+            <text x="424" y="180" fill="var(--ink)"><tspan font-weight="700" font-style="italic">F</tspan><tspan font-size="9" dy="3">G</tspan></text>
+            <text x="402" y="108" fill="var(--ink-soft)"><tspan font-weight="700" font-style="italic">F</tspan><tspan font-size="9" dy="3">t</tspan></text>
+          </g>
+          <line x1="470" y1="146" x2="506" y2="146" stroke="var(--focus)" stroke-width="1.6" stroke-dasharray="4 3"/>
+          <path d="M516,146 L505,141 V151 Z" fill="var(--focus)"/>
+          <text x="468" y="140" font-size="11" fill="var(--focus)" font-style="italic" font-weight="700">v</text>
+        </svg>
+        <figcaption>Kulička, do které jsme strčili a pak ji pustili, se pohybuje dál setrvačností. Působí na ni jen tíhová síla \(\boldsymbol{F}_\mathrm{G}\), tlaková síla stolu \(\boldsymbol{F}_\mathrm{N}\) a slabá třecí síla \(\boldsymbol{F}_\mathrm{t}\) proti pohybu, která ji pomalu brzdí.</figcaption>
+      </figure>
+      <ul>
+        <li><b>Upuštěný kámen:</b> působí na něj tíhová síla a (po rozletu) odpor vzduchu. Jakmile dopadne a leží, ruší se tíhová síla s tlakovou silou podlahy.</li>
+        <li><b>Auto jedoucí na neutrál:</b> motor netáhne; působí tíhová a tlaková síla a proti pohybu odpor vzduchu a valivý odpor. Výslednice míří dozadu, auto zpomaluje.</li>
+        <li><b>Sonda obíhající Zemi:</b> působí na ni jen gravitační síla Země. Žádný motor ji „nežene dopředu“; po dráze letí setrvačností a gravitace jen zakřivuje její dráhu.</li>
+      </ul>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Hmotnost jako míra setrvačnosti</div>
+      <p>Prázdný nákupní vozík rozjedeme i zastavíme snadno, plně naložený mnohem hůř. Čím větší má těleso hmotnost, tím víc se brání změně svého pohybu: <b>hmotnost je mírou setrvačnosti tělesa</b>. Jak přesně závisí změna rychlosti na síle a hmotnosti, říká 2. Newtonův zákon.</p>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="9" cy="9" r="7.5" stroke="var(--focus)" stroke-width="1.6"/>
+          <line x1="9" y1="8" x2="9" y2="13" stroke="var(--focus)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="5.2" r="1" fill="var(--focus)"/>
+        </svg>
+        <p>Setrvačnost se projevuje i ve stavu beztíže. Kosmonaut na oběžné dráze snadno „nadzvedne“ těžkou skříňku, ale rozpohybovat ji nebo zastavit ho stojí stejné úsilí jako na Zemi.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Shrnutí</div>
+      <p>• <b>1. Newtonův zákon (zákon setrvačnosti):</b> těleso setrvává v klidu nebo v rovnoměrném přímočarém pohybu, dokud je výslednice sil, které na něj působí, nulová.</p>
+      <p>• Setrvačnost je vlastnost tělesa, ne síla. K udržení pohybu síla potřeba není, ke změně pohybu ano.</p>
+      <p>• Inerciální vztažná soustava je soustava, ve které platí zákon setrvačnosti; soustavu spojenou se Zemí za ni obvykle považujeme.</p>
+      <p>• Hmotnost je mírou setrvačnosti tělesa.</p>
+    </div>
+  </div>
+
+  <!-- ============ SETRVAČNOST V SITUACÍCH ============ -->
+  <div id="aplet-section" class="tab-section" hidden>
+    <div class="card applet-card" id="in-card">
+      <div class="applet-head">
+        <div class="applet-head-text">
+          <span class="cat-tag">Aplet</span>
+          <h2>Setrvačnost v situacích</h2>
+          <p class="desc">Čtyři situace, ve kterých se projevuje setrvačnost. Vyberte situaci a variantu, spusťte animaci a sledujte, co se stane s tělesy, na která právě nepůsobí žádná síla (nebo jen slabá).</p>
+        </div>
+      </div>
+
+      <div class="mode-row">
+        <span class="mode-row-label" id="in-lbl-scene">Situace</span>
+        <div class="seg" id="in-scene-seg" role="group" aria-labelledby="in-lbl-scene">
+          <button class="chip accented on" type="button" data-scene="bus" aria-pressed="true">Autobus</button>
+          <button class="chip accented" type="button" data-scene="mince" aria-pressed="false">Mince a kartička</button>
+          <button class="chip accented" type="button" data-scene="naraz" aria-pressed="false">Náraz auta</button>
+          <button class="chip accented" type="button" data-scene="podlozka" aria-pressed="false">Kulička na podložce</button>
+        </div>
+      </div>
+      <div class="mode-row">
+        <span class="mode-row-label" id="in-lbl-var">Varianta</span>
+        <div class="seg" id="in-var-seg" role="group" aria-labelledby="in-lbl-var"></div>
+      </div>
+
+      <div class="canvas-wrap">
+        <svg class="scene" id="in-svg" viewBox="0 0 640 340" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Animace vybrané situace, ve které se projevuje setrvačnost."></svg>
+      </div>
+
+      <div class="mode-row">
+        <span class="mode-row-label">Animace</span>
+        <div class="btn-row">
+          <button class="btn primary" id="in-play" type="button">Spustit</button>
+          <button class="btn ghost" id="in-reset" type="button">Vynulovat</button>
+        </div>
+      </div>
+      <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint">Nahoře vyberte situaci a pod ní variantu, pak stiskněte Spustit. Autobus: kamera jede s autobusem, sledujte cestujícího, držadlo a míček na podlaze (náklon cestujícího je pro názornost zvětšený). Mince a kartička: rychlé cvrnknutí je zpomalené dvacetkrát. Náraz auta: samotný náraz je zpomalený dvacetkrát, figurína sedí s pásem nebo bez něj. Kulička na podložce: kulička sjede z rampy a dojíždí po podložce; praporky označují, kam dojela při předchozích pokusech.</p>
+      </details>
+
+      <div class="comment" id="in-comment" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <!-- ============ TRÉNINK ============ -->
+  <div id="trenink-section" class="tab-section" hidden>
+
+    <div class="panel">
+      <div class="section-block">
+        <div class="panel-title">Typ úlohy</div>
+        <div class="row" id="type-row"></div>
+      </div>
+      <div class="settings-foot" style="justify-content:flex-end;">
+        <button class="linklike" id="reset-stats">vynulovat statistiku</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="cat-tag" id="cat-tag">Úloha</span>
+      <p class="task-text" id="task-text"></p>
+      <p class="task-rule" id="task-rule">Počítejte s&nbsp;<i>g</i>&nbsp;=&nbsp;10&nbsp;m·s⁻². Výsledek zaokrouhlete na 3 platné číslice; uznává se odchylka do 1&nbsp;%.</p>
+      <div class="task-fig" id="task-fig" hidden></div>
+      <div class="equation" id="equation">
+        <span id="eq-given"></span>
+        <span class="eq">=</span>
+        <span class="answer-slot" id="slot-single">
+          <input class="answer-input" id="answer" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="?" aria-label="odpověď">
+        </span>
+        <span class="unit" id="eq-unit"></span>
+      </div>
+      <div class="opt-grid wide-opts" id="opt-grid" hidden></div>
+      <div class="actions">
+        <button class="btn primary" id="btn-check">Zkontrolovat</button>
+        <button class="btn ghost" id="btn-skip">Nevím / Zobrazit řešení</button>
+      </div>
+      <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint">Výsledek zapište do rámečku a potvrďte tlačítkem Zkontrolovat nebo klávesou Enter; dalším Enterem přejdete na další příklad. Desetinnou čárku i tečku lze zadat obojí. Po kontrole se rámeček obarví zeleně (správně) nebo červeně (špatně) a pod ním se zobrazí zadané hodnoty a celý postup řešení. Typ úloh vyberete nahoře v panelu Typ úlohy.</p>
+      </details>
+      <div class="feedback" id="feedback" hidden>
+        <div class="headline" id="feedback-headline"></div>
+        <div class="steps" id="feedback-steps"></div>
+        <div class="tip" id="feedback-tip" hidden></div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>Fyzika — Kvinta/1. ročník</footer>
+</div>
+
+<script src="../spolecne/reseni.js?v=1"></script>
+<script src="../spolecne/spolecne.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  // ---- záložky: tlačítko .toptab[data-tab="x"] ↔ sekce #x-section (Teorie = #theory-section) ----
+  var tabs = {}, sections = {}, tabHooks = {};
+  Array.prototype.forEach.call(document.querySelectorAll('.toptab[data-tab]'), function(btn){
+    var name = btn.getAttribute('data-tab');
+    tabs[name] = btn;
+    sections[name] = document.getElementById(name === 'teorie' ? 'theory-section' : name + '-section');
+  });
+  function showTab(name){
+    for(var k in tabs){
+      tabs[k].classList.toggle('on', k === name);
+      if(sections[k]) sections[k].hidden = k !== name;
+    }
+    // skóre, série a úspěšnost v hlavičce jen u tréninku
+    var readout = document.getElementById('header-readout');
+    if(readout) readout.hidden = name !== 'trenink';
+    if(tabHooks[name]) setTimeout(tabHooks[name], 0);
+  }
+  Object.keys(tabs).forEach(function(k){ tabs[k].addEventListener('click', function(){ showTab(k); }); });
+
+  // ---- příklady: postupně odemykané steppery ----
+  Array.prototype.forEach.call(document.querySelectorAll('.stepper'), function(wrap){
+    var steps = Array.prototype.slice.call(wrap.querySelectorAll('.step'));
+    var unlockedUpTo = 1;
+
+    function refreshLocks(){
+      steps.forEach(function(st){
+        var idx = parseInt(st.getAttribute('data-step'), 10);
+        var locked = idx > unlockedUpTo;
+        st.classList.toggle('locked', locked);
+        st.classList.toggle('unlocked', !locked && !st.classList.contains('done'));
+        st.querySelector('.step-head').setAttribute('aria-disabled', locked ? 'true' : 'false');
+      });
+    }
+
+    steps.forEach(function(st){
+      var idx = parseInt(st.getAttribute('data-step'), 10);
+      var head = st.querySelector('.step-head');
+      var body = st.querySelector('.step-body');
+      head.addEventListener('click', function(){
+        if(idx > unlockedUpTo) return;
+        var wasOpen = st.classList.contains('open');
+        st.classList.toggle('open', !wasOpen);
+        body.hidden = wasOpen;
+        head.setAttribute('aria-expanded', (!wasOpen).toString());
+        if(!wasOpen){
+          st.classList.add('done');
+          if(idx === unlockedUpTo && unlockedUpTo < steps.length){ unlockedUpTo++; }
+          refreshLocks();
+        }
+      });
+    });
+
+    var resetBtn = document.getElementById(wrap.getAttribute('data-reset'));
+    if(resetBtn){
+      resetBtn.addEventListener('click', function(){
+        unlockedUpTo = 1;
+        steps.forEach(function(st){
+          st.classList.remove('open', 'done');
+          st.querySelector('.step-body').hidden = true;
+          st.querySelector('.step-head').setAttribute('aria-expanded', 'false');
+        });
+        refreshLocks();
+      });
+    }
+
+    refreshLocks();
+  });
+
+  // ================= POMOCNÉ FUNKCE (čísla, TeX) =================
+  var G = 10;   // tíhové zrychlení v úlohách tréninku (m·s⁻²), stejně jako v přípravách
+  function tex(t){
+    // bez zalomení řádků: FyzikaReseni dělí řádky řešení podle \n (KaTeX má \n uvnitř SVG odmocniny)
+    try{ return window.katex ? katex.renderToString(t, {throwOnError:false}).replace(/\n/g, ' ') : t; }catch(e){ return t; }
+  }
+  function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+  // náhodné číslo z intervalu <a, b> s krokem step (hodnoty jsou „hezké“ a přesně ty, které žák vidí)
+  function rnd(a, b, step){
+    var n = Math.round((b - a)/step);
+    return roundTo(a + step*Math.floor(Math.random()*(n + 1)), 6);
+  }
+  // seskupení tisíců: sep = '\\,' (TeX) nebo '&nbsp;' (HTML)
+  function groupInt(s, sep){
+    if(s.length < 4) return s;
+    return s.replace(/\B(?=(\d{3})+(?!\d))/g, '#').replace(/#/g, sep);
+  }
+  function numParts(x, dec){
+    var s = Math.abs(roundTo(x, dec)).toFixed(dec);
+    var p = s.split('.');
+    return { neg: roundTo(x, dec) < 0, i: p[0], d: p[1] || '' };
+  }
+  // číslo zadání (bez zbytečných nul) a výsledek na sig platných číslic
+  function natDec(x){
+    for(var d = 0; d < 6; d++){ if(Math.abs(roundTo(x, d) - x) < 1e-9) return d; }
+    return 6;
+  }
+  function fmt(x, dec, mode){
+    var p = numParts(x, dec);
+    var tx = mode === 'tex';
+    var s = groupInt(p.i, tx ? '\\,' : '&nbsp;') + (p.d ? (tx ? '{,}' : ',') + p.d : '');
+    return (p.neg ? (tx ? '-' : '−') : '') + s;
+  }
+  function T(x){ return fmt(x, natDec(x), 'tex'); }                // TeX, zadaná hodnota
+  function H(x){ return fmt(x, natDec(x), 'html'); }               // HTML, zadaná hodnota
+  function TS(x, sig){ var r = roundSig(x, sig || 3); return fmt(r, decimalsForSig(r, sig || 3), 'tex'); }
+  function HS(x, sig){ var r = roundSig(x, sig || 3); return fmt(r, decimalsForSig(r, sig || 3), 'html'); }
+  // hodnota s jednotkou v TeXu
+  function U(x, unit){ return T(x) + '\\ \\mathrm{' + unit + '}'; }
+  function US(x, unit, sig){ return TS(x, sig) + '\\ \\mathrm{' + unit + '}'; }
+  // rovná se, nebo přibližně rovná se?
+  function eqs(x, sig){ return Math.abs(roundSig(x, sig || 3) - x) <= 1e-9*Math.max(1, Math.abs(x)) ? '=' : '\\doteq'; }
+  function parseNum(str){
+    if(!str) return NaN;
+    str = str.trim().replace(/[−–]/g, '-').replace(',', '.').replace(/\s+/g, '');
+    return /^-?\d*\.?\d+$|^-?\d+\.$/.test(str) ? parseFloat(str) : NaN;
+  }
+  // text do apletů: číslo s desetinnou čárkou na dec desetinných míst
+  function cz(x, dec){ return fmt(x, dec, 'html'); }
+  function kmh(v){ return v/3.6; }
+
+  // ---- kreslení do SVG apletů (šipky bez <marker>, aby se nepletla id) ----
+  function svgArrow(x1, y1, x2, y2, color, w, dash){
+    var dx = x2 - x1, dy = y2 - y1, L = Math.sqrt(dx*dx + dy*dy);
+    if(L < 2) return '';
+    w = w || 3;
+    var hl = Math.min(12, 0.45*L + 4), hw = hl*0.45, ux = dx/L, uy = dy/L;
+    var bx = x2 - ux*hl, by = y2 - uy*hl;
+    return '<line x1="' + x1.toFixed(1) + '" y1="' + y1.toFixed(1) + '" x2="' + bx.toFixed(1) + '" y2="' + by.toFixed(1) +
+      '" stroke="' + color + '" stroke-width="' + w + '"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + ' stroke-linecap="round"/>' +
+      '<path d="M' + x2.toFixed(1) + ',' + y2.toFixed(1) + ' L' + (bx - uy*hw).toFixed(1) + ',' + (by + ux*hw).toFixed(1) +
+      ' L' + (bx + uy*hw).toFixed(1) + ',' + (by - ux*hw).toFixed(1) + ' Z" fill="' + color + '"/>';
+  }
+  // popisek síly: F s indexem (kurzíva, tučně), volitelně s čárkou
+  function svgForceLabel(x, y, sub, color, anchor, size){
+    size = size || 14;
+    return '<text x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" text-anchor="' + (anchor || 'start') + '" font-size="' + size + '" fill="' + color + '">' +
+      '<tspan font-weight="700" font-style="italic">F</tspan><tspan font-size="' + Math.round(size*0.7) + '" dy="3">' + sub + '</tspan></text>';
+  }
+  function svgText(x, y, txt, opt){
+    opt = opt || {};
+    return '<text x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" text-anchor="' + (opt.anchor || 'start') + '" font-size="' + (opt.size || 12) +
+      '" fill="' + (opt.color || 'var(--ink)') + '"' + (opt.weight ? ' font-weight="' + opt.weight + '"' : '') + '>' + txt + '</text>';
+  }
+  function setChips(seg, attr, val){
+    Array.prototype.forEach.call(seg.querySelectorAll('[data-' + attr + ']'), function(b){
+      var on = b.getAttribute('data-' + attr) === String(val);
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+  }
+
+  // ---- úloha s výběrem: správná možnost + špatné, náhodné pořadí ----
+  function shuffle(a){
+    a = a.slice();
+    for(var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random()*(i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; }
+    return a;
+  }
+  function mkChoice(tag, text, right, wrong, explain, fig){
+    var opts = shuffle([right].concat(wrong));
+    return { tag:tag, text:text, choices:opts, correct:opts.indexOf(right), explain:explain, fig:fig || '' };
+  }
+
+  // ---- propracovanější grafika apletů: společné kresby (barvy z palety, pár skutečných barev) ----
+  function f1(x){ return (+x).toFixed(1); }
+  // kolo s pneumatikou, ráfkem a paprsky; ang = úhel otočení (rad)
+  function svgWheel(cx, cy, r, ang){
+    var s = '<circle cx="' + f1(cx) + '" cy="' + f1(cy) + '" r="' + f1(r) + '" fill="#2b2f33"/>' +
+      '<circle cx="' + f1(cx) + '" cy="' + f1(cy) + '" r="' + f1(r*0.62) + '" fill="#c9ced3" stroke="#7d868e" stroke-width="1"/>';
+    for(var k = 0; k < 5; k++){
+      var a = ang + k*2*Math.PI/5;
+      s += '<line x1="' + f1(cx) + '" y1="' + f1(cy) + '" x2="' + f1(cx + r*0.58*Math.cos(a)) + '" y2="' + f1(cy + r*0.58*Math.sin(a)) + '" stroke="#7d868e" stroke-width="' + f1(Math.max(1, r*0.12)) + '"/>';
+    }
+    return s + '<circle cx="' + f1(cx) + '" cy="' + f1(cy) + '" r="' + f1(r*0.16) + '" fill="#4a5258"/>';
+  }
+  // stojící postava: chodidla v (x, y), výška h, náklon lean (rad, + = dopředu doprava), barva oblečení col
+  function svgPerson(x, y, h, lean, col){
+    var deg = lean*180/Math.PI, u = h/100;
+    return '<g transform="rotate(' + f1(deg) + ',' + f1(x) + ',' + f1(y) + ')">' +
+      '<path d="M' + f1(x - 7*u) + ',' + f1(y) + ' L' + f1(x - 4*u) + ',' + f1(y - 46*u) + ' M' + f1(x + 7*u) + ',' + f1(y) + ' L' + f1(x + 4*u) + ',' + f1(y - 46*u) + '" stroke="#3d4a5c" stroke-width="' + f1(8*u) + '" stroke-linecap="round"/>' +
+      '<rect x="' + f1(x - 11*u) + '" y="' + f1(y - 82*u) + '" width="' + f1(22*u) + '" height="' + f1(40*u) + '" rx="' + f1(8*u) + '" fill="' + col + '"/>' +
+      '<path d="M' + f1(x - 9*u) + ',' + f1(y - 76*u) + ' L' + f1(x - 13*u) + ',' + f1(y - 48*u) + ' M' + f1(x + 9*u) + ',' + f1(y - 76*u) + ' L' + f1(x + 13*u) + ',' + f1(y - 48*u) + '" stroke="' + col + '" stroke-width="' + f1(6*u) + '" stroke-linecap="round"/>' +
+      '<circle cx="' + f1(x) + '" cy="' + f1(y - 92*u) + '" r="' + f1(9*u) + '" fill="#e9c7a6" stroke="#b98d69" stroke-width="0.8"/>' +
+      '<path d="M' + f1(x - 9*u) + ',' + f1(y - 94*u) + ' Q' + f1(x) + ',' + f1(y - 106*u) + ' ' + f1(x + 9*u) + ',' + f1(y - 94*u) + '" fill="#5a4030"/></g>';
+  }
+  // přechody pro oblohu, zem, kov a dřevo; id s předponou p (jedinečné na stránce)
+  function svgDefs(p){
+    return '<defs>' +
+      '<linearGradient id="' + p + '-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cfe4f1"/><stop offset="1" stop-color="#f3f1e6"/></linearGradient>' +
+      '<linearGradient id="' + p + '-ground" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b9b3a3"/><stop offset="1" stop-color="#9c9686"/></linearGradient>' +
+      '<linearGradient id="' + p + '-metal" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eef1f3"/><stop offset="0.5" stop-color="#c3cbd1"/><stop offset="1" stop-color="#8e989f"/></linearGradient>' +
+      '<linearGradient id="' + p + '-wood" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e2c08f"/><stop offset="1" stop-color="#c49a62"/></linearGradient>' +
+      '<linearGradient id="' + p + '-glass" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#d9ecf5" stop-opacity="0.9"/><stop offset="0.5" stop-color="#ffffff" stop-opacity="0.5"/><stop offset="1" stop-color="#cfe3ee" stop-opacity="0.9"/></linearGradient>' +
+      '<radialGradient id="' + p + '-ball" cx="0.35" cy="0.35" r="0.7"><stop offset="0" stop-color="#ffd2b0"/><stop offset="0.45" stop-color="var(--accent)"/><stop offset="1" stop-color="#8a3a12"/></radialGradient>' +
+      '<filter id="' + p + '-sh" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.25"/></filter>' +
+      '</defs>';
+  }
+
+  var STATS_KEY = 'fyzika:prvni-newtonuv-zakon:stats';
+
+  // ================= APLET: SETRVAČNOST V SITUACÍCH =================
+  (function(){
+    var GA = 9.81, P = 'in';
+    var svg = document.getElementById('in-svg'), btn = document.getElementById('in-play');
+    var varSeg = document.getElementById('in-var-seg'), sceneSeg = document.getElementById('in-scene-seg');
+    var VARS = {
+      bus:[['rozjezd', 'Rozjezd'], ['stala', 'Stálá rychlost'], ['brzdeni', 'Brzdění']],
+      mince:[['rychle', 'Rychlé cvrnknutí'], ['pomalu', 'Pomalé tažení']],
+      naraz:[['pas', 'S bezpečnostním pásem'], ['bez', 'Bez pásu']],
+      podlozka:[['koberec', 'Koberec'], ['drevo', 'Dřevěná podlaha'], ['sklo', 'Sklo'], ['bez', 'Bez tření']]
+    };
+    var scene = 'bus', variant = 'rozjezd', st, running = false, last = null, flags = [];
+
+    function buildVars(){
+      varSeg.innerHTML = '';
+      VARS[scene].forEach(function(v, i){
+        var b = document.createElement('button');
+        b.type = 'button'; b.className = 'chip accented' + (v[0] === variant ? ' on' : '');
+        b.setAttribute('data-var', v[0]); b.setAttribute('aria-pressed', v[0] === variant ? 'true' : 'false');
+        b.textContent = v[1];
+        varSeg.appendChild(b);
+      });
+    }
+
+    // ---------- scéna: autobus ----------
+    var BUS = {
+      reset:function(){
+        var v0 = variant === 'rozjezd' ? 0 : variant === 'stala' ? 12 : 14;
+        st = { t:0, v:v0, a:0, off:0, lean:0, strap:0, ball:330, vb:0, wheel:0, done:false };
+      },
+      acc:function(){
+        if(variant === 'rozjezd') return st.t < 10 ? 1.4 : 0;
+        if(variant === 'brzdeni') return st.v > 0 ? -2.8 : 0;
+        return 0;
+      },
+      step:function(dt){
+        st.a = this.acc();
+        st.v = Math.max(0, st.v + st.a*dt);
+        if(variant === 'brzdeni' && st.v === 0) st.a = 0;
+        st.off += st.v*dt*14; st.wheel += st.v*dt/0.5;
+        var target = -Math.atan(st.a/GA);                       // úhel rovnovážné polohy (− = dozadu)
+        st.strap += (target - st.strap)*Math.min(1, dt*5);
+        var tl = Math.max(-0.4, Math.min(0.4, 1.8*target));      // náklon cestujícího zvětšen 1,8× (nejvýše asi 23°)
+        st.lean += (tl - st.lean)*Math.min(1, dt*3.5);
+        // míček na hladké podlaze: vůči autobusu zrychluje −a, odrazí se od stěn
+        st.vb += -st.a*dt*14; st.ball += st.vb*dt;
+        if(st.ball < 152){ st.ball = 152; st.vb = -0.4*st.vb; }
+        if(st.ball > 488){ st.ball = 488; st.vb = -0.4*st.vb; }
+        st.vb *= Math.pow(0.6, dt);                              // slabé valivé tlumení
+        st.t += dt;
+        if(st.t > 13) st.done = true;
+      },
+      draw:function(){
+        var s = svgDefs(P);
+        s += '<rect x="0" y="0" width="640" height="250" fill="url(#' + P + '-sky)"/>';
+        // pozadí: stromy a sloupy (paralaxa)
+        for(var i = -1; i < 9; i++){
+          var tx = ((i*110 - st.off*0.35) % 880 + 880) % 880 - 120;
+          s += '<g opacity="0.75"><rect x="' + f1(tx + 18) + '" y="170" width="6" height="60" fill="#8a6b4a"/><circle cx="' + f1(tx + 21) + '" cy="160" r="26" fill="#9cbf8a"/><circle cx="' + f1(tx + 8) + '" cy="172" r="16" fill="#8fb47c"/></g>';
+        }
+        s += '<rect x="0" y="250" width="640" height="90" fill="url(#' + P + '-ground)"/>';
+        s += '<rect x="0" y="246" width="640" height="6" fill="#d8d2c2"/>';
+        for(var j = -1; j < 12; j++){
+          var dx = ((j*70 - st.off) % 840 + 840) % 840 - 70;
+          s += '<rect x="' + f1(dx) + '" y="298" width="38" height="5" fill="#f4f1e8"/>';
+        }
+        // autobus
+        s += '<g filter="url(#' + P + '-sh)"><rect x="105" y="62" width="430" height="178" rx="20" fill="#e8a33d" stroke="var(--ink)" stroke-width="2"/></g>';
+        s += '<rect x="132" y="82" width="378" height="146" rx="8" fill="#f7f1e2" stroke="#9a6a22" stroke-width="2"/>';
+        s += '<rect x="132" y="82" width="378" height="64" rx="8" fill="url(#' + P + '-glass)" opacity="0.7"/>';
+        s += '<line x1="132" y1="226" x2="510" y2="226" stroke="var(--ink)" stroke-width="3"/>';
+        s += '<line x1="140" y1="98" x2="502" y2="98" stroke="#7d868e" stroke-width="3"/>';
+        s += '<rect x="510" y="96" width="18" height="40" rx="4" fill="#fff6c9" stroke="#9a6a22" stroke-width="1"/>';
+        // držadlo
+        s += '<g transform="rotate(' + f1(st.strap*180/Math.PI) + ',420,98)"><line x1="420" y1="98" x2="420" y2="132" stroke="#5d6b76" stroke-width="3"/><circle cx="420" cy="140" r="8" fill="none" stroke="#5d6b76" stroke-width="3"/></g>';
+        s += '<line x1="420" y1="98" x2="420" y2="148" stroke="var(--line)" stroke-width="1" stroke-dasharray="3 3"/>';
+        // cestující a míček
+        s += svgPerson(290, 226, 118, st.lean, '#2f6f8f');
+        s += '<circle cx="' + f1(st.ball) + '" cy="216" r="10" fill="url(#' + P + '-ball)"/>';
+        s += svgWheel(180, 242, 22, st.wheel) + svgWheel(460, 242, 22, st.wheel);
+        // šipka zrychlení autobusu
+        if(Math.abs(st.a) > 0.01){
+          var L = st.a*28;
+          s += svgArrow(320, 44, 320 + L, 44, 'var(--accent)', 3.2);
+          s += svgText(320 + L + (L > 0 ? 6 : -6), 49, '<tspan font-style="italic" font-weight="700">a</tspan>', {anchor:L > 0 ? 'start' : 'end', size:15, color:'var(--accent)'});
+        }
+        s += svgText(14, 24, 'rychlost autobusu ' + cz(st.v*3.6, 0) + '&#160;km·h⁻¹', {size:12.5, weight:600, color:'var(--ink)'});
+        return s;
+      },
+      comment:function(){
+        if(variant === 'stala') return '<p><b>Stálá rychlost:</b> autobus je inerciální soustava. Cestující stojí rovně, držadlo visí svisle a míček leží v klidu, i když autobus jede ' + cz(st.v*3.6, 0) + '&nbsp;km·h⁻¹. Uvnitř nepoznáte, zda autobus jede, nebo stojí.</p>';
+        if(variant === 'rozjezd') return st.a > 0 ? '<p><b>Rozjezd:</b> autobus zrychluje dopředu, ale tělo cestujícího si setrvačností udržuje původní (nulovou) rychlost. Nohy jsou s podlahou unášeny dopředu, horní část těla zůstává pozadu: cestující se zakloní. Míček se odvaluje dozadu a držadlo se vychýlí dozadu, i když je nic netlačí.</p>' : '<p>Autobus už jede stálou rychlostí, zrychlení je nulové. Cestující se narovná a držadlo visí svisle.</p>';
+        return st.a < 0 ? '<p><b>Brzdění:</b> autobus zpomaluje, ale cestující si setrvačností udržuje rychlost a pokračuje dopředu. Proto se předkloní (nebo by spadl dopředu, kdyby se nedržel). Míček se rozjede dopředu a držadlo se vychýlí dopředu.</p>' : '<p>Autobus zastavil. Míček se po podlaze ještě valí, protože se ho nic (kromě slabého valivého odporu) nesnaží zastavit.</p>';
+      }
+    };
+
+    // ---------- scéna: mince a kartička ----------
+    var MK = 2000, MX = 320, MF = 0.3;      // px na metr, střed sklenice, součinitel tření mince–kartička
+    var MINCE = {
+      slow:function(){ return variant === 'rychle' ? 0.05 : 1; },
+      reset:function(){ st = { t:0, xc:0, vc:0, xk:0, vk:0, yk:0, vy:0, onCard:true, landed:false, done:false }; },
+      step:function(dt){
+        var ac = variant === 'rychle' ? 80 : 1.0, stopX = 0.13;
+        if(st.xc < stopX || variant === 'rychle'){ st.vc += (st.xc < stopX ? ac : 0)*dt; }
+        else st.vc = 0;
+        st.xc += st.vc*dt;
+        if(st.onCard){
+          var amax = MF*GA;
+          if(st.vk < st.vc){ st.vk = Math.min(st.vc, st.vk + amax*dt); }
+          else st.vk = st.vc;
+          st.xk += st.vk*dt;
+          if(Math.abs(st.xk - st.xc) > 0.045){ st.onCard = false; }
+        } else if(!st.landed){
+          st.xk += st.vk*dt; st.vy += GA*dt; st.yk += st.vy*dt;
+          if(st.yk >= 0.042){ st.yk = 0.042; st.landed = true; st.vk = 0; }     // dno sklenice
+        }
+        st.t += dt;
+        if((variant === 'rychle' && st.landed && st.t > 0.25) || (variant === 'pomalu' && st.t > 1.3)) st.done = true;
+      },
+      draw:function(){
+        var s = svgDefs(P);
+        s += '<rect x="0" y="0" width="640" height="262" fill="url(#' + P + '-sky)"/>';
+        s += '<rect x="0" y="262" width="640" height="78" fill="url(#' + P + '-wood)"/>';
+        s += '<line x1="0" y1="262" x2="640" y2="262" stroke="#9a7444" stroke-width="2"/>';
+        // sklenice
+        s += '<path d="M262,176 L274,262 H366 L378,176" fill="url(#' + P + '-glass)" stroke="#8fb3c6" stroke-width="2.5"/>';
+        s += '<ellipse cx="320" cy="258" rx="44" ry="4" fill="#bcd7e4"/>';
+        // kartička
+        var cx = MX + st.xc*MK;
+        if(cx < 760){
+          s += '<rect x="' + f1(cx - 90) + '" y="170" width="180" height="6" rx="1.5" fill="#f2f2ee" stroke="#9aa4ab" stroke-width="1.2" filter="url(#' + P + '-sh)"/>';
+          s += '<line x1="' + f1(cx - 80) + '" y1="173" x2="' + f1(cx + 80) + '" y2="173" stroke="var(--accent)" stroke-width="1" opacity="0.6"/>';
+        }
+        // ruka / prst
+        if(variant === 'rychle'){
+          var fx = MX - 118 + Math.min(st.xc*MK, 14);
+          s += '<path d="M' + f1(fx - 60) + ',196 C' + f1(fx - 30) + ',188 ' + f1(fx) + ',180 ' + f1(fx + 24) + ',176 C' + f1(fx + 30) + ',175 ' + f1(fx + 30) + ',182 ' + f1(fx + 22) + ',184 L' + f1(fx - 60) + ',214 Z" fill="#e9c7a6" stroke="#b98d69" stroke-width="1.2"/>';
+        } else {
+          var hx = cx - 92;
+          s += '<path d="M' + f1(hx - 70) + ',150 Q' + f1(hx - 20) + ',150 ' + f1(hx + 6) + ',166 L' + f1(hx + 6) + ',180 Q' + f1(hx - 20) + ',196 ' + f1(hx - 70) + ',196 Z" fill="#e9c7a6" stroke="#b98d69" stroke-width="1.2"/>';
+        }
+        // mince
+        var kx = MX + st.xk*MK, ky = 166 + st.yk*MK;
+        s += '<rect x="' + f1(kx - 22) + '" y="' + f1(ky - 4) + '" width="44" height="8" rx="3" fill="#d7b24a" stroke="#8e7020" stroke-width="1.2"/>';
+        s += '<line x1="' + f1(kx - 18) + '" y1="' + f1(ky - 1) + '" x2="' + f1(kx + 18) + '" y2="' + f1(ky - 1) + '" stroke="#f3dc8c" stroke-width="1.5"/>';
+        if(this.slow() < 1) s += svgText(626, 24, 'zpomaleno 20×', {anchor:'end', size:12.5, weight:600, color:'var(--danger)'});
+        s += svgText(14, 24, variant === 'rychle' ? 'kartička zrychluje asi 80&#160;m·s⁻²' : 'kartička zrychluje asi 1&#160;m·s⁻²', {size:12.5, weight:600});
+        return s;
+      },
+      comment:function(){
+        if(variant === 'rychle') return st.landed ? '<p><b>Mince spadla do sklenice.</b> Kartička se pohnula tak prudce, že jí tření nestihlo dodat mince stejnou rychlost: třecí síla udělí minci zrychlení nejvýše <i>f g</i> ≈ 3&nbsp;m·s⁻², kartička ale zrychlovala asi 80&nbsp;m·s⁻². Mince si setrvačností udržela téměř původní polohu a spadla rovnou dolů.</p>' : '<p>Stiskněte Spustit: prst cvrnkne do kartičky.</p>';
+        return st.t > 0 ? '<p><b>Mince jede s kartičkou.</b> Při pomalém tažení (zrychlení 1&nbsp;m·s⁻²) stačí klidová třecí síla, aby mince získala stejné zrychlení jako kartička. Mince se proto pohybuje spolu s ní a do sklenice nespadne.</p>' : '<p>Stiskněte Spustit: ruka pomalu vytáhne kartičku.</p>';
+      }
+    };
+
+    // ---------- scéna: náraz auta ----------
+    var NK = 42, WALLX = 560, V0 = 50/3.6, CRUSH = 0.6, GAPX = 0.36;   // px na metr, poloha zdi, rychlost, deformační dráha (m), vzdálenost hrudníku od volantu (m)
+    var NARAZ = {
+      slow:function(){ return st.crash ? 0.05 : 1; },
+      reset:function(){ st = { t:0, x:-9.4, v:V0, crash:false, xd:0, vd:V0, rel:0, hit:false, def:0, done:false, wheel:0, tc:0 }; },
+      step:function(dt){
+        var front = st.x + 4.2 - st.def;               // přední nárazník (m)
+        var xw = (WALLX - 70)/NK;                       // zeď v metrech od x = 0 (levý okraj obrazu je x = −70/NK)
+        if(!st.crash && front >= xw){ st.crash = true; }
+        if(st.crash){
+          var a = V0*V0/(2*CRUSH);
+          if(st.v > 0){ st.v = Math.max(0, st.v - a*dt); st.def += st.v*dt; }
+          st.tc += dt;
+        }
+        st.x += st.v*dt;                                 // zadní část auta jede dál, předek stojí u zdi a deformuje se
+        st.wheel += st.v*dt/0.32;
+        // figurína: bez pásu letí dál stálou rychlostí, dokud nenarazí; s pásem ji pás brzdí s malým zpožděním
+        if(variant === 'bez'){
+          if(!st.hit){ st.rel += (st.vd - st.v)*dt; if(st.rel >= GAPX){ st.rel = GAPX; st.hit = true; st.vd = st.v; } }
+          else st.vd = st.v;
+        } else {
+          var k = 900, c = 45;                           // tuhost a tlumení pásu (na kg)
+          var ad = -k*st.rel - c*(st.vd - st.v);
+          if(!st.crash) ad = 0;
+          st.vd += ad*dt; st.rel += (st.vd - st.v)*dt;
+          if(st.rel < 0){ st.rel = 0; }
+        }
+        st.t += dt;
+        if(st.crash && st.tc > 0.35) st.done = true;
+      },
+      draw:function(){
+        var s = svgDefs(P), ox = 70 + st.x*NK;
+        s += '<rect x="0" y="0" width="640" height="270" fill="url(#' + P + '-sky)"/>';
+        s += '<rect x="0" y="270" width="640" height="70" fill="url(#' + P + '-ground)"/>';
+        for(var i = 0; i < 10; i++) s += '<rect x="' + (i*70 + 10) + '" y="300" width="36" height="4" fill="#f4f1e8"/>';
+        // zeď z betonových bloků
+        s += '<rect x="' + WALLX + '" y="120" width="80" height="150" fill="#b8b2a6" stroke="#6f6a60" stroke-width="2"/>';
+        for(var r = 0; r < 5; r++) for(var q = 0; q < 2; q++) s += '<rect x="' + (WALLX + q*40 + (r % 2)*20 - (r % 2 ? 20 : 0)) + '" y="' + (120 + r*30) + '" width="40" height="30" fill="none" stroke="#8d877c" stroke-width="1"/>';
+        s += '<path d="M' + WALLX + ',120 l12,-10 h68 v150" fill="#cfc9bd" stroke="#6f6a60" stroke-width="1.5"/>';
+        // auto (bok), délka 4,2 m, předek se při nárazu deformuje
+        var L = 4.2*NK, dpx = st.def*NK, x0 = ox, x1 = Math.min(ox + L - dpx, WALLX);
+        var body = 'M' + f1(x0) + ',248 L' + f1(x0) + ',214 Q' + f1(x0 + 6) + ',206 ' + f1(x0 + 20) + ',205 L' + f1(x0 + 44) + ',204 L' + f1(x0 + 66) + ',170 Q' + f1(x0 + 72) + ',164 ' + f1(x0 + 84) + ',164 L' + f1(x1 - 70) + ',164 Q' + f1(x1 - 62) + ',164 ' + f1(x1 - 56) + ',170 L' + f1(x1 - 34) + ',200 L' + f1(x1 - 6) + ',206 Q' + f1(x1) + ',210 ' + f1(x1) + ',222 L' + f1(x1) + ',248 Z';
+        s += '<g filter="url(#' + P + '-sh)"><path d="' + body + '" fill="var(--accent)" stroke="var(--ink)" stroke-width="2"/></g>';
+        s += '<path d="M' + f1(x0 + 52) + ',203 L' + f1(x0 + 70) + ',174 L' + f1(x1 - 66) + ',174 L' + f1(x1 - 44) + ',202 Z" fill="url(#' + P + '-glass)" stroke="#6a7b86" stroke-width="1.2"/>';
+        if(dpx > 2){
+          for(var z = 0; z < 4; z++) s += '<line x1="' + f1(x1 - 4 - z*dpx/4) + '" y1="206" x2="' + f1(x1 - 4 - z*dpx/4 - 6) + '" y2="244" stroke="var(--ink)" stroke-width="1.2" opacity="0.6"/>';
+        }
+        // figurína: boky na sedadle, trup se naklání podle posunu vůči autu
+        var hipX = x0 + 92, hipY = 214;
+        s += '<path d="M' + f1(hipX - 14) + ',' + f1(hipY + 6) + ' L' + f1(hipX - 14) + ',' + f1(hipY - 34) + '" stroke="#6b5a47" stroke-width="7" stroke-linecap="round"/>';
+        s += '<path d="M' + f1(hipX - 16) + ',' + f1(hipY + 6) + ' H' + f1(hipX + 12) + '" stroke="#6b5a47" stroke-width="7" stroke-linecap="round"/>';
+        var ang = Math.asin(Math.min(0.9, st.rel/0.55));
+        var shX = hipX + 40*Math.sin(ang), shY = hipY - 40*Math.cos(ang);
+        s += '<path d="M' + f1(hipX) + ',' + f1(hipY) + ' L' + f1(hipX + 30) + ',' + f1(hipY + 2) + ' L' + f1(hipX + 34) + ',' + f1(hipY + 28) + '" stroke="#e0b64a" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>';
+        s += '<line x1="' + f1(hipX) + '" y1="' + f1(hipY) + '" x2="' + f1(shX) + '" y2="' + f1(shY) + '" stroke="#e0b64a" stroke-width="12" stroke-linecap="round"/>';
+        s += '<circle cx="' + f1(shX + 4*Math.sin(ang)) + '" cy="' + f1(shY - 12*Math.cos(ang)) + '" r="9" fill="#e0b64a" stroke="#9a7a20" stroke-width="1"/>';
+        s += '<line x1="' + f1(shX) + '" y1="' + f1(shY + 4) + '" x2="' + f1(hipX + 46) + '" y2="' + f1(hipY - 14) + '" stroke="#e0b64a" stroke-width="5" stroke-linecap="round"/>';
+        if(variant === 'pas') s += '<line x1="' + f1(hipX - 14) + '" y1="' + f1(hipY - 34) + '" x2="' + f1(hipX + 6) + '" y2="' + f1(hipY - 2) + '" stroke="#2b2f33" stroke-width="3"/><line x1="' + f1(shX - 2) + '" y1="' + f1(shY + 2) + '" x2="' + f1(hipX + 8) + '" y2="' + f1(hipY) + '" stroke="#2b2f33" stroke-width="3"/>';
+        // volant
+        s += '<line x1="' + f1(hipX + 52) + '" y1="' + f1(hipY - 10) + '" x2="' + f1(hipX + 46) + '" y2="' + f1(hipY - 30) + '" stroke="#2b2f33" stroke-width="5" stroke-linecap="round"/>';
+        if(st.hit) s += '<path d="M' + f1(shX + 18) + ',' + f1(shY - 18) + ' l6,8 l9,-3 l-4,9 l8,5 l-10,1 l0,9 l-6,-7 l-7,6 l1,-10 l-9,-3 l9,-4 Z" fill="var(--danger)"/>';
+        s += svgWheel(x0 + 36, 248, 18, st.wheel) + svgWheel(x0 + L - 40 - dpx*0.3, 248, 18, st.wheel);
+        if(st.crash) s += svgText(626, 24, 'zpomaleno 20×', {anchor:'end', size:12.5, weight:600, color:'var(--danger)'});
+        s += svgText(14, 24, 'auto ' + cz(st.v*3.6, 0) + '&#160;km·h⁻¹   figurína ' + cz(Math.max(0, st.vd)*3.6, 0) + '&#160;km·h⁻¹', {size:12.5, weight:600});
+        return s;
+      },
+      comment:function(){
+        if(!st.crash) return '<p>Auto jede rychlostí 50&nbsp;km·h⁻¹ ke zdi. Stiskněte Spustit a sledujte figurínu.</p>';
+        if(variant === 'bez') return '<p><b>Bez pásu:</b> karoserie se zastaví na deformační dráze 0,6&nbsp;m během necelé desetiny sekundy. Na figurínu ale zpočátku nepůsobí žádná síla dozadu, a proto se setrvačností pohybuje dál rychlostí 50&nbsp;km·h⁻¹, až narazí do volantu a čelního skla. Zabrzdí ji teprve tento tvrdý náraz.</p>';
+        return '<p><b>S pásem:</b> pás začne figurínu brzdit téměř současně s autem. Figurína se posune dopředu jen o několik centimetrů a zastaví se na delší dráze, tedy menší silou. Bezpečnostní pás jí dodá sílu, kterou by jinak dostala až od volantu.</p>';
+      }
+    };
+
+    // ---------- scéna: kulička na podložce ----------
+    var SURF = { koberec:{f:0.3, n:'koberec'}, drevo:{f:0.1, n:'dřevo'}, sklo:{f:0.03, n:'sklo'}, bez:{f:0, n:'bez tření'} };
+    var PK = 24, H0 = 0.5, X0P = 130, YP = 250;      // px na metr na vodorovné podložce, výška rampy (m)
+    var PODL = {
+      reset:function(){ st = { t:0, phase:'ramp', u:0, s:0, v:0, roll:0, cam:0, done:false }; },
+      step:function(dt){
+        var f = SURF[variant].f;
+        if(st.phase === 'ramp'){
+          st.u += dt/0.6;                                 // sjezd po rampě (vizuálně 0,6 s)
+          st.v = Math.sqrt(2*GA*H0)*Math.min(1, st.u);
+          if(st.u >= 1){ st.phase = 'flat'; st.v = Math.sqrt(2*GA*H0); }
+        } else {
+          st.v = Math.max(0, st.v - f*GA*dt);
+          st.s += st.v*dt;
+          if(st.v === 0){ st.done = true; flags.push({ s:st.s, n:SURF[variant].n }); if(flags.length > 4) flags.shift(); }
+          if(st.s > 80){ st.done = true; }
+        }
+        st.roll += st.v*dt/0.1;
+        var bx = X0P + st.s*PK;
+        if(bx - st.cam > 380) st.cam = bx - 380;
+        st.t += dt;
+      },
+      draw:function(){
+        var s = svgDefs(P), cam = st.cam, f = SURF[variant].f;
+        s += '<rect x="0" y="0" width="640" height="' + YP + '" fill="url(#' + P + '-sky)"/>';
+        var col = variant === 'koberec' ? '#a86a5a' : variant === 'drevo' ? 'url(#' + P + '-wood)' : variant === 'sklo' ? '#d6e9f1' : '#eef3f6';
+        s += '<rect x="' + f1(-cam) + '" y="' + YP + '" width="' + f1(2400) + '" height="16" fill="' + col + '" stroke="var(--ink-soft)" stroke-width="1"/>';
+        s += '<rect x="0" y="' + (YP + 16) + '" width="640" height="' + (340 - YP - 16) + '" fill="#e6dfcf"/>';
+        // rampa
+        s += '<path d="M' + f1(20 - cam) + ',' + f1(YP - 120) + ' L' + f1(X0P - cam) + ',' + YP + ' L' + f1(20 - cam) + ',' + YP + ' Z" fill="url(#' + P + '-wood)" stroke="var(--ink)" stroke-width="1.5"/>';
+        // značky po metrech
+        for(var m = 0; m <= 90; m++){
+          var mx = X0P + m*PK - cam;
+          if(mx < -20 || mx > 660) continue;
+          s += '<line x1="' + f1(mx) + '" y1="' + (YP + 16) + '" x2="' + f1(mx) + '" y2="' + (YP + (m % 5 ? 22 : 28)) + '" stroke="var(--ink-soft)" stroke-width="1"/>';
+          if(m % 5 === 0) s += svgText(mx, YP + 42, m + '&#160;m', {anchor:'middle', size:11, color:'var(--ink-soft)'});
+        }
+        // praporky předchozích pokusů
+        flags.forEach(function(fl){
+          var fx = X0P + fl.s*PK - cam;
+          if(fx < -10 || fx > 650) return;
+          s += '<line x1="' + f1(fx) + '" y1="' + YP + '" x2="' + f1(fx) + '" y2="' + (YP - 46) + '" stroke="var(--ink)" stroke-width="1.5"/><path d="M' + f1(fx) + ',' + (YP - 46) + ' l22,6 l-22,6 Z" fill="var(--focus)"/>';
+          s += svgText(fx + 3, YP - 50, fl.n + ' ' + cz(fl.s, 1) + '&#160;m', {size:10.5, color:'var(--focus)', weight:600});
+        });
+        // kulička
+        var bx, by;
+        if(st.phase === 'ramp'){ var u = st.u*st.u; bx = 20 + (X0P - 20)*u - cam; by = YP - 120 + 120*u; }
+        else { bx = X0P + st.s*PK - cam; by = YP; }
+        var R = 11;
+        s += '<g transform="translate(' + f1(bx) + ',' + f1(by - R) + ') rotate(' + f1(st.roll*180/Math.PI) + ')"><circle r="' + R + '" fill="url(#' + P + '-ball)"/><path d="M-' + R + ',0 A' + R + ',' + R + ' 0 0 0 ' + R + ',0" fill="none" stroke="#fff" stroke-width="1.5" opacity="0.7"/></g>';
+        if(st.v > 0.01 && st.phase === 'flat') s += svgArrow(bx + 14, by - 30, bx + 14 + st.v*14, by - 30, 'var(--focus)', 2.6);
+        s += svgText(14, 24, 'podložka: ' + SURF[variant].n + (f > 0 ? ', zpomalení ' + cz(f*GA, 2) + '&#160;m·s⁻²' : ', žádné zpomalení') + '   ujetá dráha ' + cz(st.s, 1) + '&#160;m', {size:12.5, weight:600});
+        return s;
+      },
+      comment:function(){
+        if(st.t === 0) return '<p>Kulička sjede z rampy vysoké 0,5&nbsp;m vždy stejnou rychlostí asi 3,1&nbsp;m·s⁻¹. Vyzkoušejte postupně všechny podložky.</p>';
+        if(variant === 'bez') return '<p><b>Bez tření</b> na kuličku ve vodorovném směru nepůsobí žádná síla. Podle zákona setrvačnosti se pohybuje stále stejnou rychlostí, dokud do něčeho nenarazí. Kamera ji sleduje.</p>';
+        return st.done ? '<p>Kulička dojela ' + cz(st.s, 1) + '&nbsp;m. Čím menší je tření, tím menší je síla, která ji brzdí, a tím dál dojede. Bez tření by nezastavila nikdy.</p>' : '<p>Kuličku brzdí jen slabá síla proti pohybu (tření a valivý odpor). Kdyby žádná síla nepůsobila, jela by dál stejnou rychlostí.</p>';
+      }
+    };
+
+    var SC = { bus:BUS, mince:MINCE, naraz:NARAZ, podlozka:PODL };
+    function draw(){
+      svg.innerHTML = SC[scene].draw();
+      document.getElementById('in-comment').innerHTML = SC[scene].comment();
+    }
+    function reset(){ running = false; last = null; SC[scene].reset(); btn.textContent = 'Spustit'; draw(); }
+    function frame(ts){
+      if(!running){ last = null; return; }
+      if(last === null) last = ts;
+      var dt = Math.min(0.05, (ts - last)/1000); last = ts;
+      var sc = SC[scene], k = sc.slow ? sc.slow() : 1, n = Math.max(1, Math.ceil(dt*k/0.001));
+      for(var i = 0; i < n && !st.done; i++) sc.step(dt*k/n);
+      draw();
+      if(st.done){ running = false; btn.textContent = 'Spustit znovu'; return; }
+      window.requestAnimationFrame(frame);
+    }
+    sceneSeg.addEventListener('click', function(e){
+      var b = e.target.closest('[data-scene]'); if(!b) return;
+      scene = b.getAttribute('data-scene'); variant = VARS[scene][0][0];
+      setChips(sceneSeg, 'scene', scene); buildVars(); reset();
+    });
+    varSeg.addEventListener('click', function(e){
+      var b = e.target.closest('[data-var]'); if(!b) return;
+      variant = b.getAttribute('data-var'); setChips(varSeg, 'var', variant); reset();
+    });
+    btn.addEventListener('click', function(){
+      if(st.done) SC[scene].reset();
+      running = !running;
+      btn.textContent = running ? 'Pozastavit' : 'Spustit';
+      if(running) window.requestAnimationFrame(frame);
+    });
+    document.getElementById('in-reset').addEventListener('click', reset);
+    buildVars(); reset();
+  })();
+
+  // ================= TRÉNINK: ÚLOHY S VÝBĚREM =================
+  // [zadání, správná odpověď, [špatné odpovědi], vysvětlení]
+  var BANK_PRED = [
+    ['Stojíte v autobusu a nedržíte se. Autobus se prudce rozjede. Co se stane?', 'Zakloníte se (budete padat dozadu).', ['Předkloníte se.', 'Nic, autobus vás unese stejně jako podlahu.', 'Odletíte dopředu ke dveřím řidiče.'],
+     'Nohy unáší podlaha dopředu, ale horní část těla si setrvačností udržuje původní klid. Proto se vzhledem k autobusu zakloníte.'],
+    ['Auto jede po rovné silnici a řidič prudce zabrzdí. Co se stane s krabicí volně položenou na sedadle spolujezdce?', 'Pokračuje v pohybu dopředu a může spadnout pod palubní desku.', ['Posune se dozadu k opěradlu.', 'Zůstane přesně na místě vzhledem k sedadlu.', 'Nadskočí nahoru.'],
+     'Krabice si setrvačností udržuje původní rychlost. Auto zpomaluje, krabice ne (slabé tření ji nezabrzdí dost rychle), a proto se vzhledem k autu pohybuje dopředu.'],
+    ['Na sklenici leží kartička a na ní mince. Kartičku rychle cvrnkneme vodorovně do strany. Co se stane s mincí?', 'Spadne do sklenice.', ['Odletí spolu s kartičkou.', 'Odletí na opačnou stranu, než letí kartička.', 'Vyskočí vzhůru.'],
+     'Při prudkém pohybu kartičky nestihne tření minci urychlit. Mince si setrvačností udrží svou polohu a po odletu kartičky spadne rovnou dolů do sklenice.'],
+    ['Kosmická sonda letí daleko od všech hvězd a planet a vypne motory. Jak se bude dál pohybovat?', 'Rovnoměrně přímočaře stálou rychlostí.', ['Začne zpomalovat, až se zastaví.', 'Zastaví se okamžitě.', 'Začne zrychlovat.'],
+     'Na sondu nepůsobí žádná síla (výslednice je nulová). Podle zákona setrvačnosti se pohybuje rovnoměrně přímočaře rychlostí, kterou měla při vypnutí motorů.'],
+    ['Hokejový puk klouže po dokonale hladkém ledu (bez tření a odporu vzduchu). Co se s ním bude dít?', 'Pojede stále stejnou rychlostí po přímce.', ['Bude pomalu zpomalovat, protože mu „dochází síla“.', 'Bude zrychlovat.', 'Začne zatáčet.'],
+     'Puk žádnou „sílu pohybu“ nepotřebuje. Bez tření je výslednice sil nulová, a puk se proto pohybuje rovnoměrně přímočaře.'],
+    ['Zmokřený pes se otřepe. Proč z něj odletí voda?', 'Srst se zastaví, kapky si setrvačností udrží pohyb a odletí.', ['Srst kapky odpuzuje elektrickou silou.', 'Kapky jsou těžší než srst, proto padají.', 'Vítr kapky odfoukne.'],
+     'Při otřepání se srst pohybuje sem a tam. Když srst prudce změní směr, kapky pokračují v původním pohybu a od srsti se oddělí.'],
+    ['Cestující sedí ve vlaku jedoucím stálou rychlostí po rovné trati a vyhodí míček svisle vzhůru. Kam míček dopadne?', 'Zpět do ruky.', ['Za cestujícího (dozadu).', 'Před cestujícího (dopředu).', 'Na strop vagonu.'],
+     'Míček má od začátku stejnou vodorovnou rychlost jako vlak i cestující a setrvačností si ji udrží. Ve vlaku (inerciální soustavě) se proto pohybuje jen svisle a dopadne zpět do ruky.'],
+    ['Jezdec na koni přeskakuje překážku a kůň se před ní nečekaně zastaví. Co se stane s jezdcem?', 'Přepadne dopředu přes hlavu koně.', ['Spadne dozadu z koně.', 'Zůstane sedět, protože ho kůň drží.', 'Sjede bokem.'],
+     'Jezdec si setrvačností udržuje rychlost koně před zastavením. Kůň se zastaví, jezdce nic dostatečně nezabrzdí a pokračuje dopředu.'],
+    ['Rychle trhneme za ubrus, na kterém stojí talíře. Co se s nimi stane?', 'Zůstanou téměř na místě na stole.', ['Odletí s ubrusem.', 'Odletí opačným směrem, než táhneme.', 'Vyskočí do výšky.'],
+     'Při rychlém trhnutí působí tření na talíře jen velmi krátce, a nestihne jim dodat znatelnou rychlost. Talíře si setrvačností udrží klid.']
+  ];
+  var BANK_SILY = [
+    ['Míč jsme kopli a letí šikmo vzhůru. Které síly na něj působí během letu (odpor vzduchu zanedbejte)?', 'Jen tíhová síla.', ['Tíhová síla a síla kopnutí ve směru letu.', 'Síla kopnutí ve směru letu.', 'Žádná síla, letí setrvačností.'],
+     'Noha působí na míč jen během kopu. Pak na míč působí už jen Země (tíhová síla), která zakřivuje jeho dráhu. Žádná „síla kopnutí“ s míčem neletí.'],
+    ['Kniha leží v klidu na stole. Jaká je výslednice sil, které na ni působí?', 'Nulová: tíhová síla a tlaková síla stolu se ruší.', ['Míří dolů, protože ji přitahuje Země.', 'Míří nahoru, protože ji stůl drží.', 'Nelze určit bez znalosti hmotnosti.'],
+     'Kniha je v klidu, podle 1. Newtonova zákona je proto výslednice nulová. Tíhová síla a tlaková síla stolu jsou stejně velké a opačné.'],
+    ['Auto jede po rovné dálnici stálou rychlostí 120 km·h⁻¹. Jaká je výslednice sil na auto?', 'Nulová: tažná síla je stejně velká jako odporové síly.', ['Míří dopředu, jinak by auto zastavilo.', 'Míří dozadu, protože působí odpor vzduchu.', 'Je rovna tíhové síle auta.'],
+     'Rovnoměrný přímočarý pohyb znamená nulové zrychlení, a tedy nulovou výslednici. Motor pouze vyrovnává odpor vzduchu a valivý odpor.'],
+    ['Kulička se po strčení kutálí po stole a už se jí nedotýkáme. Které síly na ni působí?', 'Tíhová síla, tlaková síla stolu a slabá síla proti pohybu.', ['Tíhová síla, tlaková síla stolu a síla ve směru pohybu.', 'Jen síla ve směru pohybu.', 'Žádná síla.'],
+     'Kulička se pohybuje setrvačností. Síla ve směru pohybu neexistuje: neumíme říct, které těleso by ji způsobovalo. Tření a valivý odpor ji pomalu brzdí.'],
+    ['Parašutista klesá s otevřeným padákem stálou rychlostí. Jak velká je odporová síla vzduchu?', 'Stejně velká jako tíhová síla parašutisty s padákem.', ['Menší než tíhová síla, jinak by nepadal.', 'Větší než tíhová síla.', 'Nulová, padá setrvačností.'],
+     'Stálá rychlost znamená nulovou výslednici. Odporová síla vzduchu je proto stejně velká jako tíhová síla, jen opačného směru.'],
+    ['Družice obíhá Zemi po kruhové dráze s vypnutými motory. Které síly na ni působí?', 'Jen gravitační síla Země.', ['Gravitační síla a síla ve směru pohybu.', 'Žádná, ve vesmíru je beztíže.', 'Gravitační síla a stejně velká odstředivá síla, takže výslednice je nulová.'],
+     'Na družici působí jen gravitační síla Země. Ta stále zakřivuje její dráhu do kružnice. Kdyby výslednice byla nulová, letěla by družice po přímce (odstředivou sílu zavádí jen pozorovatel v otáčející se soustavě).']
+  ];
+  var BANK_SOUST = [
+    ['Je soustava spojená s autem, které brzdí před semaforem, inerciální?', 'Ne, je neinerciální (zpomaluje).', ['Ano, auto se pohybuje po přímce.', 'Ano, každá soustava spojená se Zemí je inerciální.'], 'Auto má zrychlení (zpomaluje). Soustavy pohybující se se zrychlením nejsou inerciální.'],
+    ['Je soustava spojená s vlakem jedoucím stálou rychlostí po rovné trati inerciální?', 'Ano.', ['Ne, protože se pohybuje.', 'Jen když vlak stojí.'], 'Soustava, která se vůči inerciální soustavě (Zemi) pohybuje rovnoměrně přímočaře, je také inerciální.'],
+    ['Je soustava spojená s kolotočem, který se otáčí stálou rychlostí, inerciální?', 'Ne, je neinerciální.', ['Ano, protože se točí stálou rychlostí.', 'Ano, protože stojí na místě.'], 'Body kolotoče se pohybují po kružnicích a mají dostředivé zrychlení. Otáčející se soustava není inerciální.'],
+    ['Je soustava spojená s eskalátorem, který jede stálou rychlostí, inerciální?', 'Ano.', ['Ne, protože se pohybuje šikmo.', 'Ne, protože jezdí po kladkách.'], 'Eskalátor se pohybuje rovnoměrně přímočaře, je to tedy inerciální soustava (stejně jako Země).'],
+    ['Je soustava spojená s výtahem, který se rozjíždí nahoru, inerciální?', 'Ne, je neinerciální.', ['Ano, výtah jede po přímce.', 'Ano, pokud jede nahoru.'], 'Výtah se při rozjezdu pohybuje se zrychlením, proto jde o neinerciální soustavu.'],
+    ['Je soustava spojená s raketou letící daleko ve vesmíru s vypnutými motory inerciální?', 'Ano.', ['Ne, ve vesmíru inerciální soustavy nejsou.', 'Ne, raketa se pohybuje velkou rychlostí.'], 'Na raketu nepůsobí síly, pohybuje se rovnoměrně přímočaře; soustava s ní spojená je inerciální. Na velikosti rychlosti nezáleží.']
+  ];
+  function fromBank(bank, tag){ var b = pick(bank); return mkChoice(tag, b[0], b[1], b[2], b[3]); }
+  var TASKS = [
+    { key:'predikce', name:'Co se stane?', gen:function(){ return fromBank(BANK_PRED, 'Projevy setrvačnosti'); } },
+    { key:'sily', name:'Síly a pohyb', gen:function(){ return fromBank(BANK_SILY, 'Síly a 1. Newtonův zákon'); } },
+    { key:'soustavy', name:'Inerciální soustava?', gen:function(){ return fromBank(BANK_SOUST, 'Vztažné soustavy'); } }
+  ];
+
+  // ================= TRÉNINK (číselná odpověď nebo výběr z možností) =================
+  // Každý typ úlohy (TASKS) má gen(), která vrátí objekt:
+  //   tag, text (HTML zadání), sym (TeX levé strany), unit (TeX jednotky),
+  //   exact (přesný výsledek ze zadaných hodnot), sig (platné číslice výsledku),
+  //   given/find/steps (řádky řešení v TeXu), note (volitelná poznámka, HTML), fig (volitelný obrázek, SVG).
+  // Úloha s výběrem má místo sym/unit/exact: choices (HTML možností), correct (index), explain (HTML).
+  // Odpověď se uznává, liší-li se od přesné hodnoty nejvýše o 1 % (zaokrouhlené mezivýsledky).
+  var state = {
+    type:'all', score:0, streak:0, bestStreak:0,
+    answered:0, correct:0, current:null, lastKey:'', locked:false, touched:false
+  };
+  var TOL = 0.01;
+
+  function loadStats(){
+    try{ var raw = localStorage.getItem(STATS_KEY); if(raw){ state.bestStreak = JSON.parse(raw).bestStreak || 0; } }catch(e){}
+  }
+  function saveStats(){
+    try{ localStorage.setItem(STATS_KEY, JSON.stringify({bestStreak: state.bestStreak})); }catch(e){}
+  }
+
+  function generateQuestion(){
+    var pool = state.type === 'all' ? TASKS : TASKS.filter(function(t){ return t.key === state.type; });
+    var q, tries = 0;
+    do{
+      var t = pick(pool);
+      q = t.gen();
+      q.key = t.key + '|' + q.text;
+      tries++;
+    }while(q.key === state.lastKey && tries < 20);
+    if(!q.sig) q.sig = 3;
+    state.current = q;
+    state.lastKey = q.key;
+    state.locked = false; state.touched = false;
+    renderQuestion();
+  }
+
+  function isChoice(){ return !!(state.current && state.current.choices); }
+  function renderQuestion(){
+    var q = state.current, ch = isChoice();
+    document.getElementById('cat-tag').textContent = q.tag;
+    document.getElementById('task-text').innerHTML = q.text;
+    var fig = document.getElementById('task-fig');
+    fig.hidden = !q.fig; fig.innerHTML = q.fig || '';
+    document.getElementById('task-rule').hidden = ch;
+    document.getElementById('equation').hidden = ch;
+    var grid = document.getElementById('opt-grid');
+    grid.hidden = !ch; grid.innerHTML = '';
+    state.sel = null;
+    if(ch){
+      q.choices.forEach(function(c, i){
+        var b = document.createElement('button');
+        b.type = 'button'; b.className = 'opt-btn'; b.innerHTML = c;
+        b.addEventListener('click', function(){
+          if(state.locked) return;
+          state.sel = i; state.touched = true;
+          Array.prototype.forEach.call(grid.children, function(el, j){ el.classList.toggle('selected', j === i); });
+          document.getElementById('btn-check').focus({preventScroll:true});
+        });
+        grid.appendChild(b);
+      });
+    } else {
+      document.getElementById('eq-given').innerHTML = tex(q.sym);
+      document.getElementById('eq-unit').innerHTML = q.unit ? tex('\\mathrm{' + q.unit + '}') : '';
+      var el = document.getElementById('answer');
+      el.value = ''; el.disabled = false; el.classList.remove('correct', 'wrong');
+    }
+    var fb = document.getElementById('feedback');
+    fb.hidden = true; fb.classList.remove('ok', 'bad', 'sol');
+    document.getElementById('feedback-tip').hidden = true;
+    document.getElementById('btn-check').textContent = 'Zkontrolovat';
+    if(!ch) document.getElementById('answer').focus({preventScroll:true});
+  }
+
+  function isAnswerEmpty(){ return isChoice() ? state.sel === null : isNaN(parseNum(document.getElementById('answer').value)); }
+  function lockUI(){
+    document.getElementById('answer').disabled = true;
+    Array.prototype.forEach.call(document.getElementById('opt-grid').children, function(el){ el.disabled = true; });
+    state.locked = true;
+    var b = document.getElementById('btn-check');
+    b.textContent = 'Další příklad →';
+    b.focus({preventScroll:true});
+    updateStats();
+  }
+  function showSolution(){
+    var q = state.current;
+    if(isChoice()){
+      Array.prototype.forEach.call(document.getElementById('opt-grid').children, function(el, j){
+        if(j === q.correct) el.classList.add(state.sel === j ? 'correct' : 'missed');
+        else if(j === state.sel) el.classList.add('wrong');
+      });
+      FyzikaReseni.show(document.getElementById('feedback'), document.getElementById('feedback-steps'), {
+        raw:true, title:'Vysvětlení', steps:[q.explain], final:'Správná odpověď: ' + q.choices[q.correct]
+      });
+      return;
+    }
+    var fin = q.sym + ' ' + eqs(q.exact, q.sig) + ' ' + TS(q.exact, q.sig) + (q.unit ? '\\ \\mathrm{' + q.unit + '}' : '');
+    FyzikaReseni.show(document.getElementById('feedback'), document.getElementById('feedback-steps'), {
+      raw:true,
+      given:(q.given || []).map(tex),
+      find:(q.find || []).map(tex),
+      steps:q.steps.map(tex),
+      final:tex(fin),
+      note:q.note || ''
+    });
+  }
+
+  function checkAnswer(){
+    if(state.locked){ generateQuestion(); return; }
+    var q = state.current, ok, tipText = '', el = document.getElementById('answer');
+    if(isChoice()){
+      ok = state.sel === q.correct;
+    } else {
+      var v = parseNum(el.value);
+      ok = !isNaN(v) && Math.abs(v - q.exact) <= TOL*Math.abs(q.exact) + 1e-12;
+      if(!ok && !isNaN(v) && Math.abs(v + q.exact) <= TOL*Math.abs(q.exact)) tipText = 'Velikost sedí, ale znaménko ne. Zkontrolujte zvolený kladný směr.';
+      else if(!ok && !isNaN(v) && v !== 0){
+        var ratio = Math.abs(q.exact/v), k = Math.round(Math.log10(ratio));
+        if(k !== 0 && Math.abs(Math.log10(ratio) - k) < 0.005) tipText = 'Číslice sedí, ale řád ne. Zkontrolujte převody jednotek.';
+      }
+    }
+    state.answered++;
+    var fb = document.getElementById('feedback'), head = document.getElementById('feedback-headline'), tip = document.getElementById('feedback-tip');
+    fb.hidden = false; tip.hidden = !tipText; tip.textContent = tipText;
+    if(ok){
+      state.score += 10; state.streak++; state.correct++;
+      if(state.streak > state.bestStreak){
+        state.bestStreak = state.streak; saveStats();
+        if(window.FyzikaScores) FyzikaScores.report('serie', state.bestStreak, false);
+      }
+      if(!isChoice()) el.classList.add('correct');
+      fb.classList.add('ok'); fb.classList.remove('bad');
+      head.textContent = 'Správně!';
+    } else {
+      state.streak = 0;
+      if(!isChoice()) el.classList.add('wrong');
+      fb.classList.add('bad'); fb.classList.remove('ok');
+      head.textContent = isAnswerEmpty() ? (isChoice() ? 'Vyberte odpověď.' : 'Doplňte odpověď.') : 'Bohužel špatně.';
+    }
+    showSolution(); lockUI();
+  }
+  function skip(){
+    if(state.locked){ generateQuestion(); return; }
+    state.streak = 0; state.answered++;
+    var fb = document.getElementById('feedback');
+    fb.hidden = false; fb.classList.add('bad'); fb.classList.remove('ok');
+    document.getElementById('feedback-tip').hidden = true;
+    document.getElementById('feedback-headline').textContent = isChoice() ? 'Správná odpověď:' : 'Správný postup:';
+    showSolution(); lockUI();
+  }
+  function updateStats(){
+    document.getElementById('stat-score').textContent = state.score;
+    document.getElementById('stat-streak').textContent = state.streak + (state.bestStreak > 0 ? ' / ' + state.bestStreak : '');
+    document.getElementById('stat-accuracy').textContent = state.answered === 0 ? '—' : Math.round(100*state.correct/state.answered) + ' %';
+  }
+
+  // Vyhodnotí rozdělanou úlohu před změnou typu úlohy (stejná logika jako settleCurrentQuestion()
+  // ve spolecne.js; vlastní jméno, protože globální verze vidí jen globální `state`).
+  function settleQuestion(){
+    if(state.locked) return 'locked';
+    if(!state.touched) return 'untouched';
+    if(isAnswerEmpty() && !confirm('Odpověď není vyplněná. Opravdu chcete změnit nastavení?')) return 'cancelled';
+    checkAnswer();
+    return 'settled';
+  }
+
+  (function buildTypeRow(){
+    var row = document.getElementById('type-row');
+    var items = [{key:'all', name:'Vše'}].concat(TASKS.map(function(t){ return {key:t.key, name:t.name}; }));
+    items.forEach(function(d){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip accented' + (d.key === state.type ? ' on' : '');
+      b.setAttribute('aria-pressed', d.key === state.type ? 'true' : 'false');
+      b.textContent = d.name;
+      b.addEventListener('click', function(){
+        if(d.key === state.type) return;
+        var res = settleQuestion();
+        if(res === 'cancelled') return;
+        state.type = d.key;
+        Array.prototype.forEach.call(row.children, function(el, i){
+          var on = items[i].key === state.type;
+          el.classList.toggle('on', on);
+          el.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        if(res === 'locked' || res === 'untouched'){ generateQuestion(); }
+      });
+      row.appendChild(b);
+    });
+  })();
+
+  function tryCheck(){
+    if(state.locked){ generateQuestion(); return; }
+    if(isAnswerEmpty() && !confirm(isChoice() ? 'Není vybraná žádná možnost. Opravdu chcete zkontrolovat?' : 'Odpověď není vyplněná. Opravdu chcete zkontrolovat?')) return;
+    checkAnswer();
+  }
+  function trySkip(){
+    if(state.locked){ generateQuestion(); return; }
+    skip();
+  }
+  document.getElementById('btn-check').addEventListener('click', tryCheck);
+  document.getElementById('btn-skip').addEventListener('click', trySkip);
+  (function(){
+    var el = document.getElementById('answer');
+    sanitizeNumericInput(el, true);
+    el.addEventListener('input', function(){ state.touched = true; });
+    el.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); tryCheck(); } });
+  })();
+  document.getElementById('reset-stats').addEventListener('click', function(){
+    state.score = 0; state.streak = 0; state.answered = 0; state.correct = 0; state.bestStreak = 0;
+    try{ localStorage.removeItem(STATS_KEY); }catch(e){}
+    updateStats();
+  });
+  document.addEventListener('fyzika:scores-updated', function(){ state.bestStreak = 0; loadStats(); updateStats(); });
+
+  loadStats();
+  updateStats();
+  generateQuestion();
+  window.scrollTo(0, 0);
+
+  // ---- vzorce (KaTeX) ----
+  if(window.renderMathInElement){
+    ['theory-section', 'aplet-section'].forEach(function(id){
+      try{
+        renderMathInElement(document.getElementById(id), {
+          delimiters: [{left:'\\(', right:'\\)', display:false}, {left:'\\[', right:'\\]', display:true}]
+        });
+      }catch(e){}
+    });
+  }
+
+  // ---- sbalovací panely v teorii ----
+  try{ makePanelsCollapsible(document.getElementById('theory-section')); }catch(e){}
+
+  // ---- otevření záložky odkazem (…/stranka.html#trenink) ----
+  var hash = location.hash.replace('#', '');
+  if(hash && tabs[hash]) showTab(hash);
+})();
+</script>
+
+</body>
+</html>

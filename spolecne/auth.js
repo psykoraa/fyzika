@@ -48,7 +48,9 @@
     'grafy-rovnomerne-zrychleneho-pohybu.html': 'kvinta',
     'pohyb-po-kruznici.html': 'kvinta',
     'sila.html': 'kvinta',
-    'newtonovy-zakony.html': 'kvinta',
+    'prvni-newtonuv-zakon.html': 'kvinta',
+    'druhy-newtonuv-zakon.html': 'kvinta',
+    'treti-newtonuv-zakon.html': 'kvinta',
     'hybnost.html': 'kvinta',
     'treci-sila.html': 'kvinta',
     'dostrediva-sila.html': 'kvinta',
@@ -128,8 +130,14 @@
       { d: 'hra-180s', key: 'fyzika:sila:game-bests', field: '180' },
       { d: 'hra-300s', key: 'fyzika:sila:game-bests', field: '300' }
     ],
-    'newtonovy-zakony.html': [
-      { d: 'serie', key: 'fyzika:newtonovy-zakony:stats', field: 'bestStreak' }
+    'prvni-newtonuv-zakon.html': [
+      { d: 'serie', key: 'fyzika:prvni-newtonuv-zakon:stats', field: 'bestStreak' }
+    ],
+    'druhy-newtonuv-zakon.html': [
+      { d: 'serie', key: 'fyzika:druhy-newtonuv-zakon:stats', field: 'bestStreak' }
+    ],
+    'treti-newtonuv-zakon.html': [
+      { d: 'serie', key: 'fyzika:treti-newtonuv-zakon:stats', field: 'bestStreak' }
     ],
     'hybnost.html': [
       { d: 'serie', key: 'fyzika:hybnost:stats', field: 'bestStreak' }
