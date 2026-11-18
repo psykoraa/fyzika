@@ -380,7 +380,7 @@
       </div>
       <details class="navod">
         <summary>Návod</summary>
-        <p class="hint">Nahoře vyberte situaci a pod ní variantu, pak stiskněte Spustit. Všechny scény jsou nakreslené ve skutečném měřítku a pohyb se počítá z pohybových rovnic. Autobus: kamera jede s autobusem, sledujte cestujícího, držadla a míč na podlaze; při brzdění svítí brzdová světla. Mince a kartička: rychlé cvrnknutí je zpomalené dvacetkrát. Náraz auta: od 2,5&nbsp;m před překážkou je děj zpomalený dvacetkrát, figurína sedí s pásem nebo bez něj. Kulička na podložce: kulička se skutálí z rampy vysoké 0,5&nbsp;m a dojíždí po podložce; praporky označují, kam dojela při předchozích pokusech.</p>
+        <p class="hint">Nahoře vyberte situaci a pod ní variantu, pak stiskněte Spustit. Všechny scény jsou nakreslené ve skutečném měřítku a pohyb se počítá z pohybových rovnic. Autobus: kamera jede s autobusem, sledujte cestujícího, držadla a míč na podlaze; při brzdění svítí brzdová světla. Mince a kartička: rychlé cvrnknutí je zpomalené dvacetkrát. Náraz auta: od 2,5&nbsp;m před překážkou je děj zpomalený dvacetkrát, figurína řidiče sedí s pásem nebo bez něj; ve Srovnání narazí dvě stejná auta se spolujezdcem (nahoře s pásem, dole bez pásu), let spolujezdce po průrazu skla je zpomalený desetkrát. Kulička na podložce: kulička se skutálí z rampy vysoké 0,5&nbsp;m a dojíždí po podložce; praporky označují, kam dojela při předchozích pokusech.</p>
       </details>
 
       <div class="comment" id="in-comment" aria-live="polite"></div>
@@ -647,7 +647,7 @@
     var VARS = {
       bus:[['rozjezd', 'Rozjezd'], ['stala', 'Stálá rychlost'], ['brzdeni', 'Brzdění']],
       mince:[['rychle', 'Rychlé cvrnknutí'], ['pomalu', 'Pomalé tažení']],
-      naraz:[['pas', 'S bezpečnostním pásem'], ['bez', 'Bez pásu']],
+      naraz:[['pas', 'S bezpečnostním pásem'], ['bez', 'Bez pásu'], ['srovnani', 'Srovnání: spolujezdec']],
       podlozka:[['koberec', 'Koberec'], ['drevo', 'Dřevěná podlaha'], ['sklo', 'Sklo'], ['bez', 'Bez tření']]
     };
     var scene = 'bus', variant = 'rozjezd', st, running = false, last = null, flags = [];
@@ -907,81 +907,219 @@
     };
 
     // ---------- scéna: náraz auta ----------
-    // Auto dlouhé 4,2 m (70 px/m) narazí rychlostí 50 km·h⁻¹ do betonové překážky; deformační zóna 0,6 m, malý odraz zpět.
-    // Figurína: hrudník se vůči autu posouvá o s; pás = pružina s vůlí 3 cm, bez pásu ji zastaví až volant.
-    var NK = 70, WX = 560, GRD = 284, V0 = 50/3.6, CRUSH = 0.6, AC = V0*V0/(2*CRUSH), GAP = 0.36;
+    // Auto dlouhé 4,2 m narazí rychlostí 50 km·h⁻¹ do betonové překážky; deformační zóna 0,6 m, malý odraz zpět.
+    // Figurína: hrudník se vůči autu posouvá o s. Pás = pružina s vůlí 3 cm; řidiče bez pásu zastaví volant,
+    // spolujezdce bez pásu nezastaví nic a proletí čelním sklem (varianta Srovnání).
+    var V0 = 50/3.6, CRUSH = 0.6, AC = V0*V0/(2*CRUSH), GAP = 0.36;
     // obrys auta v souřadnicích auta (m): x od zadního nárazníku, y od země
     var BODY = [[0, 0.24], [0, 0.6], [0.06, 0.9], [0.38, 0.98], [0.74, 1.4], [1.72, 1.42], [2.2, 0.99], [3.6, 0.9], [4.08, 0.8], [4.2, 0.62], [4.2, 0.24]];
     function crx(x, def){ return x <= 2.6 ? x : 2.6 + (x - 2.6)*(1 - def/1.6); }     // stlačení přídě před přepážkou motoru
-    function nPose(){
-      var belt = variant === 'pas';
-      var xp = belt ? clamp(0.25*st.s, 0, 0.05) : clamp(0.6*st.s, 0, 0.18);
-      var th = Math.asin(clamp(Math.sin(-0.3) + (st.s - xp)/0.35, -0.6, 0.95));     // vzpřímený sed je zakloněný o 0,3 rad
-      var hip = [1.535 + xp, 0.52], sh = [hip[0] + 0.5*Math.sin(th), hip[1] + 0.5*Math.cos(th)];
-      var hd = [sh[0] + 0.2*Math.sin(th + st.psi), sh[1] + 0.2*Math.cos(th + st.psi)];
-      return { xp:xp, th:th, hip:hip, sh:sh, hd:hd };
-    }
     var WS = [[2.2, 0.99], [1.72, 1.42]];                  // čelní sklo (spodní a horní okraj)
     function wsDist(p){                                   // vzdálenost bodu od čelního skla (> 0 = uvnitř kabiny) a parametr podél skla
       var ax = WS[0][0], ay = WS[0][1], dx = WS[1][0] - ax, dy = WS[1][1] - ay, L = Math.sqrt(dx*dx + dy*dy);
       return { d:-((p[0] - ax)*dy - (p[1] - ay)*dx)/L, t:((p[0] - ax)*dx + (p[1] - ay)*dy)/(L*L) };
     }
+    function rnd2(i, k){ var r = Math.sin(i*12.9898 + k*78.233)*43758.5453; return r - Math.floor(r); }
+    function carNew(){ return { x:-8.2, v:V0, A:0, ph:'jizda', def:0, tc:0, pit:0, pv:0, wheel:0, frags:[] }; }
+    function carStep(c, dt){
+      var front = c.x + 4.2 - c.def, A = 0;
+      if(c.ph === 'jizda' && front >= 0){
+        c.ph = 'naraz';
+        for(var i = 0; i < 12; i++){
+          var r1 = rnd2(i, 0), r2 = rnd2(i, 1);
+          c.frags.push({ x:-0.05, y:0.3 + 0.35*r1, vx:-0.6 - 3*r2, vy:1 + 3.5*r1, r:0, w:(r2 - 0.5)*30, c:i % 3 ? '#2b2f33' : '#fff6c9', k:0.03 + 0.04*r2 });
+        }
+      }
+      if(c.ph === 'naraz'){
+        A = AC; c.v -= AC*dt; c.tc += dt;
+        if(c.v > 0) c.def += c.v*dt;
+        else c.def = Math.max(CRUSH - 0.05, c.def + c.v*dt);              // pružné vrácení části deformace
+        if(c.v <= -1.5) c.ph = 'odraz';
+      } else if(c.ph === 'odraz'){
+        A = -8; c.v = Math.min(0, c.v + 8*dt); c.tc += dt;                   // odražené auto zabrzdí
+        if(c.v === 0) c.ph = 'stoji';
+      } else if(c.ph === 'stoji') c.tc += dt;
+      c.A = A;
+      c.x += c.v*dt; c.wheel += c.v*dt/0.31;
+      // klopení karoserie: při nárazu se zadek zvedne (rad, > 0 = předek dolů)
+      c.pv += (-324*c.pit - 14.4*c.pv + 0.08*A)*dt; c.pit = Math.max(-0.01, c.pit + c.pv*dt);
+      stepFrags(c.frags, dt);
+    }
+    function stepFrags(fr, dt){
+      for(var j = 0; j < fr.length; j++){
+        var f = fr[j];
+        f.vy -= GA*dt; f.x += f.vx*dt; f.y += f.vy*dt; f.r += f.w*dt;
+        if(f.y < 0){ f.y = 0; f.vy = -0.3*f.vy; f.vx *= 0.6; f.w *= 0.6; }
+      }
+    }
+    // mode: 'pas', 'bez' (řidič), 'spol-pas', 'spol-bez' (spolujezdec)
+    function occNew(mode){ return { mode:mode, s:0, u:0, smax:0, uhit:0, hit:false, psi:0, pw:0, crack:null, ej:null, glass:[] }; }
+    function belted(o){ return o.mode === 'pas' || o.mode === 'spol-pas'; }
+    function occPose(o){
+      var belt = belted(o), flyer = o.mode === 'spol-bez';
+      var xp = belt ? clamp(0.25*o.s, 0, 0.05) : clamp(0.6*o.s, 0, 0.18);
+      var smax = flyer ? 0.75 : 0.95, sn = Math.sin(-0.3) + (o.s - xp)/0.35;   // vzpřímený sed je zakloněný o 0,3 rad
+      var th = Math.asin(clamp(sn, -0.6, smax));
+      var hip = [1.535 + xp, 0.52];
+      // spolujezdec bez pásu: kolena se zapřou o palubní desku a tělo se přes ně zvedá a sune dopředu
+      if(flyer && sn > smax){ var e = (sn - smax)*0.35; hip = [hip[0] + 0.9*e, hip[1] + 0.42*e]; }
+      var sh = [hip[0] + 0.5*Math.sin(th), hip[1] + 0.5*Math.cos(th)];
+      var hd = [sh[0] + 0.2*Math.sin(th + o.psi), sh[1] + 0.2*Math.cos(th + o.psi)];
+      return { xp:xp, th:th, hip:hip, sh:sh, hd:hd, knee:[1.535 + xp + 0.42 + 0.35*xp, 0.6], foot:[2.02 + 0.2*xp, 0.36] };
+    }
+    function occStep(o, c, dt){
+      if(o.ej){ ejStep(o, dt); stepFrags(o.glass, dt); return; }
+      var A = c.A, acc = A;
+      if(belted(o)){ var e = o.s - 0.03; if(e > 0) acc -= 1000*e + 32*o.u; }
+      else if(o.mode === 'bez' && o.s >= GAP){ acc -= 40000*(o.s - GAP) + 300*o.u; if(!o.hit){ o.hit = true; o.uhit = o.u; } }
+      o.u += acc*dt; o.s += o.u*dt;
+      if(o.s < 0){ o.s = 0; if(o.u < 0) o.u = 0; }
+      o.smax = Math.max(o.smax, o.s);
+      // hlava na krku (kyvadlo délky 0,15 m s pružným krkem): hnací zrychlení = zpomalení hrudníku vůči zemi
+      o.pw += ((A - acc)/0.15 - 1225*o.psi - 24.5*o.pw)*dt;
+      o.psi = clamp(o.psi + o.pw*dt, -0.5, 1.15);
+      if(belted(o)) return;
+      var q = occPose(o), w = wsDist(q.hd);
+      if(o.mode === 'spol-bez'){
+        if(w.t > -0.1 && w.t < 1.1 && w.d < 0.11) eject(o, c, q);           // hlava narazí do skla a prorazí ho
+        return;
+      }
+      var n = 0;
+      while(w.t > -0.05 && w.t < 1.05 && w.d < 0.11 && n < 60){ o.psi -= 0.02; q = occPose(o); w = wsDist(q.hd); n++; }
+      if(n > 0){ o.pw = Math.min(0, o.pw); if(!o.crack) o.crack = [q.hd[0] + 0.11*0.67, q.hd[1] + 0.11*0.74]; }
+    }
+    // průlet sklem: dál letí jako těleso v tíhovém poli (náraz do skla a rámu ubere asi 40 % rychlosti vůči autu), přitom se převrací
+    function eject(o, c, q){
+      o.crack = [q.hd[0] + 0.11*0.67, q.hd[1] + 0.11*0.74];
+      var vx = c.v + 0.55*o.u;
+      var a0 = Math.max(q.th, 1.15);                        // hlava je v místě průrazu skla, trup se natáhne hlavou napřed
+      o.ej = { x:c.x + q.hd[0] - 0.7*Math.sin(a0), y:q.hd[1] - 0.7*Math.cos(a0), vx:vx, vy:2.5, v0:vx, ang:a0, w:3.5, psi:0, land:false, slide:false };
+      for(var i = 0; i < 14; i++){
+        var r1 = rnd2(i, 3), r2 = rnd2(i, 4);
+        o.glass.push({ x:c.x + o.crack[0], y:o.crack[1] + 0.2*(r1 - 0.5), vx:vx*(0.6 + 0.5*r2), vy:0.5 + 2.5*r1, r:0, w:(r1 - 0.5)*40, c:'#cfe8f3', k:0.015 + 0.025*r2 });
+      }
+    }
+    function ejPts(j){                                      // body letící figuríny ve světových souřadnicích (m)
+      var a = j.ang, S = Math.sin, C = Math.cos;
+      var hip = [j.x, j.y], sh = [j.x + 0.5*S(a), j.y + 0.5*C(a)], hd = [sh[0] + 0.2*S(a + j.psi), sh[1] + 0.2*C(a + j.psi)];
+      var lg = a + Math.PI - 0.15;                          // nohy táhne za sebou, mírně pokrčené
+      var knee = [j.x + 0.45*S(lg), j.y + 0.45*C(lg)], foot = [knee[0] + 0.45*S(lg + 0.6), knee[1] + 0.45*C(lg + 0.6)];
+      var ar = a + 2.4;                                     // paže vlají za tělem
+      var el = [sh[0] + 0.3*S(ar), sh[1] + 0.3*C(ar)], hand = [el[0] + 0.28*S(ar + 0.5), el[1] + 0.28*C(ar + 0.5)];
+      return { hip:hip, sh:sh, hd:hd, knee:knee, foot:foot, el:el, hand:hand };
+    }
+    function ejStep(o, dt){
+      var j = o.ej;
+      if(!j.land){
+        j.vy -= GA*dt; j.x += j.vx*dt; j.y += j.vy*dt; j.ang += j.w*dt; j.w *= Math.exp(-3*dt);   // překlápí se hlavou napřed, otáčení slábne
+        var p = ejPts(j), lo = Math.min(p.hd[1] - 0.11, p.hip[1] - 0.1, p.foot[1], p.knee[1] - 0.06, p.hand[1]);
+        if(lo <= 0 && j.vy < 0){ j.land = true; j.y -= lo; j.vy = 0; j.xl = j.x; j.lie = Math.PI/2 + Math.PI*Math.round((j.ang - Math.PI/2)/Math.PI); }
+      } else {
+        j.vx = Math.max(0, j.vx - 1.1*GA*dt); j.x += j.vx*dt;                   // smýká se a kutálí po zemi (zpomalení 1,1 g)
+        j.ang += (j.lie - j.ang)*Math.min(1, 8*dt); j.y += (0.12 - j.y)*Math.min(1, 8*dt); j.psi *= Math.exp(-6*dt);
+        if(j.vx === 0) j.slide = true;
+      }
+    }
+    // figurína ze zadaných bodů obrazovky
+    function dummySvg(p){
+      var D = '#e0b64a', DE = '#9a7a20', s = '';
+      s += limb(p.hip[0], p.hip[1], p.knee[0], p.knee[1], p.w*8, D, DE) + limb(p.knee[0], p.knee[1], p.foot[0], p.foot[1], p.w*7, D, DE);
+      s += limb(p.hip[0], p.hip[1], p.sh[0], p.sh[1], p.w*13, D, DE);
+      s += limb(p.sh[0], p.sh[1], p.el[0], p.el[1], p.w*6, D, DE) + limb(p.el[0], p.el[1], p.hand[0], p.hand[1], p.w*5, D, DE);
+      var r = 7.5*p.w, h = p.hd;
+      s += '<circle cx="' + f1(h[0]) + '" cy="' + f1(h[1]) + '" r="' + f1(r) + '" fill="' + D + '" stroke="' + DE + '" stroke-width="1"/>';
+      s += '<path d="M' + f1(h[0]) + ',' + f1(h[1]) + ' m' + f1(-r/2) + ',0 a' + f1(r/2) + ',' + f1(r/2) + ' 0 0 1 ' + f1(r/2) + ',' + f1(-r/2) + ' v' + f1(r/2) + ' Z M' + f1(h[0]) + ',' + f1(h[1]) + ' m' + f1(r/2) + ',0 a' + f1(r/2) + ',' + f1(r/2) + ' 0 0 1 ' + f1(-r/2) + ',' + f1(r/2) + ' v' + f1(-r/2) + ' Z" fill="#2b2f33"/>';
+      return s;
+    }
+    function ik(sh, hand){                                  // loket dvoučlánkové paže 0,3 + 0,3 m (m)
+      var dx = hand[0] - sh[0], dy = hand[1] - sh[1], dd = Math.sqrt(dx*dx + dy*dy);
+      if(dd > 0.58){ hand = [sh[0] + dx/dd*0.58, sh[1] + dy/dd*0.58]; dd = 0.58; dx = hand[0] - sh[0]; dy = hand[1] - sh[1]; }
+      var hb = Math.sqrt(Math.max(0, 0.09 - dd*dd/4));
+      return { el:[sh[0] + dx/2 + dy/dd*hb, sh[1] + dy/2 - dx/dd*hb], hand:hand };
+    }
+    // celé auto s posádkou; K = px/m, WX = poloha čela překážky, GRD = úroveň země (px)
+    function carSvg(c, o, K, WX, GRD){
+      var def = c.def, i, g, spol = o.mode.indexOf('spol') === 0;
+      function X(x){ return WX + (c.x + x)*K; }
+      function Y(y){ return GRD - y*K; }
+      function P2(p){ return [X(p[0]), Y(p[1])]; }
+      var s = '<ellipse cx="' + f1(X(2.1 - def/2)) + '" cy="' + (GRD + 2) + '" rx="' + f1((2.2 - def/2)*K) + '" ry="' + f1(K/14) + '" fill="#000" opacity="0.2"/>';
+      var fw = crx(3.5, def), pivX = X(fw), pts = BODY.map(function(p){ return [X(crx(p[0], def)), Y(p[1])]; });
+      var bump = 0.1*clamp(def/CRUSH, 0, 1);                                  // zvlnění kapoty
+      pts.splice(7, 0, [X(crx(3.0, def)), Y(0.95 + bump)], [X(crx(3.3, def)), Y(0.9 + bump*0.3)]);
+      g = '<g transform="rotate(' + f1(c.pit*180/Math.PI) + ',' + f1(pivX) + ',' + GRD + ')">';
+      g += '<g filter="url(#' + P + '-sh)">' + poly(pts, 'var(--accent)', 'var(--ink)', 2) + '</g>';
+      // kabina v řezu (vidíme figurínu)
+      g += poly([[0.5, 0.42], [0.5, 0.98], [0.8, 1.33], [1.68, 1.35], [2.12, 0.99], [2.12, 0.42]].map(P2), '#5b4f4a', '#3a302c', 1.2);
+      g += poly([[0.55, 1.0], [0.82, 1.3], [1.66, 1.32], [2.08, 1.0]].map(P2), 'url(#' + P + '-glass)', null, 0, ' opacity="0.35"');
+      g += poly([[1.36, 0.5], [1.22, 1.16], [1.34, 1.18], [1.48, 0.56], [1.8, 0.58], [1.8, 0.46], [1.38, 0.44]].map(P2), '#2f3a46', '#1d252e', 1);   // sedadlo
+      g += poly([[2.12, 0.98], [1.92, 0.94], [1.9, 0.78], [2.12, 0.7]].map(P2), '#3a3f44');                                                    // palubní deska
+      if(!spol){
+        var a1 = P2([2.05, 0.78]), a2 = P2([1.86, 0.92]), r1 = P2([1.79, 1.06]), r2 = P2([1.92, 0.77]);
+        g += ln(a1[0], a1[1], a2[0], a2[1], '#2b2f33', K/17) + ln(r1[0], r1[1], r2[0], r2[1], '#1d1f22', K/12);                                  // volant
+      } else {
+        g += poly([[2.1, 0.9], [1.95, 0.88], [1.94, 0.8], [2.1, 0.78]].map(P2), '#4a5056', '#2b2f33', 0.8);                                     // přihrádka spolujezdce
+      }
+      var w = K/70;
+      if(!o.ej){
+        var q = occPose(o), arm = ik(q.sh, spol ? [q.knee[0] - 0.05, q.knee[1] + 0.05] : [1.81, 1.02]);
+        g += dummySvg({ hip:P2(q.hip), sh:P2(q.sh), hd:P2(q.hd), knee:P2(q.knee), foot:P2(q.foot), el:P2(arm.el), hand:P2(arm.hand), w:w });
+        if(belted(o)){
+          var sh = P2(q.sh), anc = P2([1.3, 1.22]), buck = P2([q.hip[0] + 0.14, 0.52]), lap = P2([1.48, 0.52]);
+          g += ln(anc[0], anc[1], sh[0] + 2*w, sh[1] + w, '#2b2f33', 3*w) + ln(sh[0] + 2*w, sh[1] + w, buck[0], buck[1], '#2b2f33', 3*w) + ln(lap[0], lap[1], buck[0], buck[1], '#2b2f33', 3*w);
+        }
+      }
+      // čelní sklo: celé, prasklé, nebo proražené
+      var w0 = P2(WS[0]), w1 = P2(WS[1]);
+      if(o.ej){
+        var m1 = [w0[0] + (w1[0] - w0[0])*0.18, w0[1] + (w1[1] - w0[1])*0.18], m2 = [w0[0] + (w1[0] - w0[0])*0.86, w0[1] + (w1[1] - w0[1])*0.86];
+        g += ln(w0[0], w0[1], m1[0], m1[1], '#a9cfe0', 3.5*w) + ln(m2[0], m2[1], w1[0], w1[1], '#a9cfe0', 3.5*w);
+        g += '<path d="M' + f1(m1[0]) + ',' + f1(m1[1]) + ' l' + f1(4*w) + ',' + f1(-6*w) + ' l' + f1(-2*w) + ',' + f1(-5*w) + ' M' + f1(m2[0]) + ',' + f1(m2[1]) + ' l' + f1(5*w) + ',' + f1(5*w) + ' l' + f1(-1*w) + ',' + f1(5*w) + '" fill="none" stroke="#a9cfe0" stroke-width="' + f1(2*w) + '"/>';
+      } else g += ln(w0[0], w0[1], w1[0], w1[1], '#a9cfe0', 3.5*w);
+      if(o.crack && !o.ej){
+        var cc = P2(o.crack);
+        for(i = 0; i < 7; i++){ var an = i*0.9 + 0.3, lr = (6 + (i % 3)*4)*w; g += ln(cc[0], cc[1], cc[0] + lr*Math.cos(an), cc[1] + lr*Math.sin(an), '#ffffff', 1.2); }
+      }
+      // dveře, světla, deformace přídě, podběhy kol
+      var d1 = P2([1.25, 0.3]), d2 = P2([1.25, 0.98]), tl = P2([0.02, 0.86]);
+      g += ln(d1[0], d1[1], d2[0], d2[1], '#3a302c', 1, ' opacity="0.6"');
+      g += '<rect x="' + f1(tl[0]) + '" y="' + f1(tl[1]) + '" width="' + f1(6*w) + '" height="' + f1(12*w) + '" rx="2" fill="#a8261c"/>';
+      if(def < 0.08){ var hl = P2([crx(4.12, def), 0.78]); g += '<rect x="' + f1(hl[0] - 4*w) + '" y="' + f1(hl[1]) + '" width="' + f1(8*w) + '" height="' + f1(7*w) + '" rx="2" fill="#fff6c9" stroke="#9a6a22" stroke-width="0.8"/>'; }
+      var nf = Math.floor(def*14);
+      for(i = 0; i < nf; i++){
+        var fx = X(crx(2.7 + (i + 0.5)*1.5/nf, def)), z = 0.12*K;
+        g += '<path d="M' + f1(fx) + ',' + f1(Y(0.88)) + ' l' + f1(-4*w) + ',' + f1(z) + ' l' + f1(4*w) + ',' + f1(z) + ' l' + f1(-4*w) + ',' + f1(z) + ' l' + f1(4*w) + ',' + f1(z) + '" fill="none" stroke="var(--ink)" stroke-width="1.1" opacity="0.55"/>';
+      }
+      var ar = 0.34*K;
+      g += '<path d="M' + f1(X(0.85) - ar) + ',' + GRD + ' a' + f1(ar) + ',' + f1(ar) + ' 0 0 1 ' + f1(2*ar) + ',0 Z M' + f1(X(fw) - ar) + ',' + GRD + ' a' + f1(ar) + ',' + f1(ar) + ' 0 0 1 ' + f1(2*ar) + ',0 Z" fill="#2a2d31" transform="translate(0,' + f1(-0.24*K) + ')"/>';
+      g += '</g>';
+      s += g + svgWheel(X(0.85), GRD - 0.31*K, 0.31*K, c.wheel) + svgWheel(X(fw), GRD - 0.31*K, 0.31*K, c.wheel);
+      return s;
+    }
+    function fragsSvg(fr, K, WX, GRD){
+      return fr.map(function(f){
+        var fx = WX + f.x*K, fy = GRD - f.y*K, k = f.k*K;
+        return '<rect x="' + f1(fx - k) + '" y="' + f1(fy - k/2) + '" width="' + f1(2*k) + '" height="' + f1(k) + '" fill="' + f.c + '" stroke="#555" stroke-width="0.5" transform="rotate(' + f1(f.r*57.3) + ',' + f1(fx) + ',' + f1(fy) + ')"/>';
+      }).join('');
+    }
+    function flyerSvg(o, K, WX, GRD){                       // figurína, která proletěla sklem (světové souřadnice)
+      if(!o.ej) return '';
+      var p = ejPts(o.ej), T = function(q){ return [WX + q[0]*K, GRD - q[1]*K]; };
+      return dummySvg({ hip:T(p.hip), sh:T(p.sh), hd:T(p.hd), knee:T(p.knee), foot:T(p.foot), el:T(p.el), hand:T(p.hand), w:K/70 });
+    }
+
+    // jedno auto s řidičem (varianty S pásem / Bez pásu), měřítko 70 px/m
+    var NK = 70, WX = 560, GRD = 284;
     var NARAZ = {
-      slow:function(){ return st.slowOn ? 0.05 : 1; },
-      reset:function(){
-        st = { t:0, x:-8.2, v:V0, A:0, ph:'jizda', def:0, tc:0, pit:0, pv:0, s:0, u:0, smax:0, uhit:0, hit:false, psi:0, pw:0, crack:null, frags:[], wheel:0, slowOn:false, done:false };
-      },
+      slow:function(){ return st.c.x + 4.2 - st.c.def > -2.5 ? 0.05 : 1; },        // zpomalení začne 2,5 m před překážkou
+      reset:function(){ st = { c:carNew(), o:occNew(variant), t:0, done:false }; },
       step:function(dt){
-        var front = st.x + 4.2 - st.def, A = 0;
-        if(front > -2.5) st.slowOn = true;                                 // zpomalení začne 2,5 m před překážkou
-        if(st.ph === 'jizda' && front >= 0){
-          st.ph = 'naraz';
-          for(var i = 0; i < 12; i++){
-            var r1 = Math.sin(i*12.9898)*43758.5453, r2 = Math.sin(i*78.233)*12543.12;
-            r1 -= Math.floor(r1); r2 -= Math.floor(r2);
-            st.frags.push({ x:-0.05, y:0.35 + 0.45*r1, vx:-0.6 - 3*r2, vy:1 + 3.5*r1, r:0, w:(r2 - 0.5)*30, c:i % 3 ? '#2b2f33' : '#fff6c9', k:2 + 3*r2 });
-          }
-        }
-        if(st.ph === 'naraz'){
-          A = AC; st.v -= AC*dt; st.tc += dt;
-          if(st.v > 0) st.def += st.v*dt;
-          else st.def = Math.max(CRUSH - 0.05, st.def + st.v*dt);           // pružné vrácení části deformace
-          if(st.v <= -1.5) st.ph = 'odraz';
-        } else if(st.ph === 'odraz'){
-          A = -8; st.v = Math.min(0, st.v + 8*dt); st.tc += dt;                // odražené auto zabrzdí
-          if(st.v === 0) st.ph = 'stoji';
-        } else if(st.ph === 'stoji') st.tc += dt;
-        st.A = A;
-        st.x += st.v*dt; st.wheel += st.v*dt/0.31;
-        // klopení karoserie: při nárazu se zadek zvedne (rad, > 0 = předek dolů)
-        st.pv += (-324*st.pit - 14.4*st.pv + 0.08*A)*dt; st.pit = Math.max(-0.01, st.pit + st.pv*dt);
-        // figurína v soustavě auta: působí na ni setrvačná síla m·A dopředu
-        var acc = A;
-        if(variant === 'pas'){ var e = st.s - 0.03; if(e > 0) acc -= 1000*e + 32*st.u; }
-        else if(st.s >= GAP){ acc -= 40000*(st.s - GAP) + 300*st.u; if(!st.hit){ st.hit = true; st.uhit = st.u; } }
-        st.u += acc*dt; st.s += st.u*dt;
-        if(st.s < 0){ st.s = 0; if(st.u < 0) st.u = 0; }
-        st.smax = Math.max(st.smax, st.s);
-        // hlava na krku (kyvadlo délky 0,15 m s pružným krkem): hnací zrychlení = zpomalení hrudníku vůči zemi
-        st.pw += ((A - acc)/0.15 - 1225*st.psi - 24.5*st.pw)*dt;
-        st.psi = clamp(st.psi + st.pw*dt, -0.5, 1.15);
-        if(variant === 'bez'){
-          var q = nPose(), w = wsDist(q.hd), n = 0;
-          while(w.t > -0.05 && w.t < 1.05 && w.d < 0.11 && n < 60){ st.psi -= 0.02; q = nPose(); w = wsDist(q.hd); n++; }
-          if(n > 0){ st.pw = Math.min(0, st.pw); if(!st.crack) st.crack = [q.hd[0] + 0.11*0.67, q.hd[1] + 0.11*0.74]; }
-        }
-        for(var j = 0; j < st.frags.length; j++){
-          var f = st.frags[j];
-          f.vy -= GA*dt; f.x += f.vx*dt; f.y += f.vy*dt; f.r += f.w*dt;
-          if(f.y < 0){ f.y = 0; f.vy = -0.3*f.vy; f.vx *= 0.6; f.w *= 0.6; }
-        }
+        carStep(st.c, dt); occStep(st.o, st.c, dt);
         st.t += dt;
-        if(st.tc > 0.42) st.done = true;
+        if(st.c.tc > 0.42) st.done = true;
       },
       draw:function(){
-        var s = svgDefs(P), K = NK, def = st.def, i;
-        function X(x){ return WX + (st.x + x)*K; }
-        function Y(y){ return GRD - y*K; }
+        var s = svgDefs(P), K = NK, i, c = st.c, o = st.o;
         s += '<rect x="0" y="0" width="640" height="' + GRD + '" fill="url(#' + P + '-sky)"/>';
         s += '<rect x="0" y="' + GRD + '" width="640" height="' + (340 - GRD) + '" fill="url(#' + P + '-ground)"/>';
         for(i = 0; i < 8; i++) s += '<rect x="' + (i*80 + 6) + '" y="' + (GRD + 22) + '" width="40" height="4" fill="#f4f1e8"/>';
@@ -990,77 +1128,61 @@
         for(i = 0; i < 4; i++) s += ln(WX + 4, GRD - 100 + i*26, WX + 78, GRD - 100 + i*26, '#9c968a', 1);
         for(i = 0; i < 6; i++) s += poly([[WX, GRD - 70 + i*10], [WX + 8, GRD - 70 + i*10], [WX + 8, GRD - 64 + i*10], [WX, GRD - 64 + i*10]], i % 2 ? '#2b2f33' : '#f2c230');
         s += '<path d="M' + WX + ',' + (GRD - 112) + ' l12,-8 h68 v120" fill="#cfc9bd" stroke="#6f6a60" stroke-width="1.5"/>';
-        s += '<ellipse cx="' + f1(X(2.1 - def/2)) + '" cy="' + (GRD + 2) + '" rx="' + f1((2.2 - def/2)*K) + '" ry="5" fill="#000" opacity="0.2"/>';
-        // ---- auto (klopí se kolem stopy předního kola) ----
-        var fw = crx(3.5, def), pivX = X(fw), pts = BODY.map(function(p){ return [X(crx(p[0], def)), Y(p[1])]; });
-        var bump = 0.1*clamp(def/CRUSH, 0, 1);                                  // zvlnění kapoty
-        pts.splice(7, 0, [X(crx(3.0, def)), Y(0.95 + bump)], [X(crx(3.3, def)), Y(0.9 + bump*0.3)]);
-        var g = '<g transform="rotate(' + f1(st.pit*180/Math.PI) + ',' + f1(pivX) + ',' + GRD + ')">';
-        g += '<g filter="url(#' + P + '-sh)">' + poly(pts, 'var(--accent)', 'var(--ink)', 2) + '</g>';
-        // kabina v řezu (vidíme figurínu)
-        var cab = [[0.5, 0.42], [0.5, 0.98], [0.8, 1.33], [1.68, 1.35], [2.12, 0.99], [2.12, 0.42]].map(function(p){ return [X(p[0]), Y(p[1])]; });
-        g += poly(cab, '#5b4f4a', '#3a302c', 1.2);
-        var win = [[0.55, 1.0], [0.82, 1.3], [1.66, 1.32], [2.08, 1.0]].map(function(p){ return [X(p[0]), Y(p[1])]; });
-        g += poly(win, 'url(#' + P + '-glass)', null, 0, ' opacity="0.35"');
-        // sedadlo
-        g += poly([[X(1.36), Y(0.5)], [X(1.22), Y(1.16)], [X(1.34), Y(1.18)], [X(1.48), Y(0.56)], [X(1.8), Y(0.58)], [X(1.8), Y(0.46)], [X(1.38), Y(0.44)]], '#2f3a46', '#1d252e', 1);
-        // palubní deska, volant
-        g += poly([[X(2.12), Y(0.98)], [X(1.92), Y(0.94)], [X(1.9), Y(0.78)], [X(2.12), Y(0.7)]], '#3a3f44');
-        g += ln(X(2.05), Y(0.78), X(1.86), Y(0.92), '#2b2f33', 4);
-        g += ln(X(1.79), Y(1.06), X(1.92), Y(0.77), '#1d1f22', 6);
-        // figurína (žlutá s terčíky jako při skutečných zkouškách)
-        var q = nPose(), D = '#e0b64a', DE = '#9a7a20';
-        function P2(p){ return [X(p[0]), Y(p[1])]; }
-        var hip = P2(q.hip), sh = P2(q.sh), hd = P2(q.hd);
-        var knee = P2([q.hip[0] + 0.42 + 0.35*q.xp, 0.6]), foot = P2([2.02 + 0.2*q.xp, 0.36]);
-        g += limb(hip[0], hip[1], knee[0], knee[1], 8, D, DE) + limb(knee[0], knee[1], foot[0], foot[1], 7, D, DE);
-        g += limb(hip[0], hip[1], sh[0], sh[1], 13, D, DE);
-        // paže: k volantu, pokud dosáhnou (dvoučlánkové rameno 0,3 + 0,3 m)
-        var hand = [1.81, 1.02], dx = hand[0] - q.sh[0], dy = hand[1] - q.sh[1], dd = Math.sqrt(dx*dx + dy*dy);
-        if(dd > 0.58){ hand = [q.sh[0] + dx/dd*0.58, q.sh[1] + dy/dd*0.58]; dd = 0.58; dx = hand[0] - q.sh[0]; dy = hand[1] - q.sh[1]; }
-        var hb = Math.sqrt(Math.max(0, 0.09 - dd*dd/4)), el = [q.sh[0] + dx/2 + dy/dd*hb, q.sh[1] + dy/2 - dx/dd*hb];
-        var E = P2(el), Hh = P2(hand);
-        g += limb(sh[0], sh[1], E[0], E[1], 6, D, DE) + limb(E[0], E[1], Hh[0], Hh[1], 5, D, DE);
-        g += '<circle cx="' + f1(hd[0]) + '" cy="' + f1(hd[1]) + '" r="7.5" fill="' + D + '" stroke="' + DE + '" stroke-width="1"/>';
-        g += '<path d="M' + f1(hd[0]) + ',' + f1(hd[1]) + ' m-3.5,0 a3.5,3.5 0 0 1 3.5,-3.5 v3.5 Z M' + f1(hd[0]) + ',' + f1(hd[1]) + ' m3.5,0 a3.5,3.5 0 0 1 -3.5,3.5 v-3.5 Z" fill="#2b2f33"/>';
-        if(variant === 'pas'){
-          var anc = P2([1.3, 1.22]), buck = P2([q.hip[0] + 0.14, 0.52]);
-          g += ln(anc[0], anc[1], sh[0] + 2, sh[1] + 1, '#2b2f33', 3) + ln(sh[0] + 2, sh[1] + 1, buck[0], buck[1], '#2b2f33', 3);
-          g += ln(X(1.48), Y(0.52), buck[0], buck[1], '#2b2f33', 3);
-        }
-        // čelní sklo a prasklina po nárazu hlavy
-        g += ln(X(WS[0][0]), Y(WS[0][1]), X(WS[1][0]), Y(WS[1][1]), '#a9cfe0', 3.5);
-        if(st.crack){
-          var c = P2(st.crack);
-          for(i = 0; i < 7; i++){ var an = i*0.9 + 0.3, lr = 6 + (i % 3)*4; g += ln(c[0], c[1], c[0] + lr*Math.cos(an), c[1] + lr*Math.sin(an), '#ffffff', 1.2); }
-        }
-        // dveře, kliky, světla, deformace přídě
-        g += ln(X(1.25), Y(0.3), X(1.25), Y(0.98), '#3a302c', 1, ' opacity="0.6"');
-        g += '<rect x="' + f1(X(0.02)) + '" y="' + f1(Y(0.86)) + '" width="6" height="12" rx="2" fill="#a8261c"/>';
-        if(def < 0.08) g += '<rect x="' + f1(X(crx(4.12, def)) - 4) + '" y="' + f1(Y(0.78)) + '" width="8" height="7" rx="2" fill="#fff6c9" stroke="#9a6a22" stroke-width="0.8"/>';
-        var nf = Math.floor(def*14);
-        for(i = 0; i < nf; i++){
-          var fx = X(crx(2.7 + (i + 0.5)*1.5/nf, def));
-          g += '<path d="M' + f1(fx) + ',' + f1(Y(0.88)) + ' l-4,' + f1(0.12*K) + ' l4,' + f1(0.12*K) + ' l-4,' + f1(0.12*K) + ' l4,' + f1(0.12*K) + '" fill="none" stroke="var(--ink)" stroke-width="1.1" opacity="0.55"/>';
-        }
-        g += '<path d="M' + f1(X(0.55)) + ',' + GRD + ' a24,24 0 0 1 48,0 Z M' + f1(X(fw) - 24) + ',' + GRD + ' a24,24 0 0 1 48,0 Z" fill="#2a2d31" transform="translate(0,' + f1(-0.24*K) + ')"/>';
-        g += '</g>';
-        s += g + svgWheel(X(0.85), GRD - 0.31*K, 0.31*K, st.wheel) + svgWheel(X(fw), GRD - 0.31*K, 0.31*K, st.wheel);
-        st.frags.forEach(function(f){
-          var fx = WX + f.x*K, fy = GRD - f.y*K;
-          s += '<rect x="' + f1(fx - f.k) + '" y="' + f1(fy - f.k/2) + '" width="' + f1(2*f.k) + '" height="' + f1(f.k) + '" fill="' + f.c + '" stroke="#555" stroke-width="0.5" transform="rotate(' + f1(f.r*57.3) + ',' + f1(fx) + ',' + f1(fy) + ')"/>';
-        });
-        if(st.slowOn) s += svgText(626, 24, 'zpomaleno 20×', {anchor:'end', size:12.5, weight:600, color:'var(--danger)'});
-        s += svgText(14, 24, 'auto ' + cz(Math.abs(st.v)*3.6, 0) + '&#160;km·h⁻¹   figurína ' + cz(Math.max(0, st.v + st.u)*3.6, 0) + '&#160;km·h⁻¹', {size:12.5, weight:600});
+        s += carSvg(c, o, K, WX, GRD) + fragsSvg(c.frags, K, WX, GRD);
+        if(this.slow() < 1) s += svgText(626, 24, 'zpomaleno 20×', {anchor:'end', size:12.5, weight:600, color:'var(--danger)'});
+        s += svgText(14, 24, 'auto ' + cz(Math.abs(c.v)*3.6, 0) + '&#160;km·h⁻¹   figurína ' + cz(Math.max(0, c.v + o.u)*3.6, 0) + '&#160;km·h⁻¹', {size:12.5, weight:600});
         return s;
       },
       comment:function(){
-        if(st.ph === 'jizda') return '<p>Auto jede rychlostí 50&nbsp;km·h⁻¹ k betonové překážce. Stiskněte Spustit a sledujte figurínu. Těsně před nárazem se animace zpomalí dvacetkrát.</p>';
+        var c = st.c, o = st.o;
+        if(c.ph === 'jizda') return '<p>Auto jede rychlostí 50&nbsp;km·h⁻¹ k betonové překážce. Stiskněte Spustit a sledujte figurínu. Těsně před nárazem se animace zpomalí dvacetkrát.</p>';
         if(variant === 'bez'){
-          if(!st.hit) return '<p><b>Bez pásu:</b> karoserie se zastavuje na deformační dráze 0,6&nbsp;m za necelou desetinu sekundy. Na figurínu ale nepůsobí žádná síla dozadu, a proto se setrvačností pohybuje dál rychlostí 50&nbsp;km·h⁻¹.</p>';
-          return '<p><b>Bez pásu:</b> figurína se setrvačností pohybovala dál, zatímco auto už skoro stálo. Do volantu narazila hrudníkem rychlostí asi ' + cz(st.uhit*3.6, 0) + '&nbsp;km·h⁻¹ vůči autu' + (st.crack ? ' a hlavou udeřila do čelního skla' : '') + '. Zabrzdil ji teprve tento tvrdý náraz na dráze několika centimetrů, tedy obrovskou silou.</p>';
+          if(!o.hit) return '<p><b>Bez pásu:</b> karoserie se zastavuje na deformační dráze 0,6&nbsp;m za necelou desetinu sekundy. Na figurínu ale nepůsobí žádná síla dozadu, a proto se setrvačností pohybuje dál rychlostí 50&nbsp;km·h⁻¹.</p>';
+          return '<p><b>Bez pásu:</b> figurína se setrvačností pohybovala dál, zatímco auto už skoro stálo. Do volantu narazila hrudníkem rychlostí asi ' + cz(o.uhit*3.6, 0) + '&nbsp;km·h⁻¹ vůči autu' + (o.crack ? ' a hlavou udeřila do čelního skla' : '') + '. Zabrzdil ji teprve tento tvrdý náraz na dráze několika centimetrů, tedy obrovskou silou.</p>';
         }
-        return '<p><b>S pásem:</b> jakmile se vymezí vůle pásu, pás začne figurínu brzdit spolu s autem. Hrudník se vůči autu posune dopředu jen asi o ' + cz(Math.round(st.smax*100), 0) + '&nbsp;cm, takže figurína zastaví na dráze asi ' + cz(CRUSH + st.smax, 1) + '&nbsp;m (deformační zóna + posun v pásu), tedy mnohem menší silou. Hlava se setrvačností předkloní a krk ji vrátí zpět.</p>';
+        return '<p><b>S pásem:</b> jakmile se vymezí vůle pásu, pás začne figurínu brzdit spolu s autem. Hrudník se vůči autu posune dopředu jen asi o ' + cz(Math.round(o.smax*100), 0) + '&nbsp;cm, takže figurína zastaví na dráze asi ' + cz(CRUSH + o.smax, 1) + '&nbsp;m (deformační zóna + posun v pásu), tedy mnohem menší silou. Hlava se setrvačností předkloní a krk ji vrátí zpět.</p>';
+      }
+    };
+
+    // srovnání: dvě stejná auta se spolujezdcem (nahoře s pásem, dole bez pásu) narazí do nízkého betonového bloku
+    // (výška 0,6 m); měřítko 48 px/m
+    var CK = 48, CWX = 215, CG1 = 150, CG2 = 322, BLK = 0.6;
+    var CMP = {
+      slow:function(){ var c = st.c; return c.x + 4.2 - c.def <= -2.5 ? 1 : (c.tc > 0.15 ? 0.1 : 0.05); },   // let a dopad 10× zpomaleně
+      reset:function(){ st = { c:carNew(), o1:occNew('spol-pas'), o2:occNew('spol-bez'), t:0, done:false }; },
+      step:function(dt){
+        carStep(st.c, dt); occStep(st.o1, st.c, dt); occStep(st.o2, st.c, dt);
+        st.t += dt;
+        var j = st.o2.ej;
+        if((st.c.tc > 0.45 && j && j.slide) || st.c.tc > 2.5) st.done = true;
+      },
+      draw:function(){
+        var s = svgDefs(P), K = CK, c = st.c, i;
+        s += '<rect x="0" y="0" width="640" height="340" fill="url(#' + P + '-sky)"/>';
+        [[CG1, st.o1, 'S pásem'], [CG2, st.o2, 'Bez pásu']].forEach(function(b){
+          var G = b[0], o = b[1];
+          s += '<rect x="0" y="' + G + '" width="640" height="' + (G === CG1 ? 20 : 18) + '" fill="url(#' + P + '-ground)"/>';
+          for(i = 0; i < 8; i++) s += '<rect x="' + (i*80 + 6) + '" y="' + (G + 9) + '" width="40" height="3" fill="#f4f1e8"/>';
+          // nízký betonový blok s výstražnými pruhy
+          var bh = BLK*K, bw = 0.6*K;
+          s += '<rect x="' + CWX + '" y="' + f1(G - bh) + '" width="' + f1(bw) + '" height="' + f1(bh) + '" fill="#b8b2a6" stroke="#6f6a60" stroke-width="1.5"/>';
+          for(i = 0; i < 4; i++) s += poly([[CWX, G - bh + 4 + i*6], [CWX + 6, G - bh + 4 + i*6], [CWX + 6, G - bh + 8 + i*6], [CWX, G - bh + 8 + i*6]], i % 2 ? '#2b2f33' : '#f2c230');
+          s += carSvg(c, o, K, CWX, G) + fragsSvg(c.frags, K, CWX, G) + flyerSvg(o, K, CWX, G) + fragsSvg(o.glass, K, CWX, G);
+          var vo = o.ej ? Math.hypot(o.ej.vx, o.ej.land ? 0 : o.ej.vy) : Math.max(0, c.v + o.u);
+          s += svgText(14, G === CG1 ? 22 : 194, '<tspan font-weight="700">' + b[2] + ':</tspan> auto ' + cz(Math.abs(c.v)*3.6, 0) + '&#160;km·h⁻¹   spolujezdec ' + cz(vo*3.6, 0) + '&#160;km·h⁻¹', {size:12.5, weight:600});
+        });
+        s += ln(0, CG1 + 21, 640, CG1 + 21, 'var(--ink-soft)', 1, ' opacity="0.5"');
+        var k = this.slow();
+        if(k < 1) s += svgText(626, 22, 'zpomaleno ' + Math.round(1/k) + '×', {anchor:'end', size:12.5, weight:600, color:'var(--danger)'});
+        return s;
+      },
+      comment:function(){
+        var c = st.c, o1 = st.o1, j = st.o2.ej;
+        if(c.ph === 'jizda') return '<p>Dvě stejná auta narazí rychlostí 50&nbsp;km·h⁻¹ do nízkého betonového bloku. Nahoře je spolujezdec připoutaný, dole bez pásu. Před spolujezdcem není volant, který by ho zachytil. Stiskněte Spustit; těsně před nárazem se animace zpomalí.</p>';
+        if(!j) return '<p>Obě auta se zastavují na deformační dráze 0,6&nbsp;m. Připoutaného spolujezdce brzdí pás spolu s autem. Na nepřipoutaného nepůsobí žádná síla dozadu, a proto se setrvačností pohybuje dál rychlostí 50&nbsp;km·h⁻¹; kolena se zapřou o palubní desku a tělo se přes ně překlopí dopředu.</p>';
+        var txt = '<p><b>Bez pásu:</b> nic spolujezdce nezastavilo, a proto hlavou prorazil čelní sklo a vyletěl z auta rychlostí asi ' + cz(j.v0*3.6, 0) + '&nbsp;km·h⁻¹.';
+        if(j.land) txt += ' Přeletěl kapotu i betonový blok a dopadl na zem asi ' + cz(Math.max(0, j.xl - BLK), 1) + '&nbsp;m za ním' + (j.slide ? '; po zemi se ještě smýkal a kutálel, celkem skončil ' + cz(Math.max(0, j.x - BLK), 1) + '&nbsp;m za blokem' : '') + '.';
+        return txt + ' <b>S pásem:</b> spolujezdec se posunul dopředu jen asi o ' + cz(Math.round(o1.smax*100), 0) + '&nbsp;cm a zůstal v sedadle. Proto se poutáme na všech sedadlech, i vzadu.</p>';
       }
     };
 
@@ -1144,16 +1266,17 @@
     };
 
     var SC = { bus:BUS, mince:MINCE, naraz:NARAZ, podlozka:PODL };
+    function cur(){ return scene === 'naraz' && variant === 'srovnani' ? CMP : SC[scene]; }
     function draw(){
-      svg.innerHTML = SC[scene].draw();
-      document.getElementById('in-comment').innerHTML = SC[scene].comment();
+      svg.innerHTML = cur().draw();
+      document.getElementById('in-comment').innerHTML = cur().comment();
     }
-    function reset(){ running = false; last = null; SC[scene].reset(); btn.textContent = 'Spustit'; draw(); }
+    function reset(){ running = false; last = null; cur().reset(); btn.textContent = 'Spustit'; draw(); }
     function frame(ts){
       if(!running){ last = null; return; }
       if(last === null) last = ts;
       var dt = Math.min(0.05, (ts - last)/1000); last = ts;
-      var sc = SC[scene], n = Math.max(1, Math.ceil(dt/0.0005));
+      var sc = cur(), n = Math.max(1, Math.ceil(dt/0.0005));
       for(var i = 0; i < n && !st.done; i++){ var k = sc.slow ? sc.slow() : 1; sc.step(dt*k/n); }
       draw();
       if(st.done){ running = false; btn.textContent = 'Spustit znovu'; return; }
@@ -1169,7 +1292,7 @@
       variant = b.getAttribute('data-var'); setChips(varSeg, 'var', variant); reset();
     });
     btn.addEventListener('click', function(){
-      if(st.done) SC[scene].reset();
+      if(st.done) cur().reset();
       running = !running;
       btn.textContent = running ? 'Pozastavit' : 'Spustit';
       if(running) window.requestAnimationFrame(frame);
