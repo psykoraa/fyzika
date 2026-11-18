@@ -918,7 +918,7 @@
         </div>
         <details class="navod">
           <summary>Návod</summary>
-          <p class="hint">Schéma nahoře je nakreslené svisle zvětšeně (úhly v něm nejsou skutečné) a rozteč štěrbin je zvětšená, aby šla vidět; polohy na stínítku odpovídají obrazci, grafu i tabulce. Jas obrazce odpovídá intenzitě v grafu, graf je vztažený k hlavnímu maximu bez vlivu obálky. Hlavní maxima zůstávají na stejných místech, ať je štěrbin osvětleno kolik chce; s jejich počtem <i>M</i> se ale zužují a mezi nimi vzniká <i>M</i>&nbsp;−&nbsp;1 minim a <i>M</i>&nbsp;−&nbsp;2 slabých vedlejších maxim. Skutečná mřížka má osvětlených štěrbin tisíce, takže maxima jsou tenké čáry. Obálka (čárkovaně) je rozložení intenzity po ohybu na jedné štěrbině: čím užší štěrbina, tím je plošší. Výběr bodu funguje jen v jednobarevném světle. U CD a DVD jde o odraz, úhly ale vycházejí stejně jako u mřížky se stejnou roztečí stop.</p>
+          <p class="hint">Schéma nahoře je nakreslené svisle zvětšeně (úhly v něm nejsou skutečné) a štěrbiny jsou zvětšené, aby šly vidět: s větší hustotou vrypů se zmenšuje jejich rozteč (ne v měřítku) a šířka štěrbiny je vždy nastavenou částí rozteče; polohy na stínítku odpovídají obrazci, grafu i tabulce. Jas obrazce odpovídá intenzitě v grafu, graf je vztažený k hlavnímu maximu bez vlivu obálky. Hlavní maxima zůstávají na stejných místech, ať je štěrbin osvětleno kolik chce; s jejich počtem <i>M</i> se ale zužují a mezi nimi vzniká <i>M</i>&nbsp;−&nbsp;1 minim a <i>M</i>&nbsp;−&nbsp;2 slabých vedlejších maxim. Skutečná mřížka má osvětlených štěrbin tisíce, takže maxima jsou tenké čáry. Obálka (čárkovaně) je rozložení intenzity po ohybu na jedné štěrbině: čím užší štěrbina, tím je plošší. Výběr bodu funguje jen v jednobarevném světle. U CD a DVD jde o odraz, úhly ale vycházejí stejně jako u mřížky se stejnou roztečí stop.</p>
         </details>
       </div>
 
@@ -1575,7 +1575,11 @@
 
       // ---------- A: schéma (pohled shora, svisle zvětšeno) ----------
       var yc = 92, ky = 64 / X, xs = 120, xsc = xs + D * 240;
-      var sp = 8, M = st.M;                                          // rozteč štěrbin ve schématu je zvětšená
+      // rozteč štěrbin ve schématu je zvětšená a roste s b logaritmicky (b = 0,71 µm až 10 µm → 4 px až 10 px),
+      // šířka štěrbiny je ve schématu stejným podílem rozteče jako ve skutečnosti (a = af · b)
+      var M = st.M, bUm = 1e3 / st.N;
+      var sp = 4 + 6 * Math.log(bUm / (1e3 / 1400)) / Math.log(1400 / 100);
+      var gap = Math.max(1.5, sp * st.af / 100);
       var yTopS = yc - (M - 1) / 2 * sp, yk = (st.mk === null) ? yc : yc - st.mk * ky;
       o += '<g font-family="Work Sans, sans-serif" font-size="' + fsl(13) + '" fill="var(--ink)">';
       var yi;
@@ -1589,11 +1593,11 @@
       }
       o += '</g>';
       // mřížka: M štěrbin, mezi nimi neprůhledné části
-      o += '<line x1="' + xs + '" y1="14" x2="' + xs + '" y2="' + (yTopS - 2) + '" stroke="var(--ink)" stroke-width="7"/>';
+      o += '<line x1="' + xs + '" y1="14" x2="' + xs + '" y2="' + (yTopS - gap / 2) + '" stroke="var(--ink)" stroke-width="7"/>';
       for(i = 0; i < M - 1; i++){
-        o += '<line x1="' + xs + '" y1="' + (yTopS + i * sp + 2) + '" x2="' + xs + '" y2="' + (yTopS + (i + 1) * sp - 2) + '" stroke="var(--ink)" stroke-width="7"/>';
+        o += '<line x1="' + xs + '" y1="' + (yTopS + i * sp + gap / 2) + '" x2="' + xs + '" y2="' + (yTopS + (i + 1) * sp - gap / 2) + '" stroke="var(--ink)" stroke-width="7"/>';
       }
-      o += '<line x1="' + xs + '" y1="' + (yTopS + (M - 1) * sp + 2) + '" x2="' + xs + '" y2="170" stroke="var(--ink)" stroke-width="7"/>';
+      o += '<line x1="' + xs + '" y1="' + (yTopS + (M - 1) * sp + gap / 2) + '" x2="' + xs + '" y2="170" stroke="var(--ink)" stroke-width="7"/>';
       o += '<text x="' + (xs - 10) + '" y="12" text-anchor="end" fill="var(--ink-soft)">mřížka</text>';
       if(!st.white){ o += '<rect x="' + (xsc + 4) + '" y="' + (yc - 64) + '" width="14" height="128" fill="url(#g-side)"/>'; }
       o += '<line x1="' + xsc + '" y1="14" x2="' + xsc + '" y2="170" stroke="var(--ink)" stroke-width="4"/>';
