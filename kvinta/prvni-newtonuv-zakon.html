@@ -380,7 +380,7 @@
       </div>
       <details class="navod">
         <summary>Návod</summary>
-        <p class="hint">Nahoře vyberte situaci a pod ní variantu, pak stiskněte Spustit. Autobus: kamera jede s autobusem, sledujte cestujícího, držadlo a míček na podlaze (náklon cestujícího je pro názornost zvětšený). Mince a kartička: rychlé cvrnknutí je zpomalené dvacetkrát. Náraz auta: samotný náraz je zpomalený dvacetkrát, figurína sedí s pásem nebo bez něj. Kulička na podložce: kulička sjede z rampy a dojíždí po podložce; praporky označují, kam dojela při předchozích pokusech.</p>
+        <p class="hint">Nahoře vyberte situaci a pod ní variantu, pak stiskněte Spustit. Všechny scény jsou nakreslené ve skutečném měřítku a pohyb se počítá z pohybových rovnic. Autobus: kamera jede s autobusem, sledujte cestujícího, držadla a míč na podlaze; při brzdění svítí brzdová světla. Mince a kartička: rychlé cvrnknutí je zpomalené dvacetkrát. Náraz auta: od 2,5&nbsp;m před překážkou je děj zpomalený dvacetkrát, figurína sedí s pásem nebo bez něj. Kulička na podložce: kulička se skutálí z rampy vysoké 0,5&nbsp;m a dojíždí po podložce; praporky označují, kam dojela při předchozích pokusech.</p>
       </details>
 
       <div class="comment" id="in-comment" aria-live="polite"></div>
@@ -639,6 +639,7 @@
   var STATS_KEY = 'fyzika:prvni-newtonuv-zakon:stats';
 
   // ================= APLET: SETRVAČNOST V SITUACÍCH =================
+  // Každá scéna počítá pohyb z pohybových rovnic v SI jednotkách a kreslí se ve skutečném měřítku (px na metr).
   (function(){
     var GA = 9.81, P = 'in';
     var svg = document.getElementById('in-svg'), btn = document.getElementById('in-play');
@@ -653,7 +654,7 @@
 
     function buildVars(){
       varSeg.innerHTML = '';
-      VARS[scene].forEach(function(v, i){
+      VARS[scene].forEach(function(v){
         var b = document.createElement('button');
         b.type = 'button'; b.className = 'chip accented' + (v[0] === variant ? ' on' : '');
         b.setAttribute('data-var', v[0]); b.setAttribute('aria-pressed', v[0] === variant ? 'true' : 'false');
@@ -662,270 +663,483 @@
       });
     }
 
+    // ---- pomocné kreslení ----
+    function clamp(x, a, b){ return x < a ? a : x > b ? b : x; }
+    function wrap(x, per){ return ((x % per) + per) % per; }
+    function ln(x1, y1, x2, y2, col, w, ex){
+      return '<line x1="' + f1(x1) + '" y1="' + f1(y1) + '" x2="' + f1(x2) + '" y2="' + f1(y2) + '" stroke="' + col + '" stroke-width="' + w + '" stroke-linecap="round"' + (ex || '') + '/>';
+    }
+    function poly(pts, fill, stroke, w, ex){
+      return '<path d="M' + pts.map(function(p){ return f1(p[0]) + ',' + f1(p[1]); }).join(' L') + ' Z" fill="' + fill + '"' +
+        (stroke ? ' stroke="' + stroke + '" stroke-width="' + (w || 1) + '" stroke-linejoin="round"' : '') + (ex || '') + '/>';
+    }
+    // prst / končetina: obrys a výplň (kapsle)
+    function limb(x1, y1, x2, y2, w, fill, edge){ return ln(x1, y1, x2, y2, edge, w + 2) + ln(x1, y1, x2, y2, fill, w); }
+    function tree(x, yb, k){
+      return '<rect x="' + f1(x - 3*k) + '" y="' + f1(yb - 34*k) + '" width="' + f1(6*k) + '" height="' + f1(34*k) + '" fill="#7a5c3e"/>' +
+        '<circle cx="' + f1(x) + '" cy="' + f1(yb - 46*k) + '" r="' + f1(22*k) + '" fill="#9cbf8a"/>' +
+        '<circle cx="' + f1(x - 14*k) + '" cy="' + f1(yb - 33*k) + '" r="' + f1(14*k) + '" fill="#8fb47c"/>' +
+        '<circle cx="' + f1(x + 13*k) + '" cy="' + f1(yb - 35*k) + '" r="' + f1(15*k) + '" fill="#86ab73"/>';
+    }
+
     // ---------- scéna: autobus ----------
+    // Midibus délky asi 7,3 m v měřítku 60 px/m. Cestující je obrácené kyvadlo, které svaly vracejí do svislé polohy,
+    // držadla a volně visící paže jsou kyvadla, míč je valící se koule, karoserie se naklání na pérování.
+    var BK = 60, BR = 26;                       // px na metr, poloměr kola (px) = 0,43 m
+    function person(x, y, h, legA, torA, armA, col){
+      var u = h/100, S = Math.sin, C = Math.cos;
+      var hip = [x + 48*u*S(legA), y - 48*u*C(legA)];
+      var sh = [hip[0] + 31*u*S(torA), hip[1] - 31*u*C(torA)];
+      var hd = [hip[0] + 42*u*S(torA), hip[1] - 42*u*C(torA)];
+      var hand = [sh[0] + 27*u*S(armA), sh[1] + 27*u*C(armA)], hand2 = [sh[0] + 27*u*S(armA - 0.12), sh[1] + 27*u*C(armA - 0.12)];
+      var s = '';
+      s += limb(sh[0], sh[1], hand2[0], hand2[1], 5*u, '#2a5a73', '#1f4456');                  // zadní paže
+      s += limb(hip[0], hip[1], x - 5*u, y - 2*u, 7*u, '#343f4e', '#262e39');                    // zadní noha
+      s += limb(hip[0], hip[1], x + 5*u, y - 2*u, 7*u, '#3d4a5c', '#262e39');                    // přední noha
+      s += '<ellipse cx="' + f1(x - 3*u) + '" cy="' + f1(y - 1.5*u) + '" rx="' + f1(6*u) + '" ry="' + f1(2.2*u) + '" fill="#222"/>';
+      s += '<ellipse cx="' + f1(x + 8*u) + '" cy="' + f1(y - 1.5*u) + '" rx="' + f1(6*u) + '" ry="' + f1(2.2*u) + '" fill="#222"/>';
+      s += limb(hip[0], hip[1], sh[0], sh[1], 15*u, col, '#1f4456');                              // trup
+      s += '<circle cx="' + f1(hd[0]) + '" cy="' + f1(hd[1]) + '" r="' + f1(7.5*u) + '" fill="#e9c7a6" stroke="#b98d69" stroke-width="0.8"/>';
+      s += '<path d="M' + f1(hd[0] - 7.5*u) + ',' + f1(hd[1] - 1*u) + ' A' + f1(7.5*u) + ',' + f1(7.5*u) + ' 0 0 1 ' + f1(hd[0] + 6*u) + ',' + f1(hd[1] - 4.5*u) + ' L' + f1(hd[0] - 2*u) + ',' + f1(hd[1] - 2*u) + ' Z" fill="#5a4030" transform="rotate(' + f1(torA*57.3) + ',' + f1(hd[0]) + ',' + f1(hd[1]) + ')"/>';
+      s += '<circle cx="' + f1(hd[0] + 7.2*u*C(torA)) + '" cy="' + f1(hd[1] + 7.2*u*S(torA)) + '" r="' + f1(1.3*u) + '" fill="#d9b08c"/>';  // nos
+      s += limb(sh[0], sh[1], hand[0], hand[1], 5*u, col, '#1f4456');                            // přední paže
+      s += '<circle cx="' + f1(hand[0]) + '" cy="' + f1(hand[1]) + '" r="' + f1(2.6*u) + '" fill="#e9c7a6"/>';
+      return s;
+    }
     var BUS = {
       reset:function(){
         var v0 = variant === 'rozjezd' ? 0 : variant === 'stala' ? 12 : 14;
-        st = { t:0, v:v0, a:0, off:0, lean:0, strap:0, ball:330, vb:0, wheel:0, done:false };
+        st = { t:0, v:v0, a:0, off:0, th:0, om:0, s1:0, w1:0, s2:0, w2:0, arm:0, aw:0, pit:0, pv:0, bx:1.2, bv:0, wheel:0, tstop:0, done:false };
       },
-      acc:function(){
-        if(variant === 'rozjezd') return st.t < 10 ? 1.4 : 0;
-        if(variant === 'brzdeni') return st.v > 0 ? -2.8 : 0;
+      cmd:function(){
+        if(variant === 'rozjezd') return st.t < 6 ? 1.8 : 0;        // svižný rozjezd na asi 39 km·h⁻¹
+        if(variant === 'brzdeni') return st.v > 0 ? -3 : 0;         // ostré, ale běžné brzdění
         return 0;
       },
       step:function(dt){
-        st.a = this.acc();
-        st.v = Math.max(0, st.v + st.a*dt);
-        if(variant === 'brzdeni' && st.v === 0) st.a = 0;
-        st.off += st.v*dt*14; st.wheel += st.v*dt/0.5;
-        var target = -Math.atan(st.a/GA);                       // úhel rovnovážné polohy (− = dozadu)
-        st.strap += (target - st.strap)*Math.min(1, dt*5);
-        var tl = Math.max(-0.4, Math.min(0.4, 1.8*target));      // náklon cestujícího zvětšen 1,8× (nejvýše asi 23°)
-        st.lean += (tl - st.lean)*Math.min(1, dt*3.5);
-        // míček na hladké podlaze: vůči autobusu zrychluje −a, odrazí se od stěn
-        st.vb += -st.a*dt*14; st.ball += st.vb*dt;
-        if(st.ball < 152){ st.ball = 152; st.vb = -0.4*st.vb; }
-        if(st.ball > 488){ st.ball = 488; st.vb = -0.4*st.vb; }
-        st.vb *= Math.pow(0.6, dt);                              // slabé valivé tlumení
+        st.a += clamp(this.cmd() - st.a, -4*dt, 4*dt);               // zrychlení se nemění skokem (ryvek nejvýše 4 m·s⁻³)
+        st.v += st.a*dt;
+        if(variant === 'brzdeni' && st.v <= 0){ st.v = 0; st.a = 0; } // při zastavení zrychlení zmizí naráz (cuknutí)
+        var a = st.a;
+        // cestující: θ'' = −a/L − ω₀²θ − 2ζω₀θ' (L = 1 m, ω₀ = 4,5 s⁻¹, ζ = 0,35); θ > 0 = předklon
+        st.om += (-a - 20.25*st.th - 3.15*st.om)*dt; st.th += st.om*dt;
+        // držadla (kyvadla délky 0,35 m a 0,30 m) a paže (silně tlumené kyvadlo 0,33 m); úhel > 0 = dopředu
+        st.w1 += (-(GA/0.35)*Math.sin(st.s1) - (a/0.35)*Math.cos(st.s1) - 0.8*st.w1)*dt; st.s1 += st.w1*dt;
+        st.w2 += (-(GA/0.30)*Math.sin(st.s2) - (a/0.30)*Math.cos(st.s2) - 0.8*st.w2)*dt; st.s2 += st.w2*dt;
+        st.aw += (-(GA/0.33)*Math.sin(st.arm) - (a/0.33)*Math.cos(st.arm) - 7*st.aw)*dt; st.arm += st.aw*dt;
+        // karoserie na pérování: při rozjezdu se předek zvedne, při brzdění skloní (rad, > 0 = předek dolů)
+        st.pv += (-36*(st.pit + 0.005*a) - 7.2*st.pv)*dt; st.pit += st.pv*dt;
+        // míč: valící se koule má vůči autobusu zrychlení −5/7·a; valivý odpor 0,03 g; odráží se od sedadel a přední stěny
+        var ab = -5/7*a, rr = 0.03*GA;
+        if(Math.abs(st.bv) > 0.002) ab -= (st.bv > 0 ? 1 : -1)*rr;
+        else if(Math.abs(ab) <= rr){ ab = 0; st.bv = 0; }
+        else ab -= (ab > 0 ? 1 : -1)*rr;
+        st.bv += ab*dt; st.bx += st.bv*dt;
+        if(st.bx < -1.57){ st.bx = -1.57; st.bv = -0.45*st.bv; }
+        if(st.bx > 2.75){ st.bx = 2.75; st.bv = -0.45*st.bv; }
+        st.off += st.v*dt; st.wheel += st.v*dt/(BR/BK);
         st.t += dt;
-        if(st.t > 13) st.done = true;
+        if(variant === 'brzdeni' && st.v === 0) st.tstop += dt;
+        if((variant === 'rozjezd' && st.t > 10) || (variant === 'brzdeni' && st.tstop > 3.5) || (variant === 'stala' && st.t > 6)) st.done = true;
       },
       draw:function(){
-        var s = svgDefs(P);
+        var s = svgDefs(P), K = BK, off = st.off*K, i, x;
+        function scenery(yb){
+          var r = '';
+          for(var j = 0; j < 9; j++){ var tx = wrap(j*95 - off*0.45, 855) - 80; r += tree(tx, yb, 0.85 + 0.2*(j % 3)); }
+          return r;
+        }
         s += '<rect x="0" y="0" width="640" height="250" fill="url(#' + P + '-sky)"/>';
-        // pozadí: stromy a sloupy (paralaxa)
-        for(var i = -1; i < 9; i++){
-          var tx = ((i*110 - st.off*0.35) % 880 + 880) % 880 - 120;
-          s += '<g opacity="0.75"><rect x="' + f1(tx + 18) + '" y="170" width="6" height="60" fill="#8a6b4a"/><circle cx="' + f1(tx + 21) + '" cy="160" r="26" fill="#9cbf8a"/><circle cx="' + f1(tx + 8) + '" cy="172" r="16" fill="#8fb47c"/></g>';
+        var hx = -wrap(off*0.05, 640);
+        s += '<path d="M' + f1(hx) + ',214 q80,-46 160,-6 t160,-2 t160,-4 t160,2 t160,-6 t160,-2 t160,-4 t160,2 V250 H' + f1(hx) + ' Z" fill="#c4d8bb" opacity="0.85"/>';
+        s += scenery(244);
+        s += '<rect x="0" y="244" width="640" height="12" fill="#d8d2c2"/><rect x="0" y="255" width="640" height="3" fill="#a9a395"/>';
+        for(i = 0; i < 3; i++){                                   // pouliční lampy po 25 m
+          x = wrap(i*500 - off, 1500) - 60;
+          s += ln(x, 248, x, 116, '#6f7a83', 4) + ln(x, 118, x + 22, 114, '#6f7a83', 3) + '<rect x="' + f1(x + 16) + '" y="110" width="16" height="6" rx="2" fill="#4a5258"/>';
         }
-        s += '<rect x="0" y="250" width="640" height="90" fill="url(#' + P + '-ground)"/>';
-        s += '<rect x="0" y="246" width="640" height="6" fill="#d8d2c2"/>';
-        for(var j = -1; j < 12; j++){
-          var dx = ((j*70 - st.off) % 840 + 840) % 840 - 70;
-          s += '<rect x="' + f1(dx) + '" y="298" width="38" height="5" fill="#f4f1e8"/>';
+        s += '<rect x="0" y="258" width="640" height="82" fill="url(#' + P + '-ground)"/>';
+        for(i = 0; i < 3; i++){ x = wrap(i*540 - off, 1620) - 200; s += '<rect x="' + f1(x) + '" y="306" width="180" height="5" fill="#f4f1e8"/>'; }
+        s += '<ellipse cx="322" cy="283" rx="236" ry="6" fill="#000" opacity="0.18"/>';
+        // ---- karoserie (naklání se na pérování kolem středu mezi koly) ----
+        var g = '<g transform="rotate(' + f1(st.pit*180/Math.PI) + ',321,254)">';
+        g += '<g filter="url(#' + P + '-sh)"><path d="M100,234 V92 Q100,64 128,64 H516 Q540,64 545,92 L549,150 V234 Q549,246 537,246 H112 Q100,246 100,234 Z" fill="#e8a33d" stroke="var(--ink)" stroke-width="2"/></g>';
+        g += '<rect x="101" y="212" width="447" height="20" fill="#c9832a"/>';
+        g += '<rect x="130" y="68" width="104" height="13" rx="2" fill="#2b2f33"/><text x="136" y="78" font-size="9" font-family="IBM Plex Mono, monospace" font-weight="700" fill="#ffb347">12  Nádraží</text>';
+        // řez: interiér se zadní stěnou a okny protější strany, za kterými ubíhá krajina
+        g += '<rect x="118" y="84" width="408" height="148" rx="6" fill="#efe6cf" stroke="#9a6a22" stroke-width="2"/>';
+        g += '<clipPath id="in-win"><rect x="124" y="90" width="374" height="64" rx="4"/></clipPath>';
+        g += '<g clip-path="url(#in-win)"><rect x="124" y="90" width="374" height="64" fill="#d9e9f2"/>' + scenery(178) + '<rect x="124" y="90" width="374" height="64" fill="url(#' + P + '-glass)" opacity="0.45"/></g>';
+        for(x = 124; x <= 499; x += 62.3) g += '<rect x="' + f1(x - 2.5) + '" y="88" width="5" height="68" fill="#c9832a"/>';
+        g += '<rect x="122" y="153" width="380" height="5" fill="#c9832a"/>';
+        g += '<rect x="500" y="88" width="24" height="142" fill="#d8ccb0"/><path d="M503,150 h18 v14 h-18 Z" fill="#4a5258"/>';  // přední část s kabinou řidiče
+        g += ln(124, 101, 498, 101, '#8e989f', 3) + ln(258, 101, 258, 228, '#9aa4ab', 4);            // madlo a tyč
+        [134, 186].forEach(function(sx){                                                       // sedadla po směru jízdy
+          g += poly([[sx, 214], [sx + 1, 168], [sx + 10, 165], [sx + 12, 202], [sx + 40, 202], [sx + 42, 214]], '#3e5a7a', '#2c4058', 1.2);
+          g += ln(sx + 26, 214, sx + 26, 228, '#5d6b76', 3);
+        });
+        g += '<rect x="118" y="228" width="408" height="5" fill="#5f5a50"/>';
+        function strap(px, L, ang){
+          var c = Math.sin(ang), d = Math.cos(ang), Lp = L*K;
+          return ln(px, 101, px + Lp*c, 101 + Lp*d, '#5d6b76', 3) + '<circle cx="' + f1(px + (Lp + 7)*c) + '" cy="' + f1(101 + (Lp + 7)*d) + '" r="7" fill="none" stroke="#3f4a52" stroke-width="3"/>';
         }
-        // autobus
-        s += '<g filter="url(#' + P + '-sh)"><rect x="105" y="62" width="430" height="178" rx="20" fill="#e8a33d" stroke="var(--ink)" stroke-width="2"/></g>';
-        s += '<rect x="132" y="82" width="378" height="146" rx="8" fill="#f7f1e2" stroke="#9a6a22" stroke-width="2"/>';
-        s += '<rect x="132" y="82" width="378" height="64" rx="8" fill="url(#' + P + '-glass)" opacity="0.7"/>';
-        s += '<line x1="132" y1="226" x2="510" y2="226" stroke="var(--ink)" stroke-width="3"/>';
-        s += '<line x1="140" y1="98" x2="502" y2="98" stroke="#7d868e" stroke-width="3"/>';
-        s += '<rect x="510" y="96" width="18" height="40" rx="4" fill="#fff6c9" stroke="#9a6a22" stroke-width="1"/>';
-        // držadlo
-        s += '<g transform="rotate(' + f1(st.strap*180/Math.PI) + ',420,98)"><line x1="420" y1="98" x2="420" y2="132" stroke="#5d6b76" stroke-width="3"/><circle cx="420" cy="140" r="8" fill="none" stroke="#5d6b76" stroke-width="3"/></g>';
-        s += '<line x1="420" y1="98" x2="420" y2="148" stroke="var(--line)" stroke-width="1" stroke-dasharray="3 3"/>';
-        // cestující a míček
-        s += svgPerson(290, 226, 118, st.lean, '#2f6f8f');
-        s += '<circle cx="' + f1(st.ball) + '" cy="216" r="10" fill="url(#' + P + '-ball)"/>';
-        s += svgWheel(180, 242, 22, st.wheel) + svgWheel(460, 242, 22, st.wheel);
-        // šipka zrychlení autobusu
-        if(Math.abs(st.a) > 0.01){
+        g += strap(392, 0.35, st.s1) + strap(446, 0.30, st.s2);
+        // míč (průměr 27 cm) se valí a otáčí
+        var mx = 330 + st.bx*K, rb = 8, rot = st.bx/(rb/K)*180/Math.PI;
+        g += '<ellipse cx="' + f1(mx) + '" cy="228" rx="9" ry="1.6" fill="#000" opacity="0.25"/>';
+        g += '<g transform="translate(' + f1(mx) + ',' + (228 - rb) + ') rotate(' + f1(rot) + ')"><circle r="' + rb + '" fill="url(#' + P + '-ball)"/><path d="M-' + rb + ',0 A' + rb + ',' + rb + ' 0 0 0 ' + rb + ',0" fill="none" stroke="#fff" stroke-width="1.5" opacity="0.75"/></g>';
+        g += person(318, 228, 105, 0.55*st.th, 1.8*st.th, st.arm + 0.08, '#2f6f8f');
+        // přední a zadní světla; brzdová světla svítí při brzdění
+        g += '<path d="M538,96 Q546,120 547,150 L538,150 Z" fill="url(#' + P + '-glass)" stroke="#6a7b86" stroke-width="1"/>';
+        g += '<rect x="540" y="214" width="9" height="12" rx="2" fill="#fff6c9" stroke="#9a6a22" stroke-width="1"/>';
+        var brake = st.a < -0.3;
+        if(brake) g += '<circle cx="104" cy="207" r="13" fill="#ff3b2f" opacity="0.25"/>';
+        g += '<rect x="100" y="198" width="7" height="18" rx="2" fill="' + (brake ? '#ff3b2f' : '#8e2a20') + '"/>';
+        g += '<path d="M146,246 A30,30 0 0 1 206,246 Z M436,246 A30,30 0 0 1 496,246 Z" fill="#3a3f44"/>';
+        g += '</g>';
+        s += g + svgWheel(176, 280 - BR, BR, st.wheel) + svgWheel(466, 280 - BR, BR, st.wheel);
+        if(Math.abs(st.a) > 0.05){
           var L = st.a*28;
-          s += svgArrow(320, 44, 320 + L, 44, 'var(--accent)', 3.2);
-          s += svgText(320 + L + (L > 0 ? 6 : -6), 49, '<tspan font-style="italic" font-weight="700">a</tspan>', {anchor:L > 0 ? 'start' : 'end', size:15, color:'var(--accent)'});
+          s += svgArrow(322, 42, 322 + L, 42, 'var(--accent)', 3.2);
+          s += svgText(322 + L + (L > 0 ? 6 : -6), 47, '<tspan font-style="italic" font-weight="700">a</tspan>', {anchor:L > 0 ? 'start' : 'end', size:15, color:'var(--accent)'});
         }
-        s += svgText(14, 24, 'rychlost autobusu ' + cz(st.v*3.6, 0) + '&#160;km·h⁻¹', {size:12.5, weight:600, color:'var(--ink)'});
+        s += svgText(14, 24, 'rychlost autobusu ' + cz(st.v*3.6, 0) + '&#160;km·h⁻¹', {size:12.5, weight:600});
         return s;
       },
       comment:function(){
-        if(st.t === 0 && variant === 'rozjezd') return '<p>Autobus stojí na zastávce. Stiskněte Spustit a sledujte cestujícího, držadlo a míček, když se autobus rozjede.</p>';
-        if(st.t === 0 && variant === 'brzdeni') return '<p>Autobus jede stálou rychlostí ' + cz(st.v*3.6, 0) + '&nbsp;km·h⁻¹. Stiskněte Spustit a sledujte cestujícího, držadlo a míček, když autobus začne brzdit.</p>';
-        if(variant === 'stala') return '<p><b>Stálá rychlost:</b> autobus je inerciální soustava. Cestující stojí rovně, držadlo visí svisle a míček leží v klidu, i když autobus jede ' + cz(st.v*3.6, 0) + '&nbsp;km·h⁻¹. Uvnitř nepoznáte, zda autobus jede, nebo stojí.</p>';
-        if(variant === 'rozjezd') return st.a > 0 ? '<p><b>Rozjezd:</b> autobus zrychluje dopředu, ale tělo cestujícího si setrvačností udržuje původní (nulovou) rychlost. Nohy jsou s podlahou unášeny dopředu, horní část těla zůstává pozadu: cestující se zakloní. Míček se odvaluje dozadu a držadlo se vychýlí dozadu, i když je nic netlačí.</p>' : '<p>Autobus už jede stálou rychlostí, zrychlení je nulové. Cestující se narovná a držadlo visí svisle.</p>';
-        return st.a < 0 ? '<p><b>Brzdění:</b> autobus zpomaluje, ale cestující si setrvačností udržuje rychlost a pokračuje dopředu. Proto se předkloní (nebo by spadl dopředu, kdyby se nedržel). Míček se rozjede dopředu a držadlo se vychýlí dopředu.</p>' : '<p>Autobus zastavil. Míček se po podlaze ještě valí, protože se ho nic (kromě slabého valivého odporu) nesnaží zastavit.</p>';
+        if(st.t === 0 && variant === 'rozjezd') return '<p>Autobus stojí na zastávce. Stiskněte Spustit a sledujte cestujícího, držadla a míč, když se autobus rozjede.</p>';
+        if(st.t === 0 && variant === 'brzdeni') return '<p>Autobus jede stálou rychlostí ' + cz(st.v*3.6, 0) + '&nbsp;km·h⁻¹. Stiskněte Spustit a sledujte cestujícího, držadla a míč, když autobus začne brzdit.</p>';
+        if(variant === 'stala') return '<p><b>Stálá rychlost:</b> autobus je inerciální soustava. Cestující stojí rovně, držadla visí svisle a míč leží v klidu, i když autobus jede ' + cz(st.v*3.6, 0) + '&nbsp;km·h⁻¹. Uvnitř nepoznáte, zda autobus jede, nebo stojí.</p>';
+        if(variant === 'rozjezd') return st.a > 0.05 ? '<p><b>Rozjezd:</b> autobus zrychluje dopředu, ale tělo cestujícího si setrvačností udržuje původní (nulovou) rychlost. Nohy jsou s podlahou unášeny dopředu, horní část těla zůstává pozadu: cestující se zakloní. Držadla se vychýlí dozadu a míč se rozkutálí dozadu, i když je nic netlačí.</p>' : '<p>Autobus už jede stálou rychlostí, zrychlení je nulové. Cestující se narovná (chvíli se ještě zhoupne dopředu), držadla se dokývou do svislé polohy. Míč se kutálí dál, dokud ho nezastaví valivý odpor nebo sedadlo.</p>';
+        return st.a < -0.05 ? '<p><b>Brzdění:</b> autobus zpomaluje, ale cestující si setrvačností udržuje rychlost a pokračuje dopředu. Proto se předkloní (nebo by spadl dopředu, kdyby se nedržel). Držadla se vychýlí dopředu, míč se rozkutálí dopředu a karoserie se na pérování skloní dopředu.</p>' : '<p>Autobus zastavil. Brzdění skončilo naráz, a proto se cestující zhoupne zpět a držadla se rozkývají. Míč se po podlaze ještě valí, protože se ho nic (kromě slabého valivého odporu) nesnaží zastavit.</p>';
       }
     };
 
     // ---------- scéna: mince a kartička ----------
-    var MK = 2000, MX = 320, MF = 0.3;      // px na metr, střed sklenice, součinitel tření mince–kartička
+    // Skutečné rozměry: sklenice o průměru 6,6 cm a výšce 8 cm, hrací karta 9 cm, mince o průměru 2,5 cm; měřítko 2000 px/m.
+    var MK = 2000, GY = 296, TOPY = 136, MF = 0.3;
+    var GW = 0.033, GB = 0.027, CH = 0.045, CR = 0.0125, FALL = (GY - 10 - TOPY + 3)/MK;   // m
     var MINCE = {
       slow:function(){ return variant === 'rychle' ? 0.05 : 1; },
-      reset:function(){ st = { t:0, xc:0, vc:0, xk:0, vk:0, yk:0, vy:0, onCard:true, landed:false, done:false }; },
+      reset:function(){ st = { t:0, xc:0, vc:0, yc:0, vyc:0, rc:0, free:false, xk:0, vk:0, yk:0, vy:0, on:true, landed:false, tl:0, wob:0, done:false }; },
       step:function(dt){
-        var ac = variant === 'rychle' ? 80 : 1.0, stopX = 0.13;
-        if(st.xc < stopX || variant === 'rychle'){ st.vc += (st.xc < stopX ? ac : 0)*dt; }
-        else st.vc = 0;
+        if(variant === 'rychle'){
+          if(st.xc < 0.04) st.vc += 80*dt;                                   // prst tlačí na hranu kartičky po dráze 4 cm
+          else if(!st.free) st.vc = Math.max(0, st.vc - MF*GA*dt);           // kartička klouže po okraji sklenice
+          if(!st.free && st.xc - CH > GW) st.free = true;                    // kartička opustila sklenici a padá
+          if(st.free){ st.vyc += GA*dt; st.yc += st.vyc*dt; st.rc += 4*dt; }
+        } else {
+          if(st.t < 0.25) st.vc += 1.0*dt;                                   // ruka táhne se zrychlením 1 m·s⁻²
+          else if(st.xc < 0.07) st.vc = 0.25;
+          else st.vc = Math.max(0, st.vc - 1.0*dt);
+        }
         st.xc += st.vc*dt;
-        if(st.onCard){
-          var amax = MF*GA;
-          if(st.vk < st.vc){ st.vk = Math.min(st.vc, st.vk + amax*dt); }
+        if(st.on){
+          if(st.vk < st.vc) st.vk = Math.min(st.vc, st.vk + MF*GA*dt);       // tření urychluje minci nejvýše f g ≈ 2,9 m·s⁻²
           else st.vk = st.vc;
           st.xk += st.vk*dt;
-          if(Math.abs(st.xk - st.xc) > 0.045){ st.onCard = false; }
+          if(st.xc - CH > st.xk) st.on = false;                              // levý okraj kartičky minul střed mince
         } else if(!st.landed){
-          st.xk += st.vk*dt; st.vy += GA*dt; st.yk += st.vy*dt;
-          if(st.yk >= 0.042){ st.yk = 0.042; st.landed = true; st.vk = 0; }     // dno sklenice
+          st.vy += GA*dt; st.yk += st.vy*dt; st.xk += st.vk*dt;
+          var wIn = GW - (GW - GB)*clamp(st.yk/FALL, 0, 1) - CR - 0.0015;
+          if(st.yk > 0.002 && Math.abs(st.xk) > wIn){ st.xk = clamp(st.xk, -wIn, wIn); st.vk = -0.3*st.vk; }
+          if(st.yk >= FALL){
+            st.yk = FALL;
+            if(st.vy > 0.2){ st.vy = -0.22*st.vy; st.vk *= 0.5; st.wob = Math.max(st.wob, 0.25); }   // odraz ode dna
+            else { st.landed = true; st.vy = 0; st.vk = 0; st.tl = st.t; st.wob = Math.max(st.wob, 0.18); }
+          }
         }
+        st.wob *= Math.exp(-5*dt);
         st.t += dt;
-        if((variant === 'rychle' && st.landed && st.t > 0.25) || (variant === 'pomalu' && st.t > 1.3)) st.done = true;
+        if((variant === 'rychle' && st.landed && st.t - st.tl > 0.18) || (variant === 'pomalu' && st.t > 1.4)) st.done = true;
       },
       draw:function(){
-        var s = svgDefs(P);
-        s += '<rect x="0" y="0" width="640" height="262" fill="url(#' + P + '-sky)"/>';
-        s += '<rect x="0" y="262" width="640" height="78" fill="url(#' + P + '-wood)"/>';
-        s += '<line x1="0" y1="262" x2="640" y2="262" stroke="#9a7444" stroke-width="2"/>';
-        // sklenice
-        s += '<path d="M262,176 L274,262 H366 L378,176" fill="url(#' + P + '-glass)" stroke="#8fb3c6" stroke-width="2.5"/>';
-        s += '<ellipse cx="320" cy="258" rx="44" ry="4" fill="#bcd7e4"/>';
-        // kartička
-        var cx = MX + st.xc*MK;
-        if(cx < 760){
-          s += '<rect x="' + f1(cx - 90) + '" y="170" width="180" height="6" rx="1.5" fill="#f2f2ee" stroke="#9aa4ab" stroke-width="1.2" filter="url(#' + P + '-sh)"/>';
-          s += '<line x1="' + f1(cx - 80) + '" y1="173" x2="' + f1(cx + 80) + '" y2="173" stroke="var(--accent)" stroke-width="1" opacity="0.6"/>';
+        var s = svgDefs(P), MX = variant === 'rychle' ? 320 : 230;
+        s += '<rect x="0" y="0" width="640" height="' + GY + '" fill="#efe9dc"/><rect x="0" y="0" width="640" height="' + GY + '" fill="url(#' + P + '-sky)" opacity="0.35"/>';
+        s += '<rect x="0" y="' + GY + '" width="640" height="' + (340 - GY) + '" fill="url(#' + P + '-wood)"/>';
+        s += ln(0, GY + 0.5, 640, GY + 0.5, '#9a7444', 2) + ln(0, GY + 16, 640, GY + 16, '#b48a56', 1, ' opacity="0.6"');
+        var gt = GW*MK + 2, gb = GB*MK + 2;
+        // mince (průměr 50 px, tloušťka 4 px) s náklonem při dopadu
+        function coin(){
+          var kx = MX + st.xk*MK, ky = TOPY - 3 - 2 + st.yk*MK, ang = st.landed || st.yk > 0 ? st.wob*Math.sin(st.t*55)*57.3 : 0;
+          return '<g transform="rotate(' + f1(ang) + ',' + f1(kx) + ',' + f1(ky) + ')"><ellipse cx="' + f1(kx) + '" cy="' + f1(ky - 2) + '" rx="25" ry="3" fill="#ecd27a" stroke="#8e7020" stroke-width="0.8"/>' +
+            '<path d="M' + f1(kx - 25) + ',' + f1(ky - 2) + ' V' + f1(ky + 2) + ' A25,3 0 0 0 ' + f1(kx + 25) + ',' + f1(ky + 2) + ' V' + f1(ky - 2) + ' A25,3 0 0 1 ' + f1(kx - 25) + ',' + f1(ky - 2) + ' Z" fill="#c9a43e" stroke="#8e7020" stroke-width="0.8"/></g>';
         }
-        // ruka / prst
+        // zadní okraj sklenice, mince uvnitř, tělo sklenice, přední okraj
+        s += '<path d="M' + f1(MX - gt) + ',' + TOPY + ' A' + f1(gt) + ',5 0 0 1 ' + f1(MX + gt) + ',' + TOPY + '" fill="none" stroke="#9fc0d1" stroke-width="2"/>';
+        var inside = st.yk > 0.004;
+        if(inside) s += coin();
+        s += '<path d="M' + f1(MX - gt) + ',' + TOPY + ' L' + f1(MX - gb) + ',' + GY + ' H' + f1(MX + gb) + ' L' + f1(MX + gt) + ',' + TOPY + ' Z" fill="url(#' + P + '-glass)" opacity="0.55" stroke="#8fb3c6" stroke-width="2.5"/>';
+        s += '<rect x="' + f1(MX - gb + 2) + '" y="' + (GY - 10) + '" width="' + f1(2*gb - 4) + '" height="9" fill="#cfe3ee" opacity="0.8"/>';
+        s += ln(MX - gt + 10, TOPY + 14, MX - gb + 8, GY - 20, '#fff', 3, ' opacity="0.6"');
+        s += '<path d="M' + f1(MX - gt) + ',' + TOPY + ' A' + f1(gt) + ',5 0 0 0 ' + f1(MX + gt) + ',' + TOPY + '" fill="none" stroke="#8fb3c6" stroke-width="2"/>';
+        // kartička (9 cm × 0,3 mm, kreslena 3 px)
+        var cx = MX + st.xc*MK, cy = TOPY - 1.5 + st.yc*MK;
+        if(cx - 90 < 700 && cy < 360){
+          s += '<g transform="rotate(' + f1(st.rc*57.3) + ',' + f1(cx) + ',' + f1(cy) + ')"><rect x="' + f1(cx - 90) + '" y="' + f1(cy - 1.5) + '" width="180" height="3" fill="#fbfbf7" stroke="#9aa4ab" stroke-width="1"/>' +
+            ln(cx - 86, cy - 1.5, cx + 86, cy - 1.5, '#c0392b', 0.8, ' opacity="0.6"') + '</g>';
+        }
+        if(!inside) s += coin();
+        // ruka
+        var skin = '#e9c7a6', edge = '#b98d69';
         if(variant === 'rychle'){
-          var fx = MX - 118 + Math.min(st.xc*MK, 14);
-          s += '<path d="M' + f1(fx - 60) + ',196 C' + f1(fx - 30) + ',188 ' + f1(fx) + ',180 ' + f1(fx + 24) + ',176 C' + f1(fx + 30) + ',175 ' + f1(fx + 30) + ',182 ' + f1(fx + 22) + ',184 L' + f1(fx - 60) + ',214 Z" fill="#e9c7a6" stroke="#b98d69" stroke-width="1.2"/>';
+          var push = Math.min(st.xc, 0.04)*MK + (st.xc > 0.04 ? 6 : 0), tipX = MX - 92 + push, tipY = TOPY - 2;
+          s += '<g transform="translate(' + f1(0.75*push) + ',0)">';
+          tipX -= 0.75*push;
+          s += '<path d="M120,168 Q118,134 150,128 Q182,124 196,138 Q206,152 196,168 Q176,184 140,182 Q122,180 120,168 Z" fill="' + skin + '" stroke="' + edge + '" stroke-width="1.2"/>';
+          s += limb(186, 146, tipX, tipY, 10, skin, edge);                     // ukazováček (cvrnká)
+          s += limb(170, 160, 196, 162, 9, skin, edge);                        // palec
+          s += ln(150, 150, 166, 148, edge, 1, ' opacity="0.7"') + ln(146, 160, 164, 160, edge, 1, ' opacity="0.7"') + '</g>';
         } else {
-          var hx = cx - 92;
-          s += '<path d="M' + f1(hx - 70) + ',150 Q' + f1(hx - 20) + ',150 ' + f1(hx + 6) + ',166 L' + f1(hx + 6) + ',180 Q' + f1(hx - 20) + ',196 ' + f1(hx - 70) + ',196 Z" fill="#e9c7a6" stroke="#b98d69" stroke-width="1.2"/>';
+          var ex = cx + 90;
+          s += '<path d="M' + f1(ex + 14) + ',' + (TOPY - 26) + ' Q' + f1(ex + 60) + ',' + (TOPY - 34) + ' ' + f1(ex + 84) + ',' + (TOPY - 14) + ' Q' + f1(ex + 90) + ',' + (TOPY + 6) + ' ' + f1(ex + 70) + ',' + (TOPY + 18) + ' Q' + f1(ex + 40) + ',' + (TOPY + 26) + ' ' + f1(ex + 16) + ',' + (TOPY + 12) + ' Z" fill="' + skin + '" stroke="' + edge + '" stroke-width="1.2"/>';
+          s += limb(ex + 22, TOPY - 14, ex - 8, TOPY - 6, 9, skin, edge);          // palec nahoře
+          s += limb(ex + 24, TOPY + 8, ex - 8, TOPY + 4, 9, skin, edge);           // ukazováček zespodu
         }
-        // mince
-        var kx = MX + st.xk*MK, ky = 166 + st.yk*MK;
-        s += '<rect x="' + f1(kx - 22) + '" y="' + f1(ky - 4) + '" width="44" height="8" rx="3" fill="#d7b24a" stroke="#8e7020" stroke-width="1.2"/>';
-        s += '<line x1="' + f1(kx - 18) + '" y1="' + f1(ky - 1) + '" x2="' + f1(kx + 18) + '" y2="' + f1(ky - 1) + '" stroke="#f3dc8c" stroke-width="1.5"/>';
         if(this.slow() < 1) s += svgText(626, 24, 'zpomaleno 20×', {anchor:'end', size:12.5, weight:600, color:'var(--danger)'});
         s += svgText(14, 24, variant === 'rychle' ? 'kartička zrychluje asi 80&#160;m·s⁻²' : 'kartička zrychluje asi 1&#160;m·s⁻²', {size:12.5, weight:600});
         return s;
       },
       comment:function(){
-        if(variant === 'rychle') return st.landed ? '<p><b>Mince spadla do sklenice.</b> Kartička se pohnula tak prudce, že jí tření nestihlo dodat mince stejnou rychlost: třecí síla udělí minci zrychlení nejvýše <i>f g</i> ≈ 3&nbsp;m·s⁻², kartička ale zrychlovala asi 80&nbsp;m·s⁻². Mince si setrvačností udržela téměř původní polohu a spadla rovnou dolů.</p>' : '<p>Stiskněte Spustit: prst cvrnkne do kartičky.</p>';
+        if(variant === 'rychle') return st.landed ? '<p><b>Mince spadla do sklenice.</b> Kartička se pohnula tak prudce, že jí tření nestihlo dodat minci stejnou rychlost: třecí síla udělí minci zrychlení nejvýše <i>f g</i> ≈ 3&nbsp;m·s⁻², kartička ale zrychlovala asi 80&nbsp;m·s⁻². Mince tak získala rychlost jen asi 0,1&nbsp;m·s⁻¹ (kartička 2,5&nbsp;m·s⁻¹), než jí kartička vyklouzla zpod ní. Proto padala téměř svisle a do sklenice dopadla jen asi 1,5&nbsp;cm od středu.</p>' : '<p>Stiskněte Spustit: prst cvrnkne do kartičky.</p>';
         return st.t > 0 ? '<p><b>Mince jede s kartičkou.</b> Při pomalém tažení (zrychlení 1&nbsp;m·s⁻²) stačí klidová třecí síla, aby mince získala stejné zrychlení jako kartička. Mince se proto pohybuje spolu s ní a do sklenice nespadne.</p>' : '<p>Stiskněte Spustit: ruka pomalu vytáhne kartičku.</p>';
       }
     };
 
     // ---------- scéna: náraz auta ----------
-    var NK = 42, WALLX = 560, V0 = 50/3.6, CRUSH = 0.6, GAPX = 0.36;   // px na metr, poloha zdi, rychlost, deformační dráha (m), vzdálenost hrudníku od volantu (m)
+    // Auto dlouhé 4,2 m (70 px/m) narazí rychlostí 50 km·h⁻¹ do betonové překážky; deformační zóna 0,6 m, malý odraz zpět.
+    // Figurína: hrudník se vůči autu posouvá o s; pás = pružina s vůlí 3 cm, bez pásu ji zastaví až volant.
+    var NK = 70, WX = 560, GRD = 284, V0 = 50/3.6, CRUSH = 0.6, AC = V0*V0/(2*CRUSH), GAP = 0.36;
+    // obrys auta v souřadnicích auta (m): x od zadního nárazníku, y od země
+    var BODY = [[0, 0.24], [0, 0.6], [0.06, 0.9], [0.38, 0.98], [0.74, 1.4], [1.72, 1.42], [2.2, 0.99], [3.6, 0.9], [4.08, 0.8], [4.2, 0.62], [4.2, 0.24]];
+    function crx(x, def){ return x <= 2.6 ? x : 2.6 + (x - 2.6)*(1 - def/1.6); }     // stlačení přídě před přepážkou motoru
+    function nPose(){
+      var belt = variant === 'pas';
+      var xp = belt ? clamp(0.25*st.s, 0, 0.05) : clamp(0.6*st.s, 0, 0.18);
+      var th = Math.asin(clamp(Math.sin(-0.3) + (st.s - xp)/0.35, -0.6, 0.95));     // vzpřímený sed je zakloněný o 0,3 rad
+      var hip = [1.535 + xp, 0.52], sh = [hip[0] + 0.5*Math.sin(th), hip[1] + 0.5*Math.cos(th)];
+      var hd = [sh[0] + 0.2*Math.sin(th + st.psi), sh[1] + 0.2*Math.cos(th + st.psi)];
+      return { xp:xp, th:th, hip:hip, sh:sh, hd:hd };
+    }
+    var WS = [[2.2, 0.99], [1.72, 1.42]];                  // čelní sklo (spodní a horní okraj)
+    function wsDist(p){                                   // vzdálenost bodu od čelního skla (> 0 = uvnitř kabiny) a parametr podél skla
+      var ax = WS[0][0], ay = WS[0][1], dx = WS[1][0] - ax, dy = WS[1][1] - ay, L = Math.sqrt(dx*dx + dy*dy);
+      return { d:-((p[0] - ax)*dy - (p[1] - ay)*dx)/L, t:((p[0] - ax)*dx + (p[1] - ay)*dy)/(L*L) };
+    }
     var NARAZ = {
-      slow:function(){ return st.crash ? 0.05 : 1; },
-      reset:function(){ st = { t:0, x:-9.4, v:V0, crash:false, xd:0, vd:V0, rel:0, hit:false, def:0, done:false, wheel:0, tc:0 }; },
+      slow:function(){ return st.slowOn ? 0.05 : 1; },
+      reset:function(){
+        st = { t:0, x:-8.2, v:V0, A:0, ph:'jizda', def:0, tc:0, pit:0, pv:0, s:0, u:0, smax:0, uhit:0, hit:false, psi:0, pw:0, crack:null, frags:[], wheel:0, slowOn:false, done:false };
+      },
       step:function(dt){
-        var front = st.x + 4.2 - st.def;               // přední nárazník (m)
-        var xw = (WALLX - 70)/NK;                       // zeď v metrech od x = 0 (levý okraj obrazu je x = −70/NK)
-        if(!st.crash && front >= xw){ st.crash = true; }
-        if(st.crash){
-          var a = V0*V0/(2*CRUSH);
-          if(st.v > 0){ st.v = Math.max(0, st.v - a*dt); st.def += st.v*dt; }
-          st.tc += dt;
+        var front = st.x + 4.2 - st.def, A = 0;
+        if(front > -2.5) st.slowOn = true;                                 // zpomalení začne 2,5 m před překážkou
+        if(st.ph === 'jizda' && front >= 0){
+          st.ph = 'naraz';
+          for(var i = 0; i < 12; i++){
+            var r1 = Math.sin(i*12.9898)*43758.5453, r2 = Math.sin(i*78.233)*12543.12;
+            r1 -= Math.floor(r1); r2 -= Math.floor(r2);
+            st.frags.push({ x:-0.05, y:0.35 + 0.45*r1, vx:-0.6 - 3*r2, vy:1 + 3.5*r1, r:0, w:(r2 - 0.5)*30, c:i % 3 ? '#2b2f33' : '#fff6c9', k:2 + 3*r2 });
+          }
         }
-        st.x += st.v*dt;                                 // zadní část auta jede dál, předek stojí u zdi a deformuje se
-        st.wheel += st.v*dt/0.32;
-        // figurína: bez pásu letí dál stálou rychlostí, dokud nenarazí; s pásem ji pás brzdí s malým zpožděním
+        if(st.ph === 'naraz'){
+          A = AC; st.v -= AC*dt; st.tc += dt;
+          if(st.v > 0) st.def += st.v*dt;
+          else st.def = Math.max(CRUSH - 0.05, st.def + st.v*dt);           // pružné vrácení části deformace
+          if(st.v <= -1.5) st.ph = 'odraz';
+        } else if(st.ph === 'odraz'){
+          A = -8; st.v = Math.min(0, st.v + 8*dt); st.tc += dt;                // odražené auto zabrzdí
+          if(st.v === 0) st.ph = 'stoji';
+        } else if(st.ph === 'stoji') st.tc += dt;
+        st.A = A;
+        st.x += st.v*dt; st.wheel += st.v*dt/0.31;
+        // klopení karoserie: při nárazu se zadek zvedne (rad, > 0 = předek dolů)
+        st.pv += (-324*st.pit - 14.4*st.pv + 0.08*A)*dt; st.pit = Math.max(-0.01, st.pit + st.pv*dt);
+        // figurína v soustavě auta: působí na ni setrvačná síla m·A dopředu
+        var acc = A;
+        if(variant === 'pas'){ var e = st.s - 0.03; if(e > 0) acc -= 1000*e + 32*st.u; }
+        else if(st.s >= GAP){ acc -= 40000*(st.s - GAP) + 300*st.u; if(!st.hit){ st.hit = true; st.uhit = st.u; } }
+        st.u += acc*dt; st.s += st.u*dt;
+        if(st.s < 0){ st.s = 0; if(st.u < 0) st.u = 0; }
+        st.smax = Math.max(st.smax, st.s);
+        // hlava na krku (kyvadlo délky 0,15 m s pružným krkem): hnací zrychlení = zpomalení hrudníku vůči zemi
+        st.pw += ((A - acc)/0.15 - 1225*st.psi - 24.5*st.pw)*dt;
+        st.psi = clamp(st.psi + st.pw*dt, -0.5, 1.15);
         if(variant === 'bez'){
-          if(!st.hit){ st.rel += (st.vd - st.v)*dt; if(st.rel >= GAPX){ st.rel = GAPX; st.hit = true; st.vd = st.v; } }
-          else st.vd = st.v;
-        } else {
-          var k = 900, c = 45;                           // tuhost a tlumení pásu (na kg)
-          var ad = -k*st.rel - c*(st.vd - st.v);
-          if(!st.crash) ad = 0;
-          st.vd += ad*dt; st.rel += (st.vd - st.v)*dt;
-          if(st.rel < 0){ st.rel = 0; }
+          var q = nPose(), w = wsDist(q.hd), n = 0;
+          while(w.t > -0.05 && w.t < 1.05 && w.d < 0.11 && n < 60){ st.psi -= 0.02; q = nPose(); w = wsDist(q.hd); n++; }
+          if(n > 0){ st.pw = Math.min(0, st.pw); if(!st.crack) st.crack = [q.hd[0] + 0.11*0.67, q.hd[1] + 0.11*0.74]; }
+        }
+        for(var j = 0; j < st.frags.length; j++){
+          var f = st.frags[j];
+          f.vy -= GA*dt; f.x += f.vx*dt; f.y += f.vy*dt; f.r += f.w*dt;
+          if(f.y < 0){ f.y = 0; f.vy = -0.3*f.vy; f.vx *= 0.6; f.w *= 0.6; }
         }
         st.t += dt;
-        if(st.crash && st.tc > 0.35) st.done = true;
+        if(st.tc > 0.42) st.done = true;
       },
       draw:function(){
-        var s = svgDefs(P), ox = 70 + st.x*NK;
-        s += '<rect x="0" y="0" width="640" height="270" fill="url(#' + P + '-sky)"/>';
-        s += '<rect x="0" y="270" width="640" height="70" fill="url(#' + P + '-ground)"/>';
-        for(var i = 0; i < 10; i++) s += '<rect x="' + (i*70 + 10) + '" y="300" width="36" height="4" fill="#f4f1e8"/>';
-        // zeď z betonových bloků
-        s += '<rect x="' + WALLX + '" y="120" width="80" height="150" fill="#b8b2a6" stroke="#6f6a60" stroke-width="2"/>';
-        for(var r = 0; r < 5; r++) for(var q = 0; q < 2; q++) s += '<rect x="' + (WALLX + q*40 + (r % 2)*20 - (r % 2 ? 20 : 0)) + '" y="' + (120 + r*30) + '" width="40" height="30" fill="none" stroke="#8d877c" stroke-width="1"/>';
-        s += '<path d="M' + WALLX + ',120 l12,-10 h68 v150" fill="#cfc9bd" stroke="#6f6a60" stroke-width="1.5"/>';
-        // auto (bok), délka 4,2 m, předek se při nárazu deformuje
-        var L = 4.2*NK, dpx = st.def*NK, x0 = ox, x1 = Math.min(ox + L - dpx, WALLX);
-        var body = 'M' + f1(x0) + ',248 L' + f1(x0) + ',214 Q' + f1(x0 + 6) + ',206 ' + f1(x0 + 20) + ',205 L' + f1(x0 + 44) + ',204 L' + f1(x0 + 66) + ',170 Q' + f1(x0 + 72) + ',164 ' + f1(x0 + 84) + ',164 L' + f1(x1 - 70) + ',164 Q' + f1(x1 - 62) + ',164 ' + f1(x1 - 56) + ',170 L' + f1(x1 - 34) + ',200 L' + f1(x1 - 6) + ',206 Q' + f1(x1) + ',210 ' + f1(x1) + ',222 L' + f1(x1) + ',248 Z';
-        s += '<g filter="url(#' + P + '-sh)"><path d="' + body + '" fill="var(--accent)" stroke="var(--ink)" stroke-width="2"/></g>';
-        s += '<path d="M' + f1(x0 + 52) + ',203 L' + f1(x0 + 70) + ',174 L' + f1(x1 - 66) + ',174 L' + f1(x1 - 44) + ',202 Z" fill="url(#' + P + '-glass)" stroke="#6a7b86" stroke-width="1.2"/>';
-        if(dpx > 2){
-          for(var z = 0; z < 4; z++) s += '<line x1="' + f1(x1 - 4 - z*dpx/4) + '" y1="206" x2="' + f1(x1 - 4 - z*dpx/4 - 6) + '" y2="244" stroke="var(--ink)" stroke-width="1.2" opacity="0.6"/>';
+        var s = svgDefs(P), K = NK, def = st.def, i;
+        function X(x){ return WX + (st.x + x)*K; }
+        function Y(y){ return GRD - y*K; }
+        s += '<rect x="0" y="0" width="640" height="' + GRD + '" fill="url(#' + P + '-sky)"/>';
+        s += '<rect x="0" y="' + GRD + '" width="640" height="' + (340 - GRD) + '" fill="url(#' + P + '-ground)"/>';
+        for(i = 0; i < 8; i++) s += '<rect x="' + (i*80 + 6) + '" y="' + (GRD + 22) + '" width="40" height="4" fill="#f4f1e8"/>';
+        // betonová překážka s výstražným pruhem
+        s += '<rect x="' + WX + '" y="' + (GRD - 112) + '" width="80" height="112" fill="#b8b2a6" stroke="#6f6a60" stroke-width="2"/>';
+        for(i = 0; i < 4; i++) s += ln(WX + 4, GRD - 100 + i*26, WX + 78, GRD - 100 + i*26, '#9c968a', 1);
+        for(i = 0; i < 6; i++) s += poly([[WX, GRD - 70 + i*10], [WX + 8, GRD - 70 + i*10], [WX + 8, GRD - 64 + i*10], [WX, GRD - 64 + i*10]], i % 2 ? '#2b2f33' : '#f2c230');
+        s += '<path d="M' + WX + ',' + (GRD - 112) + ' l12,-8 h68 v120" fill="#cfc9bd" stroke="#6f6a60" stroke-width="1.5"/>';
+        s += '<ellipse cx="' + f1(X(2.1 - def/2)) + '" cy="' + (GRD + 2) + '" rx="' + f1((2.2 - def/2)*K) + '" ry="5" fill="#000" opacity="0.2"/>';
+        // ---- auto (klopí se kolem stopy předního kola) ----
+        var fw = crx(3.5, def), pivX = X(fw), pts = BODY.map(function(p){ return [X(crx(p[0], def)), Y(p[1])]; });
+        var bump = 0.1*clamp(def/CRUSH, 0, 1);                                  // zvlnění kapoty
+        pts.splice(7, 0, [X(crx(3.0, def)), Y(0.95 + bump)], [X(crx(3.3, def)), Y(0.9 + bump*0.3)]);
+        var g = '<g transform="rotate(' + f1(st.pit*180/Math.PI) + ',' + f1(pivX) + ',' + GRD + ')">';
+        g += '<g filter="url(#' + P + '-sh)">' + poly(pts, 'var(--accent)', 'var(--ink)', 2) + '</g>';
+        // kabina v řezu (vidíme figurínu)
+        var cab = [[0.5, 0.42], [0.5, 0.98], [0.8, 1.33], [1.68, 1.35], [2.12, 0.99], [2.12, 0.42]].map(function(p){ return [X(p[0]), Y(p[1])]; });
+        g += poly(cab, '#5b4f4a', '#3a302c', 1.2);
+        var win = [[0.55, 1.0], [0.82, 1.3], [1.66, 1.32], [2.08, 1.0]].map(function(p){ return [X(p[0]), Y(p[1])]; });
+        g += poly(win, 'url(#' + P + '-glass)', null, 0, ' opacity="0.35"');
+        // sedadlo
+        g += poly([[X(1.36), Y(0.5)], [X(1.22), Y(1.16)], [X(1.34), Y(1.18)], [X(1.48), Y(0.56)], [X(1.8), Y(0.58)], [X(1.8), Y(0.46)], [X(1.38), Y(0.44)]], '#2f3a46', '#1d252e', 1);
+        // palubní deska, volant
+        g += poly([[X(2.12), Y(0.98)], [X(1.92), Y(0.94)], [X(1.9), Y(0.78)], [X(2.12), Y(0.7)]], '#3a3f44');
+        g += ln(X(2.05), Y(0.78), X(1.86), Y(0.92), '#2b2f33', 4);
+        g += ln(X(1.79), Y(1.06), X(1.92), Y(0.77), '#1d1f22', 6);
+        // figurína (žlutá s terčíky jako při skutečných zkouškách)
+        var q = nPose(), D = '#e0b64a', DE = '#9a7a20';
+        function P2(p){ return [X(p[0]), Y(p[1])]; }
+        var hip = P2(q.hip), sh = P2(q.sh), hd = P2(q.hd);
+        var knee = P2([q.hip[0] + 0.42 + 0.35*q.xp, 0.6]), foot = P2([2.02 + 0.2*q.xp, 0.36]);
+        g += limb(hip[0], hip[1], knee[0], knee[1], 8, D, DE) + limb(knee[0], knee[1], foot[0], foot[1], 7, D, DE);
+        g += limb(hip[0], hip[1], sh[0], sh[1], 13, D, DE);
+        // paže: k volantu, pokud dosáhnou (dvoučlánkové rameno 0,3 + 0,3 m)
+        var hand = [1.81, 1.02], dx = hand[0] - q.sh[0], dy = hand[1] - q.sh[1], dd = Math.sqrt(dx*dx + dy*dy);
+        if(dd > 0.58){ hand = [q.sh[0] + dx/dd*0.58, q.sh[1] + dy/dd*0.58]; dd = 0.58; dx = hand[0] - q.sh[0]; dy = hand[1] - q.sh[1]; }
+        var hb = Math.sqrt(Math.max(0, 0.09 - dd*dd/4)), el = [q.sh[0] + dx/2 + dy/dd*hb, q.sh[1] + dy/2 - dx/dd*hb];
+        var E = P2(el), Hh = P2(hand);
+        g += limb(sh[0], sh[1], E[0], E[1], 6, D, DE) + limb(E[0], E[1], Hh[0], Hh[1], 5, D, DE);
+        g += '<circle cx="' + f1(hd[0]) + '" cy="' + f1(hd[1]) + '" r="7.5" fill="' + D + '" stroke="' + DE + '" stroke-width="1"/>';
+        g += '<path d="M' + f1(hd[0]) + ',' + f1(hd[1]) + ' m-3.5,0 a3.5,3.5 0 0 1 3.5,-3.5 v3.5 Z M' + f1(hd[0]) + ',' + f1(hd[1]) + ' m3.5,0 a3.5,3.5 0 0 1 -3.5,3.5 v-3.5 Z" fill="#2b2f33"/>';
+        if(variant === 'pas'){
+          var anc = P2([1.3, 1.22]), buck = P2([q.hip[0] + 0.14, 0.52]);
+          g += ln(anc[0], anc[1], sh[0] + 2, sh[1] + 1, '#2b2f33', 3) + ln(sh[0] + 2, sh[1] + 1, buck[0], buck[1], '#2b2f33', 3);
+          g += ln(X(1.48), Y(0.52), buck[0], buck[1], '#2b2f33', 3);
         }
-        // figurína: boky na sedadle, trup se naklání podle posunu vůči autu
-        var hipX = x0 + 92, hipY = 214;
-        s += '<path d="M' + f1(hipX - 14) + ',' + f1(hipY + 6) + ' L' + f1(hipX - 14) + ',' + f1(hipY - 34) + '" stroke="#6b5a47" stroke-width="7" stroke-linecap="round"/>';
-        s += '<path d="M' + f1(hipX - 16) + ',' + f1(hipY + 6) + ' H' + f1(hipX + 12) + '" stroke="#6b5a47" stroke-width="7" stroke-linecap="round"/>';
-        var ang = Math.asin(Math.min(0.9, st.rel/0.55));
-        var shX = hipX + 40*Math.sin(ang), shY = hipY - 40*Math.cos(ang);
-        s += '<path d="M' + f1(hipX) + ',' + f1(hipY) + ' L' + f1(hipX + 30) + ',' + f1(hipY + 2) + ' L' + f1(hipX + 34) + ',' + f1(hipY + 28) + '" stroke="#e0b64a" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>';
-        s += '<line x1="' + f1(hipX) + '" y1="' + f1(hipY) + '" x2="' + f1(shX) + '" y2="' + f1(shY) + '" stroke="#e0b64a" stroke-width="12" stroke-linecap="round"/>';
-        s += '<circle cx="' + f1(shX + 4*Math.sin(ang)) + '" cy="' + f1(shY - 12*Math.cos(ang)) + '" r="9" fill="#e0b64a" stroke="#9a7a20" stroke-width="1"/>';
-        s += '<line x1="' + f1(shX) + '" y1="' + f1(shY + 4) + '" x2="' + f1(hipX + 46) + '" y2="' + f1(hipY - 14) + '" stroke="#e0b64a" stroke-width="5" stroke-linecap="round"/>';
-        if(variant === 'pas') s += '<line x1="' + f1(hipX - 14) + '" y1="' + f1(hipY - 34) + '" x2="' + f1(hipX + 6) + '" y2="' + f1(hipY - 2) + '" stroke="#2b2f33" stroke-width="3"/><line x1="' + f1(shX - 2) + '" y1="' + f1(shY + 2) + '" x2="' + f1(hipX + 8) + '" y2="' + f1(hipY) + '" stroke="#2b2f33" stroke-width="3"/>';
-        // volant
-        s += '<line x1="' + f1(hipX + 52) + '" y1="' + f1(hipY - 10) + '" x2="' + f1(hipX + 46) + '" y2="' + f1(hipY - 30) + '" stroke="#2b2f33" stroke-width="5" stroke-linecap="round"/>';
-        if(st.hit) s += '<path d="M' + f1(shX + 18) + ',' + f1(shY - 18) + ' l6,8 l9,-3 l-4,9 l8,5 l-10,1 l0,9 l-6,-7 l-7,6 l1,-10 l-9,-3 l9,-4 Z" fill="var(--danger)"/>';
-        s += svgWheel(x0 + 36, 248, 18, st.wheel) + svgWheel(x0 + L - 40 - dpx*0.3, 248, 18, st.wheel);
-        if(st.crash) s += svgText(626, 24, 'zpomaleno 20×', {anchor:'end', size:12.5, weight:600, color:'var(--danger)'});
-        s += svgText(14, 24, 'auto ' + cz(st.v*3.6, 0) + '&#160;km·h⁻¹   figurína ' + cz(Math.max(0, st.vd)*3.6, 0) + '&#160;km·h⁻¹', {size:12.5, weight:600});
+        // čelní sklo a prasklina po nárazu hlavy
+        g += ln(X(WS[0][0]), Y(WS[0][1]), X(WS[1][0]), Y(WS[1][1]), '#a9cfe0', 3.5);
+        if(st.crack){
+          var c = P2(st.crack);
+          for(i = 0; i < 7; i++){ var an = i*0.9 + 0.3, lr = 6 + (i % 3)*4; g += ln(c[0], c[1], c[0] + lr*Math.cos(an), c[1] + lr*Math.sin(an), '#ffffff', 1.2); }
+        }
+        // dveře, kliky, světla, deformace přídě
+        g += ln(X(1.25), Y(0.3), X(1.25), Y(0.98), '#3a302c', 1, ' opacity="0.6"');
+        g += '<rect x="' + f1(X(0.02)) + '" y="' + f1(Y(0.86)) + '" width="6" height="12" rx="2" fill="#a8261c"/>';
+        if(def < 0.08) g += '<rect x="' + f1(X(crx(4.12, def)) - 4) + '" y="' + f1(Y(0.78)) + '" width="8" height="7" rx="2" fill="#fff6c9" stroke="#9a6a22" stroke-width="0.8"/>';
+        var nf = Math.floor(def*14);
+        for(i = 0; i < nf; i++){
+          var fx = X(crx(2.7 + (i + 0.5)*1.5/nf, def));
+          g += '<path d="M' + f1(fx) + ',' + f1(Y(0.88)) + ' l-4,' + f1(0.12*K) + ' l4,' + f1(0.12*K) + ' l-4,' + f1(0.12*K) + ' l4,' + f1(0.12*K) + '" fill="none" stroke="var(--ink)" stroke-width="1.1" opacity="0.55"/>';
+        }
+        g += '<path d="M' + f1(X(0.55)) + ',' + GRD + ' a24,24 0 0 1 48,0 Z M' + f1(X(fw) - 24) + ',' + GRD + ' a24,24 0 0 1 48,0 Z" fill="#2a2d31" transform="translate(0,' + f1(-0.24*K) + ')"/>';
+        g += '</g>';
+        s += g + svgWheel(X(0.85), GRD - 0.31*K, 0.31*K, st.wheel) + svgWheel(X(fw), GRD - 0.31*K, 0.31*K, st.wheel);
+        st.frags.forEach(function(f){
+          var fx = WX + f.x*K, fy = GRD - f.y*K;
+          s += '<rect x="' + f1(fx - f.k) + '" y="' + f1(fy - f.k/2) + '" width="' + f1(2*f.k) + '" height="' + f1(f.k) + '" fill="' + f.c + '" stroke="#555" stroke-width="0.5" transform="rotate(' + f1(f.r*57.3) + ',' + f1(fx) + ',' + f1(fy) + ')"/>';
+        });
+        if(st.slowOn) s += svgText(626, 24, 'zpomaleno 20×', {anchor:'end', size:12.5, weight:600, color:'var(--danger)'});
+        s += svgText(14, 24, 'auto ' + cz(Math.abs(st.v)*3.6, 0) + '&#160;km·h⁻¹   figurína ' + cz(Math.max(0, st.v + st.u)*3.6, 0) + '&#160;km·h⁻¹', {size:12.5, weight:600});
         return s;
       },
       comment:function(){
-        if(!st.crash) return '<p>Auto jede rychlostí 50&nbsp;km·h⁻¹ ke zdi. Stiskněte Spustit a sledujte figurínu.</p>';
-        if(variant === 'bez') return '<p><b>Bez pásu:</b> karoserie se zastaví na deformační dráze 0,6&nbsp;m během necelé desetiny sekundy. Na figurínu ale zpočátku nepůsobí žádná síla dozadu, a proto se setrvačností pohybuje dál rychlostí 50&nbsp;km·h⁻¹, až narazí do volantu a čelního skla. Zabrzdí ji teprve tento tvrdý náraz.</p>';
-        return '<p><b>S pásem:</b> pás začne figurínu brzdit téměř současně s autem. Figurína se posune dopředu jen o několik centimetrů a zastaví se na delší dráze, tedy menší silou. Bezpečnostní pás jí dodá sílu, kterou by jinak dostala až od volantu.</p>';
+        if(st.ph === 'jizda') return '<p>Auto jede rychlostí 50&nbsp;km·h⁻¹ k betonové překážce. Stiskněte Spustit a sledujte figurínu. Těsně před nárazem se animace zpomalí dvacetkrát.</p>';
+        if(variant === 'bez'){
+          if(!st.hit) return '<p><b>Bez pásu:</b> karoserie se zastavuje na deformační dráze 0,6&nbsp;m za necelou desetinu sekundy. Na figurínu ale nepůsobí žádná síla dozadu, a proto se setrvačností pohybuje dál rychlostí 50&nbsp;km·h⁻¹.</p>';
+          return '<p><b>Bez pásu:</b> figurína se setrvačností pohybovala dál, zatímco auto už skoro stálo. Do volantu narazila hrudníkem rychlostí asi ' + cz(st.uhit*3.6, 0) + '&nbsp;km·h⁻¹ vůči autu' + (st.crack ? ' a hlavou udeřila do čelního skla' : '') + '. Zabrzdil ji teprve tento tvrdý náraz na dráze několika centimetrů, tedy obrovskou silou.</p>';
+        }
+        return '<p><b>S pásem:</b> jakmile se vymezí vůle pásu, pás začne figurínu brzdit spolu s autem. Hrudník se vůči autu posune dopředu jen asi o ' + cz(Math.round(st.smax*100), 0) + '&nbsp;cm, takže figurína zastaví na dráze asi ' + cz(CRUSH + st.smax, 1) + '&nbsp;m (deformační zóna + posun v pásu), tedy mnohem menší silou. Hlava se setrvačností předkloní a krk ji vrátí zpět.</p>';
       }
     };
 
     // ---------- scéna: kulička na podložce ----------
+    // Rampa vysoká 0,5 m se sklonem 30° a zaobleným dojezdem; kulička o průměru 8 cm se valí (měřítko 200 px/m).
     var SURF = { koberec:{f:0.3, n:'koberec'}, drevo:{f:0.1, n:'dřevo'}, sklo:{f:0.03, n:'sklo'}, bez:{f:0, n:'bez tření'} };
-    var PK = 24, H0 = 0.5, X0P = 130, YP = 250;      // px na metr na vodorovné podložce, výška rampy (m)
+    var PK = 200, YP = 252, X0P = 240, HR = 0.5, RB = 0.04, AL = 30*Math.PI/180, RF = 0.3, SMAX = 15;
+    var TX = -RF*Math.sin(AL), TY = RF*(1 - Math.cos(AL)), LS = (HR - TY)/Math.sin(AL), LA = RF*AL;
+    function track(p){                                   // bod povrchu, normála a sklon pro dráhu p (m) měřenou od vrcholu rampy
+      if(p <= LS){ var q = LS - p; return { x:TX - q*Math.cos(AL), y:TY + q*Math.sin(AL), nx:Math.sin(AL), ny:Math.cos(AL), sl:AL }; }
+      if(p <= LS + LA){ var ph = AL - (p - LS)/RF; return { x:-RF*Math.sin(ph), y:RF - RF*Math.cos(ph), nx:Math.sin(ph), ny:Math.cos(ph), sl:ph }; }
+      return { x:p - LS - LA, y:0, nx:0, ny:1, sl:0 };
+    }
     var PODL = {
-      reset:function(){ st = { t:0, phase:'ramp', u:0, s:0, v:0, roll:0, cam:0, done:false }; },
+      reset:function(){ st = { t:0, p:0, v:0, s:0, roll:0, cam:0, flat:false, done:false }; },
       step:function(dt){
-        var f = SURF[variant].f;
-        if(st.phase === 'ramp'){
-          st.u += dt/0.6;                                 // sjezd po rampě (vizuálně 0,6 s)
-          st.v = Math.sqrt(2*GA*H0)*Math.min(1, st.u);
-          if(st.u >= 1){ st.phase = 'flat'; st.v = Math.sqrt(2*GA*H0); }
+        var tr = track(st.p), f = SURF[variant].f;
+        if(!st.flat){
+          st.v += 5/7*GA*Math.sin(tr.sl)*dt;               // valící se koule: a = 5/7 g sin α
+          st.p += st.v*dt;
+          if(st.p >= LS + LA) st.flat = true;
         } else {
           st.v = Math.max(0, st.v - f*GA*dt);
-          st.s += st.v*dt;
+          st.p += st.v*dt;
           if(st.v === 0){ st.done = true; flags.push({ s:st.s, n:SURF[variant].n }); if(flags.length > 4) flags.shift(); }
-          if(st.s > 80){ st.done = true; }
         }
-        st.roll += st.v*dt/0.1;
+        st.s = Math.max(0, st.p - LS - LA);
+        if(st.s > SMAX) st.done = true;
+        st.roll += st.v*dt/RB;
         var bx = X0P + st.s*PK;
-        if(bx - st.cam > 380) st.cam = bx - 380;
+        if(bx - st.cam > 420) st.cam = bx - 420;
         st.t += dt;
       },
       draw:function(){
-        var s = svgDefs(P), cam = st.cam, f = SURF[variant].f;
-        s += '<rect x="0" y="0" width="640" height="' + YP + '" fill="url(#' + P + '-sky)"/>';
-        var col = variant === 'koberec' ? '#a86a5a' : variant === 'drevo' ? 'url(#' + P + '-wood)' : variant === 'sklo' ? '#d6e9f1' : '#eef3f6';
-        s += '<rect x="' + f1(-cam) + '" y="' + YP + '" width="' + f1(2400) + '" height="16" fill="' + col + '" stroke="var(--ink-soft)" stroke-width="1"/>';
-        s += '<rect x="0" y="' + (YP + 16) + '" width="640" height="' + (340 - YP - 16) + '" fill="#e6dfcf"/>';
-        // rampa
-        s += '<path d="M' + f1(20 - cam) + ',' + f1(YP - 120) + ' L' + f1(X0P - cam) + ',' + YP + ' L' + f1(20 - cam) + ',' + YP + ' Z" fill="url(#' + P + '-wood)" stroke="var(--ink)" stroke-width="1.5"/>';
-        // značky po metrech
-        for(var m = 0; m <= 90; m++){
-          var mx = X0P + m*PK - cam;
+        var s = svgDefs(P), cam = st.cam, f = SURF[variant].f, i, x;
+        function X(m){ return X0P + m*PK - cam; }
+        function Y(m){ return YP - m*PK; }
+        s += '<rect x="0" y="0" width="640" height="' + YP + '" fill="#efe9dc"/><rect x="0" y="0" width="640" height="' + YP + '" fill="url(#' + P + '-sky)" opacity="0.35"/>';
+        s += ln(0, YP - 8, 640, YP - 8, '#d8cfbb', 3);                                        // lišta u stěny
+        // podlaha podle povrchu
+        var base = variant === 'koberec' ? '#a35d50' : variant === 'drevo' ? 'url(#' + P + '-wood)' : variant === 'sklo' ? '#d3e8f1' : '#eaf4f8';
+        s += '<rect x="0" y="' + YP + '" width="640" height="14" fill="' + base + '"/>';
+        if(variant === 'koberec'){ for(x = -wrap(cam, 5); x < 640; x += 5) s += ln(x, YP + 1, x + 1.5, YP + 5, '#8b4a3f', 1.2); }
+        if(variant === 'drevo'){ for(x = -wrap(cam, 180); x < 640; x += 180) s += ln(x, YP, x, YP + 14, '#8e6a3c', 1.2); s += ln(0, YP + 6, 640, YP + 6, '#b48a56', 0.8, ' opacity="0.7"'); }
+        if(variant === 'sklo'){ for(x = -wrap(cam, 120); x < 640; x += 120) s += ln(x + 10, YP + 12, x + 40, YP + 2, '#ffffff', 3, ' opacity="0.7"'); }
+        if(variant === 'bez') s += ln(0, YP + 1.5, 640, YP + 1.5, '#ffffff', 2, ' opacity="0.9"');
+        s += '<rect x="0" y="' + (YP + 14) + '" width="640" height="' + (340 - YP - 14) + '" fill="#e6dfcf"/>';
+        // rampa (pevná, 0,5 m vysoká) se zaobleným dojezdem
+        var top = track(0), rp = [[X(top.x - 0.08), Y(top.y)], [X(top.x), Y(top.y)]];
+        for(i = 0; i <= 12; i++){ var tq = track(LS + LA*i/12); rp.push([X(tq.x), Y(tq.y)]); }
+        rp.push([X(0.02), Y(0)], [X(top.x - 0.08), Y(0)]);
+        s += poly(rp, 'url(#' + P + '-wood)', 'var(--ink)', 1.5);
+        s += ln(X(top.x - 0.04), Y(top.y), X(top.x - 0.04), Y(0), '#9a7444', 1);
+        // měřítko: dílky po 10 cm, popisky po 0,5 m
+        for(var dm = 0; dm <= SMAX*10 + 5; dm++){
+          var mx = X(dm/10);
           if(mx < -20 || mx > 660) continue;
-          s += '<line x1="' + f1(mx) + '" y1="' + (YP + 16) + '" x2="' + f1(mx) + '" y2="' + (YP + (m % 5 ? 22 : 28)) + '" stroke="var(--ink-soft)" stroke-width="1"/>';
-          if(m % 5 === 0) s += svgText(mx, YP + 42, m + '&#160;m', {anchor:'middle', size:11, color:'var(--ink-soft)'});
+          s += ln(mx, YP + 14, mx, YP + (dm % 5 ? 19 : 25), 'var(--ink-soft)', 1);
+          if(dm % 5 === 0) s += svgText(mx, YP + 40, cz(dm/10, dm % 10 ? 1 : 0) + '&#160;m', {anchor:'middle', size:11, color:'var(--ink-soft)'});
         }
-        // praporky předchozích pokusů
         flags.forEach(function(fl){
-          var fx = X0P + fl.s*PK - cam;
+          var fx = X(fl.s);
           if(fx < -10 || fx > 650) return;
-          s += '<line x1="' + f1(fx) + '" y1="' + YP + '" x2="' + f1(fx) + '" y2="' + (YP - 46) + '" stroke="var(--ink)" stroke-width="1.5"/><path d="M' + f1(fx) + ',' + (YP - 46) + ' l22,6 l-22,6 Z" fill="var(--focus)"/>';
+          s += ln(fx, YP, fx, YP - 46, 'var(--ink)', 1.5) + '<path d="M' + f1(fx) + ',' + (YP - 46) + ' l22,6 l-22,6 Z" fill="var(--focus)"/>';
           s += svgText(fx + 3, YP - 50, fl.n + ' ' + cz(fl.s, 1) + '&#160;m', {size:10.5, color:'var(--focus)', weight:600});
         });
-        // kulička
-        var bx, by;
-        if(st.phase === 'ramp'){ var u = st.u*st.u; bx = 20 + (X0P - 20)*u - cam; by = YP - 120 + 120*u; }
-        else { bx = X0P + st.s*PK - cam; by = YP; }
-        var R = 11;
-        s += '<g transform="translate(' + f1(bx) + ',' + f1(by - R) + ') rotate(' + f1(st.roll*180/Math.PI) + ')"><circle r="' + R + '" fill="url(#' + P + '-ball)"/><path d="M-' + R + ',0 A' + R + ',' + R + ' 0 0 0 ' + R + ',0" fill="none" stroke="#fff" stroke-width="1.5" opacity="0.7"/></g>';
-        if(st.v > 0.01 && st.phase === 'flat') s += svgArrow(bx + 14, by - 30, bx + 14 + st.v*14, by - 30, 'var(--focus)', 2.6);
-        s += svgText(14, 24, 'podložka: ' + SURF[variant].n + (f > 0 ? ', zpomalení ' + cz(f*GA, 2) + '&#160;m·s⁻²' : ', žádné zpomalení') + '   ujetá dráha ' + cz(st.s, 1) + '&#160;m', {size:12.5, weight:600});
+        // kulička: střed leží o poloměr nad povrchem ve směru normály
+        var tr = track(st.p), cxb = X(tr.x + RB*tr.nx), cyb = Y(tr.y + RB*tr.ny), R = RB*PK;
+        s += '<ellipse cx="' + f1(X(tr.x)) + '" cy="' + f1(Y(tr.y) + 1) + '" rx="' + f1(R*0.9) + '" ry="1.8" fill="#000" opacity="0.25"/>';
+        if((variant === 'sklo' || variant === 'bez') && st.flat) s += '<circle cx="' + f1(cxb) + '" cy="' + f1(cyb + 2*R + 2) + '" r="' + f1(R) + '" fill="url(#' + P + '-ball)" opacity="0.18"/>';
+        s += '<g transform="translate(' + f1(cxb) + ',' + f1(cyb) + ') rotate(' + f1(st.roll*180/Math.PI) + ')"><circle r="' + f1(R) + '" fill="url(#' + P + '-ball)"/><path d="M-' + f1(R) + ',0 A' + f1(R) + ',' + f1(R) + ' 0 0 0 ' + f1(R) + ',0" fill="none" stroke="#fff" stroke-width="1.5" opacity="0.7"/></g>';
+        if(st.v > 0.01 && st.flat) s += svgArrow(cxb + 12, cyb - 22, cxb + 12 + st.v*22, cyb - 22, 'var(--focus)', 2.6);
+        s += svgText(14, 24, 'podložka: ' + SURF[variant].n + (f > 0 ? ', zpomalení ' + cz(f*GA, 2) + '&#160;m·s⁻²' : ', žádné zpomalení') + '   rychlost ' + cz(st.v, 2) + '&#160;m·s⁻¹   ujetá dráha ' + cz(st.s, 2) + '&#160;m', {size:12.5, weight:600});
         return s;
       },
       comment:function(){
-        if(st.t === 0) return '<p>Kulička sjede z rampy vysoké 0,5&nbsp;m vždy stejnou rychlostí asi 3,1&nbsp;m·s⁻¹. Vyzkoušejte postupně všechny podložky.</p>';
-        if(variant === 'bez') return '<p><b>Bez tření</b> na kuličku ve vodorovném směru nepůsobí žádná síla. Podle zákona setrvačnosti se pohybuje stále stejnou rychlostí, dokud do něčeho nenarazí. Kamera ji sleduje.</p>';
-        return st.done ? '<p>Kulička dojela ' + cz(st.s, 1) + '&nbsp;m. Čím menší je tření, tím menší je síla, která ji brzdí, a tím dál dojede. Bez tření by nezastavila nikdy.</p>' : '<p>Kuličku brzdí jen slabá síla proti pohybu (tření a valivý odpor). Kdyby žádná síla nepůsobila, jela by dál stejnou rychlostí.</p>';
+        if(st.t === 0) return '<p>Kulička se skutálí z rampy vysoké 0,5&nbsp;m a na podložku přijede vždy stejnou rychlostí asi 2,6&nbsp;m·s⁻¹. Vyzkoušejte postupně všechny podložky.</p>';
+        if(variant === 'bez') return st.done ? '<p><b>Bez tření</b> kulička ujela ' + SMAX + '&nbsp;m stále stejnou rychlostí ' + cz(st.v, 2) + '&nbsp;m·s⁻¹ a jela by dál, dokud do něčeho nenarazí. Ve vodorovném směru na ni nepůsobí žádná síla.</p>' : '<p><b>Bez tření</b> na kuličku ve vodorovném směru nepůsobí žádná síla. Podle zákona setrvačnosti se pohybuje stále stejnou rychlostí. Kamera ji sleduje.</p>';
+        return st.done ? '<p>Kulička dojela ' + cz(st.s, 2) + '&nbsp;m. Čím menší je tření, tím menší je síla, která ji brzdí, a tím dál dojede. Bez tření by nezastavila nikdy.</p>' : '<p>Kuličku brzdí jen slabá síla proti pohybu (tření a valivý odpor). Kdyby žádná síla nepůsobila, jela by dál stejnou rychlostí.</p>';
       }
     };
 
@@ -939,8 +1153,8 @@
       if(!running){ last = null; return; }
       if(last === null) last = ts;
       var dt = Math.min(0.05, (ts - last)/1000); last = ts;
-      var sc = SC[scene], k = sc.slow ? sc.slow() : 1, n = Math.max(1, Math.ceil(dt*k/0.001));
-      for(var i = 0; i < n && !st.done; i++) sc.step(dt*k/n);
+      var sc = SC[scene], n = Math.max(1, Math.ceil(dt/0.0005));
+      for(var i = 0; i < n && !st.done; i++){ var k = sc.slow ? sc.slow() : 1; sc.step(dt*k/n); }
       draw();
       if(st.done){ running = false; btn.textContent = 'Spustit znovu'; return; }
       window.requestAnimationFrame(frame);
