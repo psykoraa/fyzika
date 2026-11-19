@@ -446,7 +446,7 @@
         </p>
         <details class="navod">
           <summary>Návod</summary>
-          <p>Síly vybíráte kliknutím na nabídky, vybrané síly se hned objeví v diagramu přerušovanou čarou. Diagram obsahuje jen síly, které působí na těleso a vycházejí z jednoho bodu. Síly stejného směru jsou nakreslené za sebou: každá začíná tam, kde končí předchozí. Plné šipky jsou síly, které v diagramu už jsou. Situaci (směr pohybu, svah, podložku) zjistíte z popisu nahoře. Po vyhodnocení se zobrazí rozbor a tlačítko „Další úloha →“. Enter vyhodnotí odpověď a po vyhodnocení posune na další úlohu. Délky šipek jsou jen přibližné.</p>
+          <p>Síly vybíráte kliknutím na nabídky, vybrané síly se hned objeví v diagramu přerušovanou čarou. Diagram obsahuje jen síly, které působí na těleso a vycházejí z jednoho bodu. Síly stejného směru jsou nakreslené za sebou: každá začíná tam, kde končí předchozí. Plné šipky jsou síly, které v diagramu už jsou. Pod diagramem je schematický obrázek situace (těleso, podložka, lano, svah…), síly vycházejí z těžiště tělesa. Šedá čárkovaná šipka <i>v</i> ukazuje směr rychlosti tělesa, není to síla a do diagramu nepatří. Po vyhodnocení se zobrazí rozbor a tlačítko „Další úloha →“. Enter vyhodnotí odpověď a po vyhodnocení posune na další úlohu. Délky šipek jsou jen přibližné.</p>
         </details>
       </div>
       <div class="panel">
@@ -606,19 +606,22 @@
   var WHY_POHYBU = 'Žádná „síla pohybu“ neexistuje. Sílu vždy způsobuje nějaké těleso, které na zkoumané těleso působí, a tady takové těleso není. Pohyb se udržuje setrvačností, ta ale není síla.';
   var WHY_SETR = 'Setrvačnost je vlastnost těles, ne síla. Žádné těleso takovou sílu nezpůsobuje, proto ji do diagramu nekreslíme.';
 
-  // Úloha: lv = úroveň, scene = scéna, body = tvar tělesa, vel = šipka rychlosti (jen pomůcka, není to síla),
+  // Úloha: lv = úroveň, scene = schematický obrázek (viz sceneSvg), alpha = sklon svahu, ruka = ruka tlačí bednu,
+  // v = směr rychlosti ve stupních (čárkovaná šipka, jen pomůcka, není to síla),
   // forces: k = klíč z knihovny, a/l/p = směr/délka/posunutí počátku šipky, given = už je nakreslená,
   // ok = do diagramu patří, why = vysvětlení, name/sym/who = přepsání údajů z knihovny.
   var SCENARIOS = [
     // ===== Úroveň 1: chybí jedna síla =====
-    { lv:1, text:'Učebnice fyziky leží v klidu na vodorovném stole.',
+    { lv:1, scene:'stul',
+      text:'Učebnice fyziky leží v klidu na vodorovném stole.',
       forces:[
         { k:'G', given:true, ok:true },
         { k:'N', ok:true, rel:'stejně velká jako F_G', why:'Stůl se knihy dotýká a podpírá ji. Tlačí na ni kolmo vzhůru stejně velkou silou, jakou Země táhne knihu dolů, proto kniha neklesá.' },
         { k:'N', a:90, l:28, rel:'menší než F_G', why:'Podpora by nestačila vyrovnat tíhu a kniha by se propadala dolů. V klidu musí být výslednice nulová.' },
         { k:'N', a:90, l:90, rel:'větší než F_G', why:'Stůl by tlačil víc, než Země táhne dolů, a kniha by se zrychlovala vzhůru. V klidu musí být výslednice nulová.' },
         { k:'pohybu', a:0, why:WHY_POHYBU } ] },
-    { lv:1, text:'Krabici tlačíte rukou po podlaze doprava a ona se rozjíždí (zrychluje).',
+    { lv:1, scene:'podlaha', ruka:true, v:0,
+      text:'Krabici tlačíte rukou po podlaze doprava a ona se rozjíždí (zrychluje).',
       forces:[
         { k:'G', given:true, ok:true }, { k:'N', given:true, ok:true },
         { k:'r', given:true, ok:true, a:0, l:80 },
@@ -626,14 +629,16 @@
         { k:'t', a:180, l:80, rel:'stejně velká jako F_r', why:'Obě síly by se vyrovnaly, výslednice by byla nulová a krabice by se nerozjížděla. Ona se ale rozjíždí, takže tření musí být menší než síla ruky.' },
         { k:'t', a:180, l:120, rel:'větší než F_r', why:'Tření by bylo větší než síla ruky a krabice by se vůbec nerozjela. Ona se rozjíždí, takže tření musí být menší.' },
         { k:'t', a:0, l:40, rel:'menší než F_r', why:'Tření míří vždy proti pohybu, ne po pohybu. Tady by mířilo opačně, než je správné.' } ] },
-    { lv:1, text:'Kámen padá z mostu. Je chvíli po upuštění a rychlost má zatím malou.',
+    { lv:1, scene:'most', v:270,
+      text:'Kámen padá z mostu. Je chvíli po upuštění a rychlost má zatím malou.',
       forces:[
         { k:'G', given:true, ok:true },
         { k:'o', ok:true, a:90, l:14, rel:'mnohem menší než F_G', why:'Padající kámen naráží do vzduchu, a ten ho brzdí směrem vzhůru. Při malé rychlosti je odpor slabý, proto je šipka krátká.' },
         { k:'o', a:90, l:56, rel:'stejně velký jako F_G', why:'Při stejně velkém odporu by kámen padal stálou rychlostí. Kámen je ale chvíli po upuštění, odpor roste s rychlostí, a proto je zatím mnohem menší než tíha.' },
         { k:'o', a:90, l:100, rel:'větší než F_G', why:'Kámen by se zastavoval a letěl vzhůru. Padá ale dolů a zrychluje.' },
         { k:'r', a:270, l:40, why:'Kámen jste pustili, ruka už se ho nedotýká, a proto na něj nepůsobí.' } ] },
-    { lv:1, text:'Auto jede po vodorovné silnici na neutrál (motor netáhne) a zpomaluje.',
+    { lv:1, scene:'auto', v:0,
+      text:'Auto jede po vodorovné silnici na neutrál (motor netáhne) a zpomaluje.',
       forces:[
         { k:'G', given:true, ok:true }, { k:'N', given:true, ok:true },
         { k:'o', given:true, ok:true, a:180, l:50 },
@@ -641,7 +646,8 @@
         { k:'h', a:0, l:60, why:'Je zařazen neutrál, motor kola netáhne, hnací síla tedy nepůsobí.' },
         { k:'pohybu', a:0, l:50, why:WHY_POHYBU },
         { k:'t', a:0, l:30, name:'Valivý odpor (tření) vozovky', why:'Tření by pak pomáhalo pohybu. Ve skutečnosti ale působí proti němu.' } ] },
-    { lv:1, text:'Sáňkař sjíždí po sněhovém svahu se sklonem 25° a zrychluje. Odpor vzduchu zanedbejte.',
+    { lv:1, scene:'svah', alpha:25, v:205,
+      text:'Sáňkař sjíždí po sněhovém svahu se sklonem 25° a zrychluje. Odpor vzduchu zanedbejte.',
       forces:[
         { k:'G', given:true, ok:true },
         { k:'N', given:true, ok:true, a:115, l:51 },
@@ -649,21 +655,24 @@
         { k:'t', a:205, l:15, why:'Tření míří proti pohybu. Sáňkař jede dolů, takže tření musí mířit nahoru po svahu.' },
         { k:'comp', a:205, l:24, why:'Složka tíhy je jen část síly F_G. Kdybyste ji nakreslili spolu s F_G, započítali byste tíhu dvakrát.' },
         { k:'pohybu', a:205, l:30, why:WHY_POHYBU } ] },
-    { lv:1, text:'Lampa visí v klidu na lanu ze stropu.',
+    { lv:1, scene:'lampa',
+      text:'Lampa visí v klidu na lanu ze stropu.',
       forces:[
         { k:'G', given:true, ok:true },
         { k:'T', ok:true, rel:'stejně velká jako F_G', why:'Lampu drží lano. Táhne ji kolmo vzhůru stejně velkou silou, jakou Země táhne lampu dolů, proto lampa visí v klidu.' },
         { k:'T', a:90, l:28, rel:'menší než F_G', why:'Lano by lampu neudrželo a lampa by padala dolů. Visí v klidu, takže tahová síla musí vyrovnat tíhu.' },
         { k:'T', a:90, l:90, rel:'větší než F_G', why:'Lano by táhlo lampu vzhůru víc, než ji táhne Země dolů, a lampa by se zrychlovala nahoru. Visí v klidu.' },
         { k:'N', a:90, why:'Lampa nestojí na podložce, nese ji lano. Tlaková síla podložky tu nevzniká.' } ] },
-    { lv:1, text:'Korek plave v klidu na hladině vody.',
+    { lv:1, scene:'korek',
+      text:'Korek plave v klidu na hladině vody.',
       forces:[
         { k:'G', given:true, ok:true },
         { k:'vz', ok:true, rel:'stejně velká jako F_G', why:'Voda tlačí na ponořenou část korku zdola nahoru. Je to vztlaková síla a je stejně velká jako tíha, proto korek plave a neklesá.' },
         { k:'vz', a:90, l:28, rel:'menší než F_G', why:'Voda by korek neunesla a korek by se potápěl. Plave, takže vztlaková síla musí vyrovnat tíhu.' },
         { k:'vz', a:90, l:90, rel:'větší než F_G', why:'Korek by se zrychloval vzhůru a vyskočil by z vody. Plave v klidu, takže síly jsou stejně velké.' },
         { k:'o', a:180, l:30, why:'Korek stojí. Odpor vody vzniká jen při pohybu.' } ] },
-    { lv:1, text:'Magnetek drží na svislých dvířkách ledničky a nesklouzává.',
+    { lv:1, scene:'dvirka',
+      text:'Magnetek drží na svislých dvířkách ledničky a nesklouzává.',
       forces:[
         { k:'G', given:true, ok:true, l:50 },
         { k:'m', given:true, ok:true, a:180, l:40 },
@@ -674,7 +683,8 @@
         { k:'t', a:270, l:50, rel:'stejně velká jako F_G', why:'Tření brání pohybu. Magnetek by klouzal dolů, takže tření musí mířit nahoru.' } ] },
 
     // ===== Úroveň 2: chybí jedna nebo víc sil =====
-    { lv:2, text:'Hokejista tlačí holí puk po vodorovném ledu doprava a puk se rozjíždí. Tření zanedbejte.',
+    { lv:2, scene:'led', v:0,
+      text:'Hokejista tlačí holí puk po vodorovném ledu doprava a puk se rozjíždí. Tření zanedbejte.',
       forces:[
         { k:'G', given:true, ok:true },
         { k:'N', ok:true, rel:'stejně velká jako F_G', why:'Led puk podpírá a tlačí ho kolmo vzhůru stejně silou, jako je tíha.' },
@@ -683,7 +693,8 @@
         { k:'t', a:180, l:30, why:'Podle zadání tření zanedbáváme.' },
         { k:'setr', a:180, l:40, why:WHY_SETR },
         { k:'pohybu', a:0, l:50, why:WHY_POHYBU } ] },
-    { lv:2, text:'Kámen dopadl na beton. V okamžiku dopadu prudce brzdí. Odpor vzduchu zanedbejte.',
+    { lv:2, scene:'beton', v:270,
+      text:'Kámen dopadl na beton. V okamžiku dopadu prudce brzdí. Odpor vzduchu zanedbejte.',
       forces:[
         { k:'G', given:true, ok:true },
         { k:'N', ok:true, l:110, rel:'mnohem větší než F_G', why:'Beton kámen prudce zastavuje, proto na něj tlačí nahoru mnohem větší silou, než je tíha. Právě ta způsobuje silné brzdění.' },
@@ -692,7 +703,8 @@
         { k:'pohybu', a:270, l:60, why:WHY_POHYBU },
         { k:'t', a:0, l:30, why:'Kámen nic nebrzdí ve vodorovném směru a nic ho tam ani netlačí, tření tu nevzniká.' },
         { k:'setr', a:90, l:60, why:WHY_SETR } ] },
-    { lv:2, text:'Auto jede po vodorovné silnici na neutrál a zpomaluje.',
+    { lv:2, scene:'auto', v:0,
+      text:'Auto jede po vodorovné silnici na neutrál a zpomaluje.',
       forces:[
         { k:'G', given:true, ok:true },
         { k:'N', ok:true, rel:'stejně velká jako F_G', why:'Vozovka auto podpírá, takže tlačí na něj kolmo vzhůru. Je stejně velká jako tíha.' },
@@ -702,7 +714,8 @@
         { k:'h', a:0, l:60, why:'Je zařazen neutrál, motor kola netáhne, hnací síla tedy nepůsobí.' },
         { k:'pohybu', a:0, l:50, why:WHY_POHYBU },
         { k:'t', a:0, l:30, name:'Valivý odpor (tření) vozovky', why:'Tření by pak pomáhalo pohybu. Ve skutečnosti ale působí proti němu.' } ] },
-    { lv:2, text:'Lyžař sjíždí po svahu se sklonem 30° a zrychluje.',
+    { lv:2, scene:'svah', alpha:30, v:210,
+      text:'Lyžař sjíždí po svahu se sklonem 30° a zrychluje.',
       forces:[
         { k:'G', given:true, ok:true },
         { k:'N', ok:true, a:120, l:49, rel:'menší než F_G', why:'Svah lyžaře podpírá, a tlačí na něj kolmo ke svahu, ne svisle nahoru. Je o něco menší než tíha, protože část tíhy míří podél svahu.' },
@@ -712,14 +725,16 @@
         { k:'N', a:90, l:56, rel:'stejně velká jako F_G', name:'Tlaková síla podložky (svisle)', why:'Svah tlačí kolmo ke svahu, ne svisle nahoru.' },
         { k:'comp', a:210, l:28, why:'Složka tíhy je jen část síly F_G. Kdybyste ji nakreslili spolu s F_G, započítali byste tíhu dvakrát.' },
         { k:'pohybu', a:210, l:30, why:WHY_POHYBU } ] },
-    { lv:2, text:'Fotbalový míč letí šikmo vzhůru po kopnutí. Odpor vzduchu zanedbejte.',
+    { lv:2, scene:'mic',
+      text:'Fotbalový míč letí šikmo vzhůru po kopnutí. Odpor vzduchu zanedbejte.',
       forces:[
         { k:'G', ok:true, why:'Míč přitahuje Země. Tíhová síla je tu jediná, proto míč letí po oblouku a dopadne.' },
         { k:'r', a:50, l:50, name:'Síla nohy', who:'noha na míč', why:'Noha se míče dotýkala jen v okamžiku kopu. Míč už letí, a proto na něj noha nepůsobí.' },
         { k:'pohybu', a:50, l:50, why:WHY_POHYBU },
         { k:'N', a:90, l:56, why:'Míč neleží na podložce, tlaková síla podložky nevzniká.' },
         { k:'o', a:230, l:20, why:'Odpor vzduchu podle zadání zanedbáváme.' } ] },
-    { lv:2, text:'Bedna klouže po podlaze doprava, nikdo ji netlačí a ona zpomaluje.',
+    { lv:2, scene:'podlaha', v:0,
+      text:'Bedna klouže po podlaze doprava, nikdo ji netlačí a ona zpomaluje.',
       forces:[
         { k:'G', given:true, ok:true },
         { k:'N', ok:true, rel:'stejně velká jako F_G', why:'Podlaha bednu podpírá, a tlačí na ni kolmo vzhůru. Je stejně velká jako tíha.' },
@@ -728,7 +743,8 @@
         { k:'t', a:0, l:40, why:'Tření míří proti pohybu, ne po pohybu.' },
         { k:'h', a:0, l:60, name:'Hnací síla', who:'motor na těleso', why:'Bedna nemá motor, a nikdo ji netlačí.' },
         { k:'pohybu', a:0, l:50, why:WHY_POHYBU } ] },
-    { lv:2, text:'Chlapec táhne lanem sáně šikmo vzhůru po rovném sněhu stálou rychlostí doprava. Odpor vzduchu zanedbejte.',
+    { lv:2, scene:'sane', v:0,
+      text:'Chlapec táhne lanem sáně šikmo vzhůru po rovném sněhu stálou rychlostí doprava. Odpor vzduchu zanedbejte.',
       forces:[
         { k:'G', given:true, ok:true },
         { k:'T', ok:true, a:30, l:60, why:'Lano táhne sáně šikmo vzhůru podél lana. Vodorovná část síly táhne sáně vpřed, svislá část je částečně nadlehčuje.' },
@@ -738,7 +754,8 @@
         { k:'r', a:0, l:60, why:'Ruka táhne za lano, ne za sáně. Na sáně působí lano, ne ruka.' },
         { k:'pohybu', a:0, l:50, why:WHY_POHYBU },
         { k:'o', a:180, l:20, why:'Odpor vzduchu podle zadání zanedbáváme.' } ] },
-    { lv:2, text:'Žák stojí ve výtahu, který se právě rozjíždí směrem nahoru.',
+    { lv:2, scene:'vytah', v:90,
+      text:'Žák stojí ve výtahu, který se právě rozjíždí směrem nahoru.',
       forces:[
         { k:'G', given:true, ok:true },
         { k:'N', ok:true, l:70, rel:'větší než F_G', why:'Podlaha kabiny žáka podpírá a při rozjezdu tlačí silněji, než je tíha. Právě rozdíl sil žáka urychluje směrem vzhůru.' },
@@ -750,7 +767,8 @@
         { k:'pr', a:90, l:70, why:'Žádná pružina tu není, žáka podpírá podlaha kabiny.' } ] },
 
     // ===== Úroveň 3: celý diagram =====
-    { lv:3, text:'Bedna stojí na podlaze. Tlačíte ji rukou doprava, ale ještě se nepohnula.',
+    { lv:3, scene:'podlaha', ruka:true,
+      text:'Bedna stojí na podlaze. Tlačíte ji rukou doprava, ale ještě se nepohnula.',
       forces:[
         { k:'G', ok:true, why:'Zemi táhne bednu dolů.' },
         { k:'N', ok:true, why:'Podlaha bednu podpírá a tlačí ji nahoru stejně silou, jako je tíha.' },
@@ -761,7 +779,8 @@
         { k:'N', a:270, l:56, name:'Tlaková síla bedny na podlahu', who:'bedna na podlahu', why:'Tuto sílu působí bedna na podlahu, ne podlaha na bednu. Do diagramu bedny patří jen síly, které působí na bednu.' },
         { k:'pohybu', a:0, l:50, why:WHY_POHYBU },
         { k:'setr', a:180, l:40, why:'Bedna stojí. Setrvačnost není síla.' } ] },
-    { lv:3, text:'Kámen padá z útesu. Je chvíli po upuštění a rychlost má zatím malou.',
+    { lv:3, scene:'utes', v:270,
+      text:'Kámen padá z útesu. Je chvíli po upuštění a rychlost má zatím malou.',
       forces:[
         { k:'G', ok:true, why:'Zemi táhne kámen dolů.' },
         { k:'o', ok:true, a:90, l:14, rel:'mnohem menší než F_G', why:'Kámen naráží do vzduchu, který ho brzdí vzhůru. Při malé rychlosti je odpor slabý.' },
@@ -771,7 +790,8 @@
         { k:'N', a:90, l:56, why:'Kámen nikde neleží, nic ho nepodpírá.' },
         { k:'pohybu', a:270, l:50, why:WHY_POHYBU },
         { k:'setr', a:90, l:40, why:WHY_SETR } ] },
-    { lv:3, text:'Auto jede po rovné silnici stálou rychlostí a motor běží.',
+    { lv:3, scene:'auto', v:0,
+      text:'Auto jede po rovné silnici stálou rychlostí a motor běží.',
       forces:[
         { k:'G', ok:true, why:'Země táhne auto dolů.' },
         { k:'N', ok:true, why:'Vozovka auto podpírá a tlačí je nahoru stejně silou, jako je tíha.' },
@@ -782,7 +802,8 @@
         { k:'h', a:180, l:80, rel:'stejně velká jako obě odporové síly dohromady', name:'Hnací síla (dozadu)', why:'Hnací síla by auto brzdila. Ve skutečnosti míří dopředu.' },
         { k:'pohybu', a:0, l:50, why:WHY_POHYBU },
         { k:'setr', a:180, l:40, why:WHY_SETR } ] },
-    { lv:3, text:'Auto jede po vodorovné silnici na neutrál a zpomaluje.',
+    { lv:3, scene:'auto', v:0,
+      text:'Auto jede po vodorovné silnici na neutrál a zpomaluje.',
       forces:[
         { k:'G', ok:true, why:'Země táhne auto dolů.' },
         { k:'N', ok:true, why:'Vozovka auto podpírá a tlačí je nahoru stejně silou, jako je tíha.' },
@@ -792,7 +813,8 @@
         { k:'pohybu', a:0, l:50, why:WHY_POHYBU },
         { k:'setr', a:0, l:40, why:WHY_SETR },
         { k:'t', a:0, l:30, name:'Valivý odpor (tření) vozovky', why:'Tření by pak pomáhalo pohybu. Ve skutečnosti ale působí proti němu.' } ] },
-    { lv:3, text:'Sáňkař sjíždí po sněhovém svahu se sklonem 30° a zrychluje. Odpor vzduchu zanedbejte.',
+    { lv:3, scene:'svah', alpha:30, v:210,
+      text:'Sáňkař sjíždí po sněhovém svahu se sklonem 30° a zrychluje. Odpor vzduchu zanedbejte.',
       forces:[
         { k:'G', ok:true, why:'Země táhne sáňkaře svisle dolů. Právě část tíhy směřující podél svahu ho urychluje.' },
         { k:'N', ok:true, a:120, l:49, why:'Svah sáňkaře podpírá, a tlačí na něj kolmo ke svahu.' },
@@ -802,14 +824,16 @@
         { k:'t', a:210, l:14, name:'Třecí síla (opačný směr)', why:'Tření míří proti pohybu. Sáňkař jede dolů, takže tření míří nahoru po svahu.' },
         { k:'pohybu', a:210, l:30, why:WHY_POHYBU },
         { k:'o', a:30, l:10, why:'Odpor vzduchu podle zadání zanedbáváme.' } ] },
-    { lv:3, text:'Kosmická sonda obíhá Zemi ve výšce 400 km nad atmosférou. Motory jsou vypnuté.',
+    { lv:3, scene:'sonda', v:0,
+      text:'Kosmická sonda obíhá Zemi ve výšce 400 km nad atmosférou. Motory jsou vypnuté.',
       forces:[
         { k:'G', ok:true, name:'Gravitační síla Země', why:'Země sondu přitahuje a síla míří do středu Země. Je to jediná síla, která na sondu působí, proto sonda místo přímého letu krouží kolem Země.' },
         { k:'odst', a:90, l:50, why:'Žádné těleso takovou sílu nezpůsobuje. Sonda obíhá proto, že ji Země přitahuje.' },
         { k:'h', a:0, l:50, why:'Motory jsou vypnuté, hnací síla tedy nepůsobí.' },
         { k:'pohybu', a:0, l:50, why:WHY_POHYBU },
         { k:'o', a:180, l:30, why:'Ve výšce 400 km nad atmosférou není vzduch, odpor vzduchu tu zanedbáváme.' } ] },
-    { lv:3, text:'Motorový člun pluje po klidném jezeře stálou rychlostí doprava a vrtule běží.',
+    { lv:3, scene:'clun', v:0,
+      text:'Motorový člun pluje po klidném jezeře stálou rychlostí doprava a vrtule běží.',
       forces:[
         { k:'G', ok:true, why:'Země táhne člun dolů.' },
         { k:'vz', ok:true, rel:'stejně velká jako F_G', why:'Voda tlačí na ponořenou část člunu nahoru. Člun neklesá, proto je vztlaková síla stejně velká jako tíha.' },
@@ -820,7 +844,8 @@
         { k:'N', a:90, l:56, why:'Člun nestojí na pevné podložce. Nahoru ho tlačí voda, a ta působí vztlakovou silou.' },
         { k:'pohybu', a:0, l:50, why:WHY_POHYBU },
         { k:'setr', a:180, l:40, why:WHY_SETR } ] },
-    { lv:3, text:'Magnetek drží na svislých dvířkách ledničky a nesklouzává.',
+    { lv:3, scene:'dvirka',
+      text:'Magnetek drží na svislých dvířkách ledničky a nesklouzává.',
       forces:[
         { k:'G', ok:true, l:50, why:'Země táhne magnetek dolů.' },
         { k:'m', ok:true, a:180, l:40, why:'Železná dvířka magnetek přitahují, a to směrem ke dvířkám.' },
@@ -830,7 +855,8 @@
         { k:'pr', a:90, l:50, why:'Žádná pružina tu není.' },
         { k:'r', a:90, l:50, why:'Magnetek drží sám, nikdo ho rukou nepodpírá.' },
         { k:'pohybu', a:90, l:50, why:WHY_POHYBU } ] },
-    { lv:3, text:'Vozík na vodorovném stole je tažen provázkem se závažím a rozjíždí se doprava. Tření zanedbejte.',
+    { lv:3, scene:'vozik', v:0,
+      text:'Vozík na vodorovném stole je tažen provázkem se závažím a rozjíždí se doprava. Tření zanedbejte.',
       forces:[
         { k:'G', ok:true, why:'Země táhne vozík dolů.' },
         { k:'N', ok:true, why:'Stůl vozík podpírá a tlačí ho nahoru stejně silou, jako je tíha.' },
@@ -909,11 +935,11 @@
     return { x:x, y:y, anchor:anchor };
   }
 
-  // Silový diagram: jen šipky sil a jejich značky. Síly různých směrů vycházejí z jednoho bodu,
+  // Silový diagram: schematický obrázek situace, přes něj šipky sil a jejich značky. Síly různých směrů vycházejí z jednoho bodu,
   // síly téhož směru se skládají za sebe (každá začíná tam, kde končí předchozí).
   // items: [{ f:(resolved), style:'given'|'sel'|'sol' }]
   function drawDiagram(scn, items){
-    var s = '', labels = '', chain = {}, size = {}, seen = {};
+    var s = sceneSvg(scn), labels = '', chain = {}, size = {}, seen = {};
     var x0 = 70, x1 = 370, y0 = 0, y1 = VB_H;
     function keyOf(f){ return String(((Math.round(f.a) % 360) + 360) % 360); }
     items.forEach(function(it){ var k = keyOf(it.f); size[k] = (size[k] || 0) + 1; });
@@ -949,6 +975,170 @@
     var L = Math.max(10, Math.min(54, f.l*0.42)), u = [Math.cos(rad(f.a)), -Math.sin(rad(f.a))];
     var ar = arrowSvg(32 - u[0]*L/2, 32 - u[1]*L/2, f.a, L, colorOf(f.col), false, 3);
     return '<svg viewBox="0 0 64 64" aria-hidden="true">' + ar.svg + '</svg>';
+  }
+
+  // ---------- schematický obrázek situace ----------
+  // Kreslí se pod šipky sil; těžiště tělesa (působiště sil) je vždy v bodě (CX, CY).
+  // scn.scene = typ obrázku, scn.alpha = sklon svahu, scn.ruka = ruka tlačí zleva,
+  // scn.v = směr rychlosti ve stupních (čárkovaná šipka v rohu, jen pomůcka, není to síla).
+  var SC_INK = 'var(--ink)', SC_SOFT = 'var(--ink-soft)', SC_FILL = 'var(--surface-2)', SC_SURF = 'var(--surface)';
+  function scLine(x1, y1, x2, y2, col, w, extra){
+    return '<line x1="' + r1(x1) + '" y1="' + r1(y1) + '" x2="' + r1(x2) + '" y2="' + r1(y2) + '" stroke="' + (col||SC_INK) + '" stroke-width="' + (w||1.6) + '"' + (extra||'') + '/>';
+  }
+  function scRect(x, y, w, h, fill, stroke, sw, rx){
+    return '<rect x="' + r1(x) + '" y="' + r1(y) + '" width="' + r1(w) + '" height="' + r1(h) + '" rx="' + (rx||0) + '" fill="' + (fill||SC_FILL) + '" stroke="' + (stroke||SC_INK) + '" stroke-width="' + (sw||1.6) + '"/>';
+  }
+  function scCircle(cx, cy, r, fill, stroke, sw){
+    return '<circle cx="' + r1(cx) + '" cy="' + r1(cy) + '" r="' + r1(r) + '" fill="' + (fill||SC_FILL) + '" stroke="' + (stroke||SC_INK) + '" stroke-width="' + (sw||1.6) + '"/>';
+  }
+  function scPath(d, fill, stroke, sw, extra){
+    return '<path d="' + d + '" fill="' + (fill||'none') + '" stroke="' + (stroke||SC_INK) + '" stroke-width="' + (sw||1.6) + '" stroke-linejoin="round"' + (extra||'') + '/>';
+  }
+  // vodorovná podložka s šrafováním dolů
+  function scGround(x0, x1, y){
+    var s = scLine(x0, y, x1, y, SC_INK, 2.2);
+    for(var x = x0 + 6; x <= x1; x += 14) s += scLine(x, y, x - 7, y + 7, SC_SOFT, 1);
+    return s;
+  }
+  // strop s šrafováním nahoru
+  function scCeiling(x0, x1, y){
+    var s = scLine(x0, y, x1, y, SC_INK, 2.2);
+    for(var x = x0 + 4; x <= x1; x += 12) s += scLine(x, y, x - 7, y - 7, SC_SOFT, 1);
+    return s;
+  }
+  function scWater(x0, x1, y, y2){
+    return '<rect x="' + x0 + '" y="' + y + '" width="' + (x1 - x0) + '" height="' + (y2 - y) + '" fill="var(--focus)" fill-opacity="0.12" stroke="none"/>' +
+      scLine(x0, y, x1, y, 'var(--focus)', 1.6);
+  }
+  function scBox(){ return scRect(CX - 25, CY - 20, 50, 40, SC_FILL, SC_INK, 1.8, 3); }
+  function scStone(r){ return scPath('M' + (CX - r) + ',' + (CY + 3) + ' Q' + (CX - r + 1) + ',' + (CY - r + 2) + ' ' + (CX - 2) + ',' + (CY - r) + ' Q' + (CX + r) + ',' + (CY - r + 1) + ' ' + (CX + r) + ',' + (CY + 1) +
+    ' Q' + (CX + r - 1) + ',' + (CY + r) + ' ' + (CX + 1) + ',' + (CY + r) + ' Q' + (CX - r) + ',' + (CY + r - 1) + ' ' + (CX - r) + ',' + (CY + 3) + ' Z', SC_FILL, SC_INK, 1.8); }
+  function scCar(){
+    var s = scPath('M174,158 L174,138 Q174,132 180,132 L192,132 L203,116 L240,116 L253,132 L262,132 Q268,132 268,138 L268,158 Z', SC_FILL, SC_INK, 1.8);
+    s += scPath('M197,131 L206,120 L219,120 L219,131 Z M224,131 L224,120 L237,120 L247,131 Z', SC_SURF, SC_SOFT, 1.2);
+    s += scCircle(195, 160, 10, SC_SURF, SC_INK, 2) + scCircle(195, 160, 3, SC_INK, SC_INK, 1);
+    s += scCircle(247, 160, 10, SC_SURF, SC_INK, 2) + scCircle(247, 160, 3, SC_INK, SC_INK, 1);
+    return s + scGround(70, 370, 170);
+  }
+  function scArm(){
+    // předloktí a dlaň zleva, dlaň se opírá o levou stěnu bedny
+    return scRect(112, CY - 15, 74, 12, SC_SURF, SC_SOFT, 1.4, 6) + scRect(184, CY - 21, 11, 24, SC_SURF, SC_SOFT, 1.4, 4);
+  }
+  function scSlope(alpha){
+    var sa = Math.sin(rad(alpha)), ca = Math.cos(rad(alpha)), ta = Math.tan(rad(alpha)), h = 12;
+    var xc = CX + h*sa, yc = CY + h*ca, yB = 238;               // dotykový bod tělesa se svahem, úroveň země
+    var xL = xc - (yB - yc)/ta, xR = 362, yR = yc - (xR - xc)*ta;
+    var s = scPath('M' + r1(xL) + ',' + yB + ' L' + xR + ',' + r1(yR) + ' L' + xR + ',' + yB + ' Z', SC_FILL, SC_INK, 1.6);
+    s += scLine(Math.min(xL, 60) - 6, yB, 370, yB, SC_INK, 2.2);
+    var R = 34;
+    s += scPath('M' + r1(xL + R) + ',' + yB + ' A' + R + ',' + R + ' 0 0 0 ' + r1(xL + R*ca) + ',' + r1(yB - R*sa), 'none', SC_SOFT, 1.2);
+    s += '<text x="' + r1(xL + R + 6) + '" y="' + (yB - 6) + '" font-family="Work Sans, sans-serif" font-size="12" fill="' + SC_SOFT + '">' + alpha + '°</text>';
+    // sáně (těleso) natočené podle svahu
+    s += '<g transform="translate(' + CX + ',' + CY + ') rotate(' + (-alpha) + ')">' +
+      scRect(-23, -12, 46, 20, SC_FILL, SC_INK, 1.8, 3) +
+      scPath('M26,12 L-22,12 Q-30,12 -29,4', 'none', SC_INK, 2) +
+      scLine(-14, 8, -14, 12, SC_INK, 1.6) + scLine(12, 8, 12, 12, SC_INK, 1.6) + '</g>';
+    return s;
+  }
+  function scVelocity(a){
+    var L = 40, VX = 322, VY = 58, u = [Math.cos(rad(a)), -Math.sin(rad(a))];
+    var ar = arrowSvg(VX - u[0]*L/2, VY - u[1]*L/2, a, L, SC_SOFT, true, 2.2);
+    var nx = -u[1], ny = u[0];                                  // kolmice k šipce, popisek nad ni nebo vpravo
+    if(ny > 0.1 || (Math.abs(ny) <= 0.1 && nx < 0)){ nx = -nx; ny = -ny; }
+    var lx = VX + nx*13, ly = VY + ny*13 + 5;
+    var anchor = nx > 0.5 ? 'start' : (nx < -0.5 ? 'end' : 'middle');
+    return ar.svg + '<text x="' + r1(lx) + '" y="' + r1(ly) + '" text-anchor="' + anchor + '" font-family="Work Sans, sans-serif" font-size="15" font-weight="700" font-style="italic" fill="' + SC_SOFT + '">v</text>';
+  }
+
+  function sceneSvg(scn){
+    var s = '';
+    switch(scn.scene){
+      case 'stul':        // kniha na stole
+        s += scRect(90, CY + 10, 260, 8, SC_FILL, SC_INK, 1.6) + scRect(104, CY + 18, 8, 80, SC_FILL, SC_INK, 1.4) + scRect(328, CY + 18, 8, 80, SC_FILL, SC_INK, 1.4);
+        s += scRect(CX - 32, CY - 10, 64, 20, SC_FILL, SC_INK, 1.8, 2) + scLine(CX - 26, CY + 4, CX + 28, CY + 4, SC_SOFT, 1);
+        break;
+      case 'podlaha':     // bedna na podlaze
+        s += scGround(70, 370, CY + 20) + (scn.ruka ? scArm() : '') + scBox();
+        break;
+      case 'most':        // kámen padá z mostu
+        s += scRect(56, 70, 120, 12, SC_FILL, SC_INK, 1.6) + scRect(98, 82, 18, 150, SC_FILL, SC_INK, 1.4);
+        s += scLine(60, 70, 60, 54, SC_SOFT, 1.4) + scLine(172, 70, 172, 54, SC_SOFT, 1.4) + scLine(56, 54, 176, 54, SC_SOFT, 1.4);
+        s += scWater(56, 370, 236, 262) + scStone(13);
+        break;
+      case 'utes':        // kámen padá z útesu
+        s += scPath('M40,262 L40,72 L176,72 L172,98 L180,128 L168,170 L176,212 L164,262', SC_FILL, SC_INK, 1.6);
+        s += scWater(164, 370, 236, 262) + scStone(13);
+        break;
+      case 'auto':
+        s += scCar();
+        break;
+      case 'svah':
+        s += scSlope(scn.alpha);
+        break;
+      case 'lampa':
+        s += scCeiling(160, 280, 26) + scLine(CX, 26, CX, CY - 16, SC_INK, 1.6);
+        s += scPath('M' + (CX - 9) + ',' + (CY - 16) + ' L' + (CX + 9) + ',' + (CY - 16) + ' L' + (CX + 30) + ',' + (CY + 10) + ' L' + (CX - 30) + ',' + (CY + 10) + ' Z', SC_FILL, SC_INK, 1.8);
+        s += scPath('M' + (CX - 10) + ',' + (CY + 10) + ' A10,10 0 0 0 ' + (CX + 10) + ',' + (CY + 10), SC_SURF, SC_INK, 1.4);
+        break;
+      case 'korek':
+        s += scWater(70, 370, CY + 6, 248) + scRect(CX - 16, CY - 12, 32, 24, SC_FILL, SC_INK, 1.8, 3);
+        break;
+      case 'dvirka':      // magnetek na svislých dvířkách (dvířka vlevo)
+        s += scRect(CX - 24, 44, 14, 200, SC_FILL, SC_INK, 1.6);
+        s += scRect(CX - 10, CY - 14, 20, 28, 'var(--danger-bg)', SC_INK, 1.8, 3);
+        break;
+      case 'led':         // puk na ledu a hokejka zleva
+        s += scWater(70, 370, CY + 6, 176);
+        s += scPath('M110,62 L178,' + (CY + 2) + ' L' + (CX - 21) + ',' + (CY + 2), 'none', SC_SOFT, 4.5, ' stroke-linecap="round"');
+        s += scRect(CX - 20, CY - 6, 40, 12, SC_FILL, SC_INK, 1.8, 4);
+        break;
+      case 'beton':       // kámen dopadá na beton
+        s += scRect(70, CY + 14, 300, 28, SC_FILL, SC_INK, 1.6);
+        [96, 132, 168, 270, 306, 342, 114, 150, 288, 324].forEach(function(x, i){ s += scCircle(x, CY + 22 + (i % 3)*6, 1.8, SC_SOFT, 'none', 0); });
+        s += scStone(14);
+        break;
+      case 'mic':         // míč letí po parabole
+        var pts = [], k = 0.006, t50 = Math.tan(rad(50));
+        for(var d = -62; d <= 150; d += 4) pts.push(r1(CX + d) + ',' + r1(CY - t50*d + k*d*d));
+        s += scGround(80, 370, 238) + '<polyline points="' + pts.join(' ') + '" fill="none" stroke="' + SC_SOFT + '" stroke-width="1.4" stroke-dasharray="4 5"/>';
+        s += scCircle(CX, CY, 12, SC_FILL, SC_INK, 1.8) + scPath('M' + (CX - 12) + ',' + CY + ' Q' + CX + ',' + (CY + 6) + ' ' + (CX + 12) + ',' + CY + ' M' + CX + ',' + (CY - 12) + ' Q' + (CX - 5) + ',' + CY + ' ' + CX + ',' + (CY + 12), 'none', SC_SOFT, 1);
+        break;
+      case 'sane':        // sáně tažené lanem šikmo vzhůru
+        s += scGround(70, 370, CY + 15);
+        s += scLine(CX + 26, CY - 3, CX + 100, CY - 3 - 74*Math.tan(rad(30)), SC_SOFT, 1.6);
+        s += scRect(CX - 24, CY - 14, 48, 20, SC_FILL, SC_INK, 1.8, 3);
+        s += scPath('M' + (CX - 30) + ',' + (CY + 14) + ' L' + (CX + 26) + ',' + (CY + 14) + ' Q' + (CX + 36) + ',' + (CY + 14) + ' ' + (CX + 34) + ',' + (CY + 4), 'none', SC_INK, 2);
+        s += scLine(CX - 16, CY + 6, CX - 16, CY + 14, SC_INK, 1.6) + scLine(CX + 16, CY + 6, CX + 16, CY + 14, SC_INK, 1.6);
+        break;
+      case 'vytah':       // žák v kabině výtahu
+        s += scLine(CX, 4, CX, 40, SC_INK, 1.8) + scRect(160, 40, 120, 138, 'none', SC_INK, 1.6, 2) + scLine(160, 178, 280, 178, SC_INK, 3);
+        s += scCircle(CX, 104, 9, SC_FILL, SC_INK, 1.6);
+        s += scLine(CX - 10, 120, CX - 16, 146, SC_INK, 3, ' stroke-linecap="round"') + scLine(CX + 10, 120, CX + 16, 146, SC_INK, 3, ' stroke-linecap="round"');
+        s += scLine(CX - 5, 150, CX - 7, 177, SC_INK, 3.4, ' stroke-linecap="round"') + scLine(CX + 5, 150, CX + 7, 177, SC_INK, 3.4, ' stroke-linecap="round"');
+        s += scRect(CX - 10, 115, 20, 38, SC_FILL, SC_INK, 1.6, 5);
+        break;
+      case 'sonda':       // sonda na oběžné dráze nad Zemí
+        s += '<circle cx="' + CX + '" cy="600" r="360" fill="var(--focus)" fill-opacity="0.14" stroke="var(--focus)" stroke-width="1.6"/>';
+        s += '<circle cx="' + CX + '" cy="600" r="455" fill="none" stroke="' + SC_SOFT + '" stroke-width="1.2" stroke-dasharray="4 5"/>';
+        s += scRect(CX - 34, CY - 4, 22, 8, 'var(--focus)', SC_INK, 1.2) + scRect(CX + 12, CY - 4, 22, 8, 'var(--focus)', SC_INK, 1.2);
+        s += scRect(CX - 10, CY - 8, 20, 16, SC_FILL, SC_INK, 1.6, 2);
+        break;
+      case 'clun':        // motorový člun na vodě
+        s += scWater(70, 370, CY + 7, 248);
+        s += scLine(164, CY + 4, 160, CY + 22, SC_INK, 2) + scPath('M155,' + (CY + 18) + ' L165,' + (CY + 26), 'none', SC_INK, 3, ' stroke-linecap="round"');
+        s += scRect(196, CY - 26, 38, 16, SC_SURF, SC_INK, 1.4, 2);
+        s += scPath('M166,' + (CY - 10) + ' L276,' + (CY - 10) + ' L256,' + (CY + 15) + ' L180,' + (CY + 15) + ' Z', SC_FILL, SC_INK, 1.8);
+        break;
+      case 'vozik':       // vozík na stole tažený přes kladku závažím
+        s += scRect(60, CY + 20, 260, 8, SC_FILL, SC_INK, 1.6) + scRect(72, CY + 28, 8, 70, SC_FILL, SC_INK, 1.4) + scRect(300, CY + 28, 8, 70, SC_FILL, SC_INK, 1.4);
+        s += scLine(316, CY + 20, 328, CY + 10, SC_INK, 2) + scCircle(332, CY + 8, 8, SC_SURF, SC_INK, 1.6) + scCircle(332, CY + 8, 2, SC_INK, SC_INK, 1);
+        s += scLine(CX + 26, CY, 332, CY, SC_SOFT, 1.4) + scLine(340, CY + 8, 340, CY + 58, SC_SOFT, 1.4) + scRect(328, CY + 58, 24, 24, SC_FILL, SC_INK, 1.6, 2);
+        s += scRect(CX - 26, CY - 12, 52, 24, SC_FILL, SC_INK, 1.8, 3);
+        s += scCircle(CX - 15, CY + 14, 6, SC_SURF, SC_INK, 1.6) + scCircle(CX + 15, CY + 14, 6, SC_SURF, SC_INK, 1.6);
+        break;
+    }
+    if(scn.v !== undefined) s += scVelocity(scn.v);
+    return s;
   }
 
   function shuffle(a){
