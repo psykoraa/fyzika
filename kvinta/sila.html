@@ -910,7 +910,8 @@
   // síly téhož směru se skládají za sebe (každá začíná tam, kde končí předchozí).
   // items: [{ f:(resolved), style:'given'|'sel'|'sol' }]
   // Nápovědy pro umístění popisků (viz labelPos) a měřítko délek šipek podle scény.
-  var SCENE_HINT = { podlaha:{ left:'above' }, lampa:{ up:'right' }, svah:{ chainDown:30 } };  // chainDown: popisky vnitřních šipek za sebou pod šipkou (mimo sáně)
+  var SCENE_HINT = { podlaha:{ left:'above' }, lampa:{ up:'right' }, svah:{ chainDown:30 }, auto:{ chainUp:38 } };  // chainDown: popisky vnitřních šipek za sebou pod šipkou (mimo sáně)
+  var SCENE_DY = { auto:{ 0:-24 }, clun:{ 0:-18, 180:10 } };   // svislý posun vodorovných šipek podle směru (stupně), aby se šipky navzájem nepřekrývaly
   var SCENE_SCALE = { svah:1.5 };   // na svahu jsou tření a odpor malé, šipky se proto kreslí delší
   function drawDiagram(scn, items){
     var s = sceneSvg(scn), labels = '', chain = {}, size = {}, seen = {};
@@ -925,7 +926,7 @@
       var f = it.f, col = colorOf(f.col), key = keyOf(f), L = f.l*k;
       var off = chain[key] || 0, idx = seen[key] || 0;
       seen[key] = idx + 1;
-      var sx = CX + off*Math.cos(rad(f.a)), sy = CY - off*Math.sin(rad(f.a));
+      var sx = CX + off*Math.cos(rad(f.a)), sy = CY - off*Math.sin(rad(f.a)) + ((SCENE_DY[scn.scene] || {})[key] || 0);
       chain[key] = off + L;
       var ar = arrowSvg(sx, sy, f.a, L, col, it.style === 'sel', 3.2);
       s += ar.svg;
@@ -936,6 +937,7 @@
         if(ny > 0.1 || (Math.abs(ny) <= 0.1 && nx < 0)){ nx = -nx; ny = -ny; }
         var mx = sx + (ar.ex - sx)*0.65, my = sy + (ar.ey - sy)*0.65;
         if(hint.chainDown){ anchor = 'middle'; lx = mx - nx*hint.chainDown; ly = my - ny*hint.chainDown + 6; }
+        else if(hint.chainUp){ anchor = 'middle'; lx = mx - 8; ly = my - hint.chainUp; }
         else if(Math.abs(nx) > 0.5){ anchor = nx > 0 ? 'start' : 'end'; lx = mx + nx*9; ly = my + 5; }
         else { anchor = 'middle'; lx = mx + nx*9; ly = my - 8; }
       }else{
@@ -1049,8 +1051,9 @@
         s += scWater(70, 370, 236, 262) + scStone(13);
         break;
       case 'utes':        // kámen padá z útesu
+        s += scWater(40, 370, 236, 262);
         s += scPath('M40,262 L40,72 L176,72 L172,98 L180,128 L168,170 L176,212 L164,262', SC_FILL, SC_INK, 1.6);
-        s += scWater(164, 370, 236, 262) + scStone(13);
+        s += scStone(13);
         break;
       case 'auto':
         s += scCar();
