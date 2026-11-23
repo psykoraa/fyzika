@@ -143,10 +143,7 @@
       { d: 'hra-u3-300s', key: 'fyzika:prvni-termodynamicky-zakon:game-bests', field: '3-300' }
     ],
     'sila.html': [
-      { d: 'hra-60s', key: 'fyzika:sila:game-bests', field: '60' },
-      { d: 'hra-120s', key: 'fyzika:sila:game-bests', field: '120' },
-      { d: 'hra-180s', key: 'fyzika:sila:game-bests', field: '180' },
-      { d: 'hra-300s', key: 'fyzika:sila:game-bests', field: '300' }
+      { d: 'serie', key: 'fyzika:sila:stats', field: 'bestStreak' }
     ],
     'prvni-newtonuv-zakon.html': [
       { d: 'serie', key: 'fyzika:prvni-newtonuv-zakon:stats', field: 'bestStreak' }
