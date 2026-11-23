@@ -128,10 +128,19 @@
     ],
     'prvni-termodynamicky-zakon.html': [
       { d: 'serie', key: 'fyzika:prvni-termodynamicky-zakon:stats', field: 'bestStreak' },
-      { d: 'hra-60s', key: 'fyzika:prvni-termodynamicky-zakon:game-bests', field: '60' },
-      { d: 'hra-120s', key: 'fyzika:prvni-termodynamicky-zakon:game-bests', field: '120' },
-      { d: 'hra-180s', key: 'fyzika:prvni-termodynamicky-zakon:game-bests', field: '180' },
-      { d: 'hra-300s', key: 'fyzika:prvni-termodynamicky-zakon:game-bests', field: '300' }
+      // hra na čas: zvlášť každá úroveň (u1–u3) a délka hry; field = '<úroveň>-<sekundy>'
+      { d: 'hra-u1-60s', key: 'fyzika:prvni-termodynamicky-zakon:game-bests', field: '1-60' },
+      { d: 'hra-u1-120s', key: 'fyzika:prvni-termodynamicky-zakon:game-bests', field: '1-120' },
+      { d: 'hra-u1-180s', key: 'fyzika:prvni-termodynamicky-zakon:game-bests', field: '1-180' },
+      { d: 'hra-u1-300s', key: 'fyzika:prvni-termodynamicky-zakon:game-bests', field: '1-300' },
+      { d: 'hra-u2-60s', key: 'fyzika:prvni-termodynamicky-zakon:game-bests', field: '2-60' },
+      { d: 'hra-u2-120s', key: 'fyzika:prvni-termodynamicky-zakon:game-bests', field: '2-120' },
+      { d: 'hra-u2-180s', key: 'fyzika:prvni-termodynamicky-zakon:game-bests', field: '2-180' },
+      { d: 'hra-u2-300s', key: 'fyzika:prvni-termodynamicky-zakon:game-bests', field: '2-300' },
+      { d: 'hra-u3-60s', key: 'fyzika:prvni-termodynamicky-zakon:game-bests', field: '3-60' },
+      { d: 'hra-u3-120s', key: 'fyzika:prvni-termodynamicky-zakon:game-bests', field: '3-120' },
+      { d: 'hra-u3-180s', key: 'fyzika:prvni-termodynamicky-zakon:game-bests', field: '3-180' },
+      { d: 'hra-u3-300s', key: 'fyzika:prvni-termodynamicky-zakon:game-bests', field: '3-300' }
     ],
     'sila.html': [
       { d: 'hra-60s', key: 'fyzika:sila:game-bests', field: '60' },
