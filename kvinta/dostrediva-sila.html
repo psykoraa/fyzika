@@ -248,6 +248,9 @@
           <div class="example-note">Stanice obíhá ve výšce asi \(400\ \mathrm{km}\) nad povrchem (\(r \doteq 6\,780\ \mathrm{km}\) od středu Země). Potřebnou dostředivou sílu dodává gravitační síla Země.</div>
         </div>
       </div>
+      <div class="links">
+        <a class="btn-link" href="skladani-vektoru.html">Skládání vektorů →</a>
+      </div>
     </div>
 
     <div class="panel">
@@ -278,6 +281,30 @@
       <div class="given-data">
         <div class="given-line">Zadáno: zatáčka na vodorovné silnici má poloměr \(50\ \mathrm{m}\). Jakou největší rychlostí jí může auto projet za sucha (\(f = 0{,}6\)) a jakou za deště (\(f = 0{,}3\))? \(g = 10\ \mathrm{m\cdot s^{-2}}\).</div>
       </div>
+      <figure class="theory-fig" id="fig-zatacka">
+        <svg viewBox="0 0 400 300" style="max-width:440px" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Auto v zatáčce o poloměru 50 m, pohled shora. Postupně přibývá poloměr a třecí síla mířící do středu a rychlosti 62 km/h na suchu a 44 km/h na mokru.">
+          <defs><marker id="za-d" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4.2" markerHeight="4.2" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/></marker><marker id="za-s" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4.2" markerHeight="4.2" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink-soft)"/></marker><marker id="za-f" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4.2" markerHeight="4.2" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--focus)"/></marker></defs>
+          <g font-family="Work Sans, sans-serif" font-size="13" font-style="italic" fill="var(--ink)">
+            <circle cx="150" cy="150" r="100" fill="none" stroke="var(--surface-2)" stroke-width="24"/>
+            <circle cx="150" cy="150" r="100" fill="none" stroke="var(--ink-soft)" stroke-width="1.2" stroke-dasharray="6 6"/>
+            <circle cx="150" cy="150" r="3.5" fill="var(--ink)"/>
+            <g class="sk-layer" data-from="1" style="display:none">
+              <line x1="150" y1="150" x2="150" y2="240" stroke="var(--ink-soft)" stroke-width="1.4" stroke-dasharray="4 4"/>
+              <text x="156" y="172" fill="var(--ink-soft)">r = 50 m</text>
+              <line x1="150" y1="250" x2="150" y2="186" stroke="var(--accent)" stroke-width="3.8" stroke-linecap="round" marker-end="url(#za-d)"/>
+              <text x="158" y="205" fill="var(--accent)" font-weight="700">F<tspan dy="3" font-size="10">t</tspan><tspan dy="-3"> = F</tspan><tspan dy="3" font-size="10">d</tspan></text>
+            </g>
+            <rect x="136" y="243" width="28" height="14" rx="4" fill="var(--surface)" stroke="var(--ink)" stroke-width="1.8"/>
+            <g class="sk-layer" data-from="2" style="display:none">
+              <line x1="167" y1="250" x2="254" y2="250" stroke="var(--focus)" stroke-width="3.2" stroke-linecap="round" marker-end="url(#za-f)"/>
+              <text x="260" y="254" fill="var(--focus)" font-weight="700">v<tspan dy="3" font-size="10">sucho</tspan><tspan dy="-3"> ≐ 62 km·h<tspan dy="-4" font-size="9">−1</tspan></tspan></text>
+              <line x1="167" y1="272" x2="228" y2="272" stroke="var(--ink-soft)" stroke-width="3.2" stroke-linecap="round" marker-end="url(#za-s)"/>
+              <text x="234" y="276" fill="var(--ink-soft)" font-weight="700">v<tspan dy="3" font-size="10">mokro</tspan><tspan dy="-3"> ≐ 44 km·h<tspan dy="-4" font-size="9">−1</tspan></tspan></text>
+            </g>
+          </g>
+        </svg>
+        <figcaption>Pohled shora. Délky šipek rychlostí jsou ve stejném poměru jako \(17{,}3\ \mathrm{m\cdot s^{-1}}\) a \(12{,}2\ \mathrm{m\cdot s^{-1}}\). Obrázek se doplňuje podle toho, jak rozbalujete kroky příkladu.</figcaption>
+      </figure>
       <div class="stepper" data-reset="reset-zatacka">
         <div class="step" data-step="1">
           <div class="step-connector"></div>
@@ -553,6 +580,25 @@
 
     refreshLocks();
   });
+
+  // ---- obrázek k příkladu se doplňuje podle rozbalených kroků ----
+  (function(){
+    var fig = document.getElementById('fig-zatacka');
+    var wrap = document.querySelector('.stepper[data-reset="reset-zatacka"]');
+    if(!fig || !wrap) return;
+    function refresh(){
+      var max = 0;
+      Array.prototype.forEach.call(wrap.querySelectorAll('.step.done'), function(st){
+        max = Math.max(max, parseInt(st.getAttribute('data-step'), 10));
+      });
+      Array.prototype.forEach.call(fig.querySelectorAll('.sk-layer'), function(g){
+        g.style.display = parseInt(g.getAttribute('data-from'), 10) <= max ? '' : 'none';
+      });
+    }
+    wrap.addEventListener('click', function(){ setTimeout(refresh, 0); });
+    var r = document.getElementById('reset-zatacka');
+    if(r) r.addEventListener('click', function(){ setTimeout(refresh, 0); });
+  })();
 
   // ================= POMOCNÉ FUNKCE (čísla, TeX) =================
   var G = 10;   // tíhové zrychlení v úlohách tréninku (m·s⁻²), stejně jako v přípravách
