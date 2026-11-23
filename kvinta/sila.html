@@ -319,6 +319,9 @@
         </svg>
         <p>Velikosti sil se sčítají jen u sil <b>stejného směru</b>. Obecně platí \(F_\mathrm{v} \neq F_1 + F_2\): například kolmé síly \(3\ \mathrm{N}\) a \(4\ \mathrm{N}\) mají výslednici jen \(5\ \mathrm{N}\).</p>
       </div>
+      <div class="links">
+        <a class="btn-link" href="skladani-vektoru.html">Skládání vektorů →</a>
+      </div>
     </div>
 
     <div class="panel">
@@ -368,6 +371,35 @@
       <div class="given-data">
         <div class="given-line">Zadáno: dvě děti táhnou sáňky po ledě dvěma lany, která jsou na sebe kolmá. První táhne silou \(F_1 = 45\ \mathrm{N}\), druhé silou \(F_2 = 70\ \mathrm{N}\). Určete velikost a směr výslednice.</div>
       </div>
+      <figure class="theory-fig" id="fig-sanky">
+        <svg viewBox="0 0 300 270" style="max-width:340px" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Sáňky tažené dvěma kolmými lany silami 45 N a 70 N. Postupně přibývá rovnoběžník sil, výslednice o velikosti 83 N a úhel 57° mezi výslednicí a silou F1.">
+          <defs>
+            <marker id="sk-a" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4.2" markerHeight="4.2" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/></marker>
+            <marker id="sk-f" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4.2" markerHeight="4.2" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--focus)"/></marker>
+          </defs>
+          <g font-family="Work Sans, sans-serif" font-size="14" font-style="italic" fill="var(--ink)">
+            <g class="sk-layer" data-from="1" style="display:none">
+              <path d="M168,230 V62 M60,62 H168" fill="none" stroke="var(--ink-soft)" stroke-width="1.5" stroke-dasharray="5 4"/>
+            </g>
+            <line x1="60" y1="230" x2="168" y2="230" stroke="var(--accent)" stroke-width="3.2" stroke-linecap="round" marker-end="url(#sk-a)"/>
+            <line x1="60" y1="230" x2="60" y2="62" stroke="var(--accent)" stroke-width="3.2" stroke-linecap="round" marker-end="url(#sk-a)"/>
+            <g class="sk-layer" data-from="1" style="display:none">
+              <line x1="60" y1="230" x2="168" y2="62" stroke="var(--focus)" stroke-width="3.8" stroke-linecap="round" marker-end="url(#sk-f)"/>
+            </g>
+            <g class="sk-layer" data-from="2" style="display:none">
+              <text x="128" y="156" fill="var(--focus)" font-weight="700">F<tspan dy="3" font-size="10">v</tspan><tspan dy="-3"> = 83 N</tspan></text>
+            </g>
+            <g class="sk-layer" data-from="3" style="display:none">
+              <path d="M96,230 A36,36 0 0 0 79.4,199.7" fill="none" stroke="var(--ink)" stroke-width="1.6"/>
+              <text x="103" y="214">α ≐ 57°</text>
+            </g>
+            <circle cx="60" cy="230" r="4.5" fill="var(--ink)"/>
+            <text x="100" y="250">F<tspan dy="3" font-size="10">1</tspan><tspan dy="-3"> = 45 N</tspan></text>
+            <text x="68" y="90">F<tspan dy="3" font-size="10">2</tspan><tspan dy="-3"> = 70 N</tspan></text>
+          </g>
+        </svg>
+        <figcaption>Měřítko: \(10\ \mathrm{N}\) odpovídá \(1\ \mathrm{cm}\). Obrázek se doplňuje podle toho, jak rozbalujete kroky příkladu.</figcaption>
+      </figure>
       <div class="stepper" data-reset="reset-sanky">
         <div class="step" data-step="1">
           <div class="step-connector"></div>
@@ -554,6 +586,25 @@
 
     refreshLocks();
   });
+
+  // ---- obrázek k příkladu se doplňuje podle rozbalených kroků ----
+  (function(){
+    var fig = document.getElementById('fig-sanky');
+    var wrap = document.querySelector('.stepper[data-reset="reset-sanky"]');
+    if(!fig || !wrap) return;
+    function refresh(){
+      var max = 0;
+      Array.prototype.forEach.call(wrap.querySelectorAll('.step.done'), function(st){
+        max = Math.max(max, parseInt(st.getAttribute('data-step'), 10));
+      });
+      Array.prototype.forEach.call(fig.querySelectorAll('.sk-layer'), function(g){
+        g.style.display = parseInt(g.getAttribute('data-from'), 10) <= max ? '' : 'none';
+      });
+    }
+    wrap.addEventListener('click', function(){ setTimeout(refresh, 0); });
+    var r = document.getElementById('reset-sanky');
+    if(r) r.addEventListener('click', function(){ setTimeout(refresh, 0); });
+  })();
 
   // ---- DATA START ----
   // Knihovna sil: značka, název, kdo na koho, výchozí směr (stupně, 0 = doprava, 90 = nahoru) a délka šipky v obrázku.
