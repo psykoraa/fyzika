@@ -285,6 +285,7 @@
           a změny vnitřní energie Δ<i>U</i>. Za správnou odpověď (všechna tři znaménka) získáte
           <strong>10 bodů</strong> v 1. úrovni, <strong>15 bodů</strong> ve 2. a <strong>20 bodů</strong> ve 3. úrovni.
           Za špatnou odpověď (i za „Nevím“) se strhává <strong>5 bodů</strong>. Po vypršení zvoleného času se hra ukončí.
+          Nejlepší skóre se počítá zvlášť pro každou úroveň a délku hry.
         </p>
         <details class="navod">
           <summary>Návod</summary>
@@ -830,12 +831,21 @@
     { key:300, name:'5 min' }
   ];
   var game = { duration:120, level:1, running:false, timeLeft:120, timerId:null, score:0, correct:0, wrong:0, bests:{} };
-  function currentGameBest(){ return game.bests[game.duration] || 0; }
+  // Nejlepší skóre se vede zvlášť pro každou úroveň a délku hry (úrovně mají různé body za kartu).
+  // Klíč v localStorage i položka v SCORE_MAP (auth.js): '<úroveň>-<sekundy>', např. '2-180';
+  // disciplína na serveru: 'hra-u<úroveň>-<sekundy>s', např. 'hra-u2-180s'.
+  function gameBestKey(){ return game.level + '-' + game.duration; }
+  function currentGameBest(){ return game.bests[gameBestKey()] || 0; }
   function updateGameBestHint(){
-    document.getElementById('game-best-hint').textContent = 'Nejlepší skóre: ' + (currentGameBest() ? scoreText(currentGameBest()) : '—');
+    document.getElementById('game-best-hint').textContent = 'Nejlepší skóre (úroveň ' + game.level + ', ' + game.duration/60 + ' min): ' + (currentGameBest() ? scoreText(currentGameBest()) : '—');
   }
   function loadGameBests(){
-    try{ var raw = localStorage.getItem(GAME_KEY); if(raw) game.bests = JSON.parse(raw) || {}; }catch(e){}
+    try{
+      var raw = localStorage.getItem(GAME_KEY), all = raw ? (JSON.parse(raw) || {}) : {};
+      // starší záznamy jen podle délky hry ('60', '120'…) nemají úroveň, proto se nepřebírají
+      game.bests = {};
+      for(var k in all){ if(/^[1-3]-\d+$/.test(k)) game.bests[k] = all[k]; }
+    }catch(e){}
   }
   function saveGameBests(){
     try{ localStorage.setItem(GAME_KEY, JSON.stringify(game.bests)); }catch(e){}
@@ -888,8 +898,8 @@
     game.running = false;
     clearInterval(game.timerId);
     game.timerId = null;
-    if(game.score > currentGameBest()){ game.bests[game.duration] = game.score; saveGameBests(); }
-    if(window.FyzikaScores) FyzikaScores.report('hra-' + game.duration + 's', game.score, true);
+    if(game.score > currentGameBest()){ game.bests[gameBestKey()] = game.score; saveGameBests(); }
+    if(window.FyzikaScores) FyzikaScores.report('hra-u' + game.level + '-' + game.duration + 's', game.score, true);
     document.getElementById('game-play').hidden = true;
     document.getElementById('game-over').hidden = false;
     // Po konci hry zůstane nabídka nastavení nad výsledkem; pravidla a tlačítko „Spustit hru“ se skryjí.
@@ -935,10 +945,13 @@
   });
 
   // Enter vyhodnotí odpověď a po vyhodnocení posune na další úlohu (na tlačítku ho obslouží samo tlačítko).
+  // Výjimka: kliknutí myší nechá fokus na tlačítku se znaménkem. Je-li to znaménko už vybrané, Enter odpověď
+  // vyhodnotí; na nevybraném znaménku (průchod klávesou Tab) ho Enter jako běžné tlačítko nejdřív vybere.
   document.addEventListener('keydown', function(e){
     if(e.key !== 'Enter' || e.ctrlKey || e.metaKey || e.altKey) return;
     var t = e.target;
-    if(t && (t.tagName === 'BUTTON' || t.tagName === 'A' || t.tagName === 'SUMMARY' || t.tagName === 'INPUT')) return;
+    var onPickedSign = t && t.classList && t.classList.contains('opt-btn') && t.classList.contains('selected');
+    if(!onPickedSign && t && (t.tagName === 'BUTTON' || t.tagName === 'A' || t.tagName === 'SUMMARY' || t.tagName === 'INPUT')) return;
     if(!document.getElementById('trenink-section').hidden){ e.preventDefault(); trBoard.check(); return; }
     if(game.running && !document.getElementById('hra-section').hidden){ e.preventDefault(); gameBoard.check(); }
   });
