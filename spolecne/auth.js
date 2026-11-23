@@ -32,6 +32,7 @@
     'kvinta.html': 'rozcestniky',
     'mereni.html': 'rozcestniky',
     'oktava.html': 'rozcestniky',
+    'sexta.html': 'rozcestniky',
     'zaokrouhlovani-vysledku.html': 'mereni',
     'zpracovani-mereni.html': 'mereni',
     'neprime-mereni.html': 'mereni',
@@ -55,6 +56,7 @@
     'treci-sila.html': 'kvinta',
     'dostrediva-sila.html': 'kvinta',
     'neinercialni-soustavy.html': 'kvinta',
+    'prvni-termodynamicky-zakon.html': 'sexta',
     'kulova-zrcadla.html': 'oktava',
     'cocky.html': 'oktava',
     'zorny-uhel-a-lupa.html': 'oktava',
@@ -123,6 +125,13 @@
     ],
     'pohyb-po-kruznici.html': [
       { d: 'serie', key: 'fyzika:pohyb-po-kruznici:stats', field: 'bestStreak' }
+    ],
+    'prvni-termodynamicky-zakon.html': [
+      { d: 'serie', key: 'fyzika:prvni-termodynamicky-zakon:stats', field: 'bestStreak' },
+      { d: 'hra-60s', key: 'fyzika:prvni-termodynamicky-zakon:game-bests', field: '60' },
+      { d: 'hra-120s', key: 'fyzika:prvni-termodynamicky-zakon:game-bests', field: '120' },
+      { d: 'hra-180s', key: 'fyzika:prvni-termodynamicky-zakon:game-bests', field: '180' },
+      { d: 'hra-300s', key: 'fyzika:prvni-termodynamicky-zakon:game-bests', field: '300' }
     ],
     'sila.html': [
       { d: 'hra-60s', key: 'fyzika:sila:game-bests', field: '60' },
@@ -713,7 +722,7 @@
   var STATS_IDLE_MS = 5 * 60000;
   var STATS_MAX_EVENTS = 30;
   var STATS_MIN_MS = 15000;
-  var STATS_SKIP_PAGES = ['index.html', 'kvinta.html', 'oktava.html', 'mereni.html'];
+  var STATS_SKIP_PAGES = ['index.html', 'kvinta.html', 'sexta.html', 'oktava.html', 'mereni.html'];
   var STATS_EVENT_RE = /^[a-z0-9-]{1,30}$/;
 
   var stats = null; // stav aktuální návštěvy (nová po návratu stránky z bfcache)

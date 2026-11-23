@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>První termodynamický zákon — Fyzika</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../spolecne/config.js"></script>
+<script src="../spolecne/auth.js"></script>
+<script src="../spolecne/zalozky.js?v=3"></script>
+<link rel="stylesheet" href="../spolecne/styl.css">
+<link rel="stylesheet" href="../spolecne/komponenty.css?v=1">
+<style>
+:root{
+  --paper:#edf3f5;
+  --surface:#fbfdfe;
+  --surface-2:#d8e6eb;
+  --ink:#1b2a31;
+  --ink-soft:#587079;
+  --line:rgba(27,42,49,0.12);
+  --accent:#0d6b85;
+  --accent-ink:#f2fbfd;
+  --success:#28794f;
+  --success-bg:#e3efe0;
+  --danger:#b3392b;
+  --danger-bg:#f5e4de;
+  --focus:#1e6f66;
+  --shadow:0 1px 0 rgba(27,42,49,0.06);
+}
+
+.panel{ margin-bottom:22px; }
+.panel-title{ margin-bottom:8px; }
+.panel b{ color:var(--ink); }
+.panel ul, .panel ol{ margin:0 0 8px; padding-left:22px; font-size:0.9rem; line-height:1.55; }
+
+.card{ padding:26px 26px 28px; text-align:left; margin-bottom:24px; }
+.cat-tag{ margin-bottom:10px; }
+.card h2{
+  font-family:'Big Shoulders Display', sans-serif;
+  font-weight:700;
+  font-size:1.6rem;
+  letter-spacing:0.02em;
+  color:var(--ink);
+  text-transform:none;
+  margin-bottom:6px;
+}
+
+.katex{ font-size:1.05em; }
+
+.theory-table thead th{
+  background:var(--surface-2);
+  color:var(--ink-soft);
+  font-weight:600;
+  font-size:0.72rem;
+  text-transform:uppercase;
+  letter-spacing:0.05em;
+}
+.theory-table thead th i{ text-transform:none; }
+.theory-table tbody tr:nth-child(even) td{ background:rgba(0,0,0,0.02); }
+
+/* ---- Trénink a hra: situace a výběr znamének ---- */
+.task-text{ font-size:0.95rem; color:var(--ink); line-height:1.55; text-align:center; margin:0 auto 16px; max-width:56ch; }
+.task-rule{ font-size:0.8rem; color:var(--ink-soft); line-height:1.5; text-align:center; margin:-8px auto 14px; max-width:56ch; }
+.task-rule b{ color:var(--ink); }
+.mode-row-label i{ font-size:1.1em; }
+.seg .opt-btn{ min-width:84px; text-align:center; font-variant-numeric:tabular-nums; }
+.seg .opt-btn i{ font-size:1.08em; }
+.feedback .steps p{ margin:0 0 6px; font-size:0.86rem; line-height:1.5; }
+.feedback .steps p:last-child{ margin-bottom:0; }
+@media (max-width:720px){
+  .mode-row-label{ flex-basis:100%; }
+}
+@media (max-width:420px){ .brand-text h1{ font-size:2.1rem; } }
+@media (max-width:520px){
+  .card{ padding:20px 16px 22px; }
+  .readout .cell{ min-width:64px; padding:6px 8px; }
+  .seg{ flex-wrap:nowrap; width:100%; }
+  .seg .opt-btn{ flex:1 1 0; min-width:0; padding:10px 6px; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <a class="back-link" href="../rozcestniky/sexta.html">← Zpět na Sexta/2. ročník</a>
+
+  <div class="brand">
+    <div class="brand-lockup">
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M7,12 V35 H29 V12" stroke="var(--ink)" stroke-width="1.6" stroke-linejoin="round"/>
+        <rect x="8" y="17" width="20" height="4" rx="1" fill="var(--ink-soft)"/>
+        <line x1="18" y1="5" x2="18" y2="17" stroke="var(--ink)" stroke-width="1.6"/>
+        <line x1="35" y1="4" x2="35" y2="15" stroke="var(--accent)" stroke-width="2.2" stroke-linecap="round"/>
+        <path d="M35,19 L32,14 H38 Z" fill="var(--accent)"/>
+        <path d="M10,30 q2,-3 4,0 t4,0 t4,0 t4,0" stroke="var(--focus)" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+      <div class="brand-text">
+        <h1>První termodynamický zákon</h1>
+        <p>vnitřní energie, práce a teplo — Δ<i>U</i>&nbsp;=&nbsp;<i>W</i>&nbsp;+&nbsp;<i>Q</i>, znaménka a adiabatický děj</p>
+      </div>
+    </div>
+    <div class="readout" id="header-readout" hidden>
+      <div class="cell"><span class="label">Skóre</span><span class="value" id="stat-score">0</span></div>
+      <div class="cell"><span class="label">Série</span><span class="value" id="stat-streak">0</span></div>
+      <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="stat-accuracy">—</span></div>
+    </div>
+  </div>
+
+  <div class="top-tabs">
+    <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+    <button class="toptab" id="top-tab-trenink" data-tab="trenink">Trénink</button>
+    <button class="toptab" id="top-tab-hra" data-tab="hra">Hra na čas</button>
+  </div>
+
+  <!-- ============ TEORIE ============ -->
+  <div id="theory-section" class="tab-section">
+
+    <div class="panel">
+      <div class="panel-title">Dvě cesty ke změně vnitřní energie</div>
+      <p>Vnitřní energie \(U\) tělesa (soustavy) se může změnit dvěma způsoby:</p>
+      <ul>
+        <li><b>konáním práce</b>: píst stlačí plyn ve válci, kladivo opakovaně udeří do plechu, metlička rozvíří vodu;</li>
+        <li><b>tepelnou výměnou</b>: teplejší těleso předá část své vnitřní energie chladnějšímu, třeba plotýnka vodě v hrnci.</li>
+      </ul>
+      <p>V mnoha dějích probíhá obojí najednou. Celkovou změnu vnitřní energie pak dostaneme jako součet obou příspěvků.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">První termodynamický zákon</div>
+      <div class="formula-box">\[ \Delta U = W + Q \]</div>
+      <p>kde \(\Delta U\) je změna vnitřní energie soustavy, \(W\) práce, kterou na soustavě vykonají okolní tělesa, a \(Q\) teplo, které soustava od okolí přijme. Všechny tři veličiny mají jednotku joule (\(\mathrm{J}\)).</p>
+      <p>Zákon je vlastně <b>zákon zachování energie</b> pro děje, při kterých se mění vnitřní energie: energie soustavy vzroste přesně o to, co do ní dodala práce okolí a teplo, a klesne o to, co soustava sama odevzdala.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Znaménková konvence</div>
+      <p>Ve vztahu \(\Delta U = W + Q\) mají \(W\) i \(Q\) znaménko podle toho, zda energie do soustavy přichází, nebo z ní odchází.</p>
+      <div class="theory-table-wrap">
+        <table class="theory-table">
+          <thead>
+            <tr><th>Znaménko</th><th>Kdy nastává</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>\(W &gt; 0\)</td><td>okolí koná práci na soustavě (plyn stlačujeme)</td></tr>
+            <tr><td>\(W &lt; 0\)</td><td>soustava koná práci (plyn se rozpíná)</td></tr>
+            <tr><td>\(W = 0\)</td><td>objem soustavy se nemění</td></tr>
+            <tr><td>\(Q &gt; 0\)</td><td>soustava teplo přijímá (okolí je teplejší)</td></tr>
+            <tr><td>\(Q &lt; 0\)</td><td>soustava teplo odevzdává (okolí je chladnější)</td></tr>
+            <tr><td>\(Q = 0\)</td><td>soustava je tepelně izolovaná, nebo děj proběhne tak rychle, že se teplo nestihne vyměnit</td></tr>
+            <tr><td>\(\Delta U &gt; 0\)</td><td>vnitřní energie roste (teplota roste)</td></tr>
+            <tr><td>\(\Delta U &lt; 0\)</td><td>vnitřní energie klesá (teplota klesá)</td></tr>
+            <tr><td>\(\Delta U = 0\)</td><td>vnitřní energie se nemění</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="9" cy="9" r="7.5" stroke="var(--focus)" stroke-width="1.6"/>
+          <line x1="9" y1="8" x2="9" y2="13" stroke="var(--focus)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="5.2" r="1" fill="var(--focus)"/>
+        </svg>
+        <p>Nemění-li se skupenství, poznáme změnu vnitřní energie podle teploty: s rostoucí teplotou vnitřní energie roste. U plynu, jehož teplota zůstává stálá, je \(\Delta U = 0\). Kapaliny a pevné látky mění při zahřívání objem jen nepatrně, práci u nich proto zanedbáváme (\(W = 0\)).</p>
+      </div>
+      <div class="note">
+        <svg class="note-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M9 2.5 L16 15.5 H2 Z" stroke="var(--danger)" stroke-width="1.4" stroke-linejoin="round"/>
+          <line x1="9" y1="7" x2="9" y2="11.5" stroke="var(--danger)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="9" cy="13.6" r="1" fill="var(--danger)"/>
+        </svg>
+        <p>Plyn, který se rozpíná, práci <b>koná</b>, takže \(W &lt; 0\). Jeho teplota proto může klesnout, i když žádné teplo neodevzdá.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Jak určit znaménka v konkrétní situaci</div>
+      <ol>
+        <li>Ujasněte si, co je <b>soustava</b>: například vzduch v hustilce, ne celá hustilka.</li>
+        <li>\(W\): zmenšuje se objem soustavy, je \(W &gt; 0\); zvětšuje se, je \(W &lt; 0\); nemění se, je \(W = 0\).</li>
+        <li>\(Q\): porovnejte teplotu soustavy s okolím. Teplo přechází z teplejšího tělesa na chladnější. Izolace nebo velmi rychlý děj znamená \(Q = 0\).</li>
+        <li>\(\Delta U\): určete podle změny teploty, nebo ze zákona \(\Delta U = W + Q\), když \(W\) a \(Q\) nemají opačná znaménka.</li>
+      </ol>
+      <div class="example-grid">
+        <div class="example-item">
+          <span class="example-tag">Pumpujeme pneumatiku, vzduch v hustilce se zahřívá</span>
+          <div class="example-eq">\[ W &gt; 0,\quad Q &lt; 0,\quad \Delta U &gt; 0 \]</div>
+          <div class="example-note">Píst stlačuje vzduch, okolí tedy koná práci na plynu. Zahřátý vzduch je teplejší než okolí, a proto teplo odevzdává. Teplota vzduchu roste, takže roste i jeho vnitřní energie: práce dodá víc energie, než kolik plyn odevzdá jako teplo.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Adiabatický děj</div>
+      <p>Děj, při kterém soustava nevyměňuje teplo s okolím (\(Q = 0\)), se nazývá <b>adiabatický</b>. Vnitřní energie se pak mění jen prací:</p>
+      <div class="formula-box">\[ \Delta U = W \]</div>
+      <p>Prakticky adiabaticky probíhají děje v dobře tepelně izolované nádobě a děje tak rychlé, že se teplo nestihne vyměnit.</p>
+      <ul>
+        <li><b>Adiabatické stlačení</b>: \(W &gt; 0\), a proto \(\Delta U &gt; 0\) a plyn se zahřeje. Ve vznětovém motoru se tak vzduch ohřeje natolik, že se vstříknutá nafta sama vznítí.</li>
+        <li><b>Adiabatické rozepnutí</b>: \(W &lt; 0\), a proto \(\Delta U &lt; 0\) a plyn se ochladí. Při otevření lahve sektu se plyn v hrdle prudce rozepne a ochladí tak, že se nad hrdlem na okamžik objeví mlha.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <span class="cat-tag">Příklady</span>
+      <h2>Výpočty podle 1. termodynamického zákona</h2>
+      <p class="desc">U každého příkladu nejdřív určete znaménka, teprve potom dosazujte.</p>
+      <div class="example-grid">
+        <div class="example-item">
+          <span class="example-tag">Plyn přijme teplo a koná práci</span>
+          <div class="example-eq">\[ \Delta U = W + Q = -300\ \mathrm{J} + 450\ \mathrm{J} = \mathbf{150\ \mathrm{J}} \]</div>
+          <div class="example-note">Plyn ve válci přijme od plamene teplo \(450\ \mathrm{J}\) a při rozpínání vykoná práci \(300\ \mathrm{J}\). Plyn práci koná, proto \(W = -300\ \mathrm{J}\). Vnitřní energie vzroste o \(150\ \mathrm{J}\), teplota plynu se zvýší.</div>
+        </div>
+        <div class="example-item">
+          <span class="example-tag">Adiabatické stlačení</span>
+          <div class="example-eq">\[ \Delta U = W = \mathbf{0{,}8\ \mathrm{kJ}} \]</div>
+          <div class="example-note">Píst velmi rychle stlačí vzduch ve válci a vykoná na něm práci \(0{,}8\ \mathrm{kJ}\). Teplo se nestihne vyměnit (\(Q = 0\)), vnitřní energie vzduchu vzroste o \(0{,}8\ \mathrm{kJ}\) a vzduch se zahřeje.</div>
+        </div>
+        <div class="example-item">
+          <span class="example-tag">Kdo konal práci?</span>
+          <div class="example-eq">\[ W = \Delta U - Q = -250\ \mathrm{J} - (-400\ \mathrm{J}) = \mathbf{150\ \mathrm{J}} \]</div>
+          <div class="example-note">Vnitřní energie plynu klesla o \(250\ \mathrm{J}\) (\(\Delta U = -250\ \mathrm{J}\)) a plyn přitom odevzdal okolí teplo \(400\ \mathrm{J}\) (\(Q = -400\ \mathrm{J}\)). Vyšlo \(W &gt; 0\): práci \(150\ \mathrm{J}\) vykonalo okolí na plynu, plyn byl stlačen.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Shrnutí</div>
+      <p>• První termodynamický zákon: \(\Delta U = W + Q\).</p>
+      <p>• \(W &gt; 0\), koná-li okolí práci na soustavě; \(W &lt; 0\), koná-li práci soustava.</p>
+      <p>• \(Q &gt; 0\), přijímá-li soustava teplo; \(Q &lt; 0\), odevzdává-li ho.</p>
+      <p>• Bez změny skupenství roste vnitřní energie s teplotou.</p>
+      <p>• Adiabatický děj: \(Q = 0\), změna vnitřní energie je dána jen prací; při stlačení se plyn zahřívá, při rozepnutí ochlazuje.</p>
+    </div>
+
+  </div>
+
+
+  <!-- ============ TRÉNINK ============ -->
+  <div id="trenink-section" class="tab-section" hidden>
+
+    <div class="panel">
+      <div class="section-block">
+        <div class="panel-title">Typ úlohy</div>
+        <div class="row" id="type-row"></div>
+      </div>
+      <div class="settings-foot" style="justify-content:flex-end;">
+        <button class="linklike" id="reset-stats">vynulovat statistiku</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="cat-tag" id="tr-cat">Úloha</span>
+      <p class="task-text" id="tr-task"></p>
+      <p class="task-rule" id="tr-sys"></p>
+      <div id="tr-rows"></div>
+      <div class="actions">
+        <button class="btn primary" id="tr-check">Zkontrolovat</button>
+        <button class="btn ghost" id="tr-skip">Nevím / Zobrazit řešení</button>
+      </div>
+      <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint">U každé veličiny vyberte jedno znaménko a potvrďte tlačítkem Zkontrolovat nebo klávesou Enter; dalším Enterem přejdete na další situaci. Správně je odpověď jen tehdy, když sedí všechna tři znaménka. Po kontrole se správná volba obarví zeleně, chybná červeně a správná nevybraná volba má zelený čárkovaný rámeček; pod tím je vysvětlení každého znaménka. Typ úloh vyberete nahoře v panelu Typ úlohy.</p>
+      </details>
+      <div class="feedback" id="tr-feedback" hidden>
+        <div class="headline" id="tr-headline"></div>
+        <div class="steps" id="tr-steps"></div>
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- ============ HRA NA ČAS ============ -->
+  <div id="hra-section" class="tab-section" hidden>
+    <div id="game-info">
+      <div class="panel" id="game-rules-panel">
+        <div class="panel-title">Pravidla hry</div>
+        <p class="game-rules">
+          Na každé kartě je popsaná situace a soustava. Určete znaménka práce <i>W</i>, tepla <i>Q</i>
+          a změny vnitřní energie Δ<i>U</i>. Za správnou odpověď (všechna tři znaménka) získáte
+          <strong>10 bodů</strong> v 1. úrovni, <strong>15 bodů</strong> ve 2. a <strong>20 bodů</strong> ve 3. úrovni.
+          Za špatnou odpověď (i za „Nevím“) se strhává <strong>5 bodů</strong>. Po vypršení zvoleného času se hra ukončí.
+        </p>
+        <details class="navod">
+          <summary>Návod</summary>
+          <p class="hint">U každé veličiny klikněte na jedno znaménko a odpověď potvrďte tlačítkem Zkontrolovat nebo klávesou Enter; dalším Enterem přejdete na další kartu. Po kontrole se správná volba obarví zeleně, chybná červeně a správná nevybraná volba má zelený čárkovaný rámeček; pod kartou je krátké vysvětlení každého znaménka. Čas běží i během čtení vysvětlení.</p>
+        </details>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Úroveň</div>
+        <div class="row" id="game-level-row"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Délka hry</div>
+        <div class="row" id="game-duration-row"></div>
+      </div>
+    </div>
+
+    <div id="game-start-panel">
+      <div class="panel">
+        <div class="settings-foot">
+          <span class="hint" id="game-best-hint">Nejlepší skóre: —</span>
+          <button class="btn primary" id="btn-game-start">Spustit hru</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="game-play" hidden>
+      <div class="game-header">
+        <div class="game-timer" id="game-timer">2:00</div>
+        <div class="readout">
+          <div class="cell"><span class="label">Body</span><span class="value" id="game-score">0</span></div>
+          <div class="cell"><span class="label">Nejlepší</span><span class="value" id="game-best-live">0</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <span class="cat-tag" id="game-cat">Úroveň 1</span>
+        <span class="points-badge" id="game-points-badge">+10 b</span>
+        <p class="task-text" id="game-task"></p>
+        <p class="task-rule" id="game-sys"></p>
+        <div id="game-rows"></div>
+        <div class="actions">
+          <button class="btn primary" id="game-check">Zkontrolovat</button>
+          <button class="btn ghost" id="game-skip">Nevím / Zobrazit řešení</button>
+        </div>
+        <div class="feedback" id="game-feedback" hidden>
+          <div class="headline" id="game-headline"></div>
+          <div class="steps" id="game-steps"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="game-over" hidden>
+      <span class="cat-tag">Konec hry</span>
+      <div class="game-final-score" id="game-final-score">0 bodů</div>
+      <div class="hint" id="game-final-detail"></div>
+      <div class="actions">
+        <button class="btn primary" id="btn-game-restart">Hrát znovu</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>Fyzika — Sexta/2. ročník</footer>
+</div>
+
+<script src="../spolecne/spolecne.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  // ---- záložky: tlačítko .toptab[data-tab="x"] ↔ sekce #x-section (Teorie = #theory-section) ----
+  var tabs = {}, sections = {};
+  Array.prototype.forEach.call(document.querySelectorAll('.toptab[data-tab]'), function(btn){
+    var name = btn.getAttribute('data-tab');
+    tabs[name] = btn;
+    sections[name] = document.getElementById(name === 'teorie' ? 'theory-section' : name + '-section');
+  });
+  function showTab(name){
+    for(var k in tabs){
+      tabs[k].classList.toggle('on', k === name);
+      if(sections[k]) sections[k].hidden = k !== name;
+    }
+    // skóre, série a úspěšnost v hlavičce jen u tréninku
+    document.getElementById('header-readout').hidden = name !== 'trenink';
+  }
+
+  // ---- DATA START ----
+  // Situace pro trénink a hru. Znaménka: 1 = kladné, 0 = nulové, -1 = záporné.
+  // W = práce, kterou na soustavě vykoná okolí; Q = teplo, které soustava přijme; U = změna vnitřní energie.
+  // lv 1: jedna z veličin W, Q je nulová; lv 2: W i Q jsou nenulové. Úroveň 3 tvoří generátor genNumeric().
+  var SCENARIOS = [
+    // ---------- úroveň 1: jen tepelná výměna (W = 0) ----------
+    { lv:1, text:'Láhev s vodou dáme do ledničky a voda se v ní ochladí.', sys:'voda v láhvi',
+      W:0, Q:-1, U:-1,
+      why:{ W:'Objem vody se prakticky nemění, práce se nekoná.',
+            Q:'Voda je teplejší než vzduch v ledničce, a proto teplo odevzdává.',
+            U:'Teplota vody klesá, vnitřní energie se zmenšuje.' } },
+    { lv:1, text:'Čaj v hrnku na stole pomalu vychládá.', sys:'čaj v hrnku',
+      W:0, Q:-1, U:-1,
+      why:{ W:'Objem čaje se prakticky nemění, práce se nekoná.',
+            Q:'Čaj je teplejší než okolí, teplo odevzdává.',
+            U:'Teplota čaje klesá, vnitřní energie se zmenšuje.' } },
+    { lv:1, text:'Studenou plechovku limonády z ledničky necháme stát na stole a limonáda se ohřívá.', sys:'limonáda v plechovce',
+      W:0, Q:1, U:1,
+      why:{ W:'Objem limonády se prakticky nemění, práce se nekoná.',
+            Q:'Okolí je teplejší než limonáda, limonáda teplo přijímá.',
+            U:'Teplota limonády roste, vnitřní energie se zvětšuje.' } },
+    { lv:1, text:'Voda v hrnci na zapnutém sporáku se ohřívá (zatím nevře).', sys:'voda v hrnci',
+      W:0, Q:1, U:1,
+      why:{ W:'Objem vody se prakticky nemění, práce se nekoná.',
+            Q:'Horká plotýnka a dno hrnce předávají vodě teplo.',
+            U:'Teplota vody roste, vnitřní energie se zvětšuje.' } },
+    { lv:1, text:'Uzavřená ocelová tlaková láhev s plynem stojí na přímém slunci a plyn v ní se ohřívá.', sys:'plyn v láhvi',
+      W:0, Q:1, U:1,
+      why:{ W:'Ocelová láhev má stálý objem, plyn se nerozpíná ani nestlačuje, práce se nekoná.',
+            Q:'Plyn přijímá teplo od stěn láhve ohřátých sluncem.',
+            U:'Teplota plynu roste, vnitřní energie se zvětšuje.' } },
+    { lv:1, text:'Uzavřenou ocelovou bombu s plynem vyneseme v zimě z dílny na mráz.', sys:'plyn v bombě',
+      W:0, Q:-1, U:-1,
+      why:{ W:'Objem bomby se nemění, práce se nekoná.',
+            Q:'Plyn je teplejší než mrazivé okolí, teplo odevzdává.',
+            U:'Teplota plynu klesá, vnitřní energie se zmenšuje.' } },
+    { lv:1, text:'Rozžhavený hřebík hodíme do kbelíku se studenou vodou.', sys:'hřebík',
+      W:0, Q:-1, U:-1,
+      why:{ W:'Objem hřebíku se mění jen nepatrně, práci zanedbáváme.',
+            Q:'Hřebík je mnohem teplejší než voda, teplo odevzdává.',
+            U:'Teplota hřebíku klesá, vnitřní energie se zmenšuje.' } },
+    // ---------- úroveň 1: adiabatické děje (Q = 0) ----------
+    { lv:1, text:'Ve vznětovém (dieselovém) motoru píst při kompresi velmi rychle stlačí vzduch ve válci. Vzduch se zahřeje natolik, že se vstříknutá nafta sama vznítí.', sys:'vzduch ve válci',
+      W:1, Q:0, U:1,
+      why:{ W:'Píst vzduch stlačuje, okolí tedy koná práci na plynu.',
+            Q:'Stlačení je tak rychlé, že se teplo nestihne vyměnit (adiabatický děj).',
+            U:'Teplota vzduchu prudce roste, vnitřní energie se zvětšuje (Δ<i>U</i> = <i>W</i>).' } },
+    { lv:1, text:'Ucpeme otvor hustilky prstem a prudce stlačíme píst. Vzduch uvnitř se během stlačení zahřeje.', sys:'vzduch v hustilce',
+      W:1, Q:0, U:1,
+      why:{ W:'Píst stlačuje vzduch, okolí koná práci na plynu.',
+            Q:'Děj je velmi rychlý, teplo se nestihne vyměnit.',
+            U:'Teplota vzduchu roste, vnitřní energie se zvětšuje.' } },
+    { lv:1, text:'Otevřeme ventilek nafouknuté pneumatiky a vzduch rychle uniká. Vzduch, který v pneumatice zůstává, se rozpíná a ochlazuje.', sys:'vzduch, který zůstává v pneumatice',
+      W:-1, Q:0, U:-1,
+      why:{ W:'Zbylý vzduch se rozpíná a vytlačuje unikající vzduch ven, koná tedy práci.',
+            Q:'Děj je rychlý, teplo se nestihne vyměnit.',
+            U:'Teplota vzduchu klesá, vnitřní energie se zmenšuje.' } },
+    { lv:1, text:'Při otevření lahve sektu vyletí zátka a nad hrdlem se na okamžik objeví mlha.', sys:'plyn nad hladinou sektu',
+      W:-1, Q:0, U:-1,
+      why:{ W:'Plyn se prudce rozepne a vystřelí zátku, koná práci.',
+            Q:'Děj je velmi rychlý, teplo se nestihne vyměnit.',
+            U:'Plyn se ochladí (proto mlha), vnitřní energie se zmenšuje.' } },
+    { lv:1, text:'Vzduch stoupá podél horského svahu do výšky, kde je nižší tlak. Rozpíná se, aniž by si vyměňoval teplo s okolím.', sys:'stoupající vzduch',
+      W:-1, Q:0, U:-1,
+      why:{ W:'Vzduch se rozpíná, a tím koná práci.',
+            Q:'Podle zadání si teplo s okolím nevyměňuje.',
+            U:'Při adiabatickém rozpínání teplota klesá, vnitřní energie se zmenšuje.' } },
+    { lv:1, text:'Vzduch klesá z hor do údolí, kde je vyšší tlak. Stlačuje se, aniž by si vyměňoval teplo s okolím.', sys:'klesající vzduch',
+      W:1, Q:0, U:1,
+      why:{ W:'Okolní vzduch klesající vzduch stlačuje, koná na něm práci.',
+            Q:'Podle zadání si teplo s okolím nevyměňuje.',
+            U:'Při adiabatickém stlačení teplota roste, vnitřní energie se zvětšuje.' } },
+    { lv:1, text:'Vodu v termosce dlouho a rychle šleháme metličkou. Voda se přitom nepatrně ohřeje.', sys:'voda v termosce',
+      W:1, Q:0, U:1,
+      why:{ W:'Metlička působí na vodu silou a uvádí ji do pohybu, koná na vodě práci.',
+            Q:'Termoska je tepelně izolovaná, teplo se s okolím nevyměňuje.',
+            U:'Teplota vody vzrostla, vnitřní energie se zvětšila.' } },
+    { lv:1, text:'Plyn v tepelně izolovaném válci se rozpíná a zvedá píst se závažím.', sys:'plyn ve válci',
+      W:-1, Q:0, U:-1,
+      why:{ W:'Plyn se rozpíná a zvedá píst, koná práci.',
+            Q:'Válec je tepelně izolovaný, teplo se nevyměňuje.',
+            U:'Vnitřní energie klesá o vykonanou práci (Δ<i>U</i> = <i>W</i> &lt; 0), plyn se ochlazuje.' } },
+
+    // ---------- úroveň 2: práce i teplo ----------
+    { lv:2, text:'Pumpujeme kolo hustilkou. Vzduch v hustilce se při stlačování zahřívá a hustilka je na dotek teplá.', sys:'vzduch v hustilce při stlačování',
+      W:1, Q:-1, U:1,
+      why:{ W:'Píst stlačuje vzduch, okolí koná práci na plynu.',
+            Q:'Zahřátý vzduch je teplejší než stěny hustilky, teplo odevzdává.',
+            U:'Teplota vzduchu roste, vnitřní energie se zvětšuje: práce dodá víc energie, než kolik plyn odevzdá.' } },
+    { lv:2, text:'Nafouknutý balonek vyndáme z mrazáku do teplé místnosti. Vzduch v něm se ohřívá a balonek se zvětšuje.', sys:'vzduch v balonku',
+      W:-1, Q:1, U:1,
+      why:{ W:'Vzduch v balonku se rozpíná, koná práci.',
+            Q:'Místnost je teplejší, vzduch v balonku teplo přijímá.',
+            U:'Teplota vzduchu roste, vnitřní energie se zvětšuje.' } },
+    { lv:2, text:'Nafouknutý balonek vyneseme z teplé místnosti na mráz. Vzduch v něm se ochlazuje a balonek se zmenšuje.', sys:'vzduch v balonku',
+      W:1, Q:-1, U:-1,
+      why:{ W:'Balonek se zmenšuje, okolí vzduch stlačuje a koná na něm práci.',
+            Q:'Vzduch v balonku je teplejší než mrazivé okolí, teplo odevzdává.',
+            U:'Teplota vzduchu klesá, vnitřní energie se zmenšuje.' } },
+    { lv:2, text:'Rozžhavené spaliny ve válci motoru rychle roztlačují píst a přitom předávají teplo chladnějším stěnám válce.', sys:'spaliny ve válci',
+      W:-1, Q:-1, U:-1,
+      why:{ W:'Spaliny roztlačují píst, konají práci.',
+            Q:'Spaliny jsou teplejší než stěny válce, teplo odevzdávají.',
+            U:'Energie odchází prací i teplem, vnitřní energie spalin klesá.' } },
+    { lv:2, text:'Plyn ve válci s volně pohyblivým pístem zahříváme plamenem. Plyn se rozpíná a jeho teplota roste.', sys:'plyn ve válci',
+      W:-1, Q:1, U:1,
+      why:{ W:'Plyn se rozpíná a posouvá píst, koná práci.',
+            Q:'Plamen plynu předává teplo.',
+            U:'Teplota plynu roste, vnitřní energie se zvětšuje.' } },
+    { lv:2, text:'Injekční stříkačku se vzduchem a ucpaným hrotem ponoříme do horké vody. Vzduch uvnitř se ohřívá a píst se sám posune ven.', sys:'vzduch ve stříkačce',
+      W:-1, Q:1, U:1,
+      why:{ W:'Vzduch se rozpíná a vysouvá píst, koná práci.',
+            Q:'Horká voda vzduchu předává teplo.',
+            U:'Teplota vzduchu roste, vnitřní energie se zvětšuje.' } },
+    { lv:2, text:'Uzavřenou injekční stříkačku se vzduchem dáme do ledničky. Vzduch uvnitř se ochlazuje a píst se sám zasune dovnitř.', sys:'vzduch ve stříkačce',
+      W:1, Q:-1, U:-1,
+      why:{ W:'Objem vzduchu se zmenšuje, okolí na něm koná práci.',
+            Q:'Vzduch je teplejší než lednička, teplo odevzdává.',
+            U:'Teplota vzduchu klesá, vnitřní energie se zmenšuje.' } },
+    { lv:2, text:'Válec s plynem je ponořený do velké vodní lázně a plyn v něm pomalu stlačujeme pístem. Teplota plynu zůstává stále stejná jako teplota lázně.', sys:'plyn ve válci',
+      W:1, Q:-1, U:0,
+      why:{ W:'Píst plyn stlačuje, okolí koná práci na plynu.',
+            Q:'Aby se plyn neohřál, musí energii dodanou prací odevzdat lázni jako teplo.',
+            U:'Teplota plynu se nemění, jeho vnitřní energie také ne (<i>Q</i> = −<i>W</i>).' } },
+    { lv:2, text:'Válec s plynem je ponořený do velké vodní lázně. Plyn se pomalu rozpíná a zvedá píst, jeho teplota se přitom nemění.', sys:'plyn ve válci',
+      W:-1, Q:1, U:0,
+      why:{ W:'Plyn se rozpíná a zvedá píst, koná práci.',
+            Q:'Energii, kterou plyn vydá prací, mu lázeň doplňuje teplem.',
+            U:'Teplota plynu se nemění, jeho vnitřní energie také ne (<i>Q</i> = −<i>W</i>).' } },
+    { lv:2, text:'Vzduchová bublina pomalu stoupá ode dna jezera k hladině a zvětšuje se. Voda má všude stejnou teplotu a bublina má stále teplotu okolní vody.', sys:'vzduch v bublině',
+      W:-1, Q:1, U:0,
+      why:{ W:'Bublina se zvětšuje, vzduch v ní koná práci.',
+            Q:'Vzduch by se rozpínáním ochladil, okolní voda mu proto předává teplo.',
+            U:'Teplota vzduchu v bublině se nemění, vnitřní energie také ne.' } },
+    { lv:2, text:'Vzduch v pumpičce stlačujeme velmi pomalu, takže jeho teplota je stále stejná jako teplota okolí.', sys:'vzduch v pumpičce',
+      W:1, Q:-1, U:0,
+      why:{ W:'Píst stlačuje vzduch, okolí koná práci na plynu.',
+            Q:'Energii dodanou prací vzduch průběžně odevzdává okolí jako teplo.',
+            U:'Teplota vzduchu se nemění, vnitřní energie také ne.' } },
+    { lv:2, text:'Válec s plynem stojí v ledové tříšti. Píst plyn pomalu stlačuje a teplota plynu přitom klesá z pokojové teploty k 0\u00a0°C.', sys:'plyn ve válci',
+      W:1, Q:-1, U:-1,
+      why:{ W:'Píst plyn stlačuje, okolí koná práci na plynu.',
+            Q:'Plyn je teplejší než ledová tříšť, teplo odevzdává.',
+            U:'Teplota plynu klesá, vnitřní energie se zmenšuje: plyn odevzdá víc tepla, než kolik dostal prací.' } },
+    { lv:2, text:'Válec s plynem stojí v horké vodě a plyn se ohřívá. Píst přitom pevně zatlačujeme dovnitř, takže se objem plynu zmenšuje.', sys:'plyn ve válci',
+      W:1, Q:1, U:1,
+      why:{ W:'Objem plynu se zmenšuje, okolí na něm koná práci.',
+            Q:'Horká voda plynu předává teplo.',
+            U:'Energie přichází prací i teplem, vnitřní energie roste.' } },
+    { lv:2, text:'Plyn ve válci se rychle rozpíná a zvedá píst. Stěny válce mu přitom předávají trochu tepla, teplota plynu však přesto klesá.', sys:'plyn ve válci',
+      W:-1, Q:1, U:-1,
+      why:{ W:'Plyn se rozpíná a zvedá píst, koná práci.',
+            Q:'Stěny válce plynu předávají teplo.',
+            U:'Teplota plynu klesá, vnitřní energie se zmenšuje: prací plyn vydá víc energie, než kolik přijme teplem.' } }
+  ];
+  // ---- DATA END ----
+
+  // ---- pomocné funkce ----
+  function randInt(a, b){ return a + Math.floor(Math.random()*(b - a + 1)); }
+  function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+  function shuffle(a){
+    for(var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random()*(i+1)); var t = a[i]; a[i] = a[j]; a[j] = t; }
+    return a;
+  }
+  function sgn(x){ return x > 0 ? 1 : (x < 0 ? -1 : 0); }
+  function scoreText(n){ return n < 0 ? '−' + Math.abs(n) : String(n); }
+  function pointWord(n){
+    var a = Math.abs(n);
+    if(a === 1) return 'bod';
+    if(a >= 2 && a <= 4) return 'body';
+    return 'bodů';
+  }
+
+  var QTY = [
+    { k:'W', label:'Práce <i>W</i>', sym:'<i>W</i>' },
+    { k:'Q', label:'Teplo <i>Q</i>', sym:'<i>Q</i>' },
+    { k:'U', label:'Změna vnitřní energie Δ<i>U</i>', sym:'Δ<i>U</i>' }
+  ];
+  var SIGNS = [ { v:1, t:'&gt; 0' }, { v:0, t:'= 0' }, { v:-1, t:'&lt; 0' } ];
+  function signHtml(q, v){ return q.sym + ' ' + (v > 0 ? '&gt;' : (v < 0 ? '&lt;' : '=')) + ' 0'; }
+
+  // ---- úroveň 3: číselné situace (generátor) ----
+  // Hodnoty v celých jednotkách: v joulech (100 až 900 J po 10 J), nebo v desetinách kJ (0,2 až 4,8 kJ).
+  // Typ A: zadáno Q a W, ΔU = W + Q. Typ B: zadáno ΔU a W, Q = ΔU − W. Typ C: zadáno ΔU a Q, W = ΔU − Q.
+  // Asi v 15 % úloh jsou obě zadané hodnoty stejně velké tak, aby dopočítaná veličina vyšla nulová.
+  function fmtVal(n, kj){
+    var a = Math.abs(n), s;
+    s = kj ? (Math.floor(a/10) + ',' + (a % 10)) : String(a);
+    return (n < 0 ? '−' : '') + s + ' ' + (kj ? 'kJ' : 'J');
+  }
+  function fmtTerm(n, kj){ return n < 0 ? '(' + fmtVal(n, kj) + ')' : fmtVal(n, kj); }
+  // A = věta začíná podmětem „Plyn ve válci…“ (sloveso bez podmětu), jinak věta za „přičemž“.
+  function phraseW(w, kj, A){
+    if(A) return w > 0 ? 'je stlačen pístem, který na něm vykoná práci ' + fmtVal(w, kj)
+                       : 'se rozepne a vykoná práci ' + fmtVal(-w, kj);
+    return w > 0 ? 'píst plyn stlačí a vykoná na něm práci ' + fmtVal(w, kj)
+                 : 'se plyn rozepne a vykoná práci ' + fmtVal(-w, kj);
+  }
+  function phraseQ(q, kj, A){
+    return (A ? '' : 'plyn ') + (q > 0 ? 'přijme teplo ' + fmtVal(q, kj) : 'odevzdá okolí teplo ' + fmtVal(-q, kj));
+  }
+  function phraseU(u, kj){
+    return u > 0 ? 'vnitřní energie plynu ve válci vzroste o ' + fmtVal(u, kj)
+                 : 'vnitřní energie plynu ve válci klesne o ' + fmtVal(-u, kj);
+  }
+  function whyW(w, kj){
+    if(w > 0) return 'Plyn je stlačen, okolí na něm koná práci: <i>W</i> = ' + fmtVal(w, kj) + '.';
+    if(w < 0) return 'Plyn se rozpíná a koná práci: <i>W</i> = ' + fmtVal(w, kj) + '.';
+    return 'Práce se nekoná: <i>W</i> = 0.';
+  }
+  function whyQ(q, kj){
+    if(q > 0) return 'Plyn teplo přijímá: <i>Q</i> = ' + fmtVal(q, kj) + '.';
+    if(q < 0) return 'Plyn teplo odevzdává: <i>Q</i> = ' + fmtVal(q, kj) + '.';
+    return 'Teplo se nevyměňuje: <i>Q</i> = 0 (adiabatický děj).';
+  }
+  function whyU(u, kj){
+    if(u > 0) return 'Vnitřní energie roste: Δ<i>U</i> = ' + fmtVal(u, kj) + ', teplota plynu se zvyšuje.';
+    if(u < 0) return 'Vnitřní energie klesá: Δ<i>U</i> = ' + fmtVal(u, kj) + ', teplota plynu se snižuje.';
+    return 'Vnitřní energie se nemění: Δ<i>U</i> = 0, teplota plynu zůstává stejná.';
+  }
+  function genNumeric(){
+    var kj = Math.random() < 0.5;
+    function mag(){ return kj ? randInt(2, 48) : 10*randInt(10, 90); }
+    var r = Math.random(), type = r < 0.5 ? 'A' : (r < 0.75 ? 'B' : 'C');
+    var zero = Math.random() < 0.15;
+    var a = (Math.random() < 0.5 ? 1 : -1)*mag(), b = (Math.random() < 0.5 ? 1 : -1)*mag();
+    var w, q, u, text, why = {};
+    if(type === 'A'){            // a = W, b = Q
+      if(zero){ b = -a; }
+      w = a; q = b; u = w + q;
+      text = 'Plyn ve válci s pohyblivým pístem ' + phraseQ(q, kj, true) + ' a zároveň ' + phraseW(w, kj, true) + '.';
+      why.W = whyW(w, kj); why.Q = whyQ(q, kj);
+      why.U = 'Δ<i>U</i> = <i>W</i> + <i>Q</i> = ' + fmtTerm(w, kj) + ' + ' + fmtTerm(q, kj) + ' = ' + fmtVal(u, kj) + '. ' + whyU(u, kj);
+    }else if(type === 'B'){      // a = ΔU, b = W
+      if(zero){ b = a; }
+      u = a; w = b; q = u - w;
+      text = phraseU(u, kj).charAt(0).toUpperCase() + phraseU(u, kj).slice(1) + ', přičemž ' + phraseW(w, kj, false) + '.';
+      why.W = whyW(w, kj); why.U = whyU(u, kj);
+      why.Q = '<i>Q</i> = Δ<i>U</i> − <i>W</i> = ' + fmtTerm(u, kj) + ' − ' + fmtTerm(w, kj) + ' = ' + fmtVal(q, kj) + '. ' + whyQ(q, kj);
+    }else{                       // a = ΔU, b = Q
+      if(zero){ b = a; }
+      u = a; q = b; w = u - q;
+      text = phraseU(u, kj).charAt(0).toUpperCase() + phraseU(u, kj).slice(1) + ', přičemž ' + phraseQ(q, kj, false) + '.';
+      why.Q = whyQ(q, kj); why.U = whyU(u, kj);
+      why.W = '<i>W</i> = Δ<i>U</i> − <i>Q</i> = ' + fmtTerm(u, kj) + ' − ' + fmtTerm(q, kj) + ' = ' + fmtVal(w, kj) + '. ' + whyW(w, kj);
+    }
+    return { lv:3, text:text, sys:'plyn ve válci', W:sgn(w), Q:sgn(q), U:sgn(u), why:why,
+             raw:{ type:type, kj:kj, w:w, q:q, u:u } };
+  }
+
+  // ---------- karta se situací (společná pro trénink i hru) ----------
+  // px = předpona id prvků (px-task, px-rows, …); hooks.result(ok, skipped) vrátí nadpis zpětné vazby.
+  var LEVELS = [
+    { lv:1, name:'Jen práce, nebo jen teplo', game:'1 — jen práce, nebo jen teplo', points:10 },
+    { lv:2, name:'Práce i teplo', game:'2 — práce i teplo', points:15 },
+    { lv:3, name:'Výpočet s čísly', game:'3 — výpočet s čísly', points:20 }
+  ];
+  function makeBoard(px, hooks){
+    function $(id){ return document.getElementById(px + '-' + id); }
+    var B = { lv:1, scn:null, sel:{}, locked:false, touched:false, decks:{}, last:{} };
+    var btns = {};
+
+    // řádky s volbou znaménka
+    (function buildRows(){
+      var host = $('rows');
+      QTY.forEach(function(q){
+        var row = document.createElement('div');
+        row.className = 'mode-row';
+        var lab = document.createElement('span');
+        lab.className = 'mode-row-label';
+        lab.innerHTML = q.label;
+        var seg = document.createElement('div');
+        seg.className = 'seg';
+        seg.setAttribute('role', 'group');
+        seg.setAttribute('aria-label', lab.textContent);
+        btns[q.k] = [];
+        SIGNS.forEach(function(s){
+          var b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'opt-btn';
+          b.setAttribute('aria-pressed', 'false');
+          b.innerHTML = q.sym + ' ' + s.t;
+          b.addEventListener('click', function(){ choose(q.k, s.v); });
+          btns[q.k].push({ el:b, v:s.v });
+          seg.appendChild(b);
+        });
+        row.appendChild(lab);
+        row.appendChild(seg);
+        host.appendChild(row);
+      });
+    })();
+
+    function choose(k, v){
+      if(B.locked) return;
+      B.touched = true;
+      B.sel[k] = v;
+      btns[k].forEach(function(o){
+        var on = o.v === v;
+        o.el.classList.toggle('selected', on);
+        o.el.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+    }
+    function nextScenario(lv){
+      if(lv === 3) return genNumeric();
+      var d = B.decks[lv];
+      if(!d || !d.length){
+        var ids = [];
+        SCENARIOS.forEach(function(s, i){ if(s.lv === lv) ids.push(i); });
+        d = B.decks[lv] = shuffle(ids);
+        // nový balíček nezačne situací, která byla právě na řadě
+        if(d.length > 1 && d[d.length-1] === B.last[lv]){ d.unshift(d.pop()); }
+      }
+      B.last[lv] = d.pop();
+      return SCENARIOS[B.last[lv]];
+    }
+    B.complete = function(){ return QTY.every(function(q){ return B.sel.hasOwnProperty(q.k); }); };
+
+    B.newTask = function(){
+      var lv = B.lv === 'all' ? randInt(1, 3) : B.lv;
+      B.scn = nextScenario(lv);
+      B.sel = {}; B.locked = false; B.touched = false;
+      QTY.forEach(function(q){
+        btns[q.k].forEach(function(o){
+          o.el.disabled = false;
+          o.el.className = 'opt-btn';
+          o.el.setAttribute('aria-pressed', 'false');
+        });
+      });
+      $('cat').textContent = 'Úroveň ' + lv + ' · ' + LEVELS[lv-1].name;
+      $('task').textContent = B.scn.text;
+      $('sys').innerHTML = 'Soustava: <b>' + B.scn.sys + '</b>';
+      $('feedback').hidden = true;
+      $('check').textContent = 'Zkontrolovat';
+      $('skip').hidden = false;
+      if(hooks.onNewTask) hooks.onNewTask(lv);
+    };
+
+    function finish(skipped){
+      B.locked = true;
+      var ok = !skipped && QTY.every(function(q){ return B.sel[q.k] === B.scn[q.k]; });
+      var lines = '';
+      QTY.forEach(function(q){
+        var right = B.scn[q.k], picked = B.sel.hasOwnProperty(q.k) ? B.sel[q.k] : null;
+        btns[q.k].forEach(function(o){
+          o.el.disabled = true;
+          o.el.classList.remove('selected');
+          if(o.v === right) o.el.classList.add(picked === right ? 'correct' : 'missed');
+          else if(o.v === picked) o.el.classList.add('wrong');
+        });
+        var mark = picked === null ? '' : (picked === right ? '✓ ' : '✗ ');
+        var was = (picked !== null && picked !== right) ? ' (vybráno ' + signHtml(q, picked) + ')' : '';
+        lines += '<p><b>' + mark + signHtml(q, right) + '</b>' + was + '. ' + B.scn.why[q.k] + '</p>';
+      });
+      var fb = $('feedback');
+      fb.className = 'feedback ' + (ok ? 'ok' : 'bad');
+      $('headline').textContent = hooks.result(ok, skipped, B.scn.lv);
+      $('steps').innerHTML = lines;
+      fb.hidden = false;
+      $('check').textContent = 'Další úloha →';
+      $('skip').hidden = true;
+      $('check').focus({preventScroll:true});
+    }
+
+    B.check = function(){
+      if(B.locked){ B.newTask(); return; }
+      if(!B.complete()){
+        if(!confirm('Nevybrali jste znaménka u všech tří veličin. Opravdu chcete odpověď zkontrolovat?')) return;
+      }
+      finish(false);
+    };
+    B.skip = function(){
+      if(B.locked){ B.newTask(); return; }
+      B.sel = {};
+      finish(true);
+    };
+    // Vyhodnotí rozdělanou úlohu před změnou nastavení (jako settleCurrentQuestion() ve spolecne.js).
+    B.settle = function(){
+      if(B.locked) return 'locked';
+      if(!B.touched) return 'untouched';
+      if(!B.complete() && !confirm('Odpověď není úplná. Opravdu chcete změnit nastavení?')) return 'cancelled';
+      finish(false);
+      return 'settled';
+    };
+
+    $('check').addEventListener('click', B.check);
+    $('skip').addEventListener('click', B.skip);
+    return B;
+  }
+
+  // ---------- Trénink ----------
+  var STATS_KEY = 'fyzika:prvni-termodynamicky-zakon:stats';
+  var tr = { score:0, streak:0, bestStreak:0, answered:0, correct:0 };
+  function loadStats(){
+    try{ var raw = localStorage.getItem(STATS_KEY); if(raw){ tr.bestStreak = JSON.parse(raw).bestStreak || 0; } }catch(e){}
+  }
+  function saveStats(){
+    try{ localStorage.setItem(STATS_KEY, JSON.stringify({bestStreak: tr.bestStreak})); }catch(e){}
+  }
+  function updateStats(){
+    document.getElementById('stat-score').textContent = tr.score;
+    document.getElementById('stat-streak').textContent = tr.streak + (tr.bestStreak > 0 ? ' / ' + tr.bestStreak : '');
+    document.getElementById('stat-accuracy').textContent = tr.answered === 0 ? '—' : Math.round(100*tr.correct/tr.answered) + ' %';
+  }
+  var trBoard = makeBoard('tr', {
+    result:function(ok, skipped){
+      tr.answered++;
+      if(ok){
+        tr.score += 10; tr.streak++; tr.correct++;
+        if(tr.streak > tr.bestStreak){
+          tr.bestStreak = tr.streak; saveStats();
+          if(window.FyzikaScores) FyzikaScores.report('serie', tr.bestStreak, false);
+        }
+      }else{
+        tr.streak = 0;
+      }
+      updateStats();
+      return ok ? 'Správně!' : (skipped ? 'Správná znaménka:' : 'Bohužel špatně.');
+    }
+  });
+  trBoard.lv = 'all';
+  (function buildTypeRow(){
+    var row = document.getElementById('type-row');
+    var items = [{ key:'all', name:'Vše' }].concat(LEVELS.map(function(l){ return { key:l.lv, name:l.name }; }));
+    items.forEach(function(d){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip accented' + (d.key === trBoard.lv ? ' on' : '');
+      b.setAttribute('aria-pressed', d.key === trBoard.lv ? 'true' : 'false');
+      b.textContent = d.name;
+      b.addEventListener('click', function(){
+        if(d.key === trBoard.lv) return;
+        var res = trBoard.settle();
+        if(res === 'cancelled') return;
+        trBoard.lv = d.key;
+        Array.prototype.forEach.call(row.children, function(el, i){
+          var on = items[i].key === trBoard.lv;
+          el.classList.toggle('on', on);
+          el.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        if(res === 'locked' || res === 'untouched'){ trBoard.newTask(); }
+      });
+      row.appendChild(b);
+    });
+  })();
+  document.getElementById('reset-stats').addEventListener('click', function(){
+    tr.score = 0; tr.streak = 0; tr.answered = 0; tr.correct = 0; tr.bestStreak = 0;
+    try{ localStorage.removeItem(STATS_KEY); }catch(e){}
+    updateStats();
+  });
+
+  // ---------- Hra na čas ----------
+  var GAME_KEY = 'fyzika:prvni-termodynamicky-zakon:game-bests';
+  var WRONG_PENALTY = 5;
+  var GAME_DURATIONS = [
+    { key:60, name:'1 min' },
+    { key:120, name:'2 min' },
+    { key:180, name:'3 min' },
+    { key:300, name:'5 min' }
+  ];
+  var game = { duration:120, level:1, running:false, timeLeft:120, timerId:null, score:0, correct:0, wrong:0, bests:{} };
+  function currentGameBest(){ return game.bests[game.duration] || 0; }
+  function updateGameBestHint(){
+    document.getElementById('game-best-hint').textContent = 'Nejlepší skóre: ' + (currentGameBest() ? scoreText(currentGameBest()) : '—');
+  }
+  function loadGameBests(){
+    try{ var raw = localStorage.getItem(GAME_KEY); if(raw) game.bests = JSON.parse(raw) || {}; }catch(e){}
+  }
+  function saveGameBests(){
+    try{ localStorage.setItem(GAME_KEY, JSON.stringify(game.bests)); }catch(e){}
+  }
+  var gameBoard = makeBoard('game', {
+    onNewTask:function(lv){
+      document.getElementById('game-points-badge').textContent = '+' + LEVELS[lv-1].points + ' b';
+    },
+    result:function(ok, skipped, lv){
+      var pts = LEVELS[lv-1].points, head;
+      if(ok){
+        game.score += pts; game.correct++;
+        head = 'Správně! +' + pts + ' b';
+      }else{
+        game.score -= WRONG_PENALTY; game.wrong++;
+        head = (skipped ? 'Přeskočeno.' : 'Bohužel, špatně.') + ' −' + WRONG_PENALTY + ' b';
+      }
+      document.getElementById('game-score').textContent = scoreText(game.score);
+      return head;
+    }
+  });
+  function tickGameTimer(){
+    game.timeLeft--;
+    var timerEl = document.getElementById('game-timer');
+    timerEl.textContent = formatGameTime(Math.max(0, game.timeLeft));
+    timerEl.classList.toggle('low-time', game.timeLeft <= 20 && game.timeLeft > 0);
+    if(game.timeLeft <= 0) endGame();
+  }
+  function startGame(){
+    game.running = true;
+    game.timeLeft = game.duration;
+    game.score = 0; game.correct = 0; game.wrong = 0;
+    document.getElementById('game-score').textContent = '0';
+    var timerEl = document.getElementById('game-timer');
+    timerEl.textContent = formatGameTime(game.duration);
+    timerEl.classList.remove('low-time');
+    document.getElementById('game-best-live').textContent = scoreText(currentGameBest());
+    document.getElementById('game-info').hidden = true;
+    document.getElementById('game-start-panel').hidden = true;
+    document.getElementById('game-over').hidden = true;
+    document.getElementById('game-play').hidden = false;
+    gameBoard.lv = game.level;
+    gameBoard.decks = {};
+    gameBoard.newTask();
+    if(game.timerId) clearInterval(game.timerId);
+    game.timerId = setInterval(tickGameTimer, 1000);
+  }
+  function endGame(){
+    if(!game.running) return;
+    game.running = false;
+    clearInterval(game.timerId);
+    game.timerId = null;
+    if(game.score > currentGameBest()){ game.bests[game.duration] = game.score; saveGameBests(); }
+    if(window.FyzikaScores) FyzikaScores.report('hra-' + game.duration + 's', game.score, true);
+    document.getElementById('game-play').hidden = true;
+    document.getElementById('game-over').hidden = false;
+    // Po konci hry zůstane nabídka nastavení nad výsledkem; pravidla a tlačítko „Spustit hru“ se skryjí.
+    document.getElementById('game-rules-panel').hidden = true;
+    document.getElementById('game-info').hidden = false;
+    document.getElementById('game-final-score').textContent = scoreText(game.score) + ' ' + pointWord(game.score);
+    document.getElementById('game-final-detail').textContent =
+      'Správně: ' + game.correct + ' · Špatně: ' + game.wrong + ' · Nejlepší skóre: ' + scoreText(currentGameBest());
+    updateGameBestHint();
+  }
+  function buildChipRow(rowId, items, getKey, setKey, accented){
+    var row = document.getElementById(rowId);
+    row.innerHTML = '';
+    items.forEach(function(it){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip' + (accented ? ' accented' : '') + (it.key === getKey() ? ' on' : '');
+      b.textContent = it.name;
+      b.addEventListener('click', function(){
+        if(game.running) return;
+        setKey(it.key);
+        Array.prototype.forEach.call(row.children, function(el, i){ el.classList.toggle('on', items[i].key === getKey()); });
+        updateGameBestHint();
+      });
+      row.appendChild(b);
+    });
+  }
+  buildChipRow('game-level-row', LEVELS.map(function(l){ return { key:l.lv, name:l.game }; }), function(){ return game.level; }, function(k){ game.level = k; }, true);
+  buildChipRow('game-duration-row', GAME_DURATIONS, function(){ return game.duration; }, function(k){ game.duration = k; }, false);
+  document.getElementById('btn-game-start').addEventListener('click', startGame);
+  document.getElementById('btn-game-restart').addEventListener('click', startGame);
+
+  // ---- přepínání záložek ----
+  // Přepnutí na jinou záložku uprostřed běžící hry ji (po potvrzení) ukončí, aby čas neběžel „za zády“ žáka.
+  Object.keys(tabs).forEach(function(k){
+    tabs[k].addEventListener('click', function(){
+      if(k !== 'hra' && game.running){
+        if(!confirm('Přepnutím opustíte probíhající hru na čas. Hra se ukončí a započítá se aktuální skóre. Opravdu chcete pokračovat?')) return;
+        endGame();
+      }
+      showTab(k);
+    });
+  });
+
+  // Enter vyhodnotí odpověď a po vyhodnocení posune na další úlohu (na tlačítku ho obslouží samo tlačítko).
+  document.addEventListener('keydown', function(e){
+    if(e.key !== 'Enter' || e.ctrlKey || e.metaKey || e.altKey) return;
+    var t = e.target;
+    if(t && (t.tagName === 'BUTTON' || t.tagName === 'A' || t.tagName === 'SUMMARY' || t.tagName === 'INPUT')) return;
+    if(!document.getElementById('trenink-section').hidden){ e.preventDefault(); trBoard.check(); return; }
+    if(game.running && !document.getElementById('hra-section').hidden){ e.preventDefault(); gameBoard.check(); }
+  });
+
+  document.addEventListener('fyzika:scores-updated', function(){
+    tr.bestStreak = 0; loadStats(); updateStats();
+    game.bests = {}; loadGameBests(); updateGameBestHint();
+  });
+
+  loadStats();
+  updateStats();
+  trBoard.newTask();
+  loadGameBests();
+  updateGameBestHint();
+
+  // ---- vzorce (KaTeX) ----
+  if(window.renderMathInElement){
+    try{
+      renderMathInElement(document.getElementById('theory-section'), {
+        delimiters: [{left:'\\(', right:'\\)', display:false}, {left:'\\[', right:'\\]', display:true}]
+      });
+    }catch(e){}
+  }
+
+  // ---- sbalovací panely v teorii ----
+  try{ makePanelsCollapsible(document.getElementById('theory-section')); }catch(e){}
+
+  // ---- otevření záložky odkazem (…/stranka.html#trenink) ----
+  var hash = location.hash.replace('#', '');
+  if(hash && tabs[hash]) showTab(hash);
+  window.scrollTo(0, 0);
+})();
+</script>
+
+</body>
+</html>

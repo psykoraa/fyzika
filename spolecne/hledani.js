@@ -26,6 +26,7 @@
   var SOURCES = [
     {url:ROOT + 'rozcestniky/mereni.html', name:'Měření'},
     {url:ROOT + 'rozcestniky/kvinta.html', name:'Kvinta/1. ročník'},
+    {url:ROOT + 'rozcestniky/sexta.html', name:'Sexta/2. ročník'},
     {url:ROOT + 'rozcestniky/oktava.html', name:'Oktáva/4. ročník'}
   ];
 
