@@ -14,6 +14,7 @@
 <script src="../spolecne/auth.js"></script>
 <script src="../spolecne/zalozky.js?v=3"></script>
 <link rel="stylesheet" href="../spolecne/styl.css">
+<link rel="stylesheet" href="../spolecne/reseni.css?v=1">
 <link rel="stylesheet" href="../spolecne/komponenty.css?v=1">
 <style>
 :root{
@@ -137,6 +138,15 @@ svg.optics .f-group.dragging .f-grip{ fill:var(--accent); stroke:var(--accent); 
   .card{ padding:20px 16px 22px; }
 }
 </style>
+<style>
+/* ---- Kvíz (stejný jako u Grafů rovnoměrného pohybu a u Pohybu po kružnici) ---- */
+.kviz-task{ font-size:1.02rem; line-height:1.5; max-width:52ch; margin:0 auto 10px; color:var(--ink); text-align:center; }
+#kviz-section .kviz-task i, #kviz-section .opt-btn i, #kviz-section .feedback .steps i, #kviz-section .cat-tag i{ font-family:'STIX Two Text', Georgia, serif; font-style:italic; text-transform:none; }
+#kviz-section .feedback .steps{ font-family:'Work Sans', sans-serif; white-space:normal; opacity:1; }
+#kviz-end .kviz-end-box{ text-align:center; margin:0 0 14px; }
+#kviz-end .kviz-end-hint{ text-align:center; margin-top:10px; }
+#kviz-section [hidden]{ display:none; }
+</style>
 </head>
 <body>
 
@@ -159,10 +169,16 @@ svg.optics .f-group.dragging .f-grip{ fill:var(--accent); stroke:var(--accent); 
         <p>optika — zobrazování optickými soustavami</p>
       </div>
     </div>
+    <div class="readout" id="kviz-readout" hidden>
+      <div class="cell"><span class="label">Skóre</span><span class="value" id="kviz-stat-score">0</span></div>
+      <div class="cell"><span class="label">Série</span><span class="value" id="kviz-stat-streak">0</span></div>
+      <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="kviz-stat-accuracy">—</span></div>
+    </div>
   </div>
 
   <div class="top-tabs">
     <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+    <button class="toptab" id="top-tab-kviz" data-tab="kviz">Kvíz</button>
     <button class="toptab" id="top-tab-aplet" data-tab="aplet">Zorný úhel</button>
   </div>
 
@@ -328,6 +344,50 @@ svg.optics .f-group.dragging .f-grip{ fill:var(--accent); stroke:var(--accent); 
 
   </div>
 
+  <!-- ============ KVÍZ ============ -->
+  <div id="kviz-section" class="tab-section" hidden>
+    <div class="panel">
+      <div class="section-block">
+        <div class="panel-title">Okruh otázek</div>
+        <div class="row" id="kviz-type-row"></div>
+      </div>
+      <div class="settings-foot" style="justify-content:flex-end;">
+        <button class="linklike" id="kviz-reset-stats">vynulovat statistiku</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div id="kviz-q">
+      <span class="cat-tag" id="kviz-cat-tag">Otázka</span>
+      <p class="kviz-task" id="kviz-task-text"></p>
+      <figure class="theory-fig" id="kviz-fig" hidden>
+        <svg id="kviz-graph" viewBox="0 0 480 260" role="img" aria-label="Obrázek k otázce"></svg>
+      </figure>
+      <div class="opt-grid wide-opts" id="kviz-opt-grid"></div>
+      <div class="actions">
+        <button class="btn primary" id="kviz-btn-check">Zkontrolovat</button>
+        <button class="btn ghost" id="kviz-btn-skip">Nevím / Zobrazit řešení</button>
+      </div>
+      <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint">Vyberte jednu ze čtyř odpovědí kliknutím nebo klávesami A až D (případně 1 až 4) a potvrďte tlačítkem Zkontrolovat nebo klávesou Enter; dalším Enterem přejdete na další otázku. Po kontrole se správná odpověď obarví zeleně, chybně vybraná červeně a pod otázkou se objeví vysvětlení. Okruh otázek vyberete nahoře; otázky se neopakují, dokud neprojdete celý okruh. Pak se zobrazí, kolik otázek jste zodpověděli správně, a otázky můžete zamíchat a projít znovu.</p>
+      </details>
+      <div class="feedback" id="kviz-feedback" hidden>
+        <div class="headline" id="kviz-feedback-headline"></div>
+        <div class="steps" id="kviz-feedback-steps"></div>
+      </div>
+      </div>
+      <div id="kviz-end" hidden>
+        <div class="feedback ok kviz-end-box"><div class="headline">Hotovo, prošli jste všechny otázky!</div></div>
+        <p class="kviz-task" id="kviz-end-text"></p>
+        <div class="actions">
+          <button class="btn primary" id="kviz-btn-restart">Zamíchat otázky a začít znovu</button>
+        </div>
+        <p class="hint kviz-end-hint">Můžete také nahoře vybrat jiný okruh otázek.</p>
+      </div>
+    </div>
+  </div>
+
   <!-- ============ APLET ============ -->
   <div id="aplet-section" class="tab-section" hidden>
     <div class="card applet-card" id="applet-card">
@@ -399,6 +459,7 @@ svg.optics .f-group.dragging .f-grip{ fill:var(--accent); stroke:var(--accent); 
   <footer>Fyzika — Oktáva/4. ročník</footer>
 </div>
 
+<script src="../spolecne/reseni.js?v=1"></script>
 <script src="../spolecne/spolecne.js"></script>
 <script>
 (function(){
@@ -1141,5 +1202,344 @@ svg.optics .f-group.dragging .f-grip{ fill:var(--accent); stroke:var(--accent); 
   render();
 })();
 </script>
+<script>
+(function(){
+  "use strict";
+  // ================= KVÍZ: otázky s výběrem ze čtyř odpovědí (A–D) =================
+  // Samostatný skript (stejný kvíz jako u Grafů rovnoměrného pohybu a u Pohybu po kružnici).
+  // Položka banky: c = okruh, t = zadání (HTML), r = správná odpověď, w = tři špatné,
+  // e = vysvětlení; fixed = možnosti se nemíchají, jen seřadí.
+  var LETTERS = ['A','B','C','D'];
+  // ---- pomůcky pro obrázky k otázkám (SVG ve viewBoxu 480 × 260, barvy z proměnných stránky) ----
+  var KV_COL = { ink:'var(--ink)', soft:'var(--ink-soft)', acc:'var(--accent)', foc:'var(--focus)' };
+  var KV_DEFS = '<defs>' + ['ink','soft','acc','foc'].map(function(k){
+    return '<marker id="kv-' + k + '" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4.4" markerHeight="4.4" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="' + KV_COL[k] + '"/></marker>';
+  }).join('') + '</defs>';
+  function kvA(x1, y1, x2, y2, c, w, dash){
+    c = c || 'ink';
+    return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + KV_COL[c] + '" stroke-width="' + (w || 2.6) + '" stroke-linecap="round" marker-end="url(#kv-' + c + ')"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  function kvL(x1, y1, x2, y2, c, w, dash){
+    return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + KV_COL[c || 'soft'] + '" stroke-width="' + (w || 1.6) + '" stroke-linecap="round"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  function kvT(x, y, txt, anchor, size, c, italic){
+    return '<text x="' + x + '" y="' + y + '" text-anchor="' + (anchor || 'middle') + '" font-family="' + (italic ? "STIX Two Text, Georgia, serif" : "Work Sans, sans-serif") + '" font-size="' + (size || 13) + '"' + (italic ? ' font-style="italic"' : '') + ' fill="' + KV_COL[c || 'ink'] + '">' + txt + '</text>';
+  }
+  function kvC(x, y, r, fill, stroke){
+    return '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + (fill || 'none') + '" stroke="' + (stroke ? KV_COL[stroke] : 'none') + '" stroke-width="1.6"/>';
+  }
+  function kvR(x, y, w, h, fill, stroke, rot){
+    return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="2" fill="' + (fill || 'var(--surface-2)') + '" stroke="' + KV_COL[stroke || 'soft'] + '" stroke-width="1.6"' + (rot ? ' transform="rotate(' + rot[0] + ' ' + rot[1] + ' ' + rot[2] + ')"' : '') + '/>';
+  }
+  function kvP(d, c, w, dash, fill){
+    return '<path d="' + d + '" fill="' + (fill || 'none') + '" stroke="' + KV_COL[c || 'ink'] + '" stroke-width="' + (w || 2) + '" stroke-linecap="round" stroke-linejoin="round"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  // očíslovaný kroužek u špičky šipky (n = číslo), směr (dx, dy) od špičky ven
+  function kvN(x, y, n, dx, dy){
+    var lx = x + dx, ly = y + dy;
+    return kvC(lx, ly, 10, 'var(--surface-2)', 'soft') + '<text x="' + lx + '" y="' + (ly + 4.5) + '" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="13" font-weight="600" fill="var(--ink)">' + n + '</text>';
+  }
+  // šipka s číslem: z (x1, y1) do (x2, y2), kroužek za špičkou
+  function kvAN(x1, y1, x2, y2, n, c){
+    var dx = x2 - x1, dy = y2 - y1, l = Math.sqrt(dx*dx + dy*dy);
+    return kvA(x1, y1, x2, y2, c || 'ink') + kvN(x2, y2, n, dx/l*16, dy/l*16);
+  }
+  var KVIZ_TYPES = [
+    { key:'all', name:'Vše' },
+    { key:'videni', name:'Zřetelné vidění', tag:'Co potřebuje zřetelné vidění' },
+    { key:'uhel', name:'Zorný úhel', tag:'Zorný úhel a rozlišovací mez oka' },
+    { key:'lupa', name:'Lupa', tag:'Lupa a její zvětšení' },
+    { key:'vypocty', name:'Výpočty', tag:'Výpočty se zorným úhlem a lupou' }
+  ];
+  var KVIZ_BANK = [
+    // ----- vidění -----
+    { c:'videni', t:'Jak oko řídí množství světla, které do něj vstupuje?',
+      r:'Velikostí zornice — při jasném světle přibližně 2&nbsp;mm, při slabém až 8&nbsp;mm', w:['Změnou ohniskové vzdálenosti čočky', 'Změnou délky oční koule', 'Nijak, množství světla se neřídí'],
+      e:'Zornice se při jasném světle zúží a při slabém rozevře. Ohniskovou vzdálenost čočka mění při akomodaci, ne kvůli jasu.' },
+    { c:'videni', t:'Jak dlouho přibližně doznívá zrakový vjem po zániku obrazu na sítnici?',
+      r:'Přibližně 0,1&nbsp;s', w:['Přibližně 0,001&nbsp;s', 'Přibližně 1&nbsp;s', 'Přibližně 10&nbsp;s'],
+      e:'Vjem doznívá přibližně 0,1&nbsp;s, proto záblesky častější než 10&nbsp;Hz splývají.' },
+    { c:'videni', t:'Proč vnímáme film s 25 snímky za sekundu jako plynulý pohyb?',
+      r:'Zrakový vjem doznívá přibližně 0,1&nbsp;s, takže snímky častější než 10 za sekundu splývají.', w:['Protože oko vidí jen 25 snímků za sekundu a víc nerozliší.', 'Protože se snímky na plátně pohybují.', 'Protože mozek snímky dopočítává z barvy.'],
+      e:'Doznívání vjemu způsobí, že rychle za sebou jdoucí nehybné snímky splynou v plynulý pohyb.' },
+    { c:'videni', t:'Které tři podmínky musí být kromě zobrazení na sítnici splněny pro zřetelné vidění?',
+      r:'Vhodné osvětlení, dostatečně dlouhý zrakový vjem a dostatečně velký obraz na sítnici', w:['Barevné světlo, tma v okolí a pohyb předmětu', 'Brýle, lupa a dalekohled', 'Velká zornice, velké oko a velký předmět'],
+      e:'Velikost obrazu na sítnici určuje zorný úhel, o němž je zbytek stránky.' },
+    { c:'videni', t:'Proč se při pozorování zatmění Slunce používají tmavé filtry?',
+      r:'Příliš silné světlo zhoršuje vidění a může poškodit sítnici.', w:['Aby Slunce vypadalo větší.', 'Aby se zvětšil zorný úhel.', 'Filtry zesilují slabé světlo.'],
+      e:'Oslnění zhoršuje vidění a přímé sluneční světlo může sítnici trvale poškodit.' },
+    // ----- zorný úhel -----
+    { c:'uhel', t:'Co je zorný úhel?',
+      r:'Úhel, který svírají paprsky z krajních bodů předmětu procházející středem oční čočky', w:['Úhel, o který se oko natočí', 'Úhel mezi optickou osou a sítnicí', 'Úhel lomu světla v oční čočce'],
+      e:'Paprsek středem čočky se nelomí, takže čím větší zorný úhel, tím větší obraz na sítnici.' },
+    { c:'uhel', t:'Předmět vzdálíme na dvojnásobnou vzdálenost. Jak se přibližně změní zorný úhel?',
+      r:'Zmenší se přibližně na polovinu.', w:['Zvětší se dvakrát.', 'Zmenší se na čtvrtinu.', 'Nezmění se.'],
+      e:'Z tg <i>τ</i>′ = <i>y</i>/<i>a</i> a pro malé úhly tg <i>τ</i>′ ≈ <i>τ</i>′ je zorný úhel přibližně nepřímo úměrný vzdálenosti.' },
+    { c:'uhel', t:'Pod jakým nejmenším zorným úhlem musí oko vidět dva body, aby je rozlišilo?',
+      r:'Přibližně jedna úhlová minuta (1′)', w:['Přibližně jeden stupeň', 'Přibližně jedna úhlová vteřina (1″)', 'Přibližně 10°'],
+      e:'Rozlišovací mez oka je přibližně 1′ ≐ 2,9·10⁻⁴&nbsp;rad; pod touto hranicí body splynou.' },
+    { c:'uhel', t:'Jaká je konvenční zraková vzdálenost?',
+      r:'25&nbsp;cm', w:['2,5&nbsp;cm', '1&nbsp;m', '10&nbsp;cm'],
+      e:'Z konvenční zrakové vzdálenosti <i>d</i> = 25&nbsp;cm pozorujeme předměty pohodlně; k ní se vztahuje zorný úhel <i>τ</i> a zvětšení optických přístrojů.' },
+    { c:'uhel', t:'Jak blízko u sebe mohou nejvýše ležet dva body, abychom je z 25&nbsp;cm ještě rozlišili?',
+      r:'Přibližně 0,07&nbsp;mm', w:['Přibližně 0,7&nbsp;mm', 'Přibližně 7&nbsp;mm', 'Přibližně 0,007&nbsp;mm'],
+      e:'<i>y</i><sub>min</sub> ≐ <i>d</i> · 1′ = 250&nbsp;mm · 2,9·10⁻⁴ ≐ 0,073&nbsp;mm. Body vzdálené méně vidíme jako jediný.' },
+    { c:'uhel', t:'Proč nelze zorný úhel zvětšovat libovolným přibližováním předmětu k oku?',
+      r:'Oko zaostří jen do určité vzdálenosti (blízký bod); blíž už obraz na sítnici ostrý není.', w:['Protože blízký předmět nepropouští světlo.', 'Protože zorný úhel při přibližování klesá.', 'Protože oko vidí jen předměty vzdálené přesně 25&nbsp;cm.'],
+      e:'Pod blízký bod oko neakomoduje. Když předmět přiblížit nejde nebo nestačí, pomůže lupa, mikroskop nebo dalekohled.' },
+    // ----- lupa -----
+    { c:'lupa', t:'Co je lupa?',
+      r:'Spojná čočka s ohniskovou vzdáleností menší než konvenční zraková vzdálenost', w:['Rozptylka s velkou ohniskovou vzdáleností', 'Soustava dvou čoček', 'Spojka s ohniskovou vzdáleností větší než 25&nbsp;cm'],
+      e:'Lupa umožní dívat se na malý předmět zblízka, tedy pod větším zorným úhlem; oko je těsně za lupou.' },
+    { c:'lupa', t:'Jak je definováno úhlové zvětšení lupy?',
+      r:'<i>γ</i> = <i>τ</i>′/<i>τ</i> — poměr zorného úhlu s lupou a zorného úhlu v konvenční zrakové vzdálenosti', w:['<i>γ</i> = <i>y</i>′/<i>y</i> — poměr velikostí obrazu a předmětu', '<i>γ</i> = <i>f</i>/<i>d</i>', '<i>γ</i> = <i>a</i>′/<i>a</i>'],
+      e:'Zvětšení lupy je poměr úhlů, ne velikostí; poměr velikostí je příčné zvětšení <i>Z</i>.' },
+    { c:'lupa', t:'Jaké je zvětšení lupy, když předmět leží v jejím ohnisku?',
+      r:'<i>γ</i> = <i>d</i>/<i>f</i> = 0,25<i>φ</i>', w:['<i>γ</i> = <i>f</i>/<i>d</i>', '<i>γ</i> = <i>d</i> · <i>f</i>', '<i>γ</i> = 1'],
+      e:'Pro předmět v ohnisku je tg <i>τ</i>′ = <i>y</i>/<i>f</i> a tg <i>τ</i> = <i>y</i>/<i>d</i>, tedy <i>γ</i> = <i>d</i>/<i>f</i>; s <i>d</i> = 0,25&nbsp;m je to 0,25<i>φ</i>.' },
+    { c:'lupa', t:'Proč je při předmětu v ohnisku lupy pozorování pohodlné?',
+      r:'Paprsky za lupou jsou rovnoběžné, obraz je „v nekonečnu“ a oko nemusí akomodovat.', w:['Protože obraz je skutečný.', 'Protože obraz je převrácený.', 'Protože zvětšení je největší možné.'],
+      e:'Oko se dívá uvolněně. Posune-li se předmět blíž k lupě, zvětšení vzroste, ale oko musí víc akomodovat.' },
+    { c:'lupa', t:'Jaký obraz vytváří lupa, když je předmět blíž než ohnisko?',
+      r:'Zdánlivý, vzpřímený, zvětšený', w:['Skutečný, převrácený, zvětšený', 'Skutečný, vzpřímený, zmenšený', 'Zdánlivý, převrácený, zmenšený'],
+      e:'Pro <i>a</i> < <i>f</i> vznikne u spojky zdánlivý, vzpřímený a zvětšený obraz před čočkou. Zvětšení je <i>γ</i> = <i>d</i>/<i>a</i>.' },
+    { c:'lupa', t:'Proč jednoduchá lupa nezvětšuje víc než přibližně šestkrát?',
+      r:'Musela by mít velmi malou ohniskovou vzdálenost a příliš by se projevily vady čočky.', w:['Protože větší zvětšení oko nevydrží.', 'Protože spojky nelze vybrousit menší než 25&nbsp;cm.', 'Protože zvětšení lupy na ohniskové vzdálenosti nezávisí.'],
+      e:'Pro větší zvětšení se místo lupy používá soustava čoček, např. mikroskop.' },
+    { c:'lupa', t:'Jak lze jednoduše odhadnout zvětšení lupy?',
+      r:'Porovnat, kolik dílků milimetrového papíru viděných okem zakryje jeden dílek viděný přes lupu.', w:['Změřit průměr lupy.', 'Zvážit lupu.', 'Změřit vzdálenost oka od papíru.'],
+      e:'Počet zakrytých dílků přibližně odpovídá úhlovému zvětšení <i>γ</i>.' },
+    // ----- výpočty -----
+    { c:'vypocty', t:'Lupa má optickou mohutnost 10&nbsp;D. Jaké je její zvětšení s předmětem v ohnisku?',
+      r:'2,5', w:['10', '0,4', '40'],
+      e:'<i>γ</i> = 0,25<i>φ</i> = 0,25 · 10 = 2,5. Kontrola: <i>f</i> = 1/10&nbsp;m = 10&nbsp;cm a <i>d</i>/<i>f</i> = 25/10 = 2,5.' },
+    { c:'vypocty', t:'Jakou ohniskovou vzdálenost a optickou mohutnost musí mít lupa se zvětšením 4 (předmět v ohnisku)?',
+      r:'<i>f</i> ≐ 6,3&nbsp;cm, <i>φ</i> = 16&nbsp;D', w:['<i>f</i> = 100&nbsp;cm, <i>φ</i> = 1&nbsp;D', '<i>f</i> = 4&nbsp;cm, <i>φ</i> = 25&nbsp;D', '<i>f</i> ≐ 6,3&nbsp;cm, <i>φ</i> = 0,16&nbsp;D'],
+      e:'<i>f</i> = <i>d</i>/<i>γ</i> = 25&nbsp;cm/4 = 6,25&nbsp;cm a <i>φ</i> = 1/0,0625&nbsp;m = 16&nbsp;D. Kontrola: 0,25 · 16 = 4.' },
+    { c:'vypocty', t:'Lupa má ohniskovou vzdálenost 5,0&nbsp;cm. Předmět dáme 4,0&nbsp;cm od ní. Jaké je zvětšení?',
+      r:'Přibližně 6,3', w:['5,0', '1,25', '20'],
+      e:'Předmět je blíž než ohnisko, proto <i>γ</i> = <i>d</i>/<i>a</i> = 25/4,0 ≐ 6,3. S předmětem v ohnisku by bylo <i>γ</i> = 25/5,0 = 5,0.' },
+    { c:'vypocty', t:'Pod jakým zorným úhlem vidíme z 25&nbsp;cm předmět o velikosti 0,5&nbsp;mm?',
+      r:'Přibližně 0,002&nbsp;rad, tj. přibližně 7′', w:['Přibližně 0,5&nbsp;rad', 'Přibližně 2°', 'Přibližně 0,02′'],
+      e:'tg <i>τ</i> = <i>y</i>/<i>d</i> = 0,5/250 = 0,002, tedy <i>τ</i> ≐ 0,002&nbsp;rad. V minutách 0,002/2,9·10⁻⁴ ≐ 6,9′ — předmět okem rozlišíme.' },
+    { c:'vypocty', t:'Jakou optickou mohutnost má lupa s největším běžným zvětšením 6 (předmět v ohnisku)?',
+      r:'Přibližně 24&nbsp;D', w:['Přibližně 6&nbsp;D', 'Přibližně 1,5&nbsp;D', 'Přibližně 150&nbsp;D'],
+      e:'<i>f</i> = <i>d</i>/<i>γ</i> = 25&nbsp;cm/6 ≐ 4,2&nbsp;cm, <i>φ</i> = 1/0,042&nbsp;m ≐ 24&nbsp;D; kontrola 0,25 · 24 = 6.' },
+    { c:'vypocty', t:'Hodinářská lupa má 20&nbsp;D. Kolečko je 4,5&nbsp;cm od lupy. Kde vznikne zdánlivý obraz?',
+      r:'45&nbsp;cm před lupou', w:['4,5&nbsp;cm před lupou', '5,0&nbsp;cm za lupou', '25&nbsp;cm před lupou'],
+      e:'<i>f</i> = 1/20&nbsp;m = 5,0&nbsp;cm; |<i>a</i>′| = <i>af</i>/(<i>f</i> − <i>a</i>) = 4,5 · 5,0/0,5&nbsp;cm = 45&nbsp;cm. Zvětšení je <i>d</i>/<i>a</i> = 25/4,5 ≐ 5,6.' }
+  ];
+
+
+  var KVIZ_KEY = 'fyzika:zorny-uhel-a-lupa:kviz';
+  var section = document.getElementById('kviz-section');
+  var tabBtn = document.getElementById('top-tab-kviz');
+  var readout = document.getElementById('kviz-readout');
+  var pageReadout = document.getElementById('header-readout');
+  var kviz = {
+    type:'all', queue:[], current:null, sel:null, locked:false,
+    score:0, streak:0, bestStreak:0, answered:0, correct:0,
+    inRound:false, ended:false, roundTotal:0, roundCorrect:0
+  };
+  function $(id){ return document.getElementById(id); }
+  function kvizLoad(){
+    try{ var raw = localStorage.getItem(KVIZ_KEY); if(raw){ kviz.bestStreak = JSON.parse(raw).bestStreak || 0; } }catch(e){}
+  }
+  function kvizSave(){
+    try{ localStorage.setItem(KVIZ_KEY, JSON.stringify({bestStreak: kviz.bestStreak})); }catch(e){}
+  }
+  function kvizShuffled(a){
+    a = a.slice();
+    for(var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random()*(i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; }
+    return a;
+  }
+  function typeOf(key){ return KVIZ_TYPES.filter(function(t){ return t.key === key; })[0]; }
+
+  // Otázky okruhu se berou v náhodném pořadí bez opakování. Po projití celého okruhu
+  // se zobrazí závěrečná hláška s výsledkem kola a nabídkou otázky zamíchat znovu.
+  function kvizNext(){
+    if(!kviz.queue.length){
+      if(kviz.inRound){ kvizShowEnd(); return; }
+      var pool = KVIZ_BANK.filter(function(b){ return kviz.type === 'all' || b.c === kviz.type; });
+      kviz.queue = kvizShuffled(pool);
+      if(kviz.current && kviz.queue.length > 1 && kviz.queue[0] === kviz.current.item){ kviz.queue.push(kviz.queue.shift()); }
+      kviz.inRound = true; kviz.roundTotal = pool.length; kviz.roundCorrect = 0;
+    }
+    var item = kviz.queue.shift();
+    var opts = item.fixed ? [item.r].concat(item.w).sort() : kvizShuffled([item.r].concat(item.w));
+    kviz.current = { item:item, choices:opts, correct:opts.indexOf(item.r) };
+    kvizRender();
+  }
+  function kvizShowEnd(){
+    kviz.ended = true; kviz.inRound = false;
+    var tp = typeOf(kviz.type);
+    var n = kviz.roundTotal, k = kviz.roundCorrect;
+    $('kviz-end-text').innerHTML =
+      'Prošli jste všech ' + n + ' otázek ' + (kviz.type === 'all' ? 'kvízu' : 'okruhu „' + tp.name + '“') + '. ' +
+      'Správně jste odpověděli na ' + k + ' z ' + n + ' (' + Math.round(100*k/n) + '&nbsp;%). Chcete otázky zamíchat a projít znovu?';
+    $('kviz-q').hidden = true;
+    $('kviz-end').hidden = false;
+    $('kviz-btn-restart').focus({ preventScroll:true });
+  }
+  function kvizRestart(){
+    kviz.queue = []; kviz.inRound = false;
+    kvizNext();
+  }
+  function kvizRender(){
+    var q = kviz.current;
+    kviz.ended = false;
+    $('kviz-q').hidden = false;
+    $('kviz-end').hidden = true;
+    var tp = typeOf(q.item.c);
+    $('kviz-cat-tag').innerHTML = tp ? tp.tag : 'Otázka';
+    $('kviz-task-text').innerHTML = q.item.t;
+    var fig = $('kviz-fig');
+    fig.hidden = !q.item.f;
+    if(q.item.f){ $('kviz-graph').innerHTML = KV_DEFS + q.item.f; $('kviz-graph').setAttribute('aria-label', q.item.fa || 'Obrázek k otázce'); }
+    var grid = $('kviz-opt-grid');
+    grid.innerHTML = '';
+    kviz.sel = null; kviz.locked = false;
+    q.choices.forEach(function(c, i){
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'opt-btn';
+      b.innerHTML = '<b>' + LETTERS[i] + ')</b>&nbsp; ' + c;
+      b.addEventListener('click', function(){ kvizSelect(i); });
+      grid.appendChild(b);
+    });
+    var fb = $('kviz-feedback');
+    fb.hidden = true; fb.classList.remove('ok', 'bad', 'sol');
+    $('kviz-btn-check').textContent = 'Zkontrolovat';
+  }
+  function kvizSelect(i){
+    if(kviz.locked || kviz.ended) return;
+    kviz.sel = i;
+    Array.prototype.forEach.call($('kviz-opt-grid').children, function(el, j){ el.classList.toggle('selected', j === i); });
+    $('kviz-btn-check').focus({ preventScroll:true });
+  }
+  function kvizFinish(ok, headline){
+    var q = kviz.current;
+    Array.prototype.forEach.call($('kviz-opt-grid').children, function(el, j){
+      el.disabled = true;
+      el.classList.remove('selected');
+      if(j === q.correct) el.classList.add(kviz.sel === j ? 'correct' : 'missed');
+      else if(j === kviz.sel) el.classList.add('wrong');
+    });
+    var fb = $('kviz-feedback');
+    fb.hidden = false;
+    fb.classList.toggle('ok', ok); fb.classList.toggle('bad', !ok);
+    $('kviz-feedback-headline').textContent = headline;
+    var finalText = 'Správná odpověď: ' + LETTERS[q.correct] + ') ' + q.item.r;
+    if(window.FyzikaReseni && FyzikaReseni.show){
+      FyzikaReseni.show(fb, $('kviz-feedback-steps'), { raw:true, title:'Vysvětlení', steps:[q.item.e], final:finalText });
+    } else {
+      $('kviz-feedback-steps').innerHTML = q.item.e + '<br><b>' + finalText + '</b>';
+    }
+    kviz.locked = true;
+    var btn = $('kviz-btn-check');
+    btn.textContent = 'Další otázka →';
+    btn.focus({ preventScroll:true });
+    kvizStats();
+  }
+  function kvizCheck(){
+    if(kviz.ended){ kvizRestart(); return; }
+    if(kviz.locked){ kvizNext(); return; }
+    if(kviz.sel === null && !confirm('Není vybraná žádná možnost. Opravdu chcete zkontrolovat?')) return;
+    var ok = kviz.sel === kviz.current.correct;
+    kviz.answered++;
+    if(ok){
+      kviz.score += 10; kviz.streak++; kviz.correct++; kviz.roundCorrect++;
+      if(kviz.streak > kviz.bestStreak){ kviz.bestStreak = kviz.streak; kvizSave(); }
+    } else {
+      kviz.streak = 0;
+    }
+    kvizFinish(ok, ok ? 'Správně!' : (kviz.sel === null ? 'Vyberte odpověď.' : 'Bohužel špatně.'));
+  }
+  function kvizSkip(){
+    if(kviz.ended){ kvizRestart(); return; }
+    if(kviz.locked){ kvizNext(); return; }
+    kviz.streak = 0; kviz.answered++;
+    kvizFinish(false, 'Správná odpověď:');
+  }
+  function kvizStats(){
+    $('kviz-stat-score').textContent = kviz.score;
+    $('kviz-stat-streak').textContent = kviz.streak + (kviz.bestStreak > 0 ? ' / ' + kviz.bestStreak : '');
+    $('kviz-stat-accuracy').textContent = kviz.answered === 0 ? '—' : Math.round(100*kviz.correct/kviz.answered) + ' %';
+  }
+  (function kvizBuildTypeRow(){
+    var row = $('kviz-type-row');
+    KVIZ_TYPES.forEach(function(d){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip accented' + (d.key === kviz.type ? ' on' : '');
+      b.setAttribute('aria-pressed', d.key === kviz.type ? 'true' : 'false');
+      b.textContent = d.name;
+      b.addEventListener('click', function(){
+        if(d.key === kviz.type) return;
+        // rozpracovaná otázka s vybranou odpovědí se před změnou okruhu vyhodnotí
+        var settled = !kviz.locked && kviz.sel !== null;
+        if(settled) kvizCheck();
+        kviz.type = d.key; kviz.queue = []; kviz.inRound = false;
+        Array.prototype.forEach.call(row.children, function(el, i){
+          var on = KVIZ_TYPES[i].key === kviz.type;
+          el.classList.toggle('on', on);
+          el.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        // vyhodnocená otázka zůstane i s vysvětlením vidět, další už bude z nového okruhu
+        if(!settled) kvizNext();
+      });
+      row.appendChild(b);
+    });
+  })();
+  $('kviz-btn-check').addEventListener('click', kvizCheck);
+  $('kviz-btn-skip').addEventListener('click', kvizSkip);
+  $('kviz-btn-restart').addEventListener('click', kvizRestart);
+  $('kviz-reset-stats').addEventListener('click', function(){
+    kviz.score = 0; kviz.streak = 0; kviz.answered = 0; kviz.correct = 0; kviz.bestStreak = 0;
+    try{ localStorage.removeItem(KVIZ_KEY); }catch(e){}
+    kvizStats();
+  });
+  // Klávesnice v kvízu: A–D nebo 1–4 vybere odpověď, Enter zkontroluje / posune dál.
+  document.addEventListener('keydown', function(e){
+    if(section.hidden) return;
+    if(e.ctrlKey || e.metaKey || e.altKey) return;
+    if(e.key === 'Enter'){
+      if(e.target && e.target.tagName === 'BUTTON') return;
+      e.preventDefault(); kvizCheck(); return;
+    }
+    var idx = 'abcd'.indexOf(e.key.toLowerCase());
+    if(idx === -1) idx = '1234'.indexOf(e.key);
+    if(idx !== -1 && e.key.length === 1) kvizSelect(idx);
+  });
+
+  // ---- záložka Kvíz ----
+  // Skript je samostatný: otevření Kvízu i návrat na ostatní záložky řeší sám, ať stránka přepíná
+  // záložky jakkoli. Skóre kvízu má vlastní pole v hlavičce (skóre tréninku se tím nemění).
+  function activate(){
+    var teorieBtn = $('top-tab-teorie'), theory = $('theory-section');
+    if(!tabBtn.classList.contains('on') && teorieBtn && !teorieBtn.classList.contains('on')){
+      // nejdřív „kliknutím“ opustíme dosavadní záložku obsluhou stránky (u hry na čas s potvrzením)
+      teorieBtn.click();
+      if(theory && theory.hidden) return;   // stránka odmítla opustit dosavadní záložku (např. běžící hra)
+    }
+    Array.prototype.forEach.call(document.querySelectorAll('.tab-section'), function(s){ s.hidden = s !== section; });
+    Array.prototype.forEach.call(document.querySelectorAll('.toptab'), function(t){ t.classList.toggle('on', t === tabBtn); });
+    if(pageReadout) pageReadout.hidden = true;
+    readout.hidden = false;
+    kvizStats();
+    if(!kviz.current) kvizNext();
+  }
+  tabBtn.addEventListener('click', activate);
+  Array.prototype.forEach.call(document.querySelectorAll('.toptab'), function(t){
+    if(t === tabBtn) return;
+    t.addEventListener('click', function(){ section.hidden = true; readout.hidden = true; tabBtn.classList.remove('on'); });
+  });
+  document.addEventListener('fyzika:scores-updated', function(){ kviz.bestStreak = 0; kvizLoad(); kvizStats(); });
+  kvizLoad();
+  kvizStats();
+  if(location.hash === '#kviz' && !tabBtn.classList.contains('on')) tabBtn.click();
+  else if(location.hash === '#kviz') activate();
+})();
+</script>
+
 </body>
 </html>
