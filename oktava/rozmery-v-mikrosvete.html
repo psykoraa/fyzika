@@ -99,6 +99,20 @@
   .card{ padding:20px 16px 22px; }
 }
 </style>
+<style>
+/* ---- Kvíz (stejný jako u Grafů rovnoměrného pohybu a u Pohybu po kružnici) ---- */
+.kviz-task{ font-size:1.02rem; line-height:1.5; max-width:52ch; margin:0 auto 10px; color:var(--ink); text-align:center; }
+#kviz-section .kviz-task i, #kviz-section .opt-btn i, #kviz-section .feedback .steps i, #kviz-section .cat-tag i{ font-family:'STIX Two Text', Georgia, serif; font-style:italic; text-transform:none; }
+#kviz-section .feedback .steps{ font-family:'Work Sans', sans-serif; white-space:normal; opacity:1; }
+#kviz-end .kviz-end-box{ text-align:center; margin:0 0 14px; }
+#kviz-end .kviz-end-hint{ text-align:center; margin-top:10px; }
+#kviz-section [hidden]{ display:none; }
+@media (max-width:520px){
+  /* čtyři a více záložek: na telefonu ve dvou řadách (stejně jako Grafy rovnoměrného pohybu) */
+  .top-tabs{ flex-wrap:wrap; }
+  .toptab{ flex:1 1 calc(50% - 4px); padding:13px 8px; }
+}
+</style>
 </head>
 <body>
 
@@ -124,10 +138,16 @@
       <div class="cell"><span class="label">Série</span><span class="value" id="stat-streak">0</span></div>
       <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="stat-accuracy">—</span></div>
     </div>
+    <div class="readout" id="kviz-readout" hidden>
+      <div class="cell"><span class="label">Skóre</span><span class="value" id="kviz-stat-score">0</span></div>
+      <div class="cell"><span class="label">Série</span><span class="value" id="kviz-stat-streak">0</span></div>
+      <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="kviz-stat-accuracy">—</span></div>
+    </div>
   </div>
 
   <div class="top-tabs">
     <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+    <button class="toptab" id="top-tab-kviz" data-tab="kviz">Kvíz</button>
     <button class="toptab" id="top-tab-aplet" data-tab="aplet">Zoom do mikrosvěta</button>
     <button class="toptab" id="top-tab-trenink" data-tab="trenink">Trénink</button>
   </div>
@@ -430,6 +450,50 @@
       <p>• Optický mikroskop končí kolem 200&nbsp;nm; menší objekty pozorujeme elektronovým a tunelovým mikroskopem, nitro jader rozptylovými experimenty.</p>
     </div>
 
+  </div>
+
+  <!-- ============ KVÍZ ============ -->
+  <div id="kviz-section" class="tab-section" hidden>
+    <div class="panel">
+      <div class="section-block">
+        <div class="panel-title">Okruh otázek</div>
+        <div class="row" id="kviz-type-row"></div>
+      </div>
+      <div class="settings-foot" style="justify-content:flex-end;">
+        <button class="linklike" id="kviz-reset-stats">vynulovat statistiku</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div id="kviz-q">
+      <span class="cat-tag" id="kviz-cat-tag">Otázka</span>
+      <p class="kviz-task" id="kviz-task-text"></p>
+      <figure class="theory-fig" id="kviz-fig" hidden>
+        <svg id="kviz-graph" viewBox="0 0 480 260" role="img" aria-label="Obrázek k otázce"></svg>
+      </figure>
+      <div class="opt-grid wide-opts" id="kviz-opt-grid"></div>
+      <div class="actions">
+        <button class="btn primary" id="kviz-btn-check">Zkontrolovat</button>
+        <button class="btn ghost" id="kviz-btn-skip">Nevím / Zobrazit řešení</button>
+      </div>
+      <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint">Vyberte jednu ze čtyř odpovědí kliknutím nebo klávesami A až D (případně 1 až 4) a potvrďte tlačítkem Zkontrolovat nebo klávesou Enter; dalším Enterem přejdete na další otázku. Po kontrole se správná odpověď obarví zeleně, chybně vybraná červeně a pod otázkou se objeví vysvětlení. Okruh otázek vyberete nahoře; otázky se neopakují, dokud neprojdete celý okruh. Pak se zobrazí, kolik otázek jste zodpověděli správně, a otázky můžete zamíchat a projít znovu.</p>
+      </details>
+      <div class="feedback" id="kviz-feedback" hidden>
+        <div class="headline" id="kviz-feedback-headline"></div>
+        <div class="steps" id="kviz-feedback-steps"></div>
+      </div>
+      </div>
+      <div id="kviz-end" hidden>
+        <div class="feedback ok kviz-end-box"><div class="headline">Hotovo, prošli jste všechny otázky!</div></div>
+        <p class="kviz-task" id="kviz-end-text"></p>
+        <div class="actions">
+          <button class="btn primary" id="kviz-btn-restart">Zamíchat otázky a začít znovu</button>
+        </div>
+        <p class="hint kviz-end-hint">Můžete také nahoře vybrat jiný okruh otázek.</p>
+      </div>
+    </div>
   </div>
 
   <!-- ============ APLET: ZOOM DO MIKROSVĚTA ============ -->
@@ -1058,5 +1122,370 @@
   trGenerate();
 })();
 </script>
+<script>
+(function(){
+  "use strict";
+  // ================= KVÍZ: otázky s výběrem ze čtyř odpovědí (A–D) =================
+  // Samostatný skript (stejný kvíz jako u Grafů rovnoměrného pohybu a u Pohybu po kružnici).
+  // Položka banky: c = okruh, t = zadání (HTML), r = správná odpověď, w = tři špatné,
+  // e = vysvětlení; fixed = možnosti se nemíchají, jen seřadí.
+  var LETTERS = ['A','B','C','D'];
+  // ---- pomůcky pro obrázky k otázkám (SVG ve viewBoxu 480 × 260, barvy z proměnných stránky) ----
+  var KV_COL = { ink:'var(--ink)', soft:'var(--ink-soft)', acc:'var(--accent)', foc:'var(--focus)' };
+  var KV_DEFS = '<defs>' + ['ink','soft','acc','foc'].map(function(k){
+    return '<marker id="kv-' + k + '" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4.4" markerHeight="4.4" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="' + KV_COL[k] + '"/></marker>';
+  }).join('') + '</defs>';
+  function kvA(x1, y1, x2, y2, c, w, dash){
+    c = c || 'ink';
+    return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + KV_COL[c] + '" stroke-width="' + (w || 2.6) + '" stroke-linecap="round" marker-end="url(#kv-' + c + ')"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  function kvL(x1, y1, x2, y2, c, w, dash){
+    return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + KV_COL[c || 'soft'] + '" stroke-width="' + (w || 1.6) + '" stroke-linecap="round"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  function kvT(x, y, txt, anchor, size, c, italic){
+    return '<text x="' + x + '" y="' + y + '" text-anchor="' + (anchor || 'middle') + '" font-family="' + (italic ? "STIX Two Text, Georgia, serif" : "Work Sans, sans-serif") + '" font-size="' + (size || 13) + '"' + (italic ? ' font-style="italic"' : '') + ' fill="' + KV_COL[c || 'ink'] + '">' + txt + '</text>';
+  }
+  function kvC(x, y, r, fill, stroke){
+    return '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + (fill || 'none') + '" stroke="' + (stroke ? KV_COL[stroke] : 'none') + '" stroke-width="1.6"/>';
+  }
+  function kvR(x, y, w, h, fill, stroke, rot){
+    return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="2" fill="' + (fill || 'var(--surface-2)') + '" stroke="' + KV_COL[stroke || 'soft'] + '" stroke-width="1.6"' + (rot ? ' transform="rotate(' + rot[0] + ' ' + rot[1] + ' ' + rot[2] + ')"' : '') + '/>';
+  }
+  function kvP(d, c, w, dash, fill){
+    return '<path d="' + d + '" fill="' + (fill || 'none') + '" stroke="' + KV_COL[c || 'ink'] + '" stroke-width="' + (w || 2) + '" stroke-linecap="round" stroke-linejoin="round"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  // očíslovaný kroužek u špičky šipky (n = číslo), směr (dx, dy) od špičky ven
+  function kvN(x, y, n, dx, dy){
+    var lx = x + dx, ly = y + dy;
+    return kvC(lx, ly, 10, 'var(--surface-2)', 'soft') + '<text x="' + lx + '" y="' + (ly + 4.5) + '" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="13" font-weight="600" fill="var(--ink)">' + n + '</text>';
+  }
+  // šipka s číslem: z (x1, y1) do (x2, y2), kroužek za špičkou
+  function kvAN(x1, y1, x2, y2, n, c){
+    var dx = x2 - x1, dy = y2 - y1, l = Math.sqrt(dx*dx + dy*dy);
+    return kvA(x1, y1, x2, y2, c || 'ink') + kvN(x2, y2, n, dx/l*16, dy/l*16);
+  }
+  // ---- tři jádra z protonů (p) a neutronů (n), schematicky ----
+  function kvNuc(x, y, kind){
+    var p = kind === 'p';
+    return kvC(x, y, 16, p ? 'var(--accent)' : 'var(--surface-2)', p ? 'acc' : 'soft') +
+      '<text x="' + x + '" y="' + (y + 5) + '" text-anchor="middle" font-family="Work Sans, sans-serif" font-size="14" fill="' + (p ? 'var(--surface)' : 'var(--ink)') + '">' + (p ? 'p' : 'n') + '</text>';
+  }
+  var KV_FIG_IZO = kvNuc(100, 110, 'p') + kvN(100, 190, 1, 0, 0) +
+    kvNuc(225, 110, 'p') + kvNuc(255, 110, 'n') + kvN(240, 190, 2, 0, 0) +
+    kvNuc(365, 98, 'n') + kvNuc(395, 98, 'n') + kvNuc(380, 124, 'p') + kvN(380, 190, 3, 0, 0);
+  var KV_FIG_IZO_A = 'Tři jádra: 1 jeden proton, 2 jeden proton a jeden neutron, 3 jeden proton a dva neutrony';
+
+  var KVIZ_TYPES = [
+    { key:'all', name:'Vše' },
+    { key:'velikost', name:'Velikost atomu a jádra', tag:'Velikost atomu a jádra' },
+    { key:'castice', name:'Částice a čísla', tag:'Nukleony, elektrony a čísla Z, N, A' },
+    { key:'jednotky', name:'Jednotky', tag:'Elektronvolt a MeV/c²' },
+    { key:'pozorovani', name:'Pozorování mikrosvěta', tag:'Jak mikrosvět pozorovat' }
+  ];
+  var KVIZ_BANK = [
+    // ----- velikost -----
+    { c:'velikost', t:'Jaký je řádově poloměr atomu?',
+      r:'10⁻¹⁰&nbsp;m (0,1&nbsp;nm)', w:['10⁻¹⁵&nbsp;m (1&nbsp;fm)', '10⁻⁶&nbsp;m (1&nbsp;µm)', '10⁻¹⁸&nbsp;m'],
+      e:'Atom má poloměr řádově 10⁻¹⁰&nbsp;m = 0,1&nbsp;nm = 1&nbsp;Å. 10⁻¹⁵&nbsp;m je řádový poloměr jádra.' },
+    { c:'velikost', t:'Kolikrát je jádro přibližně menší než atom?',
+      r:'Přibližně stotisíckrát', w:['Přibližně desetkrát', 'Přibližně tisíckrát', 'Přibližně miliardkrát'],
+      e:'10⁻¹⁰&nbsp;m / 10⁻¹⁵&nbsp;m = 10⁵. Kdyby jádro mělo velikost makového zrnka (1&nbsp;mm), atom by měl průměr přibližně 100&nbsp;m.' },
+    { c:'velikost', t:'Jakou část objemu atomu zabírá jádro (atom i jádro považujeme za koule)?',
+      r:'Přibližně 10⁻¹⁵ (10⁻¹³&nbsp;%)', w:['Přibližně 10⁻⁵ (10⁻³&nbsp;%)', 'Přibližně 1&nbsp;%', 'Přibližně polovinu'],
+      e:'<i>V</i><sub>j</sub>/<i>V</i><sub>a</sub> = (<i>r</i><sub>j</sub>/<i>r</i><sub>a</sub>)³ = (10⁻⁵)³ = 10⁻¹⁵. Hodnota 10⁻⁵ je jen poměr poloměrů — zapomenutá třetí mocnina.' },
+    { c:'velikost', t:'Čemu se říká „fermi“?',
+      r:'Femtometru, 1&nbsp;fm = 10⁻¹⁵&nbsp;m', w:['Ångströmu, 1&nbsp;Å = 10⁻¹⁰&nbsp;m', 'Nanometru, 1&nbsp;nm = 10⁻⁹&nbsp;m', 'Elektronvoltu'],
+      e:'Femtometr je typická délka pro jádra, proto se mu někdy říká fermi. Pro atomy se dříve používal ångström.' },
+    { c:'velikost', t:'Jaká je přibližně hustota jaderné hmoty?',
+      r:'Přibližně 4·10¹⁷&nbsp;kg·m⁻³', w:['Přibližně 1&nbsp;000&nbsp;kg·m⁻³', 'Přibližně 2·10⁴&nbsp;kg·m⁻³', 'Přibližně 4·10⁻¹⁷&nbsp;kg·m⁻³'],
+      e:'<i>ϱ</i> ≈ 1,67·10⁻²⁷&nbsp;kg / (4/3 · π · (10⁻¹⁵&nbsp;m)³) ≐ 4·10¹⁷&nbsp;kg·m⁻³. Krychlička 1&nbsp;cm³ by vážila 400 milionů tun. Takto hustá je látka jen v neutronových hvězdách.' },
+    { c:'velikost', t:'Kolik by vážila krychlička jaderné hmoty o objemu 1&nbsp;cm³?',
+      r:'Přibližně 400 milionů tun', w:['Přibližně 1&nbsp;g', 'Přibližně 400&nbsp;kg', 'Přibližně 4&nbsp;t'],
+      e:'<i>m</i> = <i>ϱV</i> = 4·10¹⁷&nbsp;kg·m⁻³ · 10⁻⁶&nbsp;m³ = 4·10¹¹&nbsp;kg = 4·10⁸&nbsp;t.' },
+    { c:'velikost', t:'V jakém rozsahu vzdáleností nás zajímá mikrosvět?',
+      r:'Od 10⁻⁹&nbsp;m až po 10⁻¹⁸&nbsp;m', w:['Od 1&nbsp;mm do 1&nbsp;µm', 'Od 10⁻³&nbsp;m do 10³&nbsp;m', 'Jen vzdálenosti menší než 10⁻³⁰&nbsp;m'],
+      e:'Mikrosvět je svět molekul, atomů, jader a částic se vzdálenostmi od 10⁻⁹&nbsp;m až po 10⁻¹⁸&nbsp;m. Řídí se kvantovou fyzikou.' },
+    // ----- částice -----
+    { c:'castice', t:'Kolikrát je elektron lehčí než proton?',
+      r:'Přibližně 1&nbsp;836krát', w:['Přibližně 18krát', 'Přibližně 100krát', 'Stejně těžký'],
+      e:'938,3&nbsp;MeV/<i>c</i>² / 0,511&nbsp;MeV/<i>c</i>² ≐ 1&nbsp;836. Kontrola v kilogramech: 1,673·10⁻²⁷/9,11·10⁻³¹ ≐ 1&nbsp;836.' },
+    { c:'castice', t:'Která částice je podle dnešních znalostí elementární?',
+      r:'Elektron', w:['Proton', 'Neutron', 'Atomové jádro'],
+      e:'Elektron nemá vnitřní strukturu. Proton a neutron se skládají z kvarků.' },
+    { c:'castice', t:'Kolik neutronů má jádro uranu ²³⁸₉₂U?',
+      r:'146', w:['92', '238', '330'],
+      e:'<i>N</i> = <i>A</i> − <i>Z</i> = 238 − 92 = 146. 92 je počet protonů, 238 počet všech nukleonů.' },
+    { c:'castice', t:'Kolik elektronů má iont hliníku ²⁷₁₃Al³⁺?',
+      r:'10', w:['13', '16', '14'],
+      e:'Neutrální atom má 13 elektronů; náboj +3<i>e</i> znamená, že tři chybějí: 13 − 3 = 10. Jádro (13 protonů, 14 neutronů) se nezměnilo.' },
+    { c:'castice', t:'Kolik protonů, neutronů a elektronů má iont kyslíku ¹⁶₈O²⁻?',
+      r:'8 protonů, 8 neutronů, 10 elektronů', w:['8 protonů, 8 neutronů, 6 elektronů', '10 protonů, 8 neutronů, 8 elektronů', '8 protonů, 10 neutronů, 8 elektronů'],
+      e:'<i>Z</i> = 8, <i>N</i> = 16 − 8 = 8. Záporný iont má elektrony navíc: 8 + 2 = 10.' },
+    { c:'castice', t:'Čím se liší izotopy téhož prvku?',
+      r:'Počtem neutronů (nukleonovým číslem)', w:['Počtem protonů', 'Počtem elektronů v neutrálním atomu', 'Chemickými vlastnostmi'],
+      e:'Izotopy mají stejné <i>Z</i>, ale různé <i>N</i>, a tedy i <i>A</i>. Chemicky se neliší, protože obal závisí jen na <i>Z</i>.' },
+    { c:'castice', t:'Jak lze oddělit izotopy téhož prvku?',
+      r:'Fyzikálními metodami využívajícími různou hmotnost (hmotnostní spektrometr, odstředivky)', w:['Chemickou reakcí', 'Rozpuštěním ve vodě', 'Nelze je oddělit nijak'],
+      e:'Izotopy reagují chemicky stejně, liší se ale hmotností. Toho využívají hmotnostní spektrometr a odstředivky.' },
+    { c:'castice', t:'Kolik procent hmotnosti atomu železa ⁵⁶₂₆Fe připadá na jádro?',
+      r:'Přibližně 99,97&nbsp;%', w:['Přibližně 50&nbsp;%', 'Přibližně 90&nbsp;%', 'Přibližně 0,03&nbsp;%'],
+      e:'Jádro: 26 · 1,673·10⁻²⁷ + 30 · 1,675·10⁻²⁷&nbsp;kg = 9,375·10⁻²⁶&nbsp;kg; obal: 26 · 9,11·10⁻³¹&nbsp;kg = 2,37·10⁻²⁹&nbsp;kg. Podíl jádra ≐ 0,9997. 0,03&nbsp;% připadá na elektrony.' },
+    { c:'castice', t:'Co je nuklid?',
+      r:'Soubor atomů se stejným <i>Z</i> i stejným <i>A</i>', w:['Soubor atomů se stejným <i>Z</i>, ale libovolným <i>A</i>', 'Jiný název pro elektron', 'Soubor atomů se stejným počtem elektronů'],
+      e:'Prvek = stejné <i>Z</i>; nuklid = stejné <i>Z</i> i <i>A</i>; izotopy = nuklidy téhož prvku.' },
+    // ----- jednotky -----
+    { c:'jednotky', t:'Co je elektronvolt?',
+      r:'Energie, kterou získá částice s nábojem <i>e</i> urychlená napětím 1&nbsp;V', w:['Napětí mezi dvěma elektrony', 'Náboj jednoho elektronu', 'Výkon jednoho elektronu'],
+      e:'1&nbsp;eV = <i>e</i> · 1&nbsp;V = 1,602·10⁻¹⁹&nbsp;J. Je to jednotka energie.' },
+    { c:'jednotky', t:'Převeďte 2,5&nbsp;MeV na jouly.',
+      r:'Přibližně 4,0·10⁻¹³&nbsp;J', w:['Přibližně 4,0·10⁻¹⁹&nbsp;J', 'Přibližně 1,6·10¹⁹&nbsp;J', 'Přibližně 4,0·10⁻¹⁶&nbsp;J'],
+      e:'2,5·10⁶ · 1,602·10⁻¹⁹&nbsp;J ≐ 4,0·10⁻¹³&nbsp;J. Předpona mega = 10⁶; hodnota 4,0·10⁻¹⁶&nbsp;J vznikne záměnou za kilo (10³).' },
+    { c:'jednotky', t:'Převeďte 8,0·10⁻¹⁹&nbsp;J na elektronvolty.',
+      r:'Přibližně 5,0&nbsp;eV', w:['Přibližně 1,3·10⁻³⁷&nbsp;eV', 'Přibližně 0,2&nbsp;eV', 'Přibližně 50&nbsp;eV'],
+      e:'Z joulů na eV dělíme: 8,0·10⁻¹⁹/1,602·10⁻¹⁹&nbsp;eV ≐ 5,0&nbsp;eV. Násobením místo dělení vyjde nesmyslně malé číslo.' },
+    { c:'jednotky', t:'Co znamená, že proton má hmotnost 938,3&nbsp;MeV/<i>c</i>²?',
+      r:'Že jeho klidová energie <i>mc</i>² je 938,3&nbsp;MeV.', w:['Že se pohybuje rychlostí 938,3&nbsp;MeV.', 'Že jeho hmotnost je 938,3&nbsp;kg.', 'Že jeho náboj je 938,3&nbsp;eV.'],
+      e:'Z <i>E</i> = <i>mc</i>² plyne <i>m</i> = <i>E</i>/<i>c</i>². Za <i>c</i> se číslo nedosazuje, <i>c</i>² je součástí jednotky.' },
+    { c:'jednotky', t:'Jaké energii odpovídá atomová hmotnostní jednotka 1&nbsp;u?',
+      r:'931,5&nbsp;MeV', w:['938,3&nbsp;MeV', '0,511&nbsp;MeV', '1&nbsp;eV'],
+      e:'1&nbsp;u = 1,661·10⁻²⁷&nbsp;kg (dvanáctina hmotnosti atomu ¹²C) odpovídá 931,5&nbsp;MeV. 938,3&nbsp;MeV je klidová energie protonu, 0,511&nbsp;MeV elektronu.' },
+    { c:'jednotky', t:'Jakých energií řádově dosahují chemické vazby a jaderné děje?',
+      r:'Chemické vazby jednotek eV, jaderné děje milionů eV (MeV)', w:['Obojí jednotek eV', 'Chemické vazby MeV, jaderné děje eV', 'Obojí jednotek joulů'],
+      e:'Jaderné energie jsou přibližně milionkrát větší než chemické.' },
+    // ----- pozorování -----
+    { c:'pozorovani', t:'Proč optický mikroskop nerozliší předměty menší než přibližně 200&nbsp;nm?',
+      r:'Kvůli ohybu (difrakci) světla nerozliší podrobnosti menší než přibližně polovinu vlnové délky.', w:['Protože čočky nelze vybrousit dost přesně.', 'Protože malé předměty světlo pohlcují.', 'Protože oko nevidí nic menšího než 0,07&nbsp;mm.'],
+      e:'Rozlišení omezuje ohyb světla. Bakterie (10⁻⁶&nbsp;m) v optickém mikroskopu uvidíme, viry (10⁻⁷&nbsp;m) a molekuly už ne.' },
+    { c:'pozorovani', t:'Čím lze pozorovat viry (velikost řádově 10⁻⁷&nbsp;m)?',
+      r:'Elektronovým mikroskopem', w:['Lupou', 'Optickým mikroskopem', 'Jen rozptylovými experimenty na urychlovači'],
+      e:'Viry jsou menší než mez optického mikroskopu (přibližně 200&nbsp;nm). Elektrony mají mnohem kratší vlnovou délku než světlo.' },
+    { c:'pozorovani', t:'Který přístroj dokáže rozlišit jednotlivé atomy a dokonce s nimi posouvat?',
+      r:'Rastrovací tunelový mikroskop (STM)', w:['Optický mikroskop', 'Lupa', 'Hmotnostní spektrometr'],
+      e:'STM přejíždí velmi ostrým hrotem těsně nad vodivým povrchem a snímá elektrony; rozliší detaily přibližně 0,2&nbsp;nm.' },
+    { c:'pozorovani', t:'Jak se zkoumá nitro atomových jader?',
+      r:'Rozptylovými experimenty — ostřelováním rychlými částicemi z urychlovačů', w:['Optickým mikroskopem', 'Tunelovým mikroskopem', 'Lupou'],
+      e:'Jádra (10⁻¹⁵&nbsp;m až 10⁻¹⁴&nbsp;m) jsou příliš malá i pro tunelový mikroskop; sleduje se, jak se na nich rozptylují rychlé částice.' },
+    // ----- obrázky -----
+    { c:'castice', fixed:true, f:KV_FIG_IZO, fa:KV_FIG_IZO_A,
+      t:'Na obrázku jsou tři jádra (p = proton, n = neutron). Které jádro patří tritiu ³₁H?',
+      r:'Jádro 3', w:['Jádro 1', 'Jádro 2', 'Žádné'],
+      e:'Tritium má <i>Z</i> = 1 a <i>A</i> = 3, tedy jeden proton a dva neutrony: jádro 3. Jádro 1 je lehký vodík, jádro 2 deuterium.' },
+    { c:'castice', f:KV_FIG_IZO, fa:KV_FIG_IZO_A,
+      t:'Co mají všechna tři jádra na obrázku společné?',
+      r:'Protonové číslo <i>Z</i> = 1 — jsou to izotopy vodíku.', w:['Nukleonové číslo <i>A</i>', 'Neutronové číslo <i>N</i>', 'Hmotnost'],
+      e:'Každé jádro má jeden proton, liší se počtem neutronů (0, 1, 2), a tedy i nukleonovým číslem a hmotností.' }
+  ];
+
+
+  var KVIZ_KEY = 'fyzika:rozmery-v-mikrosvete:kviz';
+  var section = document.getElementById('kviz-section');
+  var tabBtn = document.getElementById('top-tab-kviz');
+  var readout = document.getElementById('kviz-readout');
+  var pageReadout = document.getElementById('header-readout');
+  var kviz = {
+    type:'all', queue:[], current:null, sel:null, locked:false,
+    score:0, streak:0, bestStreak:0, answered:0, correct:0,
+    inRound:false, ended:false, roundTotal:0, roundCorrect:0
+  };
+  function $(id){ return document.getElementById(id); }
+  function kvizLoad(){
+    try{ var raw = localStorage.getItem(KVIZ_KEY); if(raw){ kviz.bestStreak = JSON.parse(raw).bestStreak || 0; } }catch(e){}
+  }
+  function kvizSave(){
+    try{ localStorage.setItem(KVIZ_KEY, JSON.stringify({bestStreak: kviz.bestStreak})); }catch(e){}
+  }
+  function kvizShuffled(a){
+    a = a.slice();
+    for(var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random()*(i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; }
+    return a;
+  }
+  function typeOf(key){ return KVIZ_TYPES.filter(function(t){ return t.key === key; })[0]; }
+
+  // Otázky okruhu se berou v náhodném pořadí bez opakování. Po projití celého okruhu
+  // se zobrazí závěrečná hláška s výsledkem kola a nabídkou otázky zamíchat znovu.
+  function kvizNext(){
+    if(!kviz.queue.length){
+      if(kviz.inRound){ kvizShowEnd(); return; }
+      var pool = KVIZ_BANK.filter(function(b){ return kviz.type === 'all' || b.c === kviz.type; });
+      kviz.queue = kvizShuffled(pool);
+      if(kviz.current && kviz.queue.length > 1 && kviz.queue[0] === kviz.current.item){ kviz.queue.push(kviz.queue.shift()); }
+      kviz.inRound = true; kviz.roundTotal = pool.length; kviz.roundCorrect = 0;
+    }
+    var item = kviz.queue.shift();
+    var opts = item.fixed ? [item.r].concat(item.w).sort() : kvizShuffled([item.r].concat(item.w));
+    kviz.current = { item:item, choices:opts, correct:opts.indexOf(item.r) };
+    kvizRender();
+  }
+  function kvizShowEnd(){
+    kviz.ended = true; kviz.inRound = false;
+    var tp = typeOf(kviz.type);
+    var n = kviz.roundTotal, k = kviz.roundCorrect;
+    $('kviz-end-text').innerHTML =
+      'Prošli jste všech ' + n + ' otázek ' + (kviz.type === 'all' ? 'kvízu' : 'okruhu „' + tp.name + '“') + '. ' +
+      'Správně jste odpověděli na ' + k + ' z ' + n + ' (' + Math.round(100*k/n) + '&nbsp;%). Chcete otázky zamíchat a projít znovu?';
+    $('kviz-q').hidden = true;
+    $('kviz-end').hidden = false;
+    $('kviz-btn-restart').focus({ preventScroll:true });
+  }
+  function kvizRestart(){
+    kviz.queue = []; kviz.inRound = false;
+    kvizNext();
+  }
+  function kvizRender(){
+    var q = kviz.current;
+    kviz.ended = false;
+    $('kviz-q').hidden = false;
+    $('kviz-end').hidden = true;
+    var tp = typeOf(q.item.c);
+    $('kviz-cat-tag').innerHTML = tp ? tp.tag : 'Otázka';
+    $('kviz-task-text').innerHTML = q.item.t;
+    var fig = $('kviz-fig');
+    fig.hidden = !q.item.f;
+    if(q.item.f){ $('kviz-graph').innerHTML = KV_DEFS + q.item.f; $('kviz-graph').setAttribute('aria-label', q.item.fa || 'Obrázek k otázce'); }
+    var grid = $('kviz-opt-grid');
+    grid.innerHTML = '';
+    kviz.sel = null; kviz.locked = false;
+    q.choices.forEach(function(c, i){
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'opt-btn';
+      b.innerHTML = '<b>' + LETTERS[i] + ')</b>&nbsp; ' + c;
+      b.addEventListener('click', function(){ kvizSelect(i); });
+      grid.appendChild(b);
+    });
+    var fb = $('kviz-feedback');
+    fb.hidden = true; fb.classList.remove('ok', 'bad', 'sol');
+    $('kviz-btn-check').textContent = 'Zkontrolovat';
+  }
+  function kvizSelect(i){
+    if(kviz.locked || kviz.ended) return;
+    kviz.sel = i;
+    Array.prototype.forEach.call($('kviz-opt-grid').children, function(el, j){ el.classList.toggle('selected', j === i); });
+    $('kviz-btn-check').focus({ preventScroll:true });
+  }
+  function kvizFinish(ok, headline){
+    var q = kviz.current;
+    Array.prototype.forEach.call($('kviz-opt-grid').children, function(el, j){
+      el.disabled = true;
+      el.classList.remove('selected');
+      if(j === q.correct) el.classList.add(kviz.sel === j ? 'correct' : 'missed');
+      else if(j === kviz.sel) el.classList.add('wrong');
+    });
+    var fb = $('kviz-feedback');
+    fb.hidden = false;
+    fb.classList.toggle('ok', ok); fb.classList.toggle('bad', !ok);
+    $('kviz-feedback-headline').textContent = headline;
+    var finalText = 'Správná odpověď: ' + LETTERS[q.correct] + ') ' + q.item.r;
+    if(window.FyzikaReseni && FyzikaReseni.show){
+      FyzikaReseni.show(fb, $('kviz-feedback-steps'), { raw:true, title:'Vysvětlení', steps:[q.item.e], final:finalText });
+    } else {
+      $('kviz-feedback-steps').innerHTML = q.item.e + '<br><b>' + finalText + '</b>';
+    }
+    kviz.locked = true;
+    var btn = $('kviz-btn-check');
+    btn.textContent = 'Další otázka →';
+    btn.focus({ preventScroll:true });
+    kvizStats();
+  }
+  function kvizCheck(){
+    if(kviz.ended){ kvizRestart(); return; }
+    if(kviz.locked){ kvizNext(); return; }
+    if(kviz.sel === null && !confirm('Není vybraná žádná možnost. Opravdu chcete zkontrolovat?')) return;
+    var ok = kviz.sel === kviz.current.correct;
+    kviz.answered++;
+    if(ok){
+      kviz.score += 10; kviz.streak++; kviz.correct++; kviz.roundCorrect++;
+      if(kviz.streak > kviz.bestStreak){ kviz.bestStreak = kviz.streak; kvizSave(); }
+    } else {
+      kviz.streak = 0;
+    }
+    kvizFinish(ok, ok ? 'Správně!' : (kviz.sel === null ? 'Vyberte odpověď.' : 'Bohužel špatně.'));
+  }
+  function kvizSkip(){
+    if(kviz.ended){ kvizRestart(); return; }
+    if(kviz.locked){ kvizNext(); return; }
+    kviz.streak = 0; kviz.answered++;
+    kvizFinish(false, 'Správná odpověď:');
+  }
+  function kvizStats(){
+    $('kviz-stat-score').textContent = kviz.score;
+    $('kviz-stat-streak').textContent = kviz.streak + (kviz.bestStreak > 0 ? ' / ' + kviz.bestStreak : '');
+    $('kviz-stat-accuracy').textContent = kviz.answered === 0 ? '—' : Math.round(100*kviz.correct/kviz.answered) + ' %';
+  }
+  (function kvizBuildTypeRow(){
+    var row = $('kviz-type-row');
+    KVIZ_TYPES.forEach(function(d){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip accented' + (d.key === kviz.type ? ' on' : '');
+      b.setAttribute('aria-pressed', d.key === kviz.type ? 'true' : 'false');
+      b.textContent = d.name;
+      b.addEventListener('click', function(){
+        if(d.key === kviz.type) return;
+        // rozpracovaná otázka s vybranou odpovědí se před změnou okruhu vyhodnotí
+        var settled = !kviz.locked && kviz.sel !== null;
+        if(settled) kvizCheck();
+        kviz.type = d.key; kviz.queue = []; kviz.inRound = false;
+        Array.prototype.forEach.call(row.children, function(el, i){
+          var on = KVIZ_TYPES[i].key === kviz.type;
+          el.classList.toggle('on', on);
+          el.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        // vyhodnocená otázka zůstane i s vysvětlením vidět, další už bude z nového okruhu
+        if(!settled) kvizNext();
+      });
+      row.appendChild(b);
+    });
+  })();
+  $('kviz-btn-check').addEventListener('click', kvizCheck);
+  $('kviz-btn-skip').addEventListener('click', kvizSkip);
+  $('kviz-btn-restart').addEventListener('click', kvizRestart);
+  $('kviz-reset-stats').addEventListener('click', function(){
+    kviz.score = 0; kviz.streak = 0; kviz.answered = 0; kviz.correct = 0; kviz.bestStreak = 0;
+    try{ localStorage.removeItem(KVIZ_KEY); }catch(e){}
+    kvizStats();
+  });
+  // Klávesnice v kvízu: A–D nebo 1–4 vybere odpověď, Enter zkontroluje / posune dál.
+  document.addEventListener('keydown', function(e){
+    if(section.hidden) return;
+    if(e.ctrlKey || e.metaKey || e.altKey) return;
+    if(e.key === 'Enter'){
+      if(e.target && e.target.tagName === 'BUTTON') return;
+      e.preventDefault(); kvizCheck(); return;
+    }
+    var idx = 'abcd'.indexOf(e.key.toLowerCase());
+    if(idx === -1) idx = '1234'.indexOf(e.key);
+    if(idx !== -1 && e.key.length === 1) kvizSelect(idx);
+  });
+
+  // ---- záložka Kvíz ----
+  // Skript je samostatný: otevření Kvízu i návrat na ostatní záložky řeší sám, ať stránka přepíná
+  // záložky jakkoli. Skóre kvízu má vlastní pole v hlavičce (skóre tréninku se tím nemění).
+  function activate(){
+    var teorieBtn = $('top-tab-teorie'), theory = $('theory-section');
+    if(!tabBtn.classList.contains('on') && teorieBtn && !teorieBtn.classList.contains('on')){
+      // nejdřív „kliknutím“ opustíme dosavadní záložku obsluhou stránky (u hry na čas s potvrzením)
+      teorieBtn.click();
+      if(theory && theory.hidden) return;   // stránka odmítla opustit dosavadní záložku (např. běžící hra)
+    }
+    Array.prototype.forEach.call(document.querySelectorAll('.tab-section'), function(s){ s.hidden = s !== section; });
+    Array.prototype.forEach.call(document.querySelectorAll('.toptab'), function(t){ t.classList.toggle('on', t === tabBtn); });
+    if(pageReadout) pageReadout.hidden = true;
+    readout.hidden = false;
+    kvizStats();
+    if(!kviz.current) kvizNext();
+  }
+  tabBtn.addEventListener('click', activate);
+  Array.prototype.forEach.call(document.querySelectorAll('.toptab'), function(t){
+    if(t === tabBtn) return;
+    t.addEventListener('click', function(){ section.hidden = true; readout.hidden = true; tabBtn.classList.remove('on'); });
+  });
+  document.addEventListener('fyzika:scores-updated', function(){ kviz.bestStreak = 0; kvizLoad(); kvizStats(); });
+  kvizLoad();
+  kvizStats();
+  if(location.hash === '#kviz' && !tabBtn.classList.contains('on')) tabBtn.click();
+  else if(location.hash === '#kviz') activate();
+})();
+</script>
+
 </body>
 </html>
