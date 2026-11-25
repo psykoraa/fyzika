@@ -14,6 +14,7 @@
 <script src="../spolecne/auth.js"></script>
 <script src="../spolecne/zalozky.js?v=3"></script>
 <link rel="stylesheet" href="../spolecne/styl.css">
+<link rel="stylesheet" href="../spolecne/reseni.css?v=1">
 <link rel="stylesheet" href="../spolecne/komponenty.css?v=1">
 <style>
 :root{
@@ -154,6 +155,15 @@
 .calc .theory-table{ font-size:0.82rem; min-width:0; }
 .calc .theory-table th, .calc .theory-table td{ padding:5px 8px; }
 </style>
+<style>
+/* ---- Kvíz (stejný jako u Grafů rovnoměrného pohybu a u Pohybu po kružnici) ---- */
+.kviz-task{ font-size:1.02rem; line-height:1.5; max-width:52ch; margin:0 auto 10px; color:var(--ink); text-align:center; }
+#kviz-section .kviz-task i, #kviz-section .opt-btn i, #kviz-section .feedback .steps i, #kviz-section .cat-tag i{ font-family:'STIX Two Text', Georgia, serif; font-style:italic; text-transform:none; }
+#kviz-section .feedback .steps{ font-family:'Work Sans', sans-serif; white-space:normal; opacity:1; }
+#kviz-end .kviz-end-box{ text-align:center; margin:0 0 14px; }
+#kviz-end .kviz-end-hint{ text-align:center; margin-top:10px; }
+#kviz-section [hidden]{ display:none; }
+</style>
 </head>
 <body>
 
@@ -176,10 +186,16 @@
         <p>vlnová optika — koherence, dvojštěrbina, optická mřížka a tenká vrstva</p>
       </div>
     </div>
+    <div class="readout" id="kviz-readout" hidden>
+      <div class="cell"><span class="label">Skóre</span><span class="value" id="kviz-stat-score">0</span></div>
+      <div class="cell"><span class="label">Série</span><span class="value" id="kviz-stat-streak">0</span></div>
+      <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="kviz-stat-accuracy">—</span></div>
+    </div>
   </div>
 
   <div class="top-tabs">
     <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+    <button class="toptab" id="top-tab-kviz" data-tab="kviz">Kvíz</button>
     <button class="toptab" id="top-tab-dvojsterbina" data-tab="dvojsterbina">Dvojštěrbina</button>
     <button class="toptab" id="top-tab-mrizka" data-tab="mrizka">Mřížka</button>
     <button class="toptab" id="top-tab-vrstva" data-tab="vrstva">Tenká vrstva</button>
@@ -743,6 +759,50 @@
 
   </div>
 
+  <!-- ============ KVÍZ ============ -->
+  <div id="kviz-section" class="tab-section" hidden>
+    <div class="panel">
+      <div class="section-block">
+        <div class="panel-title">Okruh otázek</div>
+        <div class="row" id="kviz-type-row"></div>
+      </div>
+      <div class="settings-foot" style="justify-content:flex-end;">
+        <button class="linklike" id="kviz-reset-stats">vynulovat statistiku</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div id="kviz-q">
+      <span class="cat-tag" id="kviz-cat-tag">Otázka</span>
+      <p class="kviz-task" id="kviz-task-text"></p>
+      <figure class="theory-fig" id="kviz-fig" hidden>
+        <svg id="kviz-graph" viewBox="0 0 480 260" role="img" aria-label="Obrázek k otázce"></svg>
+      </figure>
+      <div class="opt-grid wide-opts" id="kviz-opt-grid"></div>
+      <div class="actions">
+        <button class="btn primary" id="kviz-btn-check">Zkontrolovat</button>
+        <button class="btn ghost" id="kviz-btn-skip">Nevím / Zobrazit řešení</button>
+      </div>
+      <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint">Vyberte jednu ze čtyř odpovědí kliknutím nebo klávesami A až D (případně 1 až 4) a potvrďte tlačítkem Zkontrolovat nebo klávesou Enter; dalším Enterem přejdete na další otázku. Po kontrole se správná odpověď obarví zeleně, chybně vybraná červeně a pod otázkou se objeví vysvětlení. Okruh otázek vyberete nahoře; otázky se neopakují, dokud neprojdete celý okruh. Pak se zobrazí, kolik otázek jste zodpověděli správně, a otázky můžete zamíchat a projít znovu.</p>
+      </details>
+      <div class="feedback" id="kviz-feedback" hidden>
+        <div class="headline" id="kviz-feedback-headline"></div>
+        <div class="steps" id="kviz-feedback-steps"></div>
+      </div>
+      </div>
+      <div id="kviz-end" hidden>
+        <div class="feedback ok kviz-end-box"><div class="headline">Hotovo, prošli jste všechny otázky!</div></div>
+        <p class="kviz-task" id="kviz-end-text"></p>
+        <div class="actions">
+          <button class="btn primary" id="kviz-btn-restart">Zamíchat otázky a začít znovu</button>
+        </div>
+        <p class="hint kviz-end-hint">Můžete také nahoře vybrat jiný okruh otázek.</p>
+      </div>
+    </div>
+  </div>
+
   <!-- ============ APLET: DVOJŠTĚRBINA ============ -->
   <div id="dvojsterbina-section" class="tab-section" hidden>
     <div class="card applet-card" id="d-card">
@@ -1033,6 +1093,7 @@
   <footer>Fyzika — Oktáva/4. ročník</footer>
 </div>
 
+<script src="../spolecne/reseni.js?v=1"></script>
 <script src="../spolecne/spolecne.js"></script>
 <script>
 (function(){
@@ -2370,5 +2431,373 @@
   try{ makePanelsCollapsible(document.getElementById('theory-section')); }catch(e){}
 })();
 </script>
+<script>
+(function(){
+  "use strict";
+  // ================= KVÍZ: otázky s výběrem ze čtyř odpovědí (A–D) =================
+  // Samostatný skript (stejný kvíz jako u Grafů rovnoměrného pohybu a u Pohybu po kružnici).
+  // Položka banky: c = okruh, t = zadání (HTML), r = správná odpověď, w = tři špatné,
+  // e = vysvětlení; fixed = možnosti se nemíchají, jen seřadí.
+  var LETTERS = ['A','B','C','D'];
+  // ---- pomůcky pro obrázky k otázkám (SVG ve viewBoxu 480 × 260, barvy z proměnných stránky) ----
+  var KV_COL = { ink:'var(--ink)', soft:'var(--ink-soft)', acc:'var(--accent)', foc:'var(--focus)' };
+  var KV_DEFS = '<defs>' + ['ink','soft','acc','foc'].map(function(k){
+    return '<marker id="kv-' + k + '" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4.4" markerHeight="4.4" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="' + KV_COL[k] + '"/></marker>';
+  }).join('') + '</defs>';
+  function kvA(x1, y1, x2, y2, c, w, dash){
+    c = c || 'ink';
+    return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + KV_COL[c] + '" stroke-width="' + (w || 2.6) + '" stroke-linecap="round" marker-end="url(#kv-' + c + ')"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  function kvL(x1, y1, x2, y2, c, w, dash){
+    return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + KV_COL[c || 'soft'] + '" stroke-width="' + (w || 1.6) + '" stroke-linecap="round"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  function kvT(x, y, txt, anchor, size, c, italic){
+    return '<text x="' + x + '" y="' + y + '" text-anchor="' + (anchor || 'middle') + '" font-family="' + (italic ? "STIX Two Text, Georgia, serif" : "Work Sans, sans-serif") + '" font-size="' + (size || 13) + '"' + (italic ? ' font-style="italic"' : '') + ' fill="' + KV_COL[c || 'ink'] + '">' + txt + '</text>';
+  }
+  function kvC(x, y, r, fill, stroke){
+    return '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + (fill || 'none') + '" stroke="' + (stroke ? KV_COL[stroke] : 'none') + '" stroke-width="1.6"/>';
+  }
+  function kvR(x, y, w, h, fill, stroke, rot){
+    return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="2" fill="' + (fill || 'var(--surface-2)') + '" stroke="' + KV_COL[stroke || 'soft'] + '" stroke-width="1.6"' + (rot ? ' transform="rotate(' + rot[0] + ' ' + rot[1] + ' ' + rot[2] + ')"' : '') + '/>';
+  }
+  function kvP(d, c, w, dash, fill){
+    return '<path d="' + d + '" fill="' + (fill || 'none') + '" stroke="' + KV_COL[c || 'ink'] + '" stroke-width="' + (w || 2) + '" stroke-linecap="round" stroke-linejoin="round"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  // očíslovaný kroužek u špičky šipky (n = číslo), směr (dx, dy) od špičky ven
+  function kvN(x, y, n, dx, dy){
+    var lx = x + dx, ly = y + dy;
+    return kvC(lx, ly, 10, 'var(--surface-2)', 'soft') + '<text x="' + lx + '" y="' + (ly + 4.5) + '" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="13" font-weight="600" fill="var(--ink)">' + n + '</text>';
+  }
+  // šipka s číslem: z (x1, y1) do (x2, y2), kroužek za špičkou
+  function kvAN(x1, y1, x2, y2, n, c){
+    var dx = x2 - x1, dy = y2 - y1, l = Math.sqrt(dx*dx + dy*dy);
+    return kvA(x1, y1, x2, y2, c || 'ink') + kvN(x2, y2, n, dx/l*16, dy/l*16);
+  }
+  // ---- tři dvojice vln s různým posunutím ----
+  function kvWave(y0, shift, c, dash){
+    var pts = [];
+    for(var x = 0; x <= 360; x += 6){ pts.push((80 + x) + ',' + (y0 - 20*Math.sin(2*Math.PI*(x - shift)/120)).toFixed(1)); }
+    return '<polyline points="' + pts.join(' ') + '" fill="none" stroke="' + KV_COL[c] + '" stroke-width="2.2"' + (dash ? ' stroke-dasharray="6 4"' : '') + '/>';
+  }
+  var KV_FIG_W = [[44, 120], [130, 60], [216, 30]].map(function(d, i){
+    return kvL(80, d[0], 440, d[0], 'soft', 1, '2 4') + kvWave(d[0], 0, 'acc') + kvWave(d[0], d[1], 'foc', true) + kvN(46, d[0], i + 1, 0, 0);
+  }).join('');
+  var KV_FIG_W_A = 'Tři dvojice vln stejné vlnové délky: v dvojici 1 jsou vlny posunuté o celou vlnovou délku, v dvojici 2 o polovinu vlnové délky, v dvojici 3 o čtvrtinu vlnové délky';
+
+  var KVIZ_TYPES = [
+    { key:'all', name:'Vše' },
+    { key:'koherence', name:'Koherence a podmínky', tag:'Koherence, maximum a minimum' },
+    { key:'young', name:'Dvojštěrbina', tag:'Youngův pokus s dvojštěrbinou' },
+    { key:'mrizka', name:'Optická mřížka', tag:'Optická mřížka' },
+    { key:'vrstva', name:'Tenká vrstva', tag:'Interference na tenké vrstvě a Newtonovy kroužky' }
+  ];
+  var KVIZ_BANK = [
+    // ----- koherence -----
+    { c:'koherence', t:'Proč dvě žárovky vedle sebe na stínítku nevytvoří interferenční proužky?',
+      r:'Nejsou koherentní — jejich fázový rozdíl se neustále chaoticky mění.', w:['Protože světlo žárovek není vlnění.', 'Protože mají příliš malý výkon.', 'Protože interference vzniká jen u laserového světla jedné barvy, ne u bílého.'],
+      e:'Atomy zdroje září nezávisle po krátkých klubkách s náhodnou fází. Oko pak zaznamená jen průměrnou intenzitu, rovnoměrné osvětlení.' },
+    { c:'koherence', t:'Která vlnění jsou koherentní?',
+      r:'Vlnění téže frekvence, jejichž fázový rozdíl se v daném místě s časem nemění', w:['Vlnění s libovolnou frekvencí a stejnou amplitudou', 'Vlnění, která se šíří stejným směrem', 'Vlnění z libovolných dvou zdrojů téže barvy'],
+      e:'Jen koherentní vlny dávají stálý interferenční obrazec.' },
+    { c:'koherence', t:'Jak lze získat koherentní světlo z běžného zdroje?',
+      r:'Rozdělit světlo jednoho zdroje na dva svazky, které se po různých drahách znovu setkají.', w:['Použít dvě stejné žárovky.', 'Zesílit světlo.', 'Ohřát zdroj na vyšší teplotu.'],
+      e:'Každé klubko se pak setká samo se sebou a fázový rozdíl je stálý. Dráhový rozdíl ale nesmí přesáhnout délku klubka.' },
+    { c:'koherence', t:'Jaká je podmínka interferenčního maxima (bez skoku fáze při odrazu)?',
+      r:'Δ<i>l</i> = <i>kλ</i>, <i>k</i> = 0, 1, 2, …', w:['Δ<i>l</i> = (2<i>k</i> − 1)<i>λ</i>/2', 'Δ<i>l</i> = <i>λ</i>/<i>k</i>', 'Δ<i>l</i> = 2<i>kλ</i>²'],
+      e:'Vlny posunuté o celý počet vlnových délek jsou ve fázi a zesílí se. Lichý počet půlvln dává minimum.' },
+    { c:'koherence', t:'Dvě koherentní vlny se v bodě setkají s dráhovým rozdílem 1,5<i>λ</i>. Co v tom bodě nastane?',
+      r:'Minimum (destruktivní interference)', w:['Maximum', 'Polovina maxima', 'Nedá se určit'],
+      e:'1,5<i>λ</i> = 3 · <i>λ</i>/2 je lichý počet půlvln, vlny jsou v opačné fázi a vyruší se (minimum s <i>k</i> = 2).' },
+    { c:'koherence', t:'Kde leží maximum nultého řádu (<i>k</i> = 0)?',
+      r:'Přesně uprostřed, kde je dráhový rozdíl nulový', w:['Na okraji stínítka', 'Tam, kde je dráhový rozdíl <i>λ</i>/2', 'Nultý řád neexistuje'],
+      e:'Pro <i>k</i> = 0 je Δ<i>l</i> = 0, tedy ve středu obrazce.' },
+    // ----- Young -----
+    { c:'young', t:'Kdo jako první pozoroval interferenci světla?',
+      r:'T. Young (1801)', w:['I. Newton (1704)', 'A. Fresnel (1818)', 'Ch. Huygens (1678)'],
+      e:'Thomas Young v roce 1801 nechal světlo z jedné štěrbiny dopadnout na dvojštěrbinu a pozoroval proužky.' },
+    { c:'young', t:'Jaký je rozestup interferenčních proužků za dvojštěrbinou?',
+      r:'Δ<i>x</i> = <i>Dλ</i>/<i>b</i>', w:['Δ<i>x</i> = <i>bλ</i>/<i>D</i>', 'Δ<i>x</i> = <i>Db</i>/<i>λ</i>', 'Δ<i>x</i> = 2<i>Dλ</i>/<i>b</i>'],
+      e:'Maximum <i>k</i>-tého řádu je v <i>x</i><sub><i>k</i></sub> = <i>kDλ</i>/<i>b</i>, sousední maxima jsou tedy od sebe <i>Dλ</i>/<i>b</i>. Rozměrově m · m / m = m.' },
+    { c:'young', t:'Jak se změní rozestup proužků za dvojštěrbinou, když štěrbiny přiblížíme na poloviční vzdálenost?',
+      r:'Zvětší se dvakrát.', w:['Zmenší se na polovinu.', 'Nezmění se.', 'Zvětší se čtyřikrát.'],
+      e:'Δ<i>x</i> = <i>Dλ</i>/<i>b</i> je nepřímo úměrný vzdálenosti štěrbin <i>b</i>.' },
+    { c:'young', t:'Dvojštěrbinu (<i>b</i> = 0,30&nbsp;mm) osvětlíme světlem 600&nbsp;nm. Jaký je rozestup proužků na stínítku 2,0&nbsp;m daleko?',
+      r:'4,0&nbsp;mm', w:['0,4&nbsp;mm', '40&nbsp;mm', '9,0&nbsp;mm'],
+      e:'Δ<i>x</i> = <i>Dλ</i>/<i>b</i> = 2,0 · 6,0·10⁻⁷ / 3,0·10⁻⁴&nbsp;m = 4,0·10⁻³&nbsp;m. Kontrola úměrou: vzorový pokus (650&nbsp;nm, 0,25&nbsp;mm, 3&nbsp;m) dává 7,8&nbsp;mm; 7,8 · (600/650) · (0,25/0,30) · (2/3)&nbsp;mm ≐ 4,0&nbsp;mm.' },
+    { c:'young', t:'Rozestup proužků za dvojštěrbinou (<i>b</i> = 0,25&nbsp;mm) na stínítku ve vzdálenosti 2,0&nbsp;m je 5,0&nbsp;mm. Jaká je vlnová délka světla?',
+      r:'Přibližně 625&nbsp;nm', w:['Přibližně 40&nbsp;nm', 'Přibližně 2,5&nbsp;µm', 'Přibližně 6,25&nbsp;nm'],
+      e:'<i>λ</i> = <i>b</i>Δ<i>x</i>/<i>D</i> = 2,5·10⁻⁴ · 5,0·10⁻³ / 2,0&nbsp;m = 6,25·10⁻⁷&nbsp;m (červené světlo).' },
+    { c:'young', t:'Proč intenzita proužků za dvojštěrbinou směrem od středu slábne?',
+      r:'Každá štěrbina má konečnou šířku a světlo se na ní také ohýbá.', w:['Protože proužky dál od středu mají jinou barvu.', 'Protože se světlo ve vzduchu pohlcuje.', 'Protože rozestup proužků roste.'],
+      e:'Ohyb na každé štěrbině intenzitu moduluje; rozestup proužků ale určuje jen vzdálenost štěrbin <i>b</i>.' },
+    // ----- mřížka -----
+    { c:'mrizka', t:'Mřížka má 500 vrypů na milimetr. Jaká je její mřížková konstanta?',
+      r:'2&nbsp;µm', w:['0,5&nbsp;mm', '500&nbsp;µm', '2&nbsp;nm'],
+      e:'<i>b</i> = 1/<i>N</i> = 1&nbsp;mm/500 = 0,002&nbsp;mm = 2&nbsp;µm.' },
+    { c:'mrizka', t:'Jaká je podmínka maxima <i>k</i>-tého řádu za optickou mřížkou?',
+      r:'<i>b</i> sin <i>θ</i> = <i>kλ</i>', w:['<i>b</i> cos <i>θ</i> = <i>kλ</i>', '<i>λ</i> sin <i>θ</i> = <i>kb</i>', '<i>b</i> sin <i>θ</i> = (2<i>k</i> − 1)<i>λ</i>/2'],
+      e:'Dráhový rozdíl světla ze sousedních štěrbin <i>b</i> sin <i>θ</i> musí být celistvým násobkem vlnové délky.' },
+    { c:'mrizka', t:'Mřížka s 300 vrypy na milimetr je osvětlena laserem 633&nbsp;nm. Kolik maxim vznikne celkem?',
+      r:'11', w:['5', '10', '6'],
+      e:'<i>b</i> = 3,33&nbsp;µm, <i>k</i> ≤ <i>b</i>/<i>λ</i> = 5,27, tedy <i>k</i><sub>max</sub> = 5. Pět řádů na každou stranu a nultý uprostřed: 2 · 5 + 1 = 11.' },
+    { c:'mrizka', t:'Mřížka s mřížkovou konstantou 2,0&nbsp;µm je osvětlena světlem 500&nbsp;nm. Pod jakým úhlem je maximum prvního řádu?',
+      r:'Přibližně 14,5°', w:['Přibližně 30°', 'Přibližně 0,25°', 'Přibližně 75,5°'],
+      e:'sin <i>θ</i><sub>1</sub> = <i>λ</i>/<i>b</i> = 0,5/2,0 = 0,25, <i>θ</i><sub>1</sub> ≐ 14,5°. Hodnota 0,25 je sinus, ne úhel; 75,5° je doplněk do 90°.' },
+    { c:'mrizka', t:'Proč za mřížkou při osvětlení bílým světlem vzniká spektrum?',
+      r:'Každá vlnová délka má maximum pod jiným úhlem; fialová je blíž středu, červená dál.', w:['Protože mřížka světlo obarví.', 'Protože červená je blíž středu a fialová dál.', 'Protože mřížka propouští jen jednu barvu.'],
+      e:'Ze sin <i>θ</i> = <i>kλ</i>/<i>b</i> plyne, že delší vlnová délka (červená) se odchýlí víc.' },
+    { c:'mrizka', t:'Jak se změní maxima, když použijeme hustší mřížku (více vrypů na milimetr)?',
+      r:'Maxima jsou od sebe dál a řádů je méně.', w:['Maxima jsou blíž u sebe a řádů je víc.', 'Nic se nezmění.', 'Zmizí nultý řád.'],
+      e:'Hustší mřížka má menší <i>b</i>, sin <i>θ</i> = <i>kλ</i>/<i>b</i> roste rychleji a podmínka sin <i>θ</i> ≤ 1 povolí méně řádů.' },
+    { c:'mrizka', t:'Proč lze na stínítku s mřížkou měřit úhly přesněji než u dvojštěrbiny?',
+      r:'Na interferenci se podílí mnoho štěrbin, takže maxima jsou užší a jasnější.', w:['Protože mřížka má větší štěrbiny.', 'Protože mřížka mění vlnovou délku.', 'Protože u mřížky není nultý řád.'],
+      e:'Čím více štěrbin, tím ostřejší maxima. Proto je mřížka dobrý měřicí přístroj vlnových délek.' },
+    // ----- tenká vrstva -----
+    { c:'vrstva', t:'Jakou optickou dráhu má světlo, které urazí 2,0&nbsp;cm ve skle s indexem lomu 1,5?',
+      r:'3,0&nbsp;cm', w:['1,3&nbsp;cm', '2,0&nbsp;cm', '3,5&nbsp;cm'],
+      e:'Optická dráha <i>l</i> = <i>ns</i> = 1,5 · 2,0&nbsp;cm = 3,0&nbsp;cm.' },
+    { c:'vrstva', t:'Při kterém odrazu se fáze světla obrátí (jako by vlna urazila navíc <i>λ</i>/2)?',
+      r:'Při odrazu na rozhraní s opticky hustším prostředím', w:['Při odrazu na rozhraní s opticky řidším prostředím', 'Při každém odrazu', 'Nikdy'],
+      e:'Odraz od prostředí s větším <i>n</i> obrací fázi, odraz od prostředí s menším <i>n</i> ne — stejně jako u vlnění na provaze.' },
+    { c:'vrstva', t:'Proč vypadá mýdlová bublina těsně před prasknutím černě?',
+      r:'Je mnohem tenčí než vlnová délka; odražené svazky se liší jen skokem fáze <i>λ</i>/2 a všechny barvy se zeslabí.', w:['Protože se mýdlo vypaří a zůstane jen saze.', 'Protože se bublina zahřeje.', 'Protože tenká blána odráží jen infračervené záření.'],
+      e:'Při 2<i>nd</i> ≈ 0 zbývá jen skok fáze na horním rozhraní, svazky jsou v opačné fázi pro všechny vlnové délky.' },
+    { c:'vrstva', t:'Mýdlová blána (<i>n</i> = 1,33) ve vzduchu má tloušťku 100&nbsp;nm. Která vlnová délka se v odraženém světle zesílí?',
+      r:'Přibližně 532&nbsp;nm (zelená)', w:['Přibližně 266&nbsp;nm', 'Přibližně 133&nbsp;nm', 'Přibližně 400&nbsp;nm'],
+      e:'Blána ve vzduchu má jeden skok fáze: maximum pro 2<i>nd</i> = (2<i>k</i> − 1)<i>λ</i>/2, tedy <i>λ</i> = 4<i>nd</i>/(2<i>k</i> − 1). Pro <i>k</i> = 1: 4 · 1,33 · 100&nbsp;nm = 532&nbsp;nm. Pro <i>k</i> = 2 vychází 177&nbsp;nm, mimo viditelnou oblast. 266&nbsp;nm je jen 2<i>nd</i>.' },
+    { c:'vrstva', t:'Jakou nejmenší tloušťku musí mít protiodrazová vrstva s indexem lomu 1,38 pro světlo 550&nbsp;nm?',
+      r:'Přibližně 100&nbsp;nm', w:['Přibližně 200&nbsp;nm', 'Přibližně 400&nbsp;nm', 'Přibližně 760&nbsp;nm'],
+      e:'Index vrstvy leží mezi vzduchem a sklem, skok fáze nastane na obou rozhraních; minimum pro 2<i>nd</i> = <i>λ</i>/2, tedy <i>d</i> = <i>λ</i>/(4<i>n</i>) = 550/(4 · 1,38)&nbsp;nm ≐ 100&nbsp;nm.' },
+    { c:'vrstva', t:'Jaký index lomu by měla mít ideální protiodrazová vrstva na skle s indexem lomu <i>n</i><sub>0</sub>?',
+      r:'<i>n</i> = √<i>n</i><sub>0</sub>', w:['<i>n</i> = <i>n</i><sub>0</sub>²', '<i>n</i> = <i>n</i><sub>0</sub>/2', '<i>n</i> = 1'],
+      e:'Při <i>n</i> = √<i>n</i><sub>0</sub> mají oba odražené svazky stejnou amplitudu a mohou se úplně vyrušit. Pro sklo s <i>n</i><sub>0</sub> = 1,5 vychází přibližně 1,22.' },
+    { c:'vrstva', t:'Co je uprostřed obrazce Newtonových kroužků (v odraženém světle)?',
+      r:'Tmavá skvrna', w:['Světlá skvrna', 'Barevný kroužek', 'Nic, střed je zakrytý čočkou'],
+      e:'V místě dotyku je <i>d</i> = 0 a jeden z odrazů (vzduch → sklo) má skok fáze, takže svazky jsou v opačné fázi — minimum nultého řádu.' },
+    { c:'vrstva', t:'Newtonova skla mají <i>R</i> = 1,0&nbsp;m a jsou osvětlena světlem 600&nbsp;nm. Jaký je poloměr čtvrtého tmavého kroužku?',
+      r:'Přibližně 1,5&nbsp;mm', w:['Přibližně 2,4&nbsp;mm', 'Přibližně 0,78&nbsp;mm', 'Přibližně 15&nbsp;mm'],
+      e:'<i>r</i><sub><i>k</i></sub> = √(<i>kRλ</i>) = √(4 · 1,0 · 6,0·10⁻⁷)&nbsp;m = √(2,4·10⁻⁶)&nbsp;m ≐ 1,55·10⁻³&nbsp;m. Hodnota 2,4 je číslo pod odmocninou bez odmocnění.' },
+    // ----- obrázek -----
+    { c:'koherence', fixed:true, f:KV_FIG_W, fa:KV_FIG_W_A,
+      t:'Na obrázku jsou tři dvojice koherentních vln (plná a čárkovaná). Ve které dvojici se vlny po složení vyruší (minimum)?',
+      r:'Ve dvojici 2', w:['Ve dvojici 1', 'Ve dvojici 3', 'Ve všech třech'],
+      e:'Ve dvojici 2 jsou vlny posunuté o půl vlnové délky, tedy v opačné fázi — vyruší se. Ve dvojici 1 jsou posunuté o celou vlnovou délku (ve fázi, maximum). Ve dvojici 3 (posun o čtvrtinu) se částečně zesílí.' },
+    { c:'koherence', fixed:true, f:KV_FIG_W, fa:KV_FIG_W_A,
+      t:'Ve které dvojici vln na obrázku vznikne po složení maximum s dvojnásobnou amplitudou?',
+      r:'Ve dvojici 1', w:['Ve dvojici 2', 'Ve dvojici 3', 'V žádné'],
+      e:'Posun o celou vlnovou délku (Δ<i>l</i> = <i>λ</i>) znamená, že vlny jsou ve fázi; čárkovaná vlna leží přesně na plné.' }
+  ];
+
+
+  var KVIZ_KEY = 'fyzika:interference-svetla:kviz';
+  var section = document.getElementById('kviz-section');
+  var tabBtn = document.getElementById('top-tab-kviz');
+  var readout = document.getElementById('kviz-readout');
+  var pageReadout = document.getElementById('header-readout');
+  var kviz = {
+    type:'all', queue:[], current:null, sel:null, locked:false,
+    score:0, streak:0, bestStreak:0, answered:0, correct:0,
+    inRound:false, ended:false, roundTotal:0, roundCorrect:0
+  };
+  function $(id){ return document.getElementById(id); }
+  function kvizLoad(){
+    try{ var raw = localStorage.getItem(KVIZ_KEY); if(raw){ kviz.bestStreak = JSON.parse(raw).bestStreak || 0; } }catch(e){}
+  }
+  function kvizSave(){
+    try{ localStorage.setItem(KVIZ_KEY, JSON.stringify({bestStreak: kviz.bestStreak})); }catch(e){}
+  }
+  function kvizShuffled(a){
+    a = a.slice();
+    for(var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random()*(i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; }
+    return a;
+  }
+  function typeOf(key){ return KVIZ_TYPES.filter(function(t){ return t.key === key; })[0]; }
+
+  // Otázky okruhu se berou v náhodném pořadí bez opakování. Po projití celého okruhu
+  // se zobrazí závěrečná hláška s výsledkem kola a nabídkou otázky zamíchat znovu.
+  function kvizNext(){
+    if(!kviz.queue.length){
+      if(kviz.inRound){ kvizShowEnd(); return; }
+      var pool = KVIZ_BANK.filter(function(b){ return kviz.type === 'all' || b.c === kviz.type; });
+      kviz.queue = kvizShuffled(pool);
+      if(kviz.current && kviz.queue.length > 1 && kviz.queue[0] === kviz.current.item){ kviz.queue.push(kviz.queue.shift()); }
+      kviz.inRound = true; kviz.roundTotal = pool.length; kviz.roundCorrect = 0;
+    }
+    var item = kviz.queue.shift();
+    var opts = item.fixed ? [item.r].concat(item.w).sort() : kvizShuffled([item.r].concat(item.w));
+    kviz.current = { item:item, choices:opts, correct:opts.indexOf(item.r) };
+    kvizRender();
+  }
+  function kvizShowEnd(){
+    kviz.ended = true; kviz.inRound = false;
+    var tp = typeOf(kviz.type);
+    var n = kviz.roundTotal, k = kviz.roundCorrect;
+    $('kviz-end-text').innerHTML =
+      'Prošli jste všech ' + n + ' otázek ' + (kviz.type === 'all' ? 'kvízu' : 'okruhu „' + tp.name + '“') + '. ' +
+      'Správně jste odpověděli na ' + k + ' z ' + n + ' (' + Math.round(100*k/n) + '&nbsp;%). Chcete otázky zamíchat a projít znovu?';
+    $('kviz-q').hidden = true;
+    $('kviz-end').hidden = false;
+    $('kviz-btn-restart').focus({ preventScroll:true });
+  }
+  function kvizRestart(){
+    kviz.queue = []; kviz.inRound = false;
+    kvizNext();
+  }
+  function kvizRender(){
+    var q = kviz.current;
+    kviz.ended = false;
+    $('kviz-q').hidden = false;
+    $('kviz-end').hidden = true;
+    var tp = typeOf(q.item.c);
+    $('kviz-cat-tag').innerHTML = tp ? tp.tag : 'Otázka';
+    $('kviz-task-text').innerHTML = q.item.t;
+    var fig = $('kviz-fig');
+    fig.hidden = !q.item.f;
+    if(q.item.f){ $('kviz-graph').innerHTML = KV_DEFS + q.item.f; $('kviz-graph').setAttribute('aria-label', q.item.fa || 'Obrázek k otázce'); }
+    var grid = $('kviz-opt-grid');
+    grid.innerHTML = '';
+    kviz.sel = null; kviz.locked = false;
+    q.choices.forEach(function(c, i){
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'opt-btn';
+      b.innerHTML = '<b>' + LETTERS[i] + ')</b>&nbsp; ' + c;
+      b.addEventListener('click', function(){ kvizSelect(i); });
+      grid.appendChild(b);
+    });
+    var fb = $('kviz-feedback');
+    fb.hidden = true; fb.classList.remove('ok', 'bad', 'sol');
+    $('kviz-btn-check').textContent = 'Zkontrolovat';
+  }
+  function kvizSelect(i){
+    if(kviz.locked || kviz.ended) return;
+    kviz.sel = i;
+    Array.prototype.forEach.call($('kviz-opt-grid').children, function(el, j){ el.classList.toggle('selected', j === i); });
+    $('kviz-btn-check').focus({ preventScroll:true });
+  }
+  function kvizFinish(ok, headline){
+    var q = kviz.current;
+    Array.prototype.forEach.call($('kviz-opt-grid').children, function(el, j){
+      el.disabled = true;
+      el.classList.remove('selected');
+      if(j === q.correct) el.classList.add(kviz.sel === j ? 'correct' : 'missed');
+      else if(j === kviz.sel) el.classList.add('wrong');
+    });
+    var fb = $('kviz-feedback');
+    fb.hidden = false;
+    fb.classList.toggle('ok', ok); fb.classList.toggle('bad', !ok);
+    $('kviz-feedback-headline').textContent = headline;
+    var finalText = 'Správná odpověď: ' + LETTERS[q.correct] + ') ' + q.item.r;
+    if(window.FyzikaReseni && FyzikaReseni.show){
+      FyzikaReseni.show(fb, $('kviz-feedback-steps'), { raw:true, title:'Vysvětlení', steps:[q.item.e], final:finalText });
+    } else {
+      $('kviz-feedback-steps').innerHTML = q.item.e + '<br><b>' + finalText + '</b>';
+    }
+    kviz.locked = true;
+    var btn = $('kviz-btn-check');
+    btn.textContent = 'Další otázka →';
+    btn.focus({ preventScroll:true });
+    kvizStats();
+  }
+  function kvizCheck(){
+    if(kviz.ended){ kvizRestart(); return; }
+    if(kviz.locked){ kvizNext(); return; }
+    if(kviz.sel === null && !confirm('Není vybraná žádná možnost. Opravdu chcete zkontrolovat?')) return;
+    var ok = kviz.sel === kviz.current.correct;
+    kviz.answered++;
+    if(ok){
+      kviz.score += 10; kviz.streak++; kviz.correct++; kviz.roundCorrect++;
+      if(kviz.streak > kviz.bestStreak){ kviz.bestStreak = kviz.streak; kvizSave(); }
+    } else {
+      kviz.streak = 0;
+    }
+    kvizFinish(ok, ok ? 'Správně!' : (kviz.sel === null ? 'Vyberte odpověď.' : 'Bohužel špatně.'));
+  }
+  function kvizSkip(){
+    if(kviz.ended){ kvizRestart(); return; }
+    if(kviz.locked){ kvizNext(); return; }
+    kviz.streak = 0; kviz.answered++;
+    kvizFinish(false, 'Správná odpověď:');
+  }
+  function kvizStats(){
+    $('kviz-stat-score').textContent = kviz.score;
+    $('kviz-stat-streak').textContent = kviz.streak + (kviz.bestStreak > 0 ? ' / ' + kviz.bestStreak : '');
+    $('kviz-stat-accuracy').textContent = kviz.answered === 0 ? '—' : Math.round(100*kviz.correct/kviz.answered) + ' %';
+  }
+  (function kvizBuildTypeRow(){
+    var row = $('kviz-type-row');
+    KVIZ_TYPES.forEach(function(d){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip accented' + (d.key === kviz.type ? ' on' : '');
+      b.setAttribute('aria-pressed', d.key === kviz.type ? 'true' : 'false');
+      b.textContent = d.name;
+      b.addEventListener('click', function(){
+        if(d.key === kviz.type) return;
+        // rozpracovaná otázka s vybranou odpovědí se před změnou okruhu vyhodnotí
+        var settled = !kviz.locked && kviz.sel !== null;
+        if(settled) kvizCheck();
+        kviz.type = d.key; kviz.queue = []; kviz.inRound = false;
+        Array.prototype.forEach.call(row.children, function(el, i){
+          var on = KVIZ_TYPES[i].key === kviz.type;
+          el.classList.toggle('on', on);
+          el.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        // vyhodnocená otázka zůstane i s vysvětlením vidět, další už bude z nového okruhu
+        if(!settled) kvizNext();
+      });
+      row.appendChild(b);
+    });
+  })();
+  $('kviz-btn-check').addEventListener('click', kvizCheck);
+  $('kviz-btn-skip').addEventListener('click', kvizSkip);
+  $('kviz-btn-restart').addEventListener('click', kvizRestart);
+  $('kviz-reset-stats').addEventListener('click', function(){
+    kviz.score = 0; kviz.streak = 0; kviz.answered = 0; kviz.correct = 0; kviz.bestStreak = 0;
+    try{ localStorage.removeItem(KVIZ_KEY); }catch(e){}
+    kvizStats();
+  });
+  // Klávesnice v kvízu: A–D nebo 1–4 vybere odpověď, Enter zkontroluje / posune dál.
+  document.addEventListener('keydown', function(e){
+    if(section.hidden) return;
+    if(e.ctrlKey || e.metaKey || e.altKey) return;
+    if(e.key === 'Enter'){
+      if(e.target && e.target.tagName === 'BUTTON') return;
+      e.preventDefault(); kvizCheck(); return;
+    }
+    var idx = 'abcd'.indexOf(e.key.toLowerCase());
+    if(idx === -1) idx = '1234'.indexOf(e.key);
+    if(idx !== -1 && e.key.length === 1) kvizSelect(idx);
+  });
+
+  // ---- záložka Kvíz ----
+  // Skript je samostatný: otevření Kvízu i návrat na ostatní záložky řeší sám, ať stránka přepíná
+  // záložky jakkoli. Skóre kvízu má vlastní pole v hlavičce (skóre tréninku se tím nemění).
+  function activate(){
+    var teorieBtn = $('top-tab-teorie'), theory = $('theory-section');
+    if(!tabBtn.classList.contains('on') && teorieBtn && !teorieBtn.classList.contains('on')){
+      // nejdřív „kliknutím“ opustíme dosavadní záložku obsluhou stránky (u hry na čas s potvrzením)
+      teorieBtn.click();
+      if(theory && theory.hidden) return;   // stránka odmítla opustit dosavadní záložku (např. běžící hra)
+    }
+    Array.prototype.forEach.call(document.querySelectorAll('.tab-section'), function(s){ s.hidden = s !== section; });
+    Array.prototype.forEach.call(document.querySelectorAll('.toptab'), function(t){ t.classList.toggle('on', t === tabBtn); });
+    if(pageReadout) pageReadout.hidden = true;
+    readout.hidden = false;
+    kvizStats();
+    if(!kviz.current) kvizNext();
+  }
+  tabBtn.addEventListener('click', activate);
+  Array.prototype.forEach.call(document.querySelectorAll('.toptab'), function(t){
+    if(t === tabBtn) return;
+    t.addEventListener('click', function(){ section.hidden = true; readout.hidden = true; tabBtn.classList.remove('on'); });
+  });
+  document.addEventListener('fyzika:scores-updated', function(){ kviz.bestStreak = 0; kvizLoad(); kvizStats(); });
+  kvizLoad();
+  kvizStats();
+  if(location.hash === '#kviz' && !tabBtn.classList.contains('on')) tabBtn.click();
+  else if(location.hash === '#kviz') activate();
+})();
+</script>
+
 </body>
 </html>

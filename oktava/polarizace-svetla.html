@@ -14,6 +14,7 @@
 <script src="../spolecne/auth.js"></script>
 <script src="../spolecne/zalozky.js?v=3"></script>
 <link rel="stylesheet" href="../spolecne/styl.css">
+<link rel="stylesheet" href="../spolecne/reseni.css?v=1">
 <link rel="stylesheet" href="../spolecne/komponenty.css?v=1">
 <style>
 :root{
@@ -127,6 +128,15 @@
   .toptab{ flex:1 1 auto; padding:13px 8px; }
 }
 </style>
+<style>
+/* ---- Kvíz (stejný jako u Grafů rovnoměrného pohybu a u Pohybu po kružnici) ---- */
+.kviz-task{ font-size:1.02rem; line-height:1.5; max-width:52ch; margin:0 auto 10px; color:var(--ink); text-align:center; }
+#kviz-section .kviz-task i, #kviz-section .opt-btn i, #kviz-section .feedback .steps i, #kviz-section .cat-tag i{ font-family:'STIX Two Text', Georgia, serif; font-style:italic; text-transform:none; }
+#kviz-section .feedback .steps{ font-family:'Work Sans', sans-serif; white-space:normal; opacity:1; }
+#kviz-end .kviz-end-box{ text-align:center; margin:0 0 14px; }
+#kviz-end .kviz-end-hint{ text-align:center; margin-top:10px; }
+#kviz-section [hidden]{ display:none; }
+</style>
 </head>
 <body>
 
@@ -148,10 +158,16 @@
       </div>
     </div>
     <!-- Hlavičkové skóre (.readout) se přidává jen u stránek se záložkou Trénink — viz references/zalozky-trenink-aplet.md -->
+    <div class="readout" id="kviz-readout" hidden>
+      <div class="cell"><span class="label">Skóre</span><span class="value" id="kviz-stat-score">0</span></div>
+      <div class="cell"><span class="label">Série</span><span class="value" id="kviz-stat-streak">0</span></div>
+      <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="kviz-stat-accuracy">—</span></div>
+    </div>
   </div>
 
   <div class="top-tabs">
     <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+    <button class="toptab" id="top-tab-kviz" data-tab="kviz">Kvíz</button>
     <button class="toptab" id="top-tab-aplet" data-tab="aplet">Polarizované světlo</button>
     <button class="toptab" id="top-tab-polarizatory" data-tab="polarizatory">Polarizátory</button>
       </div>
@@ -485,6 +501,50 @@
 
   </div>
 
+  <!-- ============ KVÍZ ============ -->
+  <div id="kviz-section" class="tab-section" hidden>
+    <div class="panel">
+      <div class="section-block">
+        <div class="panel-title">Okruh otázek</div>
+        <div class="row" id="kviz-type-row"></div>
+      </div>
+      <div class="settings-foot" style="justify-content:flex-end;">
+        <button class="linklike" id="kviz-reset-stats">vynulovat statistiku</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div id="kviz-q">
+      <span class="cat-tag" id="kviz-cat-tag">Otázka</span>
+      <p class="kviz-task" id="kviz-task-text"></p>
+      <figure class="theory-fig" id="kviz-fig" hidden>
+        <svg id="kviz-graph" viewBox="0 0 480 260" role="img" aria-label="Obrázek k otázce"></svg>
+      </figure>
+      <div class="opt-grid wide-opts" id="kviz-opt-grid"></div>
+      <div class="actions">
+        <button class="btn primary" id="kviz-btn-check">Zkontrolovat</button>
+        <button class="btn ghost" id="kviz-btn-skip">Nevím / Zobrazit řešení</button>
+      </div>
+      <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint">Vyberte jednu ze čtyř odpovědí kliknutím nebo klávesami A až D (případně 1 až 4) a potvrďte tlačítkem Zkontrolovat nebo klávesou Enter; dalším Enterem přejdete na další otázku. Po kontrole se správná odpověď obarví zeleně, chybně vybraná červeně a pod otázkou se objeví vysvětlení. Okruh otázek vyberete nahoře; otázky se neopakují, dokud neprojdete celý okruh. Pak se zobrazí, kolik otázek jste zodpověděli správně, a otázky můžete zamíchat a projít znovu.</p>
+      </details>
+      <div class="feedback" id="kviz-feedback" hidden>
+        <div class="headline" id="kviz-feedback-headline"></div>
+        <div class="steps" id="kviz-feedback-steps"></div>
+      </div>
+      </div>
+      <div id="kviz-end" hidden>
+        <div class="feedback ok kviz-end-box"><div class="headline">Hotovo, prošli jste všechny otázky!</div></div>
+        <p class="kviz-task" id="kviz-end-text"></p>
+        <div class="actions">
+          <button class="btn primary" id="kviz-btn-restart">Zamíchat otázky a začít znovu</button>
+        </div>
+        <p class="hint kviz-end-hint">Můžete také nahoře vybrat jiný okruh otázek.</p>
+      </div>
+    </div>
+  </div>
+
   <!-- ============ APLET ============ -->
   <div id="aplet-section" class="tab-section" hidden>
     <div class="card applet-card" id="applet-card">
@@ -711,6 +771,7 @@
   <footer>Fyzika — Oktáva/4. ročník</footer>
 </div>
 
+<script src="../spolecne/reseni.js?v=1"></script>
 <script src="../spolecne/spolecne.js"></script>
 <script>
 (function(){
@@ -1586,5 +1647,364 @@
   try{ makePanelsCollapsible(document.getElementById('theory-section')); }catch(e){}
 })();
 </script>
+<script>
+(function(){
+  "use strict";
+  // ================= KVÍZ: otázky s výběrem ze čtyř odpovědí (A–D) =================
+  // Samostatný skript (stejný kvíz jako u Grafů rovnoměrného pohybu a u Pohybu po kružnici).
+  // Položka banky: c = okruh, t = zadání (HTML), r = správná odpověď, w = tři špatné,
+  // e = vysvětlení; fixed = možnosti se nemíchají, jen seřadí.
+  var LETTERS = ['A','B','C','D'];
+  // ---- pomůcky pro obrázky k otázkám (SVG ve viewBoxu 480 × 260, barvy z proměnných stránky) ----
+  var KV_COL = { ink:'var(--ink)', soft:'var(--ink-soft)', acc:'var(--accent)', foc:'var(--focus)' };
+  var KV_DEFS = '<defs>' + ['ink','soft','acc','foc'].map(function(k){
+    return '<marker id="kv-' + k + '" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4.4" markerHeight="4.4" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="' + KV_COL[k] + '"/></marker>';
+  }).join('') + '</defs>';
+  function kvA(x1, y1, x2, y2, c, w, dash){
+    c = c || 'ink';
+    return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + KV_COL[c] + '" stroke-width="' + (w || 2.6) + '" stroke-linecap="round" marker-end="url(#kv-' + c + ')"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  function kvL(x1, y1, x2, y2, c, w, dash){
+    return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + KV_COL[c || 'soft'] + '" stroke-width="' + (w || 1.6) + '" stroke-linecap="round"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  function kvT(x, y, txt, anchor, size, c, italic){
+    return '<text x="' + x + '" y="' + y + '" text-anchor="' + (anchor || 'middle') + '" font-family="' + (italic ? "STIX Two Text, Georgia, serif" : "Work Sans, sans-serif") + '" font-size="' + (size || 13) + '"' + (italic ? ' font-style="italic"' : '') + ' fill="' + KV_COL[c || 'ink'] + '">' + txt + '</text>';
+  }
+  function kvC(x, y, r, fill, stroke){
+    return '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + (fill || 'none') + '" stroke="' + (stroke ? KV_COL[stroke] : 'none') + '" stroke-width="1.6"/>';
+  }
+  function kvR(x, y, w, h, fill, stroke, rot){
+    return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="2" fill="' + (fill || 'var(--surface-2)') + '" stroke="' + KV_COL[stroke || 'soft'] + '" stroke-width="1.6"' + (rot ? ' transform="rotate(' + rot[0] + ' ' + rot[1] + ' ' + rot[2] + ')"' : '') + '/>';
+  }
+  function kvP(d, c, w, dash, fill){
+    return '<path d="' + d + '" fill="' + (fill || 'none') + '" stroke="' + KV_COL[c || 'ink'] + '" stroke-width="' + (w || 2) + '" stroke-linecap="round" stroke-linejoin="round"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  // očíslovaný kroužek u špičky šipky (n = číslo), směr (dx, dy) od špičky ven
+  function kvN(x, y, n, dx, dy){
+    var lx = x + dx, ly = y + dy;
+    return kvC(lx, ly, 10, 'var(--surface-2)', 'soft') + '<text x="' + lx + '" y="' + (ly + 4.5) + '" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="13" font-weight="600" fill="var(--ink)">' + n + '</text>';
+  }
+  // šipka s číslem: z (x1, y1) do (x2, y2), kroužek za špičkou
+  function kvAN(x1, y1, x2, y2, n, c){
+    var dx = x2 - x1, dy = y2 - y1, l = Math.sqrt(dx*dx + dy*dy);
+    return kvA(x1, y1, x2, y2, c || 'ink') + kvN(x2, y2, n, dx/l*16, dy/l*16);
+  }
+  // ---- tři dvojice polarizátor + analyzátor (čárky = propustný směr) ----
+  function kvFilter(x, y, vert){
+    var s = '<rect x="' + (x - 26) + '" y="' + (y - 26) + '" width="52" height="52" rx="4" fill="var(--surface-2)" stroke="var(--ink-soft)" stroke-width="1.4"/>';
+    for(var i = -18; i <= 18; i += 9){
+      s += vert ? kvL(x + i, y - 20, x + i, y + 20, 'acc', 1.6) : kvL(x - 20, y + i, x + 20, y + i, 'acc', 1.6);
+    }
+    return s;
+  }
+  var KV_FIG_POL = [[44, true, true], [130, true, false], [216, false, false]].map(function(d, i){
+    var y = d[0];
+    return kvN(30, y, i + 1, 0, 0) + kvA(60, y, 110, y, 'soft', 1.8) + kvFilter(150, y, d[1]) + kvA(180, y, 290, y, 'soft', 1.8) + kvFilter(330, y, d[2]) + (d[1] === d[2] ? kvA(360, y, 430, y, 'soft', 1.8) : '');
+  }).join('') + kvT(150, 258, 'polarizátor', 'middle', 12, 'soft') + kvT(330, 258, 'analyzátor', 'middle', 12, 'soft');
+  var KV_FIG_POL_A = 'Tři dvojice filtrů, světlo jde zleva doprava: v dvojici 1 mají polarizátor i analyzátor svislý propustný směr, v dvojici 2 je polarizátor svislý a analyzátor vodorovný, v dvojici 3 jsou oba vodorovné; za analyzátorem dvojic 1 a 3 světlo pokračuje, za analyzátorem dvojice 2 ne';
+
+  var KVIZ_TYPES = [
+    { key:'all', name:'Vše' },
+    { key:'pojmy', name:'Polarizované světlo', tag:'Polarizované a nepolarizované světlo' },
+    { key:'odraz', name:'Odraz a Brewsterův úhel', tag:'Polarizace odrazem a lomem' },
+    { key:'filtry', name:'Dvojlom a filtry', tag:'Dvojlom a polarizační filtry' },
+    { key:'vyuziti', name:'Využití', tag:'Využití polarizace' }
+  ];
+  var KVIZ_BANK = [
+    // ----- pojmy -----
+    { c:'pojmy', t:'Proč lze světlo polarizovat?',
+      r:'Je to příčné vlnění — vektor <b><i>E</i></b> kmitá kolmo ke směru šíření.', w:['Protože je to podélné vlnění.', 'Protože se šíří rychlostí světla.', 'Protože má velkou frekvenci.'],
+      e:'Polarizovat lze jen příčné vlnění: v rovině kolmé k paprsku je mnoho možných směrů kmitů a polarizace jeden z nich vybere.' },
+    { c:'pojmy', t:'Co je nepolarizované světlo?',
+      r:'Světlo, v němž se směr kmitů vektoru <b><i>E</i></b> nahodile mění', w:['Světlo, které vůbec nekmitá', 'Světlo, v němž <b><i>E</i></b> kmitá stále v jedné rovině', 'Světlo laseru'],
+      e:'Světlo Slunce, žárovky nebo plamene je nepolarizované, protože zdroje vyzařují klubka s různě orientovanými kmity.' },
+    { c:'pojmy', t:'Co je kmitová rovina lineárně polarizovaného světla?',
+      r:'Rovina určená vektorem <b><i>E</i></b> a směrem šíření', w:['Rovina povrchu, od něhož se světlo odráží', 'Rovina kolmá ke směru šíření', 'Rovina stínítka'],
+      e:'U lineárně polarizovaného světla kmitá <b><i>E</i></b> stále v této rovině.' },
+    { c:'pojmy', t:'Pozná oko polarizované světlo od nepolarizovaného?',
+      r:'Ne, poznáme ho až pomocí dalšího polarizačního filtru.', w:['Ano, polarizované světlo je tmavší.', 'Ano, polarizované světlo má jinou barvu.', 'Ano, polarizované světlo bliká.'],
+      e:'Oko polarizaci nerozliší; odhalí ji až analyzátor.' },
+    { c:'pojmy', t:'Proč nelze polarizovat zvuk ve vzduchu?',
+      r:'Je to podélné vlnění — částice kmitají ve směru šíření.', w:['Protože se šíří pomalu.', 'Protože ho nevidíme.', 'Protože má velkou vlnovou délku.'],
+      e:'U podélného vlnění není v rovině kolmé ke směru šíření žádný směr kmitů, který by šlo vybrat.' },
+    { c:'pojmy', t:'Kterými třemi způsoby lze z přirozeného světla získat polarizované?',
+      r:'Odrazem a lomem, dvojlomem a absorpcí', w:['Ohybem, interferencí a lomem', 'Zesílením, zeslabením a odrazem', 'Ohřevem, ochlazením a dvojlomem'],
+      e:'Teorie probírá polarizaci odrazem a lomem, dvojlomem v anizotropním krystalu a absorpcí v polaroidu.' },
+    // ----- odraz -----
+    { c:'odraz', t:'Jak kmitá vektor <b><i>E</i></b> ve světle odraženém od skleněné desky?',
+      r:'Převážně kolmo k rovině dopadu, rovnoběžně s povrchem desky', w:['Rovnoběžně s rovinou dopadu', 'Ve směru šíření', 'Nahodile ve všech směrech stejně'],
+      e:'Odražené světlo je polarizované s kmity kolmými k rovině dopadu; úplně jen při Brewsterově úhlu.' },
+    { c:'odraz', t:'Co platí pro odražený a lomený paprsek při dopadu pod Brewsterovým úhlem?',
+      r:'Jsou na sebe kolmé.', w:['Jsou rovnoběžné.', 'Svírají úhel 45°.', 'Lomený paprsek nevzniká.'],
+      e:'Z podmínky <i>α</i><sub>B</sub> + <i>β</i> = 90° a zákona lomu plyne tg <i>α</i><sub>B</sub> = <i>n</i>.' },
+    { c:'odraz', t:'Jaký je vztah pro Brewsterův úhel?',
+      r:'tg <i>α</i><sub>B</sub> = <i>n</i>', w:['sin <i>α</i><sub>B</sub> = <i>n</i>', 'cos <i>α</i><sub>B</sub> = <i>n</i>', 'tg <i>α</i><sub>B</sub> = 1/<i>n</i>'],
+      e:'<i>n</i> = sin <i>α</i><sub>B</sub>/sin <i>β</i> = sin <i>α</i><sub>B</sub>/cos <i>α</i><sub>B</sub> = tg <i>α</i><sub>B</sub>. Sinus nemůže být větší než 1, takže vztah se sinem by pro <i>n</i> > 1 nedával smysl.' },
+    { c:'odraz', t:'Jaký je Brewsterův úhel pro vodu (<i>n</i> = 1,33)?',
+      r:'Přibližně 53°', w:['Přibližně 37°', 'Přibližně 48°', 'Přibližně 1,33°'],
+      e:'<i>α</i><sub>B</sub> = arctg 1,33 ≐ 53,1°. Lomený paprsek pak svírá s kolmicí 90° − 53,1° = 36,9°; kontrola: sin 53,1°/sin 36,9° ≐ 0,800/0,600 ≐ 1,33.' },
+    { c:'odraz', t:'Odražené světlo je úplně polarizované při úhlu dopadu 60°. Jaký index lomu má látka?',
+      r:'Přibližně 1,73', w:['Přibližně 0,87', 'Přibližně 0,58', 'Přibližně 2,0'],
+      e:'<i>n</i> = tg 60° = √3 ≐ 1,73. Hodnota 0,87 je sin 60°, 0,58 je tg 30°.' },
+    { c:'odraz', t:'Jak se změní Brewsterův úhel, má-li látka větší index lomu?',
+      r:'Zvětší se.', w:['Zmenší se.', 'Nezmění se.', 'Klesne na nulu.'],
+      e:'Tangens je rostoucí funkce: sklo (<i>n</i> = 1,5) má přibližně 56°, diamant (<i>n</i> = 2,42) přibližně 68°.' },
+    { c:'odraz', t:'Od čeho se měří Brewsterův úhel?',
+      r:'Od kolmice k rozhraní', w:['Od povrchu rozhraní', 'Od směru lomeného paprsku', 'Od vodorovné roviny vždy'],
+      e:'Stejně jako úhel dopadu se Brewsterův úhel měří od kolmice.' },
+    { c:'odraz', t:'Jak je polarizováno lomené světlo?',
+      r:'Částečně, převažují kmity rovnoběžné s rovinou dopadu.', w:['Úplně, kmity kolmé k rovině dopadu.', 'Vůbec ne.', 'Úplně při každém úhlu dopadu.'],
+      e:'Lomené světlo je polarizované jen částečně a opačně než odražené. Průchodem více destičkami se polarizace zlepšuje.' },
+    // ----- filtry -----
+    { c:'filtry', t:'Co je dvojlom?',
+      r:'Rozdělení paprsku v anizotropním krystalu na řádný a mimořádný paprsek', w:['Dvojitý odraz od zrcadla', 'Lom světla na dvou rozhraních čočky', 'Ohyb světla na dvojštěrbině'],
+      e:'V anizotropním krystalu závisí rychlost světla na směru; oba paprsky jsou lineárně polarizované v navzájem kolmých rovinách.' },
+    { c:'filtry', t:'Proč vidíme text přes krystal islandského vápence zdvojeně?',
+      r:'Řádný a mimořádný paprsek se lámou pod jiným úhlem.', w:['Krystal má dvě vrstvy.', 'Krystal světlo odráží dvakrát.', 'Oko vidí každým okem jinak.'],
+      e:'Islandský vápenec je dvojlomný; každý paprsek vytvoří vlastní obraz.' },
+    { c:'filtry', t:'K čemu slouží analyzátor?',
+      r:'Propouští polarizované světlo jen s jednou orientací kmitové roviny, a tak ji umožní zjistit.', w:['Mění polarizované světlo na nepolarizované.', 'Zesiluje světlo.', 'Rozkládá světlo na barvy.'],
+      e:'Polarizátor světlo polarizuje, analyzátor polarizaci odhalí.' },
+    { c:'filtry', t:'Jak funguje polarizační fólie (polaroid)?',
+      r:'Srovnané podlouhlé molekuly pohltí složku <b><i>E</i></b> v jednom směru, složka k němu kolmá projde.', w:['Odráží všechno světlo kromě jedné barvy.', 'Ohýbá světlo na vrypech.', 'Mění vlnovou délku světla.'],
+      e:'Jde o polarizaci absorpcí.' },
+    { c:'filtry', t:'Jaká je analogie polarizačních filtrů s rozkmitanou gumovou hadicí?',
+      r:'Hadice prochází dvěma štěrbinami; za druhou se kmity dostanou jen tehdy, je-li rovnoběžná s první.', w:['Hadice se natahuje a zkracuje jako podélné vlnění.', 'Hadice se odráží od zdi.', 'Hadice se ohýbá kolem překážky.'],
+      e:'První štěrbina (polarizátor) propustí jen kmity rovnoběžné se štěrbinou, druhá (analyzátor) jen při souhlasném směru.' },
+    // ----- využití -----
+    { c:'vyuziti', t:'Proč polarizační brýle potlačují odlesky z vodní hladiny?',
+      r:'Odražené světlo je polarizované vodorovně a brýle mají svislý propustný směr.', w:['Brýle odlesky odrážejí zpět.', 'Brýle mají tmavší barvu.', 'Brýle propouštějí jen vodorovné kmity.'],
+      e:'V odlesku kmitá <b><i>E</i></b> převážně rovnoběžně s hladinou. Svislý propustný směr ho zeslabí, ostatní světlo jen částečně.' },
+    { c:'vyuziti', t:'Jak lze polarizací měřit koncentraci roztoku cukru?',
+      r:'Roztok stáčí kmitovou rovinu a úhel stočení závisí na koncentraci.', w:['Roztok mění vlnovou délku světla.', 'Roztok světlo úplně pohltí.', 'Roztok světlo polarizuje vždy svisle.'],
+      e:'Stáčení polarizační roviny je typické například pro roztoky cukru.' },
+    { c:'vyuziti', t:'Co uvidíme, umístíme-li namáhaný průhledný předmět mezi dva polarizační filtry?',
+      r:'Namáhaná místa — mechanické napětí ovlivňuje polarizační rovinu.', w:['Nic, předmět bude neviditelný.', 'Předmět změní tvar.', 'Jen obrysy předmětu bez detailů.'],
+      e:'Takto se zjišťuje, kde je materiál nejvíc zatížen.' },
+    { c:'vyuziti', t:'Ve kterých zařízeních najdeme polarizační filtry?',
+      r:'V displejích mobilů, počítačů a plochých televizorů', w:['V žárovkách', 'V reproduktorech', 'V rentgenkách'],
+      e:'LCD displeje obsahují polarizační filtry; proto se obraz při otáčení polarizačních brýlí ztmaví.' },
+    // ----- obrázky -----
+    { c:'filtry', f:KV_FIG_POL, fa:KV_FIG_POL_A,
+      t:'Na obrázku jsou tři dvojice polarizátor–analyzátor (čárky znázorňují propustný směr). Proč za analyzátorem dvojice 2 nepokračuje žádné světlo?',
+      r:'Propustné směry polarizátoru a analyzátoru jsou navzájem kolmé.', w:['Analyzátor je natočený stejně jako polarizátor.', 'Polarizátor světlo úplně pohltí.', 'Svislé kmity se nemohou šířit.'],
+      e:'Za polarizátorem dvojice 2 kmitá <b><i>E</i></b> svisle, analyzátor propouští jen vodorovné kmity, a proto světlo neprojde. V dvojicích 1 a 3 jsou propustné směry souhlasné a světlo projde.' },
+    { c:'filtry', fixed:true, f:KV_FIG_POL, fa:KV_FIG_POL_A,
+      t:'Jak kmitá vektor <b><i>E</i></b> ve světle mezi polarizátorem a analyzátorem ve dvojici 3?',
+      r:'Vodorovně', w:['Svisle', 'Nahodile ve všech směrech', 'Ve směru šíření'],
+      e:'Polarizátor ve dvojici 3 má vodorovný propustný směr, takže za ním je světlo lineárně polarizované s vodorovnými kmity; souhlasný analyzátor ho propustí.' }
+  ];
+
+
+  var KVIZ_KEY = 'fyzika:polarizace-svetla:kviz';
+  var section = document.getElementById('kviz-section');
+  var tabBtn = document.getElementById('top-tab-kviz');
+  var readout = document.getElementById('kviz-readout');
+  var pageReadout = document.getElementById('header-readout');
+  var kviz = {
+    type:'all', queue:[], current:null, sel:null, locked:false,
+    score:0, streak:0, bestStreak:0, answered:0, correct:0,
+    inRound:false, ended:false, roundTotal:0, roundCorrect:0
+  };
+  function $(id){ return document.getElementById(id); }
+  function kvizLoad(){
+    try{ var raw = localStorage.getItem(KVIZ_KEY); if(raw){ kviz.bestStreak = JSON.parse(raw).bestStreak || 0; } }catch(e){}
+  }
+  function kvizSave(){
+    try{ localStorage.setItem(KVIZ_KEY, JSON.stringify({bestStreak: kviz.bestStreak})); }catch(e){}
+  }
+  function kvizShuffled(a){
+    a = a.slice();
+    for(var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random()*(i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; }
+    return a;
+  }
+  function typeOf(key){ return KVIZ_TYPES.filter(function(t){ return t.key === key; })[0]; }
+
+  // Otázky okruhu se berou v náhodném pořadí bez opakování. Po projití celého okruhu
+  // se zobrazí závěrečná hláška s výsledkem kola a nabídkou otázky zamíchat znovu.
+  function kvizNext(){
+    if(!kviz.queue.length){
+      if(kviz.inRound){ kvizShowEnd(); return; }
+      var pool = KVIZ_BANK.filter(function(b){ return kviz.type === 'all' || b.c === kviz.type; });
+      kviz.queue = kvizShuffled(pool);
+      if(kviz.current && kviz.queue.length > 1 && kviz.queue[0] === kviz.current.item){ kviz.queue.push(kviz.queue.shift()); }
+      kviz.inRound = true; kviz.roundTotal = pool.length; kviz.roundCorrect = 0;
+    }
+    var item = kviz.queue.shift();
+    var opts = item.fixed ? [item.r].concat(item.w).sort() : kvizShuffled([item.r].concat(item.w));
+    kviz.current = { item:item, choices:opts, correct:opts.indexOf(item.r) };
+    kvizRender();
+  }
+  function kvizShowEnd(){
+    kviz.ended = true; kviz.inRound = false;
+    var tp = typeOf(kviz.type);
+    var n = kviz.roundTotal, k = kviz.roundCorrect;
+    $('kviz-end-text').innerHTML =
+      'Prošli jste všech ' + n + ' otázek ' + (kviz.type === 'all' ? 'kvízu' : 'okruhu „' + tp.name + '“') + '. ' +
+      'Správně jste odpověděli na ' + k + ' z ' + n + ' (' + Math.round(100*k/n) + '&nbsp;%). Chcete otázky zamíchat a projít znovu?';
+    $('kviz-q').hidden = true;
+    $('kviz-end').hidden = false;
+    $('kviz-btn-restart').focus({ preventScroll:true });
+  }
+  function kvizRestart(){
+    kviz.queue = []; kviz.inRound = false;
+    kvizNext();
+  }
+  function kvizRender(){
+    var q = kviz.current;
+    kviz.ended = false;
+    $('kviz-q').hidden = false;
+    $('kviz-end').hidden = true;
+    var tp = typeOf(q.item.c);
+    $('kviz-cat-tag').innerHTML = tp ? tp.tag : 'Otázka';
+    $('kviz-task-text').innerHTML = q.item.t;
+    var fig = $('kviz-fig');
+    fig.hidden = !q.item.f;
+    if(q.item.f){ $('kviz-graph').innerHTML = KV_DEFS + q.item.f; $('kviz-graph').setAttribute('aria-label', q.item.fa || 'Obrázek k otázce'); }
+    var grid = $('kviz-opt-grid');
+    grid.innerHTML = '';
+    kviz.sel = null; kviz.locked = false;
+    q.choices.forEach(function(c, i){
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'opt-btn';
+      b.innerHTML = '<b>' + LETTERS[i] + ')</b>&nbsp; ' + c;
+      b.addEventListener('click', function(){ kvizSelect(i); });
+      grid.appendChild(b);
+    });
+    var fb = $('kviz-feedback');
+    fb.hidden = true; fb.classList.remove('ok', 'bad', 'sol');
+    $('kviz-btn-check').textContent = 'Zkontrolovat';
+  }
+  function kvizSelect(i){
+    if(kviz.locked || kviz.ended) return;
+    kviz.sel = i;
+    Array.prototype.forEach.call($('kviz-opt-grid').children, function(el, j){ el.classList.toggle('selected', j === i); });
+    $('kviz-btn-check').focus({ preventScroll:true });
+  }
+  function kvizFinish(ok, headline){
+    var q = kviz.current;
+    Array.prototype.forEach.call($('kviz-opt-grid').children, function(el, j){
+      el.disabled = true;
+      el.classList.remove('selected');
+      if(j === q.correct) el.classList.add(kviz.sel === j ? 'correct' : 'missed');
+      else if(j === kviz.sel) el.classList.add('wrong');
+    });
+    var fb = $('kviz-feedback');
+    fb.hidden = false;
+    fb.classList.toggle('ok', ok); fb.classList.toggle('bad', !ok);
+    $('kviz-feedback-headline').textContent = headline;
+    var finalText = 'Správná odpověď: ' + LETTERS[q.correct] + ') ' + q.item.r;
+    if(window.FyzikaReseni && FyzikaReseni.show){
+      FyzikaReseni.show(fb, $('kviz-feedback-steps'), { raw:true, title:'Vysvětlení', steps:[q.item.e], final:finalText });
+    } else {
+      $('kviz-feedback-steps').innerHTML = q.item.e + '<br><b>' + finalText + '</b>';
+    }
+    kviz.locked = true;
+    var btn = $('kviz-btn-check');
+    btn.textContent = 'Další otázka →';
+    btn.focus({ preventScroll:true });
+    kvizStats();
+  }
+  function kvizCheck(){
+    if(kviz.ended){ kvizRestart(); return; }
+    if(kviz.locked){ kvizNext(); return; }
+    if(kviz.sel === null && !confirm('Není vybraná žádná možnost. Opravdu chcete zkontrolovat?')) return;
+    var ok = kviz.sel === kviz.current.correct;
+    kviz.answered++;
+    if(ok){
+      kviz.score += 10; kviz.streak++; kviz.correct++; kviz.roundCorrect++;
+      if(kviz.streak > kviz.bestStreak){ kviz.bestStreak = kviz.streak; kvizSave(); }
+    } else {
+      kviz.streak = 0;
+    }
+    kvizFinish(ok, ok ? 'Správně!' : (kviz.sel === null ? 'Vyberte odpověď.' : 'Bohužel špatně.'));
+  }
+  function kvizSkip(){
+    if(kviz.ended){ kvizRestart(); return; }
+    if(kviz.locked){ kvizNext(); return; }
+    kviz.streak = 0; kviz.answered++;
+    kvizFinish(false, 'Správná odpověď:');
+  }
+  function kvizStats(){
+    $('kviz-stat-score').textContent = kviz.score;
+    $('kviz-stat-streak').textContent = kviz.streak + (kviz.bestStreak > 0 ? ' / ' + kviz.bestStreak : '');
+    $('kviz-stat-accuracy').textContent = kviz.answered === 0 ? '—' : Math.round(100*kviz.correct/kviz.answered) + ' %';
+  }
+  (function kvizBuildTypeRow(){
+    var row = $('kviz-type-row');
+    KVIZ_TYPES.forEach(function(d){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip accented' + (d.key === kviz.type ? ' on' : '');
+      b.setAttribute('aria-pressed', d.key === kviz.type ? 'true' : 'false');
+      b.textContent = d.name;
+      b.addEventListener('click', function(){
+        if(d.key === kviz.type) return;
+        // rozpracovaná otázka s vybranou odpovědí se před změnou okruhu vyhodnotí
+        var settled = !kviz.locked && kviz.sel !== null;
+        if(settled) kvizCheck();
+        kviz.type = d.key; kviz.queue = []; kviz.inRound = false;
+        Array.prototype.forEach.call(row.children, function(el, i){
+          var on = KVIZ_TYPES[i].key === kviz.type;
+          el.classList.toggle('on', on);
+          el.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        // vyhodnocená otázka zůstane i s vysvětlením vidět, další už bude z nového okruhu
+        if(!settled) kvizNext();
+      });
+      row.appendChild(b);
+    });
+  })();
+  $('kviz-btn-check').addEventListener('click', kvizCheck);
+  $('kviz-btn-skip').addEventListener('click', kvizSkip);
+  $('kviz-btn-restart').addEventListener('click', kvizRestart);
+  $('kviz-reset-stats').addEventListener('click', function(){
+    kviz.score = 0; kviz.streak = 0; kviz.answered = 0; kviz.correct = 0; kviz.bestStreak = 0;
+    try{ localStorage.removeItem(KVIZ_KEY); }catch(e){}
+    kvizStats();
+  });
+  // Klávesnice v kvízu: A–D nebo 1–4 vybere odpověď, Enter zkontroluje / posune dál.
+  document.addEventListener('keydown', function(e){
+    if(section.hidden) return;
+    if(e.ctrlKey || e.metaKey || e.altKey) return;
+    if(e.key === 'Enter'){
+      if(e.target && e.target.tagName === 'BUTTON') return;
+      e.preventDefault(); kvizCheck(); return;
+    }
+    var idx = 'abcd'.indexOf(e.key.toLowerCase());
+    if(idx === -1) idx = '1234'.indexOf(e.key);
+    if(idx !== -1 && e.key.length === 1) kvizSelect(idx);
+  });
+
+  // ---- záložka Kvíz ----
+  // Skript je samostatný: otevření Kvízu i návrat na ostatní záložky řeší sám, ať stránka přepíná
+  // záložky jakkoli. Skóre kvízu má vlastní pole v hlavičce (skóre tréninku se tím nemění).
+  function activate(){
+    var teorieBtn = $('top-tab-teorie'), theory = $('theory-section');
+    if(!tabBtn.classList.contains('on') && teorieBtn && !teorieBtn.classList.contains('on')){
+      // nejdřív „kliknutím“ opustíme dosavadní záložku obsluhou stránky (u hry na čas s potvrzením)
+      teorieBtn.click();
+      if(theory && theory.hidden) return;   // stránka odmítla opustit dosavadní záložku (např. běžící hra)
+    }
+    Array.prototype.forEach.call(document.querySelectorAll('.tab-section'), function(s){ s.hidden = s !== section; });
+    Array.prototype.forEach.call(document.querySelectorAll('.toptab'), function(t){ t.classList.toggle('on', t === tabBtn); });
+    if(pageReadout) pageReadout.hidden = true;
+    readout.hidden = false;
+    kvizStats();
+    if(!kviz.current) kvizNext();
+  }
+  tabBtn.addEventListener('click', activate);
+  Array.prototype.forEach.call(document.querySelectorAll('.toptab'), function(t){
+    if(t === tabBtn) return;
+    t.addEventListener('click', function(){ section.hidden = true; readout.hidden = true; tabBtn.classList.remove('on'); });
+  });
+  document.addEventListener('fyzika:scores-updated', function(){ kviz.bestStreak = 0; kvizLoad(); kvizStats(); });
+  kvizLoad();
+  kvizStats();
+  if(location.hash === '#kviz' && !tabBtn.classList.contains('on')) tabBtn.click();
+  else if(location.hash === '#kviz') activate();
+})();
+</script>
+
 </body>
 </html>
