@@ -84,6 +84,20 @@
   .card{ padding:20px 16px 22px; }
 }
 </style>
+<style>
+/* ---- Kvíz (stejný jako u Grafů rovnoměrného pohybu a u Pohybu po kružnici) ---- */
+.kviz-task{ font-size:1.02rem; line-height:1.5; max-width:52ch; margin:0 auto 10px; color:var(--ink); text-align:center; }
+#kviz-section .kviz-task i, #kviz-section .opt-btn i, #kviz-section .feedback .steps i, #kviz-section .cat-tag i{ font-family:'STIX Two Text', Georgia, serif; font-style:italic; text-transform:none; }
+#kviz-section .feedback .steps{ font-family:'Work Sans', sans-serif; white-space:normal; opacity:1; }
+#kviz-end .kviz-end-box{ text-align:center; margin:0 0 14px; }
+#kviz-end .kviz-end-hint{ text-align:center; margin-top:10px; }
+#kviz-section [hidden]{ display:none; }
+@media (max-width:520px){
+  /* čtyři a více záložek: na telefonu ve dvou řadách (stejně jako Grafy rovnoměrného pohybu) */
+  .top-tabs{ flex-wrap:wrap; }
+  .toptab{ flex:1 1 calc(50% - 4px); padding:13px 8px; }
+}
+</style>
 </head>
 <body>
 
@@ -109,10 +123,16 @@
       <div class="cell"><span class="label">Série</span><span class="value" id="stat-streak">0</span></div>
       <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="stat-accuracy">—</span></div>
     </div>
+    <div class="readout" id="kviz-readout" hidden>
+      <div class="cell"><span class="label">Skóre</span><span class="value" id="kviz-stat-score">0</span></div>
+      <div class="cell"><span class="label">Série</span><span class="value" id="kviz-stat-streak">0</span></div>
+      <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="kviz-stat-accuracy">—</span></div>
+    </div>
   </div>
 
   <div class="top-tabs">
     <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+    <button class="toptab" id="top-tab-kviz" data-tab="kviz">Kvíz</button>
     <button class="toptab" id="top-tab-aplet" data-tab="aplet">Tříhladinový laser</button>
     <button class="toptab" id="top-tab-trenink" data-tab="trenink">Trénink</button>
   </div>
@@ -270,6 +290,50 @@
       <p>• Laserové světlo je monofrekvenční, koherentní a málo rozbíhavé.</p>
     </div>
 
+  </div>
+
+  <!-- ============ KVÍZ ============ -->
+  <div id="kviz-section" class="tab-section" hidden>
+    <div class="panel">
+      <div class="section-block">
+        <div class="panel-title">Okruh otázek</div>
+        <div class="row" id="kviz-type-row"></div>
+      </div>
+      <div class="settings-foot" style="justify-content:flex-end;">
+        <button class="linklike" id="kviz-reset-stats">vynulovat statistiku</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div id="kviz-q">
+      <span class="cat-tag" id="kviz-cat-tag">Otázka</span>
+      <p class="kviz-task" id="kviz-task-text"></p>
+      <figure class="theory-fig" id="kviz-fig" hidden>
+        <svg id="kviz-graph" viewBox="0 0 480 260" role="img" aria-label="Obrázek k otázce"></svg>
+      </figure>
+      <div class="opt-grid wide-opts" id="kviz-opt-grid"></div>
+      <div class="actions">
+        <button class="btn primary" id="kviz-btn-check">Zkontrolovat</button>
+        <button class="btn ghost" id="kviz-btn-skip">Nevím / Zobrazit řešení</button>
+      </div>
+      <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint">Vyberte jednu ze čtyř odpovědí kliknutím nebo klávesami A až D (případně 1 až 4) a potvrďte tlačítkem Zkontrolovat nebo klávesou Enter; dalším Enterem přejdete na další otázku. Po kontrole se správná odpověď obarví zeleně, chybně vybraná červeně a pod otázkou se objeví vysvětlení. Okruh otázek vyberete nahoře; otázky se neopakují, dokud neprojdete celý okruh. Pak se zobrazí, kolik otázek jste zodpověděli správně, a otázky můžete zamíchat a projít znovu.</p>
+      </details>
+      <div class="feedback" id="kviz-feedback" hidden>
+        <div class="headline" id="kviz-feedback-headline"></div>
+        <div class="steps" id="kviz-feedback-steps"></div>
+      </div>
+      </div>
+      <div id="kviz-end" hidden>
+        <div class="feedback ok kviz-end-box"><div class="headline">Hotovo, prošli jste všechny otázky!</div></div>
+        <p class="kviz-task" id="kviz-end-text"></p>
+        <div class="actions">
+          <button class="btn primary" id="kviz-btn-restart">Zamíchat otázky a začít znovu</button>
+        </div>
+        <p class="hint kviz-end-hint">Můžete také nahoře vybrat jiný okruh otázek.</p>
+      </div>
+    </div>
   </div>
 
   <!-- ============ APLET: TŘÍHLADINOVÝ LASER ============ -->
@@ -831,5 +895,368 @@
   trGenerate();
 })();
 </script>
+<script>
+(function(){
+  "use strict";
+  // ================= KVÍZ: otázky s výběrem ze čtyř odpovědí (A–D) =================
+  // Samostatný skript (stejný kvíz jako u Grafů rovnoměrného pohybu a u Pohybu po kružnici).
+  // Položka banky: c = okruh, t = zadání (HTML), r = správná odpověď, w = tři špatné,
+  // e = vysvětlení; fixed = možnosti se nemíchají, jen seřadí.
+  var LETTERS = ['A','B','C','D'];
+  // ---- pomůcky pro obrázky k otázkám (SVG ve viewBoxu 480 × 260, barvy z proměnných stránky) ----
+  var KV_COL = { ink:'var(--ink)', soft:'var(--ink-soft)', acc:'var(--accent)', foc:'var(--focus)' };
+  var KV_DEFS = '<defs>' + ['ink','soft','acc','foc'].map(function(k){
+    return '<marker id="kv-' + k + '" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4.4" markerHeight="4.4" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="' + KV_COL[k] + '"/></marker>';
+  }).join('') + '</defs>';
+  function kvA(x1, y1, x2, y2, c, w, dash){
+    c = c || 'ink';
+    return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + KV_COL[c] + '" stroke-width="' + (w || 2.6) + '" stroke-linecap="round" marker-end="url(#kv-' + c + ')"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  function kvL(x1, y1, x2, y2, c, w, dash){
+    return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + KV_COL[c || 'soft'] + '" stroke-width="' + (w || 1.6) + '" stroke-linecap="round"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  function kvT(x, y, txt, anchor, size, c, italic){
+    return '<text x="' + x + '" y="' + y + '" text-anchor="' + (anchor || 'middle') + '" font-family="' + (italic ? "STIX Two Text, Georgia, serif" : "Work Sans, sans-serif") + '" font-size="' + (size || 13) + '"' + (italic ? ' font-style="italic"' : '') + ' fill="' + KV_COL[c || 'ink'] + '">' + txt + '</text>';
+  }
+  function kvC(x, y, r, fill, stroke){
+    return '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + (fill || 'none') + '" stroke="' + (stroke ? KV_COL[stroke] : 'none') + '" stroke-width="1.6"/>';
+  }
+  function kvR(x, y, w, h, fill, stroke, rot){
+    return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="2" fill="' + (fill || 'var(--surface-2)') + '" stroke="' + KV_COL[stroke || 'soft'] + '" stroke-width="1.6"' + (rot ? ' transform="rotate(' + rot[0] + ' ' + rot[1] + ' ' + rot[2] + ')"' : '') + '/>';
+  }
+  function kvP(d, c, w, dash, fill){
+    return '<path d="' + d + '" fill="' + (fill || 'none') + '" stroke="' + KV_COL[c || 'ink'] + '" stroke-width="' + (w || 2) + '" stroke-linecap="round" stroke-linejoin="round"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  // očíslovaný kroužek u špičky šipky (n = číslo), směr (dx, dy) od špičky ven
+  function kvN(x, y, n, dx, dy){
+    var lx = x + dx, ly = y + dy;
+    return kvC(lx, ly, 10, 'var(--surface-2)', 'soft') + '<text x="' + lx + '" y="' + (ly + 4.5) + '" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="13" font-weight="600" fill="var(--ink)">' + n + '</text>';
+  }
+  // šipka s číslem: z (x1, y1) do (x2, y2), kroužek za špičkou
+  function kvAN(x1, y1, x2, y2, n, c){
+    var dx = x2 - x1, dy = y2 - y1, l = Math.sqrt(dx*dx + dy*dy);
+    return kvA(x1, y1, x2, y2, c || 'ink') + kvN(x2, y2, n, dx/l*16, dy/l*16);
+  }
+  // ---- tříhladinový laser: hladiny E1, E2, E3 a tři očíslované přechody ----
+  function kvLevel(y, name){
+    return kvL(120, y, 380, y, 'ink', 2) +
+      '<text x="390" y="' + (y + 5) + '" font-family="STIX Two Text, Georgia, serif" font-style="italic" font-size="15" fill="var(--ink)">E<tspan font-style="normal" font-size="11" dy="4">' + name + '</tspan></text>';
+  }
+  var KV_FIG_3H = kvLevel(36, '3') + kvLevel(96, '2') + kvLevel(228, '1') +
+    kvA(170, 227, 170, 38, 'foc', 2.6) + kvN(170, 132, 1, -20, 0) +
+    kvA(240, 37, 300, 95, 'soft', 2, '5 4') + kvN(270, 66, 2, 18, -6) +
+    kvA(320, 97, 320, 226, 'acc', 3.2) + kvN(320, 162, 3, 20, 0);
+  var KV_FIG_3H_A = 'Tři energetické hladiny E1, E2 a E3 a tři očíslované šipky: 1 z E1 na E3, 2 čárkovaně z E3 na E2, 3 z E2 na E1';
+
+  var KVIZ_TYPES = [
+    { key:'all', name:'Vše' },
+    { key:'deje', name:'Emise a absorpce', tag:'Tři děje mezi dvěma hladinami' },
+    { key:'inverze', name:'Populační inverze', tag:'Populační inverze a čerpání' },
+    { key:'laser', name:'Jak funguje laser', tag:'Jak funguje laser' },
+    { key:'vlastnosti', name:'Vlastnosti a výpočty', tag:'Vlastnosti laserového světla a výpočty' }
+  ];
+  var KVIZ_BANK = [
+    // ----- děje -----
+    { c:'deje', t:'Jakou energii musí mít foton, aby mohl vyvolat přechod atomu z hladiny <i>E</i><sub>1</sub> na hladinu <i>E</i><sub>2</sub>?',
+      r:'<i>hf</i> = <i>E</i><sub>2</sub> − <i>E</i><sub>1</sub>', w:['<i>hf</i> = <i>E</i><sub>2</sub> + <i>E</i><sub>1</sub>', 'Libovolnou energii větší než <i>E</i><sub>1</sub>', '<i>hf</i> = <i>E</i><sub>1</sub>'],
+      e:'Při absorpci (i emisi) mezi dvěma hladinami má foton energii rovnou rozdílu energií hladin, <i>hf</i> = <i>E</i><sub>2</sub> − <i>E</i><sub>1</sub>.' },
+    { c:'deje', t:'Co je spontánní emise?',
+      r:'Atom na vyšší hladině sám od sebe, v náhodném okamžiku, přejde na nižší hladinu a vyzáří foton.', w:['Atom pohltí foton a přejde na vyšší hladinu.', 'Foton přiměje excitovaný atom vyzářit druhý totožný foton.', 'Atom vyzáří foton, až když ho zahřejeme.'],
+      e:'Při spontánní emisi atomy vyzařují nezávisle na sobě, různými směry a s různou fází. Tak svítí žárovka, zářivka i Slunce.' },
+    { c:'deje', t:'Čím se liší foton vzniklý stimulovanou emisí od fotonu, který ji vyvolal?',
+      r:'Ničím — má stejnou frekvenci, fázi i směr.', w:['Má poloviční energii.', 'Letí opačným směrem.', 'Má dvojnásobnou frekvenci.'],
+      e:'Při stimulované emisi se původní foton nepohltí a přibude k němu druhý, totožný: stejná frekvence, fáze i směr. Světlo se tak zesílí.' },
+    { c:'deje', t:'Kdo předpověděl stimulovanou emisi?',
+      r:'A. Einstein (1916)', w:['T. Maiman (1960)', 'M. Planck (1900)', 'N. Bohr (1913)'],
+      e:'Stimulovanou (vynucenou) emisi předpověděl A. Einstein v roce 1916. T. Maiman sestrojil v roce 1960 první laser.' },
+    { c:'deje', t:'Jaké je světlo žárovky nebo Slunce, které vzniká spontánní emisí?',
+      r:'Nekoherentní — atomy září nezávisle, různými směry a s různou fází.', w:['Koherentní a monofrekvenční.', 'Vždy polarizované.', 'Málo rozbíhavé jako laser.'],
+      e:'Při spontánní emisi vyzařuje každý atom v náhodném okamžiku, takže vlny nemají stálý fázový rozdíl — záření je nekoherentní.' },
+    { c:'deje', t:'Foton o energii <i>E</i><sub>2</sub> − <i>E</i><sub>1</sub> narazí na atom, který je na vyšší hladině <i>E</i><sub>2</sub>. Co se může stát?',
+      r:'Stimulovaná emise: atom přejde na <i>E</i><sub>1</sub> a vyletí dva totožné fotony.', w:['Absorpce: atom foton pohltí a přejde ještě výš.', 'Foton se rozpadne na dva poloviční.', 'Atom se ionizuje.'],
+      e:'Atom na vyšší hladině nemůže tento foton pohltit, ale foton ho může přimět přejít dolů. Pak letí dva fotony se stejnou frekvencí, fází i směrem.' },
+    // ----- inverze -----
+    { c:'inverze', t:'Co je populační inverze?',
+      r:'Stav, kdy je na některé vyšší hladině víc atomů než na nižší.', w:['Stav, kdy jsou všechny atomy v základním stavu.', 'Stav, kdy atomy vyzařují opačným směrem.', 'Obrácení polarity zdroje laseru.'],
+      e:'V běžné látce je víc atomů na nižších hladinách. Při populační inverzi je to naopak a látka je aktivní prostředí — světlo se v ní zesiluje.' },
+    { c:'inverze', t:'Proč se světlo v běžné (třeba zahřáté) látce nezesiluje, ale pohlcuje?',
+      r:'Na nižší hladině je víc atomů než na vyšší, takže absorpce převládne nad stimulovanou emisí.', w:['Protože v ní neprobíhá stimulovaná emise vůbec.', 'Protože zahřátá látka nevyzařuje.', 'Protože absorpce je vždy pravděpodobnější než stimulovaná emise u jednoho atomu.'],
+      e:'Absorpce a stimulovaná emise jsou pro jeden atom stejně pravděpodobné. Rozhoduje, kterých atomů je víc; v běžné látce převažují atomy na nižší hladině.' },
+    { c:'inverze', t:'Jak se nazývá dodávání energie látce, kterým vytvoříme populační inverzi?',
+      r:'Čerpání', w:['Ohřev', 'Tunelování', 'Stimulace'],
+      e:'Energii dodáváme jinak než ohřevem — světlem výbojky, elektrickým výbojem nebo proudem. Tomu se říká čerpání. Pouhým ohřevem populační inverzi nevytvoříme.' },
+    { c:'inverze', t:'Čím pomáhá metastabilní hladina při vytváření populační inverze?',
+      r:'Atom na ní vydrží poměrně dlouho (například 10⁻³&nbsp;s místo 10⁻⁸&nbsp;s), takže se na ní atomy mohou nahromadit.',
+      w:['Atom z ní okamžitě spontánně vyzáří.', 'Pohlcuje fotony všech frekvencí.', 'Je to nejnižší hladina atomu.'],
+      e:'Na obvyklé hladině atom vydrží přibližně 10⁻⁸&nbsp;s. Na metastabilní hladině až stotisíckrát déle, a proto se tam atomy nahromadí a vznikne inverze.' },
+    { c:'inverze', t:'Proč jsou čtyřhladinové lasery účinnější než tříhladinové?',
+      r:'Dolní laserová hladina se rychle vyprazdňuje, takže inverze vzniká snáz.', w:['Mají čtyři zrcadla.', 'Vyzařují čtyři různé barvy.', 'Nepotřebují čerpání.'],
+      e:'U tříhladinového laseru je dolní laserová hladina základní a je plná atomů. U čtyřhladinového (např. neodymového) se dolní hladina rychle vyprazdňuje.' },
+    // ----- laser -----
+    { c:'laser', t:'Jaká zrcadla má laser na koncích aktivního prostředí?',
+      r:'Jedno odráží úplně, druhé je polopropustné.', w:['Obě jsou polopropustná.', 'Obě odrážejí úplně.', 'Laser zrcadla nemá.'],
+      e:'Mezi rovnoběžnými zrcadly se světlo mnohokrát odráží a zesiluje. Polopropustným zrcadlem vychází část světla ven jako úzký svazek.' },
+    { c:'laser', t:'Proč se v laseru zesílí jen svazek kolmý k zrcadlům?',
+      r:'Fotony letící šikmo z aktivního prostředí uniknou, kolmé se mezi zrcadly mnohokrát odrážejí.', w:['Šikmé fotony se pohltí v zrcadlech a ohřejí je.', 'Atomy vyzařují jen kolmo k zrcadlům.', 'Šikmé fotony mají jinou frekvenci.'],
+      e:'Jen fotony letící kolmo k zrcadlům prolétají prostředím opakovaně a při každém průchodu vyvolávají další stimulované emise. Vznikne lavina fotonů stejného směru.' },
+    { c:'laser', t:'Co znamená zkratka laser?',
+      r:'Zesilování světla stimulovanou emisí záření', w:['Zdroj světla s lineární polarizací', 'Světlo z polovodičové diody', 'Zesilovač světla rozptylem na elektronech'],
+      e:'LASER = Light Amplification by Stimulated Emission of Radiation, tedy zesilování světla stimulovanou emisí záření.' },
+    { c:'laser', t:'Kdo a kdy sestrojil první laser?',
+      r:'T. Maiman v roce 1960 (rubínový laser)', w:['A. Einstein v roce 1916', 'A. Compton v roce 1922', 'T. Maiman v roce 1916 (helium-neonový laser)'],
+      e:'První laser byl rubínový a sestrojil ho T. Maiman v roce 1960. Einstein v roce 1916 jen předpověděl stimulovanou emisi.' },
+    { c:'laser', t:'Jakou vlnovou délku a barvu má světlo helium-neonového laseru?',
+      r:'632,8&nbsp;nm, červené', w:['532&nbsp;nm, zelené', '405&nbsp;nm, fialové', '1&nbsp;064&nbsp;nm, neviditelné'],
+      e:'He-Ne laser svítí červeně na 632,8&nbsp;nm; energii předávají atomům neonu atomy helia vybuzené výbojem. 532&nbsp;nm je vlnová délka zeleného ukazovátka.' },
+    { c:'laser', t:'Které lasery jsou dnes nejrozšířenější (ukazovátka, čtečky čárových kódů, tiskárny)?',
+      r:'Polovodičové', w:['Rubínové', 'Helium-neonové', 'Jodové'],
+      e:'Nejrozšířenější jsou polovodičové lasery. Jodový je například velký výzkumný laser PALS v Praze.' },
+    // ----- vlastnosti a výpočty -----
+    { c:'vlastnosti', t:'Co znamená, že laserové světlo je koherentní?',
+      r:'Vlny mají stálý fázový rozdíl, a proto spolu dobře interferují.', w:['Světlo má mnoho různých frekvencí.', 'Světlo se šíří všemi směry.', 'Světlo je velmi slabé.'],
+      e:'Koherentní vlny mají stálý fázový rozdíl. Proto se laser používá například v holografii. „Jediná frekvence“ je jiná vlastnost — monofrekvenčnost.' },
+    { c:'vlastnosti', t:'Jak vypadá spektrum laseru ve spektrometru?',
+      r:'Jediná úzká čára', w:['Spojitý duhový pás', 'Několik čar různých barev', 'Tmavé čáry na spojitém pozadí'],
+      e:'Laser je monofrekvenční — vyzařuje prakticky jedinou frekvenci. Žárovka dává spojité spektrum.' },
+    { c:'vlastnosti', t:'Proč je nebezpečné svítit laserovým ukazovátkem do očí?',
+      r:'Oko soustředí málo rozbíhavý svazek do malého bodu na sítnici a může ji trvale poškodit.', w:['Laser vyzařuje radioaktivní záření.', 'Laser oko ochladí.', 'Nebezpečné to není, ukazovátko je slabé.'],
+      e:'Laserové světlo je málo rozbíhavé, takže čočka oka ho soustředí do nepatrného bodu s velkou intenzitou. I ukazovátko může sítnici trvale poškodit.' },
+    { c:'vlastnosti', t:'Zelené ukazovátko svítí na 532&nbsp;nm. Jakou energii má jeden jeho foton?',
+      r:'Přibližně 2,33&nbsp;eV', w:['Přibližně 0,43&nbsp;eV', 'Přibližně 5,3&nbsp;eV', 'Přibližně 23&nbsp;eV'],
+      e:'<i>E</i> ≐ 1&nbsp;240/532&nbsp;eV ≐ 2,33&nbsp;eV. V joulech: <i>hc</i>/<i>λ</i> = 6,626·10⁻³⁴ · 2,998·10⁸/(532·10⁻⁹)&nbsp;J ≐ 3,73·10⁻¹⁹&nbsp;J.' },
+    { c:'vlastnosti', t:'Kolik fotonů za sekundu vyšle červený He-Ne laser (632,8&nbsp;nm) o výkonu 1,0&nbsp;mW?',
+      r:'Přibližně 3,2·10¹⁵', w:['Přibližně 3,2·10⁻¹⁵', 'Přibližně 1,3·10¹⁶', 'Přibližně 6,3·10²'],
+      e:'Energie fotonu <i>E</i> = <i>hc</i>/<i>λ</i> = 6,626·10⁻³⁴ · 2,998·10⁸/(632,8·10⁻⁹)&nbsp;J ≐ 3,14·10⁻¹⁹&nbsp;J. <i>N</i> = <i>Pt</i>/<i>E</i> = 1,0·10⁻³&nbsp;W · 1&nbsp;s / 3,14·10⁻¹⁹&nbsp;J ≐ 3,2·10¹⁵. Kontrola: 1,96&nbsp;eV · 1,602·10⁻¹⁹ ≐ 3,14·10⁻¹⁹&nbsp;J. Hodnota 1,3·10¹⁶ patří zelenému ukazovátku 5&nbsp;mW.' },
+    { c:'vlastnosti', t:'Laserový pulz o energii 0,50&nbsp;J trvá 10&nbsp;ns. Jaký je jeho výkon?',
+      r:'50&nbsp;MW', w:['5&nbsp;W', '50&nbsp;kW', '5&nbsp;nW'],
+      e:'<i>P</i> = <i>E</i>/<i>t</i> = 0,50&nbsp;J / (10·10⁻⁹&nbsp;s) = 5·10⁷&nbsp;W = 50&nbsp;MW. Malá energie soustředěná do nepatrného času dává obrovský výkon.' },
+    { c:'vlastnosti', t:'Proč nevnímáme, že laserové světlo přichází po jednotlivých fotonech?',
+      r:'Fotonů je obrovské množství (ukazovátko řádově 10¹⁶ za sekundu), takže světlo se jeví jako spojitý proud.', w:['Protože laser fotony nevyzařuje.', 'Protože fotony laseru mají nulovou energii.', 'Protože oko vnímá jen jednotlivé fotony.'],
+      e:'Zelené ukazovátko 5&nbsp;mW vyšle přibližně 1,3·10¹⁶ fotonů za sekundu. Při takovém počtu se kvantová povaha světla v běžném vnímání neprojeví.' },
+    { c:'vlastnosti', t:'Ve kterém využití se uplatní hlavně koherence laserového světla?',
+      r:'Holografie', w:['Řezání plechu', 'Laserové ukazovátko na přednášce', 'Ohřev materiálu'],
+      e:'Holografie je založena na interferenci, a ta vyžaduje koherentní světlo. Při řezání a ohřevu jde hlavně o soustředění velkého výkonu do malé plochy.' },
+    // ----- obrázek -----
+    { c:'inverze', fixed:true, f:KV_FIG_3H, fa:KV_FIG_3H_A,
+      t:'Obrázek ukazuje princip tříhladinového laseru. Která šipka znázorňuje laserový přechod (stimulovanou emisi)?',
+      r:'Šipka 3', w:['Šipka 1', 'Šipka 2', 'Žádná ze šipek'],
+      e:'Čerpání převádí atomy z <i>E</i><sub>1</sub> na <i>E</i><sub>3</sub> (šipka 1), odtud rychle přecházejí na metastabilní hladinu <i>E</i><sub>2</sub> (šipka 2). Laserový přechod probíhá mezi <i>E</i><sub>2</sub> a <i>E</i><sub>1</sub> (šipka 3).' },
+    { c:'inverze', f:KV_FIG_3H, fa:KV_FIG_3H_A,
+      t:'Která hladina tříhladinového laseru na obrázku je metastabilní (atomy se na ní hromadí)?',
+      r:'<i>E</i><sub>2</sub>', w:['<i>E</i><sub>1</sub>', '<i>E</i><sub>3</sub>', 'Všechny tři stejně'],
+      e:'Atomy z <i>E</i><sub>3</sub> rychle přejdou na <i>E</i><sub>2</sub> a tam dlouho vydrží; vznikne populační inverze mezi <i>E</i><sub>2</sub> a <i>E</i><sub>1</sub>. <i>E</i><sub>1</sub> je základní hladina.' }
+  ];
+
+
+  var KVIZ_KEY = 'fyzika:laser:kviz';
+  var section = document.getElementById('kviz-section');
+  var tabBtn = document.getElementById('top-tab-kviz');
+  var readout = document.getElementById('kviz-readout');
+  var pageReadout = document.getElementById('header-readout');
+  var kviz = {
+    type:'all', queue:[], current:null, sel:null, locked:false,
+    score:0, streak:0, bestStreak:0, answered:0, correct:0,
+    inRound:false, ended:false, roundTotal:0, roundCorrect:0
+  };
+  function $(id){ return document.getElementById(id); }
+  function kvizLoad(){
+    try{ var raw = localStorage.getItem(KVIZ_KEY); if(raw){ kviz.bestStreak = JSON.parse(raw).bestStreak || 0; } }catch(e){}
+  }
+  function kvizSave(){
+    try{ localStorage.setItem(KVIZ_KEY, JSON.stringify({bestStreak: kviz.bestStreak})); }catch(e){}
+  }
+  function kvizShuffled(a){
+    a = a.slice();
+    for(var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random()*(i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; }
+    return a;
+  }
+  function typeOf(key){ return KVIZ_TYPES.filter(function(t){ return t.key === key; })[0]; }
+
+  // Otázky okruhu se berou v náhodném pořadí bez opakování. Po projití celého okruhu
+  // se zobrazí závěrečná hláška s výsledkem kola a nabídkou otázky zamíchat znovu.
+  function kvizNext(){
+    if(!kviz.queue.length){
+      if(kviz.inRound){ kvizShowEnd(); return; }
+      var pool = KVIZ_BANK.filter(function(b){ return kviz.type === 'all' || b.c === kviz.type; });
+      kviz.queue = kvizShuffled(pool);
+      if(kviz.current && kviz.queue.length > 1 && kviz.queue[0] === kviz.current.item){ kviz.queue.push(kviz.queue.shift()); }
+      kviz.inRound = true; kviz.roundTotal = pool.length; kviz.roundCorrect = 0;
+    }
+    var item = kviz.queue.shift();
+    var opts = item.fixed ? [item.r].concat(item.w).sort() : kvizShuffled([item.r].concat(item.w));
+    kviz.current = { item:item, choices:opts, correct:opts.indexOf(item.r) };
+    kvizRender();
+  }
+  function kvizShowEnd(){
+    kviz.ended = true; kviz.inRound = false;
+    var tp = typeOf(kviz.type);
+    var n = kviz.roundTotal, k = kviz.roundCorrect;
+    $('kviz-end-text').innerHTML =
+      'Prošli jste všech ' + n + ' otázek ' + (kviz.type === 'all' ? 'kvízu' : 'okruhu „' + tp.name + '“') + '. ' +
+      'Správně jste odpověděli na ' + k + ' z ' + n + ' (' + Math.round(100*k/n) + '&nbsp;%). Chcete otázky zamíchat a projít znovu?';
+    $('kviz-q').hidden = true;
+    $('kviz-end').hidden = false;
+    $('kviz-btn-restart').focus({ preventScroll:true });
+  }
+  function kvizRestart(){
+    kviz.queue = []; kviz.inRound = false;
+    kvizNext();
+  }
+  function kvizRender(){
+    var q = kviz.current;
+    kviz.ended = false;
+    $('kviz-q').hidden = false;
+    $('kviz-end').hidden = true;
+    var tp = typeOf(q.item.c);
+    $('kviz-cat-tag').innerHTML = tp ? tp.tag : 'Otázka';
+    $('kviz-task-text').innerHTML = q.item.t;
+    var fig = $('kviz-fig');
+    fig.hidden = !q.item.f;
+    if(q.item.f){ $('kviz-graph').innerHTML = KV_DEFS + q.item.f; $('kviz-graph').setAttribute('aria-label', q.item.fa || 'Obrázek k otázce'); }
+    var grid = $('kviz-opt-grid');
+    grid.innerHTML = '';
+    kviz.sel = null; kviz.locked = false;
+    q.choices.forEach(function(c, i){
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'opt-btn';
+      b.innerHTML = '<b>' + LETTERS[i] + ')</b>&nbsp; ' + c;
+      b.addEventListener('click', function(){ kvizSelect(i); });
+      grid.appendChild(b);
+    });
+    var fb = $('kviz-feedback');
+    fb.hidden = true; fb.classList.remove('ok', 'bad', 'sol');
+    $('kviz-btn-check').textContent = 'Zkontrolovat';
+  }
+  function kvizSelect(i){
+    if(kviz.locked || kviz.ended) return;
+    kviz.sel = i;
+    Array.prototype.forEach.call($('kviz-opt-grid').children, function(el, j){ el.classList.toggle('selected', j === i); });
+    $('kviz-btn-check').focus({ preventScroll:true });
+  }
+  function kvizFinish(ok, headline){
+    var q = kviz.current;
+    Array.prototype.forEach.call($('kviz-opt-grid').children, function(el, j){
+      el.disabled = true;
+      el.classList.remove('selected');
+      if(j === q.correct) el.classList.add(kviz.sel === j ? 'correct' : 'missed');
+      else if(j === kviz.sel) el.classList.add('wrong');
+    });
+    var fb = $('kviz-feedback');
+    fb.hidden = false;
+    fb.classList.toggle('ok', ok); fb.classList.toggle('bad', !ok);
+    $('kviz-feedback-headline').textContent = headline;
+    var finalText = 'Správná odpověď: ' + LETTERS[q.correct] + ') ' + q.item.r;
+    if(window.FyzikaReseni && FyzikaReseni.show){
+      FyzikaReseni.show(fb, $('kviz-feedback-steps'), { raw:true, title:'Vysvětlení', steps:[q.item.e], final:finalText });
+    } else {
+      $('kviz-feedback-steps').innerHTML = q.item.e + '<br><b>' + finalText + '</b>';
+    }
+    kviz.locked = true;
+    var btn = $('kviz-btn-check');
+    btn.textContent = 'Další otázka →';
+    btn.focus({ preventScroll:true });
+    kvizStats();
+  }
+  function kvizCheck(){
+    if(kviz.ended){ kvizRestart(); return; }
+    if(kviz.locked){ kvizNext(); return; }
+    if(kviz.sel === null && !confirm('Není vybraná žádná možnost. Opravdu chcete zkontrolovat?')) return;
+    var ok = kviz.sel === kviz.current.correct;
+    kviz.answered++;
+    if(ok){
+      kviz.score += 10; kviz.streak++; kviz.correct++; kviz.roundCorrect++;
+      if(kviz.streak > kviz.bestStreak){ kviz.bestStreak = kviz.streak; kvizSave(); }
+    } else {
+      kviz.streak = 0;
+    }
+    kvizFinish(ok, ok ? 'Správně!' : (kviz.sel === null ? 'Vyberte odpověď.' : 'Bohužel špatně.'));
+  }
+  function kvizSkip(){
+    if(kviz.ended){ kvizRestart(); return; }
+    if(kviz.locked){ kvizNext(); return; }
+    kviz.streak = 0; kviz.answered++;
+    kvizFinish(false, 'Správná odpověď:');
+  }
+  function kvizStats(){
+    $('kviz-stat-score').textContent = kviz.score;
+    $('kviz-stat-streak').textContent = kviz.streak + (kviz.bestStreak > 0 ? ' / ' + kviz.bestStreak : '');
+    $('kviz-stat-accuracy').textContent = kviz.answered === 0 ? '—' : Math.round(100*kviz.correct/kviz.answered) + ' %';
+  }
+  (function kvizBuildTypeRow(){
+    var row = $('kviz-type-row');
+    KVIZ_TYPES.forEach(function(d){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip accented' + (d.key === kviz.type ? ' on' : '');
+      b.setAttribute('aria-pressed', d.key === kviz.type ? 'true' : 'false');
+      b.textContent = d.name;
+      b.addEventListener('click', function(){
+        if(d.key === kviz.type) return;
+        // rozpracovaná otázka s vybranou odpovědí se před změnou okruhu vyhodnotí
+        var settled = !kviz.locked && kviz.sel !== null;
+        if(settled) kvizCheck();
+        kviz.type = d.key; kviz.queue = []; kviz.inRound = false;
+        Array.prototype.forEach.call(row.children, function(el, i){
+          var on = KVIZ_TYPES[i].key === kviz.type;
+          el.classList.toggle('on', on);
+          el.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        // vyhodnocená otázka zůstane i s vysvětlením vidět, další už bude z nového okruhu
+        if(!settled) kvizNext();
+      });
+      row.appendChild(b);
+    });
+  })();
+  $('kviz-btn-check').addEventListener('click', kvizCheck);
+  $('kviz-btn-skip').addEventListener('click', kvizSkip);
+  $('kviz-btn-restart').addEventListener('click', kvizRestart);
+  $('kviz-reset-stats').addEventListener('click', function(){
+    kviz.score = 0; kviz.streak = 0; kviz.answered = 0; kviz.correct = 0; kviz.bestStreak = 0;
+    try{ localStorage.removeItem(KVIZ_KEY); }catch(e){}
+    kvizStats();
+  });
+  // Klávesnice v kvízu: A–D nebo 1–4 vybere odpověď, Enter zkontroluje / posune dál.
+  document.addEventListener('keydown', function(e){
+    if(section.hidden) return;
+    if(e.ctrlKey || e.metaKey || e.altKey) return;
+    if(e.key === 'Enter'){
+      if(e.target && e.target.tagName === 'BUTTON') return;
+      e.preventDefault(); kvizCheck(); return;
+    }
+    var idx = 'abcd'.indexOf(e.key.toLowerCase());
+    if(idx === -1) idx = '1234'.indexOf(e.key);
+    if(idx !== -1 && e.key.length === 1) kvizSelect(idx);
+  });
+
+  // ---- záložka Kvíz ----
+  // Skript je samostatný: otevření Kvízu i návrat na ostatní záložky řeší sám, ať stránka přepíná
+  // záložky jakkoli. Skóre kvízu má vlastní pole v hlavičce (skóre tréninku se tím nemění).
+  function activate(){
+    var teorieBtn = $('top-tab-teorie'), theory = $('theory-section');
+    if(!tabBtn.classList.contains('on') && teorieBtn && !teorieBtn.classList.contains('on')){
+      // nejdřív „kliknutím“ opustíme dosavadní záložku obsluhou stránky (u hry na čas s potvrzením)
+      teorieBtn.click();
+      if(theory && theory.hidden) return;   // stránka odmítla opustit dosavadní záložku (např. běžící hra)
+    }
+    Array.prototype.forEach.call(document.querySelectorAll('.tab-section'), function(s){ s.hidden = s !== section; });
+    Array.prototype.forEach.call(document.querySelectorAll('.toptab'), function(t){ t.classList.toggle('on', t === tabBtn); });
+    if(pageReadout) pageReadout.hidden = true;
+    readout.hidden = false;
+    kvizStats();
+    if(!kviz.current) kvizNext();
+  }
+  tabBtn.addEventListener('click', activate);
+  Array.prototype.forEach.call(document.querySelectorAll('.toptab'), function(t){
+    if(t === tabBtn) return;
+    t.addEventListener('click', function(){ section.hidden = true; readout.hidden = true; tabBtn.classList.remove('on'); });
+  });
+  document.addEventListener('fyzika:scores-updated', function(){ kviz.bestStreak = 0; kvizLoad(); kvizStats(); });
+  kvizLoad();
+  kvizStats();
+  if(location.hash === '#kviz' && !tabBtn.classList.contains('on')) tabBtn.click();
+  else if(location.hash === '#kviz') activate();
+})();
+</script>
+
 </body>
 </html>

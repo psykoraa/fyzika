@@ -80,6 +80,20 @@
   .card{ padding:20px 16px 22px; }
 }
 </style>
+<style>
+/* ---- Kvíz (stejný jako u Grafů rovnoměrného pohybu a u Pohybu po kružnici) ---- */
+.kviz-task{ font-size:1.02rem; line-height:1.5; max-width:52ch; margin:0 auto 10px; color:var(--ink); text-align:center; }
+#kviz-section .kviz-task i, #kviz-section .opt-btn i, #kviz-section .feedback .steps i, #kviz-section .cat-tag i{ font-family:'STIX Two Text', Georgia, serif; font-style:italic; text-transform:none; }
+#kviz-section .feedback .steps{ font-family:'Work Sans', sans-serif; white-space:normal; opacity:1; }
+#kviz-end .kviz-end-box{ text-align:center; margin:0 0 14px; }
+#kviz-end .kviz-end-hint{ text-align:center; margin-top:10px; }
+#kviz-section [hidden]{ display:none; }
+@media (max-width:520px){
+  /* čtyři a více záložek: na telefonu ve dvou řadách (stejně jako Grafy rovnoměrného pohybu) */
+  .top-tabs{ flex-wrap:wrap; }
+  .toptab{ flex:1 1 calc(50% - 4px); padding:13px 8px; }
+}
+</style>
 </head>
 <body>
 
@@ -107,10 +121,16 @@
       <div class="cell"><span class="label">Série</span><span class="value" id="stat-streak">0</span></div>
       <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="stat-accuracy">—</span></div>
     </div>
+    <div class="readout" id="kviz-readout" hidden>
+      <div class="cell"><span class="label">Skóre</span><span class="value" id="kviz-stat-score">0</span></div>
+      <div class="cell"><span class="label">Série</span><span class="value" id="kviz-stat-streak">0</span></div>
+      <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="kviz-stat-accuracy">—</span></div>
+    </div>
   </div>
 
   <div class="top-tabs">
     <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+    <button class="toptab" id="top-tab-kviz" data-tab="kviz">Kvíz</button>
     <button class="toptab" id="top-tab-aplet" data-tab="aplet">Dvojštěrbina</button>
     <button class="toptab" id="top-tab-trenink" data-tab="trenink">Trénink</button>
   </div>
@@ -262,6 +282,50 @@
       <p>• U elektronů a neutronů je \(\lambda\) srovnatelná s rozměry atomů, u makroskopických těles nepozorovatelně malá.</p>
     </div>
 
+  </div>
+
+  <!-- ============ KVÍZ ============ -->
+  <div id="kviz-section" class="tab-section" hidden>
+    <div class="panel">
+      <div class="section-block">
+        <div class="panel-title">Okruh otázek</div>
+        <div class="row" id="kviz-type-row"></div>
+      </div>
+      <div class="settings-foot" style="justify-content:flex-end;">
+        <button class="linklike" id="kviz-reset-stats">vynulovat statistiku</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div id="kviz-q">
+      <span class="cat-tag" id="kviz-cat-tag">Otázka</span>
+      <p class="kviz-task" id="kviz-task-text"></p>
+      <figure class="theory-fig" id="kviz-fig" hidden>
+        <svg id="kviz-graph" viewBox="0 0 480 260" role="img" aria-label="Obrázek k otázce"></svg>
+      </figure>
+      <div class="opt-grid wide-opts" id="kviz-opt-grid"></div>
+      <div class="actions">
+        <button class="btn primary" id="kviz-btn-check">Zkontrolovat</button>
+        <button class="btn ghost" id="kviz-btn-skip">Nevím / Zobrazit řešení</button>
+      </div>
+      <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint">Vyberte jednu ze čtyř odpovědí kliknutím nebo klávesami A až D (případně 1 až 4) a potvrďte tlačítkem Zkontrolovat nebo klávesou Enter; dalším Enterem přejdete na další otázku. Po kontrole se správná odpověď obarví zeleně, chybně vybraná červeně a pod otázkou se objeví vysvětlení. Okruh otázek vyberete nahoře; otázky se neopakují, dokud neprojdete celý okruh. Pak se zobrazí, kolik otázek jste zodpověděli správně, a otázky můžete zamíchat a projít znovu.</p>
+      </details>
+      <div class="feedback" id="kviz-feedback" hidden>
+        <div class="headline" id="kviz-feedback-headline"></div>
+        <div class="steps" id="kviz-feedback-steps"></div>
+      </div>
+      </div>
+      <div id="kviz-end" hidden>
+        <div class="feedback ok kviz-end-box"><div class="headline">Hotovo, prošli jste všechny otázky!</div></div>
+        <p class="kviz-task" id="kviz-end-text"></p>
+        <div class="actions">
+          <button class="btn primary" id="kviz-btn-restart">Zamíchat otázky a začít znovu</button>
+        </div>
+        <p class="hint kviz-end-hint">Můžete také nahoře vybrat jiný okruh otázek.</p>
+      </div>
+    </div>
   </div>
 
   <!-- ============ APLET: DVOJŠTĚRBINA ============ -->
@@ -843,5 +907,347 @@
   trGenerate();
 })();
 </script>
+<script>
+(function(){
+  "use strict";
+  // ================= KVÍZ: otázky s výběrem ze čtyř odpovědí (A–D) =================
+  // Samostatný skript (stejný kvíz jako u Grafů rovnoměrného pohybu a u Pohybu po kružnici).
+  // Položka banky: c = okruh, t = zadání (HTML), r = správná odpověď, w = tři špatné,
+  // e = vysvětlení; fixed = možnosti se nemíchají, jen seřadí.
+  var LETTERS = ['A','B','C','D'];
+  // ---- pomůcky pro obrázky k otázkám (SVG ve viewBoxu 480 × 260, barvy z proměnných stránky) ----
+  var KV_COL = { ink:'var(--ink)', soft:'var(--ink-soft)', acc:'var(--accent)', foc:'var(--focus)' };
+  var KV_DEFS = '<defs>' + ['ink','soft','acc','foc'].map(function(k){
+    return '<marker id="kv-' + k + '" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4.4" markerHeight="4.4" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="' + KV_COL[k] + '"/></marker>';
+  }).join('') + '</defs>';
+  function kvA(x1, y1, x2, y2, c, w, dash){
+    c = c || 'ink';
+    return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + KV_COL[c] + '" stroke-width="' + (w || 2.6) + '" stroke-linecap="round" marker-end="url(#kv-' + c + ')"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  function kvL(x1, y1, x2, y2, c, w, dash){
+    return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + KV_COL[c || 'soft'] + '" stroke-width="' + (w || 1.6) + '" stroke-linecap="round"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  function kvT(x, y, txt, anchor, size, c, italic){
+    return '<text x="' + x + '" y="' + y + '" text-anchor="' + (anchor || 'middle') + '" font-family="' + (italic ? "STIX Two Text, Georgia, serif" : "Work Sans, sans-serif") + '" font-size="' + (size || 13) + '"' + (italic ? ' font-style="italic"' : '') + ' fill="' + KV_COL[c || 'ink'] + '">' + txt + '</text>';
+  }
+  function kvC(x, y, r, fill, stroke){
+    return '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + (fill || 'none') + '" stroke="' + (stroke ? KV_COL[stroke] : 'none') + '" stroke-width="1.6"/>';
+  }
+  function kvR(x, y, w, h, fill, stroke, rot){
+    return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="2" fill="' + (fill || 'var(--surface-2)') + '" stroke="' + KV_COL[stroke || 'soft'] + '" stroke-width="1.6"' + (rot ? ' transform="rotate(' + rot[0] + ' ' + rot[1] + ' ' + rot[2] + ')"' : '') + '/>';
+  }
+  function kvP(d, c, w, dash, fill){
+    return '<path d="' + d + '" fill="' + (fill || 'none') + '" stroke="' + KV_COL[c || 'ink'] + '" stroke-width="' + (w || 2) + '" stroke-linecap="round" stroke-linejoin="round"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  // očíslovaný kroužek u špičky šipky (n = číslo), směr (dx, dy) od špičky ven
+  function kvN(x, y, n, dx, dy){
+    var lx = x + dx, ly = y + dy;
+    return kvC(lx, ly, 10, 'var(--surface-2)', 'soft') + '<text x="' + lx + '" y="' + (ly + 4.5) + '" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="13" font-weight="600" fill="var(--ink)">' + n + '</text>';
+  }
+  // šipka s číslem: z (x1, y1) do (x2, y2), kroužek za špičkou
+  function kvAN(x1, y1, x2, y2, n, c){
+    var dx = x2 - x1, dy = y2 - y1, l = Math.sqrt(dx*dx + dy*dy);
+    return kvA(x1, y1, x2, y2, c || 'ink') + kvN(x2, y2, n, dx/l*16, dy/l*16);
+  }
+  var KVIZ_TYPES = [
+    { key:'all', name:'Vše' },
+    { key:'foton', name:'Hybnost fotonu a Compton', tag:'Hybnost fotonu a Comptonův jev' },
+    { key:'dualismus', name:'Dualismus', tag:'Korpuskulárně vlnový dualismus' },
+    { key:'debroglie', name:'De Broglieho vlny', tag:'De Broglieho hypotéza' },
+    { key:'vypocty', name:'Výpočty a jevy', tag:'Vlnové délky částic a tunelový jev' }
+  ];
+  var KVIZ_BANK = [
+    // ----- foton -----
+    { c:'foton', t:'Jakou hybnost má foton o vlnové délce <i>λ</i>?',
+      r:'<i>p</i> = <i>h</i>/<i>λ</i>', w:['<i>p</i> = <i>hλ</i>', '<i>p</i> = <i>λ</i>/<i>h</i>', 'Foton hybnost nemá, protože nemá klidovou hmotnost.'],
+      e:'Z <i>E</i> = <i>hf</i> a <i>p</i> = <i>E</i>/<i>c</i> plyne <i>p</i> = <i>hf</i>/<i>c</i> = <i>h</i>/<i>λ</i>. Foton má nulovou klidovou hmotnost, hybnost ale má.' },
+    { c:'foton', t:'Jakou hybnost má foton ultrafialového záření o vlnové délce 250&nbsp;nm?',
+      r:'Přibližně 2,65·10⁻²⁷&nbsp;kg·m·s⁻¹', w:['Přibližně 1,33·10⁻²⁷&nbsp;kg·m·s⁻¹', 'Přibližně 1,66·10⁻⁴⁰&nbsp;kg·m·s⁻¹', 'Přibližně 7,95·10⁻¹⁹&nbsp;kg·m·s⁻¹'],
+      e:'<i>p</i> = <i>h</i>/<i>λ</i> = 6,626·10⁻³⁴&nbsp;J·s / (2,5·10⁻⁷&nbsp;m) ≐ 2,65·10⁻²⁷&nbsp;kg·m·s⁻¹. Kontrola: zelený foton 500&nbsp;nm má 1,33·10⁻²⁷&nbsp;kg·m·s⁻¹ a poloviční vlnová délka dává dvojnásobnou hybnost. Rozměrově J·s/m = kg·m·s⁻¹. 7,95·10⁻¹⁹&nbsp;J je energie fotonu, ne hybnost.' },
+    { c:'foton', t:'Kterou vlastnost foton <i>nemá</i>?',
+      r:'Nenulovou klidovou hmotnost', w:['Energii <i>hf</i>', 'Hybnost <i>h</i>/<i>λ</i>', 'Rychlost rovnou rychlosti světla'],
+      e:'Foton má nulovou klidovou hmotnost, pohybuje se vždy rychlostí světla a nelze ho zastavit, zpomalit ani urychlit. Energii i hybnost má.' },
+    { c:'foton', t:'Co zjistil A. Compton při rozptylu rentgenového záření na uhlíku (1922)?',
+      r:'Rozptýlené záření má delší vlnovou délku než dopadající, tím delší, čím víc se odchýlilo.', w:['Rozptýlené záření má kratší vlnovou délku.', 'Vlnová délka se rozptylem nemění.', 'Rentgenové záření uhlíkem neprojde.'],
+      e:'Foton předá část energie elektronu, takže rozptýlený foton má menší energii, menší frekvenci a delší vlnovou délku.' },
+    { c:'foton', t:'Proč lze v Comptonově pokusu považovat elektrony v uhlíku za volné?',
+      r:'Energie rentgenových fotonů (přibližně 18&nbsp;keV) je mnohem větší než vazební energie elektronů.', w:['Uhlík nemá žádné vázané elektrony.', 'Elektrony uhlíku jsou kladně nabité.', 'Rentgenové záření elektrony předem ionizuje teplem.'],
+      e:'Rozdíl energií je obrovský, takže vazbu elektronu lze zanedbat. Rozptyl se pak popíše jako dokonale pružná srážka fotonu s volným stojícím elektronem.' },
+    { c:'foton', t:'Který zákon zachování energie platí při Comptonově jevu (<i>f</i>′ je frekvence rozptýleného záření)?',
+      r:'<i>hf</i> = <i>hf</i>′ + <i>E</i><sub>k</sub>′', w:['<i>hf</i> = <i>hf</i>′ − <i>E</i><sub>k</sub>′', '<i>hf</i>′ = <i>hf</i> + <i>E</i><sub>k</sub>′', '<i>hf</i> = <i>E</i><sub>k</sub>′'],
+      e:'Energie dopadajícího fotonu se rozdělí mezi rozptýlený foton a odražený elektron. Proto <i>f</i>′ < <i>f</i>. Zároveň se zachovává hybnost.' },
+    { c:'foton', t:'Jakou energii má foton rentgenového záření o vlnové délce 0,07&nbsp;nm?',
+      r:'Přibližně 18&nbsp;keV', w:['Přibližně 18&nbsp;eV', 'Přibližně 1,8&nbsp;MeV', 'Přibližně 0,087&nbsp;eV'],
+      e:'<i>E</i> ≐ 1&nbsp;240/0,07&nbsp;eV ≐ 17&nbsp;700&nbsp;eV ≐ 18&nbsp;keV. Kontrola: <i>hc</i>/<i>λ</i> = 6,626·10⁻³⁴ · 2,998·10⁸/(7·10⁻¹¹)&nbsp;J ≐ 2,8·10⁻¹⁵&nbsp;J, po vydělení 1,602·10⁻¹⁹ přibližně 1,8·10⁴&nbsp;eV.' },
+    // ----- dualismus -----
+    { c:'dualismus', t:'Který jev ukazuje vlnové vlastnosti světla?',
+      r:'Interference za dvojštěrbinou (Youngův pokus)', w:['Fotoelektrický jev', 'Comptonův jev', 'Vybíjení elektroskopu ultrafialovým zářením'],
+      e:'Ohyb a interference jsou typické vlnové jevy. Fotoefekt a Comptonův jev naopak ukazují částicové vlastnosti světla.' },
+    { c:'dualismus', t:'Na dvojštěrbinu posíláme velmi slabé světlo, foton po fotonu. Co pozorujeme na fotografické desce?',
+      r:'Každý foton dopadne do jednoho bodu, ale po delší době se z bodů složí interferenční proužky.', w:['Hned od začátku rozmazané proužky bez bodů.', 'Jen dva světlé body za štěrbinami.', 'Nic, jednotlivé fotony neinterferují.'],
+      e:'Jednotlivý foton se projeví jako částice (jeden bod), rozložení mnoha dopadů ale odpovídá interferenci vln. Vlna určuje pravděpodobnost dopadu.' },
+    { c:'dualismus', t:'Lze předpovědět, kam na stínítku dopadne konkrétní foton za dvojštěrbinou?',
+      r:'Ne, vlna určuje jen pravděpodobnost dopadu.', w:['Ano, pokud známe jeho energii.', 'Ano, vždy do středu stínítka.', 'Ano, do jednoho ze dvou bodů za štěrbinami.'],
+      e:'Místo dopadu jednoho fotonu nelze předpovědět. Předpovědět lze jen rozložení mnoha dopadů — interferenční obrazec.' },
+    { c:'dualismus', t:'Co znamená korpuskulárně vlnový dualismus?',
+      r:'Objekty mikrosvěta projevují podle druhu pokusu jednou vlnové, jindy částicové vlastnosti.', w:['Světlo je vlna a elektron je částice, nic víc.', 'Každá částice je složena ze dvou vln.', 'Světlo se skládá ze dvou druhů fotonů.'],
+      e:'Foton (i elektron) není ani kulička, ani vlna v běžném smyslu. Corpusculum znamená latinsky tělísko.' },
+    { c:'dualismus', t:'U jakého záření se nejvýrazněji projevují částicové vlastnosti?',
+      r:'U záření s krátkou vlnovou délkou (rentgenové, gama)', w:['U rádiových vln', 'U infračerveného záření', 'U všech stejně'],
+      e:'Čím kratší vlnová délka, tím větší energie a hybnost fotonu a tím výrazněji se projevují částicové vlastnosti.' },
+    // ----- de Broglie -----
+    { c:'debroglie', t:'Jakou vlnovou délku přiřadil L. de Broglie částici o hmotnosti <i>m</i> a rychlosti <i>v</i>?',
+      r:'<i>λ</i> = <i>h</i>/(<i>mv</i>)', w:['<i>λ</i> = <i>mv</i>/<i>h</i>', '<i>λ</i> = <i>hmv</i>', '<i>λ</i> = <i>h</i>/(<i>mc</i>²)'],
+      e:'De Broglie (1924) přiřadil každé částici o hybnosti <i>p</i> = <i>mv</i> vlnovou délku <i>λ</i> = <i>h</i>/<i>p</i>, stejně jako u fotonu.' },
+    { c:'debroglie', t:'Který pokus potvrdil de Broglieho hypotézu?',
+      r:'Davisson a Germer: odraz elektronů od krystalu niklu vytvářel interferenční maxima (1927).', w:['Rutherfordův pokus se zlatou fólií.', 'Millikanův pokus s olejovými kapičkami.', 'Comptonův rozptyl rentgenového záření.'],
+      e:'Elektrony odražené od krystalu se chovaly jako rentgenové záření. Téhož roku pozoroval G. P. Thomson difrakční kroužky elektronů prošlých tenkou fólií.' },
+    { c:'debroglie', t:'Jakou de Broglieho vlnovou délku má elektron urychlený z klidu napětím 100&nbsp;V?',
+      r:'Přibližně 0,12&nbsp;nm', w:['Přibližně 12&nbsp;nm', 'Přibližně 0,012&nbsp;nm', 'Přibližně 123&nbsp;nm'],
+      e:'<i>λ</i> ≐ 1,23/√100&nbsp;nm = 0,123&nbsp;nm. Kontrola: <i>p</i> = √(2<i>m</i><sub>e</sub><i>eU</i>) = √(2 · 9,109·10⁻³¹ · 1,602·10⁻¹⁹ · 100)&nbsp;kg·m·s⁻¹ ≐ 5,40·10⁻²⁴&nbsp;kg·m·s⁻¹ a <i>h</i>/<i>p</i> ≐ 1,23·10⁻¹⁰&nbsp;m.' },
+    { c:'debroglie', t:'Urychlovací napětí elektronu zvětšíme čtyřikrát. Jak se změní jeho de Broglieho vlnová délka?',
+      r:'Zmenší se na polovinu.', w:['Zmenší se na čtvrtinu.', 'Zvětší se dvakrát.', 'Nezmění se.'],
+      e:'<i>λ</i> ≐ 1,23/√<i>U</i>&nbsp;nm je nepřímo úměrná √<i>U</i>. Čtyřnásobné napětí dává √4 = 2krát menší vlnovou délku.' },
+    { c:'debroglie', t:'Elektron a proton se pohybují stejnou rychlostí. Která částice má delší de Broglieho vlnovou délku?',
+      r:'Elektron, přibližně 1&nbsp;840krát delší', w:['Proton, protože je těžší', 'Obě mají stejnou vlnovou délku.', 'Elektron, ale jen dvakrát delší'],
+      e:'Při stejné rychlosti je <i>λ</i> = <i>h</i>/(<i>mv</i>) nepřímo úměrná hmotnosti. Proton je přibližně 1&nbsp;840krát těžší, a proto má tolikrát kratší vlnovou délku.' },
+    { c:'debroglie', t:'Proč lze elektrony použít v elektronovém mikroskopu s lepším rozlišením než světlo?',
+      r:'Jejich vlnová délka (desetiny nanometru i méně) je mnohem kratší než vlnová délka světla.', w:['Elektrony jsou vidět okem.', 'Elektrony se neohýbají.', 'Elektrony mají větší vlnovou délku než světlo.'],
+      e:'Rozlišení omezuje ohyb, který je tím menší, čím kratší je vlnová délka. Elektron urychlený 150&nbsp;V má 0,1&nbsp;nm, viditelné světlo 400&nbsp;nm až 700&nbsp;nm.' },
+    { c:'debroglie', t:'Do kdy platí vztah <i>λ</i> ≐ 1,23/√<i>U</i>&nbsp;nm pro urychlený elektron?',
+      r:'Jen pro rychlosti malé proti rychlosti světla (zhruba do desítek kilovoltů).', w:['Pro libovolné napětí.', 'Jen pro napětí pod 1&nbsp;V.', 'Jen pro protony.'],
+      e:'Vztah vychází z klasické kinetické energie <i>eU</i> = ½<i>m</i><sub>e</sub><i>v</i>². Při napětích řádově stovek kilovoltů je nutné počítat relativisticky.' },
+    // ----- výpočty a jevy -----
+    { c:'vypocty', t:'Proč nepozorujeme vlnové vlastnosti tenisového míčku (0,058&nbsp;kg, 50&nbsp;m·s⁻¹)?',
+      r:'Jeho vlnová délka (přibližně 2·10⁻³⁴&nbsp;m) je nesrovnatelně menší než cokoli, s čím by mohl interferovat.', w:['Míček žádnou vlnovou délku nemá.', 'Jeho vlnová délka je příliš velká, přibližně 1&nbsp;km.', 'Vlnění míčku tlumí vzduch.'],
+      e:'<i>λ</i> = <i>h</i>/(<i>mv</i>) = 6,626·10⁻³⁴/(0,058 · 50)&nbsp;m ≐ 2,3·10⁻³⁴&nbsp;m. U makroskopických těles se vlnové vlastnosti neprojeví.' },
+    { c:'vypocty', t:'Jakou de Broglieho vlnovou délku má elektron letící rychlostí 1,0·10⁶&nbsp;m·s⁻¹?',
+      r:'Přibližně 0,73&nbsp;nm', w:['Přibližně 7,3&nbsp;nm', 'Přibližně 0,073&nbsp;nm', 'Přibližně 1,4&nbsp;nm'],
+      e:'<i>λ</i> = <i>h</i>/(<i>m</i><sub>e</sub><i>v</i>) = 6,626·10⁻³⁴/(9,109·10⁻³¹ · 1,0·10⁶)&nbsp;m ≐ 7,3·10⁻¹⁰&nbsp;m = 0,73&nbsp;nm. Kontrola: <i>E</i><sub>k</sub> = ½<i>mv</i>² ≐ 4,55·10⁻¹⁹&nbsp;J ≐ 2,84&nbsp;eV a 1,23/√2,84&nbsp;nm ≐ 0,73&nbsp;nm.' },
+    { c:'vypocty', t:'Proč se difrakcí pomalých (tepelných) neutronů zkoumá stavba krystalů?',
+      r:'Jejich vlnová délka (přibližně 0,18&nbsp;nm) je srovnatelná se vzdálenostmi atomů v krystalu.', w:['Neutrony jsou nabité a krystal je odpuzuje.', 'Neutrony mají vlnovou délku několik metrů.', 'Neutrony krystal roztaví a ukážou jeho složení.'],
+      e:'Pro neutron s rychlostí 2&nbsp;200&nbsp;m·s⁻¹ je <i>λ</i> = 6,626·10⁻³⁴/(1,675·10⁻²⁷ · 2&nbsp;200)&nbsp;m ≐ 1,8·10⁻¹⁰&nbsp;m — rozměr atomů, proto se na krystalu ohýbají.' },
+    { c:'vypocty', t:'V elektronové difrakční trubici zvýšíme urychlovací napětí. Co se stane s difrakčními kroužky?',
+      r:'Zmenší se, protože elektrony mají větší hybnost a kratší vlnovou délku.', w:['Zvětší se.', 'Zmizí.', 'Nezmění se.'],
+      e:'Větší napětí → větší hybnost → kratší vlnová délka → menší ohybové úhly, takže kroužky se zmenší.' },
+    { c:'vypocty', t:'Co je tunelový jev?',
+      r:'Částice mikrosvěta může s malou pravděpodobností proniknout bariérou, na jejíž překonání nemá energii.', w:['Pohyb elektronů v kovovém drátu.', 'Odraz světla ve světlovodu.', 'Pohyb částic v urychlovači v podzemním tunelu.'],
+      e:'Klasická kulička kopec bez dostatečné energie nepřekoná, vlna se ale za překážku dostat může. Je to typický projev vlnové povahy částic.' },
+    { c:'vypocty', t:'Kde se uplatňuje tunelový jev?',
+      r:'Při vyletování částic alfa z jader a v rastrovacím tunelovém mikroskopu', w:['Při lomu světla na čočce', 'Při Comptonově rozptylu', 'Při vzniku duhy'],
+      e:'Tunelovým jevem vylétají částice alfa z jader; funguje na něm také řada polovodičových součástek a rastrovací tunelový mikroskop.' }
+  ];
+
+
+  var KVIZ_KEY = 'fyzika:vlnove-vlastnosti-castic:kviz';
+  var section = document.getElementById('kviz-section');
+  var tabBtn = document.getElementById('top-tab-kviz');
+  var readout = document.getElementById('kviz-readout');
+  var pageReadout = document.getElementById('header-readout');
+  var kviz = {
+    type:'all', queue:[], current:null, sel:null, locked:false,
+    score:0, streak:0, bestStreak:0, answered:0, correct:0,
+    inRound:false, ended:false, roundTotal:0, roundCorrect:0
+  };
+  function $(id){ return document.getElementById(id); }
+  function kvizLoad(){
+    try{ var raw = localStorage.getItem(KVIZ_KEY); if(raw){ kviz.bestStreak = JSON.parse(raw).bestStreak || 0; } }catch(e){}
+  }
+  function kvizSave(){
+    try{ localStorage.setItem(KVIZ_KEY, JSON.stringify({bestStreak: kviz.bestStreak})); }catch(e){}
+  }
+  function kvizShuffled(a){
+    a = a.slice();
+    for(var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random()*(i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; }
+    return a;
+  }
+  function typeOf(key){ return KVIZ_TYPES.filter(function(t){ return t.key === key; })[0]; }
+
+  // Otázky okruhu se berou v náhodném pořadí bez opakování. Po projití celého okruhu
+  // se zobrazí závěrečná hláška s výsledkem kola a nabídkou otázky zamíchat znovu.
+  function kvizNext(){
+    if(!kviz.queue.length){
+      if(kviz.inRound){ kvizShowEnd(); return; }
+      var pool = KVIZ_BANK.filter(function(b){ return kviz.type === 'all' || b.c === kviz.type; });
+      kviz.queue = kvizShuffled(pool);
+      if(kviz.current && kviz.queue.length > 1 && kviz.queue[0] === kviz.current.item){ kviz.queue.push(kviz.queue.shift()); }
+      kviz.inRound = true; kviz.roundTotal = pool.length; kviz.roundCorrect = 0;
+    }
+    var item = kviz.queue.shift();
+    var opts = item.fixed ? [item.r].concat(item.w).sort() : kvizShuffled([item.r].concat(item.w));
+    kviz.current = { item:item, choices:opts, correct:opts.indexOf(item.r) };
+    kvizRender();
+  }
+  function kvizShowEnd(){
+    kviz.ended = true; kviz.inRound = false;
+    var tp = typeOf(kviz.type);
+    var n = kviz.roundTotal, k = kviz.roundCorrect;
+    $('kviz-end-text').innerHTML =
+      'Prošli jste všech ' + n + ' otázek ' + (kviz.type === 'all' ? 'kvízu' : 'okruhu „' + tp.name + '“') + '. ' +
+      'Správně jste odpověděli na ' + k + ' z ' + n + ' (' + Math.round(100*k/n) + '&nbsp;%). Chcete otázky zamíchat a projít znovu?';
+    $('kviz-q').hidden = true;
+    $('kviz-end').hidden = false;
+    $('kviz-btn-restart').focus({ preventScroll:true });
+  }
+  function kvizRestart(){
+    kviz.queue = []; kviz.inRound = false;
+    kvizNext();
+  }
+  function kvizRender(){
+    var q = kviz.current;
+    kviz.ended = false;
+    $('kviz-q').hidden = false;
+    $('kviz-end').hidden = true;
+    var tp = typeOf(q.item.c);
+    $('kviz-cat-tag').innerHTML = tp ? tp.tag : 'Otázka';
+    $('kviz-task-text').innerHTML = q.item.t;
+    var fig = $('kviz-fig');
+    fig.hidden = !q.item.f;
+    if(q.item.f){ $('kviz-graph').innerHTML = KV_DEFS + q.item.f; $('kviz-graph').setAttribute('aria-label', q.item.fa || 'Obrázek k otázce'); }
+    var grid = $('kviz-opt-grid');
+    grid.innerHTML = '';
+    kviz.sel = null; kviz.locked = false;
+    q.choices.forEach(function(c, i){
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'opt-btn';
+      b.innerHTML = '<b>' + LETTERS[i] + ')</b>&nbsp; ' + c;
+      b.addEventListener('click', function(){ kvizSelect(i); });
+      grid.appendChild(b);
+    });
+    var fb = $('kviz-feedback');
+    fb.hidden = true; fb.classList.remove('ok', 'bad', 'sol');
+    $('kviz-btn-check').textContent = 'Zkontrolovat';
+  }
+  function kvizSelect(i){
+    if(kviz.locked || kviz.ended) return;
+    kviz.sel = i;
+    Array.prototype.forEach.call($('kviz-opt-grid').children, function(el, j){ el.classList.toggle('selected', j === i); });
+    $('kviz-btn-check').focus({ preventScroll:true });
+  }
+  function kvizFinish(ok, headline){
+    var q = kviz.current;
+    Array.prototype.forEach.call($('kviz-opt-grid').children, function(el, j){
+      el.disabled = true;
+      el.classList.remove('selected');
+      if(j === q.correct) el.classList.add(kviz.sel === j ? 'correct' : 'missed');
+      else if(j === kviz.sel) el.classList.add('wrong');
+    });
+    var fb = $('kviz-feedback');
+    fb.hidden = false;
+    fb.classList.toggle('ok', ok); fb.classList.toggle('bad', !ok);
+    $('kviz-feedback-headline').textContent = headline;
+    var finalText = 'Správná odpověď: ' + LETTERS[q.correct] + ') ' + q.item.r;
+    if(window.FyzikaReseni && FyzikaReseni.show){
+      FyzikaReseni.show(fb, $('kviz-feedback-steps'), { raw:true, title:'Vysvětlení', steps:[q.item.e], final:finalText });
+    } else {
+      $('kviz-feedback-steps').innerHTML = q.item.e + '<br><b>' + finalText + '</b>';
+    }
+    kviz.locked = true;
+    var btn = $('kviz-btn-check');
+    btn.textContent = 'Další otázka →';
+    btn.focus({ preventScroll:true });
+    kvizStats();
+  }
+  function kvizCheck(){
+    if(kviz.ended){ kvizRestart(); return; }
+    if(kviz.locked){ kvizNext(); return; }
+    if(kviz.sel === null && !confirm('Není vybraná žádná možnost. Opravdu chcete zkontrolovat?')) return;
+    var ok = kviz.sel === kviz.current.correct;
+    kviz.answered++;
+    if(ok){
+      kviz.score += 10; kviz.streak++; kviz.correct++; kviz.roundCorrect++;
+      if(kviz.streak > kviz.bestStreak){ kviz.bestStreak = kviz.streak; kvizSave(); }
+    } else {
+      kviz.streak = 0;
+    }
+    kvizFinish(ok, ok ? 'Správně!' : (kviz.sel === null ? 'Vyberte odpověď.' : 'Bohužel špatně.'));
+  }
+  function kvizSkip(){
+    if(kviz.ended){ kvizRestart(); return; }
+    if(kviz.locked){ kvizNext(); return; }
+    kviz.streak = 0; kviz.answered++;
+    kvizFinish(false, 'Správná odpověď:');
+  }
+  function kvizStats(){
+    $('kviz-stat-score').textContent = kviz.score;
+    $('kviz-stat-streak').textContent = kviz.streak + (kviz.bestStreak > 0 ? ' / ' + kviz.bestStreak : '');
+    $('kviz-stat-accuracy').textContent = kviz.answered === 0 ? '—' : Math.round(100*kviz.correct/kviz.answered) + ' %';
+  }
+  (function kvizBuildTypeRow(){
+    var row = $('kviz-type-row');
+    KVIZ_TYPES.forEach(function(d){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip accented' + (d.key === kviz.type ? ' on' : '');
+      b.setAttribute('aria-pressed', d.key === kviz.type ? 'true' : 'false');
+      b.textContent = d.name;
+      b.addEventListener('click', function(){
+        if(d.key === kviz.type) return;
+        // rozpracovaná otázka s vybranou odpovědí se před změnou okruhu vyhodnotí
+        var settled = !kviz.locked && kviz.sel !== null;
+        if(settled) kvizCheck();
+        kviz.type = d.key; kviz.queue = []; kviz.inRound = false;
+        Array.prototype.forEach.call(row.children, function(el, i){
+          var on = KVIZ_TYPES[i].key === kviz.type;
+          el.classList.toggle('on', on);
+          el.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        // vyhodnocená otázka zůstane i s vysvětlením vidět, další už bude z nového okruhu
+        if(!settled) kvizNext();
+      });
+      row.appendChild(b);
+    });
+  })();
+  $('kviz-btn-check').addEventListener('click', kvizCheck);
+  $('kviz-btn-skip').addEventListener('click', kvizSkip);
+  $('kviz-btn-restart').addEventListener('click', kvizRestart);
+  $('kviz-reset-stats').addEventListener('click', function(){
+    kviz.score = 0; kviz.streak = 0; kviz.answered = 0; kviz.correct = 0; kviz.bestStreak = 0;
+    try{ localStorage.removeItem(KVIZ_KEY); }catch(e){}
+    kvizStats();
+  });
+  // Klávesnice v kvízu: A–D nebo 1–4 vybere odpověď, Enter zkontroluje / posune dál.
+  document.addEventListener('keydown', function(e){
+    if(section.hidden) return;
+    if(e.ctrlKey || e.metaKey || e.altKey) return;
+    if(e.key === 'Enter'){
+      if(e.target && e.target.tagName === 'BUTTON') return;
+      e.preventDefault(); kvizCheck(); return;
+    }
+    var idx = 'abcd'.indexOf(e.key.toLowerCase());
+    if(idx === -1) idx = '1234'.indexOf(e.key);
+    if(idx !== -1 && e.key.length === 1) kvizSelect(idx);
+  });
+
+  // ---- záložka Kvíz ----
+  // Skript je samostatný: otevření Kvízu i návrat na ostatní záložky řeší sám, ať stránka přepíná
+  // záložky jakkoli. Skóre kvízu má vlastní pole v hlavičce (skóre tréninku se tím nemění).
+  function activate(){
+    var teorieBtn = $('top-tab-teorie'), theory = $('theory-section');
+    if(!tabBtn.classList.contains('on') && teorieBtn && !teorieBtn.classList.contains('on')){
+      // nejdřív „kliknutím“ opustíme dosavadní záložku obsluhou stránky (u hry na čas s potvrzením)
+      teorieBtn.click();
+      if(theory && theory.hidden) return;   // stránka odmítla opustit dosavadní záložku (např. běžící hra)
+    }
+    Array.prototype.forEach.call(document.querySelectorAll('.tab-section'), function(s){ s.hidden = s !== section; });
+    Array.prototype.forEach.call(document.querySelectorAll('.toptab'), function(t){ t.classList.toggle('on', t === tabBtn); });
+    if(pageReadout) pageReadout.hidden = true;
+    readout.hidden = false;
+    kvizStats();
+    if(!kviz.current) kvizNext();
+  }
+  tabBtn.addEventListener('click', activate);
+  Array.prototype.forEach.call(document.querySelectorAll('.toptab'), function(t){
+    if(t === tabBtn) return;
+    t.addEventListener('click', function(){ section.hidden = true; readout.hidden = true; tabBtn.classList.remove('on'); });
+  });
+  document.addEventListener('fyzika:scores-updated', function(){ kviz.bestStreak = 0; kvizLoad(); kvizStats(); });
+  kvizLoad();
+  kvizStats();
+  if(location.hash === '#kviz' && !tabBtn.classList.contains('on')) tabBtn.click();
+  else if(location.hash === '#kviz') activate();
+})();
+</script>
+
 </body>
 </html>
