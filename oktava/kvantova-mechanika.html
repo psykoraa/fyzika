@@ -14,6 +14,7 @@
 <script src="../spolecne/auth.js"></script>
 <script src="../spolecne/zalozky.js?v=3"></script>
 <link rel="stylesheet" href="../spolecne/styl.css">
+<link rel="stylesheet" href="../spolecne/reseni.css?v=1">
 <link rel="stylesheet" href="../spolecne/komponenty.css?v=1">
 <style>
 :root{
@@ -68,6 +69,16 @@
   .card{ padding:20px 16px 22px; }
 }
 </style>
+<style>
+/* ---- Kvíz (stejný jako u Grafů rovnoměrného pohybu a u Pohybu po kružnici) ---- */
+.kviz-task{ font-size:1.02rem; line-height:1.5; max-width:52ch; margin:0 auto 10px; color:var(--ink); text-align:center; }
+#kviz-section .kviz-task i, #kviz-section .opt-btn i, #kviz-section .feedback .steps i, #kviz-section .cat-tag i{ font-family:'STIX Two Text', Georgia, serif; font-style:italic; text-transform:none; }
+#kviz-section .feedback .steps{ font-family:'Work Sans', sans-serif; white-space:normal; opacity:1; }
+#kviz-end .kviz-end-box{ text-align:center; margin:0 0 14px; }
+#kviz-end .kviz-end-hint{ text-align:center; margin-top:10px; }
+#kviz-section [hidden]{ display:none; }
+#kviz-fig svg{ display:block; width:100%; max-width:560px; height:auto; margin:0 auto; }
+</style>
 </head>
 <body>
 
@@ -88,10 +99,16 @@
         <p>atomová a částicová fyzika — relace neurčitosti, vlnová funkce, měření</p>
       </div>
     </div>
+    <div class="readout" id="kviz-readout" hidden>
+      <div class="cell"><span class="label">Skóre</span><span class="value" id="kviz-stat-score">0</span></div>
+      <div class="cell"><span class="label">Série</span><span class="value" id="kviz-stat-streak">0</span></div>
+      <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="kviz-stat-accuracy">—</span></div>
+    </div>
   </div>
 
   <div class="top-tabs">
     <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+    <button class="toptab" id="top-tab-kviz" data-tab="kviz">Kvíz</button>
     <button class="toptab" id="top-tab-aplet" data-tab="aplet">Aplety</button>
   </div>
 
@@ -205,6 +222,50 @@
 
   </div>
 
+  <!-- ============ KVÍZ ============ -->
+  <div id="kviz-section" class="tab-section" hidden>
+    <div class="panel">
+      <div class="section-block">
+        <div class="panel-title">Okruh otázek</div>
+        <div class="row" id="kviz-type-row"></div>
+      </div>
+      <div class="settings-foot" style="justify-content:flex-end;">
+        <button class="linklike" id="kviz-reset-stats">vynulovat statistiku</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div id="kviz-q">
+      <span class="cat-tag" id="kviz-cat-tag">Otázka</span>
+      <p class="kviz-task" id="kviz-task-text"></p>
+      <figure class="theory-fig" id="kviz-fig" hidden>
+        <svg id="kviz-graph" viewBox="0 0 480 260" role="img" aria-label="Obrázek k otázce"></svg>
+      </figure>
+      <div class="opt-grid wide-opts" id="kviz-opt-grid"></div>
+      <div class="actions">
+        <button class="btn primary" id="kviz-btn-check">Zkontrolovat</button>
+        <button class="btn ghost" id="kviz-btn-skip">Nevím / Zobrazit řešení</button>
+      </div>
+      <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint">Vyberte jednu ze čtyř odpovědí kliknutím nebo klávesami A až D (případně 1 až 4) a potvrďte tlačítkem Zkontrolovat nebo klávesou Enter; dalším Enterem přejdete na další otázku. Po kontrole se správná odpověď obarví zeleně, chybně vybraná červeně a pod otázkou se objeví vysvětlení. Okruh otázek vyberete nahoře; otázky se neopakují, dokud neprojdete celý okruh. Pak se zobrazí, kolik otázek jste zodpověděli správně, a otázky můžete zamíchat a projít znovu.</p>
+      </details>
+      <div class="feedback" id="kviz-feedback" hidden>
+        <div class="headline" id="kviz-feedback-headline"></div>
+        <div class="steps" id="kviz-feedback-steps"></div>
+      </div>
+      </div>
+      <div id="kviz-end" hidden>
+        <div class="feedback ok kviz-end-box"><div class="headline">Hotovo, prošli jste všechny otázky!</div></div>
+        <p class="kviz-task" id="kviz-end-text"></p>
+        <div class="actions">
+          <button class="btn primary" id="kviz-btn-restart">Zamíchat otázky a začít znovu</button>
+        </div>
+        <p class="hint kviz-end-hint">Můžete také nahoře vybrat jiný okruh otázek.</p>
+      </div>
+    </div>
+  </div>
+
   <!-- ============ APLETY: KVANTOVÝ KOSMONAUT, ČÁSTICE V JÁMĚ ============ -->
   <div id="aplet-section" class="tab-section" hidden>
     <div class="card applet-card">
@@ -268,6 +329,7 @@
   <footer>Fyzika — Oktáva/4. ročník</footer>
 </div>
 
+<script src="../spolecne/reseni.js?v=1"></script>
 <script src="../spolecne/spolecne.js"></script>
 <script>
 (function(){
@@ -517,5 +579,374 @@
   })();
 })();
 </script>
+<script>
+(function(){
+  "use strict";
+  // ================= KVÍZ: otázky s výběrem ze čtyř odpovědí (A–D) =================
+  // Samostatný skript (stejný kvíz jako u Grafů rovnoměrného pohybu a u Pohybu po kružnici).
+  // Položka banky: c = okruh, t = zadání (HTML), r = správná odpověď, w = tři špatné,
+  // e = vysvětlení; fixed = možnosti se nemíchají, jen seřadí.
+  var LETTERS = ['A','B','C','D'];
+  // ---- pomůcky pro obrázky k otázkám (SVG ve viewBoxu 480 × 260, barvy z proměnných stránky) ----
+  var KV_COL = { ink:'var(--ink)', soft:'var(--ink-soft)', acc:'var(--accent)', foc:'var(--focus)' };
+  var KV_DEFS = '<defs>' + ['ink','soft','acc','foc'].map(function(k){
+    return '<marker id="kv-' + k + '" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4.4" markerHeight="4.4" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="' + KV_COL[k] + '"/></marker>';
+  }).join('') + '</defs>';
+  function kvA(x1, y1, x2, y2, c, w, dash){
+    c = c || 'ink';
+    return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + KV_COL[c] + '" stroke-width="' + (w || 2.6) + '" stroke-linecap="round" marker-end="url(#kv-' + c + ')"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  function kvL(x1, y1, x2, y2, c, w, dash){
+    return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + KV_COL[c || 'soft'] + '" stroke-width="' + (w || 1.6) + '" stroke-linecap="round"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  function kvT(x, y, txt, anchor, size, c, italic){
+    return '<text x="' + x + '" y="' + y + '" text-anchor="' + (anchor || 'middle') + '" font-family="' + (italic ? "STIX Two Text, Georgia, serif" : "Work Sans, sans-serif") + '" font-size="' + (size || 13) + '"' + (italic ? ' font-style="italic"' : '') + ' fill="' + KV_COL[c || 'ink'] + '">' + txt + '</text>';
+  }
+  function kvC(x, y, r, fill, stroke){
+    return '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + (fill || 'none') + '" stroke="' + (stroke ? KV_COL[stroke] : 'none') + '" stroke-width="1.6"/>';
+  }
+  function kvR(x, y, w, h, fill, stroke, rot){
+    return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="2" fill="' + (fill || 'var(--surface-2)') + '" stroke="' + KV_COL[stroke || 'soft'] + '" stroke-width="1.6"' + (rot ? ' transform="rotate(' + rot[0] + ' ' + rot[1] + ' ' + rot[2] + ')"' : '') + '/>';
+  }
+  function kvP(d, c, w, dash, fill){
+    return '<path d="' + d + '" fill="' + (fill || 'none') + '" stroke="' + KV_COL[c || 'ink'] + '" stroke-width="' + (w || 2) + '" stroke-linecap="round" stroke-linejoin="round"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  // očíslovaný kroužek u špičky šipky (n = číslo), směr (dx, dy) od špičky ven
+  function kvN(x, y, n, dx, dy){
+    var lx = x + dx, ly = y + dy;
+    return kvC(lx, ly, 10, 'var(--surface-2)', 'soft') + '<text x="' + lx + '" y="' + (ly + 4.5) + '" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="13" font-weight="600" fill="var(--ink)">' + n + '</text>';
+  }
+  // šipka s číslem: z (x1, y1) do (x2, y2), kroužek za špičkou
+  function kvAN(x1, y1, x2, y2, n, c){
+    var dx = x2 - x1, dy = y2 - y1, l = Math.sqrt(dx*dx + dy*dy);
+    return kvA(x1, y1, x2, y2, c || 'ink') + kvN(x2, y2, n, dx/l*16, dy/l*16);
+  }
+  // ---- hladiny v nekonečně hluboké jámě (E_n = n²E_1) ----
+  function kvWell(){
+    var y0 = 236, k = 11.5, s = kvL(150, 30, 150, y0, 'ink', 3) + kvL(330, 30, 330, y0, 'ink', 3) + kvL(150, y0, 330, y0, 'ink', 2);
+    [1, 2, 3, 4].forEach(function(n){
+      var y = y0 - k*n*n - 6;
+      s += kvL(150, y, 330, y, 'acc', 2);
+      s += '<text x="140" y="' + (y + 4.5) + '" text-anchor="end" font-family="Work Sans, sans-serif" font-size="13" fill="var(--ink)"><tspan font-family="STIX Two Text, Georgia, serif" font-style="italic">n</tspan> = ' + n + '</text>';
+      s += '<text x="340" y="' + (y + 4.5) + '" text-anchor="start" font-family="Work Sans, sans-serif" font-size="13" fill="var(--ink-soft)">' + (n === 1 ? '' : n*n) + '<tspan font-family="STIX Two Text, Georgia, serif" font-style="italic">E</tspan><tspan font-size="10" dy="3">1</tspan></text>';
+    });
+    s += '<text x="240" y="254" text-anchor="middle" font-family="Work Sans, sans-serif" font-size="12" fill="var(--ink-soft)">šířka jámy <tspan font-family="STIX Two Text, Georgia, serif" font-style="italic">L</tspan></text>';
+    return s;
+  }
+  var KV_FIG_WELL = kvWell();
+  var KV_FIG_WELL_A = 'Nekonečně hluboká jáma a čtyři nejnižší hladiny n = 1 až 4 s energiemi E1, 4E1, 9E1 a 16E1';
+
+  var KVIZ_TYPES = [
+    { key:'all', name:'Vše' },
+    { key:'neurcitost', name:'Relace neurčitosti', tag:'Heisenbergova relace neurčitosti' },
+    { key:'psi', name:'Vlnová funkce a měření', tag:'Vlnová funkce, pravděpodobnost a měření' },
+    { key:'jama', name:'Částice v jámě', tag:'Částice uzavřená v jámě' },
+    { key:'postulaty', name:'Postuláty a Pauliho princip', tag:'Postuláty kvantové mechaniky' }
+  ];
+  var KVIZ_BANK = [
+    // ----- relace neurčitosti -----
+    { c:'neurcitost', t:'Co tvrdí Heisenbergova relace neurčitosti?',
+      r:'Polohu a hybnost částice nelze současně určit libovolně přesně: Δ<i>x</i> · Δ<i>p</i> ≳ <i>h</i>.',
+      w:['Polohu a hybnost lze změřit libovolně přesně, jen jsou přístroje nedokonalé.', 'Energii částice nelze nikdy změřit.', 'Čím přesněji známe polohu, tím přesněji známe i hybnost.'],
+      e:'Neurčitosti polohy a hybnosti jsou svázány: zmenšíme-li jednu, druhá vzroste. Nejde o nedokonalost přístrojů — částice mikrosvěta nemá zároveň přesnou polohu i hybnost.' },
+    { c:'neurcitost', t:'Proč nemá smysl mluvit o dráze (trajektorii) elektronu v atomu?',
+      r:'Elektron nemá zároveň přesnou polohu i přesnou hybnost.', w:['Elektron se pohybuje rychleji než světlo.', 'Dráha elektronu je příliš malá na změření.', 'Elektron v atomu stojí na místě.'],
+      e:'Trajektorie předpokládá v každém okamžiku přesnou polohu i rychlost. To relace neurčitosti nedovoluje; pro elektron v atomu vychází neurčitost rychlosti přibližně 7·10⁶&nbsp;m·s⁻¹.' },
+    { c:'neurcitost', t:'Elektron je uvnitř atomu, Δ<i>x</i> ≈ 10⁻¹⁰&nbsp;m. Jaká je řádově neurčitost jeho rychlosti?',
+      r:'Přibližně 7·10⁶&nbsp;m·s⁻¹', w:['Přibližně 7·10⁻²⁷&nbsp;m·s⁻¹', 'Přibližně 7&nbsp;m·s⁻¹', 'Přibližně 7·10¹⁰&nbsp;m·s⁻¹'],
+      e:'Δ<i>v</i> ≈ <i>h</i>/(<i>m</i><sub>e</sub>Δ<i>x</i>) = 6,63·10⁻³⁴ / (9,11·10⁻³¹ · 10⁻¹⁰)&nbsp;m·s⁻¹ ≈ 7,3·10⁶&nbsp;m·s⁻¹. Rozměrově: J·s/(kg·m) = kg·m²·s⁻¹/(kg·m) = m·s⁻¹. Hodnota 7·10¹⁰&nbsp;m·s⁻¹ by byla větší než rychlost světla.' },
+    { c:'neurcitost', t:'Proč se relace neurčitosti neprojeví u kuličky o hmotnosti 100&nbsp;g?',
+      r:'Planckova konstanta je tak malá, že neurčitost rychlosti vychází zanedbatelná (řádově 10⁻²⁷&nbsp;m·s⁻¹).',
+      w:['Pro kuličky relace neplatí, platí jen pro elektrony.', 'Kulička nemá hybnost.', 'Neurčitost je velká, ale kompenzuje ji tření.'],
+      e:'Pro <i>m</i> = 0,1&nbsp;kg a Δ<i>x</i> = 10⁻⁶&nbsp;m je Δ<i>v</i> ≈ 6,63·10⁻³⁴/(0,1 · 10⁻⁶)&nbsp;m·s⁻¹ ≈ 7·10⁻²⁷&nbsp;m·s⁻¹. Relace platí obecně, ale v makrosvětě nic nemění.' },
+    { c:'neurcitost', t:'Polohu částice určíme dvakrát přesněji (Δ<i>x</i> se zmenší na polovinu). Jak se změní nejmenší možná neurčitost hybnosti?',
+      r:'Zvětší se dvakrát.', w:['Zmenší se dvakrát.', 'Nezmění se.', 'Zvětší se čtyřikrát.'],
+      e:'Ze vztahu Δ<i>x</i> · Δ<i>p</i> ≳ <i>h</i> plyne Δ<i>p</i> ≳ <i>h</i>/Δ<i>x</i>: je nepřímo úměrná Δ<i>x</i>. Poloviční Δ<i>x</i> znamená dvojnásobnou Δ<i>p</i>.' },
+    { c:'neurcitost', t:'Co je princip korespondence?',
+      r:'Pro velká tělesa přecházejí zákony kvantové mechaniky v klasickou mechaniku.', w:['Každé částici odpovídá antičástice.', 'Každé veličině odpovídá operátor.', 'Poloha a hybnost si navzájem odpovídají.'],
+      e:'Kvantové jevy jsou úměrné Planckově konstantě, která je velmi malá. U míčů a planet se neprojeví a kvantová mechanika dává stejné výsledky jako Newtonovy zákony.' },
+    // ----- vlnová funkce -----
+    { c:'psi', t:'Jaký fyzikální význam má veličina |<i>Ψ</i>|²?',
+      r:'Je to hustota pravděpodobnosti výskytu částice.', w:['Je to energie částice.', 'Je to přesná poloha částice.', 'Je to rychlost částice.'],
+      e:'Podle M. Borna je pravděpodobnost výskytu částice v malém objemu Δ<i>V</i> rovna Δ<i>w</i> = |<i>Ψ</i>|²Δ<i>V</i>. Samotná vlnová funkce přímý fyzikální význam nemá.' },
+    { c:'psi', t:'Jaké hodnoty má obecně vlnová funkce <i>Ψ</i>?',
+      r:'Komplexní čísla', w:['Jen kladná reálná čísla', 'Jen celá čísla', 'Jen hodnoty 0 a 1'],
+      e:'Hodnoty vlnové funkce jsou obecně komplexní čísla, proto má fyzikální význam až druhá mocnina její absolutní hodnoty.' },
+    { c:'psi', t:'Proč se u polohy částice neptáme na pravděpodobnost výskytu v jednom přesném bodě?',
+      r:'U spojité veličiny je pravděpodobnost jednoho přesného bodu nulová; má smysl jen pravděpodobnost v nějakém objemu.',
+      w:['Protože částice v žádném bodě být nemůže.', 'Protože pravděpodobnost v bodě je vždy rovna jedné.', 'Protože poloha částice není spojitá veličina.'],
+      e:'Podobně jako na „kostce s nekonečně mnoha stěnami“ by pravděpodobnost jednoho určitého čísla byla nulová. Proto se pracuje s hustotou pravděpodobnosti a pravděpodobností v objemu.' },
+    { c:'psi', t:'Částice je se stejnou pravděpodobností kdekoli v prostoru o objemu 4&nbsp;m³. S jakou pravděpodobností ji najdeme v jeho části o objemu 1&nbsp;m³?',
+      r:'1/4', w:['1/2', '1/16', '4'],
+      e:'Při rovnoměrném rozložení je pravděpodobnost úměrná objemu: 1&nbsp;m³ / 4&nbsp;m³ = 1/4. Hustota pravděpodobnosti je 1/(4&nbsp;m³) = 0,25&nbsp;m⁻³ a 0,25&nbsp;m⁻³ · 1&nbsp;m³ = 1/4. Pravděpodobnost nemůže být větší než 1.' },
+    { c:'psi', t:'„Kvantový kosmonaut“ je ve stavu: 70&nbsp;% uvnitř stanice, 30&nbsp;% venku. Měřením zjistíme, že je uvnitř. Co dá druhé měření hned potom?',
+      r:'Zase „uvnitř“ (stav se měřením změnil na 100&nbsp;% uvnitř).', w:['„Uvnitř“ s pravděpodobností 70&nbsp;%.', '„Venku“ s pravděpodobností 70&nbsp;%.', 'Výsledek nelze předpovědět.'],
+      e:'Měření dá jeden výsledek a tím změní stav: teď je kosmonaut uvnitř se 100% pravděpodobností a opakované měření dá totéž. Poměr 70&nbsp;% : 30&nbsp;% se projeví až při mnoha opakováních pokusu s nově připraveným stavem.' },
+    { c:'psi', t:'Pokus s „kvantovým kosmonautem“ (70&nbsp;% uvnitř, 30&nbsp;% venku) zopakujeme tisíckrát, pokaždé s nově připraveným stavem. Kolikrát přibližně vyjde „uvnitř“?',
+      r:'Přibližně 700krát', w:['Přesně 1&nbsp;000krát', 'Přibližně 300krát', 'Přesně 500krát'],
+      e:'Pravděpodobnost 70&nbsp;% se projeví v mnoha opakováních: 0,7 · 1&nbsp;000 = 700. Přesný počet ale předpovědět nelze.' },
+    { c:'psi', t:'Co ilustruje myšlenkový pokus se Schrödingerovou kočkou?',
+      r:'Jak podivně zní kvantový výklad měření, přeneseme-li ho do makrosvěta.', w:['Že kočky mají kvantové vlastnosti.', 'Že atomy se rozpadají jen při pozorování.', 'Že vlnová funkce je vždy reálná.'],
+      e:'Osud kočky je svázán s rozpadem jednoho atomu; dokud se nepodíváme, je stav „kočka živá i mrtvá zároveň“. Schrödinger tím chtěl ukázat podivnost výkladu měření.' },
+    { c:'psi', t:'Co se stane s interferenčními proužky elektronů za dvojštěrbinou, když měříme, kterou štěrbinou elektron prošel?',
+      r:'Proužky zmizí.', w:['Proužky zůstanou beze změny.', 'Proužky se zúží na polovinu.', 'Počet proužků se zdvojnásobí.'],
+      e:'Dokud nezjišťujeme, kterou štěrbinou elektron prošel, chová se jako vlna a interferuje. Měření změní stav a interferenční proužky zmizí.' },
+    // ----- jáma -----
+    { c:'jama', t:'Jaké vlnové délky se mohou „vejít“ do nekonečně hluboké jámy šířky <i>L</i>?',
+      r:'<i>λ</i><sub><i>n</i></sub> = 2<i>L</i>/<i>n</i>, <i>n</i> = 1, 2, 3, …', w:['<i>λ</i><sub><i>n</i></sub> = <i>nL</i>', '<i>λ</i><sub><i>n</i></sub> = <i>L</i>/(2<i>n</i>)', 'Libovolné vlnové délky'],
+      e:'Mezi stěnami vznikne stojaté vlnění jako na struně upevněné na obou koncích: na délku <i>L</i> se musí vejít celistvý počet půlvln, <i>L</i> = <i>n</i> · <i>λ</i>/2.' },
+    { c:'jama', t:'Kolikrát větší energii má částice v jámě na hladině <i>n</i> = 3 než v základním stavu?',
+      r:'9krát', w:['3krát', '6krát', '27krát'],
+      e:'<i>E</i><sub><i>n</i></sub> = <i>n</i>² <i>h</i>²/(8<i>mL</i>²), takže <i>E</i><sub>3</sub>/<i>E</i><sub>1</sub> = 3² = 9.' },
+    { c:'jama', t:'Jámu, v níž je elektron, zúžíme na polovinu. Jak se změní energie základního stavu?',
+      r:'Zvětší se čtyřikrát.', w:['Zvětší se dvakrát.', 'Zmenší se čtyřikrát.', 'Nezmění se.'],
+      e:'<i>E</i><sub>1</sub> = <i>h</i>²/(8<i>mL</i>²) je nepřímo úměrná <i>L</i>². Poloviční <i>L</i> dává čtyřnásobnou energii. Čím menší prostor, tím větší energie.' },
+    { c:'jama', t:'Může mít částice uzavřená v jámě nulovou energii (být v klidu)?',
+      r:'Ne, ani v základním stavu (<i>n</i> = 1) není energie nulová.', w:['Ano, v základním stavu je v klidu.', 'Ano, pokud je jáma dost široká.', 'Ano, při teplotě absolutní nuly.'],
+      e:'Nejnižší energie je <i>E</i><sub>1</sub> = <i>h</i>²/(8<i>mL</i>²) > 0. Uvězněná částice nemůže být v klidu, což souvisí i s relací neurčitosti.' },
+    { c:'jama', t:'Proč mají atomy energie hladin řádově elektronvolty, ale jádra megaelektronvolty?',
+      r:'Jádra jsou mnohem menší (10⁻¹⁵&nbsp;m oproti 10⁻¹⁰&nbsp;m) a energie s klesajícím rozměrem prostoru roste.',
+      w:['Jádra jsou nabitá kladně.', 'V jádrech působí gravitace.', 'Atomy jsou mnohem těžší než jádra.'],
+      e:'Podle <i>E</i><sub><i>n</i></sub> ~ 1/<i>L</i>² dává menší prostor větší energie: atomům (10⁻¹⁰&nbsp;m) odpovídají eV, jádrům (10⁻¹⁵&nbsp;m) MeV.' },
+    { c:'jama', t:'Elektron v jámě široké 1&nbsp;nm má <i>E</i><sub>1</sub> ≐ 0,38&nbsp;eV. Jakou energii má foton vyzářený při přechodu z hladiny 2 na hladinu 1?',
+      r:'Přibližně 1,1&nbsp;eV', w:['Přibližně 0,38&nbsp;eV', 'Přibližně 1,5&nbsp;eV', 'Přibližně 0,76&nbsp;eV'],
+      e:'<i>E</i><sub>2</sub> = 4<i>E</i><sub>1</sub> ≐ 1,5&nbsp;eV, foton má <i>hf</i> = <i>E</i><sub>2</sub> − <i>E</i><sub>1</sub> = 3<i>E</i><sub>1</sub> ≐ 1,1&nbsp;eV (infračervené záření, <i>λ</i> ≐ 1&nbsp;240/1,13&nbsp;nm ≐ 1,1&nbsp;µm). Hodnota 1,5&nbsp;eV je samotná energie hladiny 2, ne rozdíl.' },
+    { c:'jama', t:'Ztrácí částice ve stacionárním stavu energii vyzařováním?',
+      r:'Ne, rozložení |<i>Ψ</i>|² se nemění; energii vyzáří jen skokem na nižší hladinu.', w:['Ano, neustále ji pomalu ztrácí.', 'Ano, ale jen v základním stavu.', 'Ne, protože nemá žádnou energii.'],
+      e:'Ve stacionárním stavu se rozložení hustoty pravděpodobnosti v čase nemění a částice nevyzařuje. Energii může vyzářit nebo pohltit jen skokem mezi hladinami, <i>hf</i> = <i>E</i><sub><i>n</i></sub> − <i>E</i><sub><i>m</i></sub>.' },
+    // ----- postuláty -----
+    { c:'postulaty', t:'Co je v kvantové mechanice obdobou pohybových rovnic klasické mechaniky?',
+      r:'Schrödingerova rovnice', w:['Heisenbergova relace neurčitosti', 'Pauliho vylučovací princip', 'Bohrova kvantovací podmínka'],
+      e:'Časový vývoj vlnové funkce popisuje Schrödingerova rovnice (E. Schrödinger, 1926), obdobně jako Newtonovy zákony popisují vývoj polohy a rychlosti.' },
+    { c:'postulaty', t:'Co je podle postulátů kvantové mechaniky přiřazeno každé fyzikální veličině (poloze, hybnosti, energii)?',
+      r:'Operátor — matematický předpis, který pracuje s vlnovou funkcí', w:['Jedno pevné číslo', 'Pravděpodobnost 1/2', 'Trajektorie'],
+      e:'Každé veličině odpovídá operátor. Měřením lze získat jen jeho vlastní čísla, proto například energie atomu nabývá jen určitých hodnot.' },
+    { c:'postulaty', t:'Proč nabývá energie atomu jen určitých hodnot?',
+      r:'Měřením lze získat jen vlastní čísla operátoru energie.', w:['Protože energie se měří jen v celých elektronvoltech.', 'Protože elektrony jsou nedělitelné.', 'Protože atom je kulový.'],
+      e:'Podle postulátu dává měření jen určité hodnoty — vlastní čísla operátoru příslušné veličiny. U energie atomu to jsou energetické hladiny.' },
+    { c:'postulaty', t:'Co říká Pauliho vylučovací princip?',
+      r:'Žádné dva fermiony (např. elektrony) nemohou být ve stejném kvantovém stavu.', w:['Polohu a hybnost nelze současně přesně změřit.', 'Elektron nemůže opustit atom.', 'Dva fotony nemohou mít stejnou energii.'],
+      e:'Pauliho princip platí pro částice s poločíselným spinem (fermiony). Díky němu elektrony zaplňují postupně vyšší hladiny a existuje periodická soustava prvků.' },
+    { c:'postulaty', t:'Co by se stalo, kdyby pro elektrony neplatil Pauliho princip?',
+      r:'Všechny elektrony atomu by se nahromadily v nejnižším stavu a nebyla by chemie, jak ji známe.', w:['Atomy by byly větší.', 'Elektrony by se pohybovaly po přesných drahách.', 'Nic by se nezměnilo.'],
+      e:'Právě Pauliho princip nutí elektrony zaplňovat vyšší hladiny. Bez něj by všechny elektrony byly v základním stavu a prvky by se chemicky nelišily tak, jak je známe.' },
+    // ----- obrázek -----
+    { c:'jama', f:KV_FIG_WELL, fa:KV_FIG_WELL_A,
+      t:'Obrázek ukazuje hladiny částice v nekonečně hluboké jámě. Kolikrát větší energii má foton vyzářený při přechodu 3 → 1 než foton z přechodu 2 → 1?',
+      r:'8/3krát (přibližně 2,7krát)', w:['1,5krát', '3krát', '9krát'],
+      e:'Přechod 3 → 1: 9<i>E</i><sub>1</sub> − <i>E</i><sub>1</sub> = 8<i>E</i><sub>1</sub>; přechod 2 → 1: 4<i>E</i><sub>1</sub> − <i>E</i><sub>1</sub> = 3<i>E</i><sub>1</sub>. Poměr 8/3 ≐ 2,7. Poměr 9 je poměr samotných energií hladin, ne rozdílů. Hladiny se s rostoucím <i>n</i> od sebe vzdalují.' }
+  ];
+
+
+  var KVIZ_KEY = 'fyzika:kvantova-mechanika:kviz';
+  var section = document.getElementById('kviz-section');
+  var tabBtn = document.getElementById('top-tab-kviz');
+  var readout = document.getElementById('kviz-readout');
+  var pageReadout = document.getElementById('header-readout');
+  var kviz = {
+    type:'all', queue:[], current:null, sel:null, locked:false,
+    score:0, streak:0, bestStreak:0, answered:0, correct:0,
+    inRound:false, ended:false, roundTotal:0, roundCorrect:0
+  };
+  function $(id){ return document.getElementById(id); }
+  function kvizLoad(){
+    try{ var raw = localStorage.getItem(KVIZ_KEY); if(raw){ kviz.bestStreak = JSON.parse(raw).bestStreak || 0; } }catch(e){}
+  }
+  function kvizSave(){
+    try{ localStorage.setItem(KVIZ_KEY, JSON.stringify({bestStreak: kviz.bestStreak})); }catch(e){}
+  }
+  function kvizShuffled(a){
+    a = a.slice();
+    for(var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random()*(i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; }
+    return a;
+  }
+  function typeOf(key){ return KVIZ_TYPES.filter(function(t){ return t.key === key; })[0]; }
+
+  // Otázky okruhu se berou v náhodném pořadí bez opakování. Po projití celého okruhu
+  // se zobrazí závěrečná hláška s výsledkem kola a nabídkou otázky zamíchat znovu.
+  function kvizNext(){
+    if(!kviz.queue.length){
+      if(kviz.inRound){ kvizShowEnd(); return; }
+      var pool = KVIZ_BANK.filter(function(b){ return kviz.type === 'all' || b.c === kviz.type; });
+      kviz.queue = kvizShuffled(pool);
+      if(kviz.current && kviz.queue.length > 1 && kviz.queue[0] === kviz.current.item){ kviz.queue.push(kviz.queue.shift()); }
+      kviz.inRound = true; kviz.roundTotal = pool.length; kviz.roundCorrect = 0;
+    }
+    var item = kviz.queue.shift();
+    var opts = item.fixed ? [item.r].concat(item.w).sort() : kvizShuffled([item.r].concat(item.w));
+    kviz.current = { item:item, choices:opts, correct:opts.indexOf(item.r) };
+    kvizRender();
+  }
+  function kvizShowEnd(){
+    kviz.ended = true; kviz.inRound = false;
+    var tp = typeOf(kviz.type);
+    var n = kviz.roundTotal, k = kviz.roundCorrect;
+    $('kviz-end-text').innerHTML =
+      'Prošli jste všech ' + n + ' otázek ' + (kviz.type === 'all' ? 'kvízu' : 'okruhu „' + tp.name + '“') + '. ' +
+      'Správně jste odpověděli na ' + k + ' z ' + n + ' (' + Math.round(100*k/n) + '&nbsp;%). Chcete otázky zamíchat a projít znovu?';
+    $('kviz-q').hidden = true;
+    $('kviz-end').hidden = false;
+    $('kviz-btn-restart').focus({ preventScroll:true });
+  }
+  function kvizRestart(){
+    kviz.queue = []; kviz.inRound = false;
+    kvizNext();
+  }
+  function kvizRender(){
+    var q = kviz.current;
+    kviz.ended = false;
+    $('kviz-q').hidden = false;
+    $('kviz-end').hidden = true;
+    var tp = typeOf(q.item.c);
+    $('kviz-cat-tag').innerHTML = tp ? tp.tag : 'Otázka';
+    $('kviz-task-text').innerHTML = q.item.t;
+    var fig = $('kviz-fig');
+    fig.hidden = !q.item.f;
+    if(q.item.f){ $('kviz-graph').innerHTML = KV_DEFS + q.item.f; $('kviz-graph').setAttribute('aria-label', q.item.fa || 'Obrázek k otázce'); }
+    var grid = $('kviz-opt-grid');
+    grid.innerHTML = '';
+    kviz.sel = null; kviz.locked = false;
+    q.choices.forEach(function(c, i){
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'opt-btn';
+      b.innerHTML = '<b>' + LETTERS[i] + ')</b>&nbsp; ' + c;
+      b.addEventListener('click', function(){ kvizSelect(i); });
+      grid.appendChild(b);
+    });
+    var fb = $('kviz-feedback');
+    fb.hidden = true; fb.classList.remove('ok', 'bad', 'sol');
+    $('kviz-btn-check').textContent = 'Zkontrolovat';
+  }
+  function kvizSelect(i){
+    if(kviz.locked || kviz.ended) return;
+    kviz.sel = i;
+    Array.prototype.forEach.call($('kviz-opt-grid').children, function(el, j){ el.classList.toggle('selected', j === i); });
+    $('kviz-btn-check').focus({ preventScroll:true });
+  }
+  function kvizFinish(ok, headline){
+    var q = kviz.current;
+    Array.prototype.forEach.call($('kviz-opt-grid').children, function(el, j){
+      el.disabled = true;
+      el.classList.remove('selected');
+      if(j === q.correct) el.classList.add(kviz.sel === j ? 'correct' : 'missed');
+      else if(j === kviz.sel) el.classList.add('wrong');
+    });
+    var fb = $('kviz-feedback');
+    fb.hidden = false;
+    fb.classList.toggle('ok', ok); fb.classList.toggle('bad', !ok);
+    $('kviz-feedback-headline').textContent = headline;
+    var finalText = 'Správná odpověď: ' + LETTERS[q.correct] + ') ' + q.item.r;
+    if(window.FyzikaReseni && FyzikaReseni.show){
+      FyzikaReseni.show(fb, $('kviz-feedback-steps'), { raw:true, title:'Vysvětlení', steps:[q.item.e], final:finalText });
+    } else {
+      $('kviz-feedback-steps').innerHTML = q.item.e + '<br><b>' + finalText + '</b>';
+    }
+    kviz.locked = true;
+    var btn = $('kviz-btn-check');
+    btn.textContent = 'Další otázka →';
+    btn.focus({ preventScroll:true });
+    kvizStats();
+  }
+  function kvizCheck(){
+    if(kviz.ended){ kvizRestart(); return; }
+    if(kviz.locked){ kvizNext(); return; }
+    if(kviz.sel === null && !confirm('Není vybraná žádná možnost. Opravdu chcete zkontrolovat?')) return;
+    var ok = kviz.sel === kviz.current.correct;
+    kviz.answered++;
+    if(ok){
+      kviz.score += 10; kviz.streak++; kviz.correct++; kviz.roundCorrect++;
+      if(kviz.streak > kviz.bestStreak){ kviz.bestStreak = kviz.streak; kvizSave(); }
+    } else {
+      kviz.streak = 0;
+    }
+    kvizFinish(ok, ok ? 'Správně!' : (kviz.sel === null ? 'Vyberte odpověď.' : 'Bohužel špatně.'));
+  }
+  function kvizSkip(){
+    if(kviz.ended){ kvizRestart(); return; }
+    if(kviz.locked){ kvizNext(); return; }
+    kviz.streak = 0; kviz.answered++;
+    kvizFinish(false, 'Správná odpověď:');
+  }
+  function kvizStats(){
+    $('kviz-stat-score').textContent = kviz.score;
+    $('kviz-stat-streak').textContent = kviz.streak + (kviz.bestStreak > 0 ? ' / ' + kviz.bestStreak : '');
+    $('kviz-stat-accuracy').textContent = kviz.answered === 0 ? '—' : Math.round(100*kviz.correct/kviz.answered) + ' %';
+  }
+  (function kvizBuildTypeRow(){
+    var row = $('kviz-type-row');
+    KVIZ_TYPES.forEach(function(d){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip accented' + (d.key === kviz.type ? ' on' : '');
+      b.setAttribute('aria-pressed', d.key === kviz.type ? 'true' : 'false');
+      b.textContent = d.name;
+      b.addEventListener('click', function(){
+        if(d.key === kviz.type) return;
+        // rozpracovaná otázka s vybranou odpovědí se před změnou okruhu vyhodnotí
+        var settled = !kviz.locked && kviz.sel !== null;
+        if(settled) kvizCheck();
+        kviz.type = d.key; kviz.queue = []; kviz.inRound = false;
+        Array.prototype.forEach.call(row.children, function(el, i){
+          var on = KVIZ_TYPES[i].key === kviz.type;
+          el.classList.toggle('on', on);
+          el.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        // vyhodnocená otázka zůstane i s vysvětlením vidět, další už bude z nového okruhu
+        if(!settled) kvizNext();
+      });
+      row.appendChild(b);
+    });
+  })();
+  $('kviz-btn-check').addEventListener('click', kvizCheck);
+  $('kviz-btn-skip').addEventListener('click', kvizSkip);
+  $('kviz-btn-restart').addEventListener('click', kvizRestart);
+  $('kviz-reset-stats').addEventListener('click', function(){
+    kviz.score = 0; kviz.streak = 0; kviz.answered = 0; kviz.correct = 0; kviz.bestStreak = 0;
+    try{ localStorage.removeItem(KVIZ_KEY); }catch(e){}
+    kvizStats();
+  });
+  // Klávesnice v kvízu: A–D nebo 1–4 vybere odpověď, Enter zkontroluje / posune dál.
+  document.addEventListener('keydown', function(e){
+    if(section.hidden) return;
+    if(e.ctrlKey || e.metaKey || e.altKey) return;
+    if(e.key === 'Enter'){
+      if(e.target && e.target.tagName === 'BUTTON') return;
+      e.preventDefault(); kvizCheck(); return;
+    }
+    var idx = 'abcd'.indexOf(e.key.toLowerCase());
+    if(idx === -1) idx = '1234'.indexOf(e.key);
+    if(idx !== -1 && e.key.length === 1) kvizSelect(idx);
+  });
+
+  // ---- záložka Kvíz ----
+  // Skript je samostatný: otevření Kvízu i návrat na ostatní záložky řeší sám, ať stránka přepíná
+  // záložky jakkoli. Skóre kvízu má vlastní pole v hlavičce (skóre tréninku se tím nemění).
+  function activate(){
+    var teorieBtn = $('top-tab-teorie'), theory = $('theory-section');
+    if(!tabBtn.classList.contains('on') && teorieBtn && !teorieBtn.classList.contains('on')){
+      // nejdřív „kliknutím“ opustíme dosavadní záložku obsluhou stránky (u hry na čas s potvrzením)
+      teorieBtn.click();
+      if(theory && theory.hidden) return;   // stránka odmítla opustit dosavadní záložku (např. běžící hra)
+    }
+    Array.prototype.forEach.call(document.querySelectorAll('.tab-section'), function(s){ s.hidden = s !== section; });
+    Array.prototype.forEach.call(document.querySelectorAll('.toptab'), function(t){ t.classList.toggle('on', t === tabBtn); });
+    if(pageReadout) pageReadout.hidden = true;
+    readout.hidden = false;
+    kvizStats();
+    if(!kviz.current) kvizNext();
+  }
+  tabBtn.addEventListener('click', activate);
+  Array.prototype.forEach.call(document.querySelectorAll('.toptab'), function(t){
+    if(t === tabBtn) return;
+    t.addEventListener('click', function(){ section.hidden = true; readout.hidden = true; tabBtn.classList.remove('on'); });
+  });
+  document.addEventListener('fyzika:scores-updated', function(){ kviz.bestStreak = 0; kvizLoad(); kvizStats(); });
+  kvizLoad();
+  kvizStats();
+  if(location.hash === '#kviz' && !tabBtn.classList.contains('on')) tabBtn.click();
+  else if(location.hash === '#kviz') activate();
+})();
+</script>
+
 </body>
 </html>

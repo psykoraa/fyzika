@@ -115,6 +115,20 @@
   .card{ padding:20px 16px 22px; }
 }
 </style>
+<style>
+/* ---- Kvíz (stejný jako u Grafů rovnoměrného pohybu a u Pohybu po kružnici) ---- */
+.kviz-task{ font-size:1.02rem; line-height:1.5; max-width:52ch; margin:0 auto 10px; color:var(--ink); text-align:center; }
+#kviz-section .kviz-task i, #kviz-section .opt-btn i, #kviz-section .feedback .steps i, #kviz-section .cat-tag i{ font-family:'STIX Two Text', Georgia, serif; font-style:italic; text-transform:none; }
+#kviz-section .feedback .steps{ font-family:'Work Sans', sans-serif; white-space:normal; opacity:1; }
+#kviz-end .kviz-end-box{ text-align:center; margin:0 0 14px; }
+#kviz-end .kviz-end-hint{ text-align:center; margin-top:10px; }
+#kviz-section [hidden]{ display:none; }
+@media (max-width:520px){
+  /* čtyři a více záložek: na telefonu ve dvou řadách (stejně jako Grafy rovnoměrného pohybu) */
+  .top-tabs{ flex-wrap:wrap; }
+  .toptab{ flex:1 1 calc(50% - 4px); padding:13px 8px; }
+}
+</style>
 </head>
 <body>
 
@@ -141,10 +155,16 @@
       <div class="cell"><span class="label">Série</span><span class="value" id="stat-streak">0</span></div>
       <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="stat-accuracy">—</span></div>
     </div>
+    <div class="readout" id="kviz-readout" hidden>
+      <div class="cell"><span class="label">Skóre</span><span class="value" id="kviz-stat-score">0</span></div>
+      <div class="cell"><span class="label">Série</span><span class="value" id="kviz-stat-streak">0</span></div>
+      <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="kviz-stat-accuracy">—</span></div>
+    </div>
   </div>
 
   <div class="top-tabs">
     <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+    <button class="toptab" id="top-tab-kviz" data-tab="kviz">Kvíz</button>
     <button class="toptab" id="top-tab-trenink" data-tab="trenink">Trénink</button>
     <button class="toptab" id="top-tab-hra" data-tab="hra">Hra na čas</button>
   </div>
@@ -311,6 +331,50 @@
       <p>• Pauliho princip: v jednom kvantovém stavu je nejvýše jeden elektron.</p>
     </div>
 
+  </div>
+
+  <!-- ============ KVÍZ ============ -->
+  <div id="kviz-section" class="tab-section" hidden>
+    <div class="panel">
+      <div class="section-block">
+        <div class="panel-title">Okruh otázek</div>
+        <div class="row" id="kviz-type-row"></div>
+      </div>
+      <div class="settings-foot" style="justify-content:flex-end;">
+        <button class="linklike" id="kviz-reset-stats">vynulovat statistiku</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div id="kviz-q">
+      <span class="cat-tag" id="kviz-cat-tag">Otázka</span>
+      <p class="kviz-task" id="kviz-task-text"></p>
+      <figure class="theory-fig" id="kviz-fig" hidden>
+        <svg id="kviz-graph" viewBox="0 0 480 260" role="img" aria-label="Obrázek k otázce"></svg>
+      </figure>
+      <div class="opt-grid wide-opts" id="kviz-opt-grid"></div>
+      <div class="actions">
+        <button class="btn primary" id="kviz-btn-check">Zkontrolovat</button>
+        <button class="btn ghost" id="kviz-btn-skip">Nevím / Zobrazit řešení</button>
+      </div>
+      <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint">Vyberte jednu ze čtyř odpovědí kliknutím nebo klávesami A až D (případně 1 až 4) a potvrďte tlačítkem Zkontrolovat nebo klávesou Enter; dalším Enterem přejdete na další otázku. Po kontrole se správná odpověď obarví zeleně, chybně vybraná červeně a pod otázkou se objeví vysvětlení. Okruh otázek vyberete nahoře; otázky se neopakují, dokud neprojdete celý okruh. Pak se zobrazí, kolik otázek jste zodpověděli správně, a otázky můžete zamíchat a projít znovu.</p>
+      </details>
+      <div class="feedback" id="kviz-feedback" hidden>
+        <div class="headline" id="kviz-feedback-headline"></div>
+        <div class="steps" id="kviz-feedback-steps"></div>
+      </div>
+      </div>
+      <div id="kviz-end" hidden>
+        <div class="feedback ok kviz-end-box"><div class="headline">Hotovo, prošli jste všechny otázky!</div></div>
+        <p class="kviz-task" id="kviz-end-text"></p>
+        <div class="actions">
+          <button class="btn primary" id="kviz-btn-restart">Zamíchat otázky a začít znovu</button>
+        </div>
+        <p class="hint kviz-end-hint">Můžete také nahoře vybrat jiný okruh otázek.</p>
+      </div>
+    </div>
   </div>
 
   <!-- ============ TRÉNINK ============ -->
@@ -974,5 +1038,370 @@
   trGenerate();
 })();
 </script>
+<script>
+(function(){
+  "use strict";
+  // ================= KVÍZ: otázky s výběrem ze čtyř odpovědí (A–D) =================
+  // Samostatný skript (stejný kvíz jako u Grafů rovnoměrného pohybu a u Pohybu po kružnici).
+  // Položka banky: c = okruh, t = zadání (HTML), r = správná odpověď, w = tři špatné,
+  // e = vysvětlení; fixed = možnosti se nemíchají, jen seřadí.
+  var LETTERS = ['A','B','C','D'];
+  // ---- pomůcky pro obrázky k otázkám (SVG ve viewBoxu 480 × 260, barvy z proměnných stránky) ----
+  var KV_COL = { ink:'var(--ink)', soft:'var(--ink-soft)', acc:'var(--accent)', foc:'var(--focus)' };
+  var KV_DEFS = '<defs>' + ['ink','soft','acc','foc'].map(function(k){
+    return '<marker id="kv-' + k + '" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4.4" markerHeight="4.4" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="' + KV_COL[k] + '"/></marker>';
+  }).join('') + '</defs>';
+  function kvA(x1, y1, x2, y2, c, w, dash){
+    c = c || 'ink';
+    return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + KV_COL[c] + '" stroke-width="' + (w || 2.6) + '" stroke-linecap="round" marker-end="url(#kv-' + c + ')"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  function kvL(x1, y1, x2, y2, c, w, dash){
+    return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + KV_COL[c || 'soft'] + '" stroke-width="' + (w || 1.6) + '" stroke-linecap="round"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  function kvT(x, y, txt, anchor, size, c, italic){
+    return '<text x="' + x + '" y="' + y + '" text-anchor="' + (anchor || 'middle') + '" font-family="' + (italic ? "STIX Two Text, Georgia, serif" : "Work Sans, sans-serif") + '" font-size="' + (size || 13) + '"' + (italic ? ' font-style="italic"' : '') + ' fill="' + KV_COL[c || 'ink'] + '">' + txt + '</text>';
+  }
+  function kvC(x, y, r, fill, stroke){
+    return '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + (fill || 'none') + '" stroke="' + (stroke ? KV_COL[stroke] : 'none') + '" stroke-width="1.6"/>';
+  }
+  function kvR(x, y, w, h, fill, stroke, rot){
+    return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="2" fill="' + (fill || 'var(--surface-2)') + '" stroke="' + KV_COL[stroke || 'soft'] + '" stroke-width="1.6"' + (rot ? ' transform="rotate(' + rot[0] + ' ' + rot[1] + ' ' + rot[2] + ')"' : '') + '/>';
+  }
+  function kvP(d, c, w, dash, fill){
+    return '<path d="' + d + '" fill="' + (fill || 'none') + '" stroke="' + KV_COL[c || 'ink'] + '" stroke-width="' + (w || 2) + '" stroke-linecap="round" stroke-linejoin="round"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  // očíslovaný kroužek u špičky šipky (n = číslo), směr (dx, dy) od špičky ven
+  function kvN(x, y, n, dx, dy){
+    var lx = x + dx, ly = y + dy;
+    return kvC(lx, ly, 10, 'var(--surface-2)', 'soft') + '<text x="' + lx + '" y="' + (ly + 4.5) + '" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="13" font-weight="600" fill="var(--ink)">' + n + '</text>';
+  }
+  // šipka s číslem: z (x1, y1) do (x2, y2), kroužek za špičkou
+  function kvAN(x1, y1, x2, y2, n, c){
+    var dx = x2 - x1, dy = y2 - y1, l = Math.sqrt(dx*dx + dy*dy);
+    return kvA(x1, y1, x2, y2, c || 'ink') + kvN(x2, y2, n, dx/l*16, dy/l*16);
+  }
+  // ---- tvary orbitalů (schematicky) ----
+  function kvEll(cx, cy, rx, ry, rot, c){
+    return '<ellipse cx="' + cx + '" cy="' + cy + '" rx="' + rx + '" ry="' + ry + '" transform="rotate(' + rot + ' ' + cx + ' ' + cy + ')" fill="' + KV_COL[c] + '" fill-opacity="0.25" stroke="' + KV_COL[c] + '" stroke-width="1.6"/>';
+  }
+  var KV_FIG_ORB = kvEll(80, 120, 38, 20, 0, 'acc') + kvEll(160, 120, 38, 20, 0, 'foc') + kvC(120, 120, 3, 'var(--ink)') + kvN(120, 200, 1, 0, 0) +
+    kvC(240, 120, 48, 'none', 'acc') + '<circle cx="240" cy="120" r="48" fill="var(--accent)" fill-opacity="0.25"/>' + kvC(240, 120, 3, 'var(--ink)') + kvN(240, 200, 2, 0, 0) +
+    kvEll(360, 92, 14, 26, 0, 'acc') + kvEll(360, 148, 14, 26, 0, 'acc') + kvEll(332, 120, 26, 14, 0, 'foc') + kvEll(388, 120, 26, 14, 0, 'foc') + kvC(360, 120, 3, 'var(--ink)') + kvN(360, 200, 3, 0, 0);
+  var KV_FIG_ORB_A = 'Tři útvary: 1 činka ze dvou laloků, 2 koule, 3 čtyřlístek ze čtyř laloků';
+
+  var KVIZ_TYPES = [
+    { key:'all', name:'Vše' },
+    { key:'model', name:'Model atomu', tag:'Kvantově mechanický model atomu' },
+    { key:'cisla', name:'Kvantová čísla', tag:'Čtyři kvantová čísla' },
+    { key:'stavy', name:'Počty stavů', tag:'Kolik stavů má hladina' },
+    { key:'pauli', name:'Pauliho princip a slupky', tag:'Pauliho princip a slupky' }
+  ];
+  var KVIZ_BANK = [
+    // ----- model -----
+    { c:'model', t:'Co je atomový orbital?',
+      r:'Oblast, ve které se elektron vyskytuje s největší pravděpodobností.', w:['Přesná kruhová dráha elektronu kolem jádra.', 'Část jádra, kde jsou protony.', 'Dráha, po které elektron vyzařuje.'],
+      e:'Podle kvantové mechaniky elektron nemá dráhu; známe jen pravděpodobnost jeho výskytu. Oblast nejpravděpodobnějšího výskytu znázorňujeme jako geometrický útvar — orbital.' },
+    { c:'model', t:'Jak získáme rozložení pravděpodobnosti výskytu elektronu v atomu?',
+      r:'Řešením Schrödingerovy rovnice', w:['Z Newtonových pohybových zákonů', 'Z Balmerova vzorce', 'Měřením dráhy elektronu'],
+      e:'Rozložení pravděpodobnosti je dáno vlnovou funkcí, kterou dostaneme řešením Schrödingerovy rovnice.' },
+    { c:'model', t:'V jaké vzdálenosti od jádra najdeme elektron v základním stavu vodíku s největší pravděpodobností?',
+      r:'Ve vzdálenosti Bohrova poloměru, přibližně 0,053&nbsp;nm', w:['Přesně v jádře', 'Ve vzdálenosti přibližně 0,53&nbsp;nm', 'Nikdy dál než 0,053&nbsp;nm'],
+      e:'Maximum pravděpodobnosti stavu 1s je ve vzdálenosti Bohrova poloměru 0,053&nbsp;nm. S malou pravděpodobností ale elektron můžeme najít i mnohem dál od jádra.' },
+    { c:'model', t:'Na čem závisí energie elektronu v atomu?',
+      r:'Na stavu, ve kterém elektron je, ne na tom, jak daleko od jádra ho zrovna najdeme.', w:['Jen na okamžité vzdálenosti elektronu od jádra.', 'Na rychlosti elektronu v daném okamžiku.', 'Na tom, kdy elektron pozorujeme.'],
+      e:'Energie je vlastností stavu. Například stav 2s má vyšší energii než 1s, přestože jedno z maxim pravděpodobnosti stavu 2s je blíž k jádru než maximum stavu 1s.' },
+    { c:'model', t:'Co vyjadřuje energie základního stavu vodíku −13,6&nbsp;eV?',
+      r:'Tolik energie musíme elektronu dodat, abychom atom ionizovali.', w:['Tolik energie elektron vyzáří každou sekundu.', 'Je to kinetická energie jádra.', 'Tolik energie má foton viditelného světla.'],
+      e:'Ionizační energie vodíku v základním stavu je 13,6&nbsp;eV. Foton viditelného světla má jen 1,8&nbsp;eV až 3,1&nbsp;eV.' },
+    { c:'model', t:'Jaký tvar mají orbitaly s?',
+      r:'Kulově souměrný', w:['Tvar činky', 'Tvar čtyřlístku', 'Tvar ploché kružnice'],
+      e:'Orbitaly s (<i>l</i> = 0) jsou kulově souměrné. Orbitaly p mají tvar činky ve třech navzájem kolmých směrech.' },
+    // ----- čísla -----
+    { c:'cisla', t:'Co určuje hlavní kvantové číslo <i>n</i>?',
+      r:'Energii stavu a velikost orbitalu', w:['Tvar orbitalu', 'Orientaci orbitalu v prostoru', 'Natočení spinu'],
+      e:'Hlavní kvantové číslo určuje energii (u vodíku <i>E</i><sub><i>n</i></sub> = −13,6&nbsp;eV/<i>n</i>²) a velikost orbitalu. Tvar určuje <i>l</i>, orientaci <i>m</i>, spin <i>m</i><sub><i>s</i></sub>.' },
+    { c:'cisla', t:'Jakých hodnot může nabývat vedlejší kvantové číslo <i>l</i> pro <i>n</i> = 3?',
+      r:'0, 1, 2', w:['1, 2, 3', '0, 1, 2, 3', '−2, …, +2'],
+      e:'<i>l</i> = 0, 1, …, <i>n</i> − 1, tedy pro <i>n</i> = 3 jsou to 0, 1, 2 (3s, 3p, 3d). Hodnoty −2 až +2 může mít magnetické číslo <i>m</i> pro <i>l</i> = 2.' },
+    { c:'cisla', t:'Co určuje magnetické kvantové číslo <i>m</i>?',
+      r:'Orientaci orbitalu v prostoru', w:['Energii stavu', 'Tvar orbitalu', 'Velikost orbitalu'],
+      e:'Pro dané <i>l</i> nabývá <i>m</i> hodnot −<i>l</i>, …, 0, …, +<i>l</i> (2<i>l</i> + 1 možností) a určuje orientaci orbitalu v prostoru.' },
+    { c:'cisla', t:'Jakých hodnot může nabývat spinové magnetické kvantové číslo <i>m</i><sub><i>s</i></sub>?',
+      r:'+½ a −½', w:['0 a 1', '−1, 0, +1', 'Libovolných'],
+      e:'Elektron se ve vnějším magnetickém poli může natočit jen dvěma způsoby: po směru pole, nebo proti němu, <i>m</i><sub><i>s</i></sub> = ±½.' },
+    { c:'cisla', t:'Co znamená zápis 3d?',
+      r:'Stav s <i>n</i> = 3 a <i>l</i> = 2', w:['Stav s <i>n</i> = 3 a <i>l</i> = 3', 'Stav s <i>n</i> = 2 a <i>l</i> = 3', 'Tři elektrony v orbitalu d'],
+      e:'Číslo udává <i>n</i>, písmeno <i>l</i>: s = 0, p = 1, d = 2, f = 3. Zápis 3d je tedy <i>n</i> = 3, <i>l</i> = 2.' },
+    { c:'cisla', t:'Který z následujících stavů neexistuje?',
+      r:'2d', w:['3p', '4f', '1s'],
+      e:'Pro <i>n</i> = 2 může být <i>l</i> jen 0 nebo 1 (2s, 2p); d by vyžadovalo <i>l</i> = 2 ≤ <i>n</i> − 1 = 1, což neplatí. Stavy 3p, 4f a 1s přípustné jsou.' },
+    { c:'cisla', t:'Kolik hodnot může mít magnetické kvantové číslo <i>m</i> pro <i>l</i> = 2?',
+      r:'5', w:['2', '3', '4'],
+      e:'<i>m</i> = −2, −1, 0, +1, +2, tedy 2<i>l</i> + 1 = 5 hodnot (pět orbitalů d).' },
+    { c:'cisla', t:'Která čtveřice kvantových čísel (<i>n</i>, <i>l</i>, <i>m</i>, <i>m</i><sub><i>s</i></sub>) je přípustná?',
+      r:'(3, 2, −1, +½)', w:['(2, 2, 0, +½)', '(3, 1, 2, −½)', '(1, 0, 0, 1)'],
+      e:'V (3, 2, −1, +½) platí <i>l</i> ≤ <i>n</i> − 1 a |<i>m</i>| ≤ <i>l</i>. U (2, 2, …) je <i>l</i> = <i>n</i>, u (3, 1, 2, …) je |<i>m</i>| > <i>l</i>, u (…, 1) je <i>m</i><sub><i>s</i></sub> = 1 místo ±½.' },
+    { c:'cisla', t:'Co je spin elektronu?',
+      r:'Vnitřní kvantová vlastnost částice, která nemá obdobu v makrosvětě.', w:['Skutečné otáčení elektronu kolem vlastní osy jako kuličky.', 'Oběh elektronu kolem jádra.', 'Náboj elektronu.'],
+      e:'Představa roztočené kuličky je jen pomůcka. Spin je vnitřní vlastnost; ve vnějším magnetickém poli se elektron chová jako malý magnet se dvěma možnými natočeními.' },
+    { c:'cisla', t:'Které pozorování vedlo k objevu spinu?',
+      r:'Pokusy s atomy v magnetickém poli ukázaly dvakrát víc stavů, než odpovídá číslům <i>n</i>, <i>l</i>, <i>m</i>.', w:['Rutherfordův pokus se zlatou fólií.', 'Pozorování fotoelektrického jevu.', 'Měření náboje olejových kapiček.'],
+      e:'V magnetickém poli se ukázalo, že stavů je dvojnásobek. Vysvětlením je spin s hodnotami <i>m</i><sub><i>s</i></sub> = ±½.' },
+    // ----- stavy -----
+    { c:'stavy', t:'Kolik orbitalů odpovídá hlavnímu kvantovému číslu <i>n</i> = 3?',
+      r:'9', w:['3', '6', '18'],
+      e:'Pro <i>n</i> = 3 je <i>l</i> = 0, 1, 2 a orbitalů je 1 + 3 + 5 = 9 = <i>n</i>². Hodnota 18 = 2<i>n</i>² je počet stavů (se spinem).' },
+    { c:'stavy', t:'Kolik elektronů se nejvýše vejde do slupky s <i>n</i> = 4?',
+      r:'32', w:['16', '8', '18'],
+      e:'Počet stavů je 2<i>n</i>² = 2 · 16 = 32 (4s, 4p, 4d, 4f: 2 + 6 + 10 + 14 = 32). Hodnota 16 = <i>n</i>² je počet orbitalů.' },
+    { c:'stavy', t:'Kolik elektronů pojme podslupka p?',
+      r:'6', w:['2', '3', '10'],
+      e:'Pro <i>l</i> = 1 jsou tři orbitaly (<i>m</i> = −1, 0, +1), každý pro dva elektrony: 2(2<i>l</i> + 1) = 6.' },
+    { c:'stavy', t:'Kolik elektronů pojme podslupka 4f?',
+      r:'14', w:['7', '10', '32'],
+      e:'Pro f je <i>l</i> = 3, orbitalů je 2<i>l</i> + 1 = 7 a elektronů 2 · 7 = 14. Hodnota 32 je kapacita celé slupky <i>n</i> = 4.' },
+    { c:'stavy', t:'Kolik kvantových stavů odpovídá hlavnímu kvantovému číslu <i>n</i> = 5?',
+      r:'50', w:['25', '10', '32'],
+      e:'2<i>n</i>² = 2 · 25 = 50. Kontrola součtem: <i>l</i> = 0 až 4 dává 2 · (1 + 3 + 5 + 7 + 9) = 2 · 25 = 50.' },
+    { c:'stavy', t:'Proč je počet orbitalů pro hlavní kvantové číslo <i>n</i> roven <i>n</i>²?',
+      r:'Součet 1 + 3 + 5 + … + (2<i>n</i> − 1) lichých čísel je <i>n</i>².', w:['Každý orbital pojme <i>n</i> elektronů.', 'Je to dáno Balmerovým vzorcem.', 'Orbitalů je 2<i>n</i>, ale každý se počítá dvakrát.'],
+      e:'Pro každé <i>l</i> = 0, …, <i>n</i> − 1 je 2<i>l</i> + 1 orbitalů; součet prvních <i>n</i> lichých čísel je <i>n</i>². Se spinem je stavů 2<i>n</i>².' },
+    // ----- Pauli -----
+    { c:'pauli', t:'Kolik elektronů může být podle Pauliho principu v jednom kvantovém stavu (dané čtveřici <i>n</i>, <i>l</i>, <i>m</i>, <i>m</i><sub><i>s</i></sub>)?',
+      r:'Nejvýše jeden', w:['Nejvýše dva', 'Libovolně mnoho', 'Právě <i>n</i>'],
+      e:'V jednom kvantovém stavu je nejvýše jeden elektron. V jednom orbitalu (dané <i>n</i>, <i>l</i>, <i>m</i>) mohou být dva — s opačným spinem.' },
+    { c:'pauli', t:'Kolik elektronů může být nejvýše v jednom orbitalu?',
+      r:'Dva, s opačným spinem', w:['Jeden', 'Osm', 'Libovolně mnoho'],
+      e:'Orbital je určen čísly <i>n</i>, <i>l</i>, <i>m</i>; zbývá spin ±½, takže do orbitalu se vejdou dva elektrony s opačným spinem.' },
+    { c:'pauli', t:'Co tvoří elektrony se stejným hlavním kvantovým číslem <i>n</i>?',
+      r:'Slupku', w:['Podslupku', 'Orbital', 'Jádro'],
+      e:'Elektrony se stejným <i>n</i> tvoří slupku, elektrony se stejným <i>n</i> i <i>l</i> podslupku. Slupky pojmou 2, 8, 18, 32 elektronů.' },
+    { c:'pauli', t:'Které elektrony určují hlavně chemické vlastnosti prvku?',
+      r:'Elektrony v poslední (valenční) slupce', w:['Elektrony v nejnižší slupce 1s', 'Všechny elektrony stejnou měrou', 'Elektrony uvnitř jádra'],
+      e:'Chemické vlastnosti určují hlavně valenční elektrony. Tím kvantová fyzika vysvětluje periodickou soustavu prvků.' },
+    { c:'pauli', t:'Na čem závisí energie elektronu v atomu s více elektrony (na rozdíl od vodíku)?',
+      r:'Nejen na <i>n</i>, ale i na <i>l</i>', w:['Jen na <i>n</i>', 'Jen na <i>m</i><sub><i>s</i></sub>', 'Na žádném kvantovém čísle'],
+      e:'U vodíku závisí energie jen na <i>n</i>. Ve víceelektronových atomech se elektrony navzájem ovlivňují a energie závisí i na vedlejším kvantovém čísle <i>l</i>.' },
+    { c:'pauli', t:'Atom má 10 elektronů v základním stavu. Jak jsou rozděleny do slupek?',
+      r:'2 ve slupce <i>n</i> = 1 a 8 ve slupce <i>n</i> = 2', w:['10 ve slupce <i>n</i> = 1', '5 ve slupce <i>n</i> = 1 a 5 ve slupce <i>n</i> = 2', '2 ve slupce <i>n</i> = 1, 6 ve slupce <i>n</i> = 2 a 2 ve slupce <i>n</i> = 3'],
+      e:'Slupka <i>n</i> = 1 pojme 2<i>n</i>² = 2 elektrony, slupka <i>n</i> = 2 pojme 8. Deset elektronů (neon) zaplní obě slupky úplně.' },
+    // ----- obrázek -----
+    { c:'model', fixed:true, f:KV_FIG_ORB, fa:KV_FIG_ORB_A,
+      t:'Který z útvarů na obrázku znázorňuje orbital p?',
+      r:'Útvar 1', w:['Útvar 2', 'Útvar 3', 'Žádný z nich'],
+      e:'Orbital p (<i>l</i> = 1) má tvar činky ze dvou laloků (útvar 1); barvy rozlišují části s opačným znaménkem vlnové funkce. Koule (útvar 2) je orbital s. Tvar čtyřlístku (útvar 3) mají některé orbitaly d (<i>l</i> = 2).' }
+  ];
+
+
+  var KVIZ_KEY = 'fyzika:kvantova-cisla:kviz';
+  var section = document.getElementById('kviz-section');
+  var tabBtn = document.getElementById('top-tab-kviz');
+  var readout = document.getElementById('kviz-readout');
+  var pageReadout = document.getElementById('header-readout');
+  var kviz = {
+    type:'all', queue:[], current:null, sel:null, locked:false,
+    score:0, streak:0, bestStreak:0, answered:0, correct:0,
+    inRound:false, ended:false, roundTotal:0, roundCorrect:0
+  };
+  function $(id){ return document.getElementById(id); }
+  function kvizLoad(){
+    try{ var raw = localStorage.getItem(KVIZ_KEY); if(raw){ kviz.bestStreak = JSON.parse(raw).bestStreak || 0; } }catch(e){}
+  }
+  function kvizSave(){
+    try{ localStorage.setItem(KVIZ_KEY, JSON.stringify({bestStreak: kviz.bestStreak})); }catch(e){}
+  }
+  function kvizShuffled(a){
+    a = a.slice();
+    for(var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random()*(i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; }
+    return a;
+  }
+  function typeOf(key){ return KVIZ_TYPES.filter(function(t){ return t.key === key; })[0]; }
+
+  // Otázky okruhu se berou v náhodném pořadí bez opakování. Po projití celého okruhu
+  // se zobrazí závěrečná hláška s výsledkem kola a nabídkou otázky zamíchat znovu.
+  function kvizNext(){
+    if(!kviz.queue.length){
+      if(kviz.inRound){ kvizShowEnd(); return; }
+      var pool = KVIZ_BANK.filter(function(b){ return kviz.type === 'all' || b.c === kviz.type; });
+      kviz.queue = kvizShuffled(pool);
+      if(kviz.current && kviz.queue.length > 1 && kviz.queue[0] === kviz.current.item){ kviz.queue.push(kviz.queue.shift()); }
+      kviz.inRound = true; kviz.roundTotal = pool.length; kviz.roundCorrect = 0;
+    }
+    var item = kviz.queue.shift();
+    var opts = item.fixed ? [item.r].concat(item.w).sort() : kvizShuffled([item.r].concat(item.w));
+    kviz.current = { item:item, choices:opts, correct:opts.indexOf(item.r) };
+    kvizRender();
+  }
+  function kvizShowEnd(){
+    kviz.ended = true; kviz.inRound = false;
+    var tp = typeOf(kviz.type);
+    var n = kviz.roundTotal, k = kviz.roundCorrect;
+    $('kviz-end-text').innerHTML =
+      'Prošli jste všech ' + n + ' otázek ' + (kviz.type === 'all' ? 'kvízu' : 'okruhu „' + tp.name + '“') + '. ' +
+      'Správně jste odpověděli na ' + k + ' z ' + n + ' (' + Math.round(100*k/n) + '&nbsp;%). Chcete otázky zamíchat a projít znovu?';
+    $('kviz-q').hidden = true;
+    $('kviz-end').hidden = false;
+    $('kviz-btn-restart').focus({ preventScroll:true });
+  }
+  function kvizRestart(){
+    kviz.queue = []; kviz.inRound = false;
+    kvizNext();
+  }
+  function kvizRender(){
+    var q = kviz.current;
+    kviz.ended = false;
+    $('kviz-q').hidden = false;
+    $('kviz-end').hidden = true;
+    var tp = typeOf(q.item.c);
+    $('kviz-cat-tag').innerHTML = tp ? tp.tag : 'Otázka';
+    $('kviz-task-text').innerHTML = q.item.t;
+    var fig = $('kviz-fig');
+    fig.hidden = !q.item.f;
+    if(q.item.f){ $('kviz-graph').innerHTML = KV_DEFS + q.item.f; $('kviz-graph').setAttribute('aria-label', q.item.fa || 'Obrázek k otázce'); }
+    var grid = $('kviz-opt-grid');
+    grid.innerHTML = '';
+    kviz.sel = null; kviz.locked = false;
+    q.choices.forEach(function(c, i){
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'opt-btn';
+      b.innerHTML = '<b>' + LETTERS[i] + ')</b>&nbsp; ' + c;
+      b.addEventListener('click', function(){ kvizSelect(i); });
+      grid.appendChild(b);
+    });
+    var fb = $('kviz-feedback');
+    fb.hidden = true; fb.classList.remove('ok', 'bad', 'sol');
+    $('kviz-btn-check').textContent = 'Zkontrolovat';
+  }
+  function kvizSelect(i){
+    if(kviz.locked || kviz.ended) return;
+    kviz.sel = i;
+    Array.prototype.forEach.call($('kviz-opt-grid').children, function(el, j){ el.classList.toggle('selected', j === i); });
+    $('kviz-btn-check').focus({ preventScroll:true });
+  }
+  function kvizFinish(ok, headline){
+    var q = kviz.current;
+    Array.prototype.forEach.call($('kviz-opt-grid').children, function(el, j){
+      el.disabled = true;
+      el.classList.remove('selected');
+      if(j === q.correct) el.classList.add(kviz.sel === j ? 'correct' : 'missed');
+      else if(j === kviz.sel) el.classList.add('wrong');
+    });
+    var fb = $('kviz-feedback');
+    fb.hidden = false;
+    fb.classList.toggle('ok', ok); fb.classList.toggle('bad', !ok);
+    $('kviz-feedback-headline').textContent = headline;
+    var finalText = 'Správná odpověď: ' + LETTERS[q.correct] + ') ' + q.item.r;
+    if(window.FyzikaReseni && FyzikaReseni.show){
+      FyzikaReseni.show(fb, $('kviz-feedback-steps'), { raw:true, title:'Vysvětlení', steps:[q.item.e], final:finalText });
+    } else {
+      $('kviz-feedback-steps').innerHTML = q.item.e + '<br><b>' + finalText + '</b>';
+    }
+    kviz.locked = true;
+    var btn = $('kviz-btn-check');
+    btn.textContent = 'Další otázka →';
+    btn.focus({ preventScroll:true });
+    kvizStats();
+  }
+  function kvizCheck(){
+    if(kviz.ended){ kvizRestart(); return; }
+    if(kviz.locked){ kvizNext(); return; }
+    if(kviz.sel === null && !confirm('Není vybraná žádná možnost. Opravdu chcete zkontrolovat?')) return;
+    var ok = kviz.sel === kviz.current.correct;
+    kviz.answered++;
+    if(ok){
+      kviz.score += 10; kviz.streak++; kviz.correct++; kviz.roundCorrect++;
+      if(kviz.streak > kviz.bestStreak){ kviz.bestStreak = kviz.streak; kvizSave(); }
+    } else {
+      kviz.streak = 0;
+    }
+    kvizFinish(ok, ok ? 'Správně!' : (kviz.sel === null ? 'Vyberte odpověď.' : 'Bohužel špatně.'));
+  }
+  function kvizSkip(){
+    if(kviz.ended){ kvizRestart(); return; }
+    if(kviz.locked){ kvizNext(); return; }
+    kviz.streak = 0; kviz.answered++;
+    kvizFinish(false, 'Správná odpověď:');
+  }
+  function kvizStats(){
+    $('kviz-stat-score').textContent = kviz.score;
+    $('kviz-stat-streak').textContent = kviz.streak + (kviz.bestStreak > 0 ? ' / ' + kviz.bestStreak : '');
+    $('kviz-stat-accuracy').textContent = kviz.answered === 0 ? '—' : Math.round(100*kviz.correct/kviz.answered) + ' %';
+  }
+  (function kvizBuildTypeRow(){
+    var row = $('kviz-type-row');
+    KVIZ_TYPES.forEach(function(d){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip accented' + (d.key === kviz.type ? ' on' : '');
+      b.setAttribute('aria-pressed', d.key === kviz.type ? 'true' : 'false');
+      b.textContent = d.name;
+      b.addEventListener('click', function(){
+        if(d.key === kviz.type) return;
+        // rozpracovaná otázka s vybranou odpovědí se před změnou okruhu vyhodnotí
+        var settled = !kviz.locked && kviz.sel !== null;
+        if(settled) kvizCheck();
+        kviz.type = d.key; kviz.queue = []; kviz.inRound = false;
+        Array.prototype.forEach.call(row.children, function(el, i){
+          var on = KVIZ_TYPES[i].key === kviz.type;
+          el.classList.toggle('on', on);
+          el.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        // vyhodnocená otázka zůstane i s vysvětlením vidět, další už bude z nového okruhu
+        if(!settled) kvizNext();
+      });
+      row.appendChild(b);
+    });
+  })();
+  $('kviz-btn-check').addEventListener('click', kvizCheck);
+  $('kviz-btn-skip').addEventListener('click', kvizSkip);
+  $('kviz-btn-restart').addEventListener('click', kvizRestart);
+  $('kviz-reset-stats').addEventListener('click', function(){
+    kviz.score = 0; kviz.streak = 0; kviz.answered = 0; kviz.correct = 0; kviz.bestStreak = 0;
+    try{ localStorage.removeItem(KVIZ_KEY); }catch(e){}
+    kvizStats();
+  });
+  // Klávesnice v kvízu: A–D nebo 1–4 vybere odpověď, Enter zkontroluje / posune dál.
+  document.addEventListener('keydown', function(e){
+    if(section.hidden) return;
+    if(e.ctrlKey || e.metaKey || e.altKey) return;
+    if(e.key === 'Enter'){
+      if(e.target && e.target.tagName === 'BUTTON') return;
+      e.preventDefault(); kvizCheck(); return;
+    }
+    var idx = 'abcd'.indexOf(e.key.toLowerCase());
+    if(idx === -1) idx = '1234'.indexOf(e.key);
+    if(idx !== -1 && e.key.length === 1) kvizSelect(idx);
+  });
+
+  // ---- záložka Kvíz ----
+  // Skript je samostatný: otevření Kvízu i návrat na ostatní záložky řeší sám, ať stránka přepíná
+  // záložky jakkoli. Skóre kvízu má vlastní pole v hlavičce (skóre tréninku se tím nemění).
+  function activate(){
+    var teorieBtn = $('top-tab-teorie'), theory = $('theory-section');
+    if(!tabBtn.classList.contains('on') && teorieBtn && !teorieBtn.classList.contains('on')){
+      // nejdřív „kliknutím“ opustíme dosavadní záložku obsluhou stránky (u hry na čas s potvrzením)
+      teorieBtn.click();
+      if(theory && theory.hidden) return;   // stránka odmítla opustit dosavadní záložku (např. běžící hra)
+    }
+    Array.prototype.forEach.call(document.querySelectorAll('.tab-section'), function(s){ s.hidden = s !== section; });
+    Array.prototype.forEach.call(document.querySelectorAll('.toptab'), function(t){ t.classList.toggle('on', t === tabBtn); });
+    if(pageReadout) pageReadout.hidden = true;
+    readout.hidden = false;
+    kvizStats();
+    if(!kviz.current) kvizNext();
+  }
+  tabBtn.addEventListener('click', activate);
+  Array.prototype.forEach.call(document.querySelectorAll('.toptab'), function(t){
+    if(t === tabBtn) return;
+    t.addEventListener('click', function(){ section.hidden = true; readout.hidden = true; tabBtn.classList.remove('on'); });
+  });
+  document.addEventListener('fyzika:scores-updated', function(){ kviz.bestStreak = 0; kvizLoad(); kvizStats(); });
+  kvizLoad();
+  kvizStats();
+  if(location.hash === '#kviz' && !tabBtn.classList.contains('on')) tabBtn.click();
+  else if(location.hash === '#kviz') activate();
+})();
+</script>
+
 </body>
 </html>

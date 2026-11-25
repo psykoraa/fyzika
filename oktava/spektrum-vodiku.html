@@ -87,6 +87,15 @@
   .card{ padding:20px 16px 22px; }
 }
 </style>
+<style>
+/* ---- Kvíz (stejný jako u Grafů rovnoměrného pohybu a u Pohybu po kružnici) ---- */
+.kviz-task{ font-size:1.02rem; line-height:1.5; max-width:52ch; margin:0 auto 10px; color:var(--ink); text-align:center; }
+#kviz-section .kviz-task i, #kviz-section .opt-btn i, #kviz-section .feedback .steps i, #kviz-section .cat-tag i{ font-family:'STIX Two Text', Georgia, serif; font-style:italic; text-transform:none; }
+#kviz-section .feedback .steps{ font-family:'Work Sans', sans-serif; white-space:normal; opacity:1; }
+#kviz-end .kviz-end-box{ text-align:center; margin:0 0 14px; }
+#kviz-end .kviz-end-hint{ text-align:center; margin-top:10px; }
+#kviz-section [hidden]{ display:none; }
+</style>
 </head>
 <body>
 
@@ -113,10 +122,16 @@
       <div class="cell"><span class="label">Série</span><span class="value" id="stat-streak">0</span></div>
       <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="stat-accuracy">—</span></div>
     </div>
+    <div class="readout" id="kviz-readout" hidden>
+      <div class="cell"><span class="label">Skóre</span><span class="value" id="kviz-stat-score">0</span></div>
+      <div class="cell"><span class="label">Série</span><span class="value" id="kviz-stat-streak">0</span></div>
+      <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="kviz-stat-accuracy">—</span></div>
+    </div>
   </div>
 
   <div class="top-tabs">
     <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+    <button class="toptab" id="top-tab-kviz" data-tab="kviz">Kvíz</button>
     <button class="toptab" id="top-tab-trenink" data-tab="trenink">Trénink</button>
   </div>
 
@@ -257,6 +272,50 @@
       <p>• Rutherfordův model by dával spojité spektrum — čárové spektrum vysvětlit neumí.</p>
     </div>
 
+  </div>
+
+  <!-- ============ KVÍZ ============ -->
+  <div id="kviz-section" class="tab-section" hidden>
+    <div class="panel">
+      <div class="section-block">
+        <div class="panel-title">Okruh otázek</div>
+        <div class="row" id="kviz-type-row"></div>
+      </div>
+      <div class="settings-foot" style="justify-content:flex-end;">
+        <button class="linklike" id="kviz-reset-stats">vynulovat statistiku</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div id="kviz-q">
+      <span class="cat-tag" id="kviz-cat-tag">Otázka</span>
+      <p class="kviz-task" id="kviz-task-text"></p>
+      <figure class="theory-fig" id="kviz-fig" hidden>
+        <svg id="kviz-graph" viewBox="0 0 480 260" role="img" aria-label="Obrázek k otázce"></svg>
+      </figure>
+      <div class="opt-grid wide-opts" id="kviz-opt-grid"></div>
+      <div class="actions">
+        <button class="btn primary" id="kviz-btn-check">Zkontrolovat</button>
+        <button class="btn ghost" id="kviz-btn-skip">Nevím / Zobrazit řešení</button>
+      </div>
+      <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint">Vyberte jednu ze čtyř odpovědí kliknutím nebo klávesami A až D (případně 1 až 4) a potvrďte tlačítkem Zkontrolovat nebo klávesou Enter; dalším Enterem přejdete na další otázku. Po kontrole se správná odpověď obarví zeleně, chybně vybraná červeně a pod otázkou se objeví vysvětlení. Okruh otázek vyberete nahoře; otázky se neopakují, dokud neprojdete celý okruh. Pak se zobrazí, kolik otázek jste zodpověděli správně, a otázky můžete zamíchat a projít znovu.</p>
+      </details>
+      <div class="feedback" id="kviz-feedback" hidden>
+        <div class="headline" id="kviz-feedback-headline"></div>
+        <div class="steps" id="kviz-feedback-steps"></div>
+      </div>
+      </div>
+      <div id="kviz-end" hidden>
+        <div class="feedback ok kviz-end-box"><div class="headline">Hotovo, prošli jste všechny otázky!</div></div>
+        <p class="kviz-task" id="kviz-end-text"></p>
+        <div class="actions">
+          <button class="btn primary" id="kviz-btn-restart">Zamíchat otázky a začít znovu</button>
+        </div>
+        <p class="hint kviz-end-hint">Můžete také nahoře vybrat jiný okruh otázek.</p>
+      </div>
+    </div>
   </div>
 
   <!-- ============ TRÉNINK ============ -->
@@ -698,5 +757,374 @@
   trGenerate();
 })();
 </script>
+<script>
+(function(){
+  "use strict";
+  // ================= KVÍZ: otázky s výběrem ze čtyř odpovědí (A–D) =================
+  // Samostatný skript (stejný kvíz jako u Grafů rovnoměrného pohybu a u Pohybu po kružnici).
+  // Položka banky: c = okruh, t = zadání (HTML), r = správná odpověď, w = tři špatné,
+  // e = vysvětlení; fixed = možnosti se nemíchají, jen seřadí.
+  var LETTERS = ['A','B','C','D'];
+  // ---- pomůcky pro obrázky k otázkám (SVG ve viewBoxu 480 × 260, barvy z proměnných stránky) ----
+  var KV_COL = { ink:'var(--ink)', soft:'var(--ink-soft)', acc:'var(--accent)', foc:'var(--focus)' };
+  var KV_DEFS = '<defs>' + ['ink','soft','acc','foc'].map(function(k){
+    return '<marker id="kv-' + k + '" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4.4" markerHeight="4.4" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="' + KV_COL[k] + '"/></marker>';
+  }).join('') + '</defs>';
+  function kvA(x1, y1, x2, y2, c, w, dash){
+    c = c || 'ink';
+    return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + KV_COL[c] + '" stroke-width="' + (w || 2.6) + '" stroke-linecap="round" marker-end="url(#kv-' + c + ')"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  function kvL(x1, y1, x2, y2, c, w, dash){
+    return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + KV_COL[c || 'soft'] + '" stroke-width="' + (w || 1.6) + '" stroke-linecap="round"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  function kvT(x, y, txt, anchor, size, c, italic){
+    return '<text x="' + x + '" y="' + y + '" text-anchor="' + (anchor || 'middle') + '" font-family="' + (italic ? "STIX Two Text, Georgia, serif" : "Work Sans, sans-serif") + '" font-size="' + (size || 13) + '"' + (italic ? ' font-style="italic"' : '') + ' fill="' + KV_COL[c || 'ink'] + '">' + txt + '</text>';
+  }
+  function kvC(x, y, r, fill, stroke){
+    return '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + (fill || 'none') + '" stroke="' + (stroke ? KV_COL[stroke] : 'none') + '" stroke-width="1.6"/>';
+  }
+  function kvR(x, y, w, h, fill, stroke, rot){
+    return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="2" fill="' + (fill || 'var(--surface-2)') + '" stroke="' + KV_COL[stroke || 'soft'] + '" stroke-width="1.6"' + (rot ? ' transform="rotate(' + rot[0] + ' ' + rot[1] + ' ' + rot[2] + ')"' : '') + '/>';
+  }
+  function kvP(d, c, w, dash, fill){
+    return '<path d="' + d + '" fill="' + (fill || 'none') + '" stroke="' + KV_COL[c || 'ink'] + '" stroke-width="' + (w || 2) + '" stroke-linecap="round" stroke-linejoin="round"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  // očíslovaný kroužek u špičky šipky (n = číslo), směr (dx, dy) od špičky ven
+  function kvN(x, y, n, dx, dy){
+    var lx = x + dx, ly = y + dy;
+    return kvC(lx, ly, 10, 'var(--surface-2)', 'soft') + '<text x="' + lx + '" y="' + (ly + 4.5) + '" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="13" font-weight="600" fill="var(--ink)">' + n + '</text>';
+  }
+  // šipka s číslem: z (x1, y1) do (x2, y2), kroužek za špičkou
+  function kvAN(x1, y1, x2, y2, n, c){
+    var dx = x2 - x1, dy = y2 - y1, l = Math.sqrt(dx*dx + dy*dy);
+    return kvA(x1, y1, x2, y2, c || 'ink') + kvN(x2, y2, n, dx/l*16, dy/l*16);
+  }
+  // ---- viditelné čáry vodíku na tmavém pozadí (osa 380 nm až 720 nm) ----
+  function kvX(l){ return 40 + (l - 380)*1.2; }
+  function kvSpec(){
+    var s = '<rect x="40" y="56" width="408" height="100" rx="3" fill="#15151c"/>';
+    [[410.2, '#8b5cf6'], [434.0, '#6d6cf2'], [486.1, '#22b5c9'], [656.3, '#ef3b2d']].forEach(function(d, i){
+      var x = kvX(d[0]);
+      s += '<line x1="' + x + '" y1="58" x2="' + x + '" y2="154" stroke="' + d[1] + '" stroke-width="3.2"/>';
+      s += kvN(x, 56, i + 1, 0, -18);
+    });
+    [400, 500, 600, 700].forEach(function(l){
+      var x = kvX(l);
+      s += kvL(x, 156, x, 164, 'soft', 1.4) + kvT(x, 180, String(l), 'middle', 12, 'soft');
+    });
+    s += '<text x="244" y="204" text-anchor="middle" font-family="Work Sans, sans-serif" font-size="12" fill="var(--ink-soft)"><tspan font-family="STIX Two Text, Georgia, serif" font-style="italic">λ</tspan> (nm)</text>';
+    return s;
+  }
+  var KV_FIG_SP = kvSpec();
+  var KV_FIG_SP_A = 'Čárové spektrum vodíku ve viditelné oblasti se čtyřmi očíslovanými čarami: 1 u 410 nm, 2 u 434 nm, 3 u 486 nm, 4 u 656 nm';
+
+  var KVIZ_TYPES = [
+    { key:'all', name:'Vše' },
+    { key:'spektra', name:'Druhy spekter', tag:'Spojité a čárové spektrum' },
+    { key:'balmer', name:'Balmerova série', tag:'Balmerova série' },
+    { key:'serie', name:'Další série', tag:'Rydbergova formule a další série' },
+    { key:'model', name:'Důsledky pro model', tag:'Co z toho plyne pro model atomu' }
+  ];
+  var KVIZ_BANK = [
+    // ----- druhy spekter -----
+    { c:'spektra', t:'Jaké spektrum má světlo obyčejné žárovky?',
+      r:'Spojité', w:['Čárové', 'Absorpční čárové', 'Jen jednu čáru'],
+      e:'Zahřáté pevné těleso (vlákno žárovky) vyzařuje všechny vlnové délky, jen s různou intenzitou — vznikne spojité duhové spektrum.' },
+    { c:'spektra', t:'Jaké spektrum vyzařuje řídký plyn ve výbojce?',
+      r:'Čárové — několik ostrých barevných čar na tmavém pozadí', w:['Spojité', 'Jen bílé světlo bez čar', 'Tmavé čáry na barevném pozadí'],
+      e:'Řídký plyn (vodík, neon, páry sodíku či rtuti) vyzařuje jen určité vlnové délky. Tmavé čáry na spojitém pozadí vzniknou naopak pohlcováním ve chladném plynu.' },
+    { c:'spektra', t:'Na čem je založena spektrální analýza?',
+      r:'Každý prvek má svou charakteristickou soustavu spektrálních čar.', w:['Všechny prvky mají stejné čáry, liší se jen jasem.', 'Prvky se rozlišují podle teploty plamene.', 'Prvky se rozlišují podle hmotnosti atomů.'],
+      e:'Soustava čar je pro každý prvek jedinečná, podobně jako otisky prstů. Podle čar lze prvek spolehlivě rozpoznat.' },
+    { c:'spektra', t:'Jak vznikají tmavé Fraunhoferovy čáry ve spektru Slunce?',
+      r:'Chladnější plyn ve slunečním obalu pohlcuje ze spojitého světla právě ty vlnové délky, které by sám vyzařoval.',
+      w:['Světlo se v těchto vlnových délkách ruší interferencí na Zemi.', 'Slunce v těchto vlnových délkách vůbec nesvítí, protože je příliš horké.', 'Vznikají v oku pozorovatele.'],
+      e:'Chladný plyn pohlcuje stejné vlnové délky, jaké vyzařuje. Podle tmavých čar se zjistilo složení slunečního obalu.' },
+    { c:'spektra', t:'Který prvek byl objeven na Slunci dřív než na Zemi?',
+      r:'Helium', w:['Vodík', 'Sodík', 'Neon'],
+      e:'Helium bylo objeveno podle spektrálních čar ve slunečním spektru, teprve později na Zemi. Název pochází z řeckého helios — Slunce.' },
+    // ----- Balmer -----
+    { c:'balmer', t:'Kdo a kdy objevil vztah pro frekvence viditelných čar vodíku?',
+      r:'J. Balmer, učitel matematiky z Basileje, v roce 1885', w:['N. Bohr v roce 1913', 'T. Lyman v roce 1906', 'J. Fraunhofer v roce 1814'],
+      e:'Balmer si v roce 1885 všiml, že frekvence čtyř viditelných čar vodíku splňují jednoduchý vztah. Bohr ho později vysvětlil svým modelem.' },
+    { c:'balmer', t:'Proč je v Balmerově vzorci nejmenší možné <i>n</i> rovno 3?',
+      r:'Pro <i>n</i> = 2 by vyšla nulová frekvence a pro <i>n</i> = 1 záporná.', w:['Protože vodík má jen tři elektrony.', 'Protože čára pro <i>n</i> = 2 je neviditelná.', 'Je to náhoda měření.'],
+      e:'<i>f</i> = <i>R</i><sub><i>f</i></sub>(1/2² − 1/<i>n</i>²): pro <i>n</i> = 2 je závorka nulová, pro <i>n</i> = 1 záporná, což nedává smysl.' },
+    { c:'balmer', t:'Jakou barvu má čára Hα vodíku (656,3&nbsp;nm)?',
+      r:'Červenou', w:['Modrozelenou', 'Fialovou', 'Žlutou'],
+      e:'Hα (<i>n</i> = 3) je červená, Hβ (486,1&nbsp;nm) modrozelená, Hγ (434,0&nbsp;nm) modrofialová a Hδ (410,2&nbsp;nm) fialová.' },
+    { c:'balmer', t:'Jakou frekvenci má čára Hα (<i>n</i> = 3)?',
+      r:'Přibližně 4,57·10¹⁴&nbsp;Hz', w:['Přibližně 3,29·10¹⁵&nbsp;Hz', 'Přibližně 6,17·10¹⁴&nbsp;Hz', 'Přibližně 1,37·10¹⁵&nbsp;Hz'],
+      e:'<i>f</i> = 3,290·10¹⁵&nbsp;Hz · (1/4 − 1/9) = 3,290·10¹⁵&nbsp;Hz · 5/36 ≐ 4,57·10¹⁴&nbsp;Hz. Kontrola: <i>c</i>/<i>λ</i> = 2,998·10⁸ / (656,3·10⁻⁹)&nbsp;Hz ≐ 4,57·10¹⁴&nbsp;Hz. 6,17·10¹⁴&nbsp;Hz patří čáře Hβ.' },
+    { c:'balmer', t:'Vypočtěte z Balmerova vzorce vlnovou délku třetí čáry Balmerovy série (<i>n</i> = 5).',
+      r:'Přibližně 434&nbsp;nm', w:['Přibližně 486&nbsp;nm', 'Přibližně 410&nbsp;nm', 'Přibližně 91&nbsp;nm'],
+      e:'<i>f</i> = 3,290·10¹⁵&nbsp;Hz · (1/4 − 1/25) = 3,290·10¹⁵ · 0,21&nbsp;Hz ≐ 6,909·10¹⁴&nbsp;Hz, <i>λ</i> = <i>c</i>/<i>f</i> = 2,998·10⁸/6,909·10¹⁴&nbsp;m ≐ 4,339·10⁻⁷&nbsp;m ≐ 434&nbsp;nm (čára Hγ, změřeno 434,0&nbsp;nm).' },
+    { c:'balmer', t:'Co se děje s čarami Balmerovy série s rostoucím <i>n</i>?',
+      r:'Zhušťují se a blíží se k hraně série přibližně 365&nbsp;nm.', w:['Vzdalují se od sebe a míří k červené barvě.', 'Mají stále stejné vzdálenosti.', 'Postupně přecházejí do infračervené oblasti.'],
+      e:'Pro <i>n</i> → ∞ se závorka blíží 1/4 a frekvence k <i>R</i><sub><i>f</i></sub>/4 ≐ 8,23·10¹⁴&nbsp;Hz, tedy <i>λ</i> ≐ 364,6&nbsp;nm. Čáry se k této hraně zhušťují.' },
+    { c:'balmer', t:'Jakou hodnotu má Rydbergova frekvence <i>R</i><sub><i>f</i></sub>?',
+      r:'3,290·10¹⁵&nbsp;Hz', w:['6,626·10⁻³⁴&nbsp;Hz', '2,998·10⁸&nbsp;Hz', '1,097·10⁷&nbsp;Hz'],
+      e:'<i>R</i><sub><i>f</i></sub> = 3,290·10¹⁵&nbsp;Hz. Číslo 6,626·10⁻³⁴ je Planckova konstanta (v J·s), 2,998·10⁸ rychlost světla (v m·s⁻¹).' },
+    // ----- série -----
+    { c:'serie', t:'Ve které oblasti spektra leží Lymanova série (<i>m</i> = 1)?',
+      r:'Ultrafialové', w:['Viditelné', 'Infračervené', 'Rentgenové'],
+      e:'<i>m</i> = 1 Lymanova série (UV), <i>m</i> = 2 Balmerova (viditelná), <i>m</i> = 3 Paschenova (IR).' },
+    { c:'serie', t:'Ve které oblasti spektra leží Paschenova série (<i>m</i> = 3)?',
+      r:'Infračervené', w:['Ultrafialové', 'Viditelné', 'Mikrovlnné'],
+      e:'Paschenova série má první čáru 1&nbsp;875&nbsp;nm a hranu 820&nbsp;nm — celá leží v infračervené oblasti.' },
+    { c:'serie', t:'Jaká je vlnová délka první čáry Lymanovy série (<i>m</i> = 1, <i>n</i> = 2)?',
+      r:'Přibližně 122&nbsp;nm', w:['Přibližně 91&nbsp;nm', 'Přibližně 656&nbsp;nm', 'Přibližně 365&nbsp;nm'],
+      e:'<i>f</i> = <i>R</i><sub><i>f</i></sub> · (1 − 1/4) = 0,75 · 3,290·10¹⁵&nbsp;Hz ≐ 2,468·10¹⁵&nbsp;Hz a <i>λ</i> = 2,998·10⁸/2,468·10¹⁵&nbsp;m ≐ 1,215·10⁻⁷&nbsp;m ≐ 122&nbsp;nm (tabulka: 121,6&nbsp;nm). 91&nbsp;nm je hrana Lymanovy série.' },
+    { c:'serie', t:'Jaká je hrana Lymanovy série (<i>n</i> → ∞)?',
+      r:'Přibližně 91&nbsp;nm', w:['Přibližně 122&nbsp;nm', 'Přibližně 365&nbsp;nm', 'Přibližně 820&nbsp;nm'],
+      e:'Pro <i>n</i> → ∞ je <i>f</i> = <i>R</i><sub><i>f</i></sub>/1² = 3,290·10¹⁵&nbsp;Hz a <i>λ</i> = 2,998·10⁸/3,290·10¹⁵&nbsp;m ≐ 9,11·10⁻⁸&nbsp;m ≐ 91&nbsp;nm.' },
+    { c:'serie', t:'Jak se mění vlnové délky sérií s rostoucím <i>m</i>?',
+      r:'Prodlužují se (frekvence klesají).', w:['Zkracují se (frekvence rostou).', 'Nemění se.', 'Střídavě se zkracují a prodlužují.'],
+      e:'Člen 1/<i>m</i>² s rostoucím <i>m</i> klesá, takže frekvence jsou menší a vlnové délky delší: Lyman UV, Balmer viditelná, Paschen a Brackett IR.' },
+    { c:'serie', t:'Žák dosadil <i>R</i><sub><i>f</i></sub> do Rydbergovy formule a výsledek prohlásil za vlnovou délku. V čem je chyba?',
+      r:'Formule dává frekvenci; vlnovou délku je nutné dopočítat ze vztahu <i>λ</i> = <i>c</i>/<i>f</i>.', w:['Chyba není, formule dává přímo vlnovou délku.', 'Formule dává energii v elektronvoltech.', 'Musel by výsledek vynásobit <i>h</i>.'],
+      e:'<i>R</i><sub><i>f</i></sub> má jednotku Hz, takže <i>R</i><sub><i>f</i></sub>(1/<i>m</i>² − 1/<i>n</i>²) je frekvence. Rozměrová kontrola: m = (m·s⁻¹)/s⁻¹, proto <i>λ</i> = <i>c</i>/<i>f</i>.' },
+    { c:'serie', t:'Jakou vlnovou délku má první čára Paschenovy série (<i>m</i> = 3, <i>n</i> = 4)?',
+      r:'Přibližně 1&nbsp;875&nbsp;nm', w:['Přibližně 820&nbsp;nm', 'Přibližně 656&nbsp;nm', 'Přibližně 4&nbsp;051&nbsp;nm'],
+      e:'<i>f</i> = 3,290·10¹⁵&nbsp;Hz · (1/9 − 1/16) = 3,290·10¹⁵ · 7/144&nbsp;Hz ≐ 1,599·10¹⁴&nbsp;Hz, <i>λ</i> = 2,998·10⁸/1,599·10¹⁴&nbsp;m ≐ 1,875·10⁻⁶&nbsp;m. 820&nbsp;nm je hrana Paschenovy série, 4&nbsp;051&nbsp;nm první čára Brackettovy.' },
+    { c:'serie', t:'Kdo objevil čáry vodíku v ultrafialové oblasti?',
+      r:'T. Lyman', w:['F. Paschen', 'J. Balmer', 'J. Rydberg'],
+      e:'T. Lyman pozoroval ultrafialové čáry (1906 až 1914), F. Paschen infračervené (1908). Balmer popsal viditelné čáry, Rydberg shrnul všechny série do jedné formule.' },
+    // ----- model -----
+    { c:'model', t:'Jaké spektrum by podle Rutherfordova modelu vyzařoval atom vodíku?',
+      r:'Spojité', w:['Čárové se stejnými čarami jako ve skutečnosti', 'Žádné', 'Jen čáru Hα'],
+      e:'Elektron obíhající a vyzařující by plynule ztrácel energii a vyzařoval všechny vlnové délky. Skutečné čárové spektrum tento model vysvětlit neumí.' },
+    { c:'model', t:'Co naznačuje skutečnost, že vodík vyzařuje jen určité frekvence, které poslouchají celočíselný zákon?',
+      r:'Že energie atomu nemůže být libovolná.', w:['Že atom vodíku nemá jádro.', 'Že světlo není elektromagnetické vlnění.', 'Že elektron je těžší než proton.'],
+      e:'Jen určené frekvence znamenají jen určené energie atomu. Vysvětlení přinesl až Bohrův model s energetickými hladinami.' },
+    { c:'model', t:'Který model atomu vysvětlil Rydbergovu formuli?',
+      r:'Bohrův model', w:['Thomsonův model', 'Rutherfordův model', 'Daltonův model'],
+      e:'Bohr ukázal, že Rydbergova formule vynásobená <i>h</i> je rozdíl energií dvou hladin: <i>hf</i> = <i>E</i><sub><i>n</i></sub> − <i>E</i><sub><i>m</i></sub>.' },
+    // ----- obrázky -----
+    { c:'balmer', fixed:true, f:KV_FIG_SP, fa:KV_FIG_SP_A,
+      t:'Na obrázku jsou viditelné čáry vodíku. Která čára odpovídá v Balmerově vzorci hodnotě <i>n</i> = 5?',
+      r:'Čára 2', w:['Čára 1', 'Čára 3', 'Čára 4'],
+      e:'S rostoucím <i>n</i> frekvence roste a vlnová délka klesá: <i>n</i> = 3 je nejdelší čára 656&nbsp;nm (čára 4), <i>n</i> = 4 je 486&nbsp;nm (čára 3), <i>n</i> = 5 je 434&nbsp;nm (čára 2) a <i>n</i> = 6 je 410&nbsp;nm (čára 1).' },
+    { c:'balmer', fixed:true, f:KV_FIG_SP, fa:KV_FIG_SP_A,
+      t:'Která čára na obrázku odpovídá fotonům s největší energií?',
+      r:'Čára 1', w:['Čára 2', 'Čára 3', 'Čára 4'],
+      e:'Energie fotonu <i>E</i> = <i>hc</i>/<i>λ</i> je největší pro nejkratší vlnovou délku: čára 1 (410&nbsp;nm, fialová, přibližně 3,0&nbsp;eV). Červená čára 4 (656&nbsp;nm) má nejmenší energii, přibližně 1,9&nbsp;eV.' },
+    { c:'balmer', fixed:true, f:KV_FIG_SP, fa:KV_FIG_SP_A,
+      t:'Která čára na obrázku má frekvenci přibližně 6,17·10¹⁴&nbsp;Hz?',
+      r:'Čára 3', w:['Čára 1', 'Čára 2', 'Čára 4'],
+      e:'<i>λ</i> = <i>c</i>/<i>f</i> = 2,998·10⁸/6,17·10¹⁴&nbsp;m ≐ 4,86·10⁻⁷&nbsp;m = 486&nbsp;nm. To je modrozelená čára Hβ, na obrázku čára 3.' }
+  ];
+
+
+  var KVIZ_KEY = 'fyzika:spektrum-vodiku:kviz';
+  var section = document.getElementById('kviz-section');
+  var tabBtn = document.getElementById('top-tab-kviz');
+  var readout = document.getElementById('kviz-readout');
+  var pageReadout = document.getElementById('header-readout');
+  var kviz = {
+    type:'all', queue:[], current:null, sel:null, locked:false,
+    score:0, streak:0, bestStreak:0, answered:0, correct:0,
+    inRound:false, ended:false, roundTotal:0, roundCorrect:0
+  };
+  function $(id){ return document.getElementById(id); }
+  function kvizLoad(){
+    try{ var raw = localStorage.getItem(KVIZ_KEY); if(raw){ kviz.bestStreak = JSON.parse(raw).bestStreak || 0; } }catch(e){}
+  }
+  function kvizSave(){
+    try{ localStorage.setItem(KVIZ_KEY, JSON.stringify({bestStreak: kviz.bestStreak})); }catch(e){}
+  }
+  function kvizShuffled(a){
+    a = a.slice();
+    for(var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random()*(i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; }
+    return a;
+  }
+  function typeOf(key){ return KVIZ_TYPES.filter(function(t){ return t.key === key; })[0]; }
+
+  // Otázky okruhu se berou v náhodném pořadí bez opakování. Po projití celého okruhu
+  // se zobrazí závěrečná hláška s výsledkem kola a nabídkou otázky zamíchat znovu.
+  function kvizNext(){
+    if(!kviz.queue.length){
+      if(kviz.inRound){ kvizShowEnd(); return; }
+      var pool = KVIZ_BANK.filter(function(b){ return kviz.type === 'all' || b.c === kviz.type; });
+      kviz.queue = kvizShuffled(pool);
+      if(kviz.current && kviz.queue.length > 1 && kviz.queue[0] === kviz.current.item){ kviz.queue.push(kviz.queue.shift()); }
+      kviz.inRound = true; kviz.roundTotal = pool.length; kviz.roundCorrect = 0;
+    }
+    var item = kviz.queue.shift();
+    var opts = item.fixed ? [item.r].concat(item.w).sort() : kvizShuffled([item.r].concat(item.w));
+    kviz.current = { item:item, choices:opts, correct:opts.indexOf(item.r) };
+    kvizRender();
+  }
+  function kvizShowEnd(){
+    kviz.ended = true; kviz.inRound = false;
+    var tp = typeOf(kviz.type);
+    var n = kviz.roundTotal, k = kviz.roundCorrect;
+    $('kviz-end-text').innerHTML =
+      'Prošli jste všech ' + n + ' otázek ' + (kviz.type === 'all' ? 'kvízu' : 'okruhu „' + tp.name + '“') + '. ' +
+      'Správně jste odpověděli na ' + k + ' z ' + n + ' (' + Math.round(100*k/n) + '&nbsp;%). Chcete otázky zamíchat a projít znovu?';
+    $('kviz-q').hidden = true;
+    $('kviz-end').hidden = false;
+    $('kviz-btn-restart').focus({ preventScroll:true });
+  }
+  function kvizRestart(){
+    kviz.queue = []; kviz.inRound = false;
+    kvizNext();
+  }
+  function kvizRender(){
+    var q = kviz.current;
+    kviz.ended = false;
+    $('kviz-q').hidden = false;
+    $('kviz-end').hidden = true;
+    var tp = typeOf(q.item.c);
+    $('kviz-cat-tag').innerHTML = tp ? tp.tag : 'Otázka';
+    $('kviz-task-text').innerHTML = q.item.t;
+    var fig = $('kviz-fig');
+    fig.hidden = !q.item.f;
+    if(q.item.f){ $('kviz-graph').innerHTML = KV_DEFS + q.item.f; $('kviz-graph').setAttribute('aria-label', q.item.fa || 'Obrázek k otázce'); }
+    var grid = $('kviz-opt-grid');
+    grid.innerHTML = '';
+    kviz.sel = null; kviz.locked = false;
+    q.choices.forEach(function(c, i){
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'opt-btn';
+      b.innerHTML = '<b>' + LETTERS[i] + ')</b>&nbsp; ' + c;
+      b.addEventListener('click', function(){ kvizSelect(i); });
+      grid.appendChild(b);
+    });
+    var fb = $('kviz-feedback');
+    fb.hidden = true; fb.classList.remove('ok', 'bad', 'sol');
+    $('kviz-btn-check').textContent = 'Zkontrolovat';
+  }
+  function kvizSelect(i){
+    if(kviz.locked || kviz.ended) return;
+    kviz.sel = i;
+    Array.prototype.forEach.call($('kviz-opt-grid').children, function(el, j){ el.classList.toggle('selected', j === i); });
+    $('kviz-btn-check').focus({ preventScroll:true });
+  }
+  function kvizFinish(ok, headline){
+    var q = kviz.current;
+    Array.prototype.forEach.call($('kviz-opt-grid').children, function(el, j){
+      el.disabled = true;
+      el.classList.remove('selected');
+      if(j === q.correct) el.classList.add(kviz.sel === j ? 'correct' : 'missed');
+      else if(j === kviz.sel) el.classList.add('wrong');
+    });
+    var fb = $('kviz-feedback');
+    fb.hidden = false;
+    fb.classList.toggle('ok', ok); fb.classList.toggle('bad', !ok);
+    $('kviz-feedback-headline').textContent = headline;
+    var finalText = 'Správná odpověď: ' + LETTERS[q.correct] + ') ' + q.item.r;
+    if(window.FyzikaReseni && FyzikaReseni.show){
+      FyzikaReseni.show(fb, $('kviz-feedback-steps'), { raw:true, title:'Vysvětlení', steps:[q.item.e], final:finalText });
+    } else {
+      $('kviz-feedback-steps').innerHTML = q.item.e + '<br><b>' + finalText + '</b>';
+    }
+    kviz.locked = true;
+    var btn = $('kviz-btn-check');
+    btn.textContent = 'Další otázka →';
+    btn.focus({ preventScroll:true });
+    kvizStats();
+  }
+  function kvizCheck(){
+    if(kviz.ended){ kvizRestart(); return; }
+    if(kviz.locked){ kvizNext(); return; }
+    if(kviz.sel === null && !confirm('Není vybraná žádná možnost. Opravdu chcete zkontrolovat?')) return;
+    var ok = kviz.sel === kviz.current.correct;
+    kviz.answered++;
+    if(ok){
+      kviz.score += 10; kviz.streak++; kviz.correct++; kviz.roundCorrect++;
+      if(kviz.streak > kviz.bestStreak){ kviz.bestStreak = kviz.streak; kvizSave(); }
+    } else {
+      kviz.streak = 0;
+    }
+    kvizFinish(ok, ok ? 'Správně!' : (kviz.sel === null ? 'Vyberte odpověď.' : 'Bohužel špatně.'));
+  }
+  function kvizSkip(){
+    if(kviz.ended){ kvizRestart(); return; }
+    if(kviz.locked){ kvizNext(); return; }
+    kviz.streak = 0; kviz.answered++;
+    kvizFinish(false, 'Správná odpověď:');
+  }
+  function kvizStats(){
+    $('kviz-stat-score').textContent = kviz.score;
+    $('kviz-stat-streak').textContent = kviz.streak + (kviz.bestStreak > 0 ? ' / ' + kviz.bestStreak : '');
+    $('kviz-stat-accuracy').textContent = kviz.answered === 0 ? '—' : Math.round(100*kviz.correct/kviz.answered) + ' %';
+  }
+  (function kvizBuildTypeRow(){
+    var row = $('kviz-type-row');
+    KVIZ_TYPES.forEach(function(d){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip accented' + (d.key === kviz.type ? ' on' : '');
+      b.setAttribute('aria-pressed', d.key === kviz.type ? 'true' : 'false');
+      b.textContent = d.name;
+      b.addEventListener('click', function(){
+        if(d.key === kviz.type) return;
+        // rozpracovaná otázka s vybranou odpovědí se před změnou okruhu vyhodnotí
+        var settled = !kviz.locked && kviz.sel !== null;
+        if(settled) kvizCheck();
+        kviz.type = d.key; kviz.queue = []; kviz.inRound = false;
+        Array.prototype.forEach.call(row.children, function(el, i){
+          var on = KVIZ_TYPES[i].key === kviz.type;
+          el.classList.toggle('on', on);
+          el.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        // vyhodnocená otázka zůstane i s vysvětlením vidět, další už bude z nového okruhu
+        if(!settled) kvizNext();
+      });
+      row.appendChild(b);
+    });
+  })();
+  $('kviz-btn-check').addEventListener('click', kvizCheck);
+  $('kviz-btn-skip').addEventListener('click', kvizSkip);
+  $('kviz-btn-restart').addEventListener('click', kvizRestart);
+  $('kviz-reset-stats').addEventListener('click', function(){
+    kviz.score = 0; kviz.streak = 0; kviz.answered = 0; kviz.correct = 0; kviz.bestStreak = 0;
+    try{ localStorage.removeItem(KVIZ_KEY); }catch(e){}
+    kvizStats();
+  });
+  // Klávesnice v kvízu: A–D nebo 1–4 vybere odpověď, Enter zkontroluje / posune dál.
+  document.addEventListener('keydown', function(e){
+    if(section.hidden) return;
+    if(e.ctrlKey || e.metaKey || e.altKey) return;
+    if(e.key === 'Enter'){
+      if(e.target && e.target.tagName === 'BUTTON') return;
+      e.preventDefault(); kvizCheck(); return;
+    }
+    var idx = 'abcd'.indexOf(e.key.toLowerCase());
+    if(idx === -1) idx = '1234'.indexOf(e.key);
+    if(idx !== -1 && e.key.length === 1) kvizSelect(idx);
+  });
+
+  // ---- záložka Kvíz ----
+  // Skript je samostatný: otevření Kvízu i návrat na ostatní záložky řeší sám, ať stránka přepíná
+  // záložky jakkoli. Skóre kvízu má vlastní pole v hlavičce (skóre tréninku se tím nemění).
+  function activate(){
+    var teorieBtn = $('top-tab-teorie'), theory = $('theory-section');
+    if(!tabBtn.classList.contains('on') && teorieBtn && !teorieBtn.classList.contains('on')){
+      // nejdřív „kliknutím“ opustíme dosavadní záložku obsluhou stránky (u hry na čas s potvrzením)
+      teorieBtn.click();
+      if(theory && theory.hidden) return;   // stránka odmítla opustit dosavadní záložku (např. běžící hra)
+    }
+    Array.prototype.forEach.call(document.querySelectorAll('.tab-section'), function(s){ s.hidden = s !== section; });
+    Array.prototype.forEach.call(document.querySelectorAll('.toptab'), function(t){ t.classList.toggle('on', t === tabBtn); });
+    if(pageReadout) pageReadout.hidden = true;
+    readout.hidden = false;
+    kvizStats();
+    if(!kviz.current) kvizNext();
+  }
+  tabBtn.addEventListener('click', activate);
+  Array.prototype.forEach.call(document.querySelectorAll('.toptab'), function(t){
+    if(t === tabBtn) return;
+    t.addEventListener('click', function(){ section.hidden = true; readout.hidden = true; tabBtn.classList.remove('on'); });
+  });
+  document.addEventListener('fyzika:scores-updated', function(){ kviz.bestStreak = 0; kvizLoad(); kvizStats(); });
+  kvizLoad();
+  kvizStats();
+  if(location.hash === '#kviz' && !tabBtn.classList.contains('on')) tabBtn.click();
+  else if(location.hash === '#kviz') activate();
+})();
+</script>
+
 </body>
 </html>

@@ -105,6 +105,15 @@
   .card{ padding:20px 16px 22px; }
 }
 </style>
+<style>
+/* ---- Kvíz (stejný jako u Grafů rovnoměrného pohybu a u Pohybu po kružnici) ---- */
+.kviz-task{ font-size:1.02rem; line-height:1.5; max-width:52ch; margin:0 auto 10px; color:var(--ink); text-align:center; }
+#kviz-section .kviz-task i, #kviz-section .opt-btn i, #kviz-section .feedback .steps i, #kviz-section .cat-tag i{ font-family:'STIX Two Text', Georgia, serif; font-style:italic; text-transform:none; }
+#kviz-section .feedback .steps{ font-family:'Work Sans', sans-serif; white-space:normal; opacity:1; }
+#kviz-end .kviz-end-box{ text-align:center; margin:0 0 14px; }
+#kviz-end .kviz-end-hint{ text-align:center; margin-top:10px; }
+#kviz-section [hidden]{ display:none; }
+</style>
 </head>
 <body>
 
@@ -126,10 +135,16 @@
         <p>atomová a částicová fyzika — kvarky, leptony, čtyři síly</p>
       </div>
     </div>
+    <div class="readout" id="kviz-readout" hidden>
+      <div class="cell"><span class="label">Skóre</span><span class="value" id="kviz-stat-score">0</span></div>
+      <div class="cell"><span class="label">Série</span><span class="value" id="kviz-stat-streak">0</span></div>
+      <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="kviz-stat-accuracy">—</span></div>
+    </div>
   </div>
 
   <div class="top-tabs">
     <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+    <button class="toptab" id="top-tab-kviz" data-tab="kviz">Kvíz</button>
     <button class="toptab" id="top-tab-hra" data-tab="hra">Hra na čas</button>
   </div>
 
@@ -279,6 +294,50 @@
       <p>• Antičástice má stejnou hmotnost a opačný náboj; při anihilaci e⁻e⁺ vzniknou dva fotony gama, každý 0,511&nbsp;MeV (2,43&nbsp;pm).</p>
     </div>
 
+  </div>
+
+  <!-- ============ KVÍZ ============ -->
+  <div id="kviz-section" class="tab-section" hidden>
+    <div class="panel">
+      <div class="section-block">
+        <div class="panel-title">Okruh otázek</div>
+        <div class="row" id="kviz-type-row"></div>
+      </div>
+      <div class="settings-foot" style="justify-content:flex-end;">
+        <button class="linklike" id="kviz-reset-stats">vynulovat statistiku</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div id="kviz-q">
+      <span class="cat-tag" id="kviz-cat-tag">Otázka</span>
+      <p class="kviz-task" id="kviz-task-text"></p>
+      <figure class="theory-fig" id="kviz-fig" hidden>
+        <svg id="kviz-graph" viewBox="0 0 480 260" role="img" aria-label="Obrázek k otázce"></svg>
+      </figure>
+      <div class="opt-grid wide-opts" id="kviz-opt-grid"></div>
+      <div class="actions">
+        <button class="btn primary" id="kviz-btn-check">Zkontrolovat</button>
+        <button class="btn ghost" id="kviz-btn-skip">Nevím / Zobrazit řešení</button>
+      </div>
+      <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint">Vyberte jednu ze čtyř odpovědí kliknutím nebo klávesami A až D (případně 1 až 4) a potvrďte tlačítkem Zkontrolovat nebo klávesou Enter; dalším Enterem přejdete na další otázku. Po kontrole se správná odpověď obarví zeleně, chybně vybraná červeně a pod otázkou se objeví vysvětlení. Okruh otázek vyberete nahoře; otázky se neopakují, dokud neprojdete celý okruh. Pak se zobrazí, kolik otázek jste zodpověděli správně, a otázky můžete zamíchat a projít znovu.</p>
+      </details>
+      <div class="feedback" id="kviz-feedback" hidden>
+        <div class="headline" id="kviz-feedback-headline"></div>
+        <div class="steps" id="kviz-feedback-steps"></div>
+      </div>
+      </div>
+      <div id="kviz-end" hidden>
+        <div class="feedback ok kviz-end-box"><div class="headline">Hotovo, prošli jste všechny otázky!</div></div>
+        <p class="kviz-task" id="kviz-end-text"></p>
+        <div class="actions">
+          <button class="btn primary" id="kviz-btn-restart">Zamíchat otázky a začít znovu</button>
+        </div>
+        <p class="hint kviz-end-hint">Můžete také nahoře vybrat jiný okruh otázek.</p>
+      </div>
+    </div>
   </div>
 
   <!-- ============ HRA NA ČAS: POSKLÁDEJ HADRON ============ -->
@@ -659,5 +718,376 @@
   })();
 })();
 </script>
+<script>
+(function(){
+  "use strict";
+  // ================= KVÍZ: otázky s výběrem ze čtyř odpovědí (A–D) =================
+  // Samostatný skript (stejný kvíz jako u Grafů rovnoměrného pohybu a u Pohybu po kružnici).
+  // Položka banky: c = okruh, t = zadání (HTML), r = správná odpověď, w = tři špatné,
+  // e = vysvětlení; fixed = možnosti se nemíchají, jen seřadí.
+  var LETTERS = ['A','B','C','D'];
+  // ---- pomůcky pro obrázky k otázkám (SVG ve viewBoxu 480 × 260, barvy z proměnných stránky) ----
+  var KV_COL = { ink:'var(--ink)', soft:'var(--ink-soft)', acc:'var(--accent)', foc:'var(--focus)' };
+  var KV_DEFS = '<defs>' + ['ink','soft','acc','foc'].map(function(k){
+    return '<marker id="kv-' + k + '" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4.4" markerHeight="4.4" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="' + KV_COL[k] + '"/></marker>';
+  }).join('') + '</defs>';
+  function kvA(x1, y1, x2, y2, c, w, dash){
+    c = c || 'ink';
+    return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + KV_COL[c] + '" stroke-width="' + (w || 2.6) + '" stroke-linecap="round" marker-end="url(#kv-' + c + ')"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  function kvL(x1, y1, x2, y2, c, w, dash){
+    return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + KV_COL[c || 'soft'] + '" stroke-width="' + (w || 1.6) + '" stroke-linecap="round"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  function kvT(x, y, txt, anchor, size, c, italic){
+    return '<text x="' + x + '" y="' + y + '" text-anchor="' + (anchor || 'middle') + '" font-family="' + (italic ? "STIX Two Text, Georgia, serif" : "Work Sans, sans-serif") + '" font-size="' + (size || 13) + '"' + (italic ? ' font-style="italic"' : '') + ' fill="' + KV_COL[c || 'ink'] + '">' + txt + '</text>';
+  }
+  function kvC(x, y, r, fill, stroke){
+    return '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + (fill || 'none') + '" stroke="' + (stroke ? KV_COL[stroke] : 'none') + '" stroke-width="1.6"/>';
+  }
+  function kvR(x, y, w, h, fill, stroke, rot){
+    return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="2" fill="' + (fill || 'var(--surface-2)') + '" stroke="' + KV_COL[stroke || 'soft'] + '" stroke-width="1.6"' + (rot ? ' transform="rotate(' + rot[0] + ' ' + rot[1] + ' ' + rot[2] + ')"' : '') + '/>';
+  }
+  function kvP(d, c, w, dash, fill){
+    return '<path d="' + d + '" fill="' + (fill || 'none') + '" stroke="' + KV_COL[c || 'ink'] + '" stroke-width="' + (w || 2) + '" stroke-linecap="round" stroke-linejoin="round"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  // očíslovaný kroužek u špičky šipky (n = číslo), směr (dx, dy) od špičky ven
+  function kvN(x, y, n, dx, dy){
+    var lx = x + dx, ly = y + dy;
+    return kvC(lx, ly, 10, 'var(--surface-2)', 'soft') + '<text x="' + lx + '" y="' + (ly + 4.5) + '" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="13" font-weight="600" fill="var(--ink)">' + n + '</text>';
+  }
+  // šipka s číslem: z (x1, y1) do (x2, y2), kroužek za špičkou
+  function kvAN(x1, y1, x2, y2, n, c){
+    var dx = x2 - x1, dy = y2 - y1, l = Math.sqrt(dx*dx + dy*dy);
+    return kvA(x1, y1, x2, y2, c || 'ink') + kvN(x2, y2, n, dx/l*16, dy/l*16);
+  }
+  // ---- složení částice z kvarků: kroužky s písmeny, antikvark s pruhem ----
+  function kvQuark(x, y, q, anti){
+    var s = kvC(x, y, 30, 'var(--surface-2)', anti ? 'foc' : 'acc');
+    s += '<text x="' + x + '" y="' + (y + 9) + '" text-anchor="middle" font-family="Work Sans, sans-serif" font-size="26" fill="var(--ink)">' + q + '</text>';
+    if(anti) s += kvL(x - 8, y - 15, x + 8, y - 15, 'ink', 2);
+    return s;
+  }
+  var KV_FIG_UUD = kvC(240, 130, 95, 'none', 'soft') + kvQuark(240, 85, 'u') + kvQuark(195, 162, 'u') + kvQuark(285, 162, 'd');
+  var KV_FIG_PION = kvC(240, 130, 85, 'none', 'soft') + kvQuark(200, 130, 'u') + kvQuark(280, 130, 'd', true);
+
+  var KVIZ_TYPES = [
+    { key:'all', name:'Vše' },
+    { key:'stavba', name:'Kvarky a leptony', tag:'Z čeho se skládá hmota' },
+    { key:'interakce', name:'Interakce', tag:'Čtyři druhy interakcí' },
+    { key:'anti', name:'Antičástice', tag:'Antičástice a anihilace' },
+    { key:'detekce', name:'Detekce částic', tag:'Jak částice „vidíme“' }
+  ];
+  var KVIZ_BANK = [
+    // ----- stavba -----
+    { c:'stavba', t:'Ze kterých kvarků se skládá proton?',
+      r:'uud', w:['udd', 'uuu', 'ud a jeden elektron'],
+      e:'Proton = dva kvarky u a jeden kvark d. Náboj: 2/3 + 2/3 − 1/3 = 1, tedy +<i>e</i>. Složení udd má neutron.' },
+    { c:'stavba', t:'Jaký náboj má kvark d (down)?',
+      r:'−⅓&nbsp;<i>e</i>', w:['+⅔&nbsp;<i>e</i>', '−<i>e</i>', '0'],
+      e:'Kvarky u, c, t mají náboj +⅔&nbsp;<i>e</i>, kvarky d, s, b mají −⅓&nbsp;<i>e</i>. Kontrola na neutronu udd: 2/3 − 1/3 − 1/3 = 0.' },
+    { c:'stavba', t:'Která z částic je podle současných znalostí elementární (nemá vnitřní strukturu)?',
+      r:'Elektron', w:['Proton', 'Neutron', 'Jádro helia'],
+      e:'Elektron je elementární lepton. Proton a neutron se skládají ze tří kvarků, jádro helia ze dvou protonů a dvou neutronů.' },
+    { c:'stavba', t:'Proč se nikdy nepodařilo získat samostatný kvark?',
+      r:'Síla mezi kvarky s rostoucí vzdáleností neslábne; z dodané energie dřív vznikne nový pár kvark–antikvark.',
+      w:['Kvarky jsou příliš malé, než aby je šlo detekovat.', 'Kvarky se po vytržení okamžitě rozpadnou na elektrony.', 'Volné kvarky existují, ale jen v jádrech hvězd.'],
+      e:'Mluvíme o uvěznění kvarků. Potřebná energie by rostla bez omezení, a proto z ní dřív vznikne nový pár kvark–antikvark — podobně jako nelze získat jen jeden konec provázku.' },
+    { c:'stavba', t:'Částice se skládá z kvarků u, d a s. Jaký má náboj?',
+      r:'0', w:['+<i>e</i>', '−<i>e</i>', '+⅓&nbsp;<i>e</i>'],
+      e:'2/3 − 1/3 − 1/3 = 0. Jde o neutrální baryon (hyperon Λ). Kvark s má stejný náboj jako kvark d.' },
+    { c:'stavba', t:'Jak se nazývají částice složené ze tří kvarků?',
+      r:'Baryony', w:['Mezony', 'Leptony', 'Bosony'],
+      e:'Hadrony (částice z kvarků) se dělí na baryony ze tří kvarků (proton, neutron, hyperony) a mezony z kvarku a antikvarku (piony, kaony). Leptony kvarky neobsahují.' },
+    { c:'stavba', t:'Která skupina částic tvoří běžnou látku kolem nás?',
+      r:'Jen první generace: kvarky u, d a elektron.', w:['Všechny tři generace stejnou měrou.', 'Jen druhá generace: kvarky c, s a mion.', 'Jen neutrina.'],
+      e:'Částice druhé a třetí generace jsou těžší a velmi rychle se rozpadají (mion žije přibližně 2·10⁻⁶&nbsp;s). Vznikají jen v kosmickém záření nebo v urychlovačích.' },
+    { c:'stavba', t:'Která částice patří mezi leptony?',
+      r:'Mion', w:['Pion', 'Proton', 'Kvark s'],
+      e:'Leptony jsou elektron, mion, tauon a tři neutrina. Pion je mezon, proton je baryon, kvark s je kvark.' },
+    { c:'stavba', t:'Které částice poslouchají Pauliho vylučovací princip?',
+      r:'Fermiony (spin ½, 3/2, …), například elektrony a kvarky', w:['Bosony (spin 0, 1, 2, …), například fotony', 'Jen mezony', 'Všechny částice bez výjimky'],
+      e:'Pauliho princip platí pro fermiony: kvarky, leptony a baryony. Bosony (mezony, foton, gluony, W a Z) ho neposlouchají.' },
+    // ----- interakce -----
+    { c:'interakce', t:'Která interakce drží pohromadě protony a neutrony v jádře?',
+      r:'Silná', w:['Elektromagnetická', 'Gravitační', 'Slabá'],
+      e:'Protony se elektricky odpuzují a gravitace je mnohem slabší. Jádro drží silná interakce, která je velmi silná, ale s rostoucí vzdáleností rychle slábne.' },
+    { c:'interakce', t:'Kolikrát je gravitační síla mezi dvěma protony slabší než elektrická?',
+      r:'Přibližně 10³⁶krát', w:['Přibližně 10krát', 'Přibližně 1&nbsp;000krát', 'Je stejně velká.'],
+      e:'Gravitační přitahování dvou protonů je přibližně 10³⁶krát slabší než jejich elektrické odpuzování, takže jádro gravitace udržet nemůže.' },
+    { c:'interakce', t:'Která částice zprostředkuje elektromagnetickou interakci?',
+      r:'Foton', w:['Gluon', 'Boson W', 'Graviton'],
+      e:'Elektromagnetickou interakci zprostředkuje foton, silnou gluony, slabou bosony W⁺, W⁻ a Z⁰, gravitační hypotetický graviton.' },
+    { c:'interakce', t:'Která interakce se uplatňuje při přeměně beta, kdy se neutron mění na proton, elektron a antineutrino?',
+      r:'Slabá', w:['Silná', 'Elektromagnetická', 'Gravitační'],
+      e:'Přeměnu beta a děje s neutriny způsobuje slabá interakce s velmi krátkým dosahem. Zprostředkují ji těžké bosony W a Z.' },
+    { c:'interakce', t:'Proč na sebe v jádře působí silnou interakcí jen sousední nukleony?',
+      r:'Silná interakce s rostoucí vzdáleností velmi rychle slábne.', w:['Vzdálené nukleony jsou stíněny elektrony.', 'Silná interakce působí jen mezi protony.', 'Vzdálené nukleony se odpuzují gravitačně.'],
+      e:'Silná interakce má krátký dosah; každý nukleon působí jen na své nejbližší sousedy.' },
+    { c:'interakce', t:'Které dvě interakce se podle teorie ukázaly jako projevy jediné interakce?',
+      r:'Elektromagnetická a slabá (elektroslabá interakce)', w:['Gravitační a silná', 'Silná a slabá', 'Gravitační a elektromagnetická'],
+      e:'Elektromagnetická a slabá interakce jsou dva projevy elektroslabé interakce. Sjednocení všech čtyř sil („teorie všeho“) zatím nebylo dosaženo.' },
+    { c:'interakce', t:'Kde se uplatňuje hlavně elektromagnetická interakce?',
+      r:'V atomech a molekulách, v chemii, u tření a pružnosti', w:['Při pohybu planet a galaxií', 'Při soudržnosti jader', 'Při přeměně beta'],
+      e:'Elektromagnetická interakce působí na nabité částice: drží elektrony v atomech, tvoří chemické vazby a stojí i za třením a pružností. Pohyb planet řídí gravitace, jádra drží silná interakce, přeměnu beta způsobuje slabá.' },
+    { c:'interakce', t:'Kde a kdy byly objeveny bosony W a Z?',
+      r:'V CERN v roce 1983', w:['V USA v roce 1932', 'V Dubně v roce 1957', 'V CERN v roce 2012'],
+      e:'Bosony W a Z objevili v CERN v roce 1983; C. Rubbia a S. van der Meer za to dostali Nobelovu cenu v roce 1984.' },
+    // ----- antičástice -----
+    { c:'anti', t:'Čím se liší antičástice od částice?',
+      r:'Má stejnou hmotnost, ale opačný náboj (a další opačné vlastnosti).', w:['Má opačnou (zápornou) hmotnost.', 'Je vždy těžší než částice.', 'Liší se jen směrem pohybu.'],
+      e:'Antičástice má stejnou hmotnost a opačný náboj. Například pozitron má hmotnost elektronu a náboj +<i>e</i>.' },
+    { c:'anti', t:'Kdo objevil první antičástici, pozitron?',
+      r:'C. Anderson v kosmickém záření (1932)', w:['P. Dirac v laboratoři (1928)', 'E. Rutherford při ostřelování zlata (1911)', 'J. J. Thomson ve výbojové trubici (1897)'],
+      e:'Antičástice předpověděl teoreticky P. Dirac (1928), pozitron objevil C. Anderson v kosmickém záření (1932).' },
+    { c:'anti', t:'Co vznikne při anihilaci pomalého elektronu a pozitronu?',
+      r:'Dva fotony záření gama, které odlétají opačnými směry.', w:['Jeden foton záření gama.', 'Neutron.', 'Nic, částice zcela zmizí i s energií.'],
+      e:'Energie částic se uvolní ve formě fotonů. Kvůli zákonu zachování hybnosti (před srážkou nulové) vzniknou dva fotony letící opačnými směry. Hmota nemizí v „nic“.' },
+    { c:'anti', t:'Jakou energii má každý ze dvou fotonů vzniklých anihilací pomalého elektronu a pozitronu?',
+      r:'Přibližně 0,511&nbsp;MeV', w:['Přibližně 1,02&nbsp;MeV', 'Přibližně 13,6&nbsp;eV', 'Přibližně 938&nbsp;MeV'],
+      e:'Celková energie je 2<i>m</i><sub>e</sub><i>c</i>², každý foton odnese <i>m</i><sub>e</sub><i>c</i>² = 9,109·10⁻³¹&nbsp;kg · (2,998·10⁸&nbsp;m·s⁻¹)² ≐ 8,19·10⁻¹⁴&nbsp;J ≐ 0,511&nbsp;MeV. Hodnota 1,02&nbsp;MeV je energie obou fotonů dohromady.' },
+    { c:'anti', t:'Jakou vlnovou délku má foton o energii 0,511&nbsp;MeV vzniklý při anihilaci?',
+      r:'Přibližně 2,43&nbsp;pm', w:['Přibližně 2,43&nbsp;nm', 'Přibližně 511&nbsp;nm', 'Přibližně 0,243&nbsp;mm'],
+      e:'<i>λ</i> = <i>hc</i>/<i>E</i> = 6,626·10⁻³⁴ · 2,998·10⁸ / (8,19·10⁻¹⁴)&nbsp;m ≐ 2,43·10⁻¹²&nbsp;m = 2,43&nbsp;pm. Kontrola zkratkou: 1&nbsp;240&nbsp;eV·nm / 511&nbsp;000&nbsp;eV ≐ 0,002&nbsp;43&nbsp;nm. Je to tvrdé záření gama.' },
+    { c:'anti', t:'Která lékařská metoda je založena na detekci fotonů z anihilace elektronu a pozitronu?',
+      r:'PET (pozitronová emisní tomografie)', w:['Rentgenový snímek', 'Ultrazvuk', 'Magnetická rezonance'],
+      e:'Při PET se do těla vpraví látka vyzařující pozitrony; detektory zachycují dvojice fotonů 0,511&nbsp;MeV letících opačnými směry.' },
+    { c:'anti', t:'Co je tvorba párů?',
+      r:'Přeměna fotonu gama s dostatečnou energií na pár elektron–pozitron v blízkosti jádra.', w:['Spojení dvou elektronů do jedné částice.', 'Vznik dvou fotonů při anihilaci.', 'Rozpad neutronu na proton a elektron.'],
+      e:'Tvorba párů je opak anihilace: z energie fotonu vznikne částice a antičástice. Foton musí mít energii alespoň 2 · 0,511&nbsp;MeV = 1,022&nbsp;MeV.' },
+    // ----- detekce -----
+    { c:'detekce', t:'Na jakém principu fungují mlžná a bublinová komora?',
+      r:'Nabitá částice ionizuje látku a na iontech vznikají kapičky nebo bublinky.', w:['Částice svítí vlastním světlem.', 'Částice zahřívají stěny komory.', 'Částice mění barvu kapaliny chemickou reakcí.'],
+      e:'Nabité částice ionizují atomy. V přesycené páře mlžné komory vznikají na iontech kapičky, v přehřáté kapalině bublinové komory bublinky. Dráha se ukáže jako stopa.' },
+    { c:'detekce', t:'Jaké stopy jsou v mlžné komoře ve třídě vidět od částic alfa ze zářiče?',
+      r:'Krátké a tlusté', w:['Dlouhé a tenké', 'Kruhové', 'Žádné, částice alfa stopu nezanechávají.'],
+      e:'Částice alfa silně ionizují a rychle ztrácejí energii, jejich stopy jsou krátké a tlusté. Miony z kosmického záření zanechávají dlouhé tenké stopy.' },
+    { c:'detekce', t:'Jaký obvod má tunel urychlovače LHC v CERN?',
+      r:'Téměř 27&nbsp;km', w:['Přibližně 2,7&nbsp;km', 'Přibližně 270&nbsp;m', 'Přibližně 270&nbsp;km'],
+      e:'Kruhový tunel LHC u Ženevy má obvod téměř 27&nbsp;km. Česká republika je členem CERN.' },
+    { c:'detekce', t:'Co se kromě objevů částic zrodilo v laboratoři CERN?',
+      r:'Web (www)', w:['Tranzistor', 'Laser', 'Rentgen'],
+      e:'Web (www) vznikl v CERN jako systém pro sdílení dokumentů mezi fyziky.' },
+    // ----- obrázky -----
+    { c:'stavba', f:KV_FIG_UUD, fa:'Částice složená ze tří kvarků: dva kvarky u a jeden kvark d',
+      t:'Která částice je na obrázku znázorněna složením z kvarků?',
+      r:'Proton', w:['Mezon', 'Neutron', 'Pozitron'],
+      e:'Dva kvarky u a jeden kvark d tvoří proton: 2/3 + 2/3 − 1/3 = +1. Neutron má složení udd, mezon se skládá z kvarku a antikvarku, pozitron je elementární antičástice elektronu.' },
+    { c:'stavba', f:KV_FIG_PION, fa:'Částice složená z kvarku u a antikvarku d (d s pruhem)',
+      t:'Částice na obrázku se skládá z kvarku u a antikvarku d (antikvark je označen pruhem). Jaký má náboj?',
+      r:'+<i>e</i>', w:['0', '+⅓&nbsp;<i>e</i>', '−<i>e</i>'],
+      e:'Antikvark má opačný náboj než kvark: anti-d má +⅓&nbsp;<i>e</i>. Celkem +⅔&nbsp;<i>e</i> + ⅓&nbsp;<i>e</i> = +<i>e</i>. Jde o mezon π⁺. Hodnota +⅓&nbsp;<i>e</i> vznikne, když se náboj antikvarku nezmění na opačný.' }
+  ];
+
+
+  var KVIZ_KEY = 'fyzika:castice-a-interakce:kviz';
+  var section = document.getElementById('kviz-section');
+  var tabBtn = document.getElementById('top-tab-kviz');
+  var readout = document.getElementById('kviz-readout');
+  var pageReadout = document.getElementById('header-readout');
+  var kviz = {
+    type:'all', queue:[], current:null, sel:null, locked:false,
+    score:0, streak:0, bestStreak:0, answered:0, correct:0,
+    inRound:false, ended:false, roundTotal:0, roundCorrect:0
+  };
+  function $(id){ return document.getElementById(id); }
+  function kvizLoad(){
+    try{ var raw = localStorage.getItem(KVIZ_KEY); if(raw){ kviz.bestStreak = JSON.parse(raw).bestStreak || 0; } }catch(e){}
+  }
+  function kvizSave(){
+    try{ localStorage.setItem(KVIZ_KEY, JSON.stringify({bestStreak: kviz.bestStreak})); }catch(e){}
+  }
+  function kvizShuffled(a){
+    a = a.slice();
+    for(var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random()*(i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; }
+    return a;
+  }
+  function typeOf(key){ return KVIZ_TYPES.filter(function(t){ return t.key === key; })[0]; }
+
+  // Otázky okruhu se berou v náhodném pořadí bez opakování. Po projití celého okruhu
+  // se zobrazí závěrečná hláška s výsledkem kola a nabídkou otázky zamíchat znovu.
+  function kvizNext(){
+    if(!kviz.queue.length){
+      if(kviz.inRound){ kvizShowEnd(); return; }
+      var pool = KVIZ_BANK.filter(function(b){ return kviz.type === 'all' || b.c === kviz.type; });
+      kviz.queue = kvizShuffled(pool);
+      if(kviz.current && kviz.queue.length > 1 && kviz.queue[0] === kviz.current.item){ kviz.queue.push(kviz.queue.shift()); }
+      kviz.inRound = true; kviz.roundTotal = pool.length; kviz.roundCorrect = 0;
+    }
+    var item = kviz.queue.shift();
+    var opts = item.fixed ? [item.r].concat(item.w).sort() : kvizShuffled([item.r].concat(item.w));
+    kviz.current = { item:item, choices:opts, correct:opts.indexOf(item.r) };
+    kvizRender();
+  }
+  function kvizShowEnd(){
+    kviz.ended = true; kviz.inRound = false;
+    var tp = typeOf(kviz.type);
+    var n = kviz.roundTotal, k = kviz.roundCorrect;
+    $('kviz-end-text').innerHTML =
+      'Prošli jste všech ' + n + ' otázek ' + (kviz.type === 'all' ? 'kvízu' : 'okruhu „' + tp.name + '“') + '. ' +
+      'Správně jste odpověděli na ' + k + ' z ' + n + ' (' + Math.round(100*k/n) + '&nbsp;%). Chcete otázky zamíchat a projít znovu?';
+    $('kviz-q').hidden = true;
+    $('kviz-end').hidden = false;
+    $('kviz-btn-restart').focus({ preventScroll:true });
+  }
+  function kvizRestart(){
+    kviz.queue = []; kviz.inRound = false;
+    kvizNext();
+  }
+  function kvizRender(){
+    var q = kviz.current;
+    kviz.ended = false;
+    $('kviz-q').hidden = false;
+    $('kviz-end').hidden = true;
+    var tp = typeOf(q.item.c);
+    $('kviz-cat-tag').innerHTML = tp ? tp.tag : 'Otázka';
+    $('kviz-task-text').innerHTML = q.item.t;
+    var fig = $('kviz-fig');
+    fig.hidden = !q.item.f;
+    if(q.item.f){ $('kviz-graph').innerHTML = KV_DEFS + q.item.f; $('kviz-graph').setAttribute('aria-label', q.item.fa || 'Obrázek k otázce'); }
+    var grid = $('kviz-opt-grid');
+    grid.innerHTML = '';
+    kviz.sel = null; kviz.locked = false;
+    q.choices.forEach(function(c, i){
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'opt-btn';
+      b.innerHTML = '<b>' + LETTERS[i] + ')</b>&nbsp; ' + c;
+      b.addEventListener('click', function(){ kvizSelect(i); });
+      grid.appendChild(b);
+    });
+    var fb = $('kviz-feedback');
+    fb.hidden = true; fb.classList.remove('ok', 'bad', 'sol');
+    $('kviz-btn-check').textContent = 'Zkontrolovat';
+  }
+  function kvizSelect(i){
+    if(kviz.locked || kviz.ended) return;
+    kviz.sel = i;
+    Array.prototype.forEach.call($('kviz-opt-grid').children, function(el, j){ el.classList.toggle('selected', j === i); });
+    $('kviz-btn-check').focus({ preventScroll:true });
+  }
+  function kvizFinish(ok, headline){
+    var q = kviz.current;
+    Array.prototype.forEach.call($('kviz-opt-grid').children, function(el, j){
+      el.disabled = true;
+      el.classList.remove('selected');
+      if(j === q.correct) el.classList.add(kviz.sel === j ? 'correct' : 'missed');
+      else if(j === kviz.sel) el.classList.add('wrong');
+    });
+    var fb = $('kviz-feedback');
+    fb.hidden = false;
+    fb.classList.toggle('ok', ok); fb.classList.toggle('bad', !ok);
+    $('kviz-feedback-headline').textContent = headline;
+    var finalText = 'Správná odpověď: ' + LETTERS[q.correct] + ') ' + q.item.r;
+    if(window.FyzikaReseni && FyzikaReseni.show){
+      FyzikaReseni.show(fb, $('kviz-feedback-steps'), { raw:true, title:'Vysvětlení', steps:[q.item.e], final:finalText });
+    } else {
+      $('kviz-feedback-steps').innerHTML = q.item.e + '<br><b>' + finalText + '</b>';
+    }
+    kviz.locked = true;
+    var btn = $('kviz-btn-check');
+    btn.textContent = 'Další otázka →';
+    btn.focus({ preventScroll:true });
+    kvizStats();
+  }
+  function kvizCheck(){
+    if(kviz.ended){ kvizRestart(); return; }
+    if(kviz.locked){ kvizNext(); return; }
+    if(kviz.sel === null && !confirm('Není vybraná žádná možnost. Opravdu chcete zkontrolovat?')) return;
+    var ok = kviz.sel === kviz.current.correct;
+    kviz.answered++;
+    if(ok){
+      kviz.score += 10; kviz.streak++; kviz.correct++; kviz.roundCorrect++;
+      if(kviz.streak > kviz.bestStreak){ kviz.bestStreak = kviz.streak; kvizSave(); }
+    } else {
+      kviz.streak = 0;
+    }
+    kvizFinish(ok, ok ? 'Správně!' : (kviz.sel === null ? 'Vyberte odpověď.' : 'Bohužel špatně.'));
+  }
+  function kvizSkip(){
+    if(kviz.ended){ kvizRestart(); return; }
+    if(kviz.locked){ kvizNext(); return; }
+    kviz.streak = 0; kviz.answered++;
+    kvizFinish(false, 'Správná odpověď:');
+  }
+  function kvizStats(){
+    $('kviz-stat-score').textContent = kviz.score;
+    $('kviz-stat-streak').textContent = kviz.streak + (kviz.bestStreak > 0 ? ' / ' + kviz.bestStreak : '');
+    $('kviz-stat-accuracy').textContent = kviz.answered === 0 ? '—' : Math.round(100*kviz.correct/kviz.answered) + ' %';
+  }
+  (function kvizBuildTypeRow(){
+    var row = $('kviz-type-row');
+    KVIZ_TYPES.forEach(function(d){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip accented' + (d.key === kviz.type ? ' on' : '');
+      b.setAttribute('aria-pressed', d.key === kviz.type ? 'true' : 'false');
+      b.textContent = d.name;
+      b.addEventListener('click', function(){
+        if(d.key === kviz.type) return;
+        // rozpracovaná otázka s vybranou odpovědí se před změnou okruhu vyhodnotí
+        var settled = !kviz.locked && kviz.sel !== null;
+        if(settled) kvizCheck();
+        kviz.type = d.key; kviz.queue = []; kviz.inRound = false;
+        Array.prototype.forEach.call(row.children, function(el, i){
+          var on = KVIZ_TYPES[i].key === kviz.type;
+          el.classList.toggle('on', on);
+          el.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        // vyhodnocená otázka zůstane i s vysvětlením vidět, další už bude z nového okruhu
+        if(!settled) kvizNext();
+      });
+      row.appendChild(b);
+    });
+  })();
+  $('kviz-btn-check').addEventListener('click', kvizCheck);
+  $('kviz-btn-skip').addEventListener('click', kvizSkip);
+  $('kviz-btn-restart').addEventListener('click', kvizRestart);
+  $('kviz-reset-stats').addEventListener('click', function(){
+    kviz.score = 0; kviz.streak = 0; kviz.answered = 0; kviz.correct = 0; kviz.bestStreak = 0;
+    try{ localStorage.removeItem(KVIZ_KEY); }catch(e){}
+    kvizStats();
+  });
+  // Klávesnice v kvízu: A–D nebo 1–4 vybere odpověď, Enter zkontroluje / posune dál.
+  document.addEventListener('keydown', function(e){
+    if(section.hidden) return;
+    if(e.ctrlKey || e.metaKey || e.altKey) return;
+    if(e.key === 'Enter'){
+      if(e.target && e.target.tagName === 'BUTTON') return;
+      e.preventDefault(); kvizCheck(); return;
+    }
+    var idx = 'abcd'.indexOf(e.key.toLowerCase());
+    if(idx === -1) idx = '1234'.indexOf(e.key);
+    if(idx !== -1 && e.key.length === 1) kvizSelect(idx);
+  });
+
+  // ---- záložka Kvíz ----
+  // Skript je samostatný: otevření Kvízu i návrat na ostatní záložky řeší sám, ať stránka přepíná
+  // záložky jakkoli. Skóre kvízu má vlastní pole v hlavičce (skóre tréninku se tím nemění).
+  function activate(){
+    var teorieBtn = $('top-tab-teorie'), theory = $('theory-section');
+    if(!tabBtn.classList.contains('on') && teorieBtn && !teorieBtn.classList.contains('on')){
+      // nejdřív „kliknutím“ opustíme dosavadní záložku obsluhou stránky (u hry na čas s potvrzením)
+      teorieBtn.click();
+      if(theory && theory.hidden) return;   // stránka odmítla opustit dosavadní záložku (např. běžící hra)
+    }
+    Array.prototype.forEach.call(document.querySelectorAll('.tab-section'), function(s){ s.hidden = s !== section; });
+    Array.prototype.forEach.call(document.querySelectorAll('.toptab'), function(t){ t.classList.toggle('on', t === tabBtn); });
+    if(pageReadout) pageReadout.hidden = true;
+    readout.hidden = false;
+    kvizStats();
+    if(!kviz.current) kvizNext();
+  }
+  tabBtn.addEventListener('click', activate);
+  Array.prototype.forEach.call(document.querySelectorAll('.toptab'), function(t){
+    if(t === tabBtn) return;
+    t.addEventListener('click', function(){ section.hidden = true; readout.hidden = true; tabBtn.classList.remove('on'); });
+  });
+  document.addEventListener('fyzika:scores-updated', function(){ kviz.bestStreak = 0; kvizLoad(); kvizStats(); });
+  kvizLoad();
+  kvizStats();
+  if(location.hash === '#kviz' && !tabBtn.classList.contains('on')) tabBtn.click();
+  else if(location.hash === '#kviz') activate();
+})();
+</script>
+
 </body>
 </html>
