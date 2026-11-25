@@ -138,6 +138,15 @@
   .readout .cell{ min-width:64px; padding:6px 8px; }
 }
 </style>
+<style>
+/* ---- Kvíz (stejný jako u Grafů rovnoměrného pohybu a u Pohybu po kružnici) ---- */
+.kviz-task{ font-size:1.02rem; line-height:1.5; max-width:52ch; margin:0 auto 10px; color:var(--ink); text-align:center; }
+#kviz-section .kviz-task i, #kviz-section .opt-btn i, #kviz-section .feedback .steps i, #kviz-section .cat-tag i{ font-family:'STIX Two Text', Georgia, serif; font-style:italic; text-transform:none; }
+#kviz-section .feedback .steps{ font-family:'Work Sans', sans-serif; white-space:normal; opacity:1; }
+#kviz-end .kviz-end-box{ text-align:center; margin:0 0 14px; }
+#kviz-end .kviz-end-hint{ text-align:center; margin-top:10px; }
+#kviz-section [hidden]{ display:none; }
+</style>
 </head>
 <body>
 
@@ -164,10 +173,16 @@
       <div class="cell"><span class="label">Série</span><span class="value" id="stat-streak">0</span></div>
       <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="stat-accuracy">—</span></div>
     </div>
+    <div class="readout" id="kviz-readout" hidden>
+      <div class="cell"><span class="label">Skóre</span><span class="value" id="kviz-stat-score">0</span></div>
+      <div class="cell"><span class="label">Série</span><span class="value" id="kviz-stat-streak">0</span></div>
+      <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="kviz-stat-accuracy">—</span></div>
+    </div>
   </div>
 
   <div class="top-tabs">
     <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+    <button class="toptab" id="top-tab-kviz" data-tab="kviz">Kvíz</button>
     <button class="toptab" id="top-tab-aplet" data-tab="aplet">Vyzařovací křivka</button>
     <button class="toptab" id="top-tab-trenink" data-tab="trenink">Trénink</button>
   </div>
@@ -281,6 +296,50 @@
       <p>• S rostoucí teplotou těleso vyzařuje víc na všech vlnových délkách a jeho barva se mění od červené k bílé.</p>
       <p>• Wienův posunovací zákon: \(\lambda_\mathrm{max} = b/T\), \(b = 2{,}9 \cdot 10^{-3}\ \mathrm{m\cdot K}\) — nepřímá úměrnost.</p>
       <p>• Slunce (asi 5&nbsp;800&nbsp;K) vyzařuje nejvíce kolem 500&nbsp;nm, žárovka (asi 2&nbsp;700&nbsp;K) v infračervené oblasti.</p>
+    </div>
+  </div>
+
+  <!-- ============ KVÍZ ============ -->
+  <div id="kviz-section" class="tab-section" hidden>
+    <div class="panel">
+      <div class="section-block">
+        <div class="panel-title">Okruh otázek</div>
+        <div class="row" id="kviz-type-row"></div>
+      </div>
+      <div class="settings-foot" style="justify-content:flex-end;">
+        <button class="linklike" id="kviz-reset-stats">vynulovat statistiku</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div id="kviz-q">
+      <span class="cat-tag" id="kviz-cat-tag">Otázka</span>
+      <p class="kviz-task" id="kviz-task-text"></p>
+      <figure class="theory-fig" id="kviz-fig" hidden>
+        <svg id="kviz-graph" viewBox="0 0 480 260" role="img" aria-label="Obrázek k otázce"></svg>
+      </figure>
+      <div class="opt-grid wide-opts" id="kviz-opt-grid"></div>
+      <div class="actions">
+        <button class="btn primary" id="kviz-btn-check">Zkontrolovat</button>
+        <button class="btn ghost" id="kviz-btn-skip">Nevím / Zobrazit řešení</button>
+      </div>
+      <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint">Vyberte jednu ze čtyř odpovědí kliknutím nebo klávesami A až D (případně 1 až 4) a potvrďte tlačítkem Zkontrolovat nebo klávesou Enter; dalším Enterem přejdete na další otázku. Po kontrole se správná odpověď obarví zeleně, chybně vybraná červeně a pod otázkou se objeví vysvětlení. Okruh otázek vyberete nahoře; otázky se neopakují, dokud neprojdete celý okruh. Pak se zobrazí, kolik otázek jste zodpověděli správně, a otázky můžete zamíchat a projít znovu.</p>
+      </details>
+      <div class="feedback" id="kviz-feedback" hidden>
+        <div class="headline" id="kviz-feedback-headline"></div>
+        <div class="steps" id="kviz-feedback-steps"></div>
+      </div>
+      </div>
+      <div id="kviz-end" hidden>
+        <div class="feedback ok kviz-end-box"><div class="headline">Hotovo, prošli jste všechny otázky!</div></div>
+        <p class="kviz-task" id="kviz-end-text"></p>
+        <div class="actions">
+          <button class="btn primary" id="kviz-btn-restart">Zamíchat otázky a začít znovu</button>
+        </div>
+        <p class="hint kviz-end-hint">Můžete také nahoře vybrat jiný okruh otázek.</p>
+      </div>
     </div>
   </div>
 
@@ -1024,5 +1083,368 @@
   try{ makePanelsCollapsible(document.getElementById('theory-section')); }catch(e){}
 })();
 </script>
+<script>
+(function(){
+  "use strict";
+  // ================= KVÍZ: otázky s výběrem ze čtyř odpovědí (A–D) =================
+  // Samostatný skript (stejný kvíz jako u Grafů rovnoměrného pohybu a u Pohybu po kružnici).
+  // Položka banky: c = okruh, t = zadání (HTML), r = správná odpověď, w = tři špatné,
+  // e = vysvětlení; fixed = možnosti se nemíchají, jen seřadí.
+  var LETTERS = ['A','B','C','D'];
+  // ---- pomůcky pro obrázky k otázkám (SVG ve viewBoxu 480 × 260, barvy z proměnných stránky) ----
+  var KV_COL = { ink:'var(--ink)', soft:'var(--ink-soft)', acc:'var(--accent)', foc:'var(--focus)' };
+  var KV_DEFS = '<defs>' + ['ink','soft','acc','foc'].map(function(k){
+    return '<marker id="kv-' + k + '" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4.4" markerHeight="4.4" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="' + KV_COL[k] + '"/></marker>';
+  }).join('') + '</defs>';
+  function kvA(x1, y1, x2, y2, c, w, dash){
+    c = c || 'ink';
+    return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + KV_COL[c] + '" stroke-width="' + (w || 2.6) + '" stroke-linecap="round" marker-end="url(#kv-' + c + ')"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  function kvL(x1, y1, x2, y2, c, w, dash){
+    return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + KV_COL[c || 'soft'] + '" stroke-width="' + (w || 1.6) + '" stroke-linecap="round"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  function kvT(x, y, txt, anchor, size, c, italic){
+    return '<text x="' + x + '" y="' + y + '" text-anchor="' + (anchor || 'middle') + '" font-family="' + (italic ? "STIX Two Text, Georgia, serif" : "Work Sans, sans-serif") + '" font-size="' + (size || 13) + '"' + (italic ? ' font-style="italic"' : '') + ' fill="' + KV_COL[c || 'ink'] + '">' + txt + '</text>';
+  }
+  function kvC(x, y, r, fill, stroke){
+    return '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + (fill || 'none') + '" stroke="' + (stroke ? KV_COL[stroke] : 'none') + '" stroke-width="1.6"/>';
+  }
+  function kvR(x, y, w, h, fill, stroke, rot){
+    return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="2" fill="' + (fill || 'var(--surface-2)') + '" stroke="' + KV_COL[stroke || 'soft'] + '" stroke-width="1.6"' + (rot ? ' transform="rotate(' + rot[0] + ' ' + rot[1] + ' ' + rot[2] + ')"' : '') + '/>';
+  }
+  function kvP(d, c, w, dash, fill){
+    return '<path d="' + d + '" fill="' + (fill || 'none') + '" stroke="' + KV_COL[c || 'ink'] + '" stroke-width="' + (w || 2) + '" stroke-linecap="round" stroke-linejoin="round"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  // očíslovaný kroužek u špičky šipky (n = číslo), směr (dx, dy) od špičky ven
+  function kvN(x, y, n, dx, dy){
+    var lx = x + dx, ly = y + dy;
+    return kvC(lx, ly, 10, 'var(--surface-2)', 'soft') + '<text x="' + lx + '" y="' + (ly + 4.5) + '" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="13" font-weight="600" fill="var(--ink)">' + n + '</text>';
+  }
+  // šipka s číslem: z (x1, y1) do (x2, y2), kroužek za špičkou
+  function kvAN(x1, y1, x2, y2, n, c){
+    var dx = x2 - x1, dy = y2 - y1, l = Math.sqrt(dx*dx + dy*dy);
+    return kvA(x1, y1, x2, y2, c || 'ink') + kvN(x2, y2, n, dx/l*16, dy/l*16);
+  }
+  // ---- vyzařovací křivky (Planckův zákon, relativní jednotky) pro 4 000 K, 6 000 K a 5 000 K ----
+  function kvPlanck(lnm, T){ var l = lnm*1e-9; return 1/(Math.pow(l, 5)*(Math.exp(1.4388e-2/(l*T)) - 1)); }
+  function kvCurves(){
+    var x0 = 60, y0 = 220, sx = 390/2000, ref = kvPlanck(483, 6000), s = '';
+    s += '<rect x="' + (x0 + 390*sx) + '" y="24" width="' + (370*sx) + '" height="196" fill="var(--accent)" fill-opacity="0.08"/>';
+    s += kvA(x0, y0, 456, y0, 'ink', 1.8) + kvA(x0, y0, x0, 18, 'ink', 1.8);
+    [500, 1000, 1500, 2000].forEach(function(l){ var x = x0 + l*sx; s += kvL(x, y0, x, y0 + 6, 'ink', 1.4) + kvT(x, y0 + 20, String(l), 'middle', 12, 'soft'); });
+    s += '<text x="456" y="254" text-anchor="end" font-family="Work Sans, sans-serif" font-size="12" fill="var(--ink-soft)"><tspan font-family="STIX Two Text, Georgia, serif" font-style="italic">λ</tspan> (nm)</text>';
+    s += kvT(70, 30, 'vyzařování', 'start', 12, 'soft');
+    [[4000, 1, 'foc'], [6000, 2, 'acc'], [5000, 3, 'ink']].forEach(function(d){
+      var pts = [], top = null;
+      for(var l = 80; l <= 2000; l += 20){
+        var y = y0 - 185*kvPlanck(l, d[0])/ref;
+        pts.push((x0 + l*sx).toFixed(1) + ',' + y.toFixed(1));
+        if(top === null || y < top[1]) top = [x0 + l*sx, y];
+      }
+      s += '<polyline points="' + pts.join(' ') + '" fill="none" stroke="' + KV_COL[d[2]] + '" stroke-width="2.4" stroke-linejoin="round"/>';
+      s += kvN(top[0], top[1], d[1], 16, -12);
+    });
+    return s;
+  }
+  var KV_FIG_CB = kvCurves();
+  var KV_FIG_CB_A = 'Tři vyzařovací křivky absolutně černého tělesa očíslované 1 až 3; křivka 2 je nejvyšší a má maximum nejvíce vlevo, křivka 1 je nejnižší a má maximum nejvíce vpravo';
+
+  var KVIZ_TYPES = [
+    { key:'all', name:'Vše' },
+    { key:'teleso', name:'Černé těleso', tag:'Absolutně černé těleso' },
+    { key:'krivka', name:'Vyzařovací křivka', tag:'Vyzařovací křivka' },
+    { key:'wien', name:'Wienův zákon', tag:'Wienův posunovací zákon' },
+    { key:'vypocty', name:'Výpočty', tag:'Výpočty s Wienovým zákonem' }
+  ];
+  var KVIZ_BANK = [
+    // ----- těleso -----
+    { c:'teleso', t:'Co je absolutně černé těleso?',
+      r:'Těleso, které pohltí veškeré záření, jež na ně dopadne.', w:['Těleso, které vůbec nevyzařuje.', 'Těleso natřené černou barvou.', 'Těleso, které odráží veškeré záření.'],
+      e:'Absolutně černé těleso nic neodrazí ani nepropustí. Je to idealizace; samo přitom vyzařuje tepelné záření.' },
+    { c:'teleso', t:'Co je dobrým modelem absolutně černého tělesa?',
+      r:'Dutina s malým otvorem', w:['Lesklé zrcadlo', 'Černě natřený papír', 'Skleněná koule'],
+      e:'Záření, které otvorem vnikne do dutiny, se uvnitř mnohokrát odrazí, až se úplně pohltí, a ven se prakticky nedostane.' },
+    { c:'teleso', t:'Proč se absolutně černé těleso, které pohlcuje veškeré záření, neohřívá donekonečna?',
+      r:'Samo vyzařuje tepelné záření, tím víc, čím je teplejší; ustálí se, když vyzáří tolik, kolik pohltí.', w:['Protože pohlcené záření hned odrazí.', 'Protože záření nemá energii.', 'Ohřívá se donekonečna, jen velmi pomalu.'],
+      e:'S rostoucí teplotou roste vyzařování. Teplota se ustálí v rovnovážném stavu, kdy těleso vyzáří stejně energie, kolik pohltí.' },
+    { c:'teleso', t:'Může absolutně černé těleso svítit?',
+      r:'Ano, rozžhavené svítí červeně, žlutě i bíle — nevidíme na něm jen odražené světlo.', w:['Ne, černé těleso nikdy nesvítí.', 'Jen v ultrafialové oblasti.', 'Jen když na ně posvítíme.'],
+      e:'„Černé“ znamená jen to, že nic neodráží. Vlastní tepelné záření vysílá, a při vysoké teplotě i viditelné světlo.' },
+    { c:'teleso', t:'Které těleso se přibližně chová jako absolutně černé?',
+      r:'Slunce a ostatní hvězdy', w:['Zrcadlo', 'Okenní sklo', 'Bílý papír'],
+      e:'Hvězdy včetně Slunce vyzařují přibližně jako absolutně černá tělesa. Zrcadlo a bílý papír záření převážně odrážejí, sklo ho propouští.' },
+    // ----- křivka -----
+    { c:'krivka', t:'Jak se mění barva kusu kovu při zahřívání?',
+      r:'Od tmavě červené přes oranžovou a žlutou až k bílé', w:['Od bílé přes žlutou k červené', 'Od modré k červené', 'Barva se nemění, jen jas'],
+      e:'S rostoucí teplotou se maximum vyzařování posouvá ke kratším vlnovým délkám, a proto se barva mění od červené k bílé.' },
+    { c:'krivka', t:'Co se stane s vyzařovací křivkou, když teplota tělesa vzroste?',
+      r:'Celá křivka leží výš a její maximum se posune ke kratším vlnovým délkám.', w:['Křivka leží výš a maximum se posune k delším vlnovým délkám.', 'Křivka leží níž a maximum se nemění.', 'Mění se jen výška maxima, poloha zůstává.'],
+      e:'Teplejší těleso vyzařuje víc na všech vlnových délkách a podle Wienova zákona má maximum na kratší vlnové délce.' },
+    { c:'krivka', t:'Vyzařuje těleso o vyšší teplotě víc i na dlouhých (infračervených) vlnových délkách?',
+      r:'Ano, vyzařuje víc na všech vlnových délkách.', w:['Ne, na dlouhých vlnových délkách vyzařuje méně.', 'Ne, infračervené záření vyzařují jen chladná tělesa.', 'Vyzařuje stejně jako chladnější těleso.'],
+      e:'Vyzařovací křivky pro různé teploty se neprotínají: křivka teplejšího tělesa leží celá výš.' },
+    // ----- Wien -----
+    { c:'wien', t:'Jak zní Wienův posunovací zákon?',
+      r:'<i>λ</i><sub>max</sub> = <i>b</i>/<i>T</i>', w:['<i>λ</i><sub>max</sub> = <i>bT</i>', '<i>λ</i><sub>max</sub> = <i>T</i>/<i>b</i>', '<i>λ</i><sub>max</sub> = <i>b</i>/<i>T</i>²'],
+      e:'Vlnová délka maxima vyzařování je nepřímo úměrná termodynamické teplotě; <i>b</i> = 2,9·10⁻³&nbsp;m·K.' },
+    { c:'wien', t:'Jakou jednotku má Wienova konstanta <i>b</i>?',
+      r:'m·K', w:['m/K', 'K/m', 'W·m⁻²'],
+      e:'Z <i>b</i> = <i>λ</i><sub>max</sub>·<i>T</i> plyne jednotka m·K. Kontrola: m·K/K = m.' },
+    { c:'wien', t:'Teplota tělesa vzroste dvakrát (v kelvinech). Jak se změní <i>λ</i><sub>max</sub>?',
+      r:'Zmenší se na polovinu.', w:['Zvětší se dvakrát.', 'Zmenší se na čtvrtinu.', 'Nezmění se.'],
+      e:'Podle <i>λ</i><sub>max</sub> = <i>b</i>/<i>T</i> je vlnová délka maxima nepřímo úměrná teplotě.' },
+    { c:'wien', t:'V jakých jednotkách je nutné dosazovat teplotu do Wienova zákona?',
+      r:'V kelvinech', w:['Ve stupních Celsia', 'Je to jedno', 'Ve stupních Fahrenheita'],
+      e:'Zákon platí pro termodynamickou teplotu v kelvinech. Dosazení °C dá hrubě chybný výsledek, například u 37&nbsp;°C místo 310&nbsp;K.' },
+    { c:'wien', t:'Proč žárovka víc hřeje, než svítí?',
+      r:'Její vlákno (přibližně 2&nbsp;700&nbsp;K) vyzařuje nejvíce v infračervené oblasti, do viditelné zasahuje jen okraj křivky.', w:['Protože vlákno je příliš studené na vyzařování.', 'Protože sklo baňky pohlcuje světlo.', 'Protože vlákno vyzařuje hlavně ultrafialové záření.'],
+      e:'<i>λ</i><sub>max</sub> = 2,9·10⁻³/2&nbsp;700&nbsp;m ≐ 1&nbsp;070&nbsp;nm, to je infračervená oblast. Většina energie se vyzáří jako neviditelné tepelné záření.' },
+    { c:'wien', t:'Na jakém principu měří pyrometr teplotu rozžhavených těles?',
+      r:'Z barvy (rozložení vyzařování) tělesa určí jeho teplotu.', w:['Dotykem teploměru s povrchem.', 'Měřením hmotnosti tělesa.', 'Měřením zvuku, který těleso vydává.'],
+      e:'Pyrometr měří bezdotykově: využívá toho, že rozložení vyzařování (a tedy barva) závisí na teplotě.' },
+    { c:'wien', t:'Ve které části spektra leží maximum vyzařování Slunce?',
+      r:'V zelené části viditelného světla (přibližně 500&nbsp;nm)', w:['V infračervené oblasti', 'V ultrafialové oblasti', 'V červené části spektra (700&nbsp;nm)'],
+      e:'Pro <i>T</i> ≐ 5&nbsp;800&nbsp;K je <i>λ</i><sub>max</sub> = 2,9·10⁻³/5&nbsp;800&nbsp;m = 5,0·10⁻⁷&nbsp;m = 500&nbsp;nm, uprostřed oblasti citlivosti oka.' },
+    // ----- výpočty -----
+    { c:'vypocty', t:'Na jaké vlnové délce vyzařuje nejvíce těleso o teplotě 3&nbsp;000&nbsp;K?',
+      r:'Přibližně 970&nbsp;nm', w:['Přibližně 97&nbsp;nm', 'Přibližně 8,7&nbsp;µm', 'Přibližně 1,03&nbsp;nm'],
+      e:'<i>λ</i><sub>max</sub> = 2,9·10⁻³&nbsp;m·K / 3&nbsp;000&nbsp;K ≐ 9,7·10⁻⁷&nbsp;m ≐ 970&nbsp;nm (blízké infračervené). Kontrola poměrem se Sluncem: 500&nbsp;nm · 5&nbsp;800/3&nbsp;000 ≐ 970&nbsp;nm.' },
+    { c:'vypocty', t:'Hvězda vyzařuje nejvíce na vlnové délce 290&nbsp;nm. Jakou má povrchovou teplotu?',
+      r:'Přibližně 10&nbsp;000&nbsp;K', w:['Přibližně 1&nbsp;000&nbsp;K', 'Přibližně 8,4·10⁻¹⁰&nbsp;K', 'Přibližně 100&nbsp;000&nbsp;K'],
+      e:'<i>T</i> = <i>b</i>/<i>λ</i><sub>max</sub> = 2,9·10⁻³&nbsp;m·K / 2,9·10⁻⁷&nbsp;m = 1,0·10⁴&nbsp;K. Taková hvězda je horčejší než Slunce a jeví se modrobílá.' },
+    { c:'vypocty', t:'Na jaké vlnové délce vyzařuje nejvíce lidské tělo (přibližně 310&nbsp;K)?',
+      r:'Přibližně 9,4&nbsp;µm', w:['Přibližně 940&nbsp;nm', 'Přibližně 78&nbsp;µm', 'Přibližně 0,9&nbsp;mm'],
+      e:'<i>λ</i><sub>max</sub> = 2,9·10⁻³/310&nbsp;m ≐ 9,4·10⁻⁶&nbsp;m = 9,4&nbsp;µm — infračervené záření. Proto nás „vidí“ termokamera, ale ne oko. Hodnota 78&nbsp;µm vznikne dosazením 37&nbsp;°C místo kelvinů.' },
+    { c:'vypocty', t:'Žák dosadil do Wienova zákona teplotu místnosti 27 (ve stupních Celsia). O kolik se spletl?',
+      r:'Vyšla mu přibližně 107&nbsp;µm místo správných 9,7&nbsp;µm, tedy přibližně jedenáctkrát víc.', w:['Nespletl se, na jednotce teploty nezáleží.', 'Vyšla mu dvakrát kratší vlnová délka.', 'Vyšla mu záporná vlnová délka.'],
+      e:'Správně <i>T</i> = 300&nbsp;K a <i>λ</i><sub>max</sub> = 2,9·10⁻³/300&nbsp;m ≐ 9,7&nbsp;µm. S číslem 27 vyjde 2,9·10⁻³/27&nbsp;m ≐ 107&nbsp;µm, což je 300/27 ≐ 11krát víc.' },
+    { c:'vypocty', t:'Hvězda A má povrchovou teplotu 3&nbsp;500&nbsp;K, hvězda B 7&nbsp;000&nbsp;K. Která vyzařuje nejvíce na kratší vlnové délce a kolikrát kratší?',
+      r:'Hvězda B, na dvakrát kratší vlnové délce', w:['Hvězda A, na dvakrát kratší vlnové délce', 'Hvězda B, na čtyřikrát kratší vlnové délce', 'Obě na stejné vlnové délce'],
+      e:'Podle <i>λ</i><sub>max</sub> = <i>b</i>/<i>T</i> má teplejší hvězda kratší <i>λ</i><sub>max</sub>: 7&nbsp;000/3&nbsp;500 = 2. Číselně: 829&nbsp;nm (A) a 414&nbsp;nm (B).' },
+    { c:'vypocty', t:'Kus železa má teplotu 1&nbsp;000&nbsp;°C. Na jaké vlnové délce vyzařuje nejvíce?',
+      r:'Přibližně 2,3&nbsp;µm', w:['Přibližně 2,9&nbsp;µm', 'Přibližně 230&nbsp;nm', 'Přibližně 23&nbsp;µm'],
+      e:'<i>T</i> = (1&nbsp;000 + 273)&nbsp;K ≐ 1&nbsp;273&nbsp;K, <i>λ</i><sub>max</sub> = 2,9·10⁻³/1&nbsp;273&nbsp;m ≐ 2,3·10⁻⁶&nbsp;m. Maximum je v infračervené oblasti; železo přesto viditelně žhne, protože okraj křivky zasahuje do červené. 2,9&nbsp;µm vyjde s dosazením 1&nbsp;000&nbsp;K.' },
+    // ----- obrázky -----
+    { c:'krivka', fixed:true, f:KV_FIG_CB, fa:KV_FIG_CB_A,
+      t:'Na obrázku jsou vyzařovací křivky absolutně černého tělesa pro tři teploty (podbarvený pruh je viditelné světlo). Která křivka patří nejvyšší teplotě?',
+      r:'Křivka 2', w:['Křivka 1', 'Křivka 3', 'Z obrázku to nelze poznat.'],
+      e:'Při vyšší teplotě leží celá křivka výš a maximum je na kratší vlnové délce. Obojí platí pro křivku 2 (6&nbsp;000&nbsp;K); křivka 3 odpovídá 5&nbsp;000&nbsp;K a křivka 1 4&nbsp;000&nbsp;K.' },
+    { c:'krivka', fixed:true, f:KV_FIG_CB, fa:KV_FIG_CB_A,
+      t:'Křivka 1 na obrázku patří tělesu o teplotě 4&nbsp;000&nbsp;K. Na jaké vlnové délce má maximum?',
+      r:'Přibližně 725&nbsp;nm', w:['Přibližně 483&nbsp;nm', 'Přibližně 580&nbsp;nm', 'Přibližně 1&nbsp;450&nbsp;nm'],
+      e:'<i>λ</i><sub>max</sub> = 2,9·10⁻³/4&nbsp;000&nbsp;m ≐ 7,25·10⁻⁷&nbsp;m = 725&nbsp;nm, na rozhraní červeného světla a infračerveného záření, jak ukazuje i graf. 483&nbsp;nm patří 6&nbsp;000&nbsp;K a 580&nbsp;nm 5&nbsp;000&nbsp;K.' }
+  ];
+
+
+  var KVIZ_KEY = 'fyzika:zareni-cerneho-telesa:kviz';
+  var section = document.getElementById('kviz-section');
+  var tabBtn = document.getElementById('top-tab-kviz');
+  var readout = document.getElementById('kviz-readout');
+  var pageReadout = document.getElementById('header-readout');
+  var kviz = {
+    type:'all', queue:[], current:null, sel:null, locked:false,
+    score:0, streak:0, bestStreak:0, answered:0, correct:0,
+    inRound:false, ended:false, roundTotal:0, roundCorrect:0
+  };
+  function $(id){ return document.getElementById(id); }
+  function kvizLoad(){
+    try{ var raw = localStorage.getItem(KVIZ_KEY); if(raw){ kviz.bestStreak = JSON.parse(raw).bestStreak || 0; } }catch(e){}
+  }
+  function kvizSave(){
+    try{ localStorage.setItem(KVIZ_KEY, JSON.stringify({bestStreak: kviz.bestStreak})); }catch(e){}
+  }
+  function kvizShuffled(a){
+    a = a.slice();
+    for(var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random()*(i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; }
+    return a;
+  }
+  function typeOf(key){ return KVIZ_TYPES.filter(function(t){ return t.key === key; })[0]; }
+
+  // Otázky okruhu se berou v náhodném pořadí bez opakování. Po projití celého okruhu
+  // se zobrazí závěrečná hláška s výsledkem kola a nabídkou otázky zamíchat znovu.
+  function kvizNext(){
+    if(!kviz.queue.length){
+      if(kviz.inRound){ kvizShowEnd(); return; }
+      var pool = KVIZ_BANK.filter(function(b){ return kviz.type === 'all' || b.c === kviz.type; });
+      kviz.queue = kvizShuffled(pool);
+      if(kviz.current && kviz.queue.length > 1 && kviz.queue[0] === kviz.current.item){ kviz.queue.push(kviz.queue.shift()); }
+      kviz.inRound = true; kviz.roundTotal = pool.length; kviz.roundCorrect = 0;
+    }
+    var item = kviz.queue.shift();
+    var opts = item.fixed ? [item.r].concat(item.w).sort() : kvizShuffled([item.r].concat(item.w));
+    kviz.current = { item:item, choices:opts, correct:opts.indexOf(item.r) };
+    kvizRender();
+  }
+  function kvizShowEnd(){
+    kviz.ended = true; kviz.inRound = false;
+    var tp = typeOf(kviz.type);
+    var n = kviz.roundTotal, k = kviz.roundCorrect;
+    $('kviz-end-text').innerHTML =
+      'Prošli jste všech ' + n + ' otázek ' + (kviz.type === 'all' ? 'kvízu' : 'okruhu „' + tp.name + '“') + '. ' +
+      'Správně jste odpověděli na ' + k + ' z ' + n + ' (' + Math.round(100*k/n) + '&nbsp;%). Chcete otázky zamíchat a projít znovu?';
+    $('kviz-q').hidden = true;
+    $('kviz-end').hidden = false;
+    $('kviz-btn-restart').focus({ preventScroll:true });
+  }
+  function kvizRestart(){
+    kviz.queue = []; kviz.inRound = false;
+    kvizNext();
+  }
+  function kvizRender(){
+    var q = kviz.current;
+    kviz.ended = false;
+    $('kviz-q').hidden = false;
+    $('kviz-end').hidden = true;
+    var tp = typeOf(q.item.c);
+    $('kviz-cat-tag').innerHTML = tp ? tp.tag : 'Otázka';
+    $('kviz-task-text').innerHTML = q.item.t;
+    var fig = $('kviz-fig');
+    fig.hidden = !q.item.f;
+    if(q.item.f){ $('kviz-graph').innerHTML = KV_DEFS + q.item.f; $('kviz-graph').setAttribute('aria-label', q.item.fa || 'Obrázek k otázce'); }
+    var grid = $('kviz-opt-grid');
+    grid.innerHTML = '';
+    kviz.sel = null; kviz.locked = false;
+    q.choices.forEach(function(c, i){
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'opt-btn';
+      b.innerHTML = '<b>' + LETTERS[i] + ')</b>&nbsp; ' + c;
+      b.addEventListener('click', function(){ kvizSelect(i); });
+      grid.appendChild(b);
+    });
+    var fb = $('kviz-feedback');
+    fb.hidden = true; fb.classList.remove('ok', 'bad', 'sol');
+    $('kviz-btn-check').textContent = 'Zkontrolovat';
+  }
+  function kvizSelect(i){
+    if(kviz.locked || kviz.ended) return;
+    kviz.sel = i;
+    Array.prototype.forEach.call($('kviz-opt-grid').children, function(el, j){ el.classList.toggle('selected', j === i); });
+    $('kviz-btn-check').focus({ preventScroll:true });
+  }
+  function kvizFinish(ok, headline){
+    var q = kviz.current;
+    Array.prototype.forEach.call($('kviz-opt-grid').children, function(el, j){
+      el.disabled = true;
+      el.classList.remove('selected');
+      if(j === q.correct) el.classList.add(kviz.sel === j ? 'correct' : 'missed');
+      else if(j === kviz.sel) el.classList.add('wrong');
+    });
+    var fb = $('kviz-feedback');
+    fb.hidden = false;
+    fb.classList.toggle('ok', ok); fb.classList.toggle('bad', !ok);
+    $('kviz-feedback-headline').textContent = headline;
+    var finalText = 'Správná odpověď: ' + LETTERS[q.correct] + ') ' + q.item.r;
+    if(window.FyzikaReseni && FyzikaReseni.show){
+      FyzikaReseni.show(fb, $('kviz-feedback-steps'), { raw:true, title:'Vysvětlení', steps:[q.item.e], final:finalText });
+    } else {
+      $('kviz-feedback-steps').innerHTML = q.item.e + '<br><b>' + finalText + '</b>';
+    }
+    kviz.locked = true;
+    var btn = $('kviz-btn-check');
+    btn.textContent = 'Další otázka →';
+    btn.focus({ preventScroll:true });
+    kvizStats();
+  }
+  function kvizCheck(){
+    if(kviz.ended){ kvizRestart(); return; }
+    if(kviz.locked){ kvizNext(); return; }
+    if(kviz.sel === null && !confirm('Není vybraná žádná možnost. Opravdu chcete zkontrolovat?')) return;
+    var ok = kviz.sel === kviz.current.correct;
+    kviz.answered++;
+    if(ok){
+      kviz.score += 10; kviz.streak++; kviz.correct++; kviz.roundCorrect++;
+      if(kviz.streak > kviz.bestStreak){ kviz.bestStreak = kviz.streak; kvizSave(); }
+    } else {
+      kviz.streak = 0;
+    }
+    kvizFinish(ok, ok ? 'Správně!' : (kviz.sel === null ? 'Vyberte odpověď.' : 'Bohužel špatně.'));
+  }
+  function kvizSkip(){
+    if(kviz.ended){ kvizRestart(); return; }
+    if(kviz.locked){ kvizNext(); return; }
+    kviz.streak = 0; kviz.answered++;
+    kvizFinish(false, 'Správná odpověď:');
+  }
+  function kvizStats(){
+    $('kviz-stat-score').textContent = kviz.score;
+    $('kviz-stat-streak').textContent = kviz.streak + (kviz.bestStreak > 0 ? ' / ' + kviz.bestStreak : '');
+    $('kviz-stat-accuracy').textContent = kviz.answered === 0 ? '—' : Math.round(100*kviz.correct/kviz.answered) + ' %';
+  }
+  (function kvizBuildTypeRow(){
+    var row = $('kviz-type-row');
+    KVIZ_TYPES.forEach(function(d){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip accented' + (d.key === kviz.type ? ' on' : '');
+      b.setAttribute('aria-pressed', d.key === kviz.type ? 'true' : 'false');
+      b.textContent = d.name;
+      b.addEventListener('click', function(){
+        if(d.key === kviz.type) return;
+        // rozpracovaná otázka s vybranou odpovědí se před změnou okruhu vyhodnotí
+        var settled = !kviz.locked && kviz.sel !== null;
+        if(settled) kvizCheck();
+        kviz.type = d.key; kviz.queue = []; kviz.inRound = false;
+        Array.prototype.forEach.call(row.children, function(el, i){
+          var on = KVIZ_TYPES[i].key === kviz.type;
+          el.classList.toggle('on', on);
+          el.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        // vyhodnocená otázka zůstane i s vysvětlením vidět, další už bude z nového okruhu
+        if(!settled) kvizNext();
+      });
+      row.appendChild(b);
+    });
+  })();
+  $('kviz-btn-check').addEventListener('click', kvizCheck);
+  $('kviz-btn-skip').addEventListener('click', kvizSkip);
+  $('kviz-btn-restart').addEventListener('click', kvizRestart);
+  $('kviz-reset-stats').addEventListener('click', function(){
+    kviz.score = 0; kviz.streak = 0; kviz.answered = 0; kviz.correct = 0; kviz.bestStreak = 0;
+    try{ localStorage.removeItem(KVIZ_KEY); }catch(e){}
+    kvizStats();
+  });
+  // Klávesnice v kvízu: A–D nebo 1–4 vybere odpověď, Enter zkontroluje / posune dál.
+  document.addEventListener('keydown', function(e){
+    if(section.hidden) return;
+    if(e.ctrlKey || e.metaKey || e.altKey) return;
+    if(e.key === 'Enter'){
+      if(e.target && e.target.tagName === 'BUTTON') return;
+      e.preventDefault(); kvizCheck(); return;
+    }
+    var idx = 'abcd'.indexOf(e.key.toLowerCase());
+    if(idx === -1) idx = '1234'.indexOf(e.key);
+    if(idx !== -1 && e.key.length === 1) kvizSelect(idx);
+  });
+
+  // ---- záložka Kvíz ----
+  // Skript je samostatný: otevření Kvízu i návrat na ostatní záložky řeší sám, ať stránka přepíná
+  // záložky jakkoli. Skóre kvízu má vlastní pole v hlavičce (skóre tréninku se tím nemění).
+  function activate(){
+    var teorieBtn = $('top-tab-teorie'), theory = $('theory-section');
+    if(!tabBtn.classList.contains('on') && teorieBtn && !teorieBtn.classList.contains('on')){
+      // nejdřív „kliknutím“ opustíme dosavadní záložku obsluhou stránky (u hry na čas s potvrzením)
+      teorieBtn.click();
+      if(theory && theory.hidden) return;   // stránka odmítla opustit dosavadní záložku (např. běžící hra)
+    }
+    Array.prototype.forEach.call(document.querySelectorAll('.tab-section'), function(s){ s.hidden = s !== section; });
+    Array.prototype.forEach.call(document.querySelectorAll('.toptab'), function(t){ t.classList.toggle('on', t === tabBtn); });
+    if(pageReadout) pageReadout.hidden = true;
+    readout.hidden = false;
+    kvizStats();
+    if(!kviz.current) kvizNext();
+  }
+  tabBtn.addEventListener('click', activate);
+  Array.prototype.forEach.call(document.querySelectorAll('.toptab'), function(t){
+    if(t === tabBtn) return;
+    t.addEventListener('click', function(){ section.hidden = true; readout.hidden = true; tabBtn.classList.remove('on'); });
+  });
+  document.addEventListener('fyzika:scores-updated', function(){ kviz.bestStreak = 0; kvizLoad(); kvizStats(); });
+  kvizLoad();
+  kvizStats();
+  if(location.hash === '#kviz' && !tabBtn.classList.contains('on')) tabBtn.click();
+  else if(location.hash === '#kviz') activate();
+})();
+</script>
+
 </body>
 </html>

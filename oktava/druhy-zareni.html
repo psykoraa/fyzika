@@ -142,6 +142,15 @@
   .readout .cell{ min-width:64px; padding:6px 8px; }
 }
 </style>
+<style>
+/* ---- Kvíz (stejný jako u Grafů rovnoměrného pohybu a u Pohybu po kružnici) ---- */
+.kviz-task{ font-size:1.02rem; line-height:1.5; max-width:52ch; margin:0 auto 10px; color:var(--ink); text-align:center; }
+#kviz-section .kviz-task i, #kviz-section .opt-btn i, #kviz-section .feedback .steps i, #kviz-section .cat-tag i{ font-family:'STIX Two Text', Georgia, serif; font-style:italic; text-transform:none; }
+#kviz-section .feedback .steps{ font-family:'Work Sans', sans-serif; white-space:normal; opacity:1; }
+#kviz-end .kviz-end-box{ text-align:center; margin:0 0 14px; }
+#kviz-end .kviz-end-hint{ text-align:center; margin-top:10px; }
+#kviz-section [hidden]{ display:none; }
+</style>
 </head>
 <body>
 
@@ -166,10 +175,16 @@
       <div class="cell"><span class="label">Série</span><span class="value" id="stat-streak">0</span></div>
       <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="stat-accuracy">—</span></div>
     </div>
+    <div class="readout" id="kviz-readout" hidden>
+      <div class="cell"><span class="label">Skóre</span><span class="value" id="kviz-stat-score">0</span></div>
+      <div class="cell"><span class="label">Série</span><span class="value" id="kviz-stat-streak">0</span></div>
+      <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="kviz-stat-accuracy">—</span></div>
+    </div>
   </div>
 
   <div class="top-tabs">
     <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+    <button class="toptab" id="top-tab-kviz" data-tab="kviz">Kvíz</button>
     <button class="toptab" id="top-tab-zarivka" data-tab="zarivka">Zářivka a LED</button>
     <button class="toptab" id="top-tab-trenink" data-tab="trenink">Trénink</button>
   </div>
@@ -341,6 +356,50 @@
       <p>• Záření gama vzniká při přeměnách atomových jader.</p>
       <p>• Tepelné záření vyzařují všechna tělesa; jeho vlnové délky určuje teplota, s rostoucí teplotou se posouvají ke kratším. Pohltí-li těleso tolik energie, kolik vyzáří, je v rovnovážném stavu.</p>
       <p>• Luminiscence: kratší primární záření vyvolá delší sekundární; vlnové délky určuje složení látky. Fluorescence zhasne hned, fosforescence dosvítí.</p>
+    </div>
+  </div>
+
+  <!-- ============ KVÍZ ============ -->
+  <div id="kviz-section" class="tab-section" hidden>
+    <div class="panel">
+      <div class="section-block">
+        <div class="panel-title">Okruh otázek</div>
+        <div class="row" id="kviz-type-row"></div>
+      </div>
+      <div class="settings-foot" style="justify-content:flex-end;">
+        <button class="linklike" id="kviz-reset-stats">vynulovat statistiku</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div id="kviz-q">
+      <span class="cat-tag" id="kviz-cat-tag">Otázka</span>
+      <p class="kviz-task" id="kviz-task-text"></p>
+      <figure class="theory-fig" id="kviz-fig" hidden>
+        <svg id="kviz-graph" viewBox="0 0 480 260" role="img" aria-label="Obrázek k otázce"></svg>
+      </figure>
+      <div class="opt-grid wide-opts" id="kviz-opt-grid"></div>
+      <div class="actions">
+        <button class="btn primary" id="kviz-btn-check">Zkontrolovat</button>
+        <button class="btn ghost" id="kviz-btn-skip">Nevím / Zobrazit řešení</button>
+      </div>
+      <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint">Vyberte jednu ze čtyř odpovědí kliknutím nebo klávesami A až D (případně 1 až 4) a potvrďte tlačítkem Zkontrolovat nebo klávesou Enter; dalším Enterem přejdete na další otázku. Po kontrole se správná odpověď obarví zeleně, chybně vybraná červeně a pod otázkou se objeví vysvětlení. Okruh otázek vyberete nahoře; otázky se neopakují, dokud neprojdete celý okruh. Pak se zobrazí, kolik otázek jste zodpověděli správně, a otázky můžete zamíchat a projít znovu.</p>
+      </details>
+      <div class="feedback" id="kviz-feedback" hidden>
+        <div class="headline" id="kviz-feedback-headline"></div>
+        <div class="steps" id="kviz-feedback-steps"></div>
+      </div>
+      </div>
+      <div id="kviz-end" hidden>
+        <div class="feedback ok kviz-end-box"><div class="headline">Hotovo, prošli jste všechny otázky!</div></div>
+        <p class="kviz-task" id="kviz-end-text"></p>
+        <div class="actions">
+          <button class="btn primary" id="kviz-btn-restart">Zamíchat otázky a začít znovu</button>
+        </div>
+        <p class="hint kviz-end-hint">Můžete také nahoře vybrat jiný okruh otázek.</p>
+      </div>
     </div>
   </div>
 
@@ -1110,5 +1169,362 @@
   try{ makePanelsCollapsible(document.getElementById('theory-section')); }catch(e){}
 })();
 </script>
+<script>
+(function(){
+  "use strict";
+  // ================= KVÍZ: otázky s výběrem ze čtyř odpovědí (A–D) =================
+  // Samostatný skript (stejný kvíz jako u Grafů rovnoměrného pohybu a u Pohybu po kružnici).
+  // Položka banky: c = okruh, t = zadání (HTML), r = správná odpověď, w = tři špatné,
+  // e = vysvětlení; fixed = možnosti se nemíchají, jen seřadí.
+  var LETTERS = ['A','B','C','D'];
+  // ---- pomůcky pro obrázky k otázkám (SVG ve viewBoxu 480 × 260, barvy z proměnných stránky) ----
+  var KV_COL = { ink:'var(--ink)', soft:'var(--ink-soft)', acc:'var(--accent)', foc:'var(--focus)' };
+  var KV_DEFS = '<defs>' + ['ink','soft','acc','foc'].map(function(k){
+    return '<marker id="kv-' + k + '" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4.4" markerHeight="4.4" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="' + KV_COL[k] + '"/></marker>';
+  }).join('') + '</defs>';
+  function kvA(x1, y1, x2, y2, c, w, dash){
+    c = c || 'ink';
+    return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + KV_COL[c] + '" stroke-width="' + (w || 2.6) + '" stroke-linecap="round" marker-end="url(#kv-' + c + ')"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  function kvL(x1, y1, x2, y2, c, w, dash){
+    return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + KV_COL[c || 'soft'] + '" stroke-width="' + (w || 1.6) + '" stroke-linecap="round"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  function kvT(x, y, txt, anchor, size, c, italic){
+    return '<text x="' + x + '" y="' + y + '" text-anchor="' + (anchor || 'middle') + '" font-family="' + (italic ? "STIX Two Text, Georgia, serif" : "Work Sans, sans-serif") + '" font-size="' + (size || 13) + '"' + (italic ? ' font-style="italic"' : '') + ' fill="' + KV_COL[c || 'ink'] + '">' + txt + '</text>';
+  }
+  function kvC(x, y, r, fill, stroke){
+    return '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + (fill || 'none') + '" stroke="' + (stroke ? KV_COL[stroke] : 'none') + '" stroke-width="1.6"/>';
+  }
+  function kvR(x, y, w, h, fill, stroke, rot){
+    return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="2" fill="' + (fill || 'var(--surface-2)') + '" stroke="' + KV_COL[stroke || 'soft'] + '" stroke-width="1.6"' + (rot ? ' transform="rotate(' + rot[0] + ' ' + rot[1] + ' ' + rot[2] + ')"' : '') + '/>';
+  }
+  function kvP(d, c, w, dash, fill){
+    return '<path d="' + d + '" fill="' + (fill || 'none') + '" stroke="' + KV_COL[c || 'ink'] + '" stroke-width="' + (w || 2) + '" stroke-linecap="round" stroke-linejoin="round"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  // očíslovaný kroužek u špičky šipky (n = číslo), směr (dx, dy) od špičky ven
+  function kvN(x, y, n, dx, dy){
+    var lx = x + dx, ly = y + dy;
+    return kvC(lx, ly, 10, 'var(--surface-2)', 'soft') + '<text x="' + lx + '" y="' + (ly + 4.5) + '" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="13" font-weight="600" fill="var(--ink)">' + n + '</text>';
+  }
+  // šipka s číslem: z (x1, y1) do (x2, y2), kroužek za špičkou
+  function kvAN(x1, y1, x2, y2, n, c){
+    var dx = x2 - x1, dy = y2 - y1, l = Math.sqrt(dx*dx + dy*dy);
+    return kvA(x1, y1, x2, y2, c || 'ink') + kvN(x2, y2, n, dx/l*16, dy/l*16);
+  }
+  var KVIZ_TYPES = [
+    { key:'all', name:'Vše' },
+    { key:'ir', name:'Infračervené a UV', tag:'Infračervené a ultrafialové záření' },
+    { key:'rtg', name:'Rentgenové a gama', tag:'Rentgenové záření a záření gama' },
+    { key:'tepelne', name:'Tepelné záření', tag:'Tepelné záření' },
+    { key:'lumi', name:'Luminiscence', tag:'Luminiscence' }
+  ];
+  var KVIZ_BANK = [
+    // ----- IR a UV -----
+    { c:'ir', t:'V jakém rozsahu vlnových délek leží infračervené záření?',
+      r:'Od 760&nbsp;nm do 1&nbsp;mm', w:['Od 10&nbsp;nm do 390&nbsp;nm', 'Od 390&nbsp;nm do 760&nbsp;nm', 'Od 1&nbsp;pm do 10&nbsp;nm'],
+      e:'Infračervené záření leží mezi světlem (končí u 760&nbsp;nm) a nejkratšími rádiovými vlnami (1&nbsp;mm). 390&nbsp;nm až 760&nbsp;nm je viditelné světlo, 10&nbsp;nm až 390&nbsp;nm ultrafialové záření.' },
+    { c:'ir', t:'Proč infrazářič hřeje, i když nesvítí?',
+      r:'Pohlcené infračervené záření předává tělesům energii a ohřívá je.', w:['Protože vyzařuje ultrafialové záření.', 'Protože ohřívá vzduch prouděním.', 'Protože vyzařuje rentgenové záření.'],
+      e:'Při pohlcení infračerveného záření probíhá tepelná výměna a těleso se ohřívá. Oko infračervené záření nevidí.' },
+    { c:'ir', t:'Z jakého materiálu se vyrábějí čočky pro infračervené záření?',
+      r:'Ze speciálních materiálů, například ZnS nebo ZnSe', w:['Z obyčejného optického skla', 'Z olova', 'Infračervené záření se nedá lámat'],
+      e:'Infračervené záření se láme a odráží jako světlo, ale obyčejné optické sklo ho nepropouští. Proto se používají například ZnS nebo ZnSe.' },
+    { c:'ir', t:'Kdo a jak objevil infračervené záření?',
+      r:'W. Herschel roku 1800: teploměr se nejvíce ohříval za červeným koncem slunečního spektra.', w:['W. C. Röntgen při pokusech s výboji v plynech.', 'A. Einstein vysvětlením fotoefektu.', 'M. Planck při studiu černého tělesa.'],
+      e:'Herschel rozložil sluneční světlo hranolem a zjistil, že nejvíce se ohřívá místo za červeným koncem spektra, kde oko nic nevidí.' },
+    { c:'ir', t:'Jak lze snadno zjistit, že dálkový ovladač vysílá infračervené záření?',
+      r:'Blikající diodu ukáže kamera mobilu.', w:['Dioda svítí viditelně červeně.', 'Ovladač se při stisku zahřeje.', 'Nijak to zjistit nelze.'],
+      e:'Oko infračervené záření nevidí, ale snímač kamery mobilu ho zachytí a dioda se na displeji rozbliká.' },
+    { c:'ir', t:'K čemu se využívá termovizní kamera?',
+      r:'K hledání úniků tepla z budov, poruch vedení nebo k nočnímu vidění', w:['K prosvěcování kostí', 'K ničení bakterií', 'K měření radioaktivity'],
+      e:'Termovize zachytí infračervené záření i z neosvětlených předmětů a teplotám povrchu přiřadí barvy (termogram). Kosti prosvěcuje rentgenové záření, bakterie ničí ultrafialové.' },
+    { c:'ir', t:'Který účinek má ultrafialové záření na organismus?',
+      r:'Vyvolává opálení a tvorbu vitaminu D, ve velkých dávkách přispívá ke vzniku rakoviny kůže.', w:['Prosvěcuje kosti.', 'Ohřívá tkáně hluboko pod kůží.', 'Nemá na organismus žádný účinek.'],
+      e:'UV záření vyvolává tvorbu pigmentu a vitaminu D, ničí mikroorganismy, ale velké dávky škodí kůži i očím.' },
+    { c:'ir', t:'Proč mají baňky UV výbojek (germicidních lamp) trubici z křemenného skla?',
+      r:'Obyčejné sklo ultrafialové záření pohlcuje, křemenné ho propouští.', w:['Křemenné sklo je levnější.', 'Křemenné sklo mění UV na viditelné světlo.', 'Obyčejné sklo by se roztavilo.'],
+      e:'Aby se UV záření dostalo ven, musí trubice být z křemenného skla. U zářivky je to naopak: obyčejné sklo a luminofor přemění UV na světlo.' },
+    { c:'ir', t:'Ve které výšce leží ozonosféra a proč je důležitá?',
+      r:'Přibližně 22&nbsp;km až 25&nbsp;km; nepropustí většinu UV záření k povrchu Země.', w:['Přibližně 2&nbsp;km; chrání před infračerveným zářením.', 'Přibližně 400&nbsp;km; odráží rádiové vlny.', 'Přibližně 22&nbsp;km; propouští všechno UV záření.'],
+      e:'Ve vysokých vrstvách UV záření ionizuje kyslík a vzniká ozon. Ozonosféra pohltí většinu UV záření — bez ní by život na souši nebyl možný.' },
+    { c:'ir', t:'Co způsobuje vznik ozonových děr?',
+      r:'Freony (sloučeniny chloru a fluoru) a oxidy dusíku', w:['Infračervené záření ze Země', 'Oxid uhličitý z dýchání', 'Rentgenové záření ze Slunce'],
+      e:'Ozon rozkládají freony dříve používané ve sprejích a chladničkách a oxidy dusíku z výfukových plynů. Používání freonů bylo mezinárodně ukončeno.' },
+    // ----- rentgen a gama -----
+    { c:'rtg', t:'Jak vzniká rentgenové záření v rentgence?',
+      r:'Elektrony urychlené vysokým napětím narazí do kovové anody.', w:['Ohřevem wolframového vlákna na bílý žár.', 'Radioaktivním rozpadem jader v anodě.', 'Výbojem ve rtuťových parách.'],
+      e:'Elektrony ze žhavené katody urychlí napětí 10&nbsp;kV až 400&nbsp;kV a dopadnou na wolframovou anodu. Jejich energie se změní zčásti na rentgenové záření, z větší části na teplo.' },
+    { c:'rtg', t:'Proč se anoda rentgenky otáčí nebo chladí vodou?',
+      r:'Většina energie elektronů se v ní mění na teplo.', w:['Aby se zvýšilo napětí.', 'Aby se záření polarizovalo.', 'Aby se urychlily elektrony.'],
+      e:'Na rentgenové záření se mění jen menší část energie elektronů, většina ohřívá anodu.' },
+    { c:'rtg', t:'Jak se změní rentgenové záření, zvýšíme-li napětí na rentgence?',
+      r:'Elektrony mají větší energii a vzniká záření s kratší vlnovou délkou (tvrdší).', w:['Vzniká záření s delší vlnovou délkou (měkčí).', 'Záření se nezmění, jen zesílí.', 'Záření zanikne.'],
+      e:'Větší napětí dá elektronům větší energii, a proto i vzniklé fotony mohou mít větší energii a kratší vlnovou délku — tvrdé rentgenové záření.' },
+    { c:'rtg', t:'Jaké spektrum má brzdné rentgenové záření?',
+      r:'Spojité', w:['Čárové', 'Jedinou čáru', 'Žádné, není to elektromagnetické záření'],
+      e:'Brzdné záření vzniká prudkým zpomalením elektronů v kovu anody a má spojité spektrum. Charakteristické záření ze změn energie atomů anody je čárové.' },
+    { c:'rtg', t:'Proč jsou kosti na rentgenovém snímku světlejší než svaly?',
+      r:'Kosti obsahují prvky s větším protonovým číslem (vápník, fosfor) a pohlcují záření přibližně 150krát více.', w:['Kosti rentgenové záření odrážejí.', 'Kosti samy svítí.', 'Svaly rentgenové záření zesilují.'],
+      e:'Pohlcování silně roste s protonovým číslem. Kosti (fosforečnan vápenatý) pohltí zhruba 150krát víc než svaly (převážně voda), a na snímek dopadne méně záření.' },
+    { c:'rtg', t:'Proč se rentgenová astronomie provádí z družic?',
+      r:'Atmosféra rentgenové záření pohltí.', w:['Na Zemi je příliš mnoho světla.', 'Družice jsou blíž ke hvězdám.', 'Rentgenové záření se šíří jen ve vakuu.'],
+      e:'Zemská atmosféra rentgenové záření z vesmíru nepropustí, proto se měří z družic.' },
+    { c:'rtg', t:'Čím se liší záření gama od rentgenového záření?',
+      r:'Původem: gama vzniká při přeměnách atomových jader, rentgenové při změnách energie v elektronovém obalu.', w:['Gama má vždy delší vlnovou délku.', 'Gama není elektromagnetické záření.', 'Rentgenové záření vzniká v jádrech.'],
+      e:'Obě oblasti se zčásti překrývají. Liší se tím, kde záření vzniká: gama v jádře, rentgenové v elektronovém obalu (nebo brzděním elektronů).' },
+    { c:'rtg', t:'K čemu slouží rentgenová strukturní analýza?',
+      r:'Ohybem záření na krystalové mřížce zjistí uspořádání atomů.', w:['Hledá úniky tepla z budov.', 'Měří teplotu hvězd.', 'Ničí bakterie.'],
+      e:'Vlnová délka rentgenového záření je srovnatelná se vzdálenostmi atomů, takže se na krystalu ohýbá. Z obrazce se určí struktura.' },
+    { c:'rtg', t:'Jak se chráníme při práci s rentgenovým zářením?',
+      r:'Stíníme olovem a zkracujeme dobu ozáření na minimum.', w:['Stačí obyčejné sluneční brýle.', 'Ochrana není potřeba, dávky se nesčítají.', 'Stačí stát za skleněnou deskou.'],
+      e:'Rentgenové záření je nebezpečné a dávky se během života sčítají. Olovo ho silně pohlcuje (velké protonové číslo).' },
+    // ----- tepelné -----
+    { c:'tepelne', t:'Která tělesa vyzařují tepelné záření?',
+      r:'Všechna tělesa, nejen rozžhavená', w:['Jen tělesa teplejší než 700&nbsp;°C', 'Jen kovy', 'Jen Slunce a hvězdy'],
+      e:'Tepelné záření vyzařují všechna tělesa. Při nižších teplotách je to hlavně neviditelné infračervené záření.' },
+    { c:'tepelne', t:'Na čem závisí, které vlnové délky těleso tepelně vyzařuje?',
+      r:'Na teplotě tělesa', w:['Na látce, z níž je těleso', 'Na tvaru tělesa', 'Na barvě okolí'],
+      e:'U tepelného záření vlnové délky určuje teplota, nikoli složení látky. U luminiscence je tomu naopak.' },
+    { c:'tepelne', t:'Teplejší a chladnější těleso si vyměňují energii zářením. Co se děje?',
+      r:'Teplejší vyzáří víc, než pohltí, a chladne; chladnější víc pohltí a ohřívá se.', w:['Obě tělesa se ohřívají.', 'Chladnější těleso záření nevysílá.', 'Teplejší těleso se dál ohřívá.'],
+      e:'Obě tělesa záření vysílají i pohlcují, rozhoduje bilance. Pohltí-li těleso tolik, kolik vyzáří, je v rovnovážném stavu.' },
+    { c:'tepelne', t:'Při jaké teplotě začne plotýnka vařiče viditelně rudě žhnout?',
+      r:'Přibližně 700&nbsp;°C', w:['Přibližně 100&nbsp;°C', 'Přibližně 300&nbsp;°C', 'Přibližně 1&nbsp;300&nbsp;°C'],
+      e:'Plotýnka nejdřív jen hřeje (infračervené záření), kolem 700&nbsp;°C začne rudě žhnout. Kolem 1&nbsp;300&nbsp;°C svítí rozžhavené těleso žlutě.' },
+    { c:'tepelne', t:'Proč je baňka svítící žárovky horká, kdežto trubice zářivky zůstává chladná?',
+      r:'V žárovce vzniká světlo tepelným zářením horkého vlákna, v zářivce luminiscencí.', w:['Žárovka má větší baňku.', 'Zářivka je chlazena vodou.', 'Zářivka svítí jen ultrafialově.'],
+      e:'Atomy vlákna získávají energii tepelným pohybem (vlákno musí být horké). V zářivce ji atomy plynu získávají z elektrického pole a světlo vydá luminofor.' },
+    // ----- luminiscence -----
+    { c:'lumi', t:'Co je luminiscence?',
+      r:'Primární záření s kratší vlnovou délkou vyvolá v látce sekundární záření s delší vlnovou délkou.', w:['Záření horkých těles.', 'Odraz světla od povrchu.', 'Sekundární záření s kratší vlnovou délkou než primární.'],
+      e:'Luminiscenční zdroj může být chladný; vlnovou délku sekundárního záření určuje složení látky.' },
+    { c:'lumi', t:'Jaké záření vysílá samotný výboj v trubici zářivky?',
+      r:'Hlavně ultrafialové', w:['Hlavně infračervené', 'Bílé světlo', 'Rentgenové'],
+      e:'Výboj ve rtuťových parách vysílá hlavně UV záření. Světlo vydá až luminofor na vnitřní stěně trubice.' },
+    { c:'lumi', t:'Čím se liší fosforescence od fluorescence?',
+      r:'Fosforescence dosvítí ještě nějakou dobu po skončení primárního záření, fluorescence zhasne hned.', w:['Fosforescence vzniká jen v plynech.', 'Fluorescence dosvítí, fosforescence zhasne hned.', 'Neliší se ničím.'],
+      e:'Příklady: fluorescence u zářivky a oblečení pod UV lampou, fosforescence u svítících ručiček hodinek a nálepek svítících ve tmě.' },
+    { c:'lumi', t:'Jak vzniká bílé světlo LED?',
+      r:'Modrá dioda budí žlutě svítící luminofor.', w:['Dioda je rozžhavená do bíla.', 'Tři žárovky různých barev.', 'Ultrafialová dioda bez luminoforu.'],
+      e:'Modré světlo diody a žluté světlo luminoforu dohromady působí jako bílé.' },
+    { c:'lumi', t:'Co určuje barvu světla luminoforu?',
+      r:'Příměs v luminoforu (například Cu, Mn, Al v ZnS)', w:['Teplota luminoforu', 'Napětí sítě', 'Tloušťka skla'],
+      e:'U luminiscence vlnové délky určuje složení látky; barvu světla luminoforu určuje příměs.' },
+    { c:'lumi', t:'Které využití je založeno na luminiscenci?',
+      r:'Ochranná vlákna v bankovkách viditelná pod UV lampou', w:['Infrazářič k vytápění', 'Pyrometr', 'Termovizní kamera'],
+      e:'Ochranná vlákna obsahují luminofor, který pod UV lampou svítí. Infrazářič, pyrometr i termovizní kamera pracují s tepelným zářením.' }
+  ];
+
+
+  var KVIZ_KEY = 'fyzika:druhy-zareni:kviz';
+  var section = document.getElementById('kviz-section');
+  var tabBtn = document.getElementById('top-tab-kviz');
+  var readout = document.getElementById('kviz-readout');
+  var pageReadout = document.getElementById('header-readout');
+  var kviz = {
+    type:'all', queue:[], current:null, sel:null, locked:false,
+    score:0, streak:0, bestStreak:0, answered:0, correct:0,
+    inRound:false, ended:false, roundTotal:0, roundCorrect:0
+  };
+  function $(id){ return document.getElementById(id); }
+  function kvizLoad(){
+    try{ var raw = localStorage.getItem(KVIZ_KEY); if(raw){ kviz.bestStreak = JSON.parse(raw).bestStreak || 0; } }catch(e){}
+  }
+  function kvizSave(){
+    try{ localStorage.setItem(KVIZ_KEY, JSON.stringify({bestStreak: kviz.bestStreak})); }catch(e){}
+  }
+  function kvizShuffled(a){
+    a = a.slice();
+    for(var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random()*(i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; }
+    return a;
+  }
+  function typeOf(key){ return KVIZ_TYPES.filter(function(t){ return t.key === key; })[0]; }
+
+  // Otázky okruhu se berou v náhodném pořadí bez opakování. Po projití celého okruhu
+  // se zobrazí závěrečná hláška s výsledkem kola a nabídkou otázky zamíchat znovu.
+  function kvizNext(){
+    if(!kviz.queue.length){
+      if(kviz.inRound){ kvizShowEnd(); return; }
+      var pool = KVIZ_BANK.filter(function(b){ return kviz.type === 'all' || b.c === kviz.type; });
+      kviz.queue = kvizShuffled(pool);
+      if(kviz.current && kviz.queue.length > 1 && kviz.queue[0] === kviz.current.item){ kviz.queue.push(kviz.queue.shift()); }
+      kviz.inRound = true; kviz.roundTotal = pool.length; kviz.roundCorrect = 0;
+    }
+    var item = kviz.queue.shift();
+    var opts = item.fixed ? [item.r].concat(item.w).sort() : kvizShuffled([item.r].concat(item.w));
+    kviz.current = { item:item, choices:opts, correct:opts.indexOf(item.r) };
+    kvizRender();
+  }
+  function kvizShowEnd(){
+    kviz.ended = true; kviz.inRound = false;
+    var tp = typeOf(kviz.type);
+    var n = kviz.roundTotal, k = kviz.roundCorrect;
+    $('kviz-end-text').innerHTML =
+      'Prošli jste všech ' + n + ' otázek ' + (kviz.type === 'all' ? 'kvízu' : 'okruhu „' + tp.name + '“') + '. ' +
+      'Správně jste odpověděli na ' + k + ' z ' + n + ' (' + Math.round(100*k/n) + '&nbsp;%). Chcete otázky zamíchat a projít znovu?';
+    $('kviz-q').hidden = true;
+    $('kviz-end').hidden = false;
+    $('kviz-btn-restart').focus({ preventScroll:true });
+  }
+  function kvizRestart(){
+    kviz.queue = []; kviz.inRound = false;
+    kvizNext();
+  }
+  function kvizRender(){
+    var q = kviz.current;
+    kviz.ended = false;
+    $('kviz-q').hidden = false;
+    $('kviz-end').hidden = true;
+    var tp = typeOf(q.item.c);
+    $('kviz-cat-tag').innerHTML = tp ? tp.tag : 'Otázka';
+    $('kviz-task-text').innerHTML = q.item.t;
+    var fig = $('kviz-fig');
+    fig.hidden = !q.item.f;
+    if(q.item.f){ $('kviz-graph').innerHTML = KV_DEFS + q.item.f; $('kviz-graph').setAttribute('aria-label', q.item.fa || 'Obrázek k otázce'); }
+    var grid = $('kviz-opt-grid');
+    grid.innerHTML = '';
+    kviz.sel = null; kviz.locked = false;
+    q.choices.forEach(function(c, i){
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'opt-btn';
+      b.innerHTML = '<b>' + LETTERS[i] + ')</b>&nbsp; ' + c;
+      b.addEventListener('click', function(){ kvizSelect(i); });
+      grid.appendChild(b);
+    });
+    var fb = $('kviz-feedback');
+    fb.hidden = true; fb.classList.remove('ok', 'bad', 'sol');
+    $('kviz-btn-check').textContent = 'Zkontrolovat';
+  }
+  function kvizSelect(i){
+    if(kviz.locked || kviz.ended) return;
+    kviz.sel = i;
+    Array.prototype.forEach.call($('kviz-opt-grid').children, function(el, j){ el.classList.toggle('selected', j === i); });
+    $('kviz-btn-check').focus({ preventScroll:true });
+  }
+  function kvizFinish(ok, headline){
+    var q = kviz.current;
+    Array.prototype.forEach.call($('kviz-opt-grid').children, function(el, j){
+      el.disabled = true;
+      el.classList.remove('selected');
+      if(j === q.correct) el.classList.add(kviz.sel === j ? 'correct' : 'missed');
+      else if(j === kviz.sel) el.classList.add('wrong');
+    });
+    var fb = $('kviz-feedback');
+    fb.hidden = false;
+    fb.classList.toggle('ok', ok); fb.classList.toggle('bad', !ok);
+    $('kviz-feedback-headline').textContent = headline;
+    var finalText = 'Správná odpověď: ' + LETTERS[q.correct] + ') ' + q.item.r;
+    if(window.FyzikaReseni && FyzikaReseni.show){
+      FyzikaReseni.show(fb, $('kviz-feedback-steps'), { raw:true, title:'Vysvětlení', steps:[q.item.e], final:finalText });
+    } else {
+      $('kviz-feedback-steps').innerHTML = q.item.e + '<br><b>' + finalText + '</b>';
+    }
+    kviz.locked = true;
+    var btn = $('kviz-btn-check');
+    btn.textContent = 'Další otázka →';
+    btn.focus({ preventScroll:true });
+    kvizStats();
+  }
+  function kvizCheck(){
+    if(kviz.ended){ kvizRestart(); return; }
+    if(kviz.locked){ kvizNext(); return; }
+    if(kviz.sel === null && !confirm('Není vybraná žádná možnost. Opravdu chcete zkontrolovat?')) return;
+    var ok = kviz.sel === kviz.current.correct;
+    kviz.answered++;
+    if(ok){
+      kviz.score += 10; kviz.streak++; kviz.correct++; kviz.roundCorrect++;
+      if(kviz.streak > kviz.bestStreak){ kviz.bestStreak = kviz.streak; kvizSave(); }
+    } else {
+      kviz.streak = 0;
+    }
+    kvizFinish(ok, ok ? 'Správně!' : (kviz.sel === null ? 'Vyberte odpověď.' : 'Bohužel špatně.'));
+  }
+  function kvizSkip(){
+    if(kviz.ended){ kvizRestart(); return; }
+    if(kviz.locked){ kvizNext(); return; }
+    kviz.streak = 0; kviz.answered++;
+    kvizFinish(false, 'Správná odpověď:');
+  }
+  function kvizStats(){
+    $('kviz-stat-score').textContent = kviz.score;
+    $('kviz-stat-streak').textContent = kviz.streak + (kviz.bestStreak > 0 ? ' / ' + kviz.bestStreak : '');
+    $('kviz-stat-accuracy').textContent = kviz.answered === 0 ? '—' : Math.round(100*kviz.correct/kviz.answered) + ' %';
+  }
+  (function kvizBuildTypeRow(){
+    var row = $('kviz-type-row');
+    KVIZ_TYPES.forEach(function(d){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip accented' + (d.key === kviz.type ? ' on' : '');
+      b.setAttribute('aria-pressed', d.key === kviz.type ? 'true' : 'false');
+      b.textContent = d.name;
+      b.addEventListener('click', function(){
+        if(d.key === kviz.type) return;
+        // rozpracovaná otázka s vybranou odpovědí se před změnou okruhu vyhodnotí
+        var settled = !kviz.locked && kviz.sel !== null;
+        if(settled) kvizCheck();
+        kviz.type = d.key; kviz.queue = []; kviz.inRound = false;
+        Array.prototype.forEach.call(row.children, function(el, i){
+          var on = KVIZ_TYPES[i].key === kviz.type;
+          el.classList.toggle('on', on);
+          el.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        // vyhodnocená otázka zůstane i s vysvětlením vidět, další už bude z nového okruhu
+        if(!settled) kvizNext();
+      });
+      row.appendChild(b);
+    });
+  })();
+  $('kviz-btn-check').addEventListener('click', kvizCheck);
+  $('kviz-btn-skip').addEventListener('click', kvizSkip);
+  $('kviz-btn-restart').addEventListener('click', kvizRestart);
+  $('kviz-reset-stats').addEventListener('click', function(){
+    kviz.score = 0; kviz.streak = 0; kviz.answered = 0; kviz.correct = 0; kviz.bestStreak = 0;
+    try{ localStorage.removeItem(KVIZ_KEY); }catch(e){}
+    kvizStats();
+  });
+  // Klávesnice v kvízu: A–D nebo 1–4 vybere odpověď, Enter zkontroluje / posune dál.
+  document.addEventListener('keydown', function(e){
+    if(section.hidden) return;
+    if(e.ctrlKey || e.metaKey || e.altKey) return;
+    if(e.key === 'Enter'){
+      if(e.target && e.target.tagName === 'BUTTON') return;
+      e.preventDefault(); kvizCheck(); return;
+    }
+    var idx = 'abcd'.indexOf(e.key.toLowerCase());
+    if(idx === -1) idx = '1234'.indexOf(e.key);
+    if(idx !== -1 && e.key.length === 1) kvizSelect(idx);
+  });
+
+  // ---- záložka Kvíz ----
+  // Skript je samostatný: otevření Kvízu i návrat na ostatní záložky řeší sám, ať stránka přepíná
+  // záložky jakkoli. Skóre kvízu má vlastní pole v hlavičce (skóre tréninku se tím nemění).
+  function activate(){
+    var teorieBtn = $('top-tab-teorie'), theory = $('theory-section');
+    if(!tabBtn.classList.contains('on') && teorieBtn && !teorieBtn.classList.contains('on')){
+      // nejdřív „kliknutím“ opustíme dosavadní záložku obsluhou stránky (u hry na čas s potvrzením)
+      teorieBtn.click();
+      if(theory && theory.hidden) return;   // stránka odmítla opustit dosavadní záložku (např. běžící hra)
+    }
+    Array.prototype.forEach.call(document.querySelectorAll('.tab-section'), function(s){ s.hidden = s !== section; });
+    Array.prototype.forEach.call(document.querySelectorAll('.toptab'), function(t){ t.classList.toggle('on', t === tabBtn); });
+    if(pageReadout) pageReadout.hidden = true;
+    readout.hidden = false;
+    kvizStats();
+    if(!kviz.current) kvizNext();
+  }
+  tabBtn.addEventListener('click', activate);
+  Array.prototype.forEach.call(document.querySelectorAll('.toptab'), function(t){
+    if(t === tabBtn) return;
+    t.addEventListener('click', function(){ section.hidden = true; readout.hidden = true; tabBtn.classList.remove('on'); });
+  });
+  document.addEventListener('fyzika:scores-updated', function(){ kviz.bestStreak = 0; kvizLoad(); kvizStats(); });
+  kvizLoad();
+  kvizStats();
+  if(location.hash === '#kviz' && !tabBtn.classList.contains('on')) tabBtn.click();
+  else if(location.hash === '#kviz') activate();
+})();
+</script>
+
 </body>
 </html>
