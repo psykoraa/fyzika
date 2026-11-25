@@ -1065,12 +1065,14 @@
       function P(x, y, z){ return f1(xf + x - KZ * z) + ',' + f1(yc - y + MZ * z); }   // stejné promítání jako pr(): z míří k pozorovateli
       var a0 = alpha === undefined ? 1 : alpha, o = '', a = (ang || 0) * Math.PI / 180, ca = Math.cos(a), sa = Math.sin(a);
       function Q(uu, ww){ return [uu * ca - ww * sa, uu * sa + ww * ca]; }      // (u, w) na destičce → (y, z)
-      var cs = [Q(hy, hz), Q(-hy, hz), Q(-hy, -hz), Q(hy, -hz)], k, A, B, ey, ez, len, ny, nz, facing, d, p1, p2;
+      var cs = [Q(hy, hz), Q(-hy, hz), Q(-hy, -hz), Q(hy, -hz)], k, A, B, ey, ez, len, ny, nz, facing, d, p1, p2, pts;
       for(k = 0; k < 4; k++){                                                   // boční stěny, jen ty natočené k pozorovateli
         A = cs[k]; B = cs[(k + 1) % 4]; ey = B[0] - A[0]; ez = B[1] - A[1]; len = Math.sqrt(ey * ey + ez * ez);
         ny = ez / len; nz = -ey / len; facing = (MZ * ny + nz) / 1.1;
         if(facing <= 0.001) continue;
-        o += '<polygon points="' + [P(-t, A[0], A[1]), P(0, A[0], A[1]), P(0, B[0], B[1]), P(-t, B[0], B[1])].join(' ') + '" fill="var(--ink-soft)" fill-opacity="' + ((0.2 + 0.4 * (1 - facing)) * a0).toFixed(2) + '" stroke="var(--ink)" stroke-width="1.6" stroke-linejoin="round"/>';
+        pts = [P(-t, A[0], A[1]), P(0, A[0], A[1]), P(0, B[0], B[1]), P(-t, B[0], B[1])].join(' ');
+        o += '<polygon points="' + pts + '" fill="var(--surface)" fill-opacity="' + a0 + '" stroke="none"/>';     // neprůhledný podklad: vlna za destičkou nesmí prosvítat
+        o += '<polygon points="' + pts + '" fill="var(--ink-soft)" fill-opacity="' + ((0.2 + 0.4 * (1 - facing)) * a0).toFixed(2) + '" stroke="var(--ink)" stroke-width="1.6" stroke-linejoin="round"/>';
       }
       o += '<polygon points="' + cs.map(function(c){ return P(0, c[0], c[1]); }).join(' ') + '" fill="var(--surface-2)" fill-opacity="' + a0 + '" stroke="var(--ink)" stroke-width="1.6" stroke-linejoin="round"/>';
       if(ang !== null && ang !== undefined){
@@ -1277,7 +1279,8 @@
       var st = { alpha:35, ana:false, gam:0, auto:false, running:!reduceMotion, th:0 };
       var defs = mk('defs', {}, svg);
       marker(defs, 'pb-mO', 'var(--accent)'); marker(defs, 'pb-mE', 'var(--ray2)'); marker(defs, 'pb-mX', 'var(--ink)'); marker(defs, 'pb-mP', 'var(--ink)');
-      mk('line', { x1:XS - 8, y1:YC, x2:XE + 18, y2:YC, stroke:'var(--ink)', 'stroke-width':'1.5', 'marker-end':'url(#pb-mX)' }, svg);
+      var TA = 9;   // tloušťka analyzátoru; vlna před ním (x < XA − TA) je za destičkou, vlna za ním (x > XA) vychází z její přední stěny
+      var axis1 = mk('line', { stroke:'var(--ink)', 'stroke-width':'1.5' }, svg);
       sunIcon(svg, 26, YC);
       var gCrys = mk('g', {}, svg);
       text(svg, (XC0 + XC1) / 2 - 14, YC + 102, 'krystal (šipka = hlavní řez)', 12.5, 'var(--ink-soft)', 'middle');
@@ -1290,7 +1293,14 @@
         lo.push(mk('line', { stroke:'var(--accent)', 'stroke-width':'1.4', 'marker-end':'url(#pb-mO)' }, gO));
         le.push(mk('line', { stroke:'var(--ray2)', 'stroke-width':'1.4', 'marker-end':'url(#pb-mE)' }, gE));
       }
-      var gAna = mk('g', {}, svg), labAna = text(svg, XA, 262, 'analyzátor', 12.5, 'var(--ink-soft)', 'middle');
+      var gAna = mk('g', {}, svg);
+      var gAfter = mk('g', {}, svg), axis2 = mk('line', { stroke:'var(--ink)', 'stroke-width':'1.5', 'marker-end':'url(#pb-mX)' }, gAfter);
+      var rayO2 = mk('polyline', { fill:'none', stroke:'var(--accent)', 'stroke-width':'1.2', opacity:'0.6' }, gAfter);
+      var rayE2 = mk('polyline', { fill:'none', stroke:'var(--ray2)', 'stroke-width':'1.2', opacity:'0.7' }, gAfter);
+      var gO2 = mk('g', {}, gAfter), gE2 = mk('g', {}, gAfter);
+      var pathO2 = mk('polyline', { fill:'none', stroke:'var(--accent)', 'stroke-width':'1.8', 'stroke-linejoin':'round' }, gAfter);
+      var pathE2 = mk('polyline', { fill:'none', stroke:'var(--ray2)', 'stroke-width':'1.8', 'stroke-linejoin':'round' }, gAfter);
+      var labAna = text(svg, XA, 262, 'analyzátor', 12.5, 'var(--ink-soft)', 'middle');
       // legenda
       var lg = mk('g', {}, svg);
       mk('line', { x1:24, y1:22, x2:46, y2:22, stroke:'var(--accent)', 'stroke-width':'2.2', 'marker-end':'url(#pb-mO)' }, lg);
@@ -1342,24 +1352,37 @@
         var fr = clamp((x - XC0) / (XC1 - XC0), 0, 1), d = pr(Math.cos(ar()), Math.sin(ar()), DPX * fr);
         return [x + d[0], YC + d[1]];
       }
-      function render(){
-        var th = st.th, j, x, e, p, b, M = 220, ptsO = [], ptsE = [], a = ar(), D = pr(Math.cos(a), Math.sin(a), DPX);
+      function wavePts(which, x0, x1, th){
+        var pts = [], j, x, e, p, b, M = 220;
         for(j = 0; j <= M; j++){
-          x = XS + (XE - XS) * j / M;
-          e = field('o', x, th); p = pr(e[0], e[1], AMP); b = base('o', x); ptsO.push(f1(b[0] + p[0]) + ',' + f1(b[1] + p[1]));
-          e = field('e', x, th); p = pr(e[0], e[1], AMP); b = base('e', x); ptsE.push(f1(b[0] + p[0]) + ',' + f1(b[1] + p[1]));
+          x = x0 + (x1 - x0) * j / M; e = field(which, x, th); p = pr(e[0], e[1], AMP); b = base(which, x);
+          pts.push(f1(b[0] + p[0]) + ',' + f1(b[1] + p[1]));
         }
+        return pts.join(' ');
+      }
+      function render(){
+        var th = st.th, j, x, e, p, b, a = ar(), D = pr(Math.cos(a), Math.sin(a), DPX), hid, X1 = st.ana ? XA - TA : XE;
         gCrys.innerHTML = crystalSVG(XC0, XC1, a, 48, 30);
-        pathO.setAttribute('points', ptsO.join(' ')); pathE.setAttribute('points', ptsE.join(' '));
+        pathO.setAttribute('points', wavePts('o', XS, X1, th)); pathE.setAttribute('points', wavePts('e', XS, X1, th));
+        gAfter.style.display = st.ana ? '' : 'none';
+        if(st.ana){ pathO2.setAttribute('points', wavePts('o', XA, XE, th)); pathE2.setAttribute('points', wavePts('e', XA, XE, th)); }
         for(j = 0; j <= N; j++){
           x = XS + (XE - XS) * j / N;
+          hid = st.ana && x > XA - TA && x < XA;                                // uvnitř destičky analyzátoru
+          if(st.ana && x >= XA){ if(lo[j].parentNode !== gO2){ gO2.appendChild(lo[j]); gE2.appendChild(le[j]); } }
+          else if(lo[j].parentNode !== gO){ gO.appendChild(lo[j]); gE.appendChild(le[j]); }
           e = field('o', x, th); p = pr(e[0], e[1], AMP); b = base('o', x);
-          setLine(lo[j], b[0], b[1], b[0] + p[0], b[1] + p[1], p[0] * p[0] + p[1] * p[1] < 9);
+          setLine(lo[j], b[0], b[1], b[0] + p[0], b[1] + p[1], hid || p[0] * p[0] + p[1] * p[1] < 9);
           e = field('e', x, th); p = pr(e[0], e[1], AMP); b = base('e', x);
-          setLine(le[j], b[0], b[1], b[0] + p[0], b[1] + p[1], x < XC0 || p[0] * p[0] + p[1] * p[1] < 9);
+          setLine(le[j], b[0], b[1], b[0] + p[0], b[1] + p[1], hid || x < XC0 || p[0] * p[0] + p[1] * p[1] < 9);
         }
-        rayO.setAttribute('points', XS + ',' + YC + ' ' + XE + ',' + YC);
-        rayE.setAttribute('points', XS + ',' + YC + ' ' + XC0 + ',' + YC + ' ' + f1(XC1 + D[0]) + ',' + f1(YC + D[1]) + ' ' + f1(XE + D[0]) + ',' + f1(YC + D[1]));
+        setLine(axis1, XS - 8, YC, st.ana ? X1 : XE + 18, YC, false);
+        if(st.ana) axis1.removeAttribute('marker-end'); else axis1.setAttribute('marker-end', 'url(#pb-mX)');
+        setLine(axis2, XA, YC, XE + 18, YC, false);
+        rayO.setAttribute('points', XS + ',' + YC + ' ' + X1 + ',' + YC);
+        rayE.setAttribute('points', XS + ',' + YC + ' ' + XC0 + ',' + YC + ' ' + f1(XC1 + D[0]) + ',' + f1(YC + D[1]) + ' ' + f1(X1 + D[0]) + ',' + f1(YC + D[1]));
+        rayO2.setAttribute('points', XA + ',' + YC + ' ' + XE + ',' + YC);
+        rayE2.setAttribute('points', f1(XA + D[0]) + ',' + f1(YC + D[1]) + ' ' + f1(XE + D[0]) + ',' + f1(YC + D[1]));
         // hlavní řez na výstupní ploše krystalu
         var q1 = pr(Math.cos(a), Math.sin(a), 38), q2 = pr(-Math.cos(a), -Math.sin(a), 38);
         setLine(axisLine, XC1 + q2[0], YC + q2[1], XC1 + q1[0], YC + q1[1], false);
@@ -1379,7 +1402,7 @@
         document.getElementById('pb-out-i').textContent = 'řádný ' + fmt(io * 100, 1) + ' %, mimořádný ' + fmt(ie * 100, 1) + ' %';
       }
       function drawAna(){
-        gAna.innerHTML = st.ana ? slabSVG(XA, YC, 9, 46, 62, st.gam) : '';
+        gAna.innerHTML = st.ana ? slabSVG(XA, YC, TA, 46, 62, st.gam) : '';
         labAna.style.display = st.ana ? '' : 'none';
       }
       var slA = document.getElementById('pb-sl-a'), slG = document.getElementById('pb-sl-g'), outA = document.getElementById('pb-out-a'), outG = document.getElementById('pb-out-g');
