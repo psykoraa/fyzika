@@ -105,6 +105,18 @@
   .card{ padding:26px 16px 24px; }
   .readout .cell{ min-width:64px; padding:6px 8px; }
 }
+/* ---- Kvíz (stejný jako u Grafů rovnoměrného a rovnoměrně zrychleného pohybu) ---- */
+.task{ font-size:1.02rem; line-height:1.5; max-width:52ch; margin:0 auto 10px; color:var(--ink); }
+.task i, .opt-btn i, .feedback .steps i, .cat-tag i, .chip i{ font-family:'STIX Two Text', Georgia, serif; font-style:italic; text-transform:none; }
+#kviz-section .feedback .steps{ font-family:'Work Sans', sans-serif; white-space:normal; opacity:1; }
+#kviz-section .task{ text-align:center; }
+#kviz-end .kviz-end-box{ text-align:center; margin:0 0 14px; }
+#kviz-end .kviz-end-hint{ text-align:center; margin-top:10px; }
+@media (max-width:520px){
+  /* čtyři záložky: na telefonu ve dvou řadách (stejně jako Grafy rovnoměrného pohybu) */
+  .top-tabs{ flex-wrap:wrap; }
+  .toptab{ flex:1 1 calc(50% - 4px); padding:13px 8px; }
+}
 /* ---- vlastní proměnná této stránky: druhý sledovaný bod (fialová jako paleta Oktávy) ---- */
 :root{ --bod2:#7a4bb0; }
 
@@ -291,6 +303,7 @@ svg.scene{ width:100%; height:auto; display:block; aspect-ratio:1/1; user-select
 
   <div class="top-tabs">
     <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+    <button class="toptab" id="top-tab-kviz" data-tab="kviz">Kvíz</button>
     <button class="toptab" id="top-tab-aplet" data-tab="aplet">Gramofon a planety</button>
     <button class="toptab" id="top-tab-trenink" data-tab="trenink">Trénink</button>
   </div>
@@ -745,6 +758,50 @@ svg.scene{ width:100%; height:auto; display:block; aspect-ratio:1/1; user-select
   </div>
 
   <!-- ============ TRÉNINK ÚHLŮ ============ -->
+  <!-- ============ KVÍZ ============ -->
+  <div id="kviz-section" class="tab-section" hidden>
+    <div class="panel">
+      <div class="section-block">
+        <div class="panel-title">Okruh otázek</div>
+        <div class="row" id="kviz-type-row"></div>
+      </div>
+      <div class="settings-foot" style="justify-content:flex-end;">
+        <button class="linklike" id="kviz-reset-stats">vynulovat statistiku</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div id="kviz-q">
+      <span class="cat-tag" id="kviz-cat-tag">Otázka</span>
+      <p class="task" id="kviz-task-text"></p>
+      <figure class="theory-fig" id="kviz-fig" hidden>
+        <svg id="kviz-graph" viewBox="0 0 480 260" role="img" aria-label="Kružnice s bodem a čtyřmi očíslovanými šipkami"></svg>
+      </figure>
+      <div class="opt-grid wide-opts" id="kviz-opt-grid"></div>
+      <div class="actions">
+        <button class="btn primary" id="kviz-btn-check">Zkontrolovat</button>
+        <button class="btn ghost" id="kviz-btn-skip">Nevím / Zobrazit řešení</button>
+      </div>
+      <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint">Vyberte jednu ze čtyř odpovědí kliknutím nebo klávesami A až D (případně 1 až 4) a potvrďte tlačítkem Zkontrolovat nebo klávesou Enter; dalším Enterem přejdete na další otázku. Po kontrole se správná odpověď obarví zeleně, chybně vybraná červeně a pod otázkou se objeví vysvětlení. Okruh otázek vyberete nahoře; otázky se neopakují, dokud neprojdete celý okruh. Pak se zobrazí, kolik otázek jste zodpověděli správně, a otázky můžete zamíchat a projít znovu.</p>
+      </details>
+      <div class="feedback" id="kviz-feedback" hidden>
+        <div class="headline" id="kviz-feedback-headline"></div>
+        <div class="steps" id="kviz-feedback-steps"></div>
+      </div>
+      </div>
+      <div id="kviz-end" hidden>
+        <div class="feedback ok kviz-end-box"><div class="headline">Hotovo, prošli jste všechny otázky!</div></div>
+        <p class="task" id="kviz-end-text"></p>
+        <div class="actions">
+          <button class="btn primary" id="kviz-btn-restart">Zamíchat otázky a začít znovu</button>
+        </div>
+        <p class="hint kviz-end-hint">Můžete také nahoře vybrat jiný okruh otázek.</p>
+      </div>
+    </div>
+  </div>
+
   <div id="trenink-section" class="tab-section" hidden>
 
     <div class="panel">
@@ -954,9 +1011,11 @@ svg.scene{ width:100%; height:auto; display:block; aspect-ratio:1/1; user-select
       tabs[k].classList.toggle('on', k === name);
       if(sections[k]) sections[k].hidden = k !== name;
     }
-    // skóre, série a úspěšnost v hlavičce jen u tréninku
+    // skóre, série a úspěšnost v hlavičce jen u kvízu a tréninku (každý má svoje)
     var readout = document.getElementById('header-readout');
-    if(readout) readout.hidden = name !== 'trenink';
+    if(readout) readout.hidden = name !== 'trenink' && name !== 'kviz';
+    if(name === 'kviz' && kviz) kvizStats();
+    else if(name === 'trenink' && state) updateStats();
   }
   Object.keys(tabs).forEach(function(k){ tabs[k].addEventListener('click', function(){ showTab(k); }); });
   var hash = location.hash.replace('#', '');
@@ -1272,11 +1331,409 @@ svg.scene{ width:100%; height:auto; display:block; aspect-ratio:1/1; user-select
     try{ localStorage.removeItem(STATS_KEY); }catch(e){}
     updateStats();
   });
-  document.addEventListener('fyzika:scores-updated', function(){ state.bestStreak = 0; loadStats(); updateStats(); });
+  document.addEventListener('fyzika:scores-updated', function(){
+    state.bestStreak = 0; loadStats();
+    kviz.bestStreak = 0; kvizLoad();
+    if(!document.getElementById('kviz-section').hidden) kvizStats(); else updateStats();
+  });
+
+  // ================= KVÍZ: otázky s výběrem ze čtyř odpovědí (A–D) =================
+  // Položka banky: c = okruh, t = zadání (HTML), r = správná odpověď, w = tři špatné,
+  // e = vysvětlení, f = volitelný obrázek (kružnice s očíslovanými šipkami, viz kvizFigMarkup),
+  // fixed = možnosti se nemíchají, jen seřadí (Šipka 1 až 4).
+  var LETTERS = ['A','B','C','D'];
+  var KVIZ_TYPES = [
+    { key:'all', name:'Vše' },
+    { key:'radian', name:'Úhlová dráha a radián', tag:'Úhlová dráha a radián' },
+    { key:'omega', name:'Úhlová rychlost, perioda a frekvence', tag:'Úhlová rychlost <i>ω</i>, perioda <i>T</i> a frekvence <i>f</i>' },
+    { key:'obvod', name:'Obvodová rychlost', tag:'Obvodová rychlost <i>v</i>' },
+    { key:'dostred', name:'Dostředivé zrychlení', tag:'Dostředivé zrychlení <i>a</i><sub>d</sub>' },
+    { key:'situace', name:'Situace', tag:'Pohyb po kružnici v situacích' }
+  ];
+  var KVIZ_BANK = [
+    // ----- úhlová dráha a radián -----
+    { c:'radian', t:'Co je úhlová dráha <i>φ</i>?',
+      r:'Úhel, který průvodič bodu svírá se zvoleným základním směrem.',
+      w:['Délka oblouku, který bod na kružnici urazí.', 'Počet oběhů bodu za jednotku času.', 'Vzdálenost bodu od středu kružnice.'],
+      e:'Polohu bodu na kružnici popisuje průvodič, který vychází ze středu kružnice. Úhel, který průvodič svírá se základním směrem (polopřímkou, na které bod ležel na začátku), je úhlová dráha <i>φ</i>. Délka oblouku je dráha <i>s</i>, vzdálenost od středu je poloměr <i>r</i>.' },
+    { c:'radian', t:'Jak je definována velikost úhlu v radiánech?',
+      r:'Jako podíl délky oblouku a poloměru kružnice.',
+      w:['Jako součin délky oblouku a poloměru kružnice.', 'Jako podíl poloměru a délky oblouku.', 'Jako podíl délky oblouku a obvodu kružnice.'],
+      e:'<i>φ</i> = <i>s</i>/<i>r</i>: délku oblouku, který k úhlu přísluší, vydělíme poloměrem. Podíl oblouku a obvodu by udával, jakou část otáčky úhel představuje (u plného úhlu by vyšla 1, ne 2π).' },
+    { c:'radian', t:'Úhel má velikost 1&nbsp;rad. Co to znamená?',
+      r:'Oblouk, který k němu přísluší, je stejně dlouhý jako poloměr.',
+      w:['Oblouk, který k němu přísluší, je stejně dlouhý jako obvod kružnice.', 'Je to totéž jako úhel 1°.', 'Oblouk, který k němu přísluší, je dlouhý 1&nbsp;m.'],
+      e:'Z <i>φ</i> = <i>s</i>/<i>r</i> = 1 plyne <i>s</i> = <i>r</i>. Na velikosti kružnice nezáleží: oblouk dlouhý 1&nbsp;m vymezuje úhel 1&nbsp;rad jen na kružnici o poloměru 1&nbsp;m. Oblouk rovný obvodu odpovídá plnému úhlu 2π&nbsp;rad.' },
+    { c:'radian', t:'Kolik radiánů má plný úhel?',
+      r:'2π&nbsp;rad, tj. asi 6,28&nbsp;rad', w:['π&nbsp;rad, tj. asi 3,14&nbsp;rad', '360&nbsp;rad', 'π/2&nbsp;rad, tj. asi 1,57&nbsp;rad'],
+      e:'Plnému úhlu přísluší celý obvod 2π<i>r</i>, takže <i>φ</i> = 2π<i>r</i>/<i>r</i> = 2π. Úhel π&nbsp;rad je přímý úhel (180°), π/2&nbsp;rad pravý úhel (90°).' },
+    { c:'radian', t:'Kolik radiánů je 90°?',
+      r:'π/2&nbsp;rad', w:['π/4&nbsp;rad', 'π&nbsp;rad', '2π&nbsp;rad'],
+      e:'90° je čtvrtina plného úhlu: 2π/4 = π/2. Převodem: 90° · π/180° = π/2. Úhel π/4 je 45°, π je 180° a 2π je 360°.' },
+    { c:'radian', t:'Kolik stupňů je π/3&nbsp;rad?',
+      r:'60°', w:['30°', '45°', '120°'],
+      e:'π&nbsp;rad = 180°, takže π/3&nbsp;rad = 180°/3 = 60°. Kontrola: π/3 je šestina plného úhlu 2π a 360°/6 = 60°.' },
+    { c:'radian', t:'Kolik stupňů je přibližně 1&nbsp;rad?',
+      r:'57,3°', w:['1°', '3,14°', '180°'],
+      e:'1&nbsp;rad = 180°/π ≈ 57,3°. Radián je tedy poměrně velký úhel, asi šestina plného úhlu (360°/57,3° ≈ 6,28 = 2π).' },
+    { c:'radian', t:'Proč při dosazování úhlu v radiánech do vzorců píšeme jen jeho číselnou hodnotu?',
+      r:'Radián je podíl dvou délek, úhel v radiánech je bezrozměrná veličina.',
+      w:['Protože radián je základní jednotka soustavy SI.', 'Protože se radiány po dosazení vždy vykrátí se stupni.', 'Protože úhel v radiánech je vždy menší než 1.'],
+      e:'<i>φ</i> = <i>s</i>/<i>r</i>, jednotka je m/m = 1. Název „radián“ jen připomíná, že číslo udává úhel. Úhel v radiánech může být libovolně velký, např. plný úhel je asi 6,28.' },
+    { c:'radian', t:'Bod se pohybuje po kružnici o poloměru 2,0&nbsp;m a jeho průvodič opíše úhel 1,5&nbsp;rad. Jak dlouhý oblouk bod urazí?',
+      r:'3,0&nbsp;m', w:['1,3&nbsp;m', '0,75&nbsp;m', '3,5&nbsp;m'],
+      e:'<i>s</i> = <i>φ</i>·<i>r</i> = 1,5 · 2,0&nbsp;m = 3,0&nbsp;m. Kontrola: <i>φ</i> = <i>s</i>/<i>r</i> = 3,0&nbsp;m / 2,0&nbsp;m = 1,5. Hodnoty 1,3&nbsp;m a 0,75&nbsp;m vzniknou dělením místo násobení.' },
+    { c:'radian', t:'Kolo o poloměru 0,30&nbsp;m se otočí o 90°. Jakou dráhu urazí bod na jeho obvodu?',
+      r:'Asi 0,47&nbsp;m', w:['27&nbsp;m', 'Asi 0,94&nbsp;m', '0,30&nbsp;m'],
+      e:'Úhel je nutné převést na radiány: 90° = π/2 ≈ 1,571. Pak <i>s</i> = <i>φ</i>·<i>r</i> = 1,571 · 0,30&nbsp;m ≈ 0,47&nbsp;m. Kontrola: čtvrtina obvodu 2π · 0,30&nbsp;m / 4 ≈ 0,47&nbsp;m. Hodnota 27&nbsp;m vyjde, když se dosadí 90 ve stupních.' },
+
+    // ----- úhlová rychlost, perioda a frekvence -----
+    { c:'omega', t:'Co udává úhlová rychlost <i>ω</i>?',
+      r:'Jak velký úhel opíše průvodič za jednotku času.',
+      w:['Jakou dráhu urazí bod po obvodu za jednotku času.', 'Dobu, za kterou bod oběhne celou kružnici.', 'O kolik se za jednotku času změní poloměr kružnice.'],
+      e:'<i>ω</i> = Δ<i>φ</i>/Δ<i>t</i>: změna úhlové dráhy za jednotku času. Dráhu za jednotku času udává obvodová rychlost <i>v</i>, dobu jednoho oběhu perioda <i>T</i>.' },
+    { c:'omega', t:'Jaká je jednotka úhlové rychlosti?',
+      r:'rad·s⁻¹', w:['m·s⁻¹', 'rad·s', 'm·s⁻²'],
+      e:'[<i>ω</i>] = [<i>φ</i>]/[<i>t</i>] = rad/s = rad·s⁻¹. Protože je radián bezrozměrný, lze psát také s⁻¹.' },
+    { c:'omega', t:'Jaký je vztah mezi frekvencí <i>f</i> a periodou <i>T</i>?',
+      r:'<i>f</i> = 1/<i>T</i>', w:['<i>f</i> = 2π<i>T</i>', '<i>f</i> = <i>T</i>/2π', '<i>f</i> = <i>T</i>'],
+      e:'Perioda je doba jednoho oběhu, frekvence počet oběhů za sekundu. Trvá-li jeden oběh <i>T</i>, proběhne za 1&nbsp;s právě 1/<i>T</i> oběhů. Činitel 2π patří do vztahu <i>ω</i> = 2π/<i>T</i>.' },
+    { c:'omega', t:'Jak závisí úhlová rychlost bodů otáčejícího se kola na jejich vzdálenosti od osy?',
+      r:'Nezávisí, všechny body mají stejnou úhlovou rychlost.',
+      w:['Je tím větší, čím dál je bod od osy.', 'Je tím větší, čím blíž je bod u osy.', 'Je největší v polovině mezi osou a obvodem.'],
+      e:'Průvodiče všech bodů kola opíšou za stejnou dobu stejný úhel, kolo se otáčí jako celek. Na vzdálenosti od osy závisí obvodová rychlost <i>v</i> = <i>ω</i><i>r</i>, ne <i>ω</i>.' },
+    { c:'omega', t:'Rovnoměrný pohyb po kružnici má periodu 0,50&nbsp;s. Jaká je jeho frekvence?',
+      r:'2,0&nbsp;Hz', w:['0,50&nbsp;Hz', 'Asi 3,1&nbsp;Hz', '4,0&nbsp;Hz'],
+      e:'<i>f</i> = 1/<i>T</i> = 1/(0,50&nbsp;s) = 2,0&nbsp;Hz. Kontrola: jeden oběh trvá půl sekundy, za sekundu proběhnou dva. Hodnota 3,1&nbsp;Hz vznikne chybným násobením 2π · 0,50.' },
+    { c:'omega', t:'Motor se otáčí 1&nbsp;500krát za minutu (1&nbsp;500&nbsp;ot·min⁻¹). Jaká je frekvence otáčení?',
+      r:'25&nbsp;Hz', w:['1&nbsp;500&nbsp;Hz', '90&nbsp;000&nbsp;Hz', '2,5&nbsp;Hz'],
+      e:'Minuta má 60&nbsp;s: <i>f</i> = 1&nbsp;500/60&nbsp;s = 25&nbsp;Hz. Kontrola: 25 otáček za sekundu · 60&nbsp;s = 1&nbsp;500 otáček za minutu. Hodnota 90&nbsp;000&nbsp;Hz vznikne násobením šedesáti místo dělení.' },
+    { c:'omega', t:'Bod obíhá po kružnici s frekvencí 2,0&nbsp;Hz. Jaká je jeho úhlová rychlost?',
+      r:'Asi 12,6&nbsp;rad·s⁻¹', w:['2,0&nbsp;rad·s⁻¹', 'Asi 3,1&nbsp;rad·s⁻¹', 'Asi 0,32&nbsp;rad·s⁻¹'],
+      e:'<i>ω</i> = 2π<i>f</i> = 2π · 2,0&nbsp;s⁻¹ = 4π&nbsp;rad·s⁻¹ ≈ 12,6&nbsp;rad·s⁻¹. Kontrola: za sekundu dva oběhy po 2π&nbsp;rad, tedy 4π&nbsp;rad. Frekvence a úhlová rychlost nejsou totéž, liší se činitelem 2π.' },
+    { c:'omega', t:'Průvodič bodu se otáčí úhlovou rychlostí 0,50&nbsp;rad·s⁻¹ a na začátku měřil úhel nulový. Jakou úhlovou dráhu opíše za 4,0&nbsp;s?',
+      r:'2,0&nbsp;rad', w:['8,0&nbsp;rad', '0,13&nbsp;rad', '4,5&nbsp;rad'],
+      e:'<i>φ</i> = <i>ω</i><i>t</i> = 0,50&nbsp;rad·s⁻¹ · 4,0&nbsp;s = 2,0&nbsp;rad. Kontrola: za každou sekundu přibude 0,5&nbsp;rad, za čtyři sekundy 4 · 0,5 = 2&nbsp;rad.' },
+    { c:'omega', t:'Kolikrát větší úhlovou rychlost má minutová ručička hodin než hodinová?',
+      r:'12krát', w:['60krát', '24krát', 'Obě mají stejnou úhlovou rychlost.'],
+      e:'Minutová ručička oběhne ciferník za 1&nbsp;h, hodinová za 12&nbsp;h. Úhlová rychlost <i>ω</i> = 2π/<i>T</i> je nepřímo úměrná periodě, takže je u minutové ručičky dvanáctkrát větší: 1,75·10⁻³&nbsp;rad·s⁻¹ proti 1,45·10⁻⁴&nbsp;rad·s⁻¹.' },
+    { c:'omega', t:'Země se otočí kolem své osy přibližně za 24&nbsp;h. Jaká je zhruba úhlová rychlost jejího otáčení?',
+      r:'7,3·10⁻⁵&nbsp;rad·s⁻¹', w:['1,2·10⁻⁵&nbsp;rad·s⁻¹', '0,26&nbsp;rad·s⁻¹', '4,4·10⁻³&nbsp;rad·s⁻¹'],
+      e:'<i>T</i> = 24 · 3&nbsp;600&nbsp;s = 86&nbsp;400&nbsp;s, <i>ω</i> = 2π/<i>T</i> = 6,283/86&nbsp;400&nbsp;s ≈ 7,3·10⁻⁵&nbsp;rad·s⁻¹. Hodnota 1,2·10⁻⁵ vznikne bez činitele 2π, hodnota 0,26 dosazením periody v hodinách (byla by to rad·h⁻¹).' },
+    { c:'omega', t:'Co je perioda rovnoměrného pohybu po kružnici?',
+      r:'Doba, za kterou bod oběhne celou kružnici.',
+      w:['Počet oběhů bodu za jednu sekundu.', 'Úhel, který průvodič opíše za jednu sekundu.', 'Délka dráhy, kterou bod urazí za jeden oběh.'],
+      e:'Perioda (oběžná doba) <i>T</i> je doba jednoho oběhu, měří se v sekundách. Počet oběhů za sekundu je frekvence <i>f</i>, úhel za sekundu úhlová rychlost <i>ω</i> a dráha za jeden oběh obvod 2π<i>r</i>.' },
+
+    // ----- obvodová rychlost -----
+    { c:'obvod', t:'Jakým vztahem souvisí obvodová rychlost <i>v</i> s úhlovou rychlostí <i>ω</i> a poloměrem <i>r</i>?',
+      r:'<i>v</i> = <i>ω</i><i>r</i>', w:['<i>v</i> = <i>ω</i>/<i>r</i>', '<i>v</i> = <i>r</i>/<i>ω</i>', '<i>v</i> = <i>ω</i><i>r</i>²'],
+      e:'Za dobu Δ<i>t</i> urazí bod oblouk Δ<i>s</i> = <i>r</i>Δ<i>φ</i>, takže <i>v</i> = Δ<i>s</i>/Δ<i>t</i> = <i>r</i>Δ<i>φ</i>/Δ<i>t</i> = <i>ω</i><i>r</i>. Rozměrová kontrola: s⁻¹ · m = m·s⁻¹.' },
+    { c:'obvod', t:'Kterým směrem míří vektor rychlosti bodu, který rovnoměrně obíhá po kružnici?',
+      r:'Po tečně ke kružnici.', w:['Do středu kružnice.', 'Ze středu kružnice ven.', 'Stále stejným směrem, nemění se.'],
+      e:'Vektor rychlosti míří vždy po tečně k trajektorii. Tečna se s polohou bodu otáčí, a proto se směr rychlosti neustále mění, i když její velikost zůstává stejná. Do středu míří dostředivé zrychlení.' },
+    { c:'obvod', t:'Je rovnoměrný pohyb po kružnici (stálá velikost rychlosti) pohybem zrychleným?',
+      r:'Ano, protože se mění směr rychlosti.',
+      w:['Ne, protože se nemění velikost rychlosti.', 'Ne, protože úhlová rychlost je stálá.', 'Ano, protože velikost rychlosti stále roste.'],
+      e:'Rychlost je vektor. Mění-li se její směr, mění se rychlost, i když velikost zůstává stejná. Pohyb po kružnici je proto vždy zrychlený, zrychlení (dostředivé) mění směr rychlosti.' },
+    { c:'obvod', t:'Dva body leží na téže otáčející se desce, druhý je dvakrát dál od osy než první. Jakou má druhý bod obvodovou rychlost?',
+      r:'Dvojnásobnou', w:['Poloviční', 'Stejnou', 'Čtyřnásobnou'],
+      e:'Oba body mají stejnou úhlovou rychlost <i>ω</i> a <i>v</i> = <i>ω</i><i>r</i> je přímo úměrná vzdálenosti od osy. Kontrola: za jednu otáčku urazí vzdálenější bod obvod 2π · 2<i>r</i>, tedy dvakrát delší dráhu za stejnou dobu.' },
+    { c:'obvod', t:'Jakou obvodovou rychlost má bod, který leží přímo na ose otáčení?',
+      r:'Nulovou', w:['Stejnou jako body na obvodu', 'Největší ze všech bodů tělesa', 'Rovnou úhlové rychlosti <i>ω</i>'],
+      e:'Pro bod na ose je <i>r</i> = 0, takže <i>v</i> = <i>ω</i> · 0 = 0. Bod se jen otáčí na místě, nikam se nepohybuje.' },
+    { c:'obvod', t:'Kotouč se otáčí úhlovou rychlostí 10&nbsp;rad·s⁻¹. Jakou rychlost má bod ve vzdálenosti 0,20&nbsp;m od osy?',
+      r:'2,0&nbsp;m·s⁻¹', w:['50&nbsp;m·s⁻¹', '0,020&nbsp;m·s⁻¹', '0,40&nbsp;m·s⁻¹'],
+      e:'<i>v</i> = <i>ω</i><i>r</i> = 10&nbsp;s⁻¹ · 0,20&nbsp;m = 2,0&nbsp;m·s⁻¹. Kontrola: <i>ω</i> = <i>v</i>/<i>r</i> = 2,0/0,20 = 10&nbsp;rad·s⁻¹. Hodnota 50&nbsp;m·s⁻¹ vznikne dělením <i>ω</i>/<i>r</i>.' },
+    { c:'obvod', t:'Kolotoč o poloměru 4,0&nbsp;m se otočí jednou za 8,0&nbsp;s. Jakou rychlost má dítě sedící na jeho kraji?',
+      r:'Asi 3,1&nbsp;m·s⁻¹', w:['0,50&nbsp;m·s⁻¹', 'Asi 1,6&nbsp;m·s⁻¹', 'Asi 25&nbsp;m·s⁻¹'],
+      e:'Za jednu periodu dítě urazí obvod: <i>v</i> = 2π<i>r</i>/<i>T</i> = 2π · 4,0&nbsp;m / 8,0&nbsp;s ≈ 3,1&nbsp;m·s⁻¹. Kontrola: <i>ω</i> = 2π/8,0 ≈ 0,785&nbsp;rad·s⁻¹ a <i>v</i> = <i>ω</i><i>r</i> ≈ 3,1&nbsp;m·s⁻¹. Hodnota 25&nbsp;m je délka obvodu, ne rychlost.' },
+    { c:'obvod', t:'Hrot vteřinové ručičky je 2,0&nbsp;cm od osy. Jak velkou rychlostí se pohybuje?',
+      r:'Asi 2,1&nbsp;mm·s⁻¹', w:['Asi 0,33&nbsp;mm·s⁻¹', 'Asi 21&nbsp;mm·s⁻¹', 'Asi 13&nbsp;cm·s⁻¹'],
+      e:'Vteřinová ručička má periodu 60&nbsp;s: <i>v</i> = 2π<i>r</i>/<i>T</i> = 2π · 20&nbsp;mm / 60&nbsp;s ≈ 2,1&nbsp;mm·s⁻¹. Kontrola: <i>ω</i> = 0,105&nbsp;rad·s⁻¹ a <i>v</i> = 0,105 · 20&nbsp;mm·s⁻¹ ≈ 2,1&nbsp;mm·s⁻¹. Hodnota 0,33&nbsp;mm·s⁻¹ vznikne bez činitele 2π.' },
+    { c:'obvod', t:'Země obíhá kolem Slunce po přibližně kruhové dráze o poloměru 1,5·10¹¹&nbsp;m za 1&nbsp;rok (3,16·10⁷&nbsp;s). Jak velkou rychlostí obíhá?',
+      r:'Asi 30&nbsp;km·s⁻¹', w:['Asi 4,7&nbsp;km·s⁻¹', 'Asi 300&nbsp;km·s⁻¹', 'Asi 30&nbsp;m·s⁻¹'],
+      e:'<i>v</i> = 2π<i>r</i>/<i>T</i> = 2π · 1,5·10¹¹&nbsp;m / 3,16·10⁷&nbsp;s ≈ 3,0·10⁴&nbsp;m·s⁻¹ = 30&nbsp;km·s⁻¹. Kontrola: <i>ω</i> = 2π/<i>T</i> ≈ 2,0·10⁻⁷&nbsp;rad·s⁻¹, <i>ω</i><i>r</i> ≈ 3,0·10⁴&nbsp;m·s⁻¹. Hodnota 4,7&nbsp;km·s⁻¹ vznikne bez činitele 2π.' },
+
+    // ----- dostředivé zrychlení -----
+    { c:'dostred', t:'Kam míří dostředivé zrychlení bodu při rovnoměrném pohybu po kružnici?',
+      r:'Do středu kružnice.', w:['Po tečně ve směru pohybu.', 'Ze středu kružnice ven.', 'Po tečně proti směru pohybu.'],
+      e:'Zrychlení míří na tu stranu, kam se trajektorie zakřivuje, tedy do středu kružnice. Proto se nazývá dostředivé. Ve směru rychlosti (po tečně) míří tečné zrychlení, a to jen u nerovnoměrného pohybu.' },
+    { c:'dostred', t:'Proč je dostředivé zrychlení kolmé na rychlost?',
+      r:'Složka zrychlení ve směru rychlosti by měnila velikost rychlosti.',
+      w:['Protože rychlost bodu na kružnici je nulová.', 'Protože zrychlení musí mířit vždy kolmo k zemi.', 'Protože se při pohybu po kružnici mění poloměr.'],
+      e:'Při rovnoměrném pohybu po kružnici se velikost rychlosti nemění, mění se jen její směr. Zrychlení proto nesmí mít složku ve směru rychlosti, jinak by bod zrychloval nebo zpomaloval. Zbývá směr kolmý na rychlost, tedy do středu.' },
+    { c:'dostred', t:'Který vztah udává velikost dostředivého zrychlení?',
+      r:'<i>a</i><sub>d</sub> = <i>v</i>²/<i>r</i>', w:['<i>a</i><sub>d</sub> = <i>v</i>/<i>r</i>', '<i>a</i><sub>d</sub> = <i>v</i><i>r</i>', '<i>a</i><sub>d</sub> = <i>v</i>²<i>r</i>'],
+      e:'<i>a</i><sub>d</sub> = <i>v</i>²/<i>r</i> = <i>ω</i>²<i>r</i>. Rozměrová kontrola: (m·s⁻¹)²/m = m·s⁻². Vztah <i>v</i>/<i>r</i> dává úhlovou rychlost (s⁻¹), ne zrychlení.' },
+    { c:'dostred', t:'Auto projíždí dvě zatáčky stejně velkou rychlostí, druhá má poloviční poloměr. Jaké je dostředivé zrychlení ve druhé zatáčce?',
+      r:'Dvojnásobné', w:['Poloviční', 'Stejné', 'Čtyřnásobné'],
+      e:'Při stejném <i>v</i> je <i>a</i><sub>d</sub> = <i>v</i>²/<i>r</i> nepřímo úměrné poloměru: poloviční poloměr znamená dvojnásobné zrychlení. Ostrá zatáčka je proto „prudší“ než pozvolná.' },
+    { c:'dostred', t:'Auto projíždí stejnou zatáčku podruhé dvojnásobnou rychlostí. Jak se změní dostředivé zrychlení?',
+      r:'Zvětší se čtyřikrát.', w:['Zvětší se dvakrát.', 'Nezmění se.', 'Zmenší se na polovinu.'],
+      e:'<i>a</i><sub>d</sub> = <i>v</i>²/<i>r</i> roste s druhou mocninou rychlosti: (2<i>v</i>)² = 4<i>v</i>². Proto je rychlá jízda v zatáčce tak nebezpečná.' },
+    { c:'dostred', t:'Dva body na téže otáčející se desce: druhý je dvakrát dál od osy. Jaké dostředivé zrychlení má druhý bod?',
+      r:'Dvojnásobné', w:['Poloviční', 'Stejné', 'Čtyřnásobné'],
+      e:'Oba body mají stejnou úhlovou rychlost, a podle <i>a</i><sub>d</sub> = <i>ω</i>²<i>r</i> je zrychlení přímo úměrné vzdálenosti od osy. Kontrola přes <i>v</i>²/<i>r</i>: rychlost je dvojnásobná, (2<i>v</i>)²/(2<i>r</i>) = 2<i>v</i>²/<i>r</i>. Pravidlo „větší poloměr, menší zrychlení“ platí jen při stejné rychlosti <i>v</i>, ta tu ale stejná není.' },
+    { c:'dostred', t:'Auto projíždí zatáčku o poloměru 100&nbsp;m rychlostí 20&nbsp;m·s⁻¹. Jaké je jeho dostředivé zrychlení?',
+      r:'4,0&nbsp;m·s⁻²', w:['0,20&nbsp;m·s⁻²', '5,0&nbsp;m·s⁻²', '40&nbsp;000&nbsp;m·s⁻²'],
+      e:'<i>a</i><sub>d</sub> = <i>v</i>²/<i>r</i> = (20&nbsp;m·s⁻¹)²/100&nbsp;m = 400/100&nbsp;m·s⁻² = 4,0&nbsp;m·s⁻². Kontrola: <i>ω</i> = <i>v</i>/<i>r</i> = 0,20&nbsp;rad·s⁻¹, <i>a</i><sub>d</sub> = <i>ω</i>²<i>r</i> = 0,040 · 100 = 4,0&nbsp;m·s⁻². Hodnota 0,20 je <i>v</i>/<i>r</i> bez druhé mocniny.' },
+    { c:'dostred', t:'Bod obíhá po kružnici o poloměru 0,50&nbsp;m úhlovou rychlostí 2,0&nbsp;rad·s⁻¹. Jaké má dostředivé zrychlení?',
+      r:'2,0&nbsp;m·s⁻²', w:['1,0&nbsp;m·s⁻²', '8,0&nbsp;m·s⁻²', '0,25&nbsp;m·s⁻²'],
+      e:'<i>a</i><sub>d</sub> = <i>ω</i>²<i>r</i> = (2,0&nbsp;s⁻¹)² · 0,50&nbsp;m = 2,0&nbsp;m·s⁻². Kontrola: <i>v</i> = <i>ω</i><i>r</i> = 1,0&nbsp;m·s⁻¹ a <i>v</i>²/<i>r</i> = 1,0/0,50 = 2,0&nbsp;m·s⁻². Hodnota 1,0 je obvodová rychlost (v m·s⁻¹), ne zrychlení.' },
+    { c:'dostred', t:'Při nerovnoměrném pohybu po kružnici má bod i tečné zrychlení <i>a</i><sub>t</sub>. Co tečné zrychlení mění?',
+      r:'Velikost rychlosti.', w:['Jen směr rychlosti.', 'Poloměr kružnice.', 'Nic, při pohybu po kružnici je vždy nulové.'],
+      e:'Tečné zrychlení míří ve směru rychlosti (nebo proti ní), a proto mění její velikost: bod zrychluje nebo zpomaluje. Směr rychlosti dál mění dostředivé zrychlení.' },
+    { c:'dostred', t:'Bod na kružnici má tečné zrychlení 3,0&nbsp;m·s⁻² a dostředivé 4,0&nbsp;m·s⁻². Jak velké je jeho výsledné zrychlení?',
+      r:'5,0&nbsp;m·s⁻²', w:['7,0&nbsp;m·s⁻²', '1,0&nbsp;m·s⁻²', '12&nbsp;m·s⁻²'],
+      e:'Tečné a dostředivé zrychlení jsou k sobě kolmé, výsledné se určí Pythagorovou větou: <i>a</i> = √(3,0² + 4,0²)&nbsp;m·s⁻² = √25&nbsp;m·s⁻² = 5,0&nbsp;m·s⁻². Prostý součet 7,0&nbsp;m·s⁻² by platil, jen kdyby obě zrychlení měla stejný směr.' },
+
+    // ----- situace (s obrázkem i bez) -----
+    { c:'situace', f:{ dir:'ccw' }, fixed:true,
+      t:'Bod obíhá po kružnici proti směru hodinových ručiček (šedá šipka). Která šipka znázorňuje jeho rychlost v zakreslené poloze?',
+      r:'Šipka 2', w:['Šipka 1', 'Šipka 3', 'Šipka 4'],
+      e:'Rychlost míří po tečně ve směru pohybu. Bod je vpravo na kružnici a obíhá proti směru hodinových ručiček, tedy právě stoupá nahoru: šipka 2. Šipka 4 je tečna proti směru pohybu, šipky 1 a 3 leží na průvodiči.' },
+    { c:'situace', f:{ dir:'cw' }, fixed:true,
+      t:'Bod obíhá po kružnici ve směru hodinových ručiček (šedá šipka). Která šipka znázorňuje jeho rychlost v zakreslené poloze?',
+      r:'Šipka 4', w:['Šipka 1', 'Šipka 2', 'Šipka 3'],
+      e:'Rychlost míří po tečně ve směru pohybu. Bod je vpravo na kružnici a obíhá ve směru hodinových ručiček, tedy právě klesá dolů: šipka 4.' },
+    { c:'situace', f:{ dir:'ccw' }, fixed:true,
+      t:'Bod obíhá rovnoměrně po kružnici proti směru hodinových ručiček (šedá šipka). Která šipka znázorňuje jeho dostředivé zrychlení?',
+      r:'Šipka 3', w:['Šipka 1', 'Šipka 2', 'Šipka 4'],
+      e:'Dostředivé zrychlení míří do středu kružnice: šipka 3. Na směru oběhu nezáleží, při oběhu na druhou stranu by mířilo stejně. Šipka 2 je rychlost.' },
+    { c:'situace', f:{ dir:'cw' }, fixed:true,
+      t:'Kámen roztáčený na provázku obíhá ve směru hodinových ručiček (šedá šipka). V zakreslené poloze se provázek přetrhne. Kterým směrem kámen odletí?',
+      r:'Šipka 4', w:['Šipka 1', 'Šipka 2', 'Šipka 3'],
+      e:'Po přetržení provázku už na kámen nepůsobí síla do středu a kámen pokračuje ve směru, kterým mířila jeho rychlost, tedy po tečně: šipka 4 (při oběhu ve směru hodinových ručiček bod vpravo klesá). Neodletí „ven ze středu“ (šipka 1).' },
+    { c:'situace', t:'Na kolotoči sedí jedno dítě u kraje a druhé blízko středu. Co platí?',
+      r:'Mají stejnou úhlovou rychlost, dítě u kraje má větší obvodovou rychlost.',
+      w:['Mají stejnou obvodovou rychlost, dítě u kraje má větší úhlovou rychlost.', 'Dítě u kraje má větší úhlovou i obvodovou rychlost.', 'Mají stejnou úhlovou i obvodovou rychlost.'],
+      e:'Obě děti se otočí za stejnou dobu, takže mají stejné <i>ω</i>. Dítě u kraje však za tu dobu urazí delší dráhu a <i>v</i> = <i>ω</i><i>r</i> je větší.' },
+    { c:'situace', t:'Gramofonová deska se otáčí s frekvencí 33⅓&nbsp;ot·min⁻¹. Jak dlouho trvá jedna otáčka?',
+      r:'1,8&nbsp;s', w:['Asi 0,56&nbsp;s', '33&nbsp;s', 'Asi 0,03&nbsp;s'],
+      e:'Frekvence <i>f</i> = 33,33/60&nbsp;s ≈ 0,556&nbsp;Hz, perioda <i>T</i> = 1/<i>f</i> = 60&nbsp;s / 33,33 = 1,8&nbsp;s. Hodnota 0,56 je frekvence v hertzích, ne perioda.' },
+    { c:'situace', t:'Kolo auta má poloměr 0,30&nbsp;m. Auto jede rychlostí 72&nbsp;km·h⁻¹ a kola neprokluzují. Jaká je úhlová rychlost kola?',
+      r:'Asi 67&nbsp;rad·s⁻¹', w:['6,0&nbsp;rad·s⁻¹', '240&nbsp;rad·s⁻¹', 'Asi 33&nbsp;rad·s⁻¹'],
+      e:'Rychlost převedeme: 72&nbsp;km·h⁻¹ = 20&nbsp;m·s⁻¹. Pak <i>ω</i> = <i>v</i>/<i>r</i> = 20/0,30&nbsp;rad·s⁻¹ ≈ 67&nbsp;rad·s⁻¹. Kontrola: <i>f</i> = <i>ω</i>/2π ≈ 10,6&nbsp;Hz, obvod 1,885&nbsp;m · 10,6&nbsp;s⁻¹ ≈ 20&nbsp;m·s⁻¹. Hodnota 240 vznikne bez převodu km·h⁻¹, 33 dosazením průměru místo poloměru.' },
+    { c:'situace', t:'Buben pračky o poloměru 0,25&nbsp;m se při odstřeďování otáčí 1&nbsp;200&nbsp;ot·min⁻¹. Jaké je přibližně dostředivé zrychlení prádla u stěny bubnu?',
+      r:'Asi 3&nbsp;900&nbsp;m·s⁻²', w:['Asi 31&nbsp;m·s⁻²', '100&nbsp;m·s⁻²', 'Asi 3,6·10⁵&nbsp;m·s⁻²'],
+      e:'<i>f</i> = 1&nbsp;200/60&nbsp;s = 20&nbsp;Hz, <i>ω</i> = 2π<i>f</i> ≈ 126&nbsp;rad·s⁻¹, <i>a</i><sub>d</sub> = <i>ω</i>²<i>r</i> ≈ 126² · 0,25&nbsp;m·s⁻² ≈ 3&nbsp;900&nbsp;m·s⁻² (asi 400krát více než tíhové zrychlení). Kontrola: <i>v</i> = <i>ω</i><i>r</i> ≈ 31,4&nbsp;m·s⁻¹ a <i>v</i>²/<i>r</i> ≈ 3&nbsp;900&nbsp;m·s⁻². Hodnota 31 je rychlost v m·s⁻¹.' }
+  ];
+
+  // Obrázek k otázce: kružnice, bod vpravo na ní, šedá šipka směru oběhu a čtyři očíslované šipky
+  // 1 = ze středu ven, 2 = po tečně nahoru, 3 = do středu, 4 = po tečně dolů.
+  function kvizFigMarkup(f, w, h){
+    var narrow = w < 400, cx = narrow ? 150 : w/2, cy = h/2, R = narrow ? 90 : 100, L = narrow ? 56 : 70;
+    var px = cx + R, py = cy;
+    var s = '<defs><marker id="kv-arr" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4.4" markerHeight="4.4" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink)"/></marker>' +
+      '<marker id="kv-arr-soft" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4.6" markerHeight="4.6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink-soft)"/></marker></defs>';
+    s += '<circle cx="' + cx + '" cy="' + cy + '" r="' + R + '" fill="none" stroke="var(--ink-soft)" stroke-width="1.6"/>';
+    s += '<circle cx="' + cx + '" cy="' + cy + '" r="2.6" fill="var(--ink)"/>';
+    s += '<text x="' + (cx - 6) + '" y="' + (cy + 18) + '" font-family="Work Sans, sans-serif" font-size="13" fill="var(--ink-soft)">O</text>';
+    // směr oběhu: oblouk vlevo nahoře vně kružnice (úhly 110° až 160°)
+    var rho = R + 16, a1 = 110*Math.PI/180, a2 = 160*Math.PI/180;
+    var p1 = [cx + rho*Math.cos(a1), cy - rho*Math.sin(a1)], p2 = [cx + rho*Math.cos(a2), cy - rho*Math.sin(a2)];
+    var from = f.dir === 'ccw' ? p1 : p2, to = f.dir === 'ccw' ? p2 : p1;
+    s += '<path d="M' + from[0].toFixed(1) + ',' + from[1].toFixed(1) + ' A' + rho + ',' + rho + ' 0 0 ' + (f.dir === 'ccw' ? 0 : 1) + ' ' + to[0].toFixed(1) + ',' + to[1].toFixed(1) +
+      '" fill="none" stroke="var(--ink-soft)" stroke-width="2.2" marker-end="url(#kv-arr-soft)"/>';
+    var arrows = [[L, 0], [0, -L], [-L, 0], [0, L]];
+    arrows.forEach(function(d, i){
+      var ex = px + d[0], ey = py + d[1];
+      s += '<line x1="' + px + '" y1="' + py + '" x2="' + ex + '" y2="' + ey + '" stroke="var(--ink)" stroke-width="2.4" marker-end="url(#kv-arr)"/>';
+      // číslo u konce šipky: u svislých vpravo za hrotem, u vodorovných nad hrotem
+      var lx = d[0] === 0 ? px + 15 : ex + (d[0] > 0 ? 8 : -6), ly = d[0] === 0 ? ey + (d[1] > 0 ? 12 : -12) : py - 17;
+      s += '<circle cx="' + lx + '" cy="' + ly + '" r="10" fill="var(--surface-2)" stroke="var(--ink-soft)" stroke-width="1"/>' +
+        '<text x="' + lx + '" y="' + (ly + 4.5) + '" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="13" font-weight="600" fill="var(--ink)">' + (i + 1) + '</text>';
+    });
+    s += '<circle cx="' + px + '" cy="' + py + '" r="5" fill="var(--accent)"/>';
+    return s;
+  }
+
+  var kvizMQ = window.matchMedia('(max-width:520px)');
+  var KVIZ_KEY = 'fyzika:pohyb-po-kruznici:kviz';
+  var kviz = {
+    type:'all', queue:[], current:null, sel:null, locked:false,
+    score:0, streak:0, bestStreak:0, answered:0, correct:0,
+    inRound:false, ended:false, roundTotal:0, roundCorrect:0
+  };
+  function kvizLoad(){
+    try{ var raw = localStorage.getItem(KVIZ_KEY); if(raw){ kviz.bestStreak = JSON.parse(raw).bestStreak || 0; } }catch(e){}
+  }
+  function kvizSave(){
+    try{ localStorage.setItem(KVIZ_KEY, JSON.stringify({bestStreak: kviz.bestStreak})); }catch(e){}
+  }
+  function shuffled(a){
+    a = a.slice();
+    for(var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random()*(i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; }
+    return a;
+  }
+  // Otázky okruhu se berou v náhodném pořadí bez opakování. Po projití celého okruhu
+  // se zobrazí závěrečná hláška s výsledkem kola a nabídkou otázky zamíchat znovu.
+  function kvizNext(){
+    if(!kviz.queue.length){
+      if(kviz.inRound){ kvizShowEnd(); return; }
+      var pool = KVIZ_BANK.filter(function(b){ return kviz.type === 'all' || b.c === kviz.type; });
+      kviz.queue = shuffled(pool);
+      if(kviz.current && kviz.queue.length > 1 && kviz.queue[0] === kviz.current.item){ kviz.queue.push(kviz.queue.shift()); }
+      kviz.inRound = true; kviz.roundTotal = pool.length; kviz.roundCorrect = 0;
+    }
+    var item = kviz.queue.shift();
+    var opts = item.fixed ? [item.r].concat(item.w).sort() : shuffled([item.r].concat(item.w));
+    kviz.current = { item:item, choices:opts, correct:opts.indexOf(item.r) };
+    kvizRender();
+  }
+  function kvizShowEnd(){
+    kviz.ended = true; kviz.inRound = false;
+    var tp = KVIZ_TYPES.filter(function(t){ return t.key === kviz.type; })[0];
+    var n = kviz.roundTotal, k = kviz.roundCorrect;
+    document.getElementById('kviz-end-text').innerHTML =
+      'Prošli jste všech ' + n + ' otázek ' + (kviz.type === 'all' ? 'kvízu' : 'okruhu „' + tp.name + '“') + '. ' +
+      'Správně jste odpověděli na ' + k + ' z ' + n + ' (' + Math.round(100*k/n) + '&nbsp;%). Chcete otázky zamíchat a projít znovu?';
+    document.getElementById('kviz-q').hidden = true;
+    document.getElementById('kviz-end').hidden = false;
+    document.getElementById('kviz-btn-restart').focus({ preventScroll:true });
+  }
+  function kvizRestart(){
+    kviz.queue = []; kviz.inRound = false;
+    kvizNext();
+  }
+  function kvizDrawFig(){
+    var q = kviz.current, fig = document.getElementById('kviz-fig');
+    fig.hidden = !(q && q.item.f);
+    if(fig.hidden) return;
+    var w = kvizMQ.matches ? 340 : 480, h = kvizMQ.matches ? 236 : 260;
+    var svg = document.getElementById('kviz-graph');
+    svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
+    svg.innerHTML = kvizFigMarkup(q.item.f, w, h);
+  }
+  function kvizRender(){
+    var q = kviz.current;
+    kviz.ended = false;
+    document.getElementById('kviz-q').hidden = false;
+    document.getElementById('kviz-end').hidden = true;
+    var tp = KVIZ_TYPES.filter(function(t){ return t.key === q.item.c; })[0];
+    document.getElementById('kviz-cat-tag').innerHTML = tp ? tp.tag : 'Otázka';
+    document.getElementById('kviz-task-text').innerHTML = q.item.t;
+    kvizDrawFig();
+    var grid = document.getElementById('kviz-opt-grid');
+    grid.innerHTML = '';
+    kviz.sel = null; kviz.locked = false;
+    q.choices.forEach(function(c, i){
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'opt-btn';
+      b.innerHTML = '<b>' + LETTERS[i] + ')</b>&nbsp; ' + c;
+      b.addEventListener('click', function(){ kvizSelect(i); });
+      grid.appendChild(b);
+    });
+    var fb = document.getElementById('kviz-feedback');
+    fb.hidden = true; fb.classList.remove('ok', 'bad', 'sol');
+    document.getElementById('kviz-btn-check').textContent = 'Zkontrolovat';
+  }
+  function kvizSelect(i){
+    if(kviz.locked || kviz.ended) return;
+    kviz.sel = i;
+    Array.prototype.forEach.call(document.getElementById('kviz-opt-grid').children, function(el, j){ el.classList.toggle('selected', j === i); });
+    document.getElementById('kviz-btn-check').focus({ preventScroll:true });
+  }
+  function kvizFinish(ok, headline){
+    var q = kviz.current;
+    Array.prototype.forEach.call(document.getElementById('kviz-opt-grid').children, function(el, j){
+      el.disabled = true;
+      el.classList.remove('selected');
+      if(j === q.correct) el.classList.add(kviz.sel === j ? 'correct' : 'missed');
+      else if(j === kviz.sel) el.classList.add('wrong');
+    });
+    var fb = document.getElementById('kviz-feedback');
+    fb.hidden = false;
+    fb.classList.toggle('ok', ok); fb.classList.toggle('bad', !ok);
+    document.getElementById('kviz-feedback-headline').textContent = headline;
+    FyzikaReseni.show(fb, document.getElementById('kviz-feedback-steps'), {
+      raw:true, title:'Vysvětlení', steps:[q.item.e], final:'Správná odpověď: ' + LETTERS[q.correct] + ') ' + q.item.r
+    });
+    kviz.locked = true;
+    var btn = document.getElementById('kviz-btn-check');
+    btn.textContent = 'Další otázka →';
+    btn.focus({ preventScroll:true });
+    kvizStats();
+  }
+  function kvizCheck(){
+    if(kviz.ended){ kvizRestart(); return; }
+    if(kviz.locked){ kvizNext(); return; }
+    if(kviz.sel === null && !confirm('Není vybraná žádná možnost. Opravdu chcete zkontrolovat?')) return;
+    var ok = kviz.sel === kviz.current.correct;
+    kviz.answered++;
+    if(ok){
+      kviz.score += 10; kviz.streak++; kviz.correct++; kviz.roundCorrect++;
+      if(kviz.streak > kviz.bestStreak){ kviz.bestStreak = kviz.streak; kvizSave(); }
+    } else {
+      kviz.streak = 0;
+    }
+    kvizFinish(ok, ok ? 'Správně!' : (kviz.sel === null ? 'Vyberte odpověď.' : 'Bohužel špatně.'));
+  }
+  function kvizSkip(){
+    if(kviz.ended){ kvizRestart(); return; }
+    if(kviz.locked){ kvizNext(); return; }
+    kviz.streak = 0; kviz.answered++;
+    kvizFinish(false, 'Správná odpověď:');
+  }
+  function kvizStats(){
+    document.getElementById('stat-score').textContent = kviz.score;
+    document.getElementById('stat-streak').textContent = kviz.streak + (kviz.bestStreak > 0 ? ' / ' + kviz.bestStreak : '');
+    document.getElementById('stat-accuracy').textContent = kviz.answered === 0 ? '—' : Math.round(100*kviz.correct/kviz.answered) + ' %';
+  }
+  (function kvizBuildTypeRow(){
+    var row = document.getElementById('kviz-type-row');
+    KVIZ_TYPES.forEach(function(d){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip accented' + (d.key === kviz.type ? ' on' : '');
+      b.setAttribute('aria-pressed', d.key === kviz.type ? 'true' : 'false');
+      b.textContent = d.name;
+      b.addEventListener('click', function(){
+        if(d.key === kviz.type) return;
+        // rozpracovaná otázka s vybranou odpovědí se před změnou okruhu vyhodnotí
+        var settled = !kviz.locked && kviz.sel !== null;
+        if(settled) kvizCheck();
+        kviz.type = d.key; kviz.queue = []; kviz.inRound = false;
+        Array.prototype.forEach.call(row.children, function(el, i){
+          var on = KVIZ_TYPES[i].key === kviz.type;
+          el.classList.toggle('on', on);
+          el.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        // vyhodnocená otázka zůstane i s vysvětlením vidět, další už bude z nového okruhu
+        if(!settled) kvizNext();
+      });
+      row.appendChild(b);
+    });
+  })();
+  document.getElementById('kviz-btn-check').addEventListener('click', kvizCheck);
+  document.getElementById('kviz-btn-skip').addEventListener('click', kvizSkip);
+  document.getElementById('kviz-btn-restart').addEventListener('click', kvizRestart);
+  document.getElementById('kviz-reset-stats').addEventListener('click', function(){
+    kviz.score = 0; kviz.streak = 0; kviz.answered = 0; kviz.correct = 0; kviz.bestStreak = 0;
+    try{ localStorage.removeItem(KVIZ_KEY); }catch(e){}
+    kvizStats();
+  });
+  // Klávesnice v kvízu: A–D nebo 1–4 vybere odpověď, Enter zkontroluje / posune dál.
+  document.addEventListener('keydown', function(e){
+    if(document.getElementById('kviz-section').hidden) return;
+    if(e.ctrlKey || e.metaKey || e.altKey) return;
+    if(e.key === 'Enter'){
+      if(e.target && e.target.tagName === 'BUTTON') return;
+      e.preventDefault(); kvizCheck(); return;
+    }
+    var idx = 'abcd'.indexOf(e.key.toLowerCase());
+    if(idx === -1) idx = '1234'.indexOf(e.key);
+    if(idx !== -1 && e.key.length === 1) kvizSelect(idx);
+  });
+  if(kvizMQ.addEventListener) kvizMQ.addEventListener('change', kvizDrawFig);
+  else if(kvizMQ.addListener) kvizMQ.addListener(kvizDrawFig);
 
   loadStats();
-  updateStats();
+  kvizLoad();
+  if(document.getElementById('kviz-section').hidden) updateStats(); else kvizStats();
   generateQuestion();
+  kvizNext();
 
   // ---- vzorce (KaTeX) ----
   if(window.renderMathInElement){
