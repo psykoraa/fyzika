@@ -427,6 +427,9 @@
       <div id="kviz-q">
       <span class="cat-tag" id="kviz-cat-tag">Otázka</span>
       <p class="kviz-task" id="kviz-task-text"></p>
+      <figure class="theory-fig" id="kviz-fig" hidden>
+        <svg id="kviz-graph" viewBox="0 0 480 260" role="img" aria-label="Obrázek k otázce"></svg>
+      </figure>
       <div class="opt-grid wide-opts" id="kviz-opt-grid"></div>
       <div class="actions">
         <button class="btn primary" id="kviz-btn-check">Zkontrolovat</button>
@@ -1255,6 +1258,40 @@
   // Položka banky: c = okruh, t = zadání (HTML), r = správná odpověď, w = tři špatné,
   // e = vysvětlení; fixed = možnosti se nemíchají, jen seřadí.
   var LETTERS = ['A','B','C','D'];
+  // ---- pomůcky pro obrázky k otázkám (SVG ve viewBoxu 480 × 260, barvy z proměnných stránky) ----
+  var KV_COL = { ink:'var(--ink)', soft:'var(--ink-soft)', acc:'var(--accent)', foc:'var(--focus)' };
+  var KV_DEFS = '<defs>' + ['ink','soft','acc','foc'].map(function(k){
+    return '<marker id="kv-' + k + '" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4.4" markerHeight="4.4" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="' + KV_COL[k] + '"/></marker>';
+  }).join('') + '</defs>';
+  function kvA(x1, y1, x2, y2, c, w, dash){
+    c = c || 'ink';
+    return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + KV_COL[c] + '" stroke-width="' + (w || 2.6) + '" stroke-linecap="round" marker-end="url(#kv-' + c + ')"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  function kvL(x1, y1, x2, y2, c, w, dash){
+    return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + KV_COL[c || 'soft'] + '" stroke-width="' + (w || 1.6) + '" stroke-linecap="round"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  function kvT(x, y, txt, anchor, size, c, italic){
+    return '<text x="' + x + '" y="' + y + '" text-anchor="' + (anchor || 'middle') + '" font-family="' + (italic ? "STIX Two Text, Georgia, serif" : "Work Sans, sans-serif") + '" font-size="' + (size || 13) + '"' + (italic ? ' font-style="italic"' : '') + ' fill="' + KV_COL[c || 'ink'] + '">' + txt + '</text>';
+  }
+  function kvC(x, y, r, fill, stroke){
+    return '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + (fill || 'none') + '" stroke="' + (stroke ? KV_COL[stroke] : 'none') + '" stroke-width="1.6"/>';
+  }
+  function kvR(x, y, w, h, fill, stroke, rot){
+    return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="2" fill="' + (fill || 'var(--surface-2)') + '" stroke="' + KV_COL[stroke || 'soft'] + '" stroke-width="1.6"' + (rot ? ' transform="rotate(' + rot[0] + ' ' + rot[1] + ' ' + rot[2] + ')"' : '') + '/>';
+  }
+  function kvP(d, c, w, dash, fill){
+    return '<path d="' + d + '" fill="' + (fill || 'none') + '" stroke="' + KV_COL[c || 'ink'] + '" stroke-width="' + (w || 2) + '" stroke-linecap="round" stroke-linejoin="round"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  // očíslovaný kroužek u špičky šipky (n = číslo), směr (dx, dy) od špičky ven
+  function kvN(x, y, n, dx, dy){
+    var lx = x + dx, ly = y + dy;
+    return kvC(lx, ly, 10, 'var(--surface-2)', 'soft') + '<text x="' + lx + '" y="' + (ly + 4.5) + '" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="13" font-weight="600" fill="var(--ink)">' + n + '</text>';
+  }
+  // šipka s číslem: z (x1, y1) do (x2, y2), kroužek za špičkou
+  function kvAN(x1, y1, x2, y2, n, c){
+    var dx = x2 - x1, dy = y2 - y1, l = Math.sqrt(dx*dx + dy*dy);
+    return kvA(x1, y1, x2, y2, c || 'ink') + kvN(x2, y2, n, dx/l*16, dy/l*16);
+  }
   var KVIZ_TYPES = [
     { key:'all', name:'Vše' },
     { key:'puvod', name:'Původ a druhy tření', tag:'Odkud se tření bere' },
@@ -1366,8 +1403,32 @@
     { c:'praxe', t:'Seřaďte typické hodnoty součinitele smykového tření <i>f</i> od nejmenšího po největší.',
       r:'ocel po ledu &lt; pneumatika po ledu &lt; pneumatika po mokrém asfaltu &lt; pneumatika po suchém asfaltu',
       w:['pneumatika po suchém asfaltu &lt; pneumatika po mokrém asfaltu &lt; pneumatika po ledu &lt; ocel po ledu', 'pneumatika po ledu &lt; ocel po ledu &lt; pneumatika po suchém asfaltu &lt; pneumatika po mokrém asfaltu', 'pneumatika po mokrém asfaltu &lt; ocel po ledu &lt; pneumatika po ledu &lt; pneumatika po suchém asfaltu'],
-      e:'Orientačně: brusle (ocel po ledu) 0,01 až 0,03, pneumatika po ledu 0,05 až 0,1, po mokrém asfaltu 0,3 až 0,5, po suchém asfaltu 0,6 až 0,8. Proto je led nebezpečnější než mokrá silnice.' }
+      e:'Orientačně: brusle (ocel po ledu) 0,01 až 0,03, pneumatika po ledu 0,05 až 0,1, po mokrém asfaltu 0,3 až 0,5, po suchém asfaltu 0,6 až 0,8. Proto je led nebezpečnější než mokrá silnice.' },
+    // ----- otázky s obrázkem -----
+    { c:'zavislost', fa:'Graf třecí síly v závislosti na tlakové síle: přímka procházející počátkem a body (2; 0,6), (4; 1,2), (6; 1,8), (8; 2,4) N',
+      f: kvA(70,220,440,220,'soft',1.8) + kvA(70,220,70,25,'soft',1.8) + kvT(446,236,'<tspan font-style="italic">F</tspan><tspan font-size="10" dy="3">N</tspan><tspan dy="-3"> (N)</tspan>','end',13,'soft') + kvT(80,32,'<tspan font-style="italic">F</tspan><tspan font-size="10" dy="3">t</tspan><tspan dy="-3"> (N)</tspan>','start',13,'soft') +
+         kvL(70,220,420,85,'foc',2,'6 4') +
+         [2,4,6,8].map(function(x){ return kvC(70 + 35*x, 220 - 45*0.3*x, 5, 'var(--accent)') + kvL(70 + 35*x, 220, 70 + 35*x, 226, 'soft', 1.6) + kvT(70 + 35*x, 240, x, 'middle', 12, 'soft'); }).join('') +
+         [0.6,1.2,1.8,2.4].map(function(y){ return kvL(64, 220 - 45*y, 70, 220 - 45*y, 'soft', 1.6) + kvT(58, 224 - 45*y, String(y).replace('.', ','), 'end', 12, 'soft'); }).join(''),
+      t:'Graf ukazuje naměřené smykové třecí síly <i>F</i><sub>t</sub> pro několik hodnot kolmé tlakové síly <i>F</i><sub>N</sub>. Určete součinitel smykového tření <i>f</i>.',
+      r:'0,30', w:['0,60', '3,3', '0,03'],
+      e:'Body leží na přímce procházející počátkem, podíl <i>F</i><sub>t</sub>/<i>F</i><sub>N</sub> je stálý: například 1,8&nbsp;N / 6&nbsp;N = 0,30 (a také 0,6/2 = 0,3). Hodnota 3,3 je převrácený podíl <i>F</i><sub>N</sub>/<i>F</i><sub>t</sub>.' },
+    { c:'puvod', fa:'Záznam siloměru: síla roste do maxima 6 N a pak klesne na stálou hodnotu 4,5 N',
+      f: kvA(70,220,440,220,'soft',1.8) + kvA(70,220,70,25,'soft',1.8) + kvT(446,236,'<tspan font-style="italic">t</tspan>','end',14,'soft') + kvT(80,32,'<tspan font-style="italic">F</tspan> (N)','start',13,'soft') +
+         kvP('M70,220 L245,70 L255,107.5 L420,107.5','acc',3) +
+         [2,4,6,8].map(function(y){ return kvL(64, 220 - 25*y, 70, 220 - 25*y, 'soft', 1.6) + kvT(58, 224 - 25*y, y, 'end', 12, 'soft'); }).join(''),
+      t:'Kvádr táhneme siloměrem stále větší silou. Graf ukazuje údaj siloměru v závislosti na čase. Jaká je mezní klidová třecí síla?',
+      r:'6&nbsp;N', w:['4,5&nbsp;N', '1,5&nbsp;N', '10,5&nbsp;N'],
+      e:'Tah roste a kvádr zůstává v klidu, dokud tah nedosáhne maxima 6&nbsp;N: to je mezní klidová třecí síla. Pak se kvádr utrhne a klesne na stálou smykovou třecí sílu 4,5&nbsp;N. Rozdíl 1,5&nbsp;N je pokles po utržení.' },
+    { c:'puvod', fa:'Záznam siloměru: síla roste do maxima 6 N a pak klesne na stálou hodnotu 4,5 N',
+      f: kvA(70,220,440,220,'soft',1.8) + kvA(70,220,70,25,'soft',1.8) + kvT(446,236,'<tspan font-style="italic">t</tspan>','end',14,'soft') + kvT(80,32,'<tspan font-style="italic">F</tspan> (N)','start',13,'soft') +
+         kvP('M70,220 L245,70 L255,107.5 L420,107.5','acc',3) +
+         [2,4,6,8].map(function(y){ return kvL(64, 220 - 25*y, 70, 220 - 25*y, 'soft', 1.6) + kvT(58, 224 - 25*y, y, 'end', 12, 'soft'); }).join(''),
+      t:'Kvádr táhneme siloměrem. Graf ukazuje údaj siloměru v závislosti na čase. Jak velká je smyková třecí síla při klouzání kvádru?',
+      r:'4,5&nbsp;N', w:['6&nbsp;N', '1,5&nbsp;N', '10,5&nbsp;N'],
+      e:'Po utržení kvádr klouže a údaj siloměru zůstává stálý na 4,5&nbsp;N, což je smyková třecí síla. Je o něco menší než mezní klidová třecí síla (6&nbsp;N).' }
   ];
+// KVIZ_FIGS_MERGED
 
 
   var KVIZ_KEY = 'fyzika:treci-sila:kviz';
@@ -1432,6 +1493,9 @@
     var tp = typeOf(q.item.c);
     $('kviz-cat-tag').innerHTML = tp ? tp.tag : 'Otázka';
     $('kviz-task-text').innerHTML = q.item.t;
+    var fig = $('kviz-fig');
+    fig.hidden = !q.item.f;
+    if(q.item.f){ $('kviz-graph').innerHTML = KV_DEFS + q.item.f; $('kviz-graph').setAttribute('aria-label', q.item.fa || 'Obrázek k otázce'); }
     var grid = $('kviz-opt-grid');
     grid.innerHTML = '';
     kviz.sel = null; kviz.locked = false;

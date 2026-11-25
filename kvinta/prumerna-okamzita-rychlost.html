@@ -314,6 +314,9 @@
       <div id="kviz-q">
       <span class="cat-tag" id="kviz-cat-tag">Otázka</span>
       <p class="kviz-task" id="kviz-task-text"></p>
+      <figure class="theory-fig" id="kviz-fig" hidden>
+        <svg id="kviz-graph" viewBox="0 0 480 260" role="img" aria-label="Obrázek k otázce"></svg>
+      </figure>
       <div class="opt-grid wide-opts" id="kviz-opt-grid"></div>
       <div class="actions">
         <button class="btn primary" id="kviz-btn-check">Zkontrolovat</button>
@@ -662,6 +665,40 @@
   // Položka banky: c = okruh, t = zadání (HTML), r = správná odpověď, w = tři špatné,
   // e = vysvětlení; fixed = možnosti se nemíchají, jen seřadí.
   var LETTERS = ['A','B','C','D'];
+  // ---- pomůcky pro obrázky k otázkám (SVG ve viewBoxu 480 × 260, barvy z proměnných stránky) ----
+  var KV_COL = { ink:'var(--ink)', soft:'var(--ink-soft)', acc:'var(--accent)', foc:'var(--focus)' };
+  var KV_DEFS = '<defs>' + ['ink','soft','acc','foc'].map(function(k){
+    return '<marker id="kv-' + k + '" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4.4" markerHeight="4.4" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="' + KV_COL[k] + '"/></marker>';
+  }).join('') + '</defs>';
+  function kvA(x1, y1, x2, y2, c, w, dash){
+    c = c || 'ink';
+    return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + KV_COL[c] + '" stroke-width="' + (w || 2.6) + '" stroke-linecap="round" marker-end="url(#kv-' + c + ')"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  function kvL(x1, y1, x2, y2, c, w, dash){
+    return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + KV_COL[c || 'soft'] + '" stroke-width="' + (w || 1.6) + '" stroke-linecap="round"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  function kvT(x, y, txt, anchor, size, c, italic){
+    return '<text x="' + x + '" y="' + y + '" text-anchor="' + (anchor || 'middle') + '" font-family="' + (italic ? "STIX Two Text, Georgia, serif" : "Work Sans, sans-serif") + '" font-size="' + (size || 13) + '"' + (italic ? ' font-style="italic"' : '') + ' fill="' + KV_COL[c || 'ink'] + '">' + txt + '</text>';
+  }
+  function kvC(x, y, r, fill, stroke){
+    return '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + (fill || 'none') + '" stroke="' + (stroke ? KV_COL[stroke] : 'none') + '" stroke-width="1.6"/>';
+  }
+  function kvR(x, y, w, h, fill, stroke, rot){
+    return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="2" fill="' + (fill || 'var(--surface-2)') + '" stroke="' + KV_COL[stroke || 'soft'] + '" stroke-width="1.6"' + (rot ? ' transform="rotate(' + rot[0] + ' ' + rot[1] + ' ' + rot[2] + ')"' : '') + '/>';
+  }
+  function kvP(d, c, w, dash, fill){
+    return '<path d="' + d + '" fill="' + (fill || 'none') + '" stroke="' + KV_COL[c || 'ink'] + '" stroke-width="' + (w || 2) + '" stroke-linecap="round" stroke-linejoin="round"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  // očíslovaný kroužek u špičky šipky (n = číslo), směr (dx, dy) od špičky ven
+  function kvN(x, y, n, dx, dy){
+    var lx = x + dx, ly = y + dy;
+    return kvC(lx, ly, 10, 'var(--surface-2)', 'soft') + '<text x="' + lx + '" y="' + (ly + 4.5) + '" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="13" font-weight="600" fill="var(--ink)">' + n + '</text>';
+  }
+  // šipka s číslem: z (x1, y1) do (x2, y2), kroužek za špičkou
+  function kvAN(x1, y1, x2, y2, n, c){
+    var dx = x2 - x1, dy = y2 - y1, l = Math.sqrt(dx*dx + dy*dy);
+    return kvA(x1, y1, x2, y2, c || 'ink') + kvN(x2, y2, n, dx/l*16, dy/l*16);
+  }
   var KVIZ_TYPES = [
     { key:'all', name:'Vše' },
     { key:'prumerna', name:'Průměrná rychlost', tag:'Průměrná rychlost' },
@@ -769,8 +806,36 @@
     { c:'bugatti', t:'V tabulce rychlostního testu je v čase 24&nbsp;s rychlost 284&nbsp;km·h⁻¹, ale v čase 21,5&nbsp;s byla 409&nbsp;km·h⁻¹. Co to znamená?',
       r:'Auto po dosažení největší rychlosti zpomalovalo.',
       w:['Chyba měření.', 'Auto zrychlovalo stále víc.', 'Tachometr se mezitím zastavil.'],
-      e:'Okamžitá rychlost klesla z 409 na 284&nbsp;km·h⁻¹, auto tedy po dosažení maxima brzdilo. Pohyb nebyl rovnoměrný.' }
+      e:'Okamžitá rychlost klesla z 409 na 284&nbsp;km·h⁻¹, auto tedy po dosažení maxima brzdilo. Pohyb nebyl rovnoměrný.' },
+    // ----- otázky s obrázkem -----
+    { c:'delta', fixed:true, fa:'Graf dráhy v závislosti na čase se třemi úseky: stání, strmý růst, pozvolný růst',
+      f: kvA(70,220,440,220,'soft',1.8) + kvA(70,220,70,25,'soft',1.8) + kvT(446,254,'<tspan font-style="italic">t</tspan> (s)','end',13,'soft') + kvT(80,32,'<tspan font-style="italic">s</tspan> (m)','start',13,'soft') +
+         [0,2,4,6,8,10].map(function(t){ return kvL(70 + 35*t, 220, 70 + 35*t, 226, 'soft', 1.6) + kvT(70 + 35*t, 240, t, 'middle', 12, 'soft'); }).join('') +
+         [20,40,60,80,100].map(function(s){ return kvL(64, 220 - 1.8*s, 70, 220 - 1.8*s, 'soft', 1.6) + kvT(58, 224 - 1.8*s, s, 'end', 12, 'soft'); }).join('') +
+         kvP('M70,220 L175,220 L245,112 L420,40','acc',3) +
+         kvC(122,208,10,'var(--surface-2)','soft') + kvT(122,212.5,'1','middle',13,'ink') + kvC(220,146,10,'var(--surface-2)','soft') + kvT(220,150.5,'2','middle',13,'ink') + kvC(335,90,10,'var(--surface-2)','soft') + kvT(335,94.5,'3','middle',13,'ink'),
+      t:'Graf ukazuje dráhu auta v závislosti na čase. Ve kterém úseku se auto pohybuje největší rychlostí?',
+      r:'Úsek 2', w:['Úsek 1', 'Úsek 3', 'Ve všech úsecích stejnou'],
+      e:'Rychlost v úseku je <i>v</i> = Δ<i>s</i>/Δ<i>t</i>, tedy sklon grafu. Úsek 1: Δ<i>s</i> = 0 (auto stojí), úsek 2: 60&nbsp;m za 2&nbsp;s = 30&nbsp;m·s⁻¹, úsek 3: 40&nbsp;m za 5&nbsp;s = 8&nbsp;m·s⁻¹. Největší sklon má úsek 2.' },
+    { c:'delta', fixed:true, fa:'Graf dráhy v závislosti na čase se třemi úseky: stání, strmý růst, pozvolný růst',
+      f: kvA(70,220,440,220,'soft',1.8) + kvA(70,220,70,25,'soft',1.8) + kvT(446,254,'<tspan font-style="italic">t</tspan> (s)','end',13,'soft') + kvT(80,32,'<tspan font-style="italic">s</tspan> (m)','start',13,'soft') +
+         [0,2,4,6,8,10].map(function(t){ return kvL(70 + 35*t, 220, 70 + 35*t, 226, 'soft', 1.6) + kvT(70 + 35*t, 240, t, 'middle', 12, 'soft'); }).join('') +
+         [20,40,60,80,100].map(function(s){ return kvL(64, 220 - 1.8*s, 70, 220 - 1.8*s, 'soft', 1.6) + kvT(58, 224 - 1.8*s, s, 'end', 12, 'soft'); }).join('') +
+         kvP('M70,220 L175,220 L245,112 L420,40','acc',3) +
+         kvC(122,208,10,'var(--surface-2)','soft') + kvT(122,212.5,'1','middle',13,'ink') + kvC(220,146,10,'var(--surface-2)','soft') + kvT(220,150.5,'2','middle',13,'ink') + kvC(335,90,10,'var(--surface-2)','soft') + kvT(335,94.5,'3','middle',13,'ink'),
+      t:'Graf ukazuje dráhu auta v závislosti na čase. V kterém úseku auto stojí?',
+      r:'Úsek 1', w:['Úsek 2', 'Úsek 3', 'Auto nestojí nikdy'],
+      e:'V úseku 1 se dráha s časem nemění (vodorovná část grafu), Δ<i>s</i> = 0, takže rychlost je nulová.' },
+    { c:'prumerna', fa:'Graf dráhy v závislosti na čase se třemi úseky: stání, strmý růst, pozvolný růst',
+      f: kvA(70,220,440,220,'soft',1.8) + kvA(70,220,70,25,'soft',1.8) + kvT(446,254,'<tspan font-style="italic">t</tspan> (s)','end',13,'soft') + kvT(80,32,'<tspan font-style="italic">s</tspan> (m)','start',13,'soft') +
+         [0,2,4,6,8,10].map(function(t){ return kvL(70 + 35*t, 220, 70 + 35*t, 226, 'soft', 1.6) + kvT(70 + 35*t, 240, t, 'middle', 12, 'soft'); }).join('') +
+         [20,40,60,80,100].map(function(s){ return kvL(64, 220 - 1.8*s, 70, 220 - 1.8*s, 'soft', 1.6) + kvT(58, 224 - 1.8*s, s, 'end', 12, 'soft'); }).join('') +
+         kvP('M70,220 L175,220 L245,112 L420,40','acc',3),
+      t:'Graf ukazuje dráhu auta v závislosti na čase. Jaká je průměrná rychlost auta za celých 10&nbsp;s?',
+      r:'10&nbsp;m·s⁻¹', w:['30&nbsp;m·s⁻¹', '8&nbsp;m·s⁻¹', '12,7&nbsp;m·s⁻¹'],
+      e:'Za 10&nbsp;s auto ujelo 100&nbsp;m, <i>v</i><sub>p</sub> = 100/10&nbsp;m·s⁻¹ = 10&nbsp;m·s⁻¹. Hodnoty 30 a 8&nbsp;m·s⁻¹ jsou rychlosti v úsecích 2 a 3, 12,7 je aritmetický průměr rychlostí úseků (0, 30 a 8), který je pro průměrnou rychlost chybný.' }
   ];
+// KVIZ_FIGS_MERGED
 
 
   var KVIZ_KEY = 'fyzika:prumerna-okamzita-rychlost:kviz';
@@ -835,6 +900,9 @@
     var tp = typeOf(q.item.c);
     $('kviz-cat-tag').innerHTML = tp ? tp.tag : 'Otázka';
     $('kviz-task-text').innerHTML = q.item.t;
+    var fig = $('kviz-fig');
+    fig.hidden = !q.item.f;
+    if(q.item.f){ $('kviz-graph').innerHTML = KV_DEFS + q.item.f; $('kviz-graph').setAttribute('aria-label', q.item.fa || 'Obrázek k otázce'); }
     var grid = $('kviz-opt-grid');
     grid.innerHTML = '';
     kviz.sel = null; kviz.locked = false;

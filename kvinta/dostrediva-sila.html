@@ -425,6 +425,9 @@
       <div id="kviz-q">
       <span class="cat-tag" id="kviz-cat-tag">Otázka</span>
       <p class="kviz-task" id="kviz-task-text"></p>
+      <figure class="theory-fig" id="kviz-fig" hidden>
+        <svg id="kviz-graph" viewBox="0 0 480 260" role="img" aria-label="Obrázek k otázce"></svg>
+      </figure>
       <div class="opt-grid wide-opts" id="kviz-opt-grid"></div>
       <div class="actions">
         <button class="btn primary" id="kviz-btn-check">Zkontrolovat</button>
@@ -1243,6 +1246,40 @@
   // Položka banky: c = okruh, t = zadání (HTML), r = správná odpověď, w = tři špatné,
   // e = vysvětlení; fixed = možnosti se nemíchají, jen seřadí.
   var LETTERS = ['A','B','C','D'];
+  // ---- pomůcky pro obrázky k otázkám (SVG ve viewBoxu 480 × 260, barvy z proměnných stránky) ----
+  var KV_COL = { ink:'var(--ink)', soft:'var(--ink-soft)', acc:'var(--accent)', foc:'var(--focus)' };
+  var KV_DEFS = '<defs>' + ['ink','soft','acc','foc'].map(function(k){
+    return '<marker id="kv-' + k + '" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4.4" markerHeight="4.4" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="' + KV_COL[k] + '"/></marker>';
+  }).join('') + '</defs>';
+  function kvA(x1, y1, x2, y2, c, w, dash){
+    c = c || 'ink';
+    return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + KV_COL[c] + '" stroke-width="' + (w || 2.6) + '" stroke-linecap="round" marker-end="url(#kv-' + c + ')"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  function kvL(x1, y1, x2, y2, c, w, dash){
+    return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + KV_COL[c || 'soft'] + '" stroke-width="' + (w || 1.6) + '" stroke-linecap="round"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  function kvT(x, y, txt, anchor, size, c, italic){
+    return '<text x="' + x + '" y="' + y + '" text-anchor="' + (anchor || 'middle') + '" font-family="' + (italic ? "STIX Two Text, Georgia, serif" : "Work Sans, sans-serif") + '" font-size="' + (size || 13) + '"' + (italic ? ' font-style="italic"' : '') + ' fill="' + KV_COL[c || 'ink'] + '">' + txt + '</text>';
+  }
+  function kvC(x, y, r, fill, stroke){
+    return '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + (fill || 'none') + '" stroke="' + (stroke ? KV_COL[stroke] : 'none') + '" stroke-width="1.6"/>';
+  }
+  function kvR(x, y, w, h, fill, stroke, rot){
+    return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="2" fill="' + (fill || 'var(--surface-2)') + '" stroke="' + KV_COL[stroke || 'soft'] + '" stroke-width="1.6"' + (rot ? ' transform="rotate(' + rot[0] + ' ' + rot[1] + ' ' + rot[2] + ')"' : '') + '/>';
+  }
+  function kvP(d, c, w, dash, fill){
+    return '<path d="' + d + '" fill="' + (fill || 'none') + '" stroke="' + KV_COL[c || 'ink'] + '" stroke-width="' + (w || 2) + '" stroke-linecap="round" stroke-linejoin="round"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  // očíslovaný kroužek u špičky šipky (n = číslo), směr (dx, dy) od špičky ven
+  function kvN(x, y, n, dx, dy){
+    var lx = x + dx, ly = y + dy;
+    return kvC(lx, ly, 10, 'var(--surface-2)', 'soft') + '<text x="' + lx + '" y="' + (ly + 4.5) + '" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="13" font-weight="600" fill="var(--ink)">' + n + '</text>';
+  }
+  // šipka s číslem: z (x1, y1) do (x2, y2), kroužek za špičkou
+  function kvAN(x1, y1, x2, y2, n, c){
+    var dx = x2 - x1, dy = y2 - y1, l = Math.sqrt(dx*dx + dy*dy);
+    return kvA(x1, y1, x2, y2, c || 'ink') + kvN(x2, y2, n, dx/l*16, dy/l*16);
+  }
   var KVIZ_TYPES = [
     { key:'all', name:'Vše' },
     { key:'sila', name:'Velikost a směr síly', tag:'Dostředivá síla' },
@@ -1354,8 +1391,28 @@
     { c:'kopec', t:'Kdy tlačí sedačka houpačky na dítě největší silou?',
       r:'V nejnižším bodě dráhy.',
       w:['V nejvyšším bodě dráhy.', 'Stále stejně.', 'V okamžiku, kdy se dítě zastaví.'],
-      e:'V nejnižším bodě míří dostředivá síla nahoru a tlaková síla sedačky se k tíhové síle přičítá: <i>F</i> = <i>m</i>(<i>g</i> + <i>v</i>²/<i>r</i>). V nejvyšším bodě dráhy je naopak sedačka zatížena nejméně.' }
+      e:'V nejnižším bodě míří dostředivá síla nahoru a tlaková síla sedačky se k tíhové síle přičítá: <i>F</i> = <i>m</i>(<i>g</i> + <i>v</i>²/<i>r</i>). V nejvyšším bodě dráhy je naopak sedačka zatížena nejméně.' },
+    // ----- otázky s obrázkem -----
+    { c:'sila', fixed:true, fa:'Bod na kružnici obíhající proti směru hodinových ručiček a čtyři očíslované šipky',
+      f: kvC(240,130,90,'none','soft') + kvC(240,130,3,'var(--ink-soft)') + kvP('M328.6,114.4 A90,90 0 0 0 285,52','soft',2.4,'5 4') + kvA(300,60,285,52,'soft',2.4) +
+         kvAN(330,130,400,130,1) + kvAN(330,130,330,62,2) + kvAN(330,130,262,130,3) + kvAN(330,130,330,198,4) + kvC(330,130,5,'var(--accent)'),
+      t:'Bod obíhá rovnoměrně po kružnici proti směru hodinových ručiček (čárkovaný oblouk se šipkou). Která šipka znázorňuje dostředivou sílu?',
+      r:'Šipka 3', w:['Šipka 1', 'Šipka 2', 'Šipka 4'],
+      e:'Dostředivá síla míří do středu kružnice: šipka 3. Šipka 2 míří po tečně ve směru pohybu (rychlost), šipka 1 ze středu ven a šipka 4 po tečně proti pohybu.' },
+    { c:'sila', fixed:true, fa:'Bod na kružnici obíhající ve směru hodinových ručiček a čtyři očíslované šipky',
+      f: kvC(240,130,90,'none','soft') + kvC(240,130,3,'var(--ink-soft)') + kvP('M328.6,145.6 A90,90 0 0 1 285,208','soft',2.4,'5 4') + kvA(300,200,285,208,'soft',2.4) +
+         kvAN(330,130,400,130,1) + kvAN(330,130,330,62,2) + kvAN(330,130,262,130,3) + kvAN(330,130,330,198,4) + kvC(330,130,5,'var(--accent)'),
+      t:'Kámen roztáčený na provázku obíhá po kružnici ve směru hodinových ručiček (čárkovaný oblouk se šipkou). V zakreslené poloze provázek přetrhneme. Kterým směrem kámen odletí?',
+      r:'Šipka 4', w:['Šipka 1', 'Šipka 2', 'Šipka 3'],
+      e:'Po přetržení provázku už nepůsobí dostředivá síla a kámen pokračuje po tečně ve směru své rychlosti. Při oběhu po směru hodinových ručiček míří rychlost v tomto bodě dolů: šipka 4. Neodletí od středu (šipka 1).' },
+    { c:'kopec', fa:'Auto na vrcholu kopce: tíhová síla dolů je delší než tlaková síla nahoru',
+      f: kvP('M40,215 Q240,30 440,215','soft',2.4) + kvR(210,100,60,22,'var(--surface-2)','ink') +
+         kvA(240,111,240,200,'ink') + kvA(240,111,240,52,'acc') + kvT(262,170,'tíhová síla','start',12,'ink') + kvT(262,70,'tlaková síla vozovky','start',12,'acc'),
+      t:'Auto projíždí vrchol zaobleného kopce. Obrázek ukazuje obě síly, které na něj působí, ve stejném měřítku. Co platí o jejich výslednici?',
+      r:'Míří dolů do středu zakřivení a je dostředivou silou.', w:['Je nulová.', 'Míří nahoru.', 'Míří ve směru jízdy.'],
+      e:'Tíhová síla je větší než tlaková síla vozovky, jejich rozdíl míří dolů, tedy do středu kružnice, po které se auto na vrcholu pohybuje: <i>F</i><sub>G</sub> − <i>F</i><sub>N</sub> = <i>mv</i>²/<i>r</i>.' }
   ];
+// KVIZ_FIGS_MERGED
 
 
   var KVIZ_KEY = 'fyzika:dostrediva-sila:kviz';
@@ -1420,6 +1477,9 @@
     var tp = typeOf(q.item.c);
     $('kviz-cat-tag').innerHTML = tp ? tp.tag : 'Otázka';
     $('kviz-task-text').innerHTML = q.item.t;
+    var fig = $('kviz-fig');
+    fig.hidden = !q.item.f;
+    if(q.item.f){ $('kviz-graph').innerHTML = KV_DEFS + q.item.f; $('kviz-graph').setAttribute('aria-label', q.item.fa || 'Obrázek k otázce'); }
     var grid = $('kviz-opt-grid');
     grid.innerHTML = '';
     kviz.sel = null; kviz.locked = false;

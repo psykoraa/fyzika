@@ -439,6 +439,9 @@
       <div id="kviz-q">
       <span class="cat-tag" id="kviz-cat-tag">Otázka</span>
       <p class="kviz-task" id="kviz-task-text"></p>
+      <figure class="theory-fig" id="kviz-fig" hidden>
+        <svg id="kviz-graph" viewBox="0 0 480 260" role="img" aria-label="Obrázek k otázce"></svg>
+      </figure>
       <div class="opt-grid wide-opts" id="kviz-opt-grid"></div>
       <div class="actions">
         <button class="btn primary" id="kviz-btn-check">Zkontrolovat</button>
@@ -1260,6 +1263,40 @@
   // Položka banky: c = okruh, t = zadání (HTML), r = správná odpověď, w = tři špatné,
   // e = vysvětlení; fixed = možnosti se nemíchají, jen seřadí.
   var LETTERS = ['A','B','C','D'];
+  // ---- pomůcky pro obrázky k otázkám (SVG ve viewBoxu 480 × 260, barvy z proměnných stránky) ----
+  var KV_COL = { ink:'var(--ink)', soft:'var(--ink-soft)', acc:'var(--accent)', foc:'var(--focus)' };
+  var KV_DEFS = '<defs>' + ['ink','soft','acc','foc'].map(function(k){
+    return '<marker id="kv-' + k + '" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4.4" markerHeight="4.4" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="' + KV_COL[k] + '"/></marker>';
+  }).join('') + '</defs>';
+  function kvA(x1, y1, x2, y2, c, w, dash){
+    c = c || 'ink';
+    return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + KV_COL[c] + '" stroke-width="' + (w || 2.6) + '" stroke-linecap="round" marker-end="url(#kv-' + c + ')"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  function kvL(x1, y1, x2, y2, c, w, dash){
+    return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + KV_COL[c || 'soft'] + '" stroke-width="' + (w || 1.6) + '" stroke-linecap="round"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  function kvT(x, y, txt, anchor, size, c, italic){
+    return '<text x="' + x + '" y="' + y + '" text-anchor="' + (anchor || 'middle') + '" font-family="' + (italic ? "STIX Two Text, Georgia, serif" : "Work Sans, sans-serif") + '" font-size="' + (size || 13) + '"' + (italic ? ' font-style="italic"' : '') + ' fill="' + KV_COL[c || 'ink'] + '">' + txt + '</text>';
+  }
+  function kvC(x, y, r, fill, stroke){
+    return '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + (fill || 'none') + '" stroke="' + (stroke ? KV_COL[stroke] : 'none') + '" stroke-width="1.6"/>';
+  }
+  function kvR(x, y, w, h, fill, stroke, rot){
+    return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="2" fill="' + (fill || 'var(--surface-2)') + '" stroke="' + KV_COL[stroke || 'soft'] + '" stroke-width="1.6"' + (rot ? ' transform="rotate(' + rot[0] + ' ' + rot[1] + ' ' + rot[2] + ')"' : '') + '/>';
+  }
+  function kvP(d, c, w, dash, fill){
+    return '<path d="' + d + '" fill="' + (fill || 'none') + '" stroke="' + KV_COL[c || 'ink'] + '" stroke-width="' + (w || 2) + '" stroke-linecap="round" stroke-linejoin="round"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  // očíslovaný kroužek u špičky šipky (n = číslo), směr (dx, dy) od špičky ven
+  function kvN(x, y, n, dx, dy){
+    var lx = x + dx, ly = y + dy;
+    return kvC(lx, ly, 10, 'var(--surface-2)', 'soft') + '<text x="' + lx + '" y="' + (ly + 4.5) + '" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="13" font-weight="600" fill="var(--ink)">' + n + '</text>';
+  }
+  // šipka s číslem: z (x1, y1) do (x2, y2), kroužek za špičkou
+  function kvAN(x1, y1, x2, y2, n, c){
+    var dx = x2 - x1, dy = y2 - y1, l = Math.sqrt(dx*dx + dy*dy);
+    return kvA(x1, y1, x2, y2, c || 'ink') + kvN(x2, y2, n, dx/l*16, dy/l*16);
+  }
   var KVIZ_TYPES = [
     { key:'all', name:'Vše' },
     { key:'pojem', name:'Hybnost tělesa', tag:'Hybnost tělesa' },
@@ -1387,8 +1424,29 @@
     { c:'deje', t:'Osobní auto (1&nbsp;200&nbsp;kg, 15&nbsp;m·s⁻¹ na východ) a dodávka (1&nbsp;500&nbsp;kg, 10&nbsp;m·s⁻¹ na sever) se srazí na křižovatce a zaklesnou do sebe. Jakou rychlost mají po srážce?',
       r:'Přibližně 8,7&nbsp;m·s⁻¹',
       w:['Přibližně 12,2&nbsp;m·s⁻¹', 'Přibližně 5&nbsp;m·s⁻¹', 'Přibližně 10,4&nbsp;m·s⁻¹'],
-      e:'Hybnosti jsou kolmé: <i>p</i><sub>1</sub> = 18&nbsp;000, <i>p</i><sub>2</sub> = 15&nbsp;000&nbsp;kg·m·s⁻¹, <i>p</i> = √(18&nbsp;000² + 15&nbsp;000²) ≈ 23&nbsp;400&nbsp;kg·m·s⁻¹ a <i>v</i>′ = 23&nbsp;400/2&nbsp;700&nbsp;m·s⁻¹ ≈ 8,7&nbsp;m·s⁻¹. Hodnotu 12,2 bychom dostali sčítáním hybností jako čísel (33&nbsp;000/2&nbsp;700 ≈ 12,2).' }
+      e:'Hybnosti jsou kolmé: <i>p</i><sub>1</sub> = 18&nbsp;000, <i>p</i><sub>2</sub> = 15&nbsp;000&nbsp;kg·m·s⁻¹, <i>p</i> = √(18&nbsp;000² + 15&nbsp;000²) ≈ 23&nbsp;400&nbsp;kg·m·s⁻¹ a <i>v</i>′ = 23&nbsp;400/2&nbsp;700&nbsp;m·s⁻¹ ≈ 8,7&nbsp;m·s⁻¹. Hodnotu 12,2 bychom dostali sčítáním hybností jako čísel (33&nbsp;000/2&nbsp;700 ≈ 12,2).' },
+    // ----- otázky s obrázkem -----
+    { c:'impuls', fa:'Graf síly v závislosti na čase: úzká vysoká křivka 1 a nízká široká křivka 2 se stejnou plochou',
+      f: kvA(60,222,440,222,'soft',1.8) + kvA(60,222,60,30,'soft',1.8) + kvT(446,236,'<tspan font-style="italic">t</tspan>','end',15,'soft') + kvT(75,36,'<tspan font-style="italic">F</tspan>','start',15,'soft') +
+         kvP('M140,220 L170,62 L200,220','acc',3) + kvP('M140,220 L200,140 L260,220','foc',3) + kvT(170,52,'1','middle',14,'acc') + kvT(205,130,'2','middle',14,'foc'),
+      t:'Člověk stejné hmotnosti dopadá stejnou rychlostí jednou na tvrdou podlahu a jednou s pokrčenými koleny. Graf ukazuje průběh síly při obou doskocích. Která křivka patří doskoku s pokrčenými koleny?',
+      r:'Křivka 2', w:['Křivka 1', 'Obě křivky', 'Žádná, plochy jsou různé'],
+      e:'Hybnost se změní vždy o stejnou hodnotu, takže plocha pod křivkou <i>F</i>(<i>t</i>) (impuls síly) je stejná. Při pokrčených kolenech trvá brzdění déle, a proto je síla menší: křivka 2. Tvrdý doskok je krátký a prudký: křivka 1.' },
+    { c:'impuls', fa:'Graf síly v závislosti na čase: úzká vysoká křivka 1 a nízká široká křivka 2 se stejnou plochou',
+      f: kvA(60,222,440,222,'soft',1.8) + kvA(60,222,60,30,'soft',1.8) + kvT(446,236,'<tspan font-style="italic">t</tspan>','end',15,'soft') + kvT(75,36,'<tspan font-style="italic">F</tspan>','start',15,'soft') +
+         kvP('M140,220 L170,62 L200,220','acc',3) + kvP('M140,220 L200,140 L260,220','foc',3) + kvT(170,52,'1','middle',14,'acc') + kvT(205,130,'2','middle',14,'foc'),
+      t:'Plochy pod oběma křivkami v grafu síly v závislosti na čase jsou stejné. Co plocha pod křivkou <i>F</i>(<i>t</i>) vyjadřuje?',
+      r:'Impuls síly, tedy změnu hybnosti tělesa.', w:['Dráhu, kterou těleso urazí.', 'Hmotnost tělesa.', 'Rychlost tělesa na konci děje.'],
+      e:'Plocha pod grafem <i>F</i>(<i>t</i>) je součin síly a doby působení, tedy impuls síly <i>F</i>Δ<i>t</i> = Δ<i>p</i>.' },
+    { c:'deje', fa:'Dva vozíky před srážkou: 2 kg se rychlostí 3 m·s⁻¹ doprava, 1 kg rychlostí 3 m·s⁻¹ doleva',
+      f: kvL(40,170,440,170,'soft',2) + kvR(100,130,70,40,'var(--surface-2)','ink') + kvR(310,142,50,28,'var(--surface-2)','acc') +
+         kvT(135,155,'2&nbsp;kg','middle',14,'ink') + kvT(335,160,'1&nbsp;kg','middle',13,'acc') + kvC(120,176,5,'var(--ink-soft)') + kvC(150,176,5,'var(--ink-soft)') + kvC(325,176,5,'var(--ink-soft)') + kvC(345,176,5,'var(--ink-soft)') +
+         kvA(110,112,190,112,'ink') + kvT(150,100,'3&nbsp;m·s⁻¹','middle',13,'ink') + kvA(360,112,280,112,'acc') + kvT(320,100,'3&nbsp;m·s⁻¹','middle',13,'acc'),
+      t:'Dva vozíky se pohybují proti sobě (velikosti rychlostí jsou na obrázku). Po srážce se spojí. Jak se pohybují?',
+      r:'Rychlostí 1&nbsp;m·s⁻¹ doprava.', w:['Rychlostí 1&nbsp;m·s⁻¹ doleva.', 'Rychlostí 3&nbsp;m·s⁻¹ doprava.', 'Zůstanou stát.'],
+      e:'Kladný směr doprava: 2 · 3 + 1 · (−3) = 3&nbsp;kg·m·s⁻¹ = (2 + 1)&nbsp;kg · <i>v</i>′, tedy <i>v</i>′ = 1&nbsp;m·s⁻¹ doprava. Celková hybnost je kladná, takže se soustava pohybuje ve směru těžšího vozíku.' }
   ];
+// KVIZ_FIGS_MERGED
 
 
   var KVIZ_KEY = 'fyzika:hybnost:kviz';
@@ -1453,6 +1511,9 @@
     var tp = typeOf(q.item.c);
     $('kviz-cat-tag').innerHTML = tp ? tp.tag : 'Otázka';
     $('kviz-task-text').innerHTML = q.item.t;
+    var fig = $('kviz-fig');
+    fig.hidden = !q.item.f;
+    if(q.item.f){ $('kviz-graph').innerHTML = KV_DEFS + q.item.f; $('kviz-graph').setAttribute('aria-label', q.item.fa || 'Obrázek k otázce'); }
     var grid = $('kviz-opt-grid');
     grid.innerHTML = '';
     kviz.sel = null; kviz.locked = false;

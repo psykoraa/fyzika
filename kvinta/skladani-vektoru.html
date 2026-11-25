@@ -467,6 +467,9 @@ button.btn{ font-size:0.84rem; padding:9px 16px; }
       <div id="kviz-q">
       <span class="cat-tag" id="kviz-cat-tag">Otázka</span>
       <p class="kviz-task" id="kviz-task-text"></p>
+      <figure class="theory-fig" id="kviz-fig" hidden>
+        <svg id="kviz-graph" viewBox="0 0 480 260" role="img" aria-label="Obrázek k otázce"></svg>
+      </figure>
       <div class="opt-grid wide-opts" id="kviz-opt-grid"></div>
       <div class="actions">
         <button class="btn primary" id="kviz-btn-check">Zkontrolovat</button>
@@ -1841,6 +1844,40 @@ button.btn{ font-size:0.84rem; padding:9px 16px; }
   // Položka banky: c = okruh, t = zadání (HTML), r = správná odpověď, w = tři špatné,
   // e = vysvětlení; fixed = možnosti se nemíchají, jen seřadí.
   var LETTERS = ['A','B','C','D'];
+  // ---- pomůcky pro obrázky k otázkám (SVG ve viewBoxu 480 × 260, barvy z proměnných stránky) ----
+  var KV_COL = { ink:'var(--ink)', soft:'var(--ink-soft)', acc:'var(--accent)', foc:'var(--focus)' };
+  var KV_DEFS = '<defs>' + ['ink','soft','acc','foc'].map(function(k){
+    return '<marker id="kv-' + k + '" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4.4" markerHeight="4.4" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="' + KV_COL[k] + '"/></marker>';
+  }).join('') + '</defs>';
+  function kvA(x1, y1, x2, y2, c, w, dash){
+    c = c || 'ink';
+    return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + KV_COL[c] + '" stroke-width="' + (w || 2.6) + '" stroke-linecap="round" marker-end="url(#kv-' + c + ')"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  function kvL(x1, y1, x2, y2, c, w, dash){
+    return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + KV_COL[c || 'soft'] + '" stroke-width="' + (w || 1.6) + '" stroke-linecap="round"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  function kvT(x, y, txt, anchor, size, c, italic){
+    return '<text x="' + x + '" y="' + y + '" text-anchor="' + (anchor || 'middle') + '" font-family="' + (italic ? "STIX Two Text, Georgia, serif" : "Work Sans, sans-serif") + '" font-size="' + (size || 13) + '"' + (italic ? ' font-style="italic"' : '') + ' fill="' + KV_COL[c || 'ink'] + '">' + txt + '</text>';
+  }
+  function kvC(x, y, r, fill, stroke){
+    return '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + (fill || 'none') + '" stroke="' + (stroke ? KV_COL[stroke] : 'none') + '" stroke-width="1.6"/>';
+  }
+  function kvR(x, y, w, h, fill, stroke, rot){
+    return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="2" fill="' + (fill || 'var(--surface-2)') + '" stroke="' + KV_COL[stroke || 'soft'] + '" stroke-width="1.6"' + (rot ? ' transform="rotate(' + rot[0] + ' ' + rot[1] + ' ' + rot[2] + ')"' : '') + '/>';
+  }
+  function kvP(d, c, w, dash, fill){
+    return '<path d="' + d + '" fill="' + (fill || 'none') + '" stroke="' + KV_COL[c || 'ink'] + '" stroke-width="' + (w || 2) + '" stroke-linecap="round" stroke-linejoin="round"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  // očíslovaný kroužek u špičky šipky (n = číslo), směr (dx, dy) od špičky ven
+  function kvN(x, y, n, dx, dy){
+    var lx = x + dx, ly = y + dy;
+    return kvC(lx, ly, 10, 'var(--surface-2)', 'soft') + '<text x="' + lx + '" y="' + (ly + 4.5) + '" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="13" font-weight="600" fill="var(--ink)">' + n + '</text>';
+  }
+  // šipka s číslem: z (x1, y1) do (x2, y2), kroužek za špičkou
+  function kvAN(x1, y1, x2, y2, n, c){
+    var dx = x2 - x1, dy = y2 - y1, l = Math.sqrt(dx*dx + dy*dy);
+    return kvA(x1, y1, x2, y2, c || 'ink') + kvN(x2, y2, n, dx/l*16, dy/l*16);
+  }
   var KVIZ_TYPES = [
     { key:'all', name:'Vše' },
     { key:'scitani', name:'Sčítání vektorů', tag:'Sčítání vektorů' },
@@ -1944,8 +1981,37 @@ button.btn{ font-size:0.84rem; padding:9px 16px; }
     { c:'tri', t:'Využití skládání vektorů ve fyzice: co lze touto metodou určit?',
       r:'Výslednici sil působících na těleso.',
       w:['Hmotnost tělesa.', 'Teplotu tělesa.', 'Součinitel tření.'],
-      e:'Síly jsou vektory, výslednice je jejich vektorový součet. Stejným způsobem skládáme například rychlosti, zrychlení nebo hybnosti.' }
+      e:'Síly jsou vektory, výslednice je jejich vektorový součet. Stejným způsobem skládáme například rychlosti, zrychlení nebo hybnosti.' },
+    // ----- otázky s obrázkem -----
+    { c:'scitani', fixed:true, fa:'Vektory a a b ze společného počátku a čtyři očíslované šipky',
+      f: kvAN(240,135,370,35,2,'foc') + kvAN(240,135,310,195,4,'foc') + kvAN(240,135,170,75,3,'foc') + kvAN(240,135,110,235,1,'foc') +
+         kvA(240,135,340,115,'ink',3.4) + kvA(240,135,270,55,'acc',3.4) +
+         kvT(300,138,'<tspan font-weight="700">a</tspan>','middle',17,'ink',true) + kvT(236,92,'<tspan font-weight="700">b</tspan>','middle',17,'acc',true) + kvC(240,135,4,'var(--ink)'),
+      t:'Z jednoho bodu vycházejí vektory <b><i>a</i></b> (černý) a <b><i>b</i></b> (oranžový). Která z očíslovaných šipek je jejich součet <b><i>a</i></b> + <b><i>b</i></b>?',
+      r:'Šipka 2', w:['Šipka 1', 'Šipka 3', 'Šipka 4'],
+      e:'Součet je úhlopříčka rovnoběžníku sestrojeného nad vektory <b><i>a</i></b> a <b><i>b</i></b>: šipka 2. Šipka 4 je rozdíl <b><i>a</i></b> − <b><i>b</i></b>, šipka 3 rozdíl <b><i>b</i></b> − <b><i>a</i></b> a šipka 1 je vektor opačný k součtu.' },
+    { c:'odcitani', fixed:true, fa:'Vektory a a b ze společného počátku a čtyři očíslované šipky',
+      f: kvAN(240,135,370,35,2,'foc') + kvAN(240,135,310,195,4,'foc') + kvAN(240,135,170,75,3,'foc') + kvAN(240,135,110,235,1,'foc') +
+         kvA(240,135,340,115,'ink',3.4) + kvA(240,135,270,55,'acc',3.4) +
+         kvT(300,138,'<tspan font-weight="700">a</tspan>','middle',17,'ink',true) + kvT(236,92,'<tspan font-weight="700">b</tspan>','middle',17,'acc',true) + kvC(240,135,4,'var(--ink)'),
+      t:'Z jednoho bodu vycházejí vektory <b><i>a</i></b> (černý) a <b><i>b</i></b> (oranžový). Která z očíslovaných šipek je rozdíl <b><i>a</i></b> − <b><i>b</i></b>?',
+      r:'Šipka 4', w:['Šipka 1', 'Šipka 2', 'Šipka 3'],
+      e:'<b><i>a</i></b> − <b><i>b</i></b> = <b><i>a</i></b> + (−<b><i>b</i></b>): k vektoru <b><i>a</i></b> přičteme vektor opačný k <b><i>b</i></b> (míří dolů). Výsledek míří doprava dolů: šipka 4. Šipka 3 je opačná, tedy <b><i>b</i></b> − <b><i>a</i></b>.' },
+    { c:'odcitani', fixed:true, fa:'Vektory a a b ze společného počátku a čtyři očíslované šipky',
+      f: kvAN(240,135,370,35,2,'foc') + kvAN(240,135,310,195,4,'foc') + kvAN(240,135,170,75,3,'foc') + kvAN(240,135,110,235,1,'foc') +
+         kvA(240,135,340,115,'ink',3.4) + kvA(240,135,270,55,'acc',3.4) +
+         kvT(300,138,'<tspan font-weight="700">a</tspan>','middle',17,'ink',true) + kvT(236,92,'<tspan font-weight="700">b</tspan>','middle',17,'acc',true) + kvC(240,135,4,'var(--ink)'),
+      t:'Z jednoho bodu vycházejí vektory <b><i>a</i></b> (černý) a <b><i>b</i></b> (oranžový). Která z očíslovaných šipek je rozdíl <b><i>b</i></b> − <b><i>a</i></b>?',
+      r:'Šipka 3', w:['Šipka 1', 'Šipka 2', 'Šipka 4'],
+      e:'<b><i>b</i></b> − <b><i>a</i></b> je opačný vektor k <b><i>a</i></b> − <b><i>b</i></b>. Míří doleva nahoru: šipka 3. Šipka 1 je vektor −(<b><i>a</i></b> + <b><i>b</i></b>).' },
+    { c:'tri', fa:'Tři vektory za sebou tvoří uzavřený trojúhelník',
+      f: kvA(110,200,290,200,'ink',3) + kvA(290,200,200,60,'acc',3) + kvA(200,60,110,200,'foc',3) +
+         kvT(200,222,'<tspan font-weight="700">a</tspan>','middle',17,'ink',true) + kvT(262,118,'<tspan font-weight="700">b</tspan>','middle',17,'acc',true) + kvT(140,118,'<tspan font-weight="700">c</tspan>','middle',17,'foc',true),
+      t:'Tři vektory <b><i>a</i></b>, <b><i>b</i></b>, <b><i>c</i></b> jsou přiloženy za sebe podle obrázku. Jaký je jejich součet?',
+      r:'Nulový vektor.', w:['Vektor rovnoběžný s vektorem <b><i>a</i></b>.', 'Vektor o velikosti součtu velikostí všech tří vektorů.', 'Vektor mířící do horního vrcholu trojúhelníku.'],
+      e:'Řetěz vektorů se vrací do počátku, konec třetího vektoru splývá s počátkem prvního. Výsledný vektor z počátku prvního do konce posledního je proto nulový.' }
   ];
+// KVIZ_FIGS_MERGED
 
 
   var KVIZ_KEY = 'fyzika:skladani-vektoru:kviz';
@@ -2010,6 +2076,9 @@ button.btn{ font-size:0.84rem; padding:9px 16px; }
     var tp = typeOf(q.item.c);
     $('kviz-cat-tag').innerHTML = tp ? tp.tag : 'Otázka';
     $('kviz-task-text').innerHTML = q.item.t;
+    var fig = $('kviz-fig');
+    fig.hidden = !q.item.f;
+    if(q.item.f){ $('kviz-graph').innerHTML = KV_DEFS + q.item.f; $('kviz-graph').setAttribute('aria-label', q.item.fa || 'Obrázek k otázce'); }
     var grid = $('kviz-opt-grid');
     grid.innerHTML = '';
     kviz.sel = null; kviz.locked = false;

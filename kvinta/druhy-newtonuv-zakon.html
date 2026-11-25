@@ -476,6 +476,9 @@
       <div id="kviz-q">
       <span class="cat-tag" id="kviz-cat-tag">Otázka</span>
       <p class="kviz-task" id="kviz-task-text"></p>
+      <figure class="theory-fig" id="kviz-fig" hidden>
+        <svg id="kviz-graph" viewBox="0 0 480 260" role="img" aria-label="Obrázek k otázce"></svg>
+      </figure>
       <div class="opt-grid wide-opts" id="kviz-opt-grid"></div>
       <div class="actions">
         <button class="btn primary" id="kviz-btn-check">Zkontrolovat</button>
@@ -1722,6 +1725,40 @@
   // Položka banky: c = okruh, t = zadání (HTML), r = správná odpověď, w = tři špatné,
   // e = vysvětlení; fixed = možnosti se nemíchají, jen seřadí.
   var LETTERS = ['A','B','C','D'];
+  // ---- pomůcky pro obrázky k otázkám (SVG ve viewBoxu 480 × 260, barvy z proměnných stránky) ----
+  var KV_COL = { ink:'var(--ink)', soft:'var(--ink-soft)', acc:'var(--accent)', foc:'var(--focus)' };
+  var KV_DEFS = '<defs>' + ['ink','soft','acc','foc'].map(function(k){
+    return '<marker id="kv-' + k + '" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4.4" markerHeight="4.4" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="' + KV_COL[k] + '"/></marker>';
+  }).join('') + '</defs>';
+  function kvA(x1, y1, x2, y2, c, w, dash){
+    c = c || 'ink';
+    return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + KV_COL[c] + '" stroke-width="' + (w || 2.6) + '" stroke-linecap="round" marker-end="url(#kv-' + c + ')"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  function kvL(x1, y1, x2, y2, c, w, dash){
+    return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + KV_COL[c || 'soft'] + '" stroke-width="' + (w || 1.6) + '" stroke-linecap="round"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  function kvT(x, y, txt, anchor, size, c, italic){
+    return '<text x="' + x + '" y="' + y + '" text-anchor="' + (anchor || 'middle') + '" font-family="' + (italic ? "STIX Two Text, Georgia, serif" : "Work Sans, sans-serif") + '" font-size="' + (size || 13) + '"' + (italic ? ' font-style="italic"' : '') + ' fill="' + KV_COL[c || 'ink'] + '">' + txt + '</text>';
+  }
+  function kvC(x, y, r, fill, stroke){
+    return '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + (fill || 'none') + '" stroke="' + (stroke ? KV_COL[stroke] : 'none') + '" stroke-width="1.6"/>';
+  }
+  function kvR(x, y, w, h, fill, stroke, rot){
+    return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="2" fill="' + (fill || 'var(--surface-2)') + '" stroke="' + KV_COL[stroke || 'soft'] + '" stroke-width="1.6"' + (rot ? ' transform="rotate(' + rot[0] + ' ' + rot[1] + ' ' + rot[2] + ')"' : '') + '/>';
+  }
+  function kvP(d, c, w, dash, fill){
+    return '<path d="' + d + '" fill="' + (fill || 'none') + '" stroke="' + KV_COL[c || 'ink'] + '" stroke-width="' + (w || 2) + '" stroke-linecap="round" stroke-linejoin="round"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+  }
+  // očíslovaný kroužek u špičky šipky (n = číslo), směr (dx, dy) od špičky ven
+  function kvN(x, y, n, dx, dy){
+    var lx = x + dx, ly = y + dy;
+    return kvC(lx, ly, 10, 'var(--surface-2)', 'soft') + '<text x="' + lx + '" y="' + (ly + 4.5) + '" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="13" font-weight="600" fill="var(--ink)">' + n + '</text>';
+  }
+  // šipka s číslem: z (x1, y1) do (x2, y2), kroužek za špičkou
+  function kvAN(x1, y1, x2, y2, n, c){
+    var dx = x2 - x1, dy = y2 - y1, l = Math.sqrt(dx*dx + dy*dy);
+    return kvA(x1, y1, x2, y2, c || 'ink') + kvN(x2, y2, n, dx/l*16, dy/l*16);
+  }
   var KVIZ_TYPES = [
     { key:'all', name:'Vše' },
     { key:'zakon', name:'Zákon síly', tag:'2. Newtonův zákon — zákon síly' },
@@ -1837,8 +1874,37 @@
     { c:'soustava', t:'Jak řešíme úlohu se dvěma tělesy spojenými lanem?',
       r:'Napíšeme pohybovou rovnici pro každé těleso zvlášť a rovnice sečteme; tělesa mají stejně velké zrychlení.',
       w:['Napíšeme jedinou rovnici pro těleso s větší hmotností.', 'Tělesa mají různá zrychlení podle hmotnosti.', 'Tah lana zanedbáme.'],
-      e:'Lano zajišťuje stejně velké zrychlení obou těles. Rovnice pro jednotlivá tělesa obsahují tah lana <i>T</i>, který se při sečtení vykrátí a zbude rovnice pro zrychlení.' }
+      e:'Lano zajišťuje stejně velké zrychlení obou těles. Rovnice pro jednotlivá tělesa obsahují tah lana <i>T</i>, který se při sečtení vykrátí a zbude rovnice pro zrychlení.' },
+    // ----- otázky s obrázkem -----
+    { c:'rovina', fixed:true, fa:'Těleso na nakloněné rovině se sklonem 30° a čtyři očíslované šipky',
+      f: kvP('M60,230 L330,230 L330,74 Z','soft',1.8,null,'var(--surface-2)') + kvP('M110,230 A50,50 0 0 0 108,205','soft',1.6) + kvT(130,224,'<tspan font-style="italic">α</tspan> = 30°','start',12,'soft') +
+         kvR(169,129.6,40,24,'var(--surface)','ink',[-30,189,141.6]) +
+         kvAN(189,141.6,189,215,4) + kvAN(189,141.6,150,164,1) + kvAN(189,141.6,214,185,2) + kvAN(189,141.6,159,90,3),
+      t:'Těleso leží na nakloněné rovině. Která šipka znázorňuje tíhovou sílu <b><i>F</i></b><sub>G</sub>?',
+      r:'Šipka 4', w:['Šipka 1', 'Šipka 2', 'Šipka 3'],
+      e:'Tíhová síla míří vždy svisle dolů, tedy šipka 4, bez ohledu na sklon roviny. Šipka 1 je podél roviny dolů (složka <i>F</i><sub>∥</sub>), šipka 2 kolmo do roviny (složka <i>F</i><sub>⊥</sub>) a šipka 3 kolmo z roviny ven (tlaková síla podložky).' },
+    { c:'rovina', fixed:true, fa:'Těleso na nakloněné rovině se sklonem 30° a čtyři očíslované šipky',
+      f: kvP('M60,230 L330,230 L330,74 Z','soft',1.8,null,'var(--surface-2)') + kvP('M110,230 A50,50 0 0 0 108,205','soft',1.6) + kvT(130,224,'<tspan font-style="italic">α</tspan> = 30°','start',12,'soft') +
+         kvR(169,129.6,40,24,'var(--surface)','ink',[-30,189,141.6]) +
+         kvAN(189,141.6,189,215,4) + kvAN(189,141.6,150,164,1) + kvAN(189,141.6,214,185,2) + kvAN(189,141.6,159,90,3),
+      t:'Která šipka znázorňuje složku tíhové síly <b><i>F</i></b><sub>∥</sub> působící podél nakloněné roviny (táhne těleso dolů po svahu)?',
+      r:'Šipka 1', w:['Šipka 2', 'Šipka 3', 'Šipka 4'],
+      e:'Složka <i>F</i><sub>∥</sub> = <i>mg</i> sin <i>α</i> leží podél roviny a míří dolů po svahu: šipka 1. Šipka 2 je složka kolmá k rovině směrem do podložky.' },
+    { c:'rovina', fixed:true, fa:'Těleso na nakloněné rovině se sklonem 30° a čtyři očíslované šipky',
+      f: kvP('M60,230 L330,230 L330,74 Z','soft',1.8,null,'var(--surface-2)') + kvP('M110,230 A50,50 0 0 0 108,205','soft',1.6) + kvT(130,224,'<tspan font-style="italic">α</tspan> = 30°','start',12,'soft') +
+         kvR(169,129.6,40,24,'var(--surface)','ink',[-30,189,141.6]) +
+         kvAN(189,141.6,189,215,4) + kvAN(189,141.6,150,164,1) + kvAN(189,141.6,214,185,2) + kvAN(189,141.6,159,90,3),
+      t:'Která šipka znázorňuje tlakovou sílu <b><i>F</i></b><sub>N</sub>, kterou působí podložka na těleso?',
+      r:'Šipka 3', w:['Šipka 1', 'Šipka 2', 'Šipka 4'],
+      e:'Tlaková síla podložky míří kolmo od roviny ven: šipka 3. Vyrovnává složku <i>F</i><sub>⊥</sub> = <i>mg</i> cos <i>α</i> (šipka 2) a je proto stejně velká, ale opačného směru.' },
+    { c:'rovina', fa:'Nakloněná rovina se sklonem 30°',
+      f: kvP('M60,230 L330,230 L330,74 Z','soft',1.8,null,'var(--surface-2)') + kvP('M110,230 A50,50 0 0 0 108,205','soft',1.6) + kvT(130,224,'<tspan font-style="italic">α</tspan> = 30°','start',12,'soft') +
+         kvR(169,129.6,40,24,'var(--surface)','ink',[-30,189,141.6]),
+      t:'Těleso klouže bez tření po rovině se sklonem podle obrázku. Jaké je jeho zrychlení? (<i>g</i> = 10&nbsp;m·s⁻²)',
+      r:'5&nbsp;m·s⁻²', w:['10&nbsp;m·s⁻²', '8,7&nbsp;m·s⁻²', '2,5&nbsp;m·s⁻²'],
+      e:'<i>a</i> = <i>g</i> sin <i>α</i> = 10&nbsp;m·s⁻² · sin 30° = 5&nbsp;m·s⁻². Hodnota 8,7 vznikne záměnou sinu za kosinus.' }
   ];
+// KVIZ_FIGS_MERGED
 
 
   var KVIZ_KEY = 'fyzika:druhy-newtonuv-zakon:kviz';
@@ -1903,6 +1969,9 @@
     var tp = typeOf(q.item.c);
     $('kviz-cat-tag').innerHTML = tp ? tp.tag : 'Otázka';
     $('kviz-task-text').innerHTML = q.item.t;
+    var fig = $('kviz-fig');
+    fig.hidden = !q.item.f;
+    if(q.item.f){ $('kviz-graph').innerHTML = KV_DEFS + q.item.f; $('kviz-graph').setAttribute('aria-label', q.item.fa || 'Obrázek k otázce'); }
     var grid = $('kviz-opt-grid');
     grid.innerHTML = '';
     kviz.sel = null; kviz.locked = false;
