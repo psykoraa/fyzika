@@ -143,6 +143,20 @@
   .toptab{ flex:1 1 calc(50% - 4px); padding:13px 8px; }
 }
 </style>
+<style>
+/* ---- Kvíz (stejný jako u Grafů rovnoměrného pohybu a u Pohybu po kružnici) ---- */
+.kviz-task{ font-size:1.02rem; line-height:1.5; max-width:52ch; margin:0 auto 10px; color:var(--ink); text-align:center; }
+#kviz-section .kviz-task i, #kviz-section .opt-btn i, #kviz-section .feedback .steps i, #kviz-section .cat-tag i{ font-family:'STIX Two Text', Georgia, serif; font-style:italic; text-transform:none; }
+#kviz-section .feedback .steps{ font-family:'Work Sans', sans-serif; white-space:normal; opacity:1; }
+#kviz-end .kviz-end-box{ text-align:center; margin:0 0 14px; }
+#kviz-end .kviz-end-hint{ text-align:center; margin-top:10px; }
+#kviz-section [hidden]{ display:none; }
+@media (max-width:520px){
+  /* čtyři a více záložek: na telefonu ve dvou řadách (stejně jako Grafy rovnoměrného pohybu) */
+  .top-tabs{ flex-wrap:wrap; }
+  .toptab{ flex:1 1 calc(50% - 4px); padding:13px 8px; }
+}
+</style>
 </head>
 <body>
 
@@ -174,10 +188,16 @@
       <div class="cell"><span class="label">Série</span><span class="value" id="stat-streak">0</span></div>
       <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="stat-accuracy">—</span></div>
     </div>
+    <div class="readout" id="kviz-readout" hidden>
+      <div class="cell"><span class="label">Skóre</span><span class="value" id="kviz-stat-score">0</span></div>
+      <div class="cell"><span class="label">Série</span><span class="value" id="kviz-stat-streak">0</span></div>
+      <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="kviz-stat-accuracy">—</span></div>
+    </div>
   </div>
 
   <div class="top-tabs">
     <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+    <button class="toptab" id="top-tab-kviz" data-tab="kviz">Kvíz</button>
     <button class="toptab" id="top-tab-aplet" data-tab="aplet">Dva pohledy na vagon</button>
     <button class="toptab" id="top-tab-coriolis" data-tab="coriolis">Coriolisova síla</button>
     <button class="toptab" id="top-tab-trenink" data-tab="trenink">Trénink</button>
@@ -491,6 +511,47 @@
       <p>• V otáčející se soustavě působí odstředivá síla \(F_\mathrm{o} = m v^2/r = m\omega^2 r\) směrem od osy.</p>
       <p>• Na tělesa pohybující se v otáčející se soustavě působí Coriolisova síla \(F_\mathrm{C} = 2mv\omega\), kolmá na jejich rychlost.</p>
       <p>• Tíhová síla je výslednicí gravitační a odstředivé síly; Země je inerciální soustava jen přibližně.</p>
+    </div>
+  </div>
+
+  <!-- ============ KVÍZ ============ -->
+  <div id="kviz-section" class="tab-section" hidden>
+    <div class="panel">
+      <div class="section-block">
+        <div class="panel-title">Okruh otázek</div>
+        <div class="row" id="kviz-type-row"></div>
+      </div>
+      <div class="settings-foot" style="justify-content:flex-end;">
+        <button class="linklike" id="kviz-reset-stats">vynulovat statistiku</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div id="kviz-q">
+      <span class="cat-tag" id="kviz-cat-tag">Otázka</span>
+      <p class="kviz-task" id="kviz-task-text"></p>
+      <div class="opt-grid wide-opts" id="kviz-opt-grid"></div>
+      <div class="actions">
+        <button class="btn primary" id="kviz-btn-check">Zkontrolovat</button>
+        <button class="btn ghost" id="kviz-btn-skip">Nevím / Zobrazit řešení</button>
+      </div>
+      <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint">Vyberte jednu ze čtyř odpovědí kliknutím nebo klávesami A až D (případně 1 až 4) a potvrďte tlačítkem Zkontrolovat nebo klávesou Enter; dalším Enterem přejdete na další otázku. Po kontrole se správná odpověď obarví zeleně, chybně vybraná červeně a pod otázkou se objeví vysvětlení. Okruh otázek vyberete nahoře; otázky se neopakují, dokud neprojdete celý okruh. Pak se zobrazí, kolik otázek jste zodpověděli správně, a otázky můžete zamíchat a projít znovu.</p>
+      </details>
+      <div class="feedback" id="kviz-feedback" hidden>
+        <div class="headline" id="kviz-feedback-headline"></div>
+        <div class="steps" id="kviz-feedback-steps"></div>
+      </div>
+      </div>
+      <div id="kviz-end" hidden>
+        <div class="feedback ok kviz-end-box"><div class="headline">Hotovo, prošli jste všechny otázky!</div></div>
+        <p class="kviz-task" id="kviz-end-text"></p>
+        <div class="actions">
+          <button class="btn primary" id="kviz-btn-restart">Zamíchat otázky a začít znovu</button>
+        </div>
+        <p class="hint kviz-end-hint">Můžete také nahoře vybrat jiný okruh otázek.</p>
+      </div>
     </div>
   </div>
 
@@ -1459,6 +1520,346 @@
   // ---- otevření záložky odkazem (…/stranka.html#trenink) ----
   var hash = location.hash.replace('#', '');
   if(hash && tabs[hash]) showTab(hash);
+})();
+</script>
+
+<script>
+(function(){
+  "use strict";
+  // ================= KVÍZ: otázky s výběrem ze čtyř odpovědí (A–D) =================
+  // Samostatný skript (stejný kvíz jako u Grafů rovnoměrného pohybu a u Pohybu po kružnici).
+  // Položka banky: c = okruh, t = zadání (HTML), r = správná odpověď, w = tři špatné,
+  // e = vysvětlení; fixed = možnosti se nemíchají, jen seřadí.
+  var LETTERS = ['A','B','C','D'];
+  var KVIZ_TYPES = [
+    { key:'all', name:'Vše' },
+    { key:'soustavy', name:'Inerciální a neinerciální soustavy', tag:'Inerciální a neinerciální soustavy' },
+    { key:'setrvacna', name:'Setrvačná síla', tag:'Setrvačná síla' },
+    { key:'vytah', name:'Výtah a kosmická loď', tag:'Výtah a kosmická loď' },
+    { key:'odstredivka', name:'Odstředivá síla', tag:'Odstředivá síla a Země' },
+    { key:'coriolis', name:'Coriolisova síla', tag:'Coriolisova síla' }
+  ];
+  var KVIZ_BANK = [
+    // ----- inerciální a neinerciální soustavy -----
+    { c:'soustavy', t:'Co říká Galileův princip relativity?',
+      r:'Mechanické děje probíhají ve všech inerciálních soustavách stejně; pokusem nepoznáme klid od rovnoměrného pohybu.',
+      w:['Rychlost světla je ve všech soustavách stejná.', 'Mechanické děje se liší podle rychlosti soustavy.', 'Rovnoměrně se pohybující soustava je vždy neinerciální.'],
+      e:'Sedíte-li ve vlaku se zatemněnými okny jedoucím rovnoměrně, upuštěné klíče padají jako na nástupišti a vyhozený míček spadne zpět. Pokusem uvnitř nepoznáte, zda vlak stojí, nebo jede.' },
+    { c:'soustavy', t:'Vlak jede vůči nástupišti rychlostí 20&nbsp;m·s⁻¹. Průvodčí jde ve vlaku dopředu rychlostí 1,5&nbsp;m·s⁻¹. Jakou rychlostí se pohybuje vůči nástupišti?',
+      r:'21,5&nbsp;m·s⁻¹',
+      w:['18,5&nbsp;m·s⁻¹', '20&nbsp;m·s⁻¹', '30&nbsp;m·s⁻¹'],
+      e:'Mezi inerciálními soustavami se rychlosti sčítají: <i>v</i> = <i>v</i>′ + <i>u</i> = 1,5 + 20 = 21,5&nbsp;m·s⁻¹. Hodnota 18,5 platí, kdyby šel dozadu.' },
+    { c:'soustavy', t:'Která z uvedených soustav je neinerciální?',
+      r:'Výtah, který se rozjíždí.',
+      w:['Budova školy.', 'Vlak jedoucí stálou rychlostí po rovné trati.', 'Eskalátor jedoucí stálou rychlostí.'],
+      e:'Neinerciální je každá soustava, která se vůči inerciální pohybuje se zrychlením (rozjíždí se, brzdí nebo se otáčí). Ostatní možnosti se pohybují rovnoměrně přímočaře nebo stojí.' },
+    { c:'soustavy', t:'Vlak projíždí stálou rychlostí oblouk. Je spojená soustava inerciální?',
+      r:'Ne, vlak se pohybuje se zrychlením (mění se směr rychlosti).',
+      w:['Ano, protože velikost rychlosti je stálá.', 'Ano, protože vlak jede po kolejích.', 'Ano, protože je velká hmotnost vlaku.'],
+      e:'Zrychlení je změna rychlosti jako vektoru, mění-li se směr, zrychlení existuje. Soustava spojená s vlakem v oblouku proto není inerciální.' },
+    { c:'soustavy', t:'Rozhodněte, která dvojice soustav je obě inerciální (soustavu spojenou se Zemí považujeme za inerciální).',
+      r:'Raketa daleko ve vesmíru s vypnutými motory a vlak jedoucí stálou rychlostí po rovné trati.',
+      w:['Auto brzdící před semaforem a budova školy.', 'Vlak jedoucí obloukem a eskalátor jedoucí stálou rychlostí.', 'Výtah, který se rozjíždí, a rovně jedoucí vlak.'],
+      e:'Inerciální jsou soustavy ve stavu klidu nebo rovnoměrného přímočarého pohybu. Brzdící auto, vlak v oblouku a rozjíždějící se výtah jsou neinerciální.' },
+    { c:'soustavy', t:'Je soustava spojená s povrchem Země přesně inerciální?',
+      r:'Ne, protože se Země otáčí, ale pro běžné úlohy je odchylka zanedbatelná.',
+      w:['Ano, vždy přesně.', 'Ne, protože na povrchu Země působí tíhová síla.', 'Ne, a proto v ní žádný Newtonův zákon neplatí.'],
+      e:'Bod na povrchu Země se kvůli rotaci pohybuje po kružnici a má dostředivé zrychlení (na rovníku přibližně 0,034&nbsp;m·s⁻²). Pro běžné úlohy je to zanedbatelné. Proto soustavu považujeme za inerciální.' },
+    // ----- setrvačná síla -----
+    { c:'setrvacna', t:'Jak se vypočte setrvačná síla působící na těleso o hmotnosti <i>m</i> v soustavě se zrychlením <b><i>a</i></b>?',
+      r:'<b><i>F</i></b><sub>s</sub> = −<i>m</i><b><i>a</i></b>, má opačný směr než zrychlení soustavy.',
+      w:['<b><i>F</i></b><sub>s</sub> = <i>m</i><b><i>a</i></b>, má stejný směr jako zrychlení soustavy.', '<b><i>F</i></b><sub>s</sub> = <i>m</i><b><i>g</i></b>, míří dolů.', '<b><i>F</i></b><sub>s</sub> = −<b><i>a</i></b>/<i>m</i>.'],
+      e:'V neinerciální soustavě se zrychlením <b><i>a</i></b> zavádíme na každé těleso setrvačnou sílu −<i>m</i><b><i>a</i></b>. Je to jen projev setrvačnosti, který vidíme ze zrychlující soustavy.' },
+    { c:'setrvacna', t:'Čím se setrvačná síla liší od „skutečných“ sil (tahové, tlakové, gravitační)?',
+      r:'Nezpůsobuje ji žádné těleso a nemá reakci; je zdánlivá.',
+      w:['Je vždy větší než skutečné síly.', 'Působí jen na tělesa v klidu.', 'Má vždy reakci na Zemi.'],
+      e:'Setrvačná síla nemá původce ani reakci, pozorovatel v inerciální soustavě ji vůbec nepotřebuje. Zato ji na vlastním těle cítíme, například při rozjezdu autobusu.' },
+    { c:'setrvacna', t:'Na hladké podlaze rozjíždějícího se vagonu leží kulička. Jak ji popíše pozorovatel na nástupišti?',
+      r:'Kulička zůstává v klidu (setrvačností), vagon se pod ní rozjíždí.',
+      w:['Na kuličku působí síla dozadu.', 'Kulička se rozjíždí dozadu, protože ji táhne zadní stěna.', 'Kulička se rozjíždí vpřed spolu s vagonem.'],
+      e:'Pro pozorovatele v inerciální soustavě na kuličku působí jen tíhová a tlaková síla, které se ruší. Podle zákona setrvačnosti zůstává v klidu a vagon se pod ní posouvá.' },
+    { c:'setrvacna', t:'Na kuličku z předchozí otázky se ve vagonu (neinerciální soustava) dívá cestující. Co říká o kuličce?',
+      r:'Kulička se sama rozjíždí dozadu a cestující k tomu přidává setrvačnou sílu −<i>m</i><b><i>a</i></b>.',
+      w:['Kulička zůstává v klidu.', 'Kulička se rozjíždí dopředu.', 'Na kuličku nepůsobí žádná síla, a přesto se pohybuje.'],
+      e:'Pro cestujícího se kulička rozjíždí se zrychlením −<b><i>a</i></b>. Aby mohl používat Newtonovy zákony, přidá setrvačnou sílu. Je to tentýž děj, jen popsaný z jiné soustavy.' },
+    { c:'setrvacna', t:'Autobus zabrzdí z 50&nbsp;km·h⁻¹ na nulu za 5&nbsp;s. Jak velká setrvačná síla působí z pohledu cestujících na kufr o hmotnosti 20&nbsp;kg?',
+      r:'Přibližně 56&nbsp;N dopředu',
+      w:['Přibližně 56&nbsp;N dozadu', 'Přibližně 200&nbsp;N dopředu', 'Přibližně 5,6&nbsp;N dopředu'],
+      e:'50&nbsp;km·h⁻¹ = 13,9&nbsp;m·s⁻¹, <i>a</i> = 13,9/5&nbsp;m·s⁻² ≈ 2,8&nbsp;m·s⁻² a <i>F</i><sub>s</sub> = <i>m</i><i>a</i> = 20 · 2,78&nbsp;N ≈ 56&nbsp;N. Zrychlení míří dozadu, setrvačná síla dopředu. Hodnota 200 vznikne dosazením <i>g</i>.' },
+    { c:'setrvacna', t:'Kdy kreslíme setrvačnou sílu do obrázku sil?',
+      r:'Jen při popisu z neinerciální soustavy.',
+      w:['Vždy.', 'Jen při popisu z inerciální soustavy.', 'Nikdy.'],
+      e:'Než začneme kreslit síly, rozhodneme se, z jaké soustavy děj popisujeme. V inerciální soustavě setrvačnou sílu nikdy nekreslíme.' },
+    // ----- výtah a kosmická loď -----
+    { c:'vytah', t:'Výtah se rozjíždí nahoru se zrychlením <i>a</i>. Jak velkou silou tlačíme na podlahu (z pohledu výtahu)?',
+      r:'<i>F</i> = <i>m</i>(<i>g</i> + <i>a</i>)',
+      w:['<i>F</i> = <i>m</i>(<i>g</i> − <i>a</i>)', '<i>F</i> = <i>m</i><i>g</i>', '<i>F</i> = <i>m</i><i>a</i>'],
+      e:'Zrychlení míří nahoru, setrvačná síla dolů se přičítá k tíhové síle, takže podlaha musí tlačit silou <i>m</i>(<i>g</i> + <i>a</i>).' },
+    { c:'vytah', t:'Žák o hmotnosti 60&nbsp;kg stojí ve výtahu, který se rozjíždí nahoru se zrychlením 1,5&nbsp;m·s⁻². Jakou silou tlačí na váhu? (<i>g</i> = 10&nbsp;m·s⁻²)',
+      r:'690&nbsp;N',
+      w:['600&nbsp;N', '510&nbsp;N', '90&nbsp;N'],
+      e:'<i>F</i> = <i>m</i>(<i>g</i> + <i>a</i>) = 60 · 11,5&nbsp;N = 690&nbsp;N. Kontrola z inerciální soustavy: výslednice <i>F</i> − <i>mg</i> = 90&nbsp;N a 90/60&nbsp;m·s⁻² = 1,5&nbsp;m·s⁻². Hodnota 510 platí při zastavování.' },
+    { c:'vytah', t:'Žák z předchozí úlohy je ve výtahu, který jede nahoru rovnoměrně. Jakou silou tlačí na váhu?',
+      r:'600&nbsp;N',
+      w:['690&nbsp;N', '510&nbsp;N', '0&nbsp;N'],
+      e:'Při rovnoměrné jízdě je výtah inerciální soustava a setrvačná síla nepůsobí. <i>F</i> = <i>mg</i> = 60 · 10&nbsp;N = 600&nbsp;N.' },
+    { c:'vytah', t:'Výtah jedoucí nahoru zastavuje se zrychlením 1,5&nbsp;m·s⁻² (míří dolů). Jakou hmotnost ukáže váha cejchovaná v kilogramech, na které stojí žák o hmotnosti 60&nbsp;kg? (<i>g</i> = 10&nbsp;m·s⁻²)',
+      r:'51&nbsp;kg',
+      w:['60&nbsp;kg', '69&nbsp;kg', '45&nbsp;kg'],
+      e:'<i>F</i> = <i>m</i>(<i>g</i> − <i>a</i>) = 60 · 8,5&nbsp;N = 510&nbsp;N a 510&nbsp;N odpovídá 51&nbsp;kg (při <i>g</i> = 10&nbsp;m·s⁻²). Hodnota 69 odpovídá rozjezdu nahoru.' },
+    { c:'vytah', t:'Co se stane, kdyby lano výtahu prasklo a výtah volně padal (<i>a</i> = <i>g</i>)?',
+      r:'Síla na podlahu by byla nulová: stav beztíže.',
+      w:['Síla na podlahu by byla dvojnásobná.', 'Síla na podlahu by se nezměnila.', 'Výtah by padal rychleji než ostatní tělesa.'],
+      e:'<i>F</i> = <i>m</i>(<i>g</i> − <i>a</i>) = 0. Stejný stav beztíže zažívají kosmonauti na oběžné dráze, protože stanice s nimi neustále „padá“ kolem Země.' },
+    { c:'vytah', t:'Raketa startuje svisle se zrychlením 30&nbsp;m·s⁻². Kosmonaut (80&nbsp;kg) je tlačen do sedadla silou:',
+      r:'3&nbsp;200&nbsp;N (čtyřnásobek tíhy na Zemi, přetížení 4g)',
+      w:['800&nbsp;N (stejná jako tíha)', '1&nbsp;600&nbsp;N (dvojnásobek tíhy)', '2&nbsp;400&nbsp;N (trojnásobek tíhy)'],
+      e:'<i>F</i> = <i>m</i>(<i>g</i> + <i>a</i>) = 80 · (10 + 30)&nbsp;N = 3&nbsp;200&nbsp;N, což je 4krát větší než tíha 800&nbsp;N. Říkáme, že je vystaven přetížení 4g. Hodnota 2&nbsp;400 odpovídá samotnému zrychlení (80 · 30).' },
+    // ----- odstředivá síla a Země -----
+    { c:'odstredivka', t:'Auto projíždí zatáčku a cestující je tlačen ke dveřím na vnější straně. Jak to vysvětlí pozorovatel na chodníku?',
+      r:'Tělo cestujícího by setrvačností jelo rovně a dveře mu dodávají dostředivou sílu, aby zatáčelo s autem.',
+      w:['Na cestujícího působí odstředivá síla, kterou musí dveře vyrovnat.', 'Cestující je přitahován vnější stranou silnice.', 'Cestující se ke dveřím přitiskne tíhovou silou.'],
+      e:'Pro inerciálního pozorovatele existuje jen dostředivá síla od dveří, odstředivou nepotřebuje. Odstředivou sílu zavádí cestující v otáčející se (neinerciální) soustavě auta.' },
+    { c:'odstredivka', t:'Jaký je vztah mezi odstředivou a dostředivou silou stejného děje?',
+      r:'Mají stejnou velikost <i>m</i><i>v</i>²/<i>r</i> a opačný směr, ale patří do různých popisů.',
+      w:['Odstředivá síla je větší než dostředivá.', 'Mají stejný směr, ale různou velikost.', 'Odstředivá síla je reakcí k dostředivé.'],
+      e:'Odstředivá síla je setrvačná síla v otáčející se soustavě. Nikdy ji nekreslíme do stejného obrázku jako dostředivou: inerciální pozorovatel vidí jen dostředivou, neinerciální navíc odstředivou, která ji vyrovná. Není to akce a reakce, nemá původce.' },
+    { c:'odstredivka', t:'Kolotoč se otočí jednou za 4&nbsp;s. Jak velká odstředivá síla působí z pohledu dítěte (30&nbsp;kg), které sedí 5&nbsp;m od osy?',
+      r:'Přibližně 370&nbsp;N',
+      w:['Přibližně 59&nbsp;N', 'Přibližně 740&nbsp;N', 'Přibližně 1&nbsp;480&nbsp;N'],
+      e:'<i>ω</i> = 2π/4&nbsp;s ≈ 1,571&nbsp;rad·s⁻¹ a <i>F</i><sub>o</sub> = <i>m</i><i>ω</i>²<i>r</i> = 30 · 2,467 · 5&nbsp;N ≈ 370&nbsp;N. Kontrola: <i>v</i> = <i>ω</i><i>r</i> ≈ 7,85&nbsp;m·s⁻¹ a <i>m</i><i>v</i>²/<i>r</i> ≈ 370&nbsp;N. Hodnota 740 vznikne zdvojením poloměru, hodnota 1&nbsp;480 dosazením periody 2&nbsp;s.' },
+    { c:'odstredivka', t:'Člověk o hmotnosti 70&nbsp;kg stojí na rovníku, kde se pohybuje rychlostí 465&nbsp;m·s⁻¹ po kružnici o poloměru 6&nbsp;378&nbsp;km. Jak velká je odstředivá síla?',
+      r:'Přibližně 2,4&nbsp;N',
+      w:['Přibližně 240&nbsp;N', 'Přibližně 0,24&nbsp;N', 'Přibližně 687&nbsp;N'],
+      e:'<i>F</i><sub>o</sub> = <i>m</i><i>v</i>²/<i>R</i> = 70 · 465²/6&nbsp;378&nbsp;000&nbsp;N ≈ 2,4&nbsp;N. Je to přibližně 0,35&nbsp;% tíhy (687&nbsp;N), proto Zemi pro běžné úlohy považujeme za inerciální. Hodnota 687 je gravitační síla.' },
+    { c:'odstredivka', t:'Jak souvisí tíhová síla na povrchu Země s odstředivou silou?',
+      r:'Tíhová síla je výslednicí gravitační síly Země a odstředivé síly; na rovníku se odstředivá od gravitační odečítá.',
+      w:['Tíhová síla se rovná odstředivé síle.', 'Tíhová síla je na rovníku větší než na pólu.', 'Odstředivá síla Země na tíhu nemá žádný vliv.'],
+      e:'V soustavě spojené s povrchem Země působí kromě gravitační síly i malá odstředivá síla. Jejich výslednice je tíhová síla; na rovníku je odstředivá síla opačná ke gravitační a tíhu zmenšuje.' },
+    // ----- Coriolisova síla -----
+    { c:'coriolis', t:'Na které těleso působí Coriolisova síla?',
+      r:'Na těleso, které se pohybuje vůči otáčející se soustavě, kolmo na jeho rychlost.',
+      w:['Na každé těleso v klidu v otáčející se soustavě.', 'Jen na tělesa, která se pohybují rovnoběžně s osou otáčení.', 'Na těleso v inerciální soustavě.'],
+      e:'Coriolisova síla je setrvačná síla, která působí jen na tělesa pohybující se vůči otáčející se soustavě. Je kolmá na rychlost a pozorovatel v inerciální soustavě ji nepotřebuje.' },
+    { c:'coriolis', t:'Míček (0,10&nbsp;kg) se pohybuje rychlostí 3,0&nbsp;m·s⁻¹ kolmo k ose kolotoče, který se otáčí úhlovou rychlostí 2,0&nbsp;rad·s⁻¹. Jak velká je Coriolisova síla?',
+      r:'1,2&nbsp;N',
+      w:['0,6&nbsp;N', '0,3&nbsp;N', '2,4&nbsp;N'],
+      e:'<i>F</i><sub>C</sub> = 2<i>m</i><i>v</i><i>ω</i> = 2 · 0,10 · 3,0 · 2,0&nbsp;N = 1,2&nbsp;N. Rozměrová kontrola: kg·m·s⁻¹·s⁻¹ = N. Hodnota 0,6 vznikne vynecháním faktoru 2.' },
+    { c:'coriolis', t:'Země se při pohledu od severního pólu otáčí proti směru hodinových ručiček. Kam Coriolisova síla stáčí pohybující se tělesa na severní polokouli?',
+      r:'Doprava.',
+      w:['Doleva.', 'Dopředu ve směru pohybu.', 'Nestáčí je.'],
+      e:'Otáčí-li se soustava proti směru hodinových ručiček, Coriolisova síla stáčí pohybující se tělesa doprava. Cyklony na severní polokouli se proto otáčejí proti směru hodinových ručiček.' },
+    { c:'coriolis', t:'Voda odtéká z umyvadla. Proč o směru víru nerozhoduje polokoule, na které umyvadlo stojí?',
+      r:'Úhlová rychlost Země je malá, takže Coriolisova síla je velmi slabá; rozhoduje tvar nádoby a pohyb vody.',
+      w:['Coriolisova síla na malá tělesa nepůsobí vůbec.', 'Voda je příliš těžká.', 'Země se vůbec neotáčí.'],
+      e:'<i>ω</i> Země je jen 7,3·10⁻⁵&nbsp;rad·s⁻¹, takže Coriolisova síla na vodu v umyvadle je zanedbatelná. Projevuje se u dějů trvajících dlouho nebo probíhajících na velké vzdálenosti (cyklony, pasáty, mořské proudy).' }
+  ];
+
+
+  var KVIZ_KEY = 'fyzika:neinercialni-soustavy:kviz';
+  var section = document.getElementById('kviz-section');
+  var tabBtn = document.getElementById('top-tab-kviz');
+  var readout = document.getElementById('kviz-readout');
+  var pageReadout = document.getElementById('header-readout');
+  var kviz = {
+    type:'all', queue:[], current:null, sel:null, locked:false,
+    score:0, streak:0, bestStreak:0, answered:0, correct:0,
+    inRound:false, ended:false, roundTotal:0, roundCorrect:0
+  };
+  function $(id){ return document.getElementById(id); }
+  function kvizLoad(){
+    try{ var raw = localStorage.getItem(KVIZ_KEY); if(raw){ kviz.bestStreak = JSON.parse(raw).bestStreak || 0; } }catch(e){}
+  }
+  function kvizSave(){
+    try{ localStorage.setItem(KVIZ_KEY, JSON.stringify({bestStreak: kviz.bestStreak})); }catch(e){}
+  }
+  function kvizShuffled(a){
+    a = a.slice();
+    for(var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random()*(i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; }
+    return a;
+  }
+  function typeOf(key){ return KVIZ_TYPES.filter(function(t){ return t.key === key; })[0]; }
+
+  // Otázky okruhu se berou v náhodném pořadí bez opakování. Po projití celého okruhu
+  // se zobrazí závěrečná hláška s výsledkem kola a nabídkou otázky zamíchat znovu.
+  function kvizNext(){
+    if(!kviz.queue.length){
+      if(kviz.inRound){ kvizShowEnd(); return; }
+      var pool = KVIZ_BANK.filter(function(b){ return kviz.type === 'all' || b.c === kviz.type; });
+      kviz.queue = kvizShuffled(pool);
+      if(kviz.current && kviz.queue.length > 1 && kviz.queue[0] === kviz.current.item){ kviz.queue.push(kviz.queue.shift()); }
+      kviz.inRound = true; kviz.roundTotal = pool.length; kviz.roundCorrect = 0;
+    }
+    var item = kviz.queue.shift();
+    var opts = item.fixed ? [item.r].concat(item.w).sort() : kvizShuffled([item.r].concat(item.w));
+    kviz.current = { item:item, choices:opts, correct:opts.indexOf(item.r) };
+    kvizRender();
+  }
+  function kvizShowEnd(){
+    kviz.ended = true; kviz.inRound = false;
+    var tp = typeOf(kviz.type);
+    var n = kviz.roundTotal, k = kviz.roundCorrect;
+    $('kviz-end-text').innerHTML =
+      'Prošli jste všech ' + n + ' otázek ' + (kviz.type === 'all' ? 'kvízu' : 'okruhu „' + tp.name + '“') + '. ' +
+      'Správně jste odpověděli na ' + k + ' z ' + n + ' (' + Math.round(100*k/n) + '&nbsp;%). Chcete otázky zamíchat a projít znovu?';
+    $('kviz-q').hidden = true;
+    $('kviz-end').hidden = false;
+    $('kviz-btn-restart').focus({ preventScroll:true });
+  }
+  function kvizRestart(){
+    kviz.queue = []; kviz.inRound = false;
+    kvizNext();
+  }
+  function kvizRender(){
+    var q = kviz.current;
+    kviz.ended = false;
+    $('kviz-q').hidden = false;
+    $('kviz-end').hidden = true;
+    var tp = typeOf(q.item.c);
+    $('kviz-cat-tag').innerHTML = tp ? tp.tag : 'Otázka';
+    $('kviz-task-text').innerHTML = q.item.t;
+    var grid = $('kviz-opt-grid');
+    grid.innerHTML = '';
+    kviz.sel = null; kviz.locked = false;
+    q.choices.forEach(function(c, i){
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'opt-btn';
+      b.innerHTML = '<b>' + LETTERS[i] + ')</b>&nbsp; ' + c;
+      b.addEventListener('click', function(){ kvizSelect(i); });
+      grid.appendChild(b);
+    });
+    var fb = $('kviz-feedback');
+    fb.hidden = true; fb.classList.remove('ok', 'bad', 'sol');
+    $('kviz-btn-check').textContent = 'Zkontrolovat';
+  }
+  function kvizSelect(i){
+    if(kviz.locked || kviz.ended) return;
+    kviz.sel = i;
+    Array.prototype.forEach.call($('kviz-opt-grid').children, function(el, j){ el.classList.toggle('selected', j === i); });
+    $('kviz-btn-check').focus({ preventScroll:true });
+  }
+  function kvizFinish(ok, headline){
+    var q = kviz.current;
+    Array.prototype.forEach.call($('kviz-opt-grid').children, function(el, j){
+      el.disabled = true;
+      el.classList.remove('selected');
+      if(j === q.correct) el.classList.add(kviz.sel === j ? 'correct' : 'missed');
+      else if(j === kviz.sel) el.classList.add('wrong');
+    });
+    var fb = $('kviz-feedback');
+    fb.hidden = false;
+    fb.classList.toggle('ok', ok); fb.classList.toggle('bad', !ok);
+    $('kviz-feedback-headline').textContent = headline;
+    var finalText = 'Správná odpověď: ' + LETTERS[q.correct] + ') ' + q.item.r;
+    if(window.FyzikaReseni && FyzikaReseni.show){
+      FyzikaReseni.show(fb, $('kviz-feedback-steps'), { raw:true, title:'Vysvětlení', steps:[q.item.e], final:finalText });
+    } else {
+      $('kviz-feedback-steps').innerHTML = q.item.e + '<br><b>' + finalText + '</b>';
+    }
+    kviz.locked = true;
+    var btn = $('kviz-btn-check');
+    btn.textContent = 'Další otázka →';
+    btn.focus({ preventScroll:true });
+    kvizStats();
+  }
+  function kvizCheck(){
+    if(kviz.ended){ kvizRestart(); return; }
+    if(kviz.locked){ kvizNext(); return; }
+    if(kviz.sel === null && !confirm('Není vybraná žádná možnost. Opravdu chcete zkontrolovat?')) return;
+    var ok = kviz.sel === kviz.current.correct;
+    kviz.answered++;
+    if(ok){
+      kviz.score += 10; kviz.streak++; kviz.correct++; kviz.roundCorrect++;
+      if(kviz.streak > kviz.bestStreak){ kviz.bestStreak = kviz.streak; kvizSave(); }
+    } else {
+      kviz.streak = 0;
+    }
+    kvizFinish(ok, ok ? 'Správně!' : (kviz.sel === null ? 'Vyberte odpověď.' : 'Bohužel špatně.'));
+  }
+  function kvizSkip(){
+    if(kviz.ended){ kvizRestart(); return; }
+    if(kviz.locked){ kvizNext(); return; }
+    kviz.streak = 0; kviz.answered++;
+    kvizFinish(false, 'Správná odpověď:');
+  }
+  function kvizStats(){
+    $('kviz-stat-score').textContent = kviz.score;
+    $('kviz-stat-streak').textContent = kviz.streak + (kviz.bestStreak > 0 ? ' / ' + kviz.bestStreak : '');
+    $('kviz-stat-accuracy').textContent = kviz.answered === 0 ? '—' : Math.round(100*kviz.correct/kviz.answered) + ' %';
+  }
+  (function kvizBuildTypeRow(){
+    var row = $('kviz-type-row');
+    KVIZ_TYPES.forEach(function(d){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip accented' + (d.key === kviz.type ? ' on' : '');
+      b.setAttribute('aria-pressed', d.key === kviz.type ? 'true' : 'false');
+      b.textContent = d.name;
+      b.addEventListener('click', function(){
+        if(d.key === kviz.type) return;
+        // rozpracovaná otázka s vybranou odpovědí se před změnou okruhu vyhodnotí
+        var settled = !kviz.locked && kviz.sel !== null;
+        if(settled) kvizCheck();
+        kviz.type = d.key; kviz.queue = []; kviz.inRound = false;
+        Array.prototype.forEach.call(row.children, function(el, i){
+          var on = KVIZ_TYPES[i].key === kviz.type;
+          el.classList.toggle('on', on);
+          el.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        // vyhodnocená otázka zůstane i s vysvětlením vidět, další už bude z nového okruhu
+        if(!settled) kvizNext();
+      });
+      row.appendChild(b);
+    });
+  })();
+  $('kviz-btn-check').addEventListener('click', kvizCheck);
+  $('kviz-btn-skip').addEventListener('click', kvizSkip);
+  $('kviz-btn-restart').addEventListener('click', kvizRestart);
+  $('kviz-reset-stats').addEventListener('click', function(){
+    kviz.score = 0; kviz.streak = 0; kviz.answered = 0; kviz.correct = 0; kviz.bestStreak = 0;
+    try{ localStorage.removeItem(KVIZ_KEY); }catch(e){}
+    kvizStats();
+  });
+  // Klávesnice v kvízu: A–D nebo 1–4 vybere odpověď, Enter zkontroluje / posune dál.
+  document.addEventListener('keydown', function(e){
+    if(section.hidden) return;
+    if(e.ctrlKey || e.metaKey || e.altKey) return;
+    if(e.key === 'Enter'){
+      if(e.target && e.target.tagName === 'BUTTON') return;
+      e.preventDefault(); kvizCheck(); return;
+    }
+    var idx = 'abcd'.indexOf(e.key.toLowerCase());
+    if(idx === -1) idx = '1234'.indexOf(e.key);
+    if(idx !== -1 && e.key.length === 1) kvizSelect(idx);
+  });
+
+  // ---- záložka Kvíz ----
+  // Skript je samostatný: otevření Kvízu i návrat na ostatní záložky řeší sám, ať stránka přepíná
+  // záložky jakkoli. Skóre kvízu má vlastní pole v hlavičce (skóre tréninku se tím nemění).
+  function activate(){
+    var teorieBtn = $('top-tab-teorie'), theory = $('theory-section');
+    if(!tabBtn.classList.contains('on') && teorieBtn && !teorieBtn.classList.contains('on')){
+      // nejdřív „kliknutím“ opustíme dosavadní záložku obsluhou stránky (u hry na čas s potvrzením)
+      teorieBtn.click();
+      if(theory && theory.hidden) return;   // stránka odmítla opustit dosavadní záložku (např. běžící hra)
+    }
+    Array.prototype.forEach.call(document.querySelectorAll('.tab-section'), function(s){ s.hidden = s !== section; });
+    Array.prototype.forEach.call(document.querySelectorAll('.toptab'), function(t){ t.classList.toggle('on', t === tabBtn); });
+    if(pageReadout) pageReadout.hidden = true;
+    readout.hidden = false;
+    kvizStats();
+    if(!kviz.current) kvizNext();
+  }
+  tabBtn.addEventListener('click', activate);
+  Array.prototype.forEach.call(document.querySelectorAll('.toptab'), function(t){
+    if(t === tabBtn) return;
+    t.addEventListener('click', function(){ section.hidden = true; readout.hidden = true; tabBtn.classList.remove('on'); });
+  });
+  document.addEventListener('fyzika:scores-updated', function(){ kviz.bestStreak = 0; kvizLoad(); kvizStats(); });
+  kvizLoad();
+  kvizStats();
+  if(location.hash === '#kviz' && !tabBtn.classList.contains('on')) tabBtn.click();
+  else if(location.hash === '#kviz') activate();
 })();
 </script>
 

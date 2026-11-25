@@ -14,6 +14,7 @@
 <script src="../spolecne/auth.js"></script>
 <script src="../spolecne/zalozky.js?v=3"></script>
 <link rel="stylesheet" href="../spolecne/styl.css">
+<link rel="stylesheet" href="../spolecne/reseni.css?v=1">
 <link rel="stylesheet" href="../spolecne/komponenty.css?v=1">
 <style>
 :root{
@@ -145,6 +146,15 @@
   .card{ padding:20px 16px 22px; }
 }
 </style>
+<style>
+/* ---- Kvíz (stejný jako u Grafů rovnoměrného pohybu a u Pohybu po kružnici) ---- */
+.kviz-task{ font-size:1.02rem; line-height:1.5; max-width:52ch; margin:0 auto 10px; color:var(--ink); text-align:center; }
+#kviz-section .kviz-task i, #kviz-section .opt-btn i, #kviz-section .feedback .steps i, #kviz-section .cat-tag i{ font-family:'STIX Two Text', Georgia, serif; font-style:italic; text-transform:none; }
+#kviz-section .feedback .steps{ font-family:'Work Sans', sans-serif; white-space:normal; opacity:1; }
+#kviz-end .kviz-end-box{ text-align:center; margin:0 0 14px; }
+#kviz-end .kviz-end-hint{ text-align:center; margin-top:10px; }
+#kviz-section [hidden]{ display:none; }
+</style>
 </head>
 <body>
 
@@ -165,10 +175,16 @@
         <p>kinematika — rychlost hmotného bodu</p>
       </div>
     </div>
+    <div class="readout" id="kviz-readout" hidden>
+      <div class="cell"><span class="label">Skóre</span><span class="value" id="kviz-stat-score">0</span></div>
+      <div class="cell"><span class="label">Série</span><span class="value" id="kviz-stat-streak">0</span></div>
+      <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="kviz-stat-accuracy">—</span></div>
+    </div>
   </div>
 
   <div class="top-tabs">
     <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+    <button class="toptab" id="top-tab-kviz" data-tab="kviz">Kvíz</button>
     <button class="toptab" id="top-tab-video" data-tab="video">Video</button>
   </div>
 
@@ -282,6 +298,47 @@
 
   </div>
 
+  <!-- ============ KVÍZ ============ -->
+  <div id="kviz-section" class="tab-section" hidden>
+    <div class="panel">
+      <div class="section-block">
+        <div class="panel-title">Okruh otázek</div>
+        <div class="row" id="kviz-type-row"></div>
+      </div>
+      <div class="settings-foot" style="justify-content:flex-end;">
+        <button class="linklike" id="kviz-reset-stats">vynulovat statistiku</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div id="kviz-q">
+      <span class="cat-tag" id="kviz-cat-tag">Otázka</span>
+      <p class="kviz-task" id="kviz-task-text"></p>
+      <div class="opt-grid wide-opts" id="kviz-opt-grid"></div>
+      <div class="actions">
+        <button class="btn primary" id="kviz-btn-check">Zkontrolovat</button>
+        <button class="btn ghost" id="kviz-btn-skip">Nevím / Zobrazit řešení</button>
+      </div>
+      <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint">Vyberte jednu ze čtyř odpovědí kliknutím nebo klávesami A až D (případně 1 až 4) a potvrďte tlačítkem Zkontrolovat nebo klávesou Enter; dalším Enterem přejdete na další otázku. Po kontrole se správná odpověď obarví zeleně, chybně vybraná červeně a pod otázkou se objeví vysvětlení. Okruh otázek vyberete nahoře; otázky se neopakují, dokud neprojdete celý okruh. Pak se zobrazí, kolik otázek jste zodpověděli správně, a otázky můžete zamíchat a projít znovu.</p>
+      </details>
+      <div class="feedback" id="kviz-feedback" hidden>
+        <div class="headline" id="kviz-feedback-headline"></div>
+        <div class="steps" id="kviz-feedback-steps"></div>
+      </div>
+      </div>
+      <div id="kviz-end" hidden>
+        <div class="feedback ok kviz-end-box"><div class="headline">Hotovo, prošli jste všechny otázky!</div></div>
+        <p class="kviz-task" id="kviz-end-text"></p>
+        <div class="actions">
+          <button class="btn primary" id="kviz-btn-restart">Zamíchat otázky a začít znovu</button>
+        </div>
+        <p class="hint kviz-end-hint">Můžete také nahoře vybrat jiný okruh otázek.</p>
+      </div>
+    </div>
+  </div>
+
   <div id="video-section" class="tab-section" hidden>
     <div class="card">
       <span class="cat-tag">Video</span>
@@ -332,6 +389,7 @@
   <footer>Fyzika — Kvinta/1. ročník</footer>
 </div>
 
+<script src="../spolecne/reseni.js?v=1"></script>
 <script src="../spolecne/spolecne.js"></script>
 <script>
 (function(){
@@ -593,6 +651,332 @@
   if(!/^[a-z0-9-]+$/.test(hash)) return;
   var btn = document.querySelector('.toptab[data-tab="' + hash + '"]');
   if(btn && !btn.classList.contains('on') && !btn.disabled) btn.click();
+})();
+</script>
+
+<script>
+(function(){
+  "use strict";
+  // ================= KVÍZ: otázky s výběrem ze čtyř odpovědí (A–D) =================
+  // Samostatný skript (stejný kvíz jako u Grafů rovnoměrného pohybu a u Pohybu po kružnici).
+  // Položka banky: c = okruh, t = zadání (HTML), r = správná odpověď, w = tři špatné,
+  // e = vysvětlení; fixed = možnosti se nemíchají, jen seřadí.
+  var LETTERS = ['A','B','C','D'];
+  var KVIZ_TYPES = [
+    { key:'all', name:'Vše' },
+    { key:'prumerna', name:'Průměrná rychlost', tag:'Průměrná rychlost' },
+    { key:'delta', name:'Rychlost na úseku', tag:'Rychlost na úseku pohybu, symbol Δ' },
+    { key:'okamzita', name:'Okamžitá rychlost', tag:'Okamžitá rychlost' },
+    { key:'bugatti', name:'Rychlostní test Bugatti', tag:'Příklad: rychlostní test Bugatti Chiron' }
+  ];
+  var KVIZ_BANK = [
+    // ----- průměrná rychlost -----
+    { c:'prumerna', t:'Jak se vypočte průměrná rychlost <i>v</i><sub>p</sub> při pohybu?',
+      r:'<i>v</i><sub>p</sub> = <i>s</i>/<i>t</i>, kde <i>s</i> je celková dráha a <i>t</i> celková doba pohybu.',
+      w:['Jako aritmetický průměr rychlostí na jednotlivých úsecích.', 'Jako největší rychlost, které těleso dosáhlo.', 'Jako rychlost na konci pohybu.'],
+      e:'Průměrná rychlost je podíl celkové dráhy a celkové doby. Aritmetický průměr rychlostí na úsecích je správný jen ve zvláštních případech (stejné doby).' },
+    { c:'prumerna', t:'Co říká průměrná rychlost o pohybu?',
+      r:'Vztahuje se na celý pohyb a neříká nic o tom, jak rychle se těleso pohybovalo v jednotlivých okamžicích.',
+      w:['Udává rychlost v každém okamžiku pohybu.', 'Udává největší rychlost při pohybu.', 'Udává rychlost tělesa na začátku pohybu.'],
+      e:'Průměrná rychlost shrnuje celý pohyb do jednoho čísla. Rychlost v daném okamžiku popisuje okamžitá rychlost.' },
+    { c:'prumerna', t:'Auto ujede 150&nbsp;km za 2&nbsp;h (včetně zastávek). Jaká je jeho průměrná rychlost?',
+      r:'75&nbsp;km·h⁻¹',
+      w:['300&nbsp;km·h⁻¹', '148&nbsp;km·h⁻¹', '0,013&nbsp;km·h⁻¹'],
+      e:'<i>v</i><sub>p</sub> = <i>s</i>/<i>t</i> = 150&nbsp;km / 2&nbsp;h = 75&nbsp;km·h⁻¹. Kontrola: 75&nbsp;km·h⁻¹ · 2&nbsp;h = 150&nbsp;km. Hodnota 300 vznikne násobením místo dělením.' },
+    { c:'prumerna', t:'Cyklista ujede 12&nbsp;km za 40&nbsp;min. Jaká je jeho průměrná rychlost?',
+      r:'18&nbsp;km·h⁻¹ (5&nbsp;m·s⁻¹)',
+      w:['0,3&nbsp;km·h⁻¹', '30&nbsp;km·h⁻¹', '480&nbsp;km·h⁻¹'],
+      e:'40&nbsp;min = 2/3&nbsp;h a <i>v</i><sub>p</sub> = 12/(2/3)&nbsp;km·h⁻¹ = 18&nbsp;km·h⁻¹ = 18/3,6&nbsp;m·s⁻¹ = 5&nbsp;m·s⁻¹. Hodnota 0,3 je podíl 12/40 v km·min⁻¹ (bez převodu času), 30 vznikne dělením 12/0,4.' },
+    { c:'prumerna', t:'Auto stálo 9&nbsp;h a pak 1&nbsp;h jelo rychlostí 50&nbsp;km·h⁻¹. Jaká je průměrná rychlost za celých 10&nbsp;h?',
+      r:'5&nbsp;km·h⁻¹',
+      w:['25&nbsp;km·h⁻¹', '50&nbsp;km·h⁻¹', '10&nbsp;km·h⁻¹'],
+      e:'Dráha je 50&nbsp;km a celková doba 10&nbsp;h, takže <i>v</i><sub>p</sub> = 50/10&nbsp;km·h⁻¹ = 5&nbsp;km·h⁻¹. Aritmetický průměr rychlostí 0 a 50 (25&nbsp;km·h⁻¹) je chybný: musíme sečíst zvlášť dráhy a zvlášť doby.' },
+    { c:'prumerna', t:'Vlak ujel první polovinu trati 120&nbsp;km rychlostí 40&nbsp;km·h⁻¹ a druhou polovinu 120&nbsp;km rychlostí 60&nbsp;km·h⁻¹. Jaká je průměrná rychlost na celé trati?',
+      r:'48&nbsp;km·h⁻¹',
+      w:['50&nbsp;km·h⁻¹', '100&nbsp;km·h⁻¹', '24&nbsp;km·h⁻¹'],
+      e:'Doby: 120/40 = 3&nbsp;h a 120/60 = 2&nbsp;h, celkem 5&nbsp;h; dráha 240&nbsp;km, <i>v</i><sub>p</sub> = 240/5 = 48&nbsp;km·h⁻¹. Kontrola: průměr (40 + 60)/2 = 50&nbsp;km·h⁻¹ je chybný, protože vlak jel pomaleji delší dobu.' },
+    { c:'prumerna', t:'Sprinter uběhne 100&nbsp;m za 10,0&nbsp;s. Jaká je jeho průměrná rychlost v km·h⁻¹?',
+      r:'36&nbsp;km·h⁻¹',
+      w:['10&nbsp;km·h⁻¹', '360&nbsp;km·h⁻¹', '2,8&nbsp;km·h⁻¹'],
+      e:'<i>v</i><sub>p</sub> = 100/10&nbsp;m·s⁻¹ = 10&nbsp;m·s⁻¹ = 10 · 3,6&nbsp;km·h⁻¹ = 36&nbsp;km·h⁻¹. Hodnota 2,8 vznikne dělením 10/3,6.' },
+    { c:'prumerna', t:'Jak se převádí rychlost z m·s⁻¹ na km·h⁻¹?',
+      r:'Násobí se 3,6.',
+      w:['Dělí se 3,6.', 'Násobí se 60.', 'Násobí se 1&nbsp;000.'],
+      e:'1&nbsp;m·s⁻¹ = 3,6&nbsp;km·h⁻¹, protože 1&nbsp;m = 1/1&nbsp;000&nbsp;km a 1&nbsp;s = 1/3&nbsp;600&nbsp;h. Opačný převod se dělí 3,6.' },
+    // ----- rychlost na úseku -----
+    { c:'delta', t:'Co znamená symbol Δ před veličinou, například Δ<i>t</i>?',
+      r:'Změnu veličiny: koncová hodnota minus počáteční hodnota.',
+      w:['Počáteční hodnotu veličiny.', 'Součet všech hodnot veličiny.', 'Podíl koncové a počáteční hodnoty.'],
+      e:'Δ vždy značí změnu veličiny a počítá se jako koncová hodnota mínus počáteční. Například Δ<i>t</i> = <i>t</i><sub>2</sub> − <i>t</i><sub>1</sub>.' },
+    { c:'delta', t:'Co říká znaménko změny Δ<i>x</i>?',
+      r:'Trend: Δ<i>x</i> &gt; 0 znamená růst, Δ<i>x</i> &lt; 0 pokles.',
+      w:['Znaménko nemá žádný význam.', 'Δ<i>x</i> &lt; 0 znamená, že měření bylo chybné.', 'Δ<i>x</i> &gt; 0 znamená pokles.'],
+      e:'Je-li koncová hodnota větší než počáteční, je změna kladná (růst), je-li menší, je záporná (pokles).' },
+    { c:'delta', t:'Jak se vypočte rychlost na vybraném úseku pohybu?',
+      r:'<i>v</i> = Δ<i>s</i>/Δ<i>t</i>',
+      w:['<i>v</i> = Δ<i>t</i>/Δ<i>s</i>', '<i>v</i> = Δ<i>s</i> · Δ<i>t</i>', '<i>v</i> = Δ<i>s</i> + Δ<i>t</i>'],
+      e:'Rychlost na úseku je podíl změny dráhy a změny času na tomto úseku. Jednotkou je metr za sekundu, tedy m·s⁻¹.' },
+    { c:'delta', t:'Trajektorie je složena ze dvou úseků: dráhy Δ<i>s</i><sub>1</sub> a Δ<i>s</i><sub>2</sub> jsou ujety v dobách Δ<i>t</i><sub>1</sub> a Δ<i>t</i><sub>2</sub>. Jak určíme průměrnou rychlost na celé trajektorii?',
+      r:'<i>v</i><sub>p</sub> = (Δ<i>s</i><sub>1</sub> + Δ<i>s</i><sub>2</sub>)/(Δ<i>t</i><sub>1</sub> + Δ<i>t</i><sub>2</sub>)',
+      w:['<i>v</i><sub>p</sub> = (<i>v</i><sub>1</sub> + <i>v</i><sub>2</sub>)/2', '<i>v</i><sub>p</sub> = Δ<i>s</i><sub>1</sub>/Δ<i>t</i><sub>2</sub> + Δ<i>s</i><sub>2</sub>/Δ<i>t</i><sub>1</sub>', '<i>v</i><sub>p</sub> = <i>v</i><sub>1</sub> · <i>v</i><sub>2</sub>'],
+      e:'Nelze jen zprůměrovat rychlosti jednotlivých úseků. Je třeba sečíst zvlášť všechny dráhy a zvlášť všechny doby.' },
+    { c:'delta', t:'Auto bylo v čase 8,0&nbsp;s v dráze 250&nbsp;m od startu a v čase 12,0&nbsp;s v dráze 570&nbsp;m. Jaká je jeho rychlost na tomto úseku?',
+      r:'80&nbsp;m·s⁻¹ (288&nbsp;km·h⁻¹)',
+      w:['47,5&nbsp;m·s⁻¹', '0,0125&nbsp;m·s⁻¹', '820&nbsp;m·s⁻¹'],
+      e:'Δ<i>s</i> = 570 − 250 = 320&nbsp;m, Δ<i>t</i> = 12,0 − 8,0 = 4,0&nbsp;s, <i>v</i> = 320/4,0&nbsp;m·s⁻¹ = 80&nbsp;m·s⁻¹ = 288&nbsp;km·h⁻¹. Hodnota 47,5 je podíl celkových hodnot 570/12.' },
+    // ----- okamžitá rychlost -----
+    { c:'okamzita', t:'Co je okamžitá rychlost?',
+      r:'Rychlost tělesa v daném časovém bodě; získáme ji pro velmi krátký časový interval Δ<i>t</i>.',
+      w:['Rychlost na celém úseku pohybu.', 'Největší rychlost při pohybu.', 'Rychlost, kterou těleso má na začátku.'],
+      e:'Čím kratší interval Δ<i>t</i> zvolíme, tím přesněji <i>v</i> = Δ<i>s</i>/Δ<i>t</i> vystihuje rychlost v daném okamžiku. V limitě pro Δ<i>t</i> → 0 dostaneme okamžitou rychlost.' },
+    { c:'okamzita', t:'Co u auta ukazuje tachometr?',
+      r:'Okamžitou rychlost.',
+      w:['Průměrnou rychlost od začátku jízdy.', 'Největší dosaženou rychlost.', 'Rychlost vůči Zemi na konci cesty.'],
+      e:'Tachometr udává rychlost auta v každém okamžiku, tedy okamžitou rychlost.' },
+    { c:'okamzita', t:'Jaký pohyb nazýváme rovnoměrný?',
+      r:'Takový, při kterém se velikost okamžité rychlosti nemění.',
+      w:['Takový, při kterém se mění směr rychlosti.', 'Takový, při kterém je dráha stálá.', 'Takový, při kterém je průměrná rychlost nulová.'],
+      e:'Při rovnoměrném pohybu je velikost okamžité rychlosti stálá. Mění-li se, jde o pohyb nerovnoměrný.' },
+    { c:'okamzita', t:'Jaký směr má vektor okamžité rychlosti na zakřivené trajektorii?',
+      r:'Leží v tečně k trajektorii a míří ve směru pohybu.',
+      w:['Míří do středu zakřivení.', 'Míří kolmo na trajektorii.', 'Míří proti směru pohybu.'],
+      e:'Okamžitá rychlost je vektor. V každém bodě trajektorie leží v tečně a míří ve směru pohybu. Při pohybu po křivce se proto její směr mění, i když se velikost měnit nemusí.' },
+    { c:'okamzita', t:'Auto projíždí zatáčku stálou velikostí rychlosti. Mění se vektor jeho rychlosti?',
+      r:'Ano, mění se jeho směr.',
+      w:['Ne, rychlost je stálá.', 'Ano, mění se jeho velikost.', 'Ne, protože se pohybuje rovnoměrně.'],
+      e:'Rychlost je vektor: mění-li se směr, mění se vektor, i když velikost zůstává. Proto při pohybu po zakřivené trajektorii nemůže být vektor rychlosti stálý.' },
+    { c:'okamzita', t:'Jaký je rozdíl mezi průměrnou a okamžitou rychlostí?',
+      r:'Průměrná shrnuje celý úsek do jednoho čísla, okamžitá popisuje pohyb v konkrétním okamžiku.',
+      w:['Průměrná je vždy menší než okamžitá.', 'Okamžitá se vždy rovná průměrné.', 'Okamžitá se měří jen v m·s⁻¹.'],
+      e:'Obě se mohou lišit. Auto, které se rozjíždí, má v prvním úseku malou průměrnou rychlost, ale na konci úseku už velkou okamžitou.' },
+    // ----- Bugatti -----
+    { c:'bugatti', t:'Při rychlostním testu auta Bugatti Chiron bylo v čase 30,2&nbsp;s ujeto 2&nbsp;049&nbsp;m. Jaká je průměrná rychlost za celou dobu?',
+      r:'Přibližně 244&nbsp;km·h⁻¹',
+      w:['Přibližně 68&nbsp;km·h⁻¹', 'Přibližně 409&nbsp;km·h⁻¹', 'Přibližně 121&nbsp;km·h⁻¹'],
+      e:'<i>v</i><sub>p</sub> = 2&nbsp;049/30,2&nbsp;m·s⁻¹ ≈ 67,8&nbsp;m·s⁻¹ ≈ 67,8 · 3,6&nbsp;km·h⁻¹ ≈ 244&nbsp;km·h⁻¹. Hodnota 68 je výsledek v m·s⁻¹ bez převodu, 409 je tachometr ve 21,5. s.' },
+    { c:'bugatti', t:'V prvním úseku (0&nbsp;s až 4&nbsp;s) Bugatti ujelo 37&nbsp;m. Jaká je průměrná rychlost v tomto úseku?',
+      r:'Přibližně 9,25&nbsp;m·s⁻¹ (33&nbsp;km·h⁻¹)',
+      w:['Přibližně 101&nbsp;km·h⁻¹', 'Přibližně 148&nbsp;m·s⁻¹', 'Přibližně 0,11&nbsp;m·s⁻¹'],
+      e:'<i>v</i> = Δ<i>s</i>/Δ<i>t</i> = 37/4&nbsp;m·s⁻¹ = 9,25&nbsp;m·s⁻¹ ≈ 33&nbsp;km·h⁻¹. Hodnota 101&nbsp;km·h⁻¹ je okamžitá rychlost v 4.&nbsp;s podle tachometru.' },
+    { c:'bugatti', t:'Tachometr ukazuje ve 4.&nbsp;s rychlost 101&nbsp;km·h⁻¹, ale průměrná rychlost v 1.&nbsp;úseku je jen přibližně 33&nbsp;km·h⁻¹. Proč?',
+      r:'Auto se z klidu rozjíždí, takže okamžitá rychlost na konci úseku je mnohem větší než průměrná v celém úseku.',
+      w:['Tachometr měří nepřesně.', 'Průměrná rychlost se počítá z jiné dráhy.', 'Okamžitá rychlost je vždy 3krát větší než průměrná.'],
+      e:'Na začátku úseku je auto v klidu a rychlost postupně narůstá. Průměrná hodnota za celý úsek je proto výrazně menší než okamžitá rychlost na jeho konci.' },
+    { c:'bugatti', t:'Podle tabulky bylo v čase 8,2&nbsp;s ujeto 249&nbsp;m a v čase 12,1&nbsp;s ujeto 559&nbsp;m. Jaká je rychlost na tomto úseku?',
+      r:'Přibližně 79,5&nbsp;m·s⁻¹ (přibližně 286&nbsp;km·h⁻¹)',
+      w:['Přibližně 46&nbsp;m·s⁻¹ (přibližně 166&nbsp;km·h⁻¹)', 'Přibližně 310&nbsp;m·s⁻¹', 'Přibližně 0,0126&nbsp;m·s⁻¹'],
+      e:'Δ<i>s</i> = 559 − 249 = 310&nbsp;m, Δ<i>t</i> = 12,1 − 8,2 = 3,9&nbsp;s, <i>v</i> = 310/3,9&nbsp;m·s⁻¹ ≈ 79,5&nbsp;m·s⁻¹ ≈ 286&nbsp;km·h⁻¹. Hodnota 46 je podíl celkových hodnot 559/12,1.' },
+    { c:'bugatti', t:'V tabulce rychlostního testu je v čase 24&nbsp;s rychlost 284&nbsp;km·h⁻¹, ale v čase 21,5&nbsp;s byla 409&nbsp;km·h⁻¹. Co to znamená?',
+      r:'Auto po dosažení největší rychlosti zpomalovalo.',
+      w:['Chyba měření.', 'Auto zrychlovalo stále víc.', 'Tachometr se mezitím zastavil.'],
+      e:'Okamžitá rychlost klesla z 409 na 284&nbsp;km·h⁻¹, auto tedy po dosažení maxima brzdilo. Pohyb nebyl rovnoměrný.' }
+  ];
+
+
+  var KVIZ_KEY = 'fyzika:prumerna-okamzita-rychlost:kviz';
+  var section = document.getElementById('kviz-section');
+  var tabBtn = document.getElementById('top-tab-kviz');
+  var readout = document.getElementById('kviz-readout');
+  var pageReadout = document.getElementById('header-readout');
+  var kviz = {
+    type:'all', queue:[], current:null, sel:null, locked:false,
+    score:0, streak:0, bestStreak:0, answered:0, correct:0,
+    inRound:false, ended:false, roundTotal:0, roundCorrect:0
+  };
+  function $(id){ return document.getElementById(id); }
+  function kvizLoad(){
+    try{ var raw = localStorage.getItem(KVIZ_KEY); if(raw){ kviz.bestStreak = JSON.parse(raw).bestStreak || 0; } }catch(e){}
+  }
+  function kvizSave(){
+    try{ localStorage.setItem(KVIZ_KEY, JSON.stringify({bestStreak: kviz.bestStreak})); }catch(e){}
+  }
+  function kvizShuffled(a){
+    a = a.slice();
+    for(var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random()*(i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; }
+    return a;
+  }
+  function typeOf(key){ return KVIZ_TYPES.filter(function(t){ return t.key === key; })[0]; }
+
+  // Otázky okruhu se berou v náhodném pořadí bez opakování. Po projití celého okruhu
+  // se zobrazí závěrečná hláška s výsledkem kola a nabídkou otázky zamíchat znovu.
+  function kvizNext(){
+    if(!kviz.queue.length){
+      if(kviz.inRound){ kvizShowEnd(); return; }
+      var pool = KVIZ_BANK.filter(function(b){ return kviz.type === 'all' || b.c === kviz.type; });
+      kviz.queue = kvizShuffled(pool);
+      if(kviz.current && kviz.queue.length > 1 && kviz.queue[0] === kviz.current.item){ kviz.queue.push(kviz.queue.shift()); }
+      kviz.inRound = true; kviz.roundTotal = pool.length; kviz.roundCorrect = 0;
+    }
+    var item = kviz.queue.shift();
+    var opts = item.fixed ? [item.r].concat(item.w).sort() : kvizShuffled([item.r].concat(item.w));
+    kviz.current = { item:item, choices:opts, correct:opts.indexOf(item.r) };
+    kvizRender();
+  }
+  function kvizShowEnd(){
+    kviz.ended = true; kviz.inRound = false;
+    var tp = typeOf(kviz.type);
+    var n = kviz.roundTotal, k = kviz.roundCorrect;
+    $('kviz-end-text').innerHTML =
+      'Prošli jste všech ' + n + ' otázek ' + (kviz.type === 'all' ? 'kvízu' : 'okruhu „' + tp.name + '“') + '. ' +
+      'Správně jste odpověděli na ' + k + ' z ' + n + ' (' + Math.round(100*k/n) + '&nbsp;%). Chcete otázky zamíchat a projít znovu?';
+    $('kviz-q').hidden = true;
+    $('kviz-end').hidden = false;
+    $('kviz-btn-restart').focus({ preventScroll:true });
+  }
+  function kvizRestart(){
+    kviz.queue = []; kviz.inRound = false;
+    kvizNext();
+  }
+  function kvizRender(){
+    var q = kviz.current;
+    kviz.ended = false;
+    $('kviz-q').hidden = false;
+    $('kviz-end').hidden = true;
+    var tp = typeOf(q.item.c);
+    $('kviz-cat-tag').innerHTML = tp ? tp.tag : 'Otázka';
+    $('kviz-task-text').innerHTML = q.item.t;
+    var grid = $('kviz-opt-grid');
+    grid.innerHTML = '';
+    kviz.sel = null; kviz.locked = false;
+    q.choices.forEach(function(c, i){
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'opt-btn';
+      b.innerHTML = '<b>' + LETTERS[i] + ')</b>&nbsp; ' + c;
+      b.addEventListener('click', function(){ kvizSelect(i); });
+      grid.appendChild(b);
+    });
+    var fb = $('kviz-feedback');
+    fb.hidden = true; fb.classList.remove('ok', 'bad', 'sol');
+    $('kviz-btn-check').textContent = 'Zkontrolovat';
+  }
+  function kvizSelect(i){
+    if(kviz.locked || kviz.ended) return;
+    kviz.sel = i;
+    Array.prototype.forEach.call($('kviz-opt-grid').children, function(el, j){ el.classList.toggle('selected', j === i); });
+    $('kviz-btn-check').focus({ preventScroll:true });
+  }
+  function kvizFinish(ok, headline){
+    var q = kviz.current;
+    Array.prototype.forEach.call($('kviz-opt-grid').children, function(el, j){
+      el.disabled = true;
+      el.classList.remove('selected');
+      if(j === q.correct) el.classList.add(kviz.sel === j ? 'correct' : 'missed');
+      else if(j === kviz.sel) el.classList.add('wrong');
+    });
+    var fb = $('kviz-feedback');
+    fb.hidden = false;
+    fb.classList.toggle('ok', ok); fb.classList.toggle('bad', !ok);
+    $('kviz-feedback-headline').textContent = headline;
+    var finalText = 'Správná odpověď: ' + LETTERS[q.correct] + ') ' + q.item.r;
+    if(window.FyzikaReseni && FyzikaReseni.show){
+      FyzikaReseni.show(fb, $('kviz-feedback-steps'), { raw:true, title:'Vysvětlení', steps:[q.item.e], final:finalText });
+    } else {
+      $('kviz-feedback-steps').innerHTML = q.item.e + '<br><b>' + finalText + '</b>';
+    }
+    kviz.locked = true;
+    var btn = $('kviz-btn-check');
+    btn.textContent = 'Další otázka →';
+    btn.focus({ preventScroll:true });
+    kvizStats();
+  }
+  function kvizCheck(){
+    if(kviz.ended){ kvizRestart(); return; }
+    if(kviz.locked){ kvizNext(); return; }
+    if(kviz.sel === null && !confirm('Není vybraná žádná možnost. Opravdu chcete zkontrolovat?')) return;
+    var ok = kviz.sel === kviz.current.correct;
+    kviz.answered++;
+    if(ok){
+      kviz.score += 10; kviz.streak++; kviz.correct++; kviz.roundCorrect++;
+      if(kviz.streak > kviz.bestStreak){ kviz.bestStreak = kviz.streak; kvizSave(); }
+    } else {
+      kviz.streak = 0;
+    }
+    kvizFinish(ok, ok ? 'Správně!' : (kviz.sel === null ? 'Vyberte odpověď.' : 'Bohužel špatně.'));
+  }
+  function kvizSkip(){
+    if(kviz.ended){ kvizRestart(); return; }
+    if(kviz.locked){ kvizNext(); return; }
+    kviz.streak = 0; kviz.answered++;
+    kvizFinish(false, 'Správná odpověď:');
+  }
+  function kvizStats(){
+    $('kviz-stat-score').textContent = kviz.score;
+    $('kviz-stat-streak').textContent = kviz.streak + (kviz.bestStreak > 0 ? ' / ' + kviz.bestStreak : '');
+    $('kviz-stat-accuracy').textContent = kviz.answered === 0 ? '—' : Math.round(100*kviz.correct/kviz.answered) + ' %';
+  }
+  (function kvizBuildTypeRow(){
+    var row = $('kviz-type-row');
+    KVIZ_TYPES.forEach(function(d){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip accented' + (d.key === kviz.type ? ' on' : '');
+      b.setAttribute('aria-pressed', d.key === kviz.type ? 'true' : 'false');
+      b.textContent = d.name;
+      b.addEventListener('click', function(){
+        if(d.key === kviz.type) return;
+        // rozpracovaná otázka s vybranou odpovědí se před změnou okruhu vyhodnotí
+        var settled = !kviz.locked && kviz.sel !== null;
+        if(settled) kvizCheck();
+        kviz.type = d.key; kviz.queue = []; kviz.inRound = false;
+        Array.prototype.forEach.call(row.children, function(el, i){
+          var on = KVIZ_TYPES[i].key === kviz.type;
+          el.classList.toggle('on', on);
+          el.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        // vyhodnocená otázka zůstane i s vysvětlením vidět, další už bude z nového okruhu
+        if(!settled) kvizNext();
+      });
+      row.appendChild(b);
+    });
+  })();
+  $('kviz-btn-check').addEventListener('click', kvizCheck);
+  $('kviz-btn-skip').addEventListener('click', kvizSkip);
+  $('kviz-btn-restart').addEventListener('click', kvizRestart);
+  $('kviz-reset-stats').addEventListener('click', function(){
+    kviz.score = 0; kviz.streak = 0; kviz.answered = 0; kviz.correct = 0; kviz.bestStreak = 0;
+    try{ localStorage.removeItem(KVIZ_KEY); }catch(e){}
+    kvizStats();
+  });
+  // Klávesnice v kvízu: A–D nebo 1–4 vybere odpověď, Enter zkontroluje / posune dál.
+  document.addEventListener('keydown', function(e){
+    if(section.hidden) return;
+    if(e.ctrlKey || e.metaKey || e.altKey) return;
+    if(e.key === 'Enter'){
+      if(e.target && e.target.tagName === 'BUTTON') return;
+      e.preventDefault(); kvizCheck(); return;
+    }
+    var idx = 'abcd'.indexOf(e.key.toLowerCase());
+    if(idx === -1) idx = '1234'.indexOf(e.key);
+    if(idx !== -1 && e.key.length === 1) kvizSelect(idx);
+  });
+
+  // ---- záložka Kvíz ----
+  // Skript je samostatný: otevření Kvízu i návrat na ostatní záložky řeší sám, ať stránka přepíná
+  // záložky jakkoli. Skóre kvízu má vlastní pole v hlavičce (skóre tréninku se tím nemění).
+  function activate(){
+    var teorieBtn = $('top-tab-teorie'), theory = $('theory-section');
+    if(!tabBtn.classList.contains('on') && teorieBtn && !teorieBtn.classList.contains('on')){
+      // nejdřív „kliknutím“ opustíme dosavadní záložku obsluhou stránky (u hry na čas s potvrzením)
+      teorieBtn.click();
+      if(theory && theory.hidden) return;   // stránka odmítla opustit dosavadní záložku (např. běžící hra)
+    }
+    Array.prototype.forEach.call(document.querySelectorAll('.tab-section'), function(s){ s.hidden = s !== section; });
+    Array.prototype.forEach.call(document.querySelectorAll('.toptab'), function(t){ t.classList.toggle('on', t === tabBtn); });
+    if(pageReadout) pageReadout.hidden = true;
+    readout.hidden = false;
+    kvizStats();
+    if(!kviz.current) kvizNext();
+  }
+  tabBtn.addEventListener('click', activate);
+  Array.prototype.forEach.call(document.querySelectorAll('.toptab'), function(t){
+    if(t === tabBtn) return;
+    t.addEventListener('click', function(){ section.hidden = true; readout.hidden = true; tabBtn.classList.remove('on'); });
+  });
+  document.addEventListener('fyzika:scores-updated', function(){ kviz.bestStreak = 0; kvizLoad(); kvizStats(); });
+  kvizLoad();
+  kvizStats();
+  if(location.hash === '#kviz' && !tabBtn.classList.contains('on')) tabBtn.click();
+  else if(location.hash === '#kviz') activate();
 })();
 </script>
 

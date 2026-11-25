@@ -94,6 +94,20 @@
 @keyframes pulse{ 0%,100%{ opacity:1; } 50%{ opacity:0.6; } }
 
 </style>
+<style>
+/* ---- Kvíz (stejný jako u Grafů rovnoměrného pohybu a u Pohybu po kružnici) ---- */
+.kviz-task{ font-size:1.02rem; line-height:1.5; max-width:52ch; margin:0 auto 10px; color:var(--ink); text-align:center; }
+#kviz-section .kviz-task i, #kviz-section .opt-btn i, #kviz-section .feedback .steps i, #kviz-section .cat-tag i{ font-family:'STIX Two Text', Georgia, serif; font-style:italic; text-transform:none; }
+#kviz-section .feedback .steps{ font-family:'Work Sans', sans-serif; white-space:normal; opacity:1; }
+#kviz-end .kviz-end-box{ text-align:center; margin:0 0 14px; }
+#kviz-end .kviz-end-hint{ text-align:center; margin-top:10px; }
+#kviz-section [hidden]{ display:none; }
+@media (max-width:520px){
+  /* čtyři a více záložek: na telefonu ve dvou řadách (stejně jako Grafy rovnoměrného pohybu) */
+  .top-tabs{ flex-wrap:wrap; }
+  .toptab{ flex:1 1 calc(50% - 4px); padding:13px 8px; }
+}
+</style>
 </head>
 <body>
 
@@ -123,10 +137,16 @@
       <div class="cell"><span class="label">Série</span><span class="value" id="stat-streak">0</span></div>
       <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="stat-accuracy">—</span></div>
     </div>
+    <div class="readout" id="kviz-readout" hidden>
+      <div class="cell"><span class="label">Skóre</span><span class="value" id="kviz-stat-score">0</span></div>
+      <div class="cell"><span class="label">Série</span><span class="value" id="kviz-stat-streak">0</span></div>
+      <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="kviz-stat-accuracy">—</span></div>
+    </div>
   </div>
 
   <div class="top-tabs">
     <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+    <button class="toptab" id="top-tab-kviz" data-tab="kviz">Kvíz</button>
     <button class="toptab" id="top-tab-trenink" data-tab="trenink">Trénink</button>
     <button class="toptab" id="top-tab-hra" data-tab="hra">Hra na čas</button>
   </div>
@@ -230,6 +250,47 @@
       </div>
     </div>
 
+  </div>
+
+  <!-- ============ KVÍZ ============ -->
+  <div id="kviz-section" class="tab-section" hidden>
+    <div class="panel">
+      <div class="section-block">
+        <div class="panel-title">Okruh otázek</div>
+        <div class="row" id="kviz-type-row"></div>
+      </div>
+      <div class="settings-foot" style="justify-content:flex-end;">
+        <button class="linklike" id="kviz-reset-stats">vynulovat statistiku</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div id="kviz-q">
+      <span class="cat-tag" id="kviz-cat-tag">Otázka</span>
+      <p class="kviz-task" id="kviz-task-text"></p>
+      <div class="opt-grid wide-opts" id="kviz-opt-grid"></div>
+      <div class="actions">
+        <button class="btn primary" id="kviz-btn-check">Zkontrolovat</button>
+        <button class="btn ghost" id="kviz-btn-skip">Nevím / Zobrazit řešení</button>
+      </div>
+      <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint">Vyberte jednu ze čtyř odpovědí kliknutím nebo klávesami A až D (případně 1 až 4) a potvrďte tlačítkem Zkontrolovat nebo klávesou Enter; dalším Enterem přejdete na další otázku. Po kontrole se správná odpověď obarví zeleně, chybně vybraná červeně a pod otázkou se objeví vysvětlení. Okruh otázek vyberete nahoře; otázky se neopakují, dokud neprojdete celý okruh. Pak se zobrazí, kolik otázek jste zodpověděli správně, a otázky můžete zamíchat a projít znovu.</p>
+      </details>
+      <div class="feedback" id="kviz-feedback" hidden>
+        <div class="headline" id="kviz-feedback-headline"></div>
+        <div class="steps" id="kviz-feedback-steps"></div>
+      </div>
+      </div>
+      <div id="kviz-end" hidden>
+        <div class="feedback ok kviz-end-box"><div class="headline">Hotovo, prošli jste všechny otázky!</div></div>
+        <p class="kviz-task" id="kviz-end-text"></p>
+        <div class="actions">
+          <button class="btn primary" id="kviz-btn-restart">Zamíchat otázky a začít znovu</button>
+        </div>
+        <p class="hint kviz-end-hint">Můžete také nahoře vybrat jiný okruh otázek.</p>
+      </div>
+    </div>
   </div>
 
   <div id="trenink-section" class="tab-section" hidden>
@@ -1490,6 +1551,348 @@
   if(!/^[a-z0-9-]+$/.test(hash)) return;
   var btn = document.querySelector('.toptab[data-tab="' + hash + '"]');
   if(btn && !btn.classList.contains('on') && !btn.disabled) btn.click();
+})();
+</script>
+
+<script>
+(function(){
+  "use strict";
+  // ================= KVÍZ: otázky s výběrem ze čtyř odpovědí (A–D) =================
+  // Samostatný skript (stejný kvíz jako u Grafů rovnoměrného pohybu a u Pohybu po kružnici).
+  // Položka banky: c = okruh, t = zadání (HTML), r = správná odpověď, w = tři špatné,
+  // e = vysvětlení; fixed = možnosti se nemíchají, jen seřadí.
+  var LETTERS = ['A','B','C','D'];
+  var KVIZ_TYPES = [
+    { key:'all', name:'Vše' },
+    { key:'veliciny', name:'Fyzikální veličina a jednotka', tag:'Fyzikální veličina a jednotka' },
+    { key:'si', name:'Soustava SI', tag:'Základní a odvozené jednotky SI' },
+    { key:'predpony', name:'Předpony', tag:'Násobky a díly jednotek' },
+    { key:'prevody', name:'Převody jednotek', tag:'Převody jednotek' }
+  ];
+  var KVIZ_BANK = [
+    // ----- fyzikální veličina a jednotka -----
+    { c:'veliciny', t:'Co je fyzikální veličina?',
+      r:'Vlastnost, stav nebo změna tělesa či pole, kterou lze měřit.',
+      w:['Číselná hodnota získaná měřením.', 'Smluvená značka pro měřicí jednotku.', 'Přístroj, kterým se měří.'],
+      e:'Příkladem veličin jsou hmotnost, délka, čas, teplota, rychlost, síla nebo elektrický náboj. Číselná hodnota je jen část zápisu hodnoty veličiny a jednotka je smluvená hodnota téhož druhu, s níž měřenou veličinu porovnáváme.' },
+    { c:'veliciny', t:'Jak se skládá hodnota fyzikální veličiny <i>X</i>?',
+      r:'<i>X</i> = {<i>X</i>}·[<i>X</i>], tedy z číselné hodnoty a měřicí jednotky.',
+      w:['<i>X</i> = {<i>X</i>} + [<i>X</i>].', '<i>X</i> = {<i>X</i>}/[<i>X</i>].', '<i>X</i> je jen číslo, jednotka se píše volitelně.'],
+      e:'Hodnota veličiny je součin číselné hodnoty {<i>X</i>} (kolikrát je veličina větší než jednotka) a jednotky [<i>X</i>]. Proto číselnou hodnotu vždy uvádíme spolu s jednotkou.' },
+    { c:'veliciny', t:'Pro objem <i>V</i> = 25&nbsp;cm³ určete číselnou hodnotu a jednotku.',
+      r:'{<i>V</i>} = 25, [<i>V</i>] = cm³',
+      w:['{<i>V</i>} = 25&nbsp;cm³, [<i>V</i>] = 25', '{<i>V</i>} = cm³, [<i>V</i>] = 25', '{<i>V</i>} = 25&nbsp;cm, [<i>V</i>] = cm²'],
+      e:'Číselná hodnota {<i>V</i>} je čistě číslo 25 a [<i>V</i>] = cm³ je měřicí jednotka. Dohromady <i>V</i> = 25&nbsp;cm³.' },
+    { c:'veliciny', t:'Délka tyče je 0,50&nbsp;m = 50&nbsp;cm = 500&nbsp;mm. Co se při změně jednotky mění?',
+      r:'Jen číselná hodnota, velikost veličiny zůstává stejná.',
+      w:['Velikost veličiny (tyč se zkrátí).', 'Jen jednotka, číselná hodnota zůstává.', 'Obojí se mění, ale nezávisle.'],
+      e:'Tutéž hodnotu veličiny lze vyjádřit v různých jednotkách. Mění se číselná hodnota, ale tyč je pořád stejně dlouhá.' },
+    { c:'veliciny', t:'Které značky patří k veličinám <i>hmotnost</i>, <i>délka</i> a <i>rychlost</i>?',
+      r:'<i>m</i>, <i>l</i>, <i>v</i>',
+      w:['kg, m, s', '<i>m</i>, <i>s</i>, <i>t</i>', 'g, cm, h'],
+      e:'Veličiny značíme kurzívou (<i>m</i> hmotnost, <i>l</i> délka, <i>v</i> rychlost), jednotky vzpřímeně (kg, m, m·s⁻¹). Značka kg není veličina, ale jednotka.' },
+    // ----- soustava SI -----
+    { c:'si', t:'Kolik základních jednotek má Mezinárodní soustava jednotek SI?',
+      r:'Sedm.',
+      w:['Pět.', 'Deset.', 'Dvanáct.'],
+      e:'Soustava SI, přijatá roku 1960, má sedm základních jednotek: metr, kilogram, sekundu, ampér, kelvin, mol a kandelu.' },
+    { c:'si', t:'Která z následujících jednotek je základní jednotkou SI?',
+      r:'kilogram',
+      w:['newton', 'litr', 'gram'],
+      e:'Základní jednotkou hmotnosti je kilogram (kg), ne gram. Newton je odvozená jednotka (kg·m·s⁻²) a litr je jednotka mimo SI.' },
+    { c:'si', t:'Jaká je základní jednotka termodynamické teploty?',
+      r:'kelvin (K)',
+      w:['stupeň Celsia (°C)', 'joule (J)', 'kandela (cd)'],
+      e:'Termodynamická teplota <i>T</i> se měří v kelvinech. Kandela je jednotka svítivosti a joule jednotka energie.' },
+    { c:'si', t:'Jaká je základní jednotka látkového množství?',
+      r:'mol',
+      w:['ampér', 'kilogram', 'kandela'],
+      e:'Látkové množství <i>n</i> se měří v molech. Ampér je jednotka elektrického proudu.' },
+    { c:'si', t:'Kterou jednotku má elektrický proud <i>I</i>?',
+      r:'ampér (A)',
+      w:['volt (V)', 'coulomb (C)', 'watt (W)'],
+      e:'Elektrický proud je základní veličina a jeho jednotkou je ampér. Volt, coulomb a watt jsou odvozené jednotky.' },
+    { c:'si', t:'Jednotka síly newton se skládá ze základních jednotek takto:',
+      r:'1&nbsp;N = 1&nbsp;kg·m·s⁻²',
+      w:['1&nbsp;N = 1&nbsp;kg·m·s⁻¹', '1&nbsp;N = 1&nbsp;kg·m²·s⁻²', '1&nbsp;N = 1&nbsp;kg·s⁻²'],
+      e:'Síla je veličina odvozená z <i>F</i> = <i>ma</i>. Její jednotka je kg·m·s⁻². Rozměr kg·m²·s⁻² patří energii (joule).' },
+    { c:'si', t:'Které z uvedených jednotek jsou povolené mimo soustavu SI?',
+      r:'minuta, hodina, litr, tuna',
+      w:['pouze minuta a hodina', 'pouze litr a tuna', 'žádné, mimo SI se používat nesmí'],
+      e:'Norma z praktických důvodů povoluje například minutu (min), hodinu (h) a den (d) pro čas, litr (l) pro objem a tunu (t) pro hmotnost.' },
+    // ----- předpony -----
+    { c:'predpony', t:'Kolik je předpona kilo-?',
+      r:'10³',
+      w:['10²', '10⁶', '10⁻³'],
+      e:'Kilo- (k) znamená tisíc, 1&nbsp;km = 10³&nbsp;m. Hekto- je 10², mega- 10⁶ a mili- 10⁻³.' },
+    { c:'predpony', t:'Co znamená předpona mikro- (µ)?',
+      r:'10⁻⁶',
+      w:['10⁻³', '10⁻⁹', '10⁶'],
+      e:'Mikro- je jedna miliontina, 1&nbsp;µm = 10⁻⁶&nbsp;m. Mili- je 10⁻³ a nano- 10⁻⁹.' },
+    { c:'predpony', t:'Seřaďte předpony od největší po nejmenší.',
+      r:'giga-, mega-, kilo-, mili-, nano-',
+      w:['nano-, mili-, kilo-, mega-, giga-', 'mega-, giga-, kilo-, nano-, mili-', 'kilo-, mega-, giga-, mili-, nano-'],
+      e:'Giga- = 10⁹, mega- = 10⁶, kilo- = 10³, mili- = 10⁻³, nano- = 10⁻⁹.' },
+    { c:'predpony', t:'Která předpona odpovídá 10²?',
+      r:'hekto- (h)',
+      w:['deka- (da)', 'centi- (c)', 'deci- (d)'],
+      e:'Hekto- je 10² (hPa), deka- 10¹ (dag), deci- 10⁻¹ (dl) a centi- 10⁻² (cm).' },
+    { c:'predpony', t:'Jak zapíšeme 2,4&nbsp;GHz v základní jednotce?',
+      r:'2,4·10⁹&nbsp;Hz',
+      w:['2,4·10⁶&nbsp;Hz', '2,4·10⁻⁹&nbsp;Hz', '2,4·10³&nbsp;Hz'],
+      e:'Giga- = 10⁹, takže 2,4&nbsp;GHz = 2,4·10⁹&nbsp;Hz. Hodnota 10⁶ by patřila předponě mega-.' },
+    // ----- převody -----
+    { c:'prevody', t:'Převeďte 2,4&nbsp;km na metry.',
+      r:'2&nbsp;400&nbsp;m',
+      w:['0,0024&nbsp;m', '240&nbsp;m', '24&nbsp;000&nbsp;m'],
+      e:'Velká jednotka → malá jednotka: násobíme. 2,4 · 1&nbsp;000&nbsp;m = 2&nbsp;400&nbsp;m. Kontrola: 1&nbsp;km je mnohem víc než 1&nbsp;m, číselná hodnota musí být větší.' },
+    { c:'prevody', t:'Převeďte 350&nbsp;mg na gramy.',
+      r:'0,35&nbsp;g',
+      w:['350&nbsp;000&nbsp;g', '3,5&nbsp;g', '0,035&nbsp;g'],
+      e:'Mili- = 10⁻³, takže 350&nbsp;mg = 350 : 1&nbsp;000&nbsp;g = 0,35&nbsp;g. Kontrola: 1&nbsp;mg je menší než 1&nbsp;g, číselná hodnota musí být menší.' },
+    { c:'prevody', t:'Převeďte 5&nbsp;min na sekundy.',
+      r:'300&nbsp;s',
+      w:['50&nbsp;s', '500&nbsp;s', '5·10⁻³&nbsp;s'],
+      e:'Minuta není násobkem sekundy pomocí mocniny deseti, platí 1&nbsp;min = 60&nbsp;s. Tedy 5 · 60&nbsp;s = 300&nbsp;s.' },
+    { c:'prevody', t:'Převeďte 500&nbsp;cm³ na m³.',
+      r:'5·10⁻⁴&nbsp;m³',
+      w:['5·10⁻²&nbsp;m³', '5·10⁻⁶&nbsp;m³', '5·10⁴&nbsp;m³'],
+      e:'1&nbsp;cm = 10⁻²&nbsp;m, takže 1&nbsp;cm³ = (10⁻²)³&nbsp;m³ = 10⁻⁶&nbsp;m³. Pak 500 · 10⁻⁶&nbsp;m³ = 5·10⁻⁴&nbsp;m³. U objemu se převodní poměr umocňuje na třetí.' },
+    { c:'prevody', t:'Převeďte 72&nbsp;km·h⁻¹ na m·s⁻¹.',
+      r:'20&nbsp;m·s⁻¹',
+      w:['259&nbsp;m·s⁻¹', '72&nbsp;m·s⁻¹', '0,02&nbsp;m·s⁻¹'],
+      e:'1&nbsp;km·h⁻¹ = 1000&nbsp;m/3600&nbsp;s = 1/3,6&nbsp;m·s⁻¹, takže 72/3,6 = 20&nbsp;m·s⁻¹. Hodnota 259 vznikne násobením 3,6 místo dělení.' },
+    { c:'prevody', t:'Převeďte 15&nbsp;m·s⁻¹ na km·h⁻¹.',
+      r:'54&nbsp;km·h⁻¹',
+      w:['4,2&nbsp;km·h⁻¹', '15&nbsp;km·h⁻¹', '0,25&nbsp;km·h⁻¹'],
+      e:'Z m·s⁻¹ na km·h⁻¹ násobíme 3,6: 15 · 3,6 = 54&nbsp;km·h⁻¹. Kontrola zpět: 54/3,6 = 15&nbsp;m·s⁻¹.' },
+    { c:'prevody', t:'Převeďte 25&nbsp;µm na metry.',
+      r:'2,5·10⁻⁵&nbsp;m',
+      w:['2,5·10⁻³&nbsp;m', '2,5·10⁻⁷&nbsp;m', '2,5·10⁻⁹&nbsp;m'],
+      e:'Mikro- = 10⁻⁶, takže 25&nbsp;µm = 25 · 10⁻⁶&nbsp;m = 2,5·10⁻⁵&nbsp;m.' },
+    { c:'prevody', t:'Převeďte 2,5&nbsp;m² na cm².',
+      r:'25&nbsp;000&nbsp;cm²',
+      w:['250&nbsp;cm²', '2&nbsp;500&nbsp;cm²', '2,5·10⁶&nbsp;cm²'],
+      e:'1&nbsp;m = 100&nbsp;cm, takže 1&nbsp;m² = 100² = 10&nbsp;000&nbsp;cm². Pak 2,5 · 10&nbsp;000 = 25&nbsp;000&nbsp;cm². U obsahu se převodní poměr umocňuje na druhou.' },
+    { c:'prevody', t:'Převeďte 4,5&nbsp;t na kilogramy.',
+      r:'4&nbsp;500&nbsp;kg',
+      w:['450&nbsp;kg', '45&nbsp;000&nbsp;kg', '4,5&nbsp;kg'],
+      e:'1&nbsp;t = 1&nbsp;000&nbsp;kg, takže 4,5 · 1&nbsp;000&nbsp;kg = 4&nbsp;500&nbsp;kg. Tuna je jednotka mimo SI.' },
+    { c:'prevody', t:'Žák převádí 500&nbsp;cm³ na m³ a násobí hodnotu číslem 10⁻². Kde je chyba?',
+      r:'Převodní poměr se u objemu umocňuje: 1&nbsp;cm³ = 10⁻⁶&nbsp;m³, ne 10⁻²&nbsp;m³.',
+      w:['Chyba není, 10⁻² je správně.', 'Má násobit číslem 10².', 'Má dělit číslem 10⁻³.'],
+      e:'1&nbsp;cm = 10⁻²&nbsp;m, ale 1&nbsp;cm³ = (10⁻²)³&nbsp;m³ = 10⁻⁶&nbsp;m³. Správný výsledek je 5·10⁻⁴&nbsp;m³.' },
+    { c:'prevody', t:'Převeďte 36&nbsp;000&nbsp;s na hodiny.',
+      r:'10&nbsp;h',
+      w:['600&nbsp;h', '36&nbsp;h', '0,1&nbsp;h'],
+      e:'1&nbsp;h = 3&nbsp;600&nbsp;s, takže 36&nbsp;000/3&nbsp;600&nbsp;h = 10&nbsp;h. Kontrola: 10 · 3&nbsp;600 = 36&nbsp;000.' }
+  ];
+
+
+  var KVIZ_KEY = 'fyzika:prevody-jednotek:kviz';
+  var section = document.getElementById('kviz-section');
+  var tabBtn = document.getElementById('top-tab-kviz');
+  var readout = document.getElementById('kviz-readout');
+  var pageReadout = document.getElementById('header-readout');
+  var kviz = {
+    type:'all', queue:[], current:null, sel:null, locked:false,
+    score:0, streak:0, bestStreak:0, answered:0, correct:0,
+    inRound:false, ended:false, roundTotal:0, roundCorrect:0
+  };
+  function $(id){ return document.getElementById(id); }
+  function kvizLoad(){
+    try{ var raw = localStorage.getItem(KVIZ_KEY); if(raw){ kviz.bestStreak = JSON.parse(raw).bestStreak || 0; } }catch(e){}
+  }
+  function kvizSave(){
+    try{ localStorage.setItem(KVIZ_KEY, JSON.stringify({bestStreak: kviz.bestStreak})); }catch(e){}
+  }
+  function kvizShuffled(a){
+    a = a.slice();
+    for(var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random()*(i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; }
+    return a;
+  }
+  function typeOf(key){ return KVIZ_TYPES.filter(function(t){ return t.key === key; })[0]; }
+
+  // Otázky okruhu se berou v náhodném pořadí bez opakování. Po projití celého okruhu
+  // se zobrazí závěrečná hláška s výsledkem kola a nabídkou otázky zamíchat znovu.
+  function kvizNext(){
+    if(!kviz.queue.length){
+      if(kviz.inRound){ kvizShowEnd(); return; }
+      var pool = KVIZ_BANK.filter(function(b){ return kviz.type === 'all' || b.c === kviz.type; });
+      kviz.queue = kvizShuffled(pool);
+      if(kviz.current && kviz.queue.length > 1 && kviz.queue[0] === kviz.current.item){ kviz.queue.push(kviz.queue.shift()); }
+      kviz.inRound = true; kviz.roundTotal = pool.length; kviz.roundCorrect = 0;
+    }
+    var item = kviz.queue.shift();
+    var opts = item.fixed ? [item.r].concat(item.w).sort() : kvizShuffled([item.r].concat(item.w));
+    kviz.current = { item:item, choices:opts, correct:opts.indexOf(item.r) };
+    kvizRender();
+  }
+  function kvizShowEnd(){
+    kviz.ended = true; kviz.inRound = false;
+    var tp = typeOf(kviz.type);
+    var n = kviz.roundTotal, k = kviz.roundCorrect;
+    $('kviz-end-text').innerHTML =
+      'Prošli jste všech ' + n + ' otázek ' + (kviz.type === 'all' ? 'kvízu' : 'okruhu „' + tp.name + '“') + '. ' +
+      'Správně jste odpověděli na ' + k + ' z ' + n + ' (' + Math.round(100*k/n) + '&nbsp;%). Chcete otázky zamíchat a projít znovu?';
+    $('kviz-q').hidden = true;
+    $('kviz-end').hidden = false;
+    $('kviz-btn-restart').focus({ preventScroll:true });
+  }
+  function kvizRestart(){
+    kviz.queue = []; kviz.inRound = false;
+    kvizNext();
+  }
+  function kvizRender(){
+    var q = kviz.current;
+    kviz.ended = false;
+    $('kviz-q').hidden = false;
+    $('kviz-end').hidden = true;
+    var tp = typeOf(q.item.c);
+    $('kviz-cat-tag').innerHTML = tp ? tp.tag : 'Otázka';
+    $('kviz-task-text').innerHTML = q.item.t;
+    var grid = $('kviz-opt-grid');
+    grid.innerHTML = '';
+    kviz.sel = null; kviz.locked = false;
+    q.choices.forEach(function(c, i){
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'opt-btn';
+      b.innerHTML = '<b>' + LETTERS[i] + ')</b>&nbsp; ' + c;
+      b.addEventListener('click', function(){ kvizSelect(i); });
+      grid.appendChild(b);
+    });
+    var fb = $('kviz-feedback');
+    fb.hidden = true; fb.classList.remove('ok', 'bad', 'sol');
+    $('kviz-btn-check').textContent = 'Zkontrolovat';
+  }
+  function kvizSelect(i){
+    if(kviz.locked || kviz.ended) return;
+    kviz.sel = i;
+    Array.prototype.forEach.call($('kviz-opt-grid').children, function(el, j){ el.classList.toggle('selected', j === i); });
+    $('kviz-btn-check').focus({ preventScroll:true });
+  }
+  function kvizFinish(ok, headline){
+    var q = kviz.current;
+    Array.prototype.forEach.call($('kviz-opt-grid').children, function(el, j){
+      el.disabled = true;
+      el.classList.remove('selected');
+      if(j === q.correct) el.classList.add(kviz.sel === j ? 'correct' : 'missed');
+      else if(j === kviz.sel) el.classList.add('wrong');
+    });
+    var fb = $('kviz-feedback');
+    fb.hidden = false;
+    fb.classList.toggle('ok', ok); fb.classList.toggle('bad', !ok);
+    $('kviz-feedback-headline').textContent = headline;
+    var finalText = 'Správná odpověď: ' + LETTERS[q.correct] + ') ' + q.item.r;
+    if(window.FyzikaReseni && FyzikaReseni.show){
+      FyzikaReseni.show(fb, $('kviz-feedback-steps'), { raw:true, title:'Vysvětlení', steps:[q.item.e], final:finalText });
+    } else {
+      $('kviz-feedback-steps').innerHTML = q.item.e + '<br><b>' + finalText + '</b>';
+    }
+    kviz.locked = true;
+    var btn = $('kviz-btn-check');
+    btn.textContent = 'Další otázka →';
+    btn.focus({ preventScroll:true });
+    kvizStats();
+  }
+  function kvizCheck(){
+    if(kviz.ended){ kvizRestart(); return; }
+    if(kviz.locked){ kvizNext(); return; }
+    if(kviz.sel === null && !confirm('Není vybraná žádná možnost. Opravdu chcete zkontrolovat?')) return;
+    var ok = kviz.sel === kviz.current.correct;
+    kviz.answered++;
+    if(ok){
+      kviz.score += 10; kviz.streak++; kviz.correct++; kviz.roundCorrect++;
+      if(kviz.streak > kviz.bestStreak){ kviz.bestStreak = kviz.streak; kvizSave(); }
+    } else {
+      kviz.streak = 0;
+    }
+    kvizFinish(ok, ok ? 'Správně!' : (kviz.sel === null ? 'Vyberte odpověď.' : 'Bohužel špatně.'));
+  }
+  function kvizSkip(){
+    if(kviz.ended){ kvizRestart(); return; }
+    if(kviz.locked){ kvizNext(); return; }
+    kviz.streak = 0; kviz.answered++;
+    kvizFinish(false, 'Správná odpověď:');
+  }
+  function kvizStats(){
+    $('kviz-stat-score').textContent = kviz.score;
+    $('kviz-stat-streak').textContent = kviz.streak + (kviz.bestStreak > 0 ? ' / ' + kviz.bestStreak : '');
+    $('kviz-stat-accuracy').textContent = kviz.answered === 0 ? '—' : Math.round(100*kviz.correct/kviz.answered) + ' %';
+  }
+  (function kvizBuildTypeRow(){
+    var row = $('kviz-type-row');
+    KVIZ_TYPES.forEach(function(d){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip accented' + (d.key === kviz.type ? ' on' : '');
+      b.setAttribute('aria-pressed', d.key === kviz.type ? 'true' : 'false');
+      b.textContent = d.name;
+      b.addEventListener('click', function(){
+        if(d.key === kviz.type) return;
+        // rozpracovaná otázka s vybranou odpovědí se před změnou okruhu vyhodnotí
+        var settled = !kviz.locked && kviz.sel !== null;
+        if(settled) kvizCheck();
+        kviz.type = d.key; kviz.queue = []; kviz.inRound = false;
+        Array.prototype.forEach.call(row.children, function(el, i){
+          var on = KVIZ_TYPES[i].key === kviz.type;
+          el.classList.toggle('on', on);
+          el.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        // vyhodnocená otázka zůstane i s vysvětlením vidět, další už bude z nového okruhu
+        if(!settled) kvizNext();
+      });
+      row.appendChild(b);
+    });
+  })();
+  $('kviz-btn-check').addEventListener('click', kvizCheck);
+  $('kviz-btn-skip').addEventListener('click', kvizSkip);
+  $('kviz-btn-restart').addEventListener('click', kvizRestart);
+  $('kviz-reset-stats').addEventListener('click', function(){
+    kviz.score = 0; kviz.streak = 0; kviz.answered = 0; kviz.correct = 0; kviz.bestStreak = 0;
+    try{ localStorage.removeItem(KVIZ_KEY); }catch(e){}
+    kvizStats();
+  });
+  // Klávesnice v kvízu: A–D nebo 1–4 vybere odpověď, Enter zkontroluje / posune dál.
+  document.addEventListener('keydown', function(e){
+    if(section.hidden) return;
+    if(e.ctrlKey || e.metaKey || e.altKey) return;
+    if(e.key === 'Enter'){
+      if(e.target && e.target.tagName === 'BUTTON') return;
+      e.preventDefault(); kvizCheck(); return;
+    }
+    var idx = 'abcd'.indexOf(e.key.toLowerCase());
+    if(idx === -1) idx = '1234'.indexOf(e.key);
+    if(idx !== -1 && e.key.length === 1) kvizSelect(idx);
+  });
+
+  // ---- záložka Kvíz ----
+  // Skript je samostatný: otevření Kvízu i návrat na ostatní záložky řeší sám, ať stránka přepíná
+  // záložky jakkoli. Skóre kvízu má vlastní pole v hlavičce (skóre tréninku se tím nemění).
+  function activate(){
+    var teorieBtn = $('top-tab-teorie'), theory = $('theory-section');
+    if(!tabBtn.classList.contains('on') && teorieBtn && !teorieBtn.classList.contains('on')){
+      // nejdřív „kliknutím“ opustíme dosavadní záložku obsluhou stránky (u hry na čas s potvrzením)
+      teorieBtn.click();
+      if(theory && theory.hidden) return;   // stránka odmítla opustit dosavadní záložku (např. běžící hra)
+    }
+    Array.prototype.forEach.call(document.querySelectorAll('.tab-section'), function(s){ s.hidden = s !== section; });
+    Array.prototype.forEach.call(document.querySelectorAll('.toptab'), function(t){ t.classList.toggle('on', t === tabBtn); });
+    if(pageReadout) pageReadout.hidden = true;
+    readout.hidden = false;
+    kvizStats();
+    if(!kviz.current) kvizNext();
+  }
+  tabBtn.addEventListener('click', activate);
+  Array.prototype.forEach.call(document.querySelectorAll('.toptab'), function(t){
+    if(t === tabBtn) return;
+    t.addEventListener('click', function(){ section.hidden = true; readout.hidden = true; tabBtn.classList.remove('on'); });
+  });
+  document.addEventListener('fyzika:scores-updated', function(){ kviz.bestStreak = 0; kvizLoad(); kvizStats(); });
+  kvizLoad();
+  kvizStats();
+  if(location.hash === '#kviz' && !tabBtn.classList.contains('on')) tabBtn.click();
+  else if(location.hash === '#kviz') activate();
 })();
 </script>
 

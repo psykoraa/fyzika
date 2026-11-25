@@ -137,6 +137,20 @@
 /* ================= tato stránka ================= */
 /* Setrvačnost v situacích */
 </style>
+<style>
+/* ---- Kvíz (stejný jako u Grafů rovnoměrného pohybu a u Pohybu po kružnici) ---- */
+.kviz-task{ font-size:1.02rem; line-height:1.5; max-width:52ch; margin:0 auto 10px; color:var(--ink); text-align:center; }
+#kviz-section .kviz-task i, #kviz-section .opt-btn i, #kviz-section .feedback .steps i, #kviz-section .cat-tag i{ font-family:'STIX Two Text', Georgia, serif; font-style:italic; text-transform:none; }
+#kviz-section .feedback .steps{ font-family:'Work Sans', sans-serif; white-space:normal; opacity:1; }
+#kviz-end .kviz-end-box{ text-align:center; margin:0 0 14px; }
+#kviz-end .kviz-end-hint{ text-align:center; margin-top:10px; }
+#kviz-section [hidden]{ display:none; }
+@media (max-width:520px){
+  /* čtyři a více záložek: na telefonu ve dvou řadách (stejně jako Grafy rovnoměrného pohybu) */
+  .top-tabs{ flex-wrap:wrap; }
+  .toptab{ flex:1 1 calc(50% - 4px); padding:13px 8px; }
+}
+</style>
 </head>
 <body>
 
@@ -163,10 +177,16 @@
       <div class="cell"><span class="label">Série</span><span class="value" id="stat-streak">0</span></div>
       <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="stat-accuracy">—</span></div>
     </div>
+    <div class="readout" id="kviz-readout" hidden>
+      <div class="cell"><span class="label">Skóre</span><span class="value" id="kviz-stat-score">0</span></div>
+      <div class="cell"><span class="label">Série</span><span class="value" id="kviz-stat-streak">0</span></div>
+      <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="kviz-stat-accuracy">—</span></div>
+    </div>
   </div>
 
   <div class="top-tabs">
     <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+    <button class="toptab" id="top-tab-kviz" data-tab="kviz">Kvíz</button>
     <button class="toptab" id="top-tab-aplet" data-tab="aplet">Setrvačnost v situacích</button>
     <button class="toptab" id="top-tab-trenink" data-tab="trenink">Trénink</button>
   </div>
@@ -336,6 +356,47 @@
       <p>• Setrvačnost je vlastnost tělesa, ne síla. K udržení pohybu síla potřeba není, ke změně pohybu ano.</p>
       <p>• Inerciální vztažná soustava je soustava, ve které platí zákon setrvačnosti; soustavu spojenou se Zemí za ni obvykle považujeme.</p>
       <p>• Hmotnost je mírou setrvačnosti tělesa.</p>
+    </div>
+  </div>
+
+  <!-- ============ KVÍZ ============ -->
+  <div id="kviz-section" class="tab-section" hidden>
+    <div class="panel">
+      <div class="section-block">
+        <div class="panel-title">Okruh otázek</div>
+        <div class="row" id="kviz-type-row"></div>
+      </div>
+      <div class="settings-foot" style="justify-content:flex-end;">
+        <button class="linklike" id="kviz-reset-stats">vynulovat statistiku</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div id="kviz-q">
+      <span class="cat-tag" id="kviz-cat-tag">Otázka</span>
+      <p class="kviz-task" id="kviz-task-text"></p>
+      <div class="opt-grid wide-opts" id="kviz-opt-grid"></div>
+      <div class="actions">
+        <button class="btn primary" id="kviz-btn-check">Zkontrolovat</button>
+        <button class="btn ghost" id="kviz-btn-skip">Nevím / Zobrazit řešení</button>
+      </div>
+      <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint">Vyberte jednu ze čtyř odpovědí kliknutím nebo klávesami A až D (případně 1 až 4) a potvrďte tlačítkem Zkontrolovat nebo klávesou Enter; dalším Enterem přejdete na další otázku. Po kontrole se správná odpověď obarví zeleně, chybně vybraná červeně a pod otázkou se objeví vysvětlení. Okruh otázek vyberete nahoře; otázky se neopakují, dokud neprojdete celý okruh. Pak se zobrazí, kolik otázek jste zodpověděli správně, a otázky můžete zamíchat a projít znovu.</p>
+      </details>
+      <div class="feedback" id="kviz-feedback" hidden>
+        <div class="headline" id="kviz-feedback-headline"></div>
+        <div class="steps" id="kviz-feedback-steps"></div>
+      </div>
+      </div>
+      <div id="kviz-end" hidden>
+        <div class="feedback ok kviz-end-box"><div class="headline">Hotovo, prošli jste všechny otázky!</div></div>
+        <p class="kviz-task" id="kviz-end-text"></p>
+        <div class="actions">
+          <button class="btn primary" id="kviz-btn-restart">Zamíchat otázky a začít znovu</button>
+        </div>
+        <p class="hint kviz-end-hint">Můžete také nahoře vybrat jiný okruh otázek.</p>
+      </div>
     </div>
   </div>
 
@@ -1246,6 +1307,346 @@
   // ---- otevření záložky odkazem (…/stranka.html#trenink) ----
   var hash = location.hash.replace('#', '');
   if(hash && tabs[hash]) showTab(hash);
+})();
+</script>
+
+<script>
+(function(){
+  "use strict";
+  // ================= KVÍZ: otázky s výběrem ze čtyř odpovědí (A–D) =================
+  // Samostatný skript (stejný kvíz jako u Grafů rovnoměrného pohybu a u Pohybu po kružnici).
+  // Položka banky: c = okruh, t = zadání (HTML), r = správná odpověď, w = tři špatné,
+  // e = vysvětlení; fixed = možnosti se nemíchají, jen seřadí.
+  var LETTERS = ['A','B','C','D'];
+  var KVIZ_TYPES = [
+    { key:'all', name:'Vše' },
+    { key:'historie', name:'Od Aristotela k Newtonovi', tag:'Od Aristotela ke Galileovi' },
+    { key:'zakon', name:'Zákon setrvačnosti', tag:'1. Newtonův zákon' },
+    { key:'projevy', name:'Projevy setrvačnosti', tag:'Projevy setrvačnosti' },
+    { key:'inerc', name:'Inerciální soustava', tag:'Inerciální vztažná soustava' },
+    { key:'sily', name:'Síly a hmotnost', tag:'Síly a hmotnost jako míra setrvačnosti' }
+  ];
+  var KVIZ_BANK = [
+    // ----- od Aristotela k Newtonovi -----
+    { c:'historie', t:'Co tvrdil Aristoteles o pohybu těles?',
+      r:'Těleso se pohybuje jen tehdy, dokud ho něco pohání; bez síly se samo zastaví.',
+      w:['Těleso bez působení sil se pohybuje stálou rychlostí po přímce.', 'Těžší tělesa padají stejně rychle jako lehká.', 'Pohyb tělesa vždy vyvolává jen tření.'],
+      e:'Po dva tisíce let se věřilo Aristotelovi, že pohyb vyžaduje stálou příčinu. Zkušenost tomu zdánlivě odpovídá: kolo, které přestaneme šlapat, se zastaví. Druhá varianta je až Newtonův zákon setrvačnosti.' },
+    { c:'historie', t:'Čeho si všiml Galileo Galilei u zastavujících se těles?',
+      r:'Zastavení má vždy příčinu: tření a odpor vzduchu.',
+      w:['Těleso se zastaví samo od sebe, protože ztratí „sílu pohybu“.', 'Těleso se zastavuje vždy po stejné době.', 'Zastavení způsobuje vlastní hmotnost tělesa.'],
+      e:'Galileo si všiml, že tělesa se nezastavují samovolně. Brzdí je tření a odpor vzduchu, tedy síly působící proti pohybu.' },
+    { c:'historie', t:'V Galileově myšlenkovém pokusu se dvěma nakloněnými rovinami proti sobě je druhá rovina vodorovná a tření zanedbáme. Co kulička dělá?',
+      r:'Jede pořád stejnou rychlostí, protože nedosáhne původní výšky.',
+      w:['Zastaví se po krátké době, protože už nestoupá.', 'Zrychluje, protože se dostává dál od startu.', 'Vrátí se zpět po první rovině.'],
+      e:'Kulička se snaží vystoupit do původní výšky. Čím mírnější je druhá rovina, tím dál dojede. Na vodorovné rovině výšky nedosáhne nikdy, a proto by bez tření jela donekonečna stejnou rychlostí.' },
+    { c:'historie', t:'Kdo a v jakém díle sepsal tři pohybové zákony klasické mechaniky?',
+      r:'Isaac Newton v Matematických principech přírodní filozofie (1687).',
+      w:['Galileo Galilei v Dialogu o dvou největších systémech světa.', 'Aristoteles ve Fyzice.', 'Albert Einstein v teorii relativity.'],
+      e:'Tři zákony sepsal Isaac Newton roku 1687 v knize Matematické principy přírodní filozofie. Galileovy myšlenky (setrvačnost) k nim vedly.' },
+    { c:'historie', t:'Proč se kolo bez šlapání po čase zastaví, i když platí zákon setrvačnosti?',
+      r:'Působí na ně tření a odpor vzduchu, tedy síly proti pohybu.',
+      w:['Zákon setrvačnosti pro kola neplatí.', 'Kolo ztrácí svou „sílu pohybu“.', 'Zemská přitažlivost kolo vždy zastaví.'],
+      e:'Výslednice sil na kolo není nulová: proti pohybu působí tření a odpor vzduchu. Zákon setrvačnosti proto neříká, že se těleso nezastaví, ale že se nezastaví bez působení sil.' },
+    // ----- zákon setrvačnosti -----
+    { c:'zakon', t:'Jak zní 1. Newtonův zákon (zákon setrvačnosti)?',
+      r:'Těleso setrvává v klidu nebo v rovnoměrném přímočarém pohybu, dokud je výslednice sil, které na něj působí, nulová.',
+      w:['Těleso se pohybuje vždy ve směru síly, která na něj působí.', 'Síly, kterými na sebe působí dvě tělesa, jsou stejně velké a opačného směru.', 'Zrychlení tělesa je přímo úměrné výslednici sil a nepřímo úměrné hmotnosti.'],
+      e:'Správná formulace je zákon setrvačnosti. Druhá nabídka je 3. Newtonův zákon (akce a reakce), třetí je 2. Newtonův zákon (zákon síly).' },
+    { c:'zakon', t:'Po zcela hladkém vodorovném ledě (bez tření) pošleme kuličku rychlostí 2&nbsp;m·s⁻¹. Jak se bude pohybovat?',
+      r:'Rovnoměrně přímočaře rychlostí 2&nbsp;m·s⁻¹.',
+      w:['Bude postupně zpomalovat, až se zastaví.', 'Bude postupně zrychlovat.', 'Bude se pohybovat po kružnici.'],
+      e:'Svislé síly se ruší, vodorovná síla nepůsobí žádná. Výslednice je nulová, takže kulička zachová rychlost i směr: pohybuje se rovnoměrně přímočaře.' },
+    { c:'zakon', t:'Jaký je vztah mezi klidem a rovnoměrným přímočarým pohybem podle 1. Newtonova zákona?',
+      r:'Klid je zvláštní případ rovnoměrného přímočarého pohybu, a to s nulovou rychlostí.',
+      w:['Jde o dva zcela odlišné stavy, které nelze porovnávat.', 'Klid vyžaduje nulovou sílu, rovnoměrný pohyb nenulovou sílu.', 'Rovnoměrný pohyb je zvláštní případ klidu.'],
+      e:'Obojí je stav s nulovou výslednicí sil. Klid je jen rovnoměrný přímočarý pohyb s nulovou rychlostí; v obou případech se pohybový stav nemění.' },
+    { c:'zakon', t:'Kdy je podle 1. Newtonova zákona nutná síla?',
+      r:'Ke změně pohybového stavu, tedy rychlosti nebo směru pohybu.',
+      w:['K udržení každého pohybu.', 'K udržení pohybu, ale ne ke změně směru.', 'Jen k uvedení tělesa do klidu.'],
+      e:'K udržení pohybu síla potřeba není, potřebujeme ji ke změně pohybu: k rozjetí, zastavení i zatočení. Proto je zakřivení dráhy také důsledek působení síly.' },
+    { c:'zakon', t:'Těleso se pohybuje rovnoměrně přímočaře. Co víme o výslednici sil, které na něj působí?',
+      r:'Je nulová.',
+      w:['Míří ve směru pohybu.', 'Míří proti směru pohybu.', 'Je stálá, ale nenulová.'],
+      e:'Podle 1. Newtonova zákona je tomu tak právě tehdy, když je výslednice sil nulová. Jednotlivé síly mohou působit, ale vzájemně se ruší.' },
+    { c:'zakon', t:'Auto jede stálou rychlostí 25&nbsp;m·s⁻¹ po rovné vodorovné silnici. Motor táhne silou 800&nbsp;N. Jak velké jsou celkové odporové síly proti pohybu?',
+      r:'800&nbsp;N',
+      w:['0&nbsp;N', '25&nbsp;N', 'Víc než 800&nbsp;N'],
+      e:'Auto se pohybuje rovnoměrně přímočaře, takže výslednice sil je nulová. Tažná síla 800&nbsp;N musí být vyrovnána stejně velkou odporovou silou opačného směru.' },
+    { c:'zakon', t:'Je setrvačnost síla?',
+      r:'Ne, je to vlastnost tělesa: nemá původce a nelze u ní říct, kdo na koho působí.',
+      w:['Ano, je to síla, kterou těleso působí proti změně pohybu.', 'Ano, je to síla, kterou na těleso působí Země.', 'Ano, ale působí jen na tělesa v klidu.'],
+      e:'Setrvačnost je vlastnost tělesa udržovat si svůj pohybový stav. Síla je vždy působení jednoho tělesa na druhé, u setrvačnosti žádné takové těleso není.' },
+    // ----- projevy setrvačnosti -----
+    { c:'projevy', t:'Autobus se prudce rozjede a stojící cestující se zakloní dozadu. Proč?',
+      r:'Tělo cestujícího si setrvačností udržuje klid, zatímco autobus pod ním zrychluje.',
+      w:['Na cestujícího působí síla dozadu, kterou způsobuje motor.', 'Cestující ztratí hmotnost.', 'Vzduch v autobuse tlačí cestujícího dozadu.'],
+      e:'Tělo je původně v klidu a setrvačností v něm chce zůstat, ale autobus se rozjíždí. Cestující se tedy vzhledem k autobusu zakloní.' },
+    { c:'projevy', t:'Proč se v autě při jízdě poutáme?',
+      r:'Při prudkém brzdění se tělo setrvačností pohybuje dál, pás mu dodá sílu, která ho zabrzdí spolu s autem.',
+      w:['Pás zvyšuje tření mezi tělem a sedadlem.', 'Při brzdění na nás působí síla dopředu, kterou vytváří auto.', 'Pás zmenšuje rychlost auta.'],
+      e:'Auto brzdí, ale tělo by setrvačností pokračovalo stejnou rychlostí dopředu. Pás dodá tělu zpomalující sílu, takže ho zabrzdí společně s autem.' },
+    { c:'projevy', t:'Na sklenici leží kartička a na ní mince. Kartičku rychle cvrnkneme do strany. Co se stane s mincí?',
+      r:'Mince se téměř nepohne a spadne do sklenice.',
+      w:['Mince odletí stejným směrem jako kartička.', 'Mince odletí na opačnou stranu.', 'Mince se začne točit na kartičce a zůstane na ní.'],
+      e:'Kartička je odsunuta velmi rychle a tření mezi ní a mincí působí jen krátce. Mince setrvačností zůstává téměř v klidu a po zmizení kartičky padá do sklenice.' },
+    { c:'projevy', t:'Zmokřený pes se oklepe a voda z jeho srsti odletí. Jak to vysvětlíme?',
+      r:'Srst se zastaví, kapky vody pokračují v pohybu a odletí.',
+      w:['Na kapky působí síla směrem ven, kterou vytváří pes.', 'Voda ztratí hmotnost a lehčí odletí.', 'Srst odpuzuje vodu elektrickou silou.'],
+      e:'Srst se při oklepání prudce zastaví a změní směr, ale kapky setrvačností pokračují v původním pohybu a od psa odletí.' },
+    { c:'projevy', t:'Kámen roztáčíme na provázku po kružnici. V jistém okamžiku provázek přetrhneme. Jak se kámen dál pohybuje?',
+      r:'Rovnoměrně přímočaře ve směru rychlosti, kterou měl v okamžiku přetržení (po tečně).',
+      w:['Po spirále směrem od středu.', 'Do středu kružnice.', 'Zastaví se na místě.'],
+      e:'Po přetržení provázku už na kámen nepůsobí síla do středu a zákon setrvačnosti platí: kámen pokračuje rovnoměrně přímočaře ve směru rychlosti, tedy po tečně ke kružnici.' },
+    // ----- inerciální soustava -----
+    { c:'inerc', t:'Co je inerciální vztažná soustava?',
+      r:'Soustava, ve které platí zákon setrvačnosti.',
+      w:['Soustava, která se vůči Zemi pohybuje se zrychlením.', 'Soustava, ve které na tělesa nepůsobí žádné síly.', 'Soustava spojená vždy s pohybujícím se tělesem.'],
+      e:'V inerciální soustavě je těleso bez výsledné síly v klidu, nebo se pohybuje rovnoměrně přímočaře. Soustavy se zrychlením takové nejsou.' },
+    { c:'inerc', t:'Která z uvedených soustav je inerciální?',
+      r:'Vlak jedoucí stálou rychlostí po rovné trati.',
+      w:['Vlak, který se rozjíždí.', 'Auto, které brzdí před semaforem.', 'Kolotoč, který se otáčí.'],
+      e:'Inerciální je každá soustava, která se vůči inerciální soustavě pohybuje rovnoměrně přímočaře. Soustavy, které zrychlují, brzdí nebo se otáčejí, inerciální nejsou.' },
+    { c:'inerc', t:'Proč soustavu spojenou s povrchem Země můžeme pro běžné pokusy považovat za inerciální?',
+      r:'Země se sice otáčí, ale odchylka od inerciální soustavy je při běžných pokusech zanedbatelná.',
+      w:['Protože Země stojí v prostoru v klidu.', 'Protože na povrchu Země nepůsobí žádné síly.', 'Protože se Země pohybuje rovnoměrně přímočaře.'],
+      e:'Země se otáčí kolem své osy, takže přesně inerciální není. Zrychlení povrchu je však malé a pro běžné pokusy je odchylka zanedbatelná.' },
+    { c:'inerc', t:'Vlak jede stálou rychlostí po rovné trati. Jak se chová míček vyhozený uvnitř svisle vzhůru?',
+      r:'Spadne zpět do ruky, stejně jako na nástupišti.',
+      w:['Spadne před vyhazující osobu.', 'Spadne za vyhazující osobu.', 'Zůstane viset ve vzduchu.'],
+      e:'Vlak jedoucí rovnoměrně přímočaře je inerciální soustava. Mechanické děje v ní probíhají stejně jako na nástupišti, míček se vrátí do ruky.' },
+    { c:'inerc', t:'Vlak projíždí stálou rychlostí oblouk. Je spojená soustava inerciální?',
+      r:'Ne, protože se vlak pohybuje se zrychlením (mění se směr rychlosti).',
+      w:['Ano, protože se nemění velikost rychlosti.', 'Ano, protože vlak zůstává na kolejích.', 'Ne, protože vlak jede po kolejích.'],
+      e:'V oblouku se mění směr rychlosti, vlak má tedy zrychlení. Inerciální by byla jen soustava pohybující se rovnoměrně přímočaře.' },
+    // ----- síly a hmotnost -----
+    { c:'sily', t:'Kulička, do které jsme strčili a pustili ji, se pohybuje po stole. Jaké síly na ni působí?',
+      r:'Tíhová síla, tlaková síla stolu a slabá třecí síla proti pohybu.',
+      w:['Jen síla, kterou jsme do ní strčili.', 'Tíhová síla a síla ve směru pohybu.', 'Žádné, protože se pohybuje setrvačností.'],
+      e:'Síla od strčení působila jen během strčení. Pak se kulička pohybuje setrvačností a působí na ni tíhová síla Země, tlaková síla stolu (obě se ruší) a slabá třecí síla, která ji pomalu brzdí. Sílu „ve směru pohybu“ nekreslíme.' },
+    { c:'sily', t:'Auto jede na neutrál (motor netáhne) po vodorovné silnici. Jak se pohybuje a proč?',
+      r:'Zpomaluje, protože odpor vzduchu a valivý odpor mířící dozadu vytvářejí nenulovou výslednici.',
+      w:['Zpomaluje, protože ztrácí „sílu pohybu“.', 'Jede stálou rychlostí, protože motor netáhne.', 'Zrychluje, protože je lehčí.'],
+      e:'Motor netáhne, proti pohybu ale působí odpor vzduchu a valivý odpor. Výslednice míří dozadu, a auto proto zpomaluje.' },
+    { c:'sily', t:'Sonda obíhá Zemi. Jaká síla na ni působí?',
+      r:'Jen gravitační síla Země.',
+      w:['Gravitační síla Země a síla, která ji žene dopředu.', 'Žádná, protože je v kosmu.', 'Odstředivá síla, která ji drží na dráze.'],
+      e:'Žádný motor sondu „nežene dopředu“: letí po dráze setrvačností a gravitační síla Země jen zakřivuje její dráhu.' },
+    { c:'sily', t:'Prázdný nákupní vozík rozjedeme snadno, plně naložený mnohem hůř. Co to ukazuje?',
+      r:'Hmotnost je mírou setrvačnosti: čím větší hmotnost, tím víc se těleso brání změně pohybu.',
+      w:['Naložený vozík má menší setrvačnost.', 'Setrvačnost nezávisí na hmotnosti.', 'Naložený vozík působí větší silou na podlahu, proto má menší setrvačnost.'],
+      e:'Hmotnější těleso se silněji brání změně svého pohybu, rozjet nebo zastavit ho je tedy obtížnější. Hmotnost je mírou setrvačnosti tělesa.' },
+    { c:'sily', t:'Kosmonaut na oběžné dráze snadno „nadzvedne“ těžkou skříňku. Jak snadno ji ale rozpohybuje?',
+      r:'Stejně obtížně jako na Zemi, protože setrvačnost se projevuje i ve stavu beztíže.',
+      w:['Zcela bez námahy, protože je beztíže.', 'Hůř než na Zemi, protože na oběžné dráze není tření.', 'Nelze ji rozpohybovat.'],
+      e:'Ve stavu beztíže skříňku nadzvednout snadno lze, ale její hmotnost a tím i setrvačnost zůstává stejná. Rozpohybovat ji nebo zastavit stojí stejné úsilí jako na Zemi.' }
+  ];
+
+
+  var KVIZ_KEY = 'fyzika:prvni-newtonuv-zakon:kviz';
+  var section = document.getElementById('kviz-section');
+  var tabBtn = document.getElementById('top-tab-kviz');
+  var readout = document.getElementById('kviz-readout');
+  var pageReadout = document.getElementById('header-readout');
+  var kviz = {
+    type:'all', queue:[], current:null, sel:null, locked:false,
+    score:0, streak:0, bestStreak:0, answered:0, correct:0,
+    inRound:false, ended:false, roundTotal:0, roundCorrect:0
+  };
+  function $(id){ return document.getElementById(id); }
+  function kvizLoad(){
+    try{ var raw = localStorage.getItem(KVIZ_KEY); if(raw){ kviz.bestStreak = JSON.parse(raw).bestStreak || 0; } }catch(e){}
+  }
+  function kvizSave(){
+    try{ localStorage.setItem(KVIZ_KEY, JSON.stringify({bestStreak: kviz.bestStreak})); }catch(e){}
+  }
+  function kvizShuffled(a){
+    a = a.slice();
+    for(var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random()*(i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; }
+    return a;
+  }
+  function typeOf(key){ return KVIZ_TYPES.filter(function(t){ return t.key === key; })[0]; }
+
+  // Otázky okruhu se berou v náhodném pořadí bez opakování. Po projití celého okruhu
+  // se zobrazí závěrečná hláška s výsledkem kola a nabídkou otázky zamíchat znovu.
+  function kvizNext(){
+    if(!kviz.queue.length){
+      if(kviz.inRound){ kvizShowEnd(); return; }
+      var pool = KVIZ_BANK.filter(function(b){ return kviz.type === 'all' || b.c === kviz.type; });
+      kviz.queue = kvizShuffled(pool);
+      if(kviz.current && kviz.queue.length > 1 && kviz.queue[0] === kviz.current.item){ kviz.queue.push(kviz.queue.shift()); }
+      kviz.inRound = true; kviz.roundTotal = pool.length; kviz.roundCorrect = 0;
+    }
+    var item = kviz.queue.shift();
+    var opts = item.fixed ? [item.r].concat(item.w).sort() : kvizShuffled([item.r].concat(item.w));
+    kviz.current = { item:item, choices:opts, correct:opts.indexOf(item.r) };
+    kvizRender();
+  }
+  function kvizShowEnd(){
+    kviz.ended = true; kviz.inRound = false;
+    var tp = typeOf(kviz.type);
+    var n = kviz.roundTotal, k = kviz.roundCorrect;
+    $('kviz-end-text').innerHTML =
+      'Prošli jste všech ' + n + ' otázek ' + (kviz.type === 'all' ? 'kvízu' : 'okruhu „' + tp.name + '“') + '. ' +
+      'Správně jste odpověděli na ' + k + ' z ' + n + ' (' + Math.round(100*k/n) + '&nbsp;%). Chcete otázky zamíchat a projít znovu?';
+    $('kviz-q').hidden = true;
+    $('kviz-end').hidden = false;
+    $('kviz-btn-restart').focus({ preventScroll:true });
+  }
+  function kvizRestart(){
+    kviz.queue = []; kviz.inRound = false;
+    kvizNext();
+  }
+  function kvizRender(){
+    var q = kviz.current;
+    kviz.ended = false;
+    $('kviz-q').hidden = false;
+    $('kviz-end').hidden = true;
+    var tp = typeOf(q.item.c);
+    $('kviz-cat-tag').innerHTML = tp ? tp.tag : 'Otázka';
+    $('kviz-task-text').innerHTML = q.item.t;
+    var grid = $('kviz-opt-grid');
+    grid.innerHTML = '';
+    kviz.sel = null; kviz.locked = false;
+    q.choices.forEach(function(c, i){
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'opt-btn';
+      b.innerHTML = '<b>' + LETTERS[i] + ')</b>&nbsp; ' + c;
+      b.addEventListener('click', function(){ kvizSelect(i); });
+      grid.appendChild(b);
+    });
+    var fb = $('kviz-feedback');
+    fb.hidden = true; fb.classList.remove('ok', 'bad', 'sol');
+    $('kviz-btn-check').textContent = 'Zkontrolovat';
+  }
+  function kvizSelect(i){
+    if(kviz.locked || kviz.ended) return;
+    kviz.sel = i;
+    Array.prototype.forEach.call($('kviz-opt-grid').children, function(el, j){ el.classList.toggle('selected', j === i); });
+    $('kviz-btn-check').focus({ preventScroll:true });
+  }
+  function kvizFinish(ok, headline){
+    var q = kviz.current;
+    Array.prototype.forEach.call($('kviz-opt-grid').children, function(el, j){
+      el.disabled = true;
+      el.classList.remove('selected');
+      if(j === q.correct) el.classList.add(kviz.sel === j ? 'correct' : 'missed');
+      else if(j === kviz.sel) el.classList.add('wrong');
+    });
+    var fb = $('kviz-feedback');
+    fb.hidden = false;
+    fb.classList.toggle('ok', ok); fb.classList.toggle('bad', !ok);
+    $('kviz-feedback-headline').textContent = headline;
+    var finalText = 'Správná odpověď: ' + LETTERS[q.correct] + ') ' + q.item.r;
+    if(window.FyzikaReseni && FyzikaReseni.show){
+      FyzikaReseni.show(fb, $('kviz-feedback-steps'), { raw:true, title:'Vysvětlení', steps:[q.item.e], final:finalText });
+    } else {
+      $('kviz-feedback-steps').innerHTML = q.item.e + '<br><b>' + finalText + '</b>';
+    }
+    kviz.locked = true;
+    var btn = $('kviz-btn-check');
+    btn.textContent = 'Další otázka →';
+    btn.focus({ preventScroll:true });
+    kvizStats();
+  }
+  function kvizCheck(){
+    if(kviz.ended){ kvizRestart(); return; }
+    if(kviz.locked){ kvizNext(); return; }
+    if(kviz.sel === null && !confirm('Není vybraná žádná možnost. Opravdu chcete zkontrolovat?')) return;
+    var ok = kviz.sel === kviz.current.correct;
+    kviz.answered++;
+    if(ok){
+      kviz.score += 10; kviz.streak++; kviz.correct++; kviz.roundCorrect++;
+      if(kviz.streak > kviz.bestStreak){ kviz.bestStreak = kviz.streak; kvizSave(); }
+    } else {
+      kviz.streak = 0;
+    }
+    kvizFinish(ok, ok ? 'Správně!' : (kviz.sel === null ? 'Vyberte odpověď.' : 'Bohužel špatně.'));
+  }
+  function kvizSkip(){
+    if(kviz.ended){ kvizRestart(); return; }
+    if(kviz.locked){ kvizNext(); return; }
+    kviz.streak = 0; kviz.answered++;
+    kvizFinish(false, 'Správná odpověď:');
+  }
+  function kvizStats(){
+    $('kviz-stat-score').textContent = kviz.score;
+    $('kviz-stat-streak').textContent = kviz.streak + (kviz.bestStreak > 0 ? ' / ' + kviz.bestStreak : '');
+    $('kviz-stat-accuracy').textContent = kviz.answered === 0 ? '—' : Math.round(100*kviz.correct/kviz.answered) + ' %';
+  }
+  (function kvizBuildTypeRow(){
+    var row = $('kviz-type-row');
+    KVIZ_TYPES.forEach(function(d){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip accented' + (d.key === kviz.type ? ' on' : '');
+      b.setAttribute('aria-pressed', d.key === kviz.type ? 'true' : 'false');
+      b.textContent = d.name;
+      b.addEventListener('click', function(){
+        if(d.key === kviz.type) return;
+        // rozpracovaná otázka s vybranou odpovědí se před změnou okruhu vyhodnotí
+        var settled = !kviz.locked && kviz.sel !== null;
+        if(settled) kvizCheck();
+        kviz.type = d.key; kviz.queue = []; kviz.inRound = false;
+        Array.prototype.forEach.call(row.children, function(el, i){
+          var on = KVIZ_TYPES[i].key === kviz.type;
+          el.classList.toggle('on', on);
+          el.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        // vyhodnocená otázka zůstane i s vysvětlením vidět, další už bude z nového okruhu
+        if(!settled) kvizNext();
+      });
+      row.appendChild(b);
+    });
+  })();
+  $('kviz-btn-check').addEventListener('click', kvizCheck);
+  $('kviz-btn-skip').addEventListener('click', kvizSkip);
+  $('kviz-btn-restart').addEventListener('click', kvizRestart);
+  $('kviz-reset-stats').addEventListener('click', function(){
+    kviz.score = 0; kviz.streak = 0; kviz.answered = 0; kviz.correct = 0; kviz.bestStreak = 0;
+    try{ localStorage.removeItem(KVIZ_KEY); }catch(e){}
+    kvizStats();
+  });
+  // Klávesnice v kvízu: A–D nebo 1–4 vybere odpověď, Enter zkontroluje / posune dál.
+  document.addEventListener('keydown', function(e){
+    if(section.hidden) return;
+    if(e.ctrlKey || e.metaKey || e.altKey) return;
+    if(e.key === 'Enter'){
+      if(e.target && e.target.tagName === 'BUTTON') return;
+      e.preventDefault(); kvizCheck(); return;
+    }
+    var idx = 'abcd'.indexOf(e.key.toLowerCase());
+    if(idx === -1) idx = '1234'.indexOf(e.key);
+    if(idx !== -1 && e.key.length === 1) kvizSelect(idx);
+  });
+
+  // ---- záložka Kvíz ----
+  // Skript je samostatný: otevření Kvízu i návrat na ostatní záložky řeší sám, ať stránka přepíná
+  // záložky jakkoli. Skóre kvízu má vlastní pole v hlavičce (skóre tréninku se tím nemění).
+  function activate(){
+    var teorieBtn = $('top-tab-teorie'), theory = $('theory-section');
+    if(!tabBtn.classList.contains('on') && teorieBtn && !teorieBtn.classList.contains('on')){
+      // nejdřív „kliknutím“ opustíme dosavadní záložku obsluhou stránky (u hry na čas s potvrzením)
+      teorieBtn.click();
+      if(theory && theory.hidden) return;   // stránka odmítla opustit dosavadní záložku (např. běžící hra)
+    }
+    Array.prototype.forEach.call(document.querySelectorAll('.tab-section'), function(s){ s.hidden = s !== section; });
+    Array.prototype.forEach.call(document.querySelectorAll('.toptab'), function(t){ t.classList.toggle('on', t === tabBtn); });
+    if(pageReadout) pageReadout.hidden = true;
+    readout.hidden = false;
+    kvizStats();
+    if(!kviz.current) kvizNext();
+  }
+  tabBtn.addEventListener('click', activate);
+  Array.prototype.forEach.call(document.querySelectorAll('.toptab'), function(t){
+    if(t === tabBtn) return;
+    t.addEventListener('click', function(){ section.hidden = true; readout.hidden = true; tabBtn.classList.remove('on'); });
+  });
+  document.addEventListener('fyzika:scores-updated', function(){ kviz.bestStreak = 0; kvizLoad(); kvizStats(); });
+  kvizLoad();
+  kvizStats();
+  if(location.hash === '#kviz' && !tabBtn.classList.contains('on')) tabBtn.click();
+  else if(location.hash === '#kviz') activate();
 })();
 </script>
 

@@ -138,6 +138,20 @@
 /* Třecí laboratoř */
 .applet-card .qtable td{ white-space:nowrap; }
 </style>
+<style>
+/* ---- Kvíz (stejný jako u Grafů rovnoměrného pohybu a u Pohybu po kružnici) ---- */
+.kviz-task{ font-size:1.02rem; line-height:1.5; max-width:52ch; margin:0 auto 10px; color:var(--ink); text-align:center; }
+#kviz-section .kviz-task i, #kviz-section .opt-btn i, #kviz-section .feedback .steps i, #kviz-section .cat-tag i{ font-family:'STIX Two Text', Georgia, serif; font-style:italic; text-transform:none; }
+#kviz-section .feedback .steps{ font-family:'Work Sans', sans-serif; white-space:normal; opacity:1; }
+#kviz-end .kviz-end-box{ text-align:center; margin:0 0 14px; }
+#kviz-end .kviz-end-hint{ text-align:center; margin-top:10px; }
+#kviz-section [hidden]{ display:none; }
+@media (max-width:520px){
+  /* čtyři a více záložek: na telefonu ve dvou řadách (stejně jako Grafy rovnoměrného pohybu) */
+  .top-tabs{ flex-wrap:wrap; }
+  .toptab{ flex:1 1 calc(50% - 4px); padding:13px 8px; }
+}
+</style>
 </head>
 <body>
 
@@ -165,10 +179,16 @@
       <div class="cell"><span class="label">Série</span><span class="value" id="stat-streak">0</span></div>
       <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="stat-accuracy">—</span></div>
     </div>
+    <div class="readout" id="kviz-readout" hidden>
+      <div class="cell"><span class="label">Skóre</span><span class="value" id="kviz-stat-score">0</span></div>
+      <div class="cell"><span class="label">Série</span><span class="value" id="kviz-stat-streak">0</span></div>
+      <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="kviz-stat-accuracy">—</span></div>
+    </div>
   </div>
 
   <div class="top-tabs">
     <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+    <button class="toptab" id="top-tab-kviz" data-tab="kviz">Kvíz</button>
     <button class="toptab" id="top-tab-aplet" data-tab="aplet">Třecí laboratoř</button>
     <button class="toptab" id="top-tab-trenink" data-tab="trenink">Trénink</button>
   </div>
@@ -388,6 +408,47 @@
       <p>• \(F_\mathrm{t} = f F_\mathrm{N}\), na vodorovné podložce \(F_\mathrm{t} = f m g\); součinitel \(f\) nemá jednotku.</p>
       <p>• Smyková třecí síla nezávisí na velikosti styčné plochy a (přibližně) ani na rychlosti.</p>
       <p>• Brzdí-li těleso jen tření, má zrychlení o velikosti \(a = f g\), nezávislé na hmotnosti.</p>
+    </div>
+  </div>
+
+  <!-- ============ KVÍZ ============ -->
+  <div id="kviz-section" class="tab-section" hidden>
+    <div class="panel">
+      <div class="section-block">
+        <div class="panel-title">Okruh otázek</div>
+        <div class="row" id="kviz-type-row"></div>
+      </div>
+      <div class="settings-foot" style="justify-content:flex-end;">
+        <button class="linklike" id="kviz-reset-stats">vynulovat statistiku</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div id="kviz-q">
+      <span class="cat-tag" id="kviz-cat-tag">Otázka</span>
+      <p class="kviz-task" id="kviz-task-text"></p>
+      <div class="opt-grid wide-opts" id="kviz-opt-grid"></div>
+      <div class="actions">
+        <button class="btn primary" id="kviz-btn-check">Zkontrolovat</button>
+        <button class="btn ghost" id="kviz-btn-skip">Nevím / Zobrazit řešení</button>
+      </div>
+      <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint">Vyberte jednu ze čtyř odpovědí kliknutím nebo klávesami A až D (případně 1 až 4) a potvrďte tlačítkem Zkontrolovat nebo klávesou Enter; dalším Enterem přejdete na další otázku. Po kontrole se správná odpověď obarví zeleně, chybně vybraná červeně a pod otázkou se objeví vysvětlení. Okruh otázek vyberete nahoře; otázky se neopakují, dokud neprojdete celý okruh. Pak se zobrazí, kolik otázek jste zodpověděli správně, a otázky můžete zamíchat a projít znovu.</p>
+      </details>
+      <div class="feedback" id="kviz-feedback" hidden>
+        <div class="headline" id="kviz-feedback-headline"></div>
+        <div class="steps" id="kviz-feedback-steps"></div>
+      </div>
+      </div>
+      <div id="kviz-end" hidden>
+        <div class="feedback ok kviz-end-box"><div class="headline">Hotovo, prošli jste všechny otázky!</div></div>
+        <p class="kviz-task" id="kviz-end-text"></p>
+        <div class="actions">
+          <button class="btn primary" id="kviz-btn-restart">Zamíchat otázky a začít znovu</button>
+        </div>
+        <p class="hint kviz-end-hint">Můžete také nahoře vybrat jiný okruh otázek.</p>
+      </div>
     </div>
   </div>
 
@@ -1183,6 +1244,336 @@
   // ---- otevření záložky odkazem (…/stranka.html#trenink) ----
   var hash = location.hash.replace('#', '');
   if(hash && tabs[hash]) showTab(hash);
+})();
+</script>
+
+<script>
+(function(){
+  "use strict";
+  // ================= KVÍZ: otázky s výběrem ze čtyř odpovědí (A–D) =================
+  // Samostatný skript (stejný kvíz jako u Grafů rovnoměrného pohybu a u Pohybu po kružnici).
+  // Položka banky: c = okruh, t = zadání (HTML), r = správná odpověď, w = tři špatné,
+  // e = vysvětlení; fixed = možnosti se nemíchají, jen seřadí.
+  var LETTERS = ['A','B','C','D'];
+  var KVIZ_TYPES = [
+    { key:'all', name:'Vše' },
+    { key:'puvod', name:'Původ a druhy tření', tag:'Odkud se tření bere' },
+    { key:'zavislost', name:'Na čem tření závisí', tag:'Na čem smyková třecí síla závisí' },
+    { key:'vypocty', name:'Výpočty', tag:'Výpočty s třecí silou' },
+    { key:'praxe', name:'Tření v praxi', tag:'Tření užitečné i škodlivé' }
+  ];
+  var KVIZ_BANK = [
+    // ----- původ a druhy tření -----
+    { c:'puvod', t:'Kniha strčená po stole chvíli klouže a zastaví se. Proč?',
+      r:'Brzdí ji třecí síla, kterou působí podložka v místě styku.',
+      w:['Zastaví ji její vlastní tíha.', 'Zastaví ji „síla pohybu“, která se vyčerpá.', 'Na knihu působí zákon setrvačnosti, který ji zastaví.'],
+      e:'Podle zákona setrvačnosti by kniha jela dál, kdyby na ni nepůsobila síla. Je to třecí síla <i>F</i><sub>t</sub> mezi knihou a stolem, která ji zpomaluje.' },
+    { c:'puvod', t:'Jak vzniká třecí síla na mikroskopické úrovni?',
+      r:'Nerovnosti obou povrchů se zachytávají a v místech dotyku vznikají slabé vazby mezi částicemi.',
+      w:['Povrchy se vzájemně přitahují gravitační silou.', 'Povrchy se odpuzují elektrickými náboji.', 'Povrchy jsou vždy dokonale hladké.'],
+      e:'Ani zdánlivě hladký povrch není hladký: má výstupky a prohlubně. Při posouvání se zachytávají, deformují a ulamují a mezi částicemi v místě skutečného dotyku vznikají slabé vazby.' },
+    { c:'puvod', t:'Jaký směr má třecí síla působící na těleso?',
+      r:'Leží v rovině styku a míří proti pohybu tělesa vzhledem k podložce.',
+      w:['Je kolmá na podložku.', 'Míří vždy ve směru pohybu tělesa.', 'Míří vždy svisle dolů.'],
+      e:'Třecí síla působí v rovině styku obou těles a míří proti pohybu tělesa vzhledem k podložce (nebo proti směru, kterým by se těleso dalo do pohybu). Kolmá na podložku je tlaková síla.' },
+    { c:'puvod', t:'Kvádr táhneme siloměrem stále silněji, ale zatím se nepohybuje. Při tahu 5&nbsp;N je siloměr stále v klidu. Jaká je klidová třecí síla?',
+      r:'5&nbsp;N, protože výslednice sil na kvádr je nulová.',
+      w:['0&nbsp;N, protože se kvádr nehýbe.', 'Větší než 5&nbsp;N, jinak by se pohnul.', 'Menší než 5&nbsp;N, protože klidové tření je slabší.'],
+      e:'Kvádr je v klidu, takže výslednice sil je nulová. Klidová třecí síla je stejně velká jako tahová síla (5&nbsp;N) a mířící opačně. Roste spolu s tahem, ale jen do mezní hodnoty.' },
+    { c:'puvod', t:'Co je mezní klidová třecí síla?',
+      r:'Největší hodnota klidové třecí síly; po překročení tahu se kvádr utrhne a začne klouzat.',
+      w:['Třecí síla při rovnoměrném klouzání.', 'Třecí síla, která roste neomezeně s tahem.', 'Třecí síla, která působí jen při valení.'],
+      e:'Klidové tření roste spolu s tahem do určité největší hodnoty, mezní klidové třecí síly. Jakmile tah překročí, kvádr se rozjede a působí na něj smyková třecí síla, která je o něco menší.' },
+    { c:'puvod', t:'Proč se těžká skříň dá do pohybu ztěžka, ale jakmile se rozjede, posouvá se snáz?',
+      r:'Mezní klidová třecí síla je větší než smyková třecí síla.',
+      w:['Skříň za pohybu ztrácí hmotnost.', 'Smykové tření je větší než klidové.', 'Při pohybu tření úplně zmizí.'],
+      e:'Smyková třecí síla je o něco menší než mezní klidová a přibližně stálá. Rozjet těleso je proto těžší než udržet ho v rovnoměrném pohybu.' },
+    // ----- na čem tření závisí -----
+    { c:'zavislost', t:'Na čem závisí velikost smykové třecí síly?',
+      r:'Na kolmé tlakové síle a na materiálu a úpravě povrchů.',
+      w:['Na velikosti styčné plochy a rychlosti pohybu.', 'Jen na rychlosti pohybu.', 'Jen na velikosti styčné plochy.'],
+      e:'Smyková třecí síla je přímo úměrná síle <i>F</i><sub>N</sub>, kterou těleso tlačí kolmo na podložku, a závisí na materiálu a úpravě povrchů (součinitel <i>f</i>). Na styčné ploše a (přibližně) ani na rychlosti nezávisí.' },
+    { c:'zavislost', t:'Položíme kvádr na menší stěnu místo na větší a táhneme ho rovnoměrně. Jak se změní smyková třecí síla?',
+      r:'Prakticky se nezmění.',
+      w:['Zvětší se, protože je tlak na podložku větší.', 'Zmenší se, protože je plocha menší.', 'Klesne na nulu.'],
+      e:'Třecí síla nezávisí na velikosti styčné plochy. Tlak na podložku sice vzroste, ale kolmá tlaková síla zůstává stejná.' },
+    { c:'zavislost', t:'Na kvádr přidáme závaží, takže se jeho tíha zdvojnásobí. Co se stane se smykovou třecí silou na vodorovné podložce?',
+      r:'Zdvojnásobí se.',
+      w:['Zmenší se na polovinu.', 'Nezmění se.', 'Zčtyřnásobí se.'],
+      e:'Na vodorovné podložce je <i>F</i><sub>N</sub> = <i>mg</i> a <i>F</i><sub>t</sub> = <i>f</i><i>F</i><sub>N</sub> je přímo úměrná tlakové síle. Dvojnásobná <i>F</i><sub>N</sub> dává dvojnásobnou <i>F</i><sub>t</sub>.' },
+    { c:'zavislost', t:'Jak vypadá graf závislosti <i>F</i><sub>t</sub> na <i>F</i><sub>N</sub> a co určuje jeho sklon?',
+      r:'Přímka procházející počátkem; sklon je součinitel smykového tření <i>f</i>.',
+      w:['Přímka procházející počátkem; sklon je hmotnost kvádru.', 'Parabola; sklon je součinitel <i>f</i>.', 'Vodorovná přímka, <i>F</i><sub>t</sub> na <i>F</i><sub>N</sub> nezávisí.'],
+      e:'Z <i>F</i><sub>t</sub> = <i>f</i><i>F</i><sub>N</sub> plyne přímá úměrnost; podíl <i>F</i><sub>t</sub>/<i>F</i><sub>N</sub> je stálý a rovná se <i>f</i>. Tak se součinitel tření určuje i v laboratorní práci.' },
+    { c:'zavislost', t:'Jakou jednotku má součinitel smykového tření <i>f</i>?',
+      r:'Nemá jednotku, je to číslo.',
+      w:['newton (N)', 'N·m⁻¹', 'kg·m·s⁻²'],
+      e:'<i>f</i> = <i>F</i><sub>t</sub>/<i>F</i><sub>N</sub> je podíl dvou sil, jednotky se vykrátí. Hodnota závisí na materiálech a úpravě povrchů (drsnost, vlhkost, mazání).' },
+    { c:'zavislost', t:'Kvádr táhneme rovnoměrně nahoru po svahu. Platí <i>F</i><sub>N</sub> = <i>mg</i> a <i>F</i><sub>t</sub> = <i>f</i><i>mg</i>?',
+      r:'Ne, rovnost <i>F</i><sub>N</sub> = <i>mg</i> platí jen na vodorovné podložce; na svahu je <i>F</i><sub>N</sub> menší.',
+      w:['Ano, vždy.', 'Ne, na svahu je <i>F</i><sub>N</sub> větší než <i>mg</i>.', 'Ano, ale jen pro vlhké povrchy.'],
+      e:'Na svahu tlačí těleso na podložku menší silou než <i>mg</i> (platí <i>F</i><sub>N</sub> = <i>mg</i> cos <i>α</i>), proto je i tření menší. Totéž platí, táhneme-li těleso šikmo vzhůru.' },
+    // ----- výpočty -----
+    { c:'vypocty', t:'Skříň o hmotnosti 80&nbsp;kg posouváme po podlaze rovnoměrně, <i>f</i> = 0,35. Jak velkou vodorovnou silou ji tlačíme? (<i>g</i> = 10&nbsp;m·s⁻²)',
+      r:'280&nbsp;N',
+      w:['28&nbsp;N', '800&nbsp;N', '2&nbsp;286&nbsp;N'],
+      e:'Rovnoměrný pohyb znamená nulovou výslednici, takže tlačíme silou rovnou tření: <i>F</i><sub>t</sub> = <i>f</i><i>mg</i> = 0,35 · 80 · 10&nbsp;N = 280&nbsp;N. Hodnota 2&nbsp;286 vznikne dělením <i>f</i>.' },
+    { c:'vypocty', t:'Hokejový puk vyslaný rychlostí 6&nbsp;m·s⁻¹ brzdí jen tření, <i>f</i> = 0,05. Jaké je jeho zpomalení? (<i>g</i> = 10&nbsp;m·s⁻²)',
+      r:'0,5&nbsp;m·s⁻²',
+      w:['5&nbsp;m·s⁻²', '0,05&nbsp;m·s⁻²', '10&nbsp;m·s⁻²'],
+      e:'Z <i>ma</i> = <i>f</i><i>mg</i> plyne <i>a</i> = <i>fg</i> = 0,05 · 10&nbsp;m·s⁻² = 0,5&nbsp;m·s⁻². Hmotnost puku se vykrátí.' },
+    { c:'vypocty', t:'Jak daleko dojede puk z předchozí úlohy (<i>v</i> = 6&nbsp;m·s⁻¹, zpomalení 0,5&nbsp;m·s⁻²), než se zastaví?',
+      r:'36&nbsp;m',
+      w:['72&nbsp;m', '12&nbsp;m', '18&nbsp;m'],
+      e:'<i>s</i> = <i>v</i>²/(2<i>a</i>) = 36/(2 · 0,5)&nbsp;m = 36&nbsp;m. Kontrola dobou: <i>t</i> = <i>v</i>/<i>a</i> = 12&nbsp;s a <i>s</i> = ½<i>vt</i> = ½ · 6 · 12&nbsp;m = 36&nbsp;m.' },
+    { c:'vypocty', t:'Auto jede rychlostí 90&nbsp;km·h⁻¹ a řidič zabrzdí s blokovanými koly na suchém asfaltu (<i>f</i> = 0,7). Jaká je brzdná dráha? (<i>g</i> = 10&nbsp;m·s⁻²)',
+      r:'Přibližně 45&nbsp;m',
+      w:['Přibližně 78&nbsp;m', 'Přibližně 90&nbsp;m', 'Přibližně 25&nbsp;m'],
+      e:'<i>v</i> = 25&nbsp;m·s⁻¹, <i>a</i> = <i>fg</i> = 7&nbsp;m·s⁻² a <i>s</i> = <i>v</i>²/(2<i>a</i>) = 625/14&nbsp;m ≈ 45&nbsp;m. Kontrola přes dobu <i>t</i> = <i>v</i>/<i>a</i> ≈ 3,57&nbsp;s a <i>s</i> = ½<i>vt</i> ≈ 45&nbsp;m. Hodnota 78&nbsp;m platí pro mokrý asfalt (<i>f</i> = 0,4).' },
+    { c:'vypocty', t:'Stejné auto jako v předchozí úloze brzdí na mokrém asfaltu (<i>f</i> = 0,4). O kolik procent je brzdná dráha delší než na suchém asfaltu?',
+      r:'Přibližně o 75&nbsp;%',
+      w:['Přibližně o 40&nbsp;%', 'Přibližně o 30&nbsp;%', 'Přibližně o 175&nbsp;%'],
+      e:'Dráha je nepřímo úměrná <i>f</i>: <i>s</i><sub>2</sub>/<i>s</i><sub>1</sub> = 0,7/0,4 = 1,75, tedy o 75&nbsp;% delší (přibližně 78&nbsp;m proti 45&nbsp;m). Hodnota 175 % je celkový poměr, ne zvětšení.' },
+    { c:'vypocty', t:'Řidič začne brzdit při dvojnásobné rychlosti než dříve (stejná silnice, kola blokují). Jak se změní brzdná dráha?',
+      r:'Zčtyřnásobí se.',
+      w:['Zdvojnásobí se.', 'Zůstane stejná.', 'Zosmeronásobí se.'],
+      e:'<i>s</i> = <i>v</i>²/(2<i>fg</i>) je úměrná druhé mocnině rychlosti. Při dvojnásobné rychlosti je dráha čtyřikrát delší.' },
+    { c:'vypocty', t:'Dřevěný kvádr o hmotnosti 5&nbsp;kg táhneme rovnoměrně po dřevěné podložce, <i>f</i> = 0,3. Jak velkou silou? (<i>g</i> = 10&nbsp;m·s⁻²)',
+      r:'15&nbsp;N',
+      w:['1,5&nbsp;N', '50&nbsp;N', '150&nbsp;N'],
+      e:'<i>F</i> = <i>F</i><sub>t</sub> = <i>f</i><i>mg</i> = 0,3 · 5 · 10&nbsp;N = 15&nbsp;N. Rozměrová kontrola: 1 · kg · m·s⁻² = N.' },
+    { c:'vypocty', t:'Dvě tělesa o různé hmotnosti (1&nbsp;kg a 3&nbsp;kg) kloužou po stejném povrchu a brzdí je jen tření. Co platí o jejich zpomalení?',
+      r:'Mají stejné zpomalení <i>a</i> = <i>fg</i>.',
+      w:['Těžší zpomaluje víc.', 'Lehčí zpomaluje víc.', 'Těžší se nezpomaluje vůbec.'],
+      e:'Těžší těleso je brzděno větší třecí silou, ale má i větší setrvačnost. Z <i>ma</i> = <i>f</i><i>mg</i> se hmotnost vykrátí, takže <i>a</i> = <i>fg</i> pro obě.' },
+    // ----- tření v praxi -----
+    { c:'praxe', t:'Kde bychom tření chtěli zvětšit?',
+      r:'Posypová sůl a štěrk na náledí, zimní pneumatiky, magnézium na rukou gymnastů.',
+      w:['Mazání ložisek strojů.', 'Hladké opracování součástek.', 'Kuličková ložiska v kolech.'],
+      e:'Tření zvětšujeme tam, kde potřebujeme pevnější záběr: posypem, zimními pneumatikami, protiskluzovými podložkami. Mazání, hladké opracování a ložiska ho naopak zmenšují.' },
+    { c:'praxe', t:'Proč kuličková ložiska zmenšují tření?',
+      r:'Valení klade mnohem menší odpor než smýkání.',
+      w:['Zvětšují styčnou plochu.', 'Zvětšují hmotnost součástek.', 'Úplně odstraňují třecí sílu.'],
+      e:'Kuličky se v ložisku po povrchu valí, a valivý odpor je mnohem menší než smykové tření. Mazání a hladké opracování ploch tření ještě dále zmenšují.' },
+    { c:'praxe', t:'Díky čemu se můžeme rozjet při chůzi?',
+      r:'Třecí síla země působí na podrážku dopředu.',
+      w:['Země podrážku odpuzuje elektrickou silou.', 'Tíhová síla nás tlačí dopředu.', 'Při chůzi tření nepůsobí.'],
+      e:'Podrážka tlačí na zem dozadu a zem na ni působí třecí silou dopředu. Bez tření (náledí) bychom se nerozjeli, noha by se smekla.' },
+    { c:'praxe', t:'Proč škodí tření ve strojích?',
+      r:'Zahřívá a opotřebovává součástky a zvyšuje spotřebu paliva.',
+      w:['Zvyšuje hmotnost součástek.', 'Zmenšuje rychlost světla.', 'Škodí jen na zimu.'],
+      e:'Tření mění část energie v teplo, opotřebovává součástky a stroj musí vynakládat více energie. Zmenšujeme ho mazáním, opracováním a ložisky.' },
+    { c:'praxe', t:'Seřaďte typické hodnoty součinitele smykového tření <i>f</i> od nejmenšího po největší.',
+      r:'ocel po ledu &lt; pneumatika po ledu &lt; pneumatika po mokrém asfaltu &lt; pneumatika po suchém asfaltu',
+      w:['pneumatika po suchém asfaltu &lt; pneumatika po mokrém asfaltu &lt; pneumatika po ledu &lt; ocel po ledu', 'pneumatika po ledu &lt; ocel po ledu &lt; pneumatika po suchém asfaltu &lt; pneumatika po mokrém asfaltu', 'pneumatika po mokrém asfaltu &lt; ocel po ledu &lt; pneumatika po ledu &lt; pneumatika po suchém asfaltu'],
+      e:'Orientačně: brusle (ocel po ledu) 0,01 až 0,03, pneumatika po ledu 0,05 až 0,1, po mokrém asfaltu 0,3 až 0,5, po suchém asfaltu 0,6 až 0,8. Proto je led nebezpečnější než mokrá silnice.' }
+  ];
+
+
+  var KVIZ_KEY = 'fyzika:treci-sila:kviz';
+  var section = document.getElementById('kviz-section');
+  var tabBtn = document.getElementById('top-tab-kviz');
+  var readout = document.getElementById('kviz-readout');
+  var pageReadout = document.getElementById('header-readout');
+  var kviz = {
+    type:'all', queue:[], current:null, sel:null, locked:false,
+    score:0, streak:0, bestStreak:0, answered:0, correct:0,
+    inRound:false, ended:false, roundTotal:0, roundCorrect:0
+  };
+  function $(id){ return document.getElementById(id); }
+  function kvizLoad(){
+    try{ var raw = localStorage.getItem(KVIZ_KEY); if(raw){ kviz.bestStreak = JSON.parse(raw).bestStreak || 0; } }catch(e){}
+  }
+  function kvizSave(){
+    try{ localStorage.setItem(KVIZ_KEY, JSON.stringify({bestStreak: kviz.bestStreak})); }catch(e){}
+  }
+  function kvizShuffled(a){
+    a = a.slice();
+    for(var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random()*(i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; }
+    return a;
+  }
+  function typeOf(key){ return KVIZ_TYPES.filter(function(t){ return t.key === key; })[0]; }
+
+  // Otázky okruhu se berou v náhodném pořadí bez opakování. Po projití celého okruhu
+  // se zobrazí závěrečná hláška s výsledkem kola a nabídkou otázky zamíchat znovu.
+  function kvizNext(){
+    if(!kviz.queue.length){
+      if(kviz.inRound){ kvizShowEnd(); return; }
+      var pool = KVIZ_BANK.filter(function(b){ return kviz.type === 'all' || b.c === kviz.type; });
+      kviz.queue = kvizShuffled(pool);
+      if(kviz.current && kviz.queue.length > 1 && kviz.queue[0] === kviz.current.item){ kviz.queue.push(kviz.queue.shift()); }
+      kviz.inRound = true; kviz.roundTotal = pool.length; kviz.roundCorrect = 0;
+    }
+    var item = kviz.queue.shift();
+    var opts = item.fixed ? [item.r].concat(item.w).sort() : kvizShuffled([item.r].concat(item.w));
+    kviz.current = { item:item, choices:opts, correct:opts.indexOf(item.r) };
+    kvizRender();
+  }
+  function kvizShowEnd(){
+    kviz.ended = true; kviz.inRound = false;
+    var tp = typeOf(kviz.type);
+    var n = kviz.roundTotal, k = kviz.roundCorrect;
+    $('kviz-end-text').innerHTML =
+      'Prošli jste všech ' + n + ' otázek ' + (kviz.type === 'all' ? 'kvízu' : 'okruhu „' + tp.name + '“') + '. ' +
+      'Správně jste odpověděli na ' + k + ' z ' + n + ' (' + Math.round(100*k/n) + '&nbsp;%). Chcete otázky zamíchat a projít znovu?';
+    $('kviz-q').hidden = true;
+    $('kviz-end').hidden = false;
+    $('kviz-btn-restart').focus({ preventScroll:true });
+  }
+  function kvizRestart(){
+    kviz.queue = []; kviz.inRound = false;
+    kvizNext();
+  }
+  function kvizRender(){
+    var q = kviz.current;
+    kviz.ended = false;
+    $('kviz-q').hidden = false;
+    $('kviz-end').hidden = true;
+    var tp = typeOf(q.item.c);
+    $('kviz-cat-tag').innerHTML = tp ? tp.tag : 'Otázka';
+    $('kviz-task-text').innerHTML = q.item.t;
+    var grid = $('kviz-opt-grid');
+    grid.innerHTML = '';
+    kviz.sel = null; kviz.locked = false;
+    q.choices.forEach(function(c, i){
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'opt-btn';
+      b.innerHTML = '<b>' + LETTERS[i] + ')</b>&nbsp; ' + c;
+      b.addEventListener('click', function(){ kvizSelect(i); });
+      grid.appendChild(b);
+    });
+    var fb = $('kviz-feedback');
+    fb.hidden = true; fb.classList.remove('ok', 'bad', 'sol');
+    $('kviz-btn-check').textContent = 'Zkontrolovat';
+  }
+  function kvizSelect(i){
+    if(kviz.locked || kviz.ended) return;
+    kviz.sel = i;
+    Array.prototype.forEach.call($('kviz-opt-grid').children, function(el, j){ el.classList.toggle('selected', j === i); });
+    $('kviz-btn-check').focus({ preventScroll:true });
+  }
+  function kvizFinish(ok, headline){
+    var q = kviz.current;
+    Array.prototype.forEach.call($('kviz-opt-grid').children, function(el, j){
+      el.disabled = true;
+      el.classList.remove('selected');
+      if(j === q.correct) el.classList.add(kviz.sel === j ? 'correct' : 'missed');
+      else if(j === kviz.sel) el.classList.add('wrong');
+    });
+    var fb = $('kviz-feedback');
+    fb.hidden = false;
+    fb.classList.toggle('ok', ok); fb.classList.toggle('bad', !ok);
+    $('kviz-feedback-headline').textContent = headline;
+    var finalText = 'Správná odpověď: ' + LETTERS[q.correct] + ') ' + q.item.r;
+    if(window.FyzikaReseni && FyzikaReseni.show){
+      FyzikaReseni.show(fb, $('kviz-feedback-steps'), { raw:true, title:'Vysvětlení', steps:[q.item.e], final:finalText });
+    } else {
+      $('kviz-feedback-steps').innerHTML = q.item.e + '<br><b>' + finalText + '</b>';
+    }
+    kviz.locked = true;
+    var btn = $('kviz-btn-check');
+    btn.textContent = 'Další otázka →';
+    btn.focus({ preventScroll:true });
+    kvizStats();
+  }
+  function kvizCheck(){
+    if(kviz.ended){ kvizRestart(); return; }
+    if(kviz.locked){ kvizNext(); return; }
+    if(kviz.sel === null && !confirm('Není vybraná žádná možnost. Opravdu chcete zkontrolovat?')) return;
+    var ok = kviz.sel === kviz.current.correct;
+    kviz.answered++;
+    if(ok){
+      kviz.score += 10; kviz.streak++; kviz.correct++; kviz.roundCorrect++;
+      if(kviz.streak > kviz.bestStreak){ kviz.bestStreak = kviz.streak; kvizSave(); }
+    } else {
+      kviz.streak = 0;
+    }
+    kvizFinish(ok, ok ? 'Správně!' : (kviz.sel === null ? 'Vyberte odpověď.' : 'Bohužel špatně.'));
+  }
+  function kvizSkip(){
+    if(kviz.ended){ kvizRestart(); return; }
+    if(kviz.locked){ kvizNext(); return; }
+    kviz.streak = 0; kviz.answered++;
+    kvizFinish(false, 'Správná odpověď:');
+  }
+  function kvizStats(){
+    $('kviz-stat-score').textContent = kviz.score;
+    $('kviz-stat-streak').textContent = kviz.streak + (kviz.bestStreak > 0 ? ' / ' + kviz.bestStreak : '');
+    $('kviz-stat-accuracy').textContent = kviz.answered === 0 ? '—' : Math.round(100*kviz.correct/kviz.answered) + ' %';
+  }
+  (function kvizBuildTypeRow(){
+    var row = $('kviz-type-row');
+    KVIZ_TYPES.forEach(function(d){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip accented' + (d.key === kviz.type ? ' on' : '');
+      b.setAttribute('aria-pressed', d.key === kviz.type ? 'true' : 'false');
+      b.textContent = d.name;
+      b.addEventListener('click', function(){
+        if(d.key === kviz.type) return;
+        // rozpracovaná otázka s vybranou odpovědí se před změnou okruhu vyhodnotí
+        var settled = !kviz.locked && kviz.sel !== null;
+        if(settled) kvizCheck();
+        kviz.type = d.key; kviz.queue = []; kviz.inRound = false;
+        Array.prototype.forEach.call(row.children, function(el, i){
+          var on = KVIZ_TYPES[i].key === kviz.type;
+          el.classList.toggle('on', on);
+          el.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        // vyhodnocená otázka zůstane i s vysvětlením vidět, další už bude z nového okruhu
+        if(!settled) kvizNext();
+      });
+      row.appendChild(b);
+    });
+  })();
+  $('kviz-btn-check').addEventListener('click', kvizCheck);
+  $('kviz-btn-skip').addEventListener('click', kvizSkip);
+  $('kviz-btn-restart').addEventListener('click', kvizRestart);
+  $('kviz-reset-stats').addEventListener('click', function(){
+    kviz.score = 0; kviz.streak = 0; kviz.answered = 0; kviz.correct = 0; kviz.bestStreak = 0;
+    try{ localStorage.removeItem(KVIZ_KEY); }catch(e){}
+    kvizStats();
+  });
+  // Klávesnice v kvízu: A–D nebo 1–4 vybere odpověď, Enter zkontroluje / posune dál.
+  document.addEventListener('keydown', function(e){
+    if(section.hidden) return;
+    if(e.ctrlKey || e.metaKey || e.altKey) return;
+    if(e.key === 'Enter'){
+      if(e.target && e.target.tagName === 'BUTTON') return;
+      e.preventDefault(); kvizCheck(); return;
+    }
+    var idx = 'abcd'.indexOf(e.key.toLowerCase());
+    if(idx === -1) idx = '1234'.indexOf(e.key);
+    if(idx !== -1 && e.key.length === 1) kvizSelect(idx);
+  });
+
+  // ---- záložka Kvíz ----
+  // Skript je samostatný: otevření Kvízu i návrat na ostatní záložky řeší sám, ať stránka přepíná
+  // záložky jakkoli. Skóre kvízu má vlastní pole v hlavičce (skóre tréninku se tím nemění).
+  function activate(){
+    var teorieBtn = $('top-tab-teorie'), theory = $('theory-section');
+    if(!tabBtn.classList.contains('on') && teorieBtn && !teorieBtn.classList.contains('on')){
+      // nejdřív „kliknutím“ opustíme dosavadní záložku obsluhou stránky (u hry na čas s potvrzením)
+      teorieBtn.click();
+      if(theory && theory.hidden) return;   // stránka odmítla opustit dosavadní záložku (např. běžící hra)
+    }
+    Array.prototype.forEach.call(document.querySelectorAll('.tab-section'), function(s){ s.hidden = s !== section; });
+    Array.prototype.forEach.call(document.querySelectorAll('.toptab'), function(t){ t.classList.toggle('on', t === tabBtn); });
+    if(pageReadout) pageReadout.hidden = true;
+    readout.hidden = false;
+    kvizStats();
+    if(!kviz.current) kvizNext();
+  }
+  tabBtn.addEventListener('click', activate);
+  Array.prototype.forEach.call(document.querySelectorAll('.toptab'), function(t){
+    if(t === tabBtn) return;
+    t.addEventListener('click', function(){ section.hidden = true; readout.hidden = true; tabBtn.classList.remove('on'); });
+  });
+  document.addEventListener('fyzika:scores-updated', function(){ kviz.bestStreak = 0; kvizLoad(); kvizStats(); });
+  kvizLoad();
+  kvizStats();
+  if(location.hash === '#kviz' && !tabBtn.classList.contains('on')) tabBtn.click();
+  else if(location.hash === '#kviz') activate();
 })();
 </script>
 

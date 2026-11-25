@@ -13,6 +13,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <link rel="stylesheet" href="../spolecne/styl.css">
+<link rel="stylesheet" href="../spolecne/reseni.css?v=1">
 <link rel="stylesheet" href="../spolecne/komponenty.css?v=1">
 <style>
 :root{
@@ -172,6 +173,20 @@
 @keyframes pulse{ 0%,100%{ opacity:1; } 50%{ opacity:0.6; } }
 
 </style>
+<style>
+/* ---- Kvíz (stejný jako u Grafů rovnoměrného pohybu a u Pohybu po kružnici) ---- */
+.kviz-task{ font-size:1.02rem; line-height:1.5; max-width:52ch; margin:0 auto 10px; color:var(--ink); text-align:center; }
+#kviz-section .kviz-task i, #kviz-section .opt-btn i, #kviz-section .feedback .steps i, #kviz-section .cat-tag i{ font-family:'STIX Two Text', Georgia, serif; font-style:italic; text-transform:none; }
+#kviz-section .feedback .steps{ font-family:'Work Sans', sans-serif; white-space:normal; opacity:1; }
+#kviz-end .kviz-end-box{ text-align:center; margin:0 0 14px; }
+#kviz-end .kviz-end-hint{ text-align:center; margin-top:10px; }
+#kviz-section [hidden]{ display:none; }
+@media (max-width:520px){
+  /* čtyři a více záložek: na telefonu ve dvou řadách (stejně jako Grafy rovnoměrného pohybu) */
+  .top-tabs{ flex-wrap:wrap; }
+  .toptab{ flex:1 1 calc(50% - 4px); padding:13px 8px; }
+}
+</style>
 </head>
 <body>
 
@@ -200,10 +215,16 @@
       <div class="cell"><span class="label">Série</span><span class="value" id="stat-streak">0</span></div>
       <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="stat-accuracy">—</span></div>
     </div>
+    <div class="readout" id="kviz-readout" hidden>
+      <div class="cell"><span class="label">Skóre</span><span class="value" id="kviz-stat-score">0</span></div>
+      <div class="cell"><span class="label">Série</span><span class="value" id="kviz-stat-streak">0</span></div>
+      <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="kviz-stat-accuracy">—</span></div>
+    </div>
   </div>
 
   <div class="top-tabs">
     <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+    <button class="toptab" id="top-tab-kviz" data-tab="kviz">Kvíz</button>
     <button class="toptab" id="top-tab-trenink" data-tab="trenink">Trénink</button>
     <button class="toptab" id="top-tab-hra" data-tab="hra">Hra na čas</button>
   </div>
@@ -354,6 +375,47 @@
 
   </div>
 
+  <!-- ============ KVÍZ ============ -->
+  <div id="kviz-section" class="tab-section" hidden>
+    <div class="panel">
+      <div class="section-block">
+        <div class="panel-title">Okruh otázek</div>
+        <div class="row" id="kviz-type-row"></div>
+      </div>
+      <div class="settings-foot" style="justify-content:flex-end;">
+        <button class="linklike" id="kviz-reset-stats">vynulovat statistiku</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div id="kviz-q">
+      <span class="cat-tag" id="kviz-cat-tag">Otázka</span>
+      <p class="kviz-task" id="kviz-task-text"></p>
+      <div class="opt-grid wide-opts" id="kviz-opt-grid"></div>
+      <div class="actions">
+        <button class="btn primary" id="kviz-btn-check">Zkontrolovat</button>
+        <button class="btn ghost" id="kviz-btn-skip">Nevím / Zobrazit řešení</button>
+      </div>
+      <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint">Vyberte jednu ze čtyř odpovědí kliknutím nebo klávesami A až D (případně 1 až 4) a potvrďte tlačítkem Zkontrolovat nebo klávesou Enter; dalším Enterem přejdete na další otázku. Po kontrole se správná odpověď obarví zeleně, chybně vybraná červeně a pod otázkou se objeví vysvětlení. Okruh otázek vyberete nahoře; otázky se neopakují, dokud neprojdete celý okruh. Pak se zobrazí, kolik otázek jste zodpověděli správně, a otázky můžete zamíchat a projít znovu.</p>
+      </details>
+      <div class="feedback" id="kviz-feedback" hidden>
+        <div class="headline" id="kviz-feedback-headline"></div>
+        <div class="steps" id="kviz-feedback-steps"></div>
+      </div>
+      </div>
+      <div id="kviz-end" hidden>
+        <div class="feedback ok kviz-end-box"><div class="headline">Hotovo, prošli jste všechny otázky!</div></div>
+        <p class="kviz-task" id="kviz-end-text"></p>
+        <div class="actions">
+          <button class="btn primary" id="kviz-btn-restart">Zamíchat otázky a začít znovu</button>
+        </div>
+        <p class="hint kviz-end-hint">Můžete také nahoře vybrat jiný okruh otázek.</p>
+      </div>
+    </div>
+  </div>
+
   <div id="trenink-section" class="tab-section" hidden>
 
   <div class="panel">
@@ -479,6 +541,7 @@
   <footer>Fyzika — Kvinta/1. ročník</footer>
 </div>
 
+<script src="../spolecne/reseni.js?v=1"></script>
 <script src="../spolecne/spolecne.js"></script>
 <script>
 (function(){
@@ -1660,6 +1723,336 @@
   if(!/^[a-z0-9-]+$/.test(hash)) return;
   var btn = document.querySelector('.toptab[data-tab="' + hash + '"]');
   if(btn && !btn.classList.contains('on') && !btn.disabled) btn.click();
+})();
+</script>
+
+<script>
+(function(){
+  "use strict";
+  // ================= KVÍZ: otázky s výběrem ze čtyř odpovědí (A–D) =================
+  // Samostatný skript (stejný kvíz jako u Grafů rovnoměrného pohybu a u Pohybu po kružnici).
+  // Položka banky: c = okruh, t = zadání (HTML), r = správná odpověď, w = tři špatné,
+  // e = vysvětlení; fixed = možnosti se nemíchají, jen seřadí.
+  var LETTERS = ['A','B','C','D'];
+  var KVIZ_TYPES = [
+    { key:'all', name:'Vše' },
+    { key:'zapis', name:'Zápis a výsledek', tag:'Zadávání a zobrazení výsledku' },
+    { key:'mocniny', name:'Mocniny, odmocniny, zlomky', tag:'Mocniny, odmocniny, zlomky a ×10ˣ' },
+    { key:'gonio', name:'Goniometrie', tag:'Goniometrické funkce a Deg/Rad' },
+    { key:'logaritmy', name:'Logaritmy', tag:'Logaritmy' }
+  ];
+  var KVIZ_BANK = [
+    // ----- zápis a výsledek -----
+    { c:'zapis', t:'Co je přirozený zápis na kalkulačce FX-82CE X?',
+      r:'Zadávání výrazů tak, jak je píšeme na papír: zlomky pod sebe, odmocniny se „stříškou“.',
+      w:['Zadávání všech výrazů pouze v desetinných číslech.', 'Zobrazení výsledků jen ve vědeckém zápisu.', 'Zadávání výrazů zprava doleva.'],
+      e:'Přirozený zápis zobrazuje výrazy stejně jako na papíře. Ve výchozím nastavení (Mat vst/Mat výs) se i výsledek zobrazí přesně, například jako zlomek, odmocnina nebo násobek π.' },
+    { c:'zapis', t:'Výsledek je zobrazený jako zlomek nebo odmocnina. Kterou klávesou ho přepnete na desetinné číslo?',
+      r:'S⇔D',
+      w:['Ans', 'SHIFT + π', '×10ˣ'],
+      e:'Klávesou S⇔D se přepíná mezi přesným tvarem (zlomek, odmocnina, násobek π) a desetinným číslem.' },
+    { c:'zapis', t:'K čemu slouží klávesa ▶ při zadávání zlomku nebo odmocniny?',
+      r:'Přesune kurzor do dalšího políčka šablony nebo z něj vystoupí.',
+      w:['Zruší poslední zadanou číslici.', 'Spočítá výsledek.', 'Zaokrouhlí číslo na celé.'],
+      e:'Po napsání čitatele přeskočíte klávesou ▶ do jmenovatele, z odmocniny nebo exponentu stejnou klávesou vystoupíte. Slouží místo uzavírací závorky.' },
+    { c:'zapis', t:'Jak lze na kalkulačce psát desetinná čísla?',
+      r:'Čárkou i tečkou, kalkulačka obojí pochopí.',
+      w:['Jen tečkou.', 'Jen čárkou.', 'Desetinná čísla nelze zadat, jen zlomky.'],
+      e:'Desetinná čísla lze psát čárkou i tečkou. Totéž platí pro trenažér na této stránce.' },
+    { c:'zapis', t:'Jakou hodnotu vloží do výpočtu klávesa Ans?',
+      r:'Poslední spočítaný výsledek.',
+      w:['Odpověď na zadanou úlohu.', 'Hodnotu konstanty π.', 'Poslední zadané číslo.'],
+      e:'Ans vloží hodnotu posledního spočítaného výsledku. Po každém stisknutí = se hodnota v Ans přepíše novým výsledkem.' },
+    { c:'zapis', t:'Spočítali jste 5² = 25. Jak výsledek vydělíte dvěma bez opětovného psaní čísla?',
+      r:'Ans ÷ 2 =, výsledek je 12,5.',
+      w:['5 ÷ 2 =, výsledek je 2,5.', 'Ans − 2 =, výsledek je 23.', 'Ans × 2 =, výsledek je 50.'],
+      e:'Po stisknutí = je v Ans číslo 25. Zadáme „Ans ÷ 2 =“ a dostaneme 12,5.' },
+    // ----- mocniny, odmocniny, zlomky -----
+    { c:'mocniny', t:'Jakou klávesou zadáte třetí mocninu čísla, například 4³?',
+      r:'4, potom klávesa x³, potom =.',
+      w:['4, potom klávesa x², potom =.', '4, potom klávesa √, potom =.', '4, potom klávesa ×10ˣ, potom =.'],
+      e:'Pro druhou mocninu je klávesa x², pro třetí x³. Pro jiný exponent se používá klávesa x▪. Výsledek: 4³ = 64.' },
+    { c:'mocniny', t:'Jak zadáte 3⁵ (obecná mocnina)?',
+      r:'3, klávesa x▪, do čtverečku exponent 5, =.',
+      w:['3, klávesa x², číslo 5, =.', '3, klávesa ×10ˣ, číslo 5, =.', '3 × 5 =.'],
+      e:'Pro exponent jiný než 2 nebo 3 použijeme klávesu x▪, kde plný čtvereček označuje exponent. Výsledek: 3⁵ = 243. Součin 3 × 5 = 15 není mocnina.' },
+    { c:'mocniny', t:'Jak zadáte odmocninu z celého výrazu, například √(6 + 8)?',
+      r:'Klávesa √ otevře šablonu; výraz 6 + 8 napíšeme do políčka a vystoupíme klávesou ▶.',
+      w:['Zadáme √ 6 + 8 a výsledek se dopočítá sám.', 'Zadáme 6 + 8 a stiskneme √.', 'Výraz musíme nejdřív sečíst na papíře.'],
+      e:'Je-li pod odmocninou celý výraz, napíšeme ho přímo do políčka šablony a z něj vystoupíme klávesou ▶, ne závorkou. Výsledek je √14 ≈ 3,742. Bez vystoupení by se 8 nacházelo pod odmocninou jen společně s 6.' },
+    { c:'mocniny', t:'Jak zadáte třetí odmocninu ∛27?',
+      r:'SHIFT ∛ 2 7 =, výsledek je 3.',
+      w:['√ 2 7 =, výsledek je 5,196.', 'x² 2 7 =, výsledek je 729.', 'SHIFT π 2 7 =, výsledek je 84,8.'],
+      e:'Třetí odmocnina má vlastní funkci po stisknutí SHIFT. Výsledek 3 je správný, protože 3³ = 27. Hodnota 5,196 je druhá odmocnina z 27.' },
+    { c:'mocniny', t:'Jak zadáte pátou odmocninu ze 200?',
+      r:'SHIFT √▪, nejdřív index 5, ▶, potom 200, =.',
+      w:['√, 200, ×10ˣ, 5, =.', 'SHIFT √▪, nejdřív 200, ▶, potom index 5, =.', 'x▪, 200, ▶, 5, =.'],
+      e:'U odmocniny s libovolným indexem se nejdřív zadá index (kolikátá odmocnina), teprve potom číslo pod odmocninou. Výsledek ⁵√200 ≈ 2,885.' },
+    { c:'mocniny', t:'Jak zadáte zlomek 3/8?',
+      r:'Klávesa zlomku, čitatel 3, ▶, jmenovatel 8.',
+      w:['3, klávesa ×10ˣ, 8.', '3 ÷ 8 vždy musí být bez šablony.', 'Klávesa zlomku, 3, 8 bez ▶.'],
+      e:'Klávesa zlomku otevře šablonu. Čitatel napíšeme rovnou a klávesou ▶ přeskočíme do jmenovatele.' },
+    { c:'mocniny', t:'Jak zadáte 3,2·10⁻⁴?',
+      r:'3 , 2 ×10ˣ (−) 4',
+      w:['3 , 2 × 10 ^ 4 (−)', '3 , 2 × 1 0 x² 4', '3 , 2 SHIFT π 4'],
+      e:'Číslo ve tvaru <i>a</i>·10ⁿ se zadává jednou klávesou ×10ˣ: nepíše se ani krát, ani deset, ani stříška. Záporný exponent se zadává klávesou (−).' },
+    { c:'mocniny', t:'Jak zadáte výraz 2π·5 (obvod kružnice o poloměru 5) tak, aby se počítalo s přesnou hodnotou π?',
+      r:'2 × SHIFT π × 5 =, výsledek je 10π ≈ 31,42.',
+      w:['2 × 3,14 × 5 =, výsledek je 31,4.', '2 × π × 5 bez SHIFT.', 'Hodnotu π zadáme jako zlomek 22/7.'],
+      e:'Klávesová zkratka SHIFT + π vloží symbol π jako přesnou hodnotu. Výsledek 10π se klávesou S⇔D převede na 31,416.' },
+    // ----- goniometrie -----
+    { c:'gonio', t:'Jak poznáte, v jakém režimu úhlu (Deg/Rad) je kalkulačka?',
+      r:'Podle ikonky D (stupně) nebo R (radiány) nahoře na displeji.',
+      w:['Podle barvy displeje.', 'Podle počtu zobrazených číslic.', 'Podle klávesy Ans.'],
+      e:'Před goniometrickým výpočtem zkontrolujeme ikonku D nebo R nahoře na displeji. Špatně nastavený režim je nejčastější příčina chybného výsledku.' },
+    { c:'gonio', t:'Jak přepnete úhel mezi stupni a radiány?',
+      r:'SHIFT MENU (SETUP), Jednotka úhlu, Stupeň nebo Radián.',
+      w:['Klávesou S⇔D.', 'Stisknutím Ans a pak π.', 'Nelze přepnout.'],
+      e:'Stiskneme SHIFT MENU, vybereme Jednotku úhlu a zvolíme Stupeň (D) nebo Radián (R).' },
+    { c:'gonio', t:'Správný výsledek sin 35° je přibližně 0,574, ale kalkulačka ukazuje přibližně −0,428. Co je nejpravděpodobnější příčina?',
+      r:'Kalkulačka je v režimu Rad, počítá sinus úhlu 35&nbsp;rad.',
+      w:['Kalkulačka je v režimu Deg.', 'Kalkulačka počítá inverzní funkci.', 'V displeji je zapnutý vědecký zápis.'],
+      e:'V režimu Rad se 35 bere jako 35 radiánů a sin 35 ≈ −0,428. Pro stupně musí být režim Deg a sin 35° ≈ 0,574.' },
+    { c:'gonio', t:'Jak v režimu Deg najdete úhel <i>α</i>, pro který sin <i>α</i> = 0,574?',
+      r:'SHIFT sin⁻¹ 0 , 5 7 4 ) =, výsledek je přibližně 35°.',
+      w:['sin 0 , 5 7 4 ) =, výsledek je 0,01.', 'SHIFT log 0 , 5 7 4 =, výsledek je 0,574.', 'S⇔D 0 , 5 7 4 =, výsledek je 0,574.'],
+      e:'Inverzní funkce se volí klávesou SHIFT před funkcí (sin⁻¹, cos⁻¹, tg⁻¹). Výsledek ve stupních: arcsin 0,574 ≈ 35°. Výsledek se zobrazí podle nastaveného režimu.' },
+    { c:'gonio', t:'Kolik je cos 60° v režimu Deg?',
+      r:'0,5',
+      w:['−0,952', '0,866', '1'],
+      e:'cos 60° = 0,5. Hodnota −0,952 je cos 60 v režimu Rad (60 radiánů).' },
+    { c:'gonio', t:'Kolik je tg 45° v režimu Deg?',
+      r:'1',
+      w:['0,5', '0,707', '1,414'],
+      e:'tg 45° = 1, protože sin 45° = cos 45° ≈ 0,707. Hodnota 0,707 je sinus nebo kosinus.' },
+    // ----- logaritmy -----
+    { c:'logaritmy', t:'Jakou klávesou spočítáte dekadický logaritmus a jakou přirozený?',
+      r:'log je dekadický (základ 10), ln přirozený (základ e).',
+      w:['log je přirozený, ln dekadický.', 'Obě klávesy počítají logaritmus o základu 2.', 'log je přirozený, ln o základu 10.'],
+      e:'log(<i>x</i>) je logaritmus o základu 10, ln(<i>x</i>) o základu e. Obě klávesy samy otevřou závorku, po zadání čísla ji zavřeme klávesou ).' },
+    { c:'logaritmy', t:'Kolik je log 1 000?',
+      r:'3',
+      w:['1 000', '10', '0,001'],
+      e:'log 1 000 = 3, protože 10³ = 1 000.' },
+    { c:'logaritmy', t:'Jak zadáte log₃(50) (logaritmus o základu 3)?',
+      r:'Klávesa log▪, základ 3, ▶, argument 50, =; výsledek je přibližně 3,56.',
+      w:['log, 3, ÷, 50, =.', 'ln 50 =.', 'SHIFT log 3 ▶ 50 =.'],
+      e:'Klávesa log▪ (plný čtvereček v dolním indexu) otevře šablonu s malým políčkem pro základ. Základ zadáme hned a klávesou ▶ přeskočíme k argumentu. Kontrola: 3³·⁵⁶ ≈ 50.' },
+    { c:'logaritmy', t:'Znáte log(<i>x</i>) = 1,4 a hledáte <i>x</i>. Jak to zadáte?',
+      r:'SHIFT log 1 , 4 ▶ =, výsledek je přibližně 25,1.',
+      w:['log 1 , 4 =, výsledek je 0,146.', 'SHIFT ln 1 , 4 =, výsledek je 4,06.', 'S⇔D 1 , 4 =, výsledek je 1,4.'],
+      e:'Inverzní funkce k log je 10ˣ. Počítáme ji klávesou SHIFT + log: 10¹·⁴ ≈ 25,12. Hodnota 4,06 je e¹·⁴.' },
+    { c:'logaritmy', t:'Znáte ln(<i>x</i>) = 2. Kolik je <i>x</i>?',
+      r:'Přibližně 7,39',
+      w:['Přibližně 0,693', 'Přibližně 100', 'Přibližně 2'],
+      e:'Inverzní funkce k ln je eˣ (SHIFT + ln): <i>x</i> = e² ≈ 7,389. Hodnota 100 by patřila k log.' }
+  ];
+
+
+  var KVIZ_KEY = 'fyzika:kalkulacka-fx82cex:kviz';
+  var section = document.getElementById('kviz-section');
+  var tabBtn = document.getElementById('top-tab-kviz');
+  var readout = document.getElementById('kviz-readout');
+  var pageReadout = document.getElementById('header-readout');
+  var kviz = {
+    type:'all', queue:[], current:null, sel:null, locked:false,
+    score:0, streak:0, bestStreak:0, answered:0, correct:0,
+    inRound:false, ended:false, roundTotal:0, roundCorrect:0
+  };
+  function $(id){ return document.getElementById(id); }
+  function kvizLoad(){
+    try{ var raw = localStorage.getItem(KVIZ_KEY); if(raw){ kviz.bestStreak = JSON.parse(raw).bestStreak || 0; } }catch(e){}
+  }
+  function kvizSave(){
+    try{ localStorage.setItem(KVIZ_KEY, JSON.stringify({bestStreak: kviz.bestStreak})); }catch(e){}
+  }
+  function kvizShuffled(a){
+    a = a.slice();
+    for(var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random()*(i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; }
+    return a;
+  }
+  function typeOf(key){ return KVIZ_TYPES.filter(function(t){ return t.key === key; })[0]; }
+
+  // Otázky okruhu se berou v náhodném pořadí bez opakování. Po projití celého okruhu
+  // se zobrazí závěrečná hláška s výsledkem kola a nabídkou otázky zamíchat znovu.
+  function kvizNext(){
+    if(!kviz.queue.length){
+      if(kviz.inRound){ kvizShowEnd(); return; }
+      var pool = KVIZ_BANK.filter(function(b){ return kviz.type === 'all' || b.c === kviz.type; });
+      kviz.queue = kvizShuffled(pool);
+      if(kviz.current && kviz.queue.length > 1 && kviz.queue[0] === kviz.current.item){ kviz.queue.push(kviz.queue.shift()); }
+      kviz.inRound = true; kviz.roundTotal = pool.length; kviz.roundCorrect = 0;
+    }
+    var item = kviz.queue.shift();
+    var opts = item.fixed ? [item.r].concat(item.w).sort() : kvizShuffled([item.r].concat(item.w));
+    kviz.current = { item:item, choices:opts, correct:opts.indexOf(item.r) };
+    kvizRender();
+  }
+  function kvizShowEnd(){
+    kviz.ended = true; kviz.inRound = false;
+    var tp = typeOf(kviz.type);
+    var n = kviz.roundTotal, k = kviz.roundCorrect;
+    $('kviz-end-text').innerHTML =
+      'Prošli jste všech ' + n + ' otázek ' + (kviz.type === 'all' ? 'kvízu' : 'okruhu „' + tp.name + '“') + '. ' +
+      'Správně jste odpověděli na ' + k + ' z ' + n + ' (' + Math.round(100*k/n) + '&nbsp;%). Chcete otázky zamíchat a projít znovu?';
+    $('kviz-q').hidden = true;
+    $('kviz-end').hidden = false;
+    $('kviz-btn-restart').focus({ preventScroll:true });
+  }
+  function kvizRestart(){
+    kviz.queue = []; kviz.inRound = false;
+    kvizNext();
+  }
+  function kvizRender(){
+    var q = kviz.current;
+    kviz.ended = false;
+    $('kviz-q').hidden = false;
+    $('kviz-end').hidden = true;
+    var tp = typeOf(q.item.c);
+    $('kviz-cat-tag').innerHTML = tp ? tp.tag : 'Otázka';
+    $('kviz-task-text').innerHTML = q.item.t;
+    var grid = $('kviz-opt-grid');
+    grid.innerHTML = '';
+    kviz.sel = null; kviz.locked = false;
+    q.choices.forEach(function(c, i){
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'opt-btn';
+      b.innerHTML = '<b>' + LETTERS[i] + ')</b>&nbsp; ' + c;
+      b.addEventListener('click', function(){ kvizSelect(i); });
+      grid.appendChild(b);
+    });
+    var fb = $('kviz-feedback');
+    fb.hidden = true; fb.classList.remove('ok', 'bad', 'sol');
+    $('kviz-btn-check').textContent = 'Zkontrolovat';
+  }
+  function kvizSelect(i){
+    if(kviz.locked || kviz.ended) return;
+    kviz.sel = i;
+    Array.prototype.forEach.call($('kviz-opt-grid').children, function(el, j){ el.classList.toggle('selected', j === i); });
+    $('kviz-btn-check').focus({ preventScroll:true });
+  }
+  function kvizFinish(ok, headline){
+    var q = kviz.current;
+    Array.prototype.forEach.call($('kviz-opt-grid').children, function(el, j){
+      el.disabled = true;
+      el.classList.remove('selected');
+      if(j === q.correct) el.classList.add(kviz.sel === j ? 'correct' : 'missed');
+      else if(j === kviz.sel) el.classList.add('wrong');
+    });
+    var fb = $('kviz-feedback');
+    fb.hidden = false;
+    fb.classList.toggle('ok', ok); fb.classList.toggle('bad', !ok);
+    $('kviz-feedback-headline').textContent = headline;
+    var finalText = 'Správná odpověď: ' + LETTERS[q.correct] + ') ' + q.item.r;
+    if(window.FyzikaReseni && FyzikaReseni.show){
+      FyzikaReseni.show(fb, $('kviz-feedback-steps'), { raw:true, title:'Vysvětlení', steps:[q.item.e], final:finalText });
+    } else {
+      $('kviz-feedback-steps').innerHTML = q.item.e + '<br><b>' + finalText + '</b>';
+    }
+    kviz.locked = true;
+    var btn = $('kviz-btn-check');
+    btn.textContent = 'Další otázka →';
+    btn.focus({ preventScroll:true });
+    kvizStats();
+  }
+  function kvizCheck(){
+    if(kviz.ended){ kvizRestart(); return; }
+    if(kviz.locked){ kvizNext(); return; }
+    if(kviz.sel === null && !confirm('Není vybraná žádná možnost. Opravdu chcete zkontrolovat?')) return;
+    var ok = kviz.sel === kviz.current.correct;
+    kviz.answered++;
+    if(ok){
+      kviz.score += 10; kviz.streak++; kviz.correct++; kviz.roundCorrect++;
+      if(kviz.streak > kviz.bestStreak){ kviz.bestStreak = kviz.streak; kvizSave(); }
+    } else {
+      kviz.streak = 0;
+    }
+    kvizFinish(ok, ok ? 'Správně!' : (kviz.sel === null ? 'Vyberte odpověď.' : 'Bohužel špatně.'));
+  }
+  function kvizSkip(){
+    if(kviz.ended){ kvizRestart(); return; }
+    if(kviz.locked){ kvizNext(); return; }
+    kviz.streak = 0; kviz.answered++;
+    kvizFinish(false, 'Správná odpověď:');
+  }
+  function kvizStats(){
+    $('kviz-stat-score').textContent = kviz.score;
+    $('kviz-stat-streak').textContent = kviz.streak + (kviz.bestStreak > 0 ? ' / ' + kviz.bestStreak : '');
+    $('kviz-stat-accuracy').textContent = kviz.answered === 0 ? '—' : Math.round(100*kviz.correct/kviz.answered) + ' %';
+  }
+  (function kvizBuildTypeRow(){
+    var row = $('kviz-type-row');
+    KVIZ_TYPES.forEach(function(d){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip accented' + (d.key === kviz.type ? ' on' : '');
+      b.setAttribute('aria-pressed', d.key === kviz.type ? 'true' : 'false');
+      b.textContent = d.name;
+      b.addEventListener('click', function(){
+        if(d.key === kviz.type) return;
+        // rozpracovaná otázka s vybranou odpovědí se před změnou okruhu vyhodnotí
+        var settled = !kviz.locked && kviz.sel !== null;
+        if(settled) kvizCheck();
+        kviz.type = d.key; kviz.queue = []; kviz.inRound = false;
+        Array.prototype.forEach.call(row.children, function(el, i){
+          var on = KVIZ_TYPES[i].key === kviz.type;
+          el.classList.toggle('on', on);
+          el.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        // vyhodnocená otázka zůstane i s vysvětlením vidět, další už bude z nového okruhu
+        if(!settled) kvizNext();
+      });
+      row.appendChild(b);
+    });
+  })();
+  $('kviz-btn-check').addEventListener('click', kvizCheck);
+  $('kviz-btn-skip').addEventListener('click', kvizSkip);
+  $('kviz-btn-restart').addEventListener('click', kvizRestart);
+  $('kviz-reset-stats').addEventListener('click', function(){
+    kviz.score = 0; kviz.streak = 0; kviz.answered = 0; kviz.correct = 0; kviz.bestStreak = 0;
+    try{ localStorage.removeItem(KVIZ_KEY); }catch(e){}
+    kvizStats();
+  });
+  // Klávesnice v kvízu: A–D nebo 1–4 vybere odpověď, Enter zkontroluje / posune dál.
+  document.addEventListener('keydown', function(e){
+    if(section.hidden) return;
+    if(e.ctrlKey || e.metaKey || e.altKey) return;
+    if(e.key === 'Enter'){
+      if(e.target && e.target.tagName === 'BUTTON') return;
+      e.preventDefault(); kvizCheck(); return;
+    }
+    var idx = 'abcd'.indexOf(e.key.toLowerCase());
+    if(idx === -1) idx = '1234'.indexOf(e.key);
+    if(idx !== -1 && e.key.length === 1) kvizSelect(idx);
+  });
+
+  // ---- záložka Kvíz ----
+  // Skript je samostatný: otevření Kvízu i návrat na ostatní záložky řeší sám, ať stránka přepíná
+  // záložky jakkoli. Skóre kvízu má vlastní pole v hlavičce (skóre tréninku se tím nemění).
+  function activate(){
+    var teorieBtn = $('top-tab-teorie'), theory = $('theory-section');
+    if(!tabBtn.classList.contains('on') && teorieBtn && !teorieBtn.classList.contains('on')){
+      // nejdřív „kliknutím“ opustíme dosavadní záložku obsluhou stránky (u hry na čas s potvrzením)
+      teorieBtn.click();
+      if(theory && theory.hidden) return;   // stránka odmítla opustit dosavadní záložku (např. běžící hra)
+    }
+    Array.prototype.forEach.call(document.querySelectorAll('.tab-section'), function(s){ s.hidden = s !== section; });
+    Array.prototype.forEach.call(document.querySelectorAll('.toptab'), function(t){ t.classList.toggle('on', t === tabBtn); });
+    if(pageReadout) pageReadout.hidden = true;
+    readout.hidden = false;
+    kvizStats();
+    if(!kviz.current) kvizNext();
+  }
+  tabBtn.addEventListener('click', activate);
+  Array.prototype.forEach.call(document.querySelectorAll('.toptab'), function(t){
+    if(t === tabBtn) return;
+    t.addEventListener('click', function(){ section.hidden = true; readout.hidden = true; tabBtn.classList.remove('on'); });
+  });
+  document.addEventListener('fyzika:scores-updated', function(){ kviz.bestStreak = 0; kvizLoad(); kvizStats(); });
+  kvizLoad();
+  kvizStats();
+  if(location.hash === '#kviz' && !tabBtn.classList.contains('on')) tabBtn.click();
+  else if(location.hash === '#kviz') activate();
 })();
 </script>
 

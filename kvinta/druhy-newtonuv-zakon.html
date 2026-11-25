@@ -143,6 +143,20 @@
   .toptab{ flex:1 1 calc(50% - 4px); padding:13px 8px; }
 }
 </style>
+<style>
+/* ---- Kvíz (stejný jako u Grafů rovnoměrného pohybu a u Pohybu po kružnici) ---- */
+.kviz-task{ font-size:1.02rem; line-height:1.5; max-width:52ch; margin:0 auto 10px; color:var(--ink); text-align:center; }
+#kviz-section .kviz-task i, #kviz-section .opt-btn i, #kviz-section .feedback .steps i, #kviz-section .cat-tag i{ font-family:'STIX Two Text', Georgia, serif; font-style:italic; text-transform:none; }
+#kviz-section .feedback .steps{ font-family:'Work Sans', sans-serif; white-space:normal; opacity:1; }
+#kviz-end .kviz-end-box{ text-align:center; margin:0 0 14px; }
+#kviz-end .kviz-end-hint{ text-align:center; margin-top:10px; }
+#kviz-section [hidden]{ display:none; }
+@media (max-width:520px){
+  /* čtyři a více záložek: na telefonu ve dvou řadách (stejně jako Grafy rovnoměrného pohybu) */
+  .top-tabs{ flex-wrap:wrap; }
+  .toptab{ flex:1 1 calc(50% - 4px); padding:13px 8px; }
+}
+</style>
 </head>
 <body>
 
@@ -169,10 +183,16 @@
       <div class="cell"><span class="label">Série</span><span class="value" id="stat-streak">0</span></div>
       <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="stat-accuracy">—</span></div>
     </div>
+    <div class="readout" id="kviz-readout" hidden>
+      <div class="cell"><span class="label">Skóre</span><span class="value" id="kviz-stat-score">0</span></div>
+      <div class="cell"><span class="label">Série</span><span class="value" id="kviz-stat-streak">0</span></div>
+      <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="kviz-stat-accuracy">—</span></div>
+    </div>
   </div>
 
   <div class="top-tabs">
     <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+    <button class="toptab" id="top-tab-kviz" data-tab="kviz">Kvíz</button>
     <button class="toptab" id="top-tab-aplet" data-tab="aplet">Nakloněná rovina</button>
     <button class="toptab" id="top-tab-vozik" data-tab="vozik">Vozík na dráze</button>
     <button class="toptab" id="top-tab-trenink" data-tab="trenink">Trénink</button>
@@ -437,6 +457,47 @@
       <p>• \(1\ \mathrm{N} = 1\ \mathrm{kg\cdot m\cdot s^{-2}}\).</p>
       <p>• Na nakloněné rovině: \(F_\parallel = m g\sin\alpha\), \(F_\mathrm{N} = m g\cos\alpha\), při klouzání dolů \(a = g(\sin\alpha - f\cos\alpha)\).</p>
       <p>• Tělesa spojená lanem mají stejně velké zrychlení; pohybovou rovnici napíšeme pro každé těleso zvlášť a rovnice sečteme.</p>
+    </div>
+  </div>
+
+  <!-- ============ KVÍZ ============ -->
+  <div id="kviz-section" class="tab-section" hidden>
+    <div class="panel">
+      <div class="section-block">
+        <div class="panel-title">Okruh otázek</div>
+        <div class="row" id="kviz-type-row"></div>
+      </div>
+      <div class="settings-foot" style="justify-content:flex-end;">
+        <button class="linklike" id="kviz-reset-stats">vynulovat statistiku</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div id="kviz-q">
+      <span class="cat-tag" id="kviz-cat-tag">Otázka</span>
+      <p class="kviz-task" id="kviz-task-text"></p>
+      <div class="opt-grid wide-opts" id="kviz-opt-grid"></div>
+      <div class="actions">
+        <button class="btn primary" id="kviz-btn-check">Zkontrolovat</button>
+        <button class="btn ghost" id="kviz-btn-skip">Nevím / Zobrazit řešení</button>
+      </div>
+      <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint">Vyberte jednu ze čtyř odpovědí kliknutím nebo klávesami A až D (případně 1 až 4) a potvrďte tlačítkem Zkontrolovat nebo klávesou Enter; dalším Enterem přejdete na další otázku. Po kontrole se správná odpověď obarví zeleně, chybně vybraná červeně a pod otázkou se objeví vysvětlení. Okruh otázek vyberete nahoře; otázky se neopakují, dokud neprojdete celý okruh. Pak se zobrazí, kolik otázek jste zodpověděli správně, a otázky můžete zamíchat a projít znovu.</p>
+      </details>
+      <div class="feedback" id="kviz-feedback" hidden>
+        <div class="headline" id="kviz-feedback-headline"></div>
+        <div class="steps" id="kviz-feedback-steps"></div>
+      </div>
+      </div>
+      <div id="kviz-end" hidden>
+        <div class="feedback ok kviz-end-box"><div class="headline">Hotovo, prošli jste všechny otázky!</div></div>
+        <p class="kviz-task" id="kviz-end-text"></p>
+        <div class="actions">
+          <button class="btn primary" id="kviz-btn-restart">Zamíchat otázky a začít znovu</button>
+        </div>
+        <p class="hint kviz-end-hint">Můžete také nahoře vybrat jiný okruh otázek.</p>
+      </div>
     </div>
   </div>
 
@@ -1650,6 +1711,340 @@
   // ---- otevření záložky odkazem (…/stranka.html#trenink) ----
   var hash = location.hash.replace('#', '');
   if(hash && tabs[hash]) showTab(hash);
+})();
+</script>
+
+<script>
+(function(){
+  "use strict";
+  // ================= KVÍZ: otázky s výběrem ze čtyř odpovědí (A–D) =================
+  // Samostatný skript (stejný kvíz jako u Grafů rovnoměrného pohybu a u Pohybu po kružnici).
+  // Položka banky: c = okruh, t = zadání (HTML), r = správná odpověď, w = tři špatné,
+  // e = vysvětlení; fixed = možnosti se nemíchají, jen seřadí.
+  var LETTERS = ['A','B','C','D'];
+  var KVIZ_TYPES = [
+    { key:'all', name:'Vše' },
+    { key:'zakon', name:'Zákon síly', tag:'2. Newtonův zákon — zákon síly' },
+    { key:'vypocty', name:'Výpočty', tag:'Pohybová rovnice <i>F</i> = <i>ma</i>' },
+    { key:'rovina', name:'Nakloněná rovina', tag:'Těleso na nakloněné rovině' },
+    { key:'soustava', name:'Spojená tělesa', tag:'Spojená tělesa' }
+  ];
+  var KVIZ_BANK = [
+    // ----- zákon síly -----
+    { c:'zakon', t:'Jak zní pohybová rovnice (2. Newtonův zákon)?',
+      r:'<b><i>F</i></b> = <i>m</i><b><i>a</i></b>: zrychlení je přímo úměrné výslednici sil a nepřímo úměrné hmotnosti.',
+      w:['<b><i>F</i></b> = <i>m</i><b><i>v</i></b>: rychlost je přímo úměrná výslednici sil.', '<b><i>F</i></b> = <b><i>a</i></b>/<i>m</i>: zrychlení je nepřímo úměrné výslednici sil.', '<b><i>F</i></b><sub>21</sub> = −<b><i>F</i></b><sub>12</sub>: síly vzájemného působení jsou stejně velké a opačného směru.'],
+      e:'Zákon síly: <b><i>F</i></b> = <i>m</i><b><i>a</i></b>, tedy <i>a</i> = <i>F</i>/<i>m</i>. Poslední nabídka je 3. Newtonův zákon. Součin <i>m</i><b><i>v</i></b> je hybnost, ne síla.' },
+    { c:'zakon', t:'Stejný vozík táhneme nejprve silou 2&nbsp;N, potom silou 4&nbsp;N. Jak se změní jeho zrychlení?',
+      r:'Zdvojnásobí se.',
+      w:['Zmenší se na polovinu.', 'Nezmění se.', 'Zčtyřnásobí se.'],
+      e:'Zrychlení je přímo úměrné výslednici sil: <i>a</i> = <i>F</i>/<i>m</i>. Při dvojnásobné síle a stejné hmotnosti je zrychlení dvojnásobné.' },
+    { c:'zakon', t:'Stejná síla působí nejprve na vozík o hmotnosti 1&nbsp;kg, potom na vozík o hmotnosti 2&nbsp;kg. Jak se změní zrychlení?',
+      r:'Zmenší se na polovinu.',
+      w:['Zdvojnásobí se.', 'Nezmění se.', 'Zmenší se na čtvrtinu.'],
+      e:'Zrychlení je nepřímo úměrné hmotnosti: <i>a</i> = <i>F</i>/<i>m</i>. Při dvojnásobné hmotnosti je při stejné síle zrychlení poloviční.' },
+    { c:'zakon', t:'Jaký směr má zrychlení tělesa?',
+      r:'Směr výslednice sil, protože hmotnost je kladný skalár.',
+      w:['Směr rychlosti tělesa.', 'Směr největší z působících sil.', 'Směr opačný než výslednice sil.'],
+      e:'Z rovnice <b><i>F</i></b> = <i>m</i><b><i>a</i></b> a z kladné hmotnosti plyne, že <b><i>a</i></b> má vždy stejný směr jako výslednice <b><i>F</i></b>. Rychlost může mít směr úplně jiný, například při brzdění.' },
+    { c:'zakon', t:'Jaká je jednotka newton vyjádřená pomocí základních jednotek SI?',
+      r:'1&nbsp;N = 1&nbsp;kg·m·s⁻²',
+      w:['1&nbsp;N = 1&nbsp;kg·m·s⁻¹', '1&nbsp;N = 1&nbsp;kg·m²·s⁻²', '1&nbsp;N = 1&nbsp;kg·s⁻²'],
+      e:'Z <i>F</i> = <i>ma</i> plyne [<i>F</i>] = kg·m·s⁻². Newton je síla, která tělesu o hmotnosti 1&nbsp;kg udělí zrychlení 1&nbsp;m·s⁻². Rozměr kg·m·s⁻¹ patří hybnosti, kg·m²·s⁻² energii.' },
+    { c:'zakon', t:'Na těleso působí síly, jejichž výslednice je nulová. Jaké je zrychlení tělesa?',
+      r:'Nulové: platí 1. Newtonův zákon.',
+      w:['Nenulové, stálé.', 'Nenulové, ale rostoucí.', 'Nelze určit.'],
+      e:'Je-li <b><i>F</i></b> = 0, je i <b><i>a</i></b> = 0, těleso je v klidu nebo se pohybuje rovnoměrně přímočaře. 1. Newtonův zákon je tedy zvláštní případ 2. zákona.' },
+    { c:'zakon', t:'Do pohybové rovnice <i>F</i> = <i>ma</i> dosazujeme sílu <i>F</i>. Která síla to je?',
+      r:'Výslednice všech sil působících na těleso.',
+      w:['Největší ze sil působících na těleso.', 'Jen síla, kterou těleso uvádíme do pohybu.', 'Součet velikostí všech sil bez ohledu na směr.'],
+      e:'Zákon síly platí pro výslednici všech sil, tedy pro jejich vektorový součet. Velikosti se sčítají jen u sil stejného směru.' },
+    // ----- výpočty -----
+    { c:'vypocty', t:'Na cyklistu i s kolem o hmotnosti 80&nbsp;kg působí výsledná síla 120&nbsp;N. Jaké je jeho zrychlení?',
+      r:'1,5&nbsp;m·s⁻²',
+      w:['0,67&nbsp;m·s⁻²', '9&nbsp;600&nbsp;m·s⁻²', '40&nbsp;m·s⁻²'],
+      e:'<i>a</i> = <i>F</i>/<i>m</i> = 120&nbsp;N / 80&nbsp;kg = 1,5&nbsp;m·s⁻². Kontrola: 80&nbsp;kg · 1,5&nbsp;m·s⁻² = 120&nbsp;N. Hodnota 0,67 vznikne zaměněním dělence a dělitele.' },
+    { c:'vypocty', t:'Jaká výsledná síla uděluje tělesu o hmotnosti 4&nbsp;kg zrychlení 2,5&nbsp;m·s⁻²?',
+      r:'10&nbsp;N',
+      w:['1,6&nbsp;N', '6,5&nbsp;N', '0,625&nbsp;N'],
+      e:'<i>F</i> = <i>ma</i> = 4&nbsp;kg · 2,5&nbsp;m·s⁻² = 10&nbsp;N. Jednotky: kg·m·s⁻² = N.' },
+    { c:'vypocty', t:'Tělesu udělí výsledná síla 30&nbsp;N zrychlení 6&nbsp;m·s⁻². Jaká je jeho hmotnost?',
+      r:'5&nbsp;kg',
+      w:['180&nbsp;kg', '0,2&nbsp;kg', '24&nbsp;kg'],
+      e:'<i>m</i> = <i>F</i>/<i>a</i> = 30&nbsp;N / 6&nbsp;m·s⁻² = 5&nbsp;kg. Kontrola: 5&nbsp;kg · 6&nbsp;m·s⁻² = 30&nbsp;N.' },
+    { c:'vypocty', t:'Cyklista (80&nbsp;kg i s kolem) se z klidu rozjíždí výslednou silou 120&nbsp;N. Jakou rychlost má po 4&nbsp;s?',
+      r:'6&nbsp;m·s⁻¹',
+      w:['0,38&nbsp;m·s⁻¹', '12&nbsp;m·s⁻¹', '480&nbsp;m·s⁻¹'],
+      e:'<i>a</i> = <i>F</i>/<i>m</i> = 1,5&nbsp;m·s⁻², <i>v</i> = <i>at</i> = 1,5&nbsp;m·s⁻² · 4&nbsp;s = 6&nbsp;m·s⁻¹ (přibližně 22&nbsp;km·h⁻¹). Rychlost 12 by vyšla s dvojnásobným zrychlením, 480 vynásobením síly dobou.' },
+    { c:'vypocty', t:'Tramvaj o hmotnosti 30&nbsp;t táhnou motory silou 45&nbsp;kN, odpor je 6&nbsp;kN. Jaké je její zrychlení?',
+      r:'1,3&nbsp;m·s⁻²',
+      w:['1,5&nbsp;m·s⁻²', '1,7&nbsp;m·s⁻²', '0,2&nbsp;m·s⁻²'],
+      e:'Výslednice je rozdíl: <i>F</i> = 45&nbsp;kN − 6&nbsp;kN = 39&nbsp;kN = 39&nbsp;000&nbsp;N. Hmotnost je 30&nbsp;000&nbsp;kg a <i>a</i> = 39&nbsp;000/30&nbsp;000&nbsp;m·s⁻² = 1,3&nbsp;m·s⁻². Hodnota 1,5 vznikne bez odečtení odporu (45/30), 1,7 chybným součtem sil.' },
+    { c:'vypocty', t:'Tramvaj z předchozí úlohy (zrychlení 1,3&nbsp;m·s⁻²) se rozjíždí z klidu. Za jakou dobu dosáhne rychlosti 36&nbsp;km·h⁻¹?',
+      r:'Přibližně 7,7&nbsp;s',
+      w:['Přibližně 27,7&nbsp;s', 'Přibližně 36&nbsp;s', 'Přibližně 13&nbsp;s'],
+      e:'Rychlost převedeme: 36&nbsp;km·h⁻¹ = 10&nbsp;m·s⁻¹. Pak <i>t</i> = <i>v</i>/<i>a</i> = 10/1,3&nbsp;s ≈ 7,7&nbsp;s. Kontrola dráhou: <i>s</i> = <i>v</i>²/(2<i>a</i>) ≈ 38&nbsp;m a <i>s</i> = ½<i>at</i>² ≈ 38&nbsp;m. Hodnota 27,7 vznikne dělením 36/1,3 bez převodu jednotek.' },
+    { c:'vypocty', t:'Raketa urychlí tenisový míček o hmotnosti 57&nbsp;g z klidu na 50&nbsp;m·s⁻¹ za 4&nbsp;ms. Jaká je průměrná síla?',
+      r:'Přibližně 710&nbsp;N',
+      w:['Přibližně 0,71&nbsp;N', 'Přibližně 11&nbsp;N', 'Přibližně 710&nbsp;000&nbsp;N'],
+      e:'<i>a</i> = Δ<i>v</i>/Δ<i>t</i> = 50/0,004&nbsp;m·s⁻² = 12&nbsp;500&nbsp;m·s⁻², <i>F</i> = <i>ma</i> = 0,057&nbsp;kg · 12&nbsp;500&nbsp;m·s⁻² ≈ 710&nbsp;N. Chyby v předponách jednotek (g místo kg, ms místo s) dávají jiné řády.' },
+    { c:'vypocty', t:'Auto o hmotnosti 1&nbsp;200&nbsp;kg zrychlí z klidu na 27&nbsp;m·s⁻¹ (přibližně 100&nbsp;km·h⁻¹) za 9&nbsp;s. Jaká výsledná síla na něj působí, je-li zrychlení stálé?',
+      r:'3&nbsp;600&nbsp;N',
+      w:['400&nbsp;N', '32&nbsp;400&nbsp;N', '133&nbsp;N'],
+      e:'<i>a</i> = <i>v</i>/<i>t</i> = 27/9&nbsp;m·s⁻² = 3&nbsp;m·s⁻², <i>F</i> = <i>ma</i> = 1&nbsp;200&nbsp;kg · 3&nbsp;m·s⁻² = 3&nbsp;600&nbsp;N. Kontrola: 3&nbsp;600/1&nbsp;200 = 3&nbsp;m·s⁻².' },
+    { c:'vypocty', t:'Proč musíme před dosazením do pohybové rovnice převést 36&nbsp;km·h⁻¹ a 30&nbsp;t na základní jednotky?',
+      r:'Aby vyšla síla v newtonech: 1&nbsp;N = 1&nbsp;kg·m·s⁻².',
+      w:['Aby byla rychlost menší.', 'Převod není potřeba, jednotky se samy vykrátí.', 'Aby se zrychlení rovnalo rychlosti.'],
+      e:'Newton je definován pomocí kg, m a s. Dosadíme-li například tuny nebo km·h⁻¹, nevyjde výsledek v newtonech a řádově se splete.' },
+    // ----- nakloněná rovina -----
+    { c:'rovina', t:'Jak velká je složka tíhové síly <i>F</i><sub>G</sub> podél nakloněné roviny se sklonem <i>α</i>?',
+      r:'<i>mg</i> sin <i>α</i>',
+      w:['<i>mg</i> cos <i>α</i>', '<i>mg</i> tg <i>α</i>', '<i>mg</i>'],
+      e:'Tíhovou sílu rozkládáme na složku podél roviny <i>F</i><sub>∥</sub> = <i>mg</i> sin <i>α</i> a složku kolmou k rovině <i>F</i><sub>⊥</sub> = <i>mg</i> cos <i>α</i>. Ta se vyrovnává s tlakovou silou podložky.' },
+    { c:'rovina', t:'Těleso klouže bez tření po rovině se sklonem 30°. Jaké je jeho zrychlení? (<i>g</i> = 10&nbsp;m·s⁻²)',
+      r:'5&nbsp;m·s⁻²',
+      w:['10&nbsp;m·s⁻²', '8,7&nbsp;m·s⁻²', '0&nbsp;m·s⁻²'],
+      e:'<i>a</i> = <i>g</i> sin <i>α</i> = 10&nbsp;m·s⁻² · 0,5 = 5&nbsp;m·s⁻². Hodnota 8,7 je <i>g</i> cos 30°, tedy záměna sinu a kosinu.' },
+    { c:'rovina', t:'Jak závisí zrychlení tělesa klouzajícího po nakloněné rovině bez tření na jeho hmotnosti?',
+      r:'Nezávisí na ní: <i>a</i> = <i>g</i> sin <i>α</i>.',
+      w:['Těžší těleso zrychluje víc.', 'Těžší těleso zrychluje méně.', 'Závisí na hmotnosti a úhlu stejnou měrou.'],
+      e:'Hmotnost se z rovnice <i>ma</i> = <i>mg</i> sin <i>α</i> vykrátí. Těžší těleso je taženo větší silou, ale má i větší setrvačnost.' },
+    { c:'rovina', t:'Sáňkař sjíždí svah se sklonem 15° a součinitelem tření 0,05. Jaké je jeho zrychlení? (<i>g</i> = 10&nbsp;m·s⁻²)',
+      r:'Přibližně 2,1&nbsp;m·s⁻²',
+      w:['Přibližně 2,6&nbsp;m·s⁻²', 'Přibližně 3,1&nbsp;m·s⁻²', 'Přibližně 9,7&nbsp;m·s⁻²'],
+      e:'<i>a</i> = <i>g</i>(sin <i>α</i> − <i>f</i> cos <i>α</i>) = 10&nbsp;m·s⁻² · (0,2588 − 0,05 · 0,9659) ≈ 2,1&nbsp;m·s⁻². Bez tření by vyšlo 2,6&nbsp;m·s⁻² (<i>g</i> sin 15°).' },
+    { c:'rovina', t:'Za jaké podmínky se těleso na nakloněné rovině samo rozjede? (<i>f</i> je součinitel klidového tření)',
+      r:'tg <i>α</i> &gt; <i>f</i>',
+      w:['sin <i>α</i> &lt; <i>f</i>', 'tg <i>α</i> &lt; <i>f</i>', 'cos <i>α</i> &gt; <i>f</i>'],
+      e:'Těleso se rozjede, když složka <i>mg</i> sin <i>α</i> převýší mezní klidovou třecí sílu <i>f</i><i>mg</i> cos <i>α</i>, tedy pro tg <i>α</i> &gt; <i>f</i>. Zvedáním roviny se takto měří součinitel tření.' },
+    { c:'rovina', t:'Těleso leží na rovině se sklonem 20° a součinitelem klidového tření 0,5. Co se stane? (tg 20° ≈ 0,36)',
+      r:'Zůstane v klidu, protože tg <i>α</i> &lt; <i>f</i>.',
+      w:['Rozjede se, protože tg <i>α</i> &gt; <i>f</i>.', 'Rozjede se, protože sin <i>α</i> &gt; 0.', 'Nelze rozhodnout bez znalosti hmotnosti.'],
+      e:'Je tg 20° ≈ 0,36 &lt; 0,5, tření tedy složku tíhy podél roviny vyrovná. Hmotnost nehraje roli, vykrátí se.' },
+    // ----- spojená tělesa -----
+    { c:'soustava', t:'Vozík o hmotnosti 2&nbsp;kg stojí na stole a přes kladku je spojen se závažím 0,5&nbsp;kg. Součinitel tření je 0,1, <i>g</i> = 10&nbsp;m·s⁻². Jaké je zrychlení soustavy?',
+      r:'1,2&nbsp;m·s⁻²',
+      w:['2&nbsp;m·s⁻²', '1,5&nbsp;m·s⁻²', '0,8&nbsp;m·s⁻²'],
+      e:'Rovnice sečteme: (<i>m</i><sub>1</sub> + <i>m</i><sub>2</sub>)<i>a</i> = <i>m</i><sub>2</sub><i>g</i> − <i>f</i><i>m</i><sub>1</sub><i>g</i>, tedy <i>a</i> = (5 − 2)&nbsp;N / 2,5&nbsp;kg = 1,2&nbsp;m·s⁻². Hodnota 2 vznikne bez tření a bez započtení hmotnosti vozíku (5/2,5).' },
+    { c:'soustava', t:'V soustavě z předchozí úlohy (<i>a</i> = 1,2&nbsp;m·s⁻²) je tah lana <i>T</i> = 4,4&nbsp;N, tíha závaží je 5&nbsp;N. Proč je tah menší než tíha závaží?',
+      r:'Závaží zrychluje dolů, takže výslednice na něj míří dolů.',
+      w:['Lano se natáhlo.', 'Tah lana je vždy roven tření vozíku.', 'Chyba: tah musí být vždy roven tíze.'],
+      e:'Pro závaží platí <i>m</i><sub>2</sub><i>a</i> = <i>m</i><sub>2</sub><i>g</i> − <i>T</i>. Zrychluje-li dolů, je <i>T</i> &lt; <i>m</i><sub>2</sub><i>g</i>. Tah by se rovnal tíze jen při <i>a</i> = 0.' },
+    { c:'soustava', t:'Vozík 1,5&nbsp;kg bez tření je tažen lanem přes kladku závažím 0,5&nbsp;kg. Jaké je zrychlení soustavy? (<i>g</i> = 10&nbsp;m·s⁻²)',
+      r:'2,5&nbsp;m·s⁻²',
+      w:['3,3&nbsp;m·s⁻²', '10&nbsp;m·s⁻²', '5&nbsp;m·s⁻²'],
+      e:'<i>a</i> = <i>m</i><sub>2</sub><i>g</i>/(<i>m</i><sub>1</sub> + <i>m</i><sub>2</sub>) = 0,5 · 10/2&nbsp;m·s⁻² = 2,5&nbsp;m·s⁻². Kontrola tahem lana: <i>T</i> = <i>m</i><sub>1</sub><i>a</i> = 3,75&nbsp;N a <i>m</i><sub>2</sub>(<i>g</i> − <i>a</i>) = 0,5 · 7,5&nbsp;N = 3,75&nbsp;N. Hodnota 3,3 vznikne dělením jen hmotností vozíku (5/1,5).' },
+    { c:'soustava', t:'Jak řešíme úlohu se dvěma tělesy spojenými lanem?',
+      r:'Napíšeme pohybovou rovnici pro každé těleso zvlášť a rovnice sečteme; tělesa mají stejně velké zrychlení.',
+      w:['Napíšeme jedinou rovnici pro těleso s větší hmotností.', 'Tělesa mají různá zrychlení podle hmotnosti.', 'Tah lana zanedbáme.'],
+      e:'Lano zajišťuje stejně velké zrychlení obou těles. Rovnice pro jednotlivá tělesa obsahují tah lana <i>T</i>, který se při sečtení vykrátí a zbude rovnice pro zrychlení.' }
+  ];
+
+
+  var KVIZ_KEY = 'fyzika:druhy-newtonuv-zakon:kviz';
+  var section = document.getElementById('kviz-section');
+  var tabBtn = document.getElementById('top-tab-kviz');
+  var readout = document.getElementById('kviz-readout');
+  var pageReadout = document.getElementById('header-readout');
+  var kviz = {
+    type:'all', queue:[], current:null, sel:null, locked:false,
+    score:0, streak:0, bestStreak:0, answered:0, correct:0,
+    inRound:false, ended:false, roundTotal:0, roundCorrect:0
+  };
+  function $(id){ return document.getElementById(id); }
+  function kvizLoad(){
+    try{ var raw = localStorage.getItem(KVIZ_KEY); if(raw){ kviz.bestStreak = JSON.parse(raw).bestStreak || 0; } }catch(e){}
+  }
+  function kvizSave(){
+    try{ localStorage.setItem(KVIZ_KEY, JSON.stringify({bestStreak: kviz.bestStreak})); }catch(e){}
+  }
+  function kvizShuffled(a){
+    a = a.slice();
+    for(var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random()*(i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; }
+    return a;
+  }
+  function typeOf(key){ return KVIZ_TYPES.filter(function(t){ return t.key === key; })[0]; }
+
+  // Otázky okruhu se berou v náhodném pořadí bez opakování. Po projití celého okruhu
+  // se zobrazí závěrečná hláška s výsledkem kola a nabídkou otázky zamíchat znovu.
+  function kvizNext(){
+    if(!kviz.queue.length){
+      if(kviz.inRound){ kvizShowEnd(); return; }
+      var pool = KVIZ_BANK.filter(function(b){ return kviz.type === 'all' || b.c === kviz.type; });
+      kviz.queue = kvizShuffled(pool);
+      if(kviz.current && kviz.queue.length > 1 && kviz.queue[0] === kviz.current.item){ kviz.queue.push(kviz.queue.shift()); }
+      kviz.inRound = true; kviz.roundTotal = pool.length; kviz.roundCorrect = 0;
+    }
+    var item = kviz.queue.shift();
+    var opts = item.fixed ? [item.r].concat(item.w).sort() : kvizShuffled([item.r].concat(item.w));
+    kviz.current = { item:item, choices:opts, correct:opts.indexOf(item.r) };
+    kvizRender();
+  }
+  function kvizShowEnd(){
+    kviz.ended = true; kviz.inRound = false;
+    var tp = typeOf(kviz.type);
+    var n = kviz.roundTotal, k = kviz.roundCorrect;
+    $('kviz-end-text').innerHTML =
+      'Prošli jste všech ' + n + ' otázek ' + (kviz.type === 'all' ? 'kvízu' : 'okruhu „' + tp.name + '“') + '. ' +
+      'Správně jste odpověděli na ' + k + ' z ' + n + ' (' + Math.round(100*k/n) + '&nbsp;%). Chcete otázky zamíchat a projít znovu?';
+    $('kviz-q').hidden = true;
+    $('kviz-end').hidden = false;
+    $('kviz-btn-restart').focus({ preventScroll:true });
+  }
+  function kvizRestart(){
+    kviz.queue = []; kviz.inRound = false;
+    kvizNext();
+  }
+  function kvizRender(){
+    var q = kviz.current;
+    kviz.ended = false;
+    $('kviz-q').hidden = false;
+    $('kviz-end').hidden = true;
+    var tp = typeOf(q.item.c);
+    $('kviz-cat-tag').innerHTML = tp ? tp.tag : 'Otázka';
+    $('kviz-task-text').innerHTML = q.item.t;
+    var grid = $('kviz-opt-grid');
+    grid.innerHTML = '';
+    kviz.sel = null; kviz.locked = false;
+    q.choices.forEach(function(c, i){
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'opt-btn';
+      b.innerHTML = '<b>' + LETTERS[i] + ')</b>&nbsp; ' + c;
+      b.addEventListener('click', function(){ kvizSelect(i); });
+      grid.appendChild(b);
+    });
+    var fb = $('kviz-feedback');
+    fb.hidden = true; fb.classList.remove('ok', 'bad', 'sol');
+    $('kviz-btn-check').textContent = 'Zkontrolovat';
+  }
+  function kvizSelect(i){
+    if(kviz.locked || kviz.ended) return;
+    kviz.sel = i;
+    Array.prototype.forEach.call($('kviz-opt-grid').children, function(el, j){ el.classList.toggle('selected', j === i); });
+    $('kviz-btn-check').focus({ preventScroll:true });
+  }
+  function kvizFinish(ok, headline){
+    var q = kviz.current;
+    Array.prototype.forEach.call($('kviz-opt-grid').children, function(el, j){
+      el.disabled = true;
+      el.classList.remove('selected');
+      if(j === q.correct) el.classList.add(kviz.sel === j ? 'correct' : 'missed');
+      else if(j === kviz.sel) el.classList.add('wrong');
+    });
+    var fb = $('kviz-feedback');
+    fb.hidden = false;
+    fb.classList.toggle('ok', ok); fb.classList.toggle('bad', !ok);
+    $('kviz-feedback-headline').textContent = headline;
+    var finalText = 'Správná odpověď: ' + LETTERS[q.correct] + ') ' + q.item.r;
+    if(window.FyzikaReseni && FyzikaReseni.show){
+      FyzikaReseni.show(fb, $('kviz-feedback-steps'), { raw:true, title:'Vysvětlení', steps:[q.item.e], final:finalText });
+    } else {
+      $('kviz-feedback-steps').innerHTML = q.item.e + '<br><b>' + finalText + '</b>';
+    }
+    kviz.locked = true;
+    var btn = $('kviz-btn-check');
+    btn.textContent = 'Další otázka →';
+    btn.focus({ preventScroll:true });
+    kvizStats();
+  }
+  function kvizCheck(){
+    if(kviz.ended){ kvizRestart(); return; }
+    if(kviz.locked){ kvizNext(); return; }
+    if(kviz.sel === null && !confirm('Není vybraná žádná možnost. Opravdu chcete zkontrolovat?')) return;
+    var ok = kviz.sel === kviz.current.correct;
+    kviz.answered++;
+    if(ok){
+      kviz.score += 10; kviz.streak++; kviz.correct++; kviz.roundCorrect++;
+      if(kviz.streak > kviz.bestStreak){ kviz.bestStreak = kviz.streak; kvizSave(); }
+    } else {
+      kviz.streak = 0;
+    }
+    kvizFinish(ok, ok ? 'Správně!' : (kviz.sel === null ? 'Vyberte odpověď.' : 'Bohužel špatně.'));
+  }
+  function kvizSkip(){
+    if(kviz.ended){ kvizRestart(); return; }
+    if(kviz.locked){ kvizNext(); return; }
+    kviz.streak = 0; kviz.answered++;
+    kvizFinish(false, 'Správná odpověď:');
+  }
+  function kvizStats(){
+    $('kviz-stat-score').textContent = kviz.score;
+    $('kviz-stat-streak').textContent = kviz.streak + (kviz.bestStreak > 0 ? ' / ' + kviz.bestStreak : '');
+    $('kviz-stat-accuracy').textContent = kviz.answered === 0 ? '—' : Math.round(100*kviz.correct/kviz.answered) + ' %';
+  }
+  (function kvizBuildTypeRow(){
+    var row = $('kviz-type-row');
+    KVIZ_TYPES.forEach(function(d){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip accented' + (d.key === kviz.type ? ' on' : '');
+      b.setAttribute('aria-pressed', d.key === kviz.type ? 'true' : 'false');
+      b.textContent = d.name;
+      b.addEventListener('click', function(){
+        if(d.key === kviz.type) return;
+        // rozpracovaná otázka s vybranou odpovědí se před změnou okruhu vyhodnotí
+        var settled = !kviz.locked && kviz.sel !== null;
+        if(settled) kvizCheck();
+        kviz.type = d.key; kviz.queue = []; kviz.inRound = false;
+        Array.prototype.forEach.call(row.children, function(el, i){
+          var on = KVIZ_TYPES[i].key === kviz.type;
+          el.classList.toggle('on', on);
+          el.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        // vyhodnocená otázka zůstane i s vysvětlením vidět, další už bude z nového okruhu
+        if(!settled) kvizNext();
+      });
+      row.appendChild(b);
+    });
+  })();
+  $('kviz-btn-check').addEventListener('click', kvizCheck);
+  $('kviz-btn-skip').addEventListener('click', kvizSkip);
+  $('kviz-btn-restart').addEventListener('click', kvizRestart);
+  $('kviz-reset-stats').addEventListener('click', function(){
+    kviz.score = 0; kviz.streak = 0; kviz.answered = 0; kviz.correct = 0; kviz.bestStreak = 0;
+    try{ localStorage.removeItem(KVIZ_KEY); }catch(e){}
+    kvizStats();
+  });
+  // Klávesnice v kvízu: A–D nebo 1–4 vybere odpověď, Enter zkontroluje / posune dál.
+  document.addEventListener('keydown', function(e){
+    if(section.hidden) return;
+    if(e.ctrlKey || e.metaKey || e.altKey) return;
+    if(e.key === 'Enter'){
+      if(e.target && e.target.tagName === 'BUTTON') return;
+      e.preventDefault(); kvizCheck(); return;
+    }
+    var idx = 'abcd'.indexOf(e.key.toLowerCase());
+    if(idx === -1) idx = '1234'.indexOf(e.key);
+    if(idx !== -1 && e.key.length === 1) kvizSelect(idx);
+  });
+
+  // ---- záložka Kvíz ----
+  // Skript je samostatný: otevření Kvízu i návrat na ostatní záložky řeší sám, ať stránka přepíná
+  // záložky jakkoli. Skóre kvízu má vlastní pole v hlavičce (skóre tréninku se tím nemění).
+  function activate(){
+    var teorieBtn = $('top-tab-teorie'), theory = $('theory-section');
+    if(!tabBtn.classList.contains('on') && teorieBtn && !teorieBtn.classList.contains('on')){
+      // nejdřív „kliknutím“ opustíme dosavadní záložku obsluhou stránky (u hry na čas s potvrzením)
+      teorieBtn.click();
+      if(theory && theory.hidden) return;   // stránka odmítla opustit dosavadní záložku (např. běžící hra)
+    }
+    Array.prototype.forEach.call(document.querySelectorAll('.tab-section'), function(s){ s.hidden = s !== section; });
+    Array.prototype.forEach.call(document.querySelectorAll('.toptab'), function(t){ t.classList.toggle('on', t === tabBtn); });
+    if(pageReadout) pageReadout.hidden = true;
+    readout.hidden = false;
+    kvizStats();
+    if(!kviz.current) kvizNext();
+  }
+  tabBtn.addEventListener('click', activate);
+  Array.prototype.forEach.call(document.querySelectorAll('.toptab'), function(t){
+    if(t === tabBtn) return;
+    t.addEventListener('click', function(){ section.hidden = true; readout.hidden = true; tabBtn.classList.remove('on'); });
+  });
+  document.addEventListener('fyzika:scores-updated', function(){ kviz.bestStreak = 0; kvizLoad(); kvizStats(); });
+  kvizLoad();
+  kvizStats();
+  if(location.hash === '#kviz' && !tabBtn.classList.contains('on')) tabBtn.click();
+  else if(location.hash === '#kviz') activate();
 })();
 </script>
 

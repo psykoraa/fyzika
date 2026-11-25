@@ -139,6 +139,20 @@
 .applet-card .qtable td{ white-space:nowrap; }
 .qtable td.sum{ font-weight:700; }
 </style>
+<style>
+/* ---- Kvíz (stejný jako u Grafů rovnoměrného pohybu a u Pohybu po kružnici) ---- */
+.kviz-task{ font-size:1.02rem; line-height:1.5; max-width:52ch; margin:0 auto 10px; color:var(--ink); text-align:center; }
+#kviz-section .kviz-task i, #kviz-section .opt-btn i, #kviz-section .feedback .steps i, #kviz-section .cat-tag i{ font-family:'STIX Two Text', Georgia, serif; font-style:italic; text-transform:none; }
+#kviz-section .feedback .steps{ font-family:'Work Sans', sans-serif; white-space:normal; opacity:1; }
+#kviz-end .kviz-end-box{ text-align:center; margin:0 0 14px; }
+#kviz-end .kviz-end-hint{ text-align:center; margin-top:10px; }
+#kviz-section [hidden]{ display:none; }
+@media (max-width:520px){
+  /* čtyři a více záložek: na telefonu ve dvou řadách (stejně jako Grafy rovnoměrného pohybu) */
+  .top-tabs{ flex-wrap:wrap; }
+  .toptab{ flex:1 1 calc(50% - 4px); padding:13px 8px; }
+}
+</style>
 </head>
 <body>
 
@@ -167,10 +181,16 @@
       <div class="cell"><span class="label">Série</span><span class="value" id="stat-streak">0</span></div>
       <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="stat-accuracy">—</span></div>
     </div>
+    <div class="readout" id="kviz-readout" hidden>
+      <div class="cell"><span class="label">Skóre</span><span class="value" id="kviz-stat-score">0</span></div>
+      <div class="cell"><span class="label">Série</span><span class="value" id="kviz-stat-streak">0</span></div>
+      <div class="cell"><span class="label">Úspěšnost</span><span class="value" id="kviz-stat-accuracy">—</span></div>
+    </div>
   </div>
 
   <div class="top-tabs">
     <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+    <button class="toptab" id="top-tab-kviz" data-tab="kviz">Kvíz</button>
     <button class="toptab" id="top-tab-aplet" data-tab="aplet">Srážky vozíků</button>
     <button class="toptab" id="top-tab-trenink" data-tab="trenink">Trénink</button>
   </div>
@@ -400,6 +420,47 @@
       <p>• 2. Newtonův zákon: \(\boldsymbol{F} = \dfrac{\Delta\boldsymbol{p}}{\Delta t}\); impuls síly \(\boldsymbol{F}\Delta t = \Delta\boldsymbol{p}\). Delší doba děje znamená menší sílu.</p>
       <p>• Celková hybnost izolované soustavy se nemění: \(m_1\boldsymbol{v}_1 + m_2\boldsymbol{v}_2 = m_1\boldsymbol{v}'_1 + m_2\boldsymbol{v}'_2\).</p>
       <p>• Při řešení zvolte kladný směr; rychlosti opačného směru mají záporné znaménko.</p>
+    </div>
+  </div>
+
+  <!-- ============ KVÍZ ============ -->
+  <div id="kviz-section" class="tab-section" hidden>
+    <div class="panel">
+      <div class="section-block">
+        <div class="panel-title">Okruh otázek</div>
+        <div class="row" id="kviz-type-row"></div>
+      </div>
+      <div class="settings-foot" style="justify-content:flex-end;">
+        <button class="linklike" id="kviz-reset-stats">vynulovat statistiku</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div id="kviz-q">
+      <span class="cat-tag" id="kviz-cat-tag">Otázka</span>
+      <p class="kviz-task" id="kviz-task-text"></p>
+      <div class="opt-grid wide-opts" id="kviz-opt-grid"></div>
+      <div class="actions">
+        <button class="btn primary" id="kviz-btn-check">Zkontrolovat</button>
+        <button class="btn ghost" id="kviz-btn-skip">Nevím / Zobrazit řešení</button>
+      </div>
+      <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint">Vyberte jednu ze čtyř odpovědí kliknutím nebo klávesami A až D (případně 1 až 4) a potvrďte tlačítkem Zkontrolovat nebo klávesou Enter; dalším Enterem přejdete na další otázku. Po kontrole se správná odpověď obarví zeleně, chybně vybraná červeně a pod otázkou se objeví vysvětlení. Okruh otázek vyberete nahoře; otázky se neopakují, dokud neprojdete celý okruh. Pak se zobrazí, kolik otázek jste zodpověděli správně, a otázky můžete zamíchat a projít znovu.</p>
+      </details>
+      <div class="feedback" id="kviz-feedback" hidden>
+        <div class="headline" id="kviz-feedback-headline"></div>
+        <div class="steps" id="kviz-feedback-steps"></div>
+      </div>
+      </div>
+      <div id="kviz-end" hidden>
+        <div class="feedback ok kviz-end-box"><div class="headline">Hotovo, prošli jste všechny otázky!</div></div>
+        <p class="kviz-task" id="kviz-end-text"></p>
+        <div class="actions">
+          <button class="btn primary" id="kviz-btn-restart">Zamíchat otázky a začít znovu</button>
+        </div>
+        <p class="hint kviz-end-hint">Můžete také nahoře vybrat jiný okruh otázek.</p>
+      </div>
     </div>
   </div>
 
@@ -1188,6 +1249,352 @@
   // ---- otevření záložky odkazem (…/stranka.html#trenink) ----
   var hash = location.hash.replace('#', '');
   if(hash && tabs[hash]) showTab(hash);
+})();
+</script>
+
+<script>
+(function(){
+  "use strict";
+  // ================= KVÍZ: otázky s výběrem ze čtyř odpovědí (A–D) =================
+  // Samostatný skript (stejný kvíz jako u Grafů rovnoměrného pohybu a u Pohybu po kružnici).
+  // Položka banky: c = okruh, t = zadání (HTML), r = správná odpověď, w = tři špatné,
+  // e = vysvětlení; fixed = možnosti se nemíchají, jen seřadí.
+  var LETTERS = ['A','B','C','D'];
+  var KVIZ_TYPES = [
+    { key:'all', name:'Vše' },
+    { key:'pojem', name:'Hybnost tělesa', tag:'Hybnost tělesa' },
+    { key:'impuls', name:'Změna hybnosti a impuls síly', tag:'Změna hybnosti a impuls síly' },
+    { key:'zzh', name:'Zákon zachování hybnosti', tag:'Izolovaná soustava a zachování hybnosti' },
+    { key:'deje', name:'Srážky a rozpojení', tag:'Typické děje' }
+  ];
+  var KVIZ_BANK = [
+    // ----- hybnost tělesa -----
+    { c:'pojem', t:'Jak je definována hybnost tělesa?',
+      r:'<b><i>p</i></b> = <i>m</i><b><i>v</i></b>, součin hmotnosti a rychlosti.',
+      w:['<b><i>p</i></b> = <b><i>F</i></b><i>t</i>, součin síly a času.', '<b><i>p</i></b> = <i>m</i><b><i>a</i></b>, součin hmotnosti a zrychlení.', '<i>p</i> = <i>m</i>/<i>v</i>, podíl hmotnosti a rychlosti.'],
+      e:'Hybnost je vektor <b><i>p</i></b> = <i>m</i><b><i>v</i></b>. Součin <b><i>F</i></b><i>t</i> je impuls síly, součin <i>m</i><b><i>a</i></b> je výslednice sil.' },
+    { c:'pojem', t:'Jaká je jednotka hybnosti v soustavě SI?',
+      r:'kg·m·s⁻¹ (též N·s)',
+      w:['kg·m·s⁻²', 'kg·m²·s⁻²', 'kg·s⁻¹'],
+      e:'[<i>p</i>] = kg·m·s⁻¹. Protože N·s = kg·m·s⁻²·s = kg·m·s⁻¹, je to také N·s. Rozměr kg·m·s⁻² má síla a kg·m²·s⁻² energie.' },
+    { c:'pojem', t:'Jaký směr má vektor hybnosti tělesa?',
+      r:'Směr rychlosti, protože hmotnost je kladný skalár.',
+      w:['Směr zrychlení tělesa.', 'Směr výslednice sil působících na těleso.', 'Směr opačný než rychlost.'],
+      e:'Z <b><i>p</i></b> = <i>m</i><b><i>v</i></b> a kladné hmotnosti plyne, že <b><i>p</i></b> má vždy směr <b><i>v</i></b>.' },
+    { c:'pojem', t:'Osobní auto o hmotnosti 1&nbsp;200&nbsp;kg jede rychlostí 90&nbsp;km·h⁻¹. Jakou má hybnost?',
+      r:'30&nbsp;000&nbsp;kg·m·s⁻¹',
+      w:['108&nbsp;000&nbsp;kg·m·s⁻¹', '13&nbsp;kg·m·s⁻¹', '1&nbsp;200&nbsp;kg·m·s⁻¹'],
+      e:'90&nbsp;km·h⁻¹ = 25&nbsp;m·s⁻¹ a <i>p</i> = <i>mv</i> = 1&nbsp;200&nbsp;kg · 25&nbsp;m·s⁻¹ = 30&nbsp;000&nbsp;kg·m·s⁻¹. Hodnota 108 000 vznikne dosazením 90 bez převodu jednotek.' },
+    { c:'pojem', t:'Kulka o hmotnosti 10&nbsp;g letí rychlostí 800&nbsp;m·s⁻¹. Jaká je její hybnost?',
+      r:'8&nbsp;kg·m·s⁻¹',
+      w:['8&nbsp;000&nbsp;kg·m·s⁻¹', '80&nbsp;kg·m·s⁻¹', '0,08&nbsp;kg·m·s⁻¹'],
+      e:'10&nbsp;g = 0,01&nbsp;kg a <i>p</i> = 0,01&nbsp;kg · 800&nbsp;m·s⁻¹ = 8&nbsp;kg·m·s⁻¹. Hodnota 8 000 vznikne dosazením gramů místo kilogramů.' },
+    { c:'pojem', t:'Chodec (70&nbsp;kg, 1,4&nbsp;m·s⁻¹) a kulka (10&nbsp;g, 800&nbsp;m·s⁻¹): kdo má větší hybnost?',
+      r:'Chodec, jeho hybnost je přibližně 98&nbsp;kg·m·s⁻¹, což je víc než 8&nbsp;kg·m·s⁻¹.',
+      w:['Kulka, protože je mnohem rychlejší.', 'Mají stejnou hybnost.', 'Nelze určit bez znalosti směru.'],
+      e:'Hybnost závisí na hmotnosti i na rychlosti. Chodec: 70 · 1,4 = 98&nbsp;kg·m·s⁻¹, kulka: 0,01 · 800 = 8&nbsp;kg·m·s⁻¹. Lehká, ale rychlá kulka má menší hybnost než pomalý chodec.' },
+    { c:'pojem', t:'Kamion o hmotnosti 40&nbsp;t jede 80&nbsp;km·h⁻¹, osobní auto 1&nbsp;200&nbsp;kg jede 90&nbsp;km·h⁻¹. Kolikrát větší hybnost má kamion?',
+      r:'Přibližně 30krát.',
+      w:['Přibližně 3krát.', 'Přibližně 33krát.', 'Přibližně 300krát.'],
+      e:'Kamion: 40&nbsp;000&nbsp;kg · 22,2&nbsp;m·s⁻¹ ≈ 890&nbsp;000&nbsp;kg·m·s⁻¹, auto: 30&nbsp;000&nbsp;kg·m·s⁻¹. Podíl ≈ 29,6, tedy přibližně 30. Kontrola poměrem: (40&nbsp;000/1&nbsp;200) · (80/90) ≈ 33,3 · 0,89 ≈ 30. Hodnota 33 by vyšla při stejné rychlosti.' },
+    // ----- změna hybnosti a impuls síly -----
+    { c:'impuls', t:'Jak se vypočte změna hybnosti tělesa, jehož rychlost se změní z <b><i>v</i></b><sub>1</sub> na <b><i>v</i></b><sub>2</sub>?',
+      r:'Δ<b><i>p</i></b> = <i>m</i>(<b><i>v</i></b><sub>2</sub> − <b><i>v</i></b><sub>1</sub>)',
+      w:['Δ<b><i>p</i></b> = <i>m</i>(<b><i>v</i></b><sub>2</sub> + <b><i>v</i></b><sub>1</sub>)', 'Δ<i>p</i> = <i>m</i>(<i>v</i><sub>2</sub> − <i>v</i><sub>1</sub>) vždy jen jako rozdíl velikostí', 'Δ<b><i>p</i></b> = <i>m</i>/(<b><i>v</i></b><sub>2</sub> − <b><i>v</i></b><sub>1</sub>)'],
+      e:'Změna hybnosti je vektorový rozdíl koncové a počáteční hybnosti. Záleží na směru: při pohybu po přímce dosazujeme rychlost opačného směru se záporným znaménkem.' },
+    { c:'impuls', t:'Míček o hmotnosti 0,20&nbsp;kg dopadne na stěnu rychlostí 5&nbsp;m·s⁻¹. Jaká je velikost změny jeho hybnosti, jestliže se odrazí zpět stejně velkou rychlostí?',
+      r:'2,0&nbsp;kg·m·s⁻¹',
+      w:['1,0&nbsp;kg·m·s⁻¹', '0&nbsp;kg·m·s⁻¹', '0,5&nbsp;kg·m·s⁻¹'],
+      e:'Zvolíme kladný směr ke stěně: <i>v</i><sub>1</sub> = +5, <i>v</i><sub>2</sub> = −5&nbsp;m·s⁻¹. Δ<i>p</i> = 0,20 · (−5 − 5)&nbsp;kg·m·s⁻¹ = −2,0&nbsp;kg·m·s⁻¹, velikost je 2,0. Kdyby se míček jen zastavil, byla by změna 1,0&nbsp;kg·m·s⁻¹.' },
+    { c:'impuls', t:'Jak lze zapsat 2. Newtonův zákon pomocí hybnosti?',
+      r:'<b><i>F</i></b> = Δ<b><i>p</i></b>/Δ<i>t</i>',
+      w:['<b><i>F</i></b> = Δ<b><i>p</i></b> · Δ<i>t</i>', '<b><i>F</i></b> = <b><i>p</i></b>/<i>m</i>', '<b><i>F</i></b> = <b><i>p</i></b> · Δ<i>t</i>'],
+      e:'Z <b><i>F</i></b> = <i>m</i>Δ<b><i>v</i></b>/Δ<i>t</i> = Δ(<i>m</i><b><i>v</i></b>)/Δ<i>t</i> plyne <b><i>F</i></b> = Δ<b><i>p</i></b>/Δ<i>t</i>, což je výslednice sil jako změna hybnosti za jednotku času.' },
+    { c:'impuls', t:'Co je impuls síly?',
+      r:'Součin <b><i>F</i></b>Δ<i>t</i>, který se rovná změně hybnosti Δ<b><i>p</i></b>.',
+      w:['Podíl Δ<b><i>p</i></b>/Δ<i>t</i>.', 'Součin <i>m</i><b><i>v</i></b>.', 'Okamžitá síla v nárazu.'],
+      e:'Impuls síly <b><i>F</i></b>Δ<i>t</i> (jednotka N·s) udává, o kolik se změní hybnost tělesa. Podíl Δ<b><i>p</i></b>/Δ<i>t</i> je síla, součin <i>m</i><b><i>v</i></b> hybnost.' },
+    { c:'impuls', t:'Na těleso o hmotnosti 2&nbsp;kg v klidu působí vodorovně síla 50&nbsp;N po dobu 0,2&nbsp;s (jiné vodorovné síly nepůsobí). Jakou získá rychlost?',
+      r:'5&nbsp;m·s⁻¹',
+      w:['10&nbsp;m·s⁻¹', '0,8&nbsp;m·s⁻¹', '125&nbsp;m·s⁻¹'],
+      e:'Impuls síly: <i>F</i>Δ<i>t</i> = 50&nbsp;N · 0,2&nbsp;s = 10&nbsp;N·s = Δ<i>p</i> = <i>mv</i>, tedy <i>v</i> = 10/2&nbsp;m·s⁻¹ = 5&nbsp;m·s⁻¹. Kontrola přes zrychlení: <i>a</i> = 25&nbsp;m·s⁻², <i>v</i> = <i>at</i> = 25 · 0,2 = 5&nbsp;m·s⁻¹. Hodnota 10 je impuls, ne rychlost.' },
+    { c:'impuls', t:'Volejbalový míč (0,27&nbsp;kg) přiletí rychlostí 12&nbsp;m·s⁻¹ a po úderu trvajícím 0,02&nbsp;s letí zpět rychlostí 15&nbsp;m·s⁻¹. Jaká je průměrná síla úderu?',
+      r:'Přibližně 360&nbsp;N',
+      w:['Přibližně 40&nbsp;N', 'Přibližně 160&nbsp;N', 'Přibližně 3&nbsp;600&nbsp;N'],
+      e:'Rychlosti mají opačný směr, takže Δ<i>p</i> = 0,27 · (12 + 15)&nbsp;kg·m·s⁻¹ = 7,29&nbsp;kg·m·s⁻¹ a <i>F</i> = 7,29/0,02&nbsp;N ≈ 365&nbsp;N, tedy přibližně 360&nbsp;N. Rozdíl rychlostí (15 − 12) by dal chybnou hodnotu 40&nbsp;N.' },
+    { c:'impuls', t:'Člověk o hmotnosti 70&nbsp;kg dopadne rychlostí 5&nbsp;m·s⁻¹ a zastaví se. Jak velká je průměrná síla při brzdění za 0,05&nbsp;s (tuhé nohy) a za 0,5&nbsp;s (pokrčení kolen)?',
+      r:'7&nbsp;000&nbsp;N a 700&nbsp;N',
+      w:['700&nbsp;N a 7&nbsp;000&nbsp;N', '350&nbsp;N a 350&nbsp;N', '70&nbsp;000&nbsp;N a 7&nbsp;000&nbsp;N'],
+      e:'Hybnost se změní vždy o Δ<i>p</i> = 70 · 5&nbsp;kg·m·s⁻¹ = 350&nbsp;kg·m·s⁻¹. Pak <i>F</i> = Δ<i>p</i>/Δ<i>t</i> = 350/0,05&nbsp;N = 7&nbsp;000&nbsp;N a 350/0,5&nbsp;N = 700&nbsp;N. Desetkrát delší doba dává desetkrát menší sílu.' },
+    { c:'impuls', t:'Proč mají auta deformační zóny a airbagy?',
+      r:'Prodlužují dobu brzdění, takže při stejné změně hybnosti je menší síla.',
+      w:['Zmenšují hmotnost auta.', 'Zmenšují změnu hybnosti cestujících.', 'Zvětšují sílu, kterou působí na cestující.'],
+      e:'Změna hybnosti cestujícího je dána jeho hmotností a rychlostí a nelze ji zmenšit. Z <i>F</i> = Δ<i>p</i>/Δ<i>t</i> plyne, že delší doba brzdění znamená menší sílu.' },
+    // ----- izolovaná soustava a zachování hybnosti -----
+    { c:'zzh', t:'Co je izolovaná soustava těles?',
+      r:'Soustava, na kterou nepůsobí vnější síly (nebo je jejich výslednice nulová).',
+      w:['Soustava, ve které se tělesa nepohybují.', 'Soustava, ve které na sebe tělesa nepůsobí.', 'Soustava jednoho tělesa bez hmotnosti.'],
+      e:'Tělesa v soustavě na sebe vnitřními silami působit mohou. Izolovaná je soustava, kde vnější síly od okolních těles chybějí nebo se ruší.' },
+    { c:'zzh', t:'Jak zní zákon zachování hybnosti?',
+      r:'Celková hybnost izolované soustavy těles se nemění.',
+      w:['Hybnost každého tělesa v soustavě zůstává stálá.', 'Celková hybnost každé soustavy se nemění.', 'Rychlosti těles zůstávají stálé.'],
+      e:'Zachovává se celková hybnost izolované soustavy, ne hybnosti jednotlivých těles. Co jedno těleso získá, druhé ztratí.' },
+    { c:'zzh', t:'Proč se při srážce dvou těles v izolované soustavě hybnost zachovává?',
+      r:'Obě tělesa na sebe působí stejně velkými opačnými silami po stejnou dobu, takže co jedno získá, druhé ztratí.',
+      w:['Protože síly mezi tělesy jsou nulové.', 'Protože těleso s větší hmotností nikdy nemění hybnost.', 'Protože se při srážce zachovává rychlost každého tělesa.'],
+      e:'Podle 3. Newtonova zákona je Δ<b><i>p</i></b><sub>2</sub> = <b><i>F</i></b>Δ<i>t</i> a Δ<b><i>p</i></b><sub>1</sub> = −<b><i>F</i></b>Δ<i>t</i>. Součet obou změn je nulový, celková hybnost se nemění.' },
+    { c:'zzh', t:'Dva vozíky na vodorovné dráze se srazí. Proč je můžeme považovat přibližně za izolovanou soustavu?',
+      r:'Tíhová síla a tlaková síla podložky se ruší a tření je malé.',
+      w:['Protože se vozíky nedotýkají.', 'Protože na ně nepůsobí žádná síla.', 'Protože mají stejnou hmotnost.'],
+      e:'Svislé síly se vzájemně ruší a tření je malé, takže vnější síly jsou zanedbatelné. Vozíky na sebe působí jen vnitřními silami při srážce.' },
+    { c:'zzh', t:'Jak postupujeme při řešení úloh na zachování hybnosti?',
+      r:'Zvolíme kladný směr, zapíšeme celkovou hybnost před dějem a po něm, položíme je rovné a vyjádříme neznámou.',
+      w:['Sečteme velikosti všech rychlostí a vydělíme počtem těles.', 'Položíme rovné rychlosti před dějem a po něm.', 'Dosadíme jen hmotnosti a rychlosti většího tělesa.'],
+      e:'Rychlosti opačného směru dosazujeme se záporným znaménkem. Záporný výsledek znamená pohyb proti zvolenému kladnému směru.' },
+    { c:'zzh', t:'Vyjde-li při řešení úlohy rychlost po srážce záporná, co to znamená?',
+      r:'Těleso se pohybuje proti zvolenému kladnému směru.',
+      w:['Těleso má zápornou hmotnost.', 'Chyba ve výpočtu, rychlost nemůže být záporná.', 'Těleso se zastavilo.'],
+      e:'Znaménko vyjadřuje směr vzhledem ke zvolenému kladnému směru. Záporná složka rychlosti znamená pohyb opačným směrem.' },
+    // ----- srážky a rozpojení -----
+    { c:'deje', t:'Bruslař (75&nbsp;kg) jede 3&nbsp;m·s⁻¹, dohoní bruslařku (50&nbsp;kg) jedoucí 1&nbsp;m·s⁻¹ stejným směrem a chytí ji. Jakou rychlostí jedou společně?',
+      r:'2,2&nbsp;m·s⁻¹',
+      w:['2&nbsp;m·s⁻¹', '4&nbsp;m·s⁻¹', '1,8&nbsp;m·s⁻¹'],
+      e:'<i>v</i>′ = (75 · 3 + 50 · 1)/125&nbsp;m·s⁻¹ = 275/125&nbsp;m·s⁻¹ = 2,2&nbsp;m·s⁻¹. Kontrola: hodnota leží mezi 1 a 3&nbsp;m·s⁻¹ a blíž k rychlosti těžšího bruslaře. Aritmetický průměr rychlostí (2) by byl správný jen pro stejné hmotnosti.' },
+    { c:'deje', t:'Vozík 2&nbsp;kg jede rychlostí 3&nbsp;m·s⁻¹ a narazí do stojícího vozíku 1&nbsp;kg. Po srážce se spojí. Jaká je jejich společná rychlost?',
+      r:'2&nbsp;m·s⁻¹',
+      w:['3&nbsp;m·s⁻¹', '1&nbsp;m·s⁻¹', '1,5&nbsp;m·s⁻¹'],
+      e:'2 · 3&nbsp;kg·m·s⁻¹ = (2 + 1)&nbsp;kg · <i>v</i>′, tedy <i>v</i>′ = 6/3&nbsp;m·s⁻¹ = 2&nbsp;m·s⁻¹. Kontrola: 3&nbsp;kg · 2&nbsp;m·s⁻¹ = 6&nbsp;kg·m·s⁻¹ = hybnost před srážkou.' },
+    { c:'deje', t:'Vozík 1&nbsp;kg jede 2&nbsp;m·s⁻¹ doprava, proti němu jede vozík 3&nbsp;kg rychlostí 1&nbsp;m·s⁻¹ doleva. Po srážce se spojí. Jak se pohybují?',
+      r:'Rychlostí 0,25&nbsp;m·s⁻¹ doleva.',
+      w:['Rychlostí 0,25&nbsp;m·s⁻¹ doprava.', 'Rychlostí 1,5&nbsp;m·s⁻¹ doleva.', 'Zůstanou stát.'],
+      e:'Kladný směr doprava: <i>p</i> = 1 · 2 + 3 · (−1)&nbsp;kg·m·s⁻¹ = −1&nbsp;kg·m·s⁻¹. Pak <i>v</i>′ = −1/4&nbsp;m·s⁻¹ = −0,25&nbsp;m·s⁻¹, tedy doleva, ve směru těžšího vozíku.' },
+    { c:'deje', t:'Puška o hmotnosti 4&nbsp;kg vystřelí kulku 10&nbsp;g rychlostí 800&nbsp;m·s⁻¹. S jakou rychlostí (a kterým směrem) se puška pohybuje, je-li volná?',
+      r:'2&nbsp;m·s⁻¹ proti směru letu kulky',
+      w:['2&nbsp;m·s⁻¹ ve směru letu kulky', '0,02&nbsp;m·s⁻¹ proti směru letu kulky', '800&nbsp;m·s⁻¹ proti směru letu kulky'],
+      e:'Celková hybnost před výstřelem je nulová: 0 = 0,01 · 800 + 4 · <i>v</i>′<sub>p</sub>, tedy <i>v</i>′<sub>p</sub> = −8/4&nbsp;m·s⁻¹ = −2&nbsp;m·s⁻¹. Puška se pohybuje opačně než kulka (zpětný ráz). Kontrola: hybnosti mají stejnou velikost 8&nbsp;kg·m·s⁻¹.' },
+    { c:'deje', t:'Člověk o hmotnosti 60&nbsp;kg stojí na hladkém ledě a hodí vodorovně míč 2&nbsp;kg rychlostí 6&nbsp;m·s⁻¹. Jak se bude pohybovat?',
+      r:'Rychlostí 0,2&nbsp;m·s⁻¹ proti směru hodu.',
+      w:['Rychlostí 0,2&nbsp;m·s⁻¹ ve směru hodu.', 'Rychlostí 6&nbsp;m·s⁻¹ proti směru hodu.', 'Zůstane stát.'],
+      e:'Hybnost soustavy je na začátku nulová: 0 = 2 · 6 + 60 · <i>v</i>′, <i>v</i>′ = −12/60&nbsp;m·s⁻¹ = −0,2&nbsp;m·s⁻¹. Člověk se odrazí proti směru hodu.' },
+    { c:'deje', t:'Jak funguje reaktivní pohon rakety z hlediska hybnosti?',
+      r:'Spaliny získají hybnost dozadu, raketa stejně velkou hybnost dopředu; celková hybnost se nemění.',
+      w:['Raketa se odráží od okolního vzduchu.', 'Spaliny získají větší hybnost než raketa.', 'Raketa ztrácí hybnost spalováním paliva.'],
+      e:'Raketa a spaliny tvoří izolovanou soustavu s nulovou počáteční hybností. Hybnost spalin dozadu je co do velikosti stejná jako hybnost rakety dopředu.' },
+    { c:'deje', t:'Při pružné srážce se tělesa od sebe odrazí. Co platí o hybnosti?',
+      r:'Hybnost se zachovává také, ale k určení obou rychlostí je třeba ještě zákon zachování energie.',
+      w:['Hybnost se při pružné srážce nezachovává.', 'Hybnost se zachovává jen při nepružné srážce.', 'Zachovává se hybnost každého tělesa zvlášť.'],
+      e:'Hybnost izolované soustavy se zachovává při každé srážce. Pro pružnou srážku dvou neznámých rychlostí ale jedna rovnice nestačí, přidává se zachování energie (probereme později).' },
+    { c:'deje', t:'Osobní auto (1&nbsp;200&nbsp;kg, 15&nbsp;m·s⁻¹ na východ) a dodávka (1&nbsp;500&nbsp;kg, 10&nbsp;m·s⁻¹ na sever) se srazí na křižovatce a zaklesnou do sebe. Jakou rychlost mají po srážce?',
+      r:'Přibližně 8,7&nbsp;m·s⁻¹',
+      w:['Přibližně 12,2&nbsp;m·s⁻¹', 'Přibližně 5&nbsp;m·s⁻¹', 'Přibližně 10,4&nbsp;m·s⁻¹'],
+      e:'Hybnosti jsou kolmé: <i>p</i><sub>1</sub> = 18&nbsp;000, <i>p</i><sub>2</sub> = 15&nbsp;000&nbsp;kg·m·s⁻¹, <i>p</i> = √(18&nbsp;000² + 15&nbsp;000²) ≈ 23&nbsp;400&nbsp;kg·m·s⁻¹ a <i>v</i>′ = 23&nbsp;400/2&nbsp;700&nbsp;m·s⁻¹ ≈ 8,7&nbsp;m·s⁻¹. Hodnotu 12,2 bychom dostali sčítáním hybností jako čísel (33&nbsp;000/2&nbsp;700 ≈ 12,2).' }
+  ];
+
+
+  var KVIZ_KEY = 'fyzika:hybnost:kviz';
+  var section = document.getElementById('kviz-section');
+  var tabBtn = document.getElementById('top-tab-kviz');
+  var readout = document.getElementById('kviz-readout');
+  var pageReadout = document.getElementById('header-readout');
+  var kviz = {
+    type:'all', queue:[], current:null, sel:null, locked:false,
+    score:0, streak:0, bestStreak:0, answered:0, correct:0,
+    inRound:false, ended:false, roundTotal:0, roundCorrect:0
+  };
+  function $(id){ return document.getElementById(id); }
+  function kvizLoad(){
+    try{ var raw = localStorage.getItem(KVIZ_KEY); if(raw){ kviz.bestStreak = JSON.parse(raw).bestStreak || 0; } }catch(e){}
+  }
+  function kvizSave(){
+    try{ localStorage.setItem(KVIZ_KEY, JSON.stringify({bestStreak: kviz.bestStreak})); }catch(e){}
+  }
+  function kvizShuffled(a){
+    a = a.slice();
+    for(var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random()*(i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; }
+    return a;
+  }
+  function typeOf(key){ return KVIZ_TYPES.filter(function(t){ return t.key === key; })[0]; }
+
+  // Otázky okruhu se berou v náhodném pořadí bez opakování. Po projití celého okruhu
+  // se zobrazí závěrečná hláška s výsledkem kola a nabídkou otázky zamíchat znovu.
+  function kvizNext(){
+    if(!kviz.queue.length){
+      if(kviz.inRound){ kvizShowEnd(); return; }
+      var pool = KVIZ_BANK.filter(function(b){ return kviz.type === 'all' || b.c === kviz.type; });
+      kviz.queue = kvizShuffled(pool);
+      if(kviz.current && kviz.queue.length > 1 && kviz.queue[0] === kviz.current.item){ kviz.queue.push(kviz.queue.shift()); }
+      kviz.inRound = true; kviz.roundTotal = pool.length; kviz.roundCorrect = 0;
+    }
+    var item = kviz.queue.shift();
+    var opts = item.fixed ? [item.r].concat(item.w).sort() : kvizShuffled([item.r].concat(item.w));
+    kviz.current = { item:item, choices:opts, correct:opts.indexOf(item.r) };
+    kvizRender();
+  }
+  function kvizShowEnd(){
+    kviz.ended = true; kviz.inRound = false;
+    var tp = typeOf(kviz.type);
+    var n = kviz.roundTotal, k = kviz.roundCorrect;
+    $('kviz-end-text').innerHTML =
+      'Prošli jste všech ' + n + ' otázek ' + (kviz.type === 'all' ? 'kvízu' : 'okruhu „' + tp.name + '“') + '. ' +
+      'Správně jste odpověděli na ' + k + ' z ' + n + ' (' + Math.round(100*k/n) + '&nbsp;%). Chcete otázky zamíchat a projít znovu?';
+    $('kviz-q').hidden = true;
+    $('kviz-end').hidden = false;
+    $('kviz-btn-restart').focus({ preventScroll:true });
+  }
+  function kvizRestart(){
+    kviz.queue = []; kviz.inRound = false;
+    kvizNext();
+  }
+  function kvizRender(){
+    var q = kviz.current;
+    kviz.ended = false;
+    $('kviz-q').hidden = false;
+    $('kviz-end').hidden = true;
+    var tp = typeOf(q.item.c);
+    $('kviz-cat-tag').innerHTML = tp ? tp.tag : 'Otázka';
+    $('kviz-task-text').innerHTML = q.item.t;
+    var grid = $('kviz-opt-grid');
+    grid.innerHTML = '';
+    kviz.sel = null; kviz.locked = false;
+    q.choices.forEach(function(c, i){
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'opt-btn';
+      b.innerHTML = '<b>' + LETTERS[i] + ')</b>&nbsp; ' + c;
+      b.addEventListener('click', function(){ kvizSelect(i); });
+      grid.appendChild(b);
+    });
+    var fb = $('kviz-feedback');
+    fb.hidden = true; fb.classList.remove('ok', 'bad', 'sol');
+    $('kviz-btn-check').textContent = 'Zkontrolovat';
+  }
+  function kvizSelect(i){
+    if(kviz.locked || kviz.ended) return;
+    kviz.sel = i;
+    Array.prototype.forEach.call($('kviz-opt-grid').children, function(el, j){ el.classList.toggle('selected', j === i); });
+    $('kviz-btn-check').focus({ preventScroll:true });
+  }
+  function kvizFinish(ok, headline){
+    var q = kviz.current;
+    Array.prototype.forEach.call($('kviz-opt-grid').children, function(el, j){
+      el.disabled = true;
+      el.classList.remove('selected');
+      if(j === q.correct) el.classList.add(kviz.sel === j ? 'correct' : 'missed');
+      else if(j === kviz.sel) el.classList.add('wrong');
+    });
+    var fb = $('kviz-feedback');
+    fb.hidden = false;
+    fb.classList.toggle('ok', ok); fb.classList.toggle('bad', !ok);
+    $('kviz-feedback-headline').textContent = headline;
+    var finalText = 'Správná odpověď: ' + LETTERS[q.correct] + ') ' + q.item.r;
+    if(window.FyzikaReseni && FyzikaReseni.show){
+      FyzikaReseni.show(fb, $('kviz-feedback-steps'), { raw:true, title:'Vysvětlení', steps:[q.item.e], final:finalText });
+    } else {
+      $('kviz-feedback-steps').innerHTML = q.item.e + '<br><b>' + finalText + '</b>';
+    }
+    kviz.locked = true;
+    var btn = $('kviz-btn-check');
+    btn.textContent = 'Další otázka →';
+    btn.focus({ preventScroll:true });
+    kvizStats();
+  }
+  function kvizCheck(){
+    if(kviz.ended){ kvizRestart(); return; }
+    if(kviz.locked){ kvizNext(); return; }
+    if(kviz.sel === null && !confirm('Není vybraná žádná možnost. Opravdu chcete zkontrolovat?')) return;
+    var ok = kviz.sel === kviz.current.correct;
+    kviz.answered++;
+    if(ok){
+      kviz.score += 10; kviz.streak++; kviz.correct++; kviz.roundCorrect++;
+      if(kviz.streak > kviz.bestStreak){ kviz.bestStreak = kviz.streak; kvizSave(); }
+    } else {
+      kviz.streak = 0;
+    }
+    kvizFinish(ok, ok ? 'Správně!' : (kviz.sel === null ? 'Vyberte odpověď.' : 'Bohužel špatně.'));
+  }
+  function kvizSkip(){
+    if(kviz.ended){ kvizRestart(); return; }
+    if(kviz.locked){ kvizNext(); return; }
+    kviz.streak = 0; kviz.answered++;
+    kvizFinish(false, 'Správná odpověď:');
+  }
+  function kvizStats(){
+    $('kviz-stat-score').textContent = kviz.score;
+    $('kviz-stat-streak').textContent = kviz.streak + (kviz.bestStreak > 0 ? ' / ' + kviz.bestStreak : '');
+    $('kviz-stat-accuracy').textContent = kviz.answered === 0 ? '—' : Math.round(100*kviz.correct/kviz.answered) + ' %';
+  }
+  (function kvizBuildTypeRow(){
+    var row = $('kviz-type-row');
+    KVIZ_TYPES.forEach(function(d){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip accented' + (d.key === kviz.type ? ' on' : '');
+      b.setAttribute('aria-pressed', d.key === kviz.type ? 'true' : 'false');
+      b.textContent = d.name;
+      b.addEventListener('click', function(){
+        if(d.key === kviz.type) return;
+        // rozpracovaná otázka s vybranou odpovědí se před změnou okruhu vyhodnotí
+        var settled = !kviz.locked && kviz.sel !== null;
+        if(settled) kvizCheck();
+        kviz.type = d.key; kviz.queue = []; kviz.inRound = false;
+        Array.prototype.forEach.call(row.children, function(el, i){
+          var on = KVIZ_TYPES[i].key === kviz.type;
+          el.classList.toggle('on', on);
+          el.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        // vyhodnocená otázka zůstane i s vysvětlením vidět, další už bude z nového okruhu
+        if(!settled) kvizNext();
+      });
+      row.appendChild(b);
+    });
+  })();
+  $('kviz-btn-check').addEventListener('click', kvizCheck);
+  $('kviz-btn-skip').addEventListener('click', kvizSkip);
+  $('kviz-btn-restart').addEventListener('click', kvizRestart);
+  $('kviz-reset-stats').addEventListener('click', function(){
+    kviz.score = 0; kviz.streak = 0; kviz.answered = 0; kviz.correct = 0; kviz.bestStreak = 0;
+    try{ localStorage.removeItem(KVIZ_KEY); }catch(e){}
+    kvizStats();
+  });
+  // Klávesnice v kvízu: A–D nebo 1–4 vybere odpověď, Enter zkontroluje / posune dál.
+  document.addEventListener('keydown', function(e){
+    if(section.hidden) return;
+    if(e.ctrlKey || e.metaKey || e.altKey) return;
+    if(e.key === 'Enter'){
+      if(e.target && e.target.tagName === 'BUTTON') return;
+      e.preventDefault(); kvizCheck(); return;
+    }
+    var idx = 'abcd'.indexOf(e.key.toLowerCase());
+    if(idx === -1) idx = '1234'.indexOf(e.key);
+    if(idx !== -1 && e.key.length === 1) kvizSelect(idx);
+  });
+
+  // ---- záložka Kvíz ----
+  // Skript je samostatný: otevření Kvízu i návrat na ostatní záložky řeší sám, ať stránka přepíná
+  // záložky jakkoli. Skóre kvízu má vlastní pole v hlavičce (skóre tréninku se tím nemění).
+  function activate(){
+    var teorieBtn = $('top-tab-teorie'), theory = $('theory-section');
+    if(!tabBtn.classList.contains('on') && teorieBtn && !teorieBtn.classList.contains('on')){
+      // nejdřív „kliknutím“ opustíme dosavadní záložku obsluhou stránky (u hry na čas s potvrzením)
+      teorieBtn.click();
+      if(theory && theory.hidden) return;   // stránka odmítla opustit dosavadní záložku (např. běžící hra)
+    }
+    Array.prototype.forEach.call(document.querySelectorAll('.tab-section'), function(s){ s.hidden = s !== section; });
+    Array.prototype.forEach.call(document.querySelectorAll('.toptab'), function(t){ t.classList.toggle('on', t === tabBtn); });
+    if(pageReadout) pageReadout.hidden = true;
+    readout.hidden = false;
+    kvizStats();
+    if(!kviz.current) kvizNext();
+  }
+  tabBtn.addEventListener('click', activate);
+  Array.prototype.forEach.call(document.querySelectorAll('.toptab'), function(t){
+    if(t === tabBtn) return;
+    t.addEventListener('click', function(){ section.hidden = true; readout.hidden = true; tabBtn.classList.remove('on'); });
+  });
+  document.addEventListener('fyzika:scores-updated', function(){ kviz.bestStreak = 0; kvizLoad(); kvizStats(); });
+  kvizLoad();
+  kvizStats();
+  if(location.hash === '#kviz' && !tabBtn.classList.contains('on')) tabBtn.click();
+  else if(location.hash === '#kviz') activate();
 })();
 </script>
 
