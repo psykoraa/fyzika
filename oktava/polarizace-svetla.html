@@ -552,7 +552,7 @@
         <div class="applet-head-text">
           <span class="cat-tag">Animace</span>
           <h2>Průchod světla polarizátory</h2>
-          <p class="desc">Nepolarizované světlo prochází jedním nebo dvěma polarizátory. Natočením druhého polarizátoru vůči prvnímu měníte intenzitu prošlého světla.</p>
+          <p class="desc">Nepolarizované světlo prochází jedním nebo dvěma polarizátory. Vzájemným natočením obou polarizátorů měníte intenzitu prošlého světla.</p>
         </div>
         <button class="btn ghost fs-btn" id="pa-fs" type="button" aria-pressed="false">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path id="pa-fs-icon" d="M1.5 5.5V1.5H5.5M10.5 1.5H14.5V5.5M14.5 10.5V14.5H10.5M5.5 14.5H1.5V10.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -582,7 +582,7 @@
           <span class="slider-val" id="pa-out-t1" aria-live="polite"></span>
         </div>
         <div class="mode-row slider-row" id="pa-row-d">
-          <label class="mode-row-label" for="pa-sl-d">Natočení 2. vůči 1.</label>
+          <label class="mode-row-label" for="pa-sl-d">Natočení 2. polarizátoru</label>
           <input type="range" id="pa-sl-d" min="0" max="180" step="5" value="45">
           <span class="slider-val" id="pa-out-d" aria-live="polite"></span>
         </div>
@@ -598,7 +598,7 @@
 
       <details class="navod">
         <summary>Návod</summary>
-        <p class="hint">Vlevo je zdroj nepolarizovaného světla: směr kmitů vektoru \(\boldsymbol{E}\) se mění po krátkých úsecích vlny („klubkách“). Čárky na destičce značí propustný směr polarizátoru. Za ním zbyde jen složka kmitů v tomto směru, takže světlo je lineárně polarizované a jeho intenzita je poloviční (průměr \(\cos^2\) přes všechny směry je \(1/2\)). Posuvník <i>Natočení 1. polarizátoru</i> otáčí jeho propustný směr. Při volbě <i>dva</i> nastavujete natočení druhého polarizátoru vůči prvnímu o úhel \(\varphi\). Intenzita za ním je \(I = I_1\cos^2\varphi\) (Malusův zákon, který je nad rámec učebnice). Pro \(\varphi = 0^\circ\) projde všechno polarizované světlo, pro \(\varphi = 90^\circ\) žádné. Intenzity v řádku <i>Intenzita</i> jsou vztažené k intenzitě \(I_0\) nepolarizovaného světla před polarizátory, jas stínítka vpravo jí odpovídá.</p>
+        <p class="hint">Vlevo je zdroj nepolarizovaného světla: směr kmitů vektoru \(\boldsymbol{E}\) se mění po krátkých úsecích vlny („klubkách“). Čárky na destičce značí propustný směr polarizátoru a otáčejí se spolu s ní. Za ním zbyde jen složka kmitů v tomto směru, takže světlo je lineárně polarizované a jeho intenzita je poloviční (průměr \(\cos^2\) přes všechny směry je \(1/2\)). Posuvník <i>Natočení 1. polarizátoru</i> otáčí první destičku, posuvník <i>Natočení 2. polarizátoru</i> nezávisle na ní druhou. Oba úhly se měří od svislého směru, v závorce je úhel \(\varphi\) mezi propustnými směry obou polarizátorů. Intenzita za ním je \(I = I_1\cos^2\varphi\) (Malusův zákon, který je nad rámec učebnice). Pro \(\varphi = 0^\circ\) projde všechno polarizované světlo, pro \(\varphi = 90^\circ\) žádné. Intenzity v řádku <i>Intenzita</i> jsou vztažené k intenzitě \(I_0\) nepolarizovaného světla před polarizátory, jas stínítka vpravo jí odpovídá.</p>
       </details>
     </div>
 
@@ -1059,26 +1059,25 @@
       t.textContent = str;
       return t;
     }
-    // tenká 3D destička (kosoúhlé promítání): rovina yz je kolmá na osu x; ang = směr propustných čárek (od svislice k hloubce z)
+    // tenká 3D destička (kosoúhlé promítání): rovina yz je kolmá na osu x, x = 0 je výstupní (přední) stěna, x = −t vstupní;
+    // ang = natočení celé destičky kolem osy x (od svislice k hloubce z); čárky propustného směru jsou na destičce pevné (podél její delší strany)
     function slabSVG(xf, yc, t, hz, hy, ang, alpha){
-      function P(x, z, y){ return f1(xf + x - KZ * z) + ',' + f1(yc - y + MZ * z); }   // stejné promítání jako pr(): z míří k pozorovateli
-      function poly(pts, fill, fo){ return '<polygon points="' + pts.join(' ') + '" fill="' + fill + '" fill-opacity="' + fo + '" stroke="var(--ink)" stroke-width="1.6" stroke-linejoin="round"/>'; }
-      var a0 = alpha === undefined ? 1 : alpha, o = '';
-      o += poly([P(-t, hz, -hy), P(0, hz, -hy), P(0, hz, hy), P(-t, hz, hy)], 'var(--ink-soft)', 0.55 * a0);
-      o += poly([P(-t, -hz, hy), P(0, -hz, hy), P(0, hz, hy), P(-t, hz, hy)], 'var(--surface)', a0);
-      o += poly([P(0, -hz, -hy), P(0, hz, -hy), P(0, hz, hy), P(0, -hz, hy)], 'var(--surface-2)', a0);
+      function P(x, y, z){ return f1(xf + x - KZ * z) + ',' + f1(yc - y + MZ * z); }   // stejné promítání jako pr(): z míří k pozorovateli
+      var a0 = alpha === undefined ? 1 : alpha, o = '', a = (ang || 0) * Math.PI / 180, ca = Math.cos(a), sa = Math.sin(a);
+      function Q(uu, ww){ return [uu * ca - ww * sa, uu * sa + ww * ca]; }      // (u, w) na destičce → (y, z)
+      var cs = [Q(hy, hz), Q(-hy, hz), Q(-hy, -hz), Q(hy, -hz)], k, A, B, ey, ez, len, ny, nz, facing, d, p1, p2;
+      for(k = 0; k < 4; k++){                                                   // boční stěny, jen ty natočené k pozorovateli
+        A = cs[k]; B = cs[(k + 1) % 4]; ey = B[0] - A[0]; ez = B[1] - A[1]; len = Math.sqrt(ey * ey + ez * ez);
+        ny = ez / len; nz = -ey / len; facing = (MZ * ny + nz) / 1.1;
+        if(facing <= 0.001) continue;
+        o += '<polygon points="' + [P(-t, A[0], A[1]), P(0, A[0], A[1]), P(0, B[0], B[1]), P(-t, B[0], B[1])].join(' ') + '" fill="var(--ink-soft)" fill-opacity="' + ((0.2 + 0.4 * (1 - facing)) * a0).toFixed(2) + '" stroke="var(--ink)" stroke-width="1.6" stroke-linejoin="round"/>';
+      }
+      o += '<polygon points="' + cs.map(function(c){ return P(0, c[0], c[1]); }).join(' ') + '" fill="var(--surface-2)" fill-opacity="' + a0 + '" stroke="var(--ink)" stroke-width="1.6" stroke-linejoin="round"/>';
       if(ang !== null && ang !== undefined){
-        var a = ang * Math.PI / 180, ca = Math.cos(a), sa = Math.sin(a), Y = hy - 4, Z = hz - 4, R = Math.sqrt(Y * Y + Z * Z), d, lo, hi, s1, s2, tmp;
-        for(d = -R + 5; d <= R - 5; d += 11){
-          lo = -1e9; hi = 1e9;
-          if(Math.abs(ca) > 1e-6){ s1 = (-Y + d * sa) / ca; s2 = (Y + d * sa) / ca; if(s1 > s2){ tmp = s1; s1 = s2; s2 = tmp; } lo = Math.max(lo, s1); hi = Math.min(hi, s2); }
-          else if(Math.abs(d * sa) > Y) continue;
-          if(Math.abs(sa) > 1e-6){ s1 = (-Z - d * ca) / sa; s2 = (Z - d * ca) / sa; if(s1 > s2){ tmp = s1; s1 = s2; s2 = tmp; } lo = Math.max(lo, s1); hi = Math.min(hi, s2); }
-          else if(Math.abs(d * ca) > Z) continue;
-          if(hi - lo < 4) continue;
-          o += '<line x1="' + P(0, d * ca + lo * sa, -d * sa + lo * ca).split(',')[0] + '" y1="' + P(0, d * ca + lo * sa, -d * sa + lo * ca).split(',')[1] +
-               '" x2="' + P(0, d * ca + hi * sa, -d * sa + hi * ca).split(',')[0] + '" y2="' + P(0, d * ca + hi * sa, -d * sa + hi * ca).split(',')[1] +
-               '" stroke="var(--ink-soft)" stroke-width="1.4"/>';
+        var nS = Math.floor((2 * hz - 16) / 11), i0;
+        for(i0 = 0; i0 <= nS; i0++){
+          d = (i0 - nS / 2) * 11; p1 = Q(-(hy - 6), d); p2 = Q(hy - 6, d);
+          o += '<line x1="' + P(0, p1[0], p1[1]).replace(',', '" y1="') + '" x2="' + P(0, p2[0], p2[1]).replace(',', '" y2="') + '" stroke="var(--ink-soft)" stroke-width="1.4"/>';
         }
       }
       return o;
@@ -1181,10 +1180,9 @@
       var svg = document.getElementById('pa-svg');
       if(!svg) return;
       var XS = 56, XE = 470, YC = 160, LAM = 82, AMP = 56, N = 54, XF1 = 180, XF2 = 330, XSC = 510, HZ = 46, HY = 66, T = 9, OMEGA = 2.0;
-      var st = { n:2, t1:0, d:45, running:!reduceMotion, th:0 };
+      var st = { n:2, t1:0, t2:45, running:!reduceMotion, th:0 };
       var defs = mk('defs', {}, svg);
       marker(defs, 'pa-mE', 'var(--accent)'); marker(defs, 'pa-mX', 'var(--ink)');
-      mk('line', { x1:XS - 8, y1:YC, x2:XE + 18, y2:YC, stroke:'var(--ink)', 'stroke-width':'1.5', 'marker-end':'url(#pa-mX)' }, svg);
       sunIcon(svg, 28, YC);
       var screenPoly = mk('polygon', { fill:'var(--ray1)', stroke:'var(--ink-soft)', 'stroke-width':'1.2' }, svg);
       (function(){
@@ -1192,38 +1190,59 @@
         screenPoly.setAttribute('points', c.join(' '));
       })();
       text(svg, XSC, 258, 'stínítko', 12.5, 'var(--ink-soft)', 'middle');
-      var gW = mk('g', {}, svg), path = mk('polyline', { fill:'none', stroke:'var(--accent)', 'stroke-width':'2', 'stroke-linejoin':'round' }, svg), lines = [], i;
-      for(i = 0; i <= N; i++) lines.push(mk('line', { stroke:'var(--accent)', 'stroke-width':'1.5', 'marker-end':'url(#pa-mE)' }, gW));
-      var gS1 = mk('g', {}, svg), gS2 = mk('g', {}, svg);
+      // vrstvy podle hloubky: úsek vlny před destičkou je za ní (destička ho zakryje), úsek za destičkou vychází z její přední stěny
+      var segs = [], gS1, gS2, lines = [], lineSeg = [], i, k;
+      function mkSeg(){
+        var g = mk('g', {}, svg);
+        return { g:g, axis:mk('line', { stroke:'var(--ink)', 'stroke-width':'1.5' }, g), path:mk('polyline', { fill:'none', stroke:'var(--accent)', 'stroke-width':'2', 'stroke-linejoin':'round' }, g), vec:mk('g', {}, g) };
+      }
+      segs.push(mkSeg()); gS1 = mk('g', {}, svg); segs.push(mkSeg()); gS2 = mk('g', {}, svg); segs.push(mkSeg());
+      for(i = 0; i <= N; i++){ lines.push(mk('line', { stroke:'var(--accent)', 'stroke-width':'1.5', 'marker-end':'url(#pa-mE)' })); lineSeg.push(-1); }
       text(svg, XF1, 262, '1. polarizátor', 12.5, 'var(--ink-soft)', 'middle');
       var lab2 = text(svg, XF2, 262, '2. polarizátor (analyzátor)', 12.5, 'var(--ink-soft)', 'middle');
       text(svg, 24, 284, 'Světlo se šíří doprava, ve směru osy x.', 12.5, 'var(--ink-soft)');
 
       function field(x, th){
         var u = (x - XS) * TWO_PI / LAM, phi = u - th, c = Math.cos(phi), psi = psiOf(phi);
-        var t1 = st.t1 * Math.PI / 180, t2 = (st.t1 + st.d) * Math.PI / 180, amp;
+        var t1 = st.t1 * Math.PI / 180, t2 = st.t2 * Math.PI / 180, amp;
         if(x < XF1) return [c * Math.cos(psi), c * Math.sin(psi)];
         amp = c * Math.cos(psi - t1);
         if(st.n === 1 || x < XF2) return [amp * Math.cos(t1), amp * Math.sin(t1)];
         amp *= Math.cos(t1 - t2);
         return [amp * Math.cos(t2), amp * Math.sin(t2)];
       }
-      function intensity(){ var i1 = 0.5, i2 = 0.5 * Math.pow(Math.cos(st.d * Math.PI / 180), 2); return [i1, i2]; }
+      function phiDeg(){ var p = Math.abs(st.t2 - st.t1); return p > 90 ? 180 - p : p; }   // úhel mezi propustnými směry (0° až 90°)
+      function intensity(){ var i1 = 0.5, i2 = 0.5 * Math.pow(Math.cos((st.t2 - st.t1) * Math.PI / 180), 2); return [i1, i2]; }
+      // úseky osy x: [začátek, konec, index vrstvy]; uvnitř destičky (x od xf − T do xf) se nekreslí nic
+      function ranges(){
+        return st.n === 2 ? [[XS, XF1 - T], [XF1, XF2 - T], [XF2, XE]] : [[XS, XF1 - T], [XF1, XE], null];
+      }
+      function segOf(x, R){ for(var q = 0; q < 3; q++){ if(R[q] && x >= R[q][0] - 1e-6 && x <= R[q][1] + 1e-6) return q; } return -1; }
       function render(){
-        var th = st.th, j, x, e, p, pts = [], M = 240;
-        for(j = 0; j <= M; j++){
-          x = XS + (XE - XS) * j / M; e = field(x, th); p = pr(e[0], e[1], AMP);
-          pts.push(f1(x + p[0]) + ',' + f1(YC + p[1]));
+        var th = st.th, j, x, e, p, M = 240, R = ranges(), q, pts, x0, x1, last;
+        for(q = 0; q < 3; q++){
+          if(!R[q]){ segs[q].g.style.display = 'none'; continue; }
+          segs[q].g.style.display = '';
+          x0 = R[q][0]; x1 = R[q][1]; last = (x1 === XE); pts = [];
+          for(j = 0; j <= M; j++){
+            x = x0 + (x1 - x0) * j / M; e = field(x, th); p = pr(e[0], e[1], AMP);
+            pts.push(f1(x + p[0]) + ',' + f1(YC + p[1]));
+          }
+          segs[q].path.setAttribute('points', pts.join(' '));
+          setLine(segs[q].axis, q === 0 ? XS - 8 : x0, YC, last ? XE + 18 : x1, YC, false);
+          if(last) segs[q].axis.setAttribute('marker-end', 'url(#pa-mX)'); else segs[q].axis.removeAttribute('marker-end');
         }
-        path.setAttribute('points', pts.join(' '));
         for(j = 0; j <= N; j++){
-          x = XS + (XE - XS) * j / N; e = field(x, th); p = pr(e[0], e[1], AMP);
+          x = XS + (XE - XS) * j / N; q = segOf(x, R);
+          if(q !== lineSeg[j]){ if(q < 0){ if(lines[j].parentNode) lines[j].parentNode.removeChild(lines[j]); } else segs[q].vec.appendChild(lines[j]); lineSeg[j] = q; }
+          if(q < 0) continue;
+          e = field(x, th); p = pr(e[0], e[1], AMP);
           setLine(lines[j], x, YC, x + p[0], YC + p[1], p[0] * p[0] + p[1] * p[1] < 9);
         }
       }
       function drawSlabs(){
         gS1.innerHTML = slabSVG(XF1, YC, T, HZ, HY, st.t1);
-        gS2.innerHTML = st.n === 2 ? slabSVG(XF2, YC, T, HZ, HY, st.t1 + st.d) : '';
+        gS2.innerHTML = st.n === 2 ? slabSVG(XF2, YC, T, HZ, HY, st.t2) : '';
         lab2.style.display = st.n === 2 ? '' : 'none';
       }
       var nBtns = document.querySelectorAll('#pa-n .chip.accented');
@@ -1233,7 +1252,7 @@
         var I = intensity(), last = st.n === 2 ? I[1] : I[0];
         setChips(nBtns, st.n - 1);
         rowD.hidden = st.n !== 2;
-        outT1.textContent = st.t1 + '°'; outD.textContent = st.d + '°';
+        outT1.textContent = st.t1 + '°'; outD.textContent = st.t2 + '° (φ = ' + phiDeg() + '°)';
         outI.textContent = fmt(I[0] * 100, 1) + ' %' + (st.n === 2 ? '  →  ' + fmt(I[1] * 100, 1) + ' %' : '');
         screenPoly.setAttribute('fill-opacity', (0.06 + 0.94 * last / 0.5).toFixed(3));
         btnPlay.textContent = st.running ? 'Pozastavit' : 'Spustit';
@@ -1241,7 +1260,7 @@
       }
       Array.prototype.forEach.call(nBtns, function(b, bi){ b.addEventListener('click', function(){ st.n = bi + 1; updateUI(); render(); }); });
       slT1.addEventListener('input', function(){ st.t1 = parseInt(slT1.value, 10); updateUI(); render(); });
-      slD.addEventListener('input', function(){ st.d = parseInt(slD.value, 10); updateUI(); render(); });
+      slD.addEventListener('input', function(){ st.t2 = parseInt(slD.value, 10); updateUI(); render(); });
       btnPlay.addEventListener('click', function(){ st.running = !st.running; updateUI(); });
       anims.push({ svg:svg, st:st, omega:OMEGA, render:render });
       updateUI(); render();
