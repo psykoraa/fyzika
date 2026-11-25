@@ -159,9 +159,16 @@
 .vec-fig .track{ stroke:var(--ink-soft); stroke-width:1.2; }
 .vec-fig .pt{ fill:var(--ink); }
 
+/* kvíz: vysvětlení je běžný text, ne řádky výpočtu */
+#kviz-section .feedback .steps{ font-family:'Work Sans', sans-serif; white-space:normal; opacity:1; }
+#kviz-section .task{ text-align:center; }
+
 @media (max-width:520px){
   .card{ padding:22px 12px 22px; }
   .readout .cell{ min-width:64px; padding:6px 8px; }
+  /* čtyři záložky: na telefonu ve dvou řadách (stejně jako 2. Newtonův zákon) */
+  .top-tabs{ flex-wrap:wrap; }
+  .toptab{ flex:1 1 calc(50% - 4px); padding:13px 8px; }
 }
 </style>
 </head>
@@ -191,6 +198,7 @@
 
   <div class="top-tabs">
     <button class="toptab on" id="top-tab-teorie" data-tab="teorie">Teorie</button>
+    <button class="toptab" id="top-tab-kviz" data-tab="kviz">Kvíz</button>
     <button class="toptab" id="top-tab-trenink" data-tab="trenink">Trénink</button>
     <button class="toptab" id="top-tab-priklady" data-tab="priklady">Příklady</button>
   </div>
@@ -404,6 +412,39 @@
       <p>• Pohyb z více úseků: dráhy jednotlivých úseků sčítáme a průměrná rychlost je celková dráha dělená celkovou dobou.</p>
     </div>
 
+  </div>
+
+  <div id="kviz-section" class="tab-section" hidden>
+    <div class="panel">
+      <div class="section-block">
+        <div class="panel-title">Okruh otázek</div>
+        <div class="row" id="kviz-type-row"></div>
+      </div>
+      <div class="settings-foot" style="justify-content:flex-end;">
+        <button class="linklike" id="kviz-reset-stats">vynulovat statistiku</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="cat-tag" id="kviz-cat-tag">Otázka</span>
+      <p class="task" id="kviz-task-text"></p>
+      <figure class="graph-fig theory-fig" id="kviz-fig" hidden>
+        <svg id="kviz-graph" viewBox="0 0 480 320" role="img" aria-label="Graf k otázce"></svg>
+      </figure>
+      <div class="opt-grid wide-opts" id="kviz-opt-grid"></div>
+      <div class="actions">
+        <button class="btn primary" id="kviz-btn-check">Zkontrolovat</button>
+        <button class="btn ghost" id="kviz-btn-skip">Nevím / Zobrazit řešení</button>
+      </div>
+      <details class="navod">
+        <summary>Návod</summary>
+        <p class="hint">Vyberte jednu ze čtyř odpovědí kliknutím nebo klávesami A až D (případně 1 až 4) a potvrďte tlačítkem Zkontrolovat nebo klávesou Enter; dalším Enterem přejdete na další otázku. Po kontrole se správná odpověď obarví zeleně, chybně vybraná červeně a pod otázkou se objeví vysvětlení. Okruh otázek vyberete nahoře; otázky se neopakují, dokud neprojdete celý okruh.</p>
+      </details>
+      <div class="feedback" id="kviz-feedback" hidden>
+        <div class="headline" id="kviz-feedback-headline"></div>
+        <div class="steps" id="kviz-feedback-steps"></div>
+      </div>
+    </div>
   </div>
 
   <div id="trenink-section" class="tab-section" hidden>
@@ -2554,21 +2595,364 @@
     exUpdateStats();
   });
 
-  // ---- horní přepínač Teorie / Trénink / Příklady ----
+  // ---------- Kvíz: otázky s výběrem ze čtyř odpovědí (A–D) ----------
+  // Položka banky: c = okruh, t = zadání (HTML), r = správná odpověď, w = tři špatné,
+  // e = vysvětlení, f = volitelný graf (stejný zápis jako THEORY_GRAPHS).
+  var LETTERS = ['A','B','C','D'];
+  var KVIZ_TYPES = [
+    { key:'all', name:'Vše' },
+    { key:'zrychleni', name:'Zrychlení', tag:'Zrychlení' },
+    { key:'grafv', name:'Graf rychlosti a zrychlení', tag:'Graf rychlosti <i>v</i>(<i>t</i>) a zrychlení <i>a</i>(<i>t</i>)' },
+    { key:'draha', name:'Dráha a graf dráhy', tag:'Dráha a graf dráhy <i>s</i>(<i>t</i>)' },
+    { key:'brzdeni', name:'Zpomalování a brzdění', tag:'Zpomalování a brzdná dráha' },
+    { key:'situace', name:'Situace', tag:'Rovnoměrně zrychlený pohyb v situacích' }
+  ];
+  var KVIZ_BANK = [
+    // ----- zrychlení -----
+    { c:'zrychleni', t:'Co vyjadřuje zrychlení tělesa?',
+      r:'Jak rychle se mění rychlost tělesa.',
+      w:['Jakou dráhu těleso urazí za jednotku času.', 'Jak velkou rychlostí se těleso pohybuje.', 'O kolik se zvětší dráha za každou sekundu.'],
+      e:'Zrychlení je podíl změny rychlosti a doby, za kterou změna nastala: <i>a</i> = Δ<i>v</i>/Δ<i>t</i>. Dráhu za jednotku času vyjadřuje rychlost.' },
+    { c:'zrychleni', t:'Jaká je jednotka zrychlení?',
+      r:'m·s⁻²', w:['m·s⁻¹', 'm·s', 's·m⁻²'],
+      e:'[<i>a</i>] = (m·s⁻¹)/s = m·s⁻², tedy metr za sekundu na druhou.' },
+    { c:'zrychleni', t:'Těleso se pohybuje se zrychlením 3&nbsp;m·s⁻². Co to znamená?',
+      r:'Každou sekundu se jeho rychlost zvětší o 3&nbsp;m·s⁻¹.',
+      w:['Každou sekundu urazí dráhu 3&nbsp;m.', 'Pohybuje se rychlostí 3&nbsp;m·s⁻¹.', 'Každou sekundu se jeho dráha zvětší o 3&nbsp;m.'],
+      e:'Zrychlení udává přírůstek rychlosti za jednu sekundu: 3&nbsp;m·s⁻² = 3&nbsp;(m·s⁻¹) za 1&nbsp;s.' },
+    { c:'zrychleni', t:'Kdy nazýváme přímočarý pohyb rovnoměrně zrychleným?',
+      r:'Když se jeho zrychlení nemění.',
+      w:['Když se jeho rychlost nemění.', 'Když za stejné doby urazí stejné dráhy.', 'Když jeho zrychlení rovnoměrně roste.'],
+      e:'U rovnoměrně zrychleného pohybu je zrychlení stálé: ve stejně dlouhých intervalech se rychlost změní o totéž. Stálou rychlost a stejné dráhy za stejné doby má pohyb rovnoměrný.' },
+    { c:'zrychleni', t:'Kladný směr osy volíme ve směru pohybu. Jaké znaménko má zrychlení tělesa, které zpomaluje?',
+      r:'Záporné, zrychlení míří proti rychlosti.',
+      w:['Kladné, zrychlení míří ve směru rychlosti.', 'Nulové, těleso přece nezrychluje.', 'Zpomalování nelze popsat zrychlením.'],
+      e:'Při zpomalování rychlost ubývá, Δ<i>v</i> &lt; 0, a proto <i>a</i> = Δ<i>v</i>/Δ<i>t</i> &lt; 0. Vektor zrychlení míří proti vektoru rychlosti.' },
+    { c:'zrychleni', t:'Jak míří vektor zrychlení u tělesa, které se po přímce rozjíždí?',
+      r:'Stejným směrem jako vektor rychlosti.',
+      w:['Opačným směrem než vektor rychlosti.', 'Kolmo k vektoru rychlosti.', 'Zrychlení žádný směr nemá.'],
+      e:'Zrychlení je vektor. Při zrychlování míří souhlasně s rychlostí a šipka rychlosti se postupně prodlužuje.' },
+    { c:'zrychleni', t:'Cyklista zrychlí během 4&nbsp;s z rychlosti 3&nbsp;m·s⁻¹ na 9&nbsp;m·s⁻¹. Jaké je jeho zrychlení?',
+      r:'1,5&nbsp;m·s⁻²', w:['2,25&nbsp;m·s⁻²', '6&nbsp;m·s⁻²', '0,75&nbsp;m·s⁻²'],
+      e:'<i>a</i> = (<i>v</i> − <i>v</i><sub>0</sub>)/<i>t</i> = (9&nbsp;m·s⁻¹ − 3&nbsp;m·s⁻¹) / 4&nbsp;s = 6&nbsp;m·s⁻¹ / 4&nbsp;s = 1,5&nbsp;m·s⁻². Chybou je dělit koncovou rychlost (9/4 = 2,25) bez odečtení počáteční.' },
+    { c:'zrychleni', t:'Který vztah udává rychlost rovnoměrně zrychleného pohybu s počáteční rychlostí <i>v</i><sub>0</sub>?',
+      r:'<i>v</i> = <i>v</i><sub>0</sub> + <i>a</i>·<i>t</i>',
+      w:['<i>v</i> = <i>v</i><sub>0</sub> + ½·<i>a</i>·<i>t</i>²', '<i>v</i> = <i>a</i>/<i>t</i>', '<i>v</i> = <i>v</i><sub>0</sub>·<i>a</i>·<i>t</i>'],
+      e:'Za dobu <i>t</i> přibude rychlost <i>a</i>·<i>t</i>, ta se přičte k počáteční rychlosti. Výraz ½·<i>a</i>·<i>t</i>² patří do vzorce pro dráhu. Kontrola jednotek: m·s⁻² · s = m·s⁻¹.' },
+    { c:'zrychleni', t:'Těleso se rozjíždí z klidu se zrychlením 2&nbsp;m·s⁻². Jakou rychlost má po 5&nbsp;s?',
+      r:'10&nbsp;m·s⁻¹', w:['25&nbsp;m·s⁻¹', '2,5&nbsp;m·s⁻¹', '7&nbsp;m·s⁻¹'],
+      e:'<i>v</i> = <i>a</i>·<i>t</i> = 2&nbsp;m·s⁻² · 5&nbsp;s = 10&nbsp;m·s⁻¹. Každou sekundu přibudou 2&nbsp;m·s⁻¹, za 5&nbsp;s tedy 5 · 2 = 10&nbsp;m·s⁻¹.' },
+
+    // ----- graf rychlosti a zrychlení -----
+    { c:'grafv', t:'Co je grafem rychlosti <i>v</i>(<i>t</i>) rovnoměrně zrychleného pohybu?',
+      r:'Část přímky, která není vodorovná.', w:['Část paraboly.', 'Vodorovná přímka.', 'Část hyperboly.'],
+      e:'Rychlost <i>v</i> = <i>v</i><sub>0</sub> + <i>a</i>·<i>t</i> je lineární funkcí času, grafem je proto šikmá přímka. Vodorovný graf rychlosti by měl rovnoměrný pohyb (<i>a</i> = 0).' },
+    { c:'grafv', t:'Co vyjadřuje sklon (strmost) grafu rychlosti <i>v</i>(<i>t</i>)?',
+      r:'Zrychlení.', w:['Dráhu.', 'Rychlost.', 'Dobu pohybu.'],
+      e:'Sklon přímky je podíl Δ<i>v</i>/Δ<i>t</i>, a to je zrychlení. Čím strmější graf rychlosti, tím větší zrychlení.' },
+    { c:'grafv', t:'Co vyjadřuje obsah plochy pod grafem rychlosti <i>v</i>(<i>t</i>)?',
+      r:'Uraženou dráhu.', w:['Zrychlení.', 'Okamžitou rychlost.', 'Přírůstek rychlosti.'],
+      e:'Dráha se rovná obsahu plochy pod grafem rychlosti, ať je pohyb jakýkoli. Přírůstek rychlosti je plocha pod grafem zrychlení.' },
+    { c:'grafv', t:'Graf rychlosti <i>v</i>(<i>t</i>) tělesa je klesající přímka nad časovou osou. Co to znamená?',
+      r:'Těleso zpomaluje, jeho zrychlení je záporné.', w:['Těleso se vrací zpět.', 'Těleso stojí.', 'Těleso zrychluje.'],
+      e:'Rychlost ubývá, takže Δ<i>v</i> &lt; 0 a <i>a</i> &lt; 0. Těleso se stále pohybuje stejným směrem (rychlost je kladná), jen čím dál pomaleji.' },
+    { c:'grafv', t:'Jak vypadá graf zrychlení <i>a</i>(<i>t</i>) rovnoměrně zrychleného pohybu?',
+      r:'Vodorovná přímka.', w:['Šikmá přímka procházející počátkem.', 'Část paraboly.', 'Leží vždy na časové ose.'],
+      e:'Zrychlení se nemění, jeho graf je proto vodorovný. Na časové ose by ležel jen u rovnoměrného pohybu (<i>a</i> = 0).' },
+    { c:'grafv', t:'Co vyjadřuje obsah plochy pod grafem zrychlení <i>a</i>(<i>t</i>)?',
+      r:'Přírůstek rychlosti Δ<i>v</i>.', w:['Uraženou dráhu.', 'Zrychlení.', 'Dobu pohybu.'],
+      e:'Pod vodorovným grafem zrychlení je obdélník o obsahu <i>a</i>·<i>t</i> = Δ<i>v</i>, tedy přírůstek rychlosti.' },
+    { c:'grafv', t:'Grafy rychlosti dvou těles jsou rovnoběžné přímky, graf tělesa A začíná výš než graf tělesa B. Co z toho plyne?',
+      r:'Tělesa mají stejné zrychlení, A má větší počáteční rychlost.', w:['Těleso A má větší zrychlení.', 'Těleso B má větší zrychlení.', 'Obě tělesa mají stejnou rychlost.'],
+      e:'Rovnoběžné přímky mají stejný sklon, tedy stejné zrychlení. Výška začátku grafu na svislé ose je počáteční rychlost <i>v</i><sub>0</sub>.' },
+    { c:'grafv', t:'Na obrázku je graf rychlosti tělesa. Jaké je jeho zrychlení?',
+      r:'2&nbsp;m·s⁻²', w:['2,33&nbsp;m·s⁻²', '12&nbsp;m·s⁻²', '14&nbsp;m·s⁻²'],
+      e:'Z grafu: za 6&nbsp;s se rychlost změní z 2&nbsp;m·s⁻¹ na 14&nbsp;m·s⁻¹, <i>a</i> = 12&nbsp;m·s⁻¹ / 6&nbsp;s = 2&nbsp;m·s⁻². Hodnota 2,33 vznikne dělením 14/6 bez odečtení počáteční rychlosti.',
+      f:{ tMax:6, tStep:1, yKind:'v', yMax:16, yStep:2, lines:[{ pts:[[0,2],[6,14]] }] } },
+    { c:'grafv', t:'Na obrázku je graf rychlosti tělesa. Jaká je jeho počáteční rychlost?',
+      r:'5&nbsp;m·s⁻¹', w:['2&nbsp;m·s⁻¹', '15&nbsp;m·s⁻¹', '0&nbsp;m·s⁻¹'],
+      e:'Počáteční rychlost je hodnota grafu v čase <i>t</i> = 0, tedy na svislé ose: <i>v</i><sub>0</sub> = 5&nbsp;m·s⁻¹. Hodnota 2 je zrychlení v m·s⁻² (sklon grafu, 12&nbsp;m·s⁻¹ / 6&nbsp;s).',
+      f:{ tMax:6, tStep:1, yKind:'v', yMax:18, yStep:1, yLabelEvery:5, lines:[{ pts:[[0,5],[6,17]] }] } },
+    { c:'grafv', t:'Na obrázku je graf rychlosti brzdícího tělesa. Jaké je jeho zrychlení?',
+      r:'−3&nbsp;m·s⁻²', w:['3&nbsp;m·s⁻²', '−48&nbsp;m·s⁻²', '−0,33&nbsp;m·s⁻²'],
+      e:'<i>a</i> = Δ<i>v</i>/Δ<i>t</i> = (0 − 12&nbsp;m·s⁻¹) / 4&nbsp;s = −3&nbsp;m·s⁻². Znaménko mínus říká, že těleso zpomaluje.',
+      f:{ tMax:6, tStep:1, yKind:'v', yMax:14, yStep:2, lines:[{ pts:[[0,12],[4,0]] }] } },
+    { c:'grafv', t:'Na obrázku je graf zrychlení tělesa. O kolik se zvětší jeho rychlost během prvních 4&nbsp;s?',
+      r:'O 6&nbsp;m·s⁻¹', w:['O 1,5&nbsp;m·s⁻¹', 'O 5,5&nbsp;m·s⁻¹', 'O 9&nbsp;m·s⁻¹'],
+      e:'Přírůstek rychlosti je obsah obdélníku pod grafem zrychlení: Δ<i>v</i> = <i>a</i>·<i>t</i> = 1,5&nbsp;m·s⁻² · 4&nbsp;s = 6&nbsp;m·s⁻¹. (9&nbsp;m·s⁻¹ by byl přírůstek za celých 6&nbsp;s.)',
+      f:{ tMax:6, tStep:1, yKind:'a', yMax:2, yStep:0.5, areas:[{ t0:0, t1:4, v:1.5 }], lines:[{ pts:[[0,1.5],[6,1.5]] }] } },
+
+    // ----- dráha a graf dráhy -----
+    { c:'draha', t:'Který vztah udává dráhu tělesa, které se rozjíždí z klidu se zrychlením <i>a</i>?',
+      r:'<i>s</i> = ½·<i>a</i>·<i>t</i>²', w:['<i>s</i> = <i>a</i>·<i>t</i>', '<i>s</i> = <i>a</i>·<i>t</i>²', '<i>s</i> = ½·<i>a</i>·<i>t</i>'],
+      e:'Plocha pod grafem rychlosti je trojúhelník o základně <i>t</i> a výšce <i>a</i>·<i>t</i>: <i>s</i> = ½·<i>t</i>·<i>a</i>·<i>t</i> = ½·<i>a</i>·<i>t</i>². Kontrola jednotek: m·s⁻² · s² = m.' },
+    { c:'draha', t:'Který vztah udává dráhu rovnoměrně zrychleného pohybu s počáteční rychlostí <i>v</i><sub>0</sub>?',
+      r:'<i>s</i> = <i>v</i><sub>0</sub>·<i>t</i> + ½·<i>a</i>·<i>t</i>²', w:['<i>s</i> = <i>v</i><sub>0</sub> + <i>a</i>·<i>t</i>', '<i>s</i> = <i>v</i><sub>0</sub>·<i>t</i> + <i>a</i>·<i>t</i>', '<i>s</i> = (<i>v</i><sub>0</sub> + <i>a</i>)·<i>t</i>²'],
+      e:'Plocha pod grafem rychlosti se rozdělí na obdélník <i>v</i><sub>0</sub>·<i>t</i> a trojúhelník ½·<i>a</i>·<i>t</i>². Vztah <i>v</i><sub>0</sub> + <i>a</i>·<i>t</i> je rychlost, ne dráha.' },
+    { c:'draha', t:'Co je grafem dráhy <i>s</i>(<i>t</i>) rovnoměrně zrychleného pohybu?',
+      r:'Část paraboly.', w:['Část přímky.', 'Vodorovná přímka.', 'Část hyperboly.'],
+      e:'Dráha je úměrná druhé mocnině času (<i>s</i> = ½·<i>a</i>·<i>t</i>²), grafem je proto část paraboly.' },
+    { c:'draha', t:'Těleso se rozjíždí z klidu rovnoměrně zrychleně. Kolikrát větší dráhu urazí za dvojnásobnou dobu?',
+      r:'Čtyřikrát větší.', w:['Dvakrát větší.', 'Osmkrát větší.', 'Stejnou.'],
+      e:'<i>s</i> = ½·<i>a</i>·<i>t</i>²: při dvojnásobném čase je <i>t</i>² čtyřikrát větší. Například kulička s <i>a</i> = 1&nbsp;m·s⁻² urazí za 2&nbsp;s dráhu 2&nbsp;m, za 4&nbsp;s dráhu 8&nbsp;m.' },
+    { c:'draha', t:'Jak se mění sklon grafu dráhy <i>s</i>(<i>t</i>) tělesa, které se rozjíždí?',
+      r:'Graf je čím dál strmější.', w:['Sklon je stále stejný.', 'Graf se postupně vyrovnává.', 'Graf je vodorovný.'],
+      e:'Sklon grafu dráhy odpovídá okamžité rychlosti. Ta při zrychlování roste, graf je proto stále strmější.' },
+    { c:'draha', t:'Z grafu dráhy jsme přečetli, že těleso urazilo dráhu <i>s</i> za dobu <i>t</i>. Co vyjde jako podíl <i>s</i>/<i>t</i>?',
+      r:'Průměrná rychlost na tomto úseku.', w:['Okamžitá rychlost na konci úseku.', 'Zrychlení tělesa.', 'Počáteční rychlost tělesa.'],
+      e:'Podíl celkové dráhy a doby je průměrná rychlost. Při zrychlování je okamžitá rychlost na konci úseku větší (při rozjezdu z klidu dvojnásobná).' },
+    { c:'draha', t:'Těleso se rozjede z klidu a za 4&nbsp;s dosáhne rychlosti 12&nbsp;m·s⁻¹. Jaká je jeho průměrná rychlost během rozjezdu?',
+      r:'6&nbsp;m·s⁻¹', w:['12&nbsp;m·s⁻¹', '3&nbsp;m·s⁻¹', '48&nbsp;m·s⁻¹'],
+      e:'Průměrná rychlost rovnoměrně zrychleného pohybu je (<i>v</i><sub>0</sub> + <i>v</i>)/2 = (0 + 12)/2&nbsp;m·s⁻¹ = 6&nbsp;m·s⁻¹. Kontrola: dráha ½ · 12&nbsp;m·s⁻¹ · 4&nbsp;s = 24&nbsp;m, 24&nbsp;m / 4&nbsp;s = 6&nbsp;m·s⁻¹.' },
+    { c:'draha', t:'Kulička se rozkutálí z klidu po nakloněné rovině se zrychlením 2&nbsp;m·s⁻². Jakou dráhu urazí za 3&nbsp;s?',
+      r:'9&nbsp;m', w:['6&nbsp;m', '18&nbsp;m', '3&nbsp;m'],
+      e:'<i>s</i> = ½·<i>a</i>·<i>t</i>² = ½ · 2&nbsp;m·s⁻² · (3&nbsp;s)² = 9&nbsp;m. Kontrola přes průměrnou rychlost: <i>v</i> = 6&nbsp;m·s⁻¹, průměr 3&nbsp;m·s⁻¹, 3&nbsp;m·s⁻¹ · 3&nbsp;s = 9&nbsp;m.' },
+    { c:'draha', t:'Na obrázku je graf rychlosti tělesa, které se rozjíždí z klidu. Jakou dráhu urazí za prvních 4&nbsp;s?',
+      r:'16&nbsp;m', w:['32&nbsp;m', '8&nbsp;m', '2&nbsp;m'],
+      e:'V čase 4&nbsp;s má těleso rychlost 8&nbsp;m·s⁻¹. Dráha je obsah trojúhelníku pod grafem: <i>s</i> = ½ · 4&nbsp;s · 8&nbsp;m·s⁻¹ = 16&nbsp;m. Hodnota 32&nbsp;m (8 · 4) by platila pro obdélník, tedy pro stálou rychlost 8&nbsp;m·s⁻¹.',
+      f:{ tMax:6, tStep:1, yKind:'v', yMax:12, yStep:2, lines:[{ pts:[[0,0],[6,12]] }] } },
+    { c:'draha', t:'Na obrázku je graf rychlosti tělesa. Jakou dráhu urazí za prvních 4&nbsp;s?',
+      r:'28&nbsp;m', w:['40&nbsp;m', '16&nbsp;m', '12&nbsp;m'],
+      e:'Plocha pod grafem od 0 do 4&nbsp;s je lichoběžník: <i>s</i> = (4&nbsp;m·s⁻¹ + 10&nbsp;m·s⁻¹)/2 · 4&nbsp;s = 28&nbsp;m. Jinak: obdélník 4 · 4 = 16&nbsp;m plus trojúhelník ½ · 4 · 6 = 12&nbsp;m.',
+      f:{ tMax:6, tStep:1, yKind:'v', yMax:14, yStep:2, lines:[{ pts:[[0,4],[6,13]] }] } },
+    { c:'draha', t:'Na obrázku je graf dráhy tělesa, které se rozjíždí z klidu. Jaké je jeho zrychlení?',
+      r:'2&nbsp;m·s⁻²', w:['4&nbsp;m·s⁻²', '1&nbsp;m·s⁻²', '8&nbsp;m·s⁻²'],
+      e:'Za 4&nbsp;s urazí těleso 16&nbsp;m. Ze <i>s</i> = ½·<i>a</i>·<i>t</i>² plyne <i>a</i> = 2<i>s</i>/<i>t</i>² = 2 · 16&nbsp;m / (4&nbsp;s)² = 2&nbsp;m·s⁻². Podíl 16/4 = 4 je jen průměrná rychlost v m·s⁻¹.',
+      f:{ tMax:5, tStep:1, yKind:'s', yMax:28, yStep:4, curves:[{ f:function(t){ return t*t; }, t0:0, t1:5 }], guides:[[4,16]] } },
+    { c:'draha', t:'Těleso zpomaluje (<i>a</i> &lt; 0). Jakou dráhu urazí za dobu <i>t</i> ve srovnání s tělesem, které by jelo stále rychlostí <i>v</i><sub>0</sub>?',
+      r:'Menší, protože člen ½·<i>a</i>·<i>t</i>² je záporný.', w:['Větší, protože se k <i>v</i><sub>0</sub>·<i>t</i> něco přičítá.', 'Stejnou, na zrychlení dráha nezávisí.', 'Nulovou.'],
+      e:'Ve vzorci <i>s</i> = <i>v</i><sub>0</sub>·<i>t</i> + ½·<i>a</i>·<i>t</i>² je při <i>a</i> &lt; 0 druhý člen záporný, dráha je tedy menší než <i>v</i><sub>0</sub>·<i>t</i>.' },
+
+    // ----- zpomalování a brzdění -----
+    { c:'brzdeni', t:'Těleso s počáteční rychlostí <i>v</i><sub>0</sub> brzdí se zrychlením <i>a</i> &lt; 0. Za jakou dobu se zastaví?',
+      r:'<i>t</i> = −<i>v</i><sub>0</sub>/<i>a</i>', w:['<i>t</i> = <i>v</i><sub>0</sub>·<i>a</i>', '<i>t</i> = −<i>a</i>/<i>v</i><sub>0</sub>', '<i>t</i> = <i>v</i><sub>0</sub>²/<i>a</i>'],
+      e:'Těleso stojí, když <i>v</i> = 0: 0 = <i>v</i><sub>0</sub> + <i>a</i>·<i>t</i>, odtud <i>t</i> = −<i>v</i><sub>0</sub>/<i>a</i>. Protože <i>a</i> &lt; 0, vyjde doba kladná. Kontrola jednotek: (m·s⁻¹)/(m·s⁻²) = s.' },
+    { c:'brzdeni', t:'Auto jede rychlostí 20&nbsp;m·s⁻¹ a brzdí se zrychlením −5&nbsp;m·s⁻². Za jak dlouho zastaví?',
+      r:'Za 4&nbsp;s', w:['Za 100&nbsp;s', 'Za 0,25&nbsp;s', 'Za 15&nbsp;s'],
+      e:'<i>t</i> = −<i>v</i><sub>0</sub>/<i>a</i> = −20&nbsp;m·s⁻¹ / (−5&nbsp;m·s⁻²) = 4&nbsp;s. Každou sekundu ubude 5&nbsp;m·s⁻¹ rychlosti, 20&nbsp;m·s⁻¹ ubude za 4&nbsp;s.' },
+    { c:'brzdeni', t:'Který vztah udává brzdnou dráhu tělesa s počáteční rychlostí <i>v</i><sub>0</sub>, které brzdí se zrychlením <i>a</i> &lt; 0 až do zastavení?',
+      r:'<i>s</i> = −<i>v</i><sub>0</sub>²/(2<i>a</i>)', w:['<i>s</i> = −<i>v</i><sub>0</sub>/(2<i>a</i>)', '<i>s</i> = <i>v</i><sub>0</sub>·<i>a</i>', '<i>s</i> = <i>v</i><sub>0</sub>²·<i>a</i>/2'],
+      e:'Dosazením doby zastavení <i>t</i> = −<i>v</i><sub>0</sub>/<i>a</i> do <i>s</i> = <i>v</i><sub>0</sub>·<i>t</i> + ½·<i>a</i>·<i>t</i>² vyjde <i>s</i> = −<i>v</i><sub>0</sub>²/(2<i>a</i>). Kontrola jednotek: (m·s⁻¹)²/(m·s⁻²) = m.' },
+    { c:'brzdeni', t:'Auto jede rychlostí 30&nbsp;m·s⁻¹ a brzdí se zrychlením −6&nbsp;m·s⁻² až do zastavení. Jaká je jeho brzdná dráha?',
+      r:'75&nbsp;m', w:['150&nbsp;m', '2,5&nbsp;m', '5&nbsp;m'],
+      e:'<i>s</i> = −<i>v</i><sub>0</sub>²/(2<i>a</i>) = −(30&nbsp;m·s⁻¹)² / (2 · (−6&nbsp;m·s⁻²)) = 900/12&nbsp;m = 75&nbsp;m. Jinak: zastaví za 5&nbsp;s, <i>s</i> = ½ · 30&nbsp;m·s⁻¹ · 5&nbsp;s = 75&nbsp;m. Hodnota 150&nbsp;m (30 · 5) by platila bez zpomalování.' },
+    { c:'brzdeni', t:'Řidič jede dvojnásobnou rychlostí a brzdí se stejným zrychlením. Jak se změní jeho brzdná dráha?',
+      r:'Bude čtyřikrát delší.', w:['Bude dvakrát delší.', 'Zůstane stejná.', 'Bude osmkrát delší.'],
+      e:'Brzdná dráha <i>s</i> = −<i>v</i><sub>0</sub>²/(2<i>a</i>) roste s druhou mocninou rychlosti: (2<i>v</i><sub>0</sub>)² = 4<i>v</i><sub>0</sub>².' },
+    { c:'brzdeni', t:'Jak vypadá graf dráhy <i>s</i>(<i>t</i>) auta, které brzdí až do zastavení a pak stojí?',
+      r:'Parabola, která se vyrovnává, po zastavení vodorovná čára.', w:['Parabola, která je čím dál strmější.', 'Přímka, která po zastavení klesá.', 'Klesající přímka.'],
+      e:'Sklon grafu dráhy je okamžitá rychlost. Při brzdění ubývá, graf se vyrovnává; po zastavení se dráha nemění a graf je vodorovný. Graf dráhy nikdy neklesá.' },
+    { c:'brzdeni', t:'Řidič jedoucí rychlostí 20&nbsp;m·s⁻¹ zpozoruje překážku a začne brzdit po reakční době 1&nbsp;s. Jakou dráhu ujede během reakční doby?',
+      r:'20&nbsp;m', w:['0&nbsp;m', '10&nbsp;m', '40&nbsp;m'],
+      e:'Během reakční doby auto ještě nebrzdí a jede stálou rychlostí: <i>s</i><sub>r</sub> = <i>v</i><sub>0</sub>·<i>t</i><sub>r</sub> = 20&nbsp;m·s⁻¹ · 1&nbsp;s = 20&nbsp;m.' },
+    { c:'brzdeni', t:'Řidič jede rychlostí 20&nbsp;m·s⁻¹, reaguje za 1&nbsp;s a pak brzdí se zrychlením −5&nbsp;m·s⁻². Jakou celkovou dráhu ujede od zpozorování překážky do zastavení?',
+      r:'60&nbsp;m', w:['40&nbsp;m', '20&nbsp;m', '80&nbsp;m'],
+      e:'Reakční dráha 20&nbsp;m·s⁻¹ · 1&nbsp;s = 20&nbsp;m, brzdná dráha −(20&nbsp;m·s⁻¹)²/(2 · (−5&nbsp;m·s⁻²)) = 40&nbsp;m; celkem 60&nbsp;m. Kontrola: zastaví za 4&nbsp;s, ½ · 20 · 4 = 40&nbsp;m.' },
+    { c:'brzdeni', t:'Na obrázku je graf rychlosti brzdícího tělesa. Jakou dráhu urazí do zastavení?',
+      r:'37,5&nbsp;m', w:['75&nbsp;m', '15&nbsp;m', '3&nbsp;m'],
+      e:'Plocha pod grafem je trojúhelník: <i>s</i> = ½ · 5&nbsp;s · 15&nbsp;m·s⁻¹ = 37,5&nbsp;m. Kontrola: <i>a</i> = −15/5 = −3&nbsp;m·s⁻², −15²/(2 · (−3)) = 37,5&nbsp;m.',
+      f:{ tMax:6, tStep:1, yKind:'v', yMax:18, yStep:3, lines:[{ pts:[[0,15],[5,0]] }] } },
+    { c:'brzdeni', t:'Vlak jede rychlostí 72&nbsp;km·h⁻¹ a brzdí se zrychlením −0,5&nbsp;m·s⁻². Jaká je jeho brzdná dráha?',
+      r:'400&nbsp;m', w:['5&nbsp;184&nbsp;m', '40&nbsp;m', '800&nbsp;m'],
+      e:'72&nbsp;km·h⁻¹ = 20&nbsp;m·s⁻¹. <i>s</i> = −(20&nbsp;m·s⁻¹)² / (2 · (−0,5&nbsp;m·s⁻²)) = 400&nbsp;m. Kontrola: zastaví za 40&nbsp;s, ½ · 20 · 40 = 400&nbsp;m. Hodnota 5&nbsp;184&nbsp;m vznikne dosazením rychlosti v km·h⁻¹.' },
+
+    // ----- situace -----
+    { c:'situace', t:'Auto zrychlí z klidu na 100&nbsp;km·h⁻¹ za 10&nbsp;s. Jaké je jeho průměrné zrychlení?',
+      r:'Asi 2,8&nbsp;m·s⁻²', w:['Asi 10&nbsp;m·s⁻²', 'Asi 28&nbsp;m·s⁻²', 'Asi 0,1&nbsp;m·s⁻²'],
+      e:'100&nbsp;km·h⁻¹ = 100/3,6&nbsp;m·s⁻¹ ≈ 27,8&nbsp;m·s⁻¹; <i>a</i> = 27,8&nbsp;m·s⁻¹ / 10&nbsp;s ≈ 2,8&nbsp;m·s⁻². Hodnota 10 vznikne bez převodu km·h⁻¹ na m·s⁻¹.' },
+    { c:'situace', t:'Sprinter po startu z klidu rovnoměrně zrychluje a za 4&nbsp;s dosáhne rychlosti 10&nbsp;m·s⁻¹. Jakou dráhu přitom uběhne?',
+      r:'20&nbsp;m', w:['40&nbsp;m', '10&nbsp;m', '80&nbsp;m'],
+      e:'<i>s</i> = (<i>v</i><sub>0</sub> + <i>v</i>)/2 · <i>t</i> = (0 + 10)/2&nbsp;m·s⁻¹ · 4&nbsp;s = 20&nbsp;m. Jinak: <i>a</i> = 2,5&nbsp;m·s⁻², ½ · 2,5 · 4² = 20&nbsp;m.' },
+    { c:'situace', t:'Letadlo se rozjíždí z klidu se zrychlením 2,5&nbsp;m·s⁻² a vzlétne při rychlosti 75&nbsp;m·s⁻¹. Jak dlouhou dráhu potřebuje k rozjezdu?',
+      r:'Asi 1,1&nbsp;km', w:['Asi 2,3&nbsp;km', 'Asi 560&nbsp;m', 'Asi 30&nbsp;m'],
+      e:'Doba rozjezdu <i>t</i> = <i>v</i>/<i>a</i> = 75/2,5&nbsp;s = 30&nbsp;s, dráha ½ · 2,5&nbsp;m·s⁻² · (30&nbsp;s)² = 1&nbsp;125&nbsp;m ≈ 1,1&nbsp;km. Kontrola: průměrná rychlost 37,5&nbsp;m·s⁻¹ · 30&nbsp;s = 1&nbsp;125&nbsp;m. Hodnota 2,3&nbsp;km (75 · 30) by platila pro stálou rychlost 75&nbsp;m·s⁻¹.' },
+    { c:'situace', t:'Tramvaj se rozjíždí 5&nbsp;s z klidu na 10&nbsp;m·s⁻¹, pak 20&nbsp;s jede stálou rychlostí a posledních 5&nbsp;s rovnoměrně brzdí do zastavení. Jakou dráhu ujede?',
+      r:'250&nbsp;m', w:['300&nbsp;m', '200&nbsp;m', '225&nbsp;m'],
+      e:'Rozjezd ½ · 10 · 5 = 25&nbsp;m, jízda 10 · 20 = 200&nbsp;m, brzdění ½ · 10 · 5 = 25&nbsp;m; celkem 250&nbsp;m (obsah lichoběžníku pod grafem rychlosti). 300&nbsp;m by ujela, kdyby jela celých 30&nbsp;s rychlostí 10&nbsp;m·s⁻¹.' },
+    { c:'situace', t:'Tramvaj se rozjíždí 5&nbsp;s z klidu na 10&nbsp;m·s⁻¹, pak 20&nbsp;s jede stálou rychlostí a posledních 5&nbsp;s rovnoměrně brzdí do zastavení. Jaká je její průměrná rychlost?',
+      r:'Asi 8,3&nbsp;m·s⁻¹', w:['10&nbsp;m·s⁻¹', 'Asi 6,7&nbsp;m·s⁻¹', '5&nbsp;m·s⁻¹'],
+      e:'Celková dráha 25&nbsp;m + 200&nbsp;m + 25&nbsp;m = 250&nbsp;m, celková doba 30&nbsp;s: <i>v</i><sub>p</sub> = 250&nbsp;m / 30&nbsp;s ≈ 8,3&nbsp;m·s⁻¹. Aritmetický průměr rychlostí úseků (5 + 10 + 5)/3 ≈ 6,7&nbsp;m·s⁻¹ je špatně, úseky trvají různě dlouho.' },
+    { c:'situace', t:'Auto jede po rovné silnici a zpomaluje před semaforem. Kladný směr osy je ve směru jízdy. Jaká znaménka mají rychlost a zrychlení auta?',
+      r:'Rychlost kladné, zrychlení záporné.', w:['Rychlost záporné, zrychlení kladné.', 'Obě kladné.', 'Obě záporné.'],
+      e:'Auto jede ve směru osy, rychlost je kladná. Zpomaluje, rychlost ubývá, a zrychlení je proto záporné (míří proti pohybu).' },
+    { c:'situace', t:'Cyklista sjíždí z kopce rovnoměrně zrychleně, za první sekundu urazí 1&nbsp;m. Jakou dráhu urazí za první 3&nbsp;s od startu z klidu?',
+      r:'9&nbsp;m', w:['3&nbsp;m', '6&nbsp;m', '27&nbsp;m'],
+      e:'Dráha z klidu roste s druhou mocninou času: za trojnásobnou dobu je 3² = 9krát větší, tedy 9&nbsp;m. Ze ½·<i>a</i>·(1&nbsp;s)² = 1&nbsp;m plyne <i>a</i> = 2&nbsp;m·s⁻² a ½ · 2 · 3² = 9&nbsp;m.' }
+  ];
+
+  var KVIZ_KEY = 'fyzika:grafy-rovnomerne-zrychleneho-pohybu:kviz';
+  var kviz = {
+    type:'all', queue:[], current:null, sel:null, locked:false,
+    score:0, streak:0, bestStreak:0, answered:0, correct:0
+  };
+  function kvizLoad(){
+    try{ var raw = localStorage.getItem(KVIZ_KEY); if(raw){ kviz.bestStreak = JSON.parse(raw).bestStreak || 0; } }catch(e){}
+  }
+  function kvizSave(){
+    try{ localStorage.setItem(KVIZ_KEY, JSON.stringify({bestStreak: kviz.bestStreak})); }catch(e){}
+  }
+  function shuffled(a){
+    a = a.slice();
+    for(var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random()*(i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; }
+    return a;
+  }
+  // Otázky okruhu se berou v náhodném pořadí bez opakování; po vyčerpání se zamíchají znovu.
+  function kvizNext(){
+    if(!kviz.queue.length){
+      var pool = KVIZ_BANK.filter(function(b){ return kviz.type === 'all' || b.c === kviz.type; });
+      kviz.queue = shuffled(pool);
+      if(kviz.current && kviz.queue.length > 1 && kviz.queue[0] === kviz.current.item){ kviz.queue.push(kviz.queue.shift()); }
+    }
+    var item = kviz.queue.shift();
+    var opts = shuffled([item.r].concat(item.w));
+    kviz.current = { item:item, choices:opts, correct:opts.indexOf(item.r) };
+    kvizRender();
+  }
+  function kvizDrawFig(){
+    var q = kviz.current, fig = document.getElementById('kviz-fig');
+    fig.hidden = !(q && q.item.f);
+    if(fig.hidden) return;
+    var w = narrowMQ.matches ? 340 : 480, h = narrowMQ.matches ? 300 : 320;
+    var svg = document.getElementById('kviz-graph');
+    svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
+    svg.innerHTML = theoryGraphMarkup(q.item.f, w, h);
+  }
+  function kvizRender(){
+    var q = kviz.current;
+    var tp = KVIZ_TYPES.filter(function(t){ return t.key === q.item.c; })[0];
+    document.getElementById('kviz-cat-tag').innerHTML = tp ? tp.tag : 'Otázka';
+    document.getElementById('kviz-task-text').innerHTML = q.item.t;
+    kvizDrawFig();
+    var grid = document.getElementById('kviz-opt-grid');
+    grid.innerHTML = '';
+    kviz.sel = null; kviz.locked = false;
+    q.choices.forEach(function(c, i){
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'opt-btn';
+      b.innerHTML = '<b>' + LETTERS[i] + ')</b>&nbsp; ' + c;
+      b.addEventListener('click', function(){ kvizSelect(i); });
+      grid.appendChild(b);
+    });
+    var fb = document.getElementById('kviz-feedback');
+    fb.hidden = true; fb.classList.remove('ok', 'bad', 'sol');
+    document.getElementById('kviz-btn-check').textContent = 'Zkontrolovat';
+  }
+  function kvizSelect(i){
+    if(kviz.locked) return;
+    kviz.sel = i;
+    Array.prototype.forEach.call(document.getElementById('kviz-opt-grid').children, function(el, j){ el.classList.toggle('selected', j === i); });
+    document.getElementById('kviz-btn-check').focus({ preventScroll:true });
+  }
+  function kvizFinish(ok, headline){
+    var q = kviz.current;
+    Array.prototype.forEach.call(document.getElementById('kviz-opt-grid').children, function(el, j){
+      el.disabled = true;
+      el.classList.remove('selected');
+      if(j === q.correct) el.classList.add(kviz.sel === j ? 'correct' : 'missed');
+      else if(j === kviz.sel) el.classList.add('wrong');
+    });
+    var fb = document.getElementById('kviz-feedback');
+    fb.hidden = false;
+    fb.classList.toggle('ok', ok); fb.classList.toggle('bad', !ok);
+    document.getElementById('kviz-feedback-headline').textContent = headline;
+    FyzikaReseni.show(fb, document.getElementById('kviz-feedback-steps'), {
+      raw:true, title:'Vysvětlení', steps:[q.item.e], final:'Správná odpověď: ' + LETTERS[q.correct] + ') ' + q.item.r
+    });
+    kviz.locked = true;
+    var btn = document.getElementById('kviz-btn-check');
+    btn.textContent = 'Další otázka →';
+    btn.focus({ preventScroll:true });
+    kvizStats();
+  }
+  function kvizCheck(){
+    if(kviz.locked){ kvizNext(); return; }
+    if(kviz.sel === null && !confirm('Není vybraná žádná možnost. Opravdu chcete zkontrolovat?')) return;
+    var ok = kviz.sel === kviz.current.correct;
+    kviz.answered++;
+    if(ok){
+      kviz.score += 10; kviz.streak++; kviz.correct++;
+      if(kviz.streak > kviz.bestStreak){ kviz.bestStreak = kviz.streak; kvizSave(); }
+    } else {
+      kviz.streak = 0;
+    }
+    kvizFinish(ok, ok ? 'Správně!' : (kviz.sel === null ? 'Vyberte odpověď.' : 'Bohužel špatně.'));
+  }
+  function kvizSkip(){
+    if(kviz.locked){ kvizNext(); return; }
+    kviz.streak = 0; kviz.answered++;
+    kvizFinish(false, 'Správná odpověď:');
+  }
+  function kvizStats(){
+    document.getElementById('stat-score').textContent = kviz.score;
+    document.getElementById('stat-streak').textContent = kviz.streak + (kviz.bestStreak > 0 ? ' / ' + kviz.bestStreak : '');
+    document.getElementById('stat-accuracy').textContent = kviz.answered === 0 ? '—' : Math.round(100*kviz.correct/kviz.answered) + ' %';
+  }
+  (function kvizBuildTypeRow(){
+    var row = document.getElementById('kviz-type-row');
+    KVIZ_TYPES.forEach(function(d){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip accented' + (d.key === kviz.type ? ' on' : '');
+      b.setAttribute('aria-pressed', d.key === kviz.type ? 'true' : 'false');
+      b.textContent = d.name;
+      b.addEventListener('click', function(){
+        if(d.key === kviz.type) return;
+        // rozpracovaná otázka s vybranou odpovědí se před změnou okruhu vyhodnotí
+        var settled = !kviz.locked && kviz.sel !== null;
+        if(settled) kvizCheck();
+        kviz.type = d.key; kviz.queue = [];
+        Array.prototype.forEach.call(row.children, function(el, i){
+          var on = KVIZ_TYPES[i].key === kviz.type;
+          el.classList.toggle('on', on);
+          el.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        // vyhodnocená otázka zůstane i s vysvětlením vidět, další už bude z nového okruhu
+        if(!settled) kvizNext();
+      });
+      row.appendChild(b);
+    });
+  })();
+  document.getElementById('kviz-btn-check').addEventListener('click', kvizCheck);
+  document.getElementById('kviz-btn-skip').addEventListener('click', kvizSkip);
+  document.getElementById('kviz-reset-stats').addEventListener('click', function(){
+    kviz.score = 0; kviz.streak = 0; kviz.answered = 0; kviz.correct = 0; kviz.bestStreak = 0;
+    try{ localStorage.removeItem(KVIZ_KEY); }catch(e){}
+    kvizStats();
+  });
+  // Klávesnice v kvízu: A–D nebo 1–4 vybere odpověď, Enter zkontroluje / posune dál.
+  document.addEventListener('keydown', function(e){
+    if(document.getElementById('kviz-section').hidden) return;
+    if(e.ctrlKey || e.metaKey || e.altKey) return;
+    if(e.key === 'Enter'){
+      if(e.target && e.target.tagName === 'BUTTON') return;
+      e.preventDefault(); kvizCheck(); return;
+    }
+    var idx = 'abcd'.indexOf(e.key.toLowerCase());
+    if(idx === -1) idx = '1234'.indexOf(e.key);
+    if(idx !== -1 && e.key.length === 1) kvizSelect(idx);
+  });
+  if(narrowMQ.addEventListener) narrowMQ.addEventListener('change', kvizDrawFig);
+  else if(narrowMQ.addListener) narrowMQ.addListener(kvizDrawFig);
+
+  // ---- horní přepínač Teorie / Kvíz / Trénink / Příklady ----
   var tabTeorie = document.getElementById('top-tab-teorie');
+  var tabKviz = document.getElementById('top-tab-kviz');
   var tabTrenink = document.getElementById('top-tab-trenink');
   var tabPriklady = document.getElementById('top-tab-priklady');
   function showTab(tab){
     tabTeorie.classList.toggle('on', tab==='teorie');
+    tabKviz.classList.toggle('on', tab==='kviz');
     tabTrenink.classList.toggle('on', tab==='trenink');
     tabPriklady.classList.toggle('on', tab==='priklady');
     document.getElementById('theory-section').hidden = tab!=='teorie';
+    document.getElementById('kviz-section').hidden = tab!=='kviz';
     document.getElementById('trenink-section').hidden = tab!=='trenink';
     document.getElementById('priklady-section').hidden = tab!=='priklady';
     document.getElementById('header-readout').hidden = tab==='teorie';
-    if(tab==='priklady') exUpdateStats(); else if(tab==='trenink') updateStats();
+    if(tab==='priklady') exUpdateStats(); else if(tab==='trenink') updateStats(); else if(tab==='kviz') kvizStats();
   }
   tabTeorie.addEventListener('click', function(){ showTab('teorie'); });
+  tabKviz.addEventListener('click', function(){ showTab('kviz'); });
   tabTrenink.addEventListener('click', function(){ showTab('trenink'); });
   tabPriklady.addEventListener('click', function(){ showTab('priklady'); });
 
@@ -2578,9 +2962,11 @@
   buildLevelRow();
   buildTypeRow();
   updateStats();
+  kvizLoad();
   showTab('teorie');
   generateQuestion();
   exGenerate();
+  kvizNext();
 
   renderTheoryGraphs();
   renderVectorFig();
@@ -2599,6 +2985,7 @@
   document.addEventListener('fyzika:scores-updated', function(){
     state.bestStreak = 0; loadStats(); if(!document.getElementById('trenink-section').hidden) updateStats();
     ex.bestStreak = 0; exLoadStats(); if(!document.getElementById('priklady-section').hidden) exUpdateStats();
+    if(!document.getElementById('kviz-section').hidden) kvizStats();
   });
 })();
 
