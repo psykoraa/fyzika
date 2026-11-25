@@ -162,6 +162,8 @@
 /* kvíz: vysvětlení je běžný text, ne řádky výpočtu */
 #kviz-section .feedback .steps{ font-family:'Work Sans', sans-serif; white-space:normal; opacity:1; }
 #kviz-section .task{ text-align:center; }
+#kviz-end .kviz-end-box{ text-align:center; margin:0 0 14px; }
+#kviz-end .kviz-end-hint{ text-align:center; margin-top:10px; }
 
 @media (max-width:520px){
   .card{ padding:22px 12px 22px; }
@@ -426,6 +428,7 @@
     </div>
 
     <div class="card">
+      <div id="kviz-q">
       <span class="cat-tag" id="kviz-cat-tag">Otázka</span>
       <p class="task" id="kviz-task-text"></p>
       <figure class="graph-fig theory-fig" id="kviz-fig" hidden>
@@ -438,11 +441,20 @@
       </div>
       <details class="navod">
         <summary>Návod</summary>
-        <p class="hint">Vyberte jednu ze čtyř odpovědí kliknutím nebo klávesami A až D (případně 1 až 4) a potvrďte tlačítkem Zkontrolovat nebo klávesou Enter; dalším Enterem přejdete na další otázku. Po kontrole se správná odpověď obarví zeleně, chybně vybraná červeně a pod otázkou se objeví vysvětlení. Okruh otázek vyberete nahoře; otázky se neopakují, dokud neprojdete celý okruh.</p>
+        <p class="hint">Vyberte jednu ze čtyř odpovědí kliknutím nebo klávesami A až D (případně 1 až 4) a potvrďte tlačítkem Zkontrolovat nebo klávesou Enter; dalším Enterem přejdete na další otázku. Po kontrole se správná odpověď obarví zeleně, chybně vybraná červeně a pod otázkou se objeví vysvětlení. Okruh otázek vyberete nahoře; otázky se neopakují, dokud neprojdete celý okruh. Pak se zobrazí, kolik otázek jste zodpověděli správně, a otázky můžete zamíchat a projít znovu.</p>
       </details>
       <div class="feedback" id="kviz-feedback" hidden>
         <div class="headline" id="kviz-feedback-headline"></div>
         <div class="steps" id="kviz-feedback-steps"></div>
+      </div>
+      </div>
+      <div id="kviz-end" hidden>
+        <div class="feedback ok kviz-end-box"><div class="headline">Hotovo, prošli jste všechny otázky!</div></div>
+        <p class="task" id="kviz-end-text"></p>
+        <div class="actions">
+          <button class="btn primary" id="kviz-btn-restart">Zamíchat otázky a začít znovu</button>
+        </div>
+        <p class="hint kviz-end-hint">Můžete také nahoře vybrat jiný okruh otázek.</p>
       </div>
     </div>
   </div>
@@ -2783,7 +2795,8 @@
   var KVIZ_KEY = 'fyzika:grafy-rovnomerne-zrychleneho-pohybu:kviz';
   var kviz = {
     type:'all', queue:[], current:null, sel:null, locked:false,
-    score:0, streak:0, bestStreak:0, answered:0, correct:0
+    score:0, streak:0, bestStreak:0, answered:0, correct:0,
+    inRound:false, ended:false, roundTotal:0, roundCorrect:0
   };
   function kvizLoad(){
     try{ var raw = localStorage.getItem(KVIZ_KEY); if(raw){ kviz.bestStreak = JSON.parse(raw).bestStreak || 0; } }catch(e){}
@@ -2796,17 +2809,35 @@
     for(var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random()*(i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; }
     return a;
   }
-  // Otázky okruhu se berou v náhodném pořadí bez opakování; po vyčerpání se zamíchají znovu.
+  // Otázky okruhu se berou v náhodném pořadí bez opakování. Po projití celého okruhu
+  // se zobrazí závěrečná hláška s výsledkem kola a nabídkou otázky zamíchat znovu.
   function kvizNext(){
     if(!kviz.queue.length){
+      if(kviz.inRound){ kvizShowEnd(); return; }
       var pool = KVIZ_BANK.filter(function(b){ return kviz.type === 'all' || b.c === kviz.type; });
       kviz.queue = shuffled(pool);
       if(kviz.current && kviz.queue.length > 1 && kviz.queue[0] === kviz.current.item){ kviz.queue.push(kviz.queue.shift()); }
+      kviz.inRound = true; kviz.roundTotal = pool.length; kviz.roundCorrect = 0;
     }
     var item = kviz.queue.shift();
     var opts = shuffled([item.r].concat(item.w));
     kviz.current = { item:item, choices:opts, correct:opts.indexOf(item.r) };
     kvizRender();
+  }
+  function kvizShowEnd(){
+    kviz.ended = true; kviz.inRound = false;
+    var tp = KVIZ_TYPES.filter(function(t){ return t.key === kviz.type; })[0];
+    var n = kviz.roundTotal, k = kviz.roundCorrect;
+    document.getElementById('kviz-end-text').innerHTML =
+      'Prošli jste všech ' + n + ' otázek ' + (kviz.type === 'all' ? 'kvízu' : 'okruhu „' + tp.name.replace('vx', '<i>v<sub>x</sub></i>') + '“') + '. ' +
+      'Správně jste odpověděli na ' + k + ' z ' + n + ' (' + Math.round(100*k/n) + '&nbsp;%). Chcete otázky zamíchat a projít znovu?';
+    document.getElementById('kviz-q').hidden = true;
+    document.getElementById('kviz-end').hidden = false;
+    document.getElementById('kviz-btn-restart').focus({ preventScroll:true });
+  }
+  function kvizRestart(){
+    kviz.queue = []; kviz.inRound = false;
+    kvizNext();
   }
   function kvizDrawFig(){
     var q = kviz.current, fig = document.getElementById('kviz-fig');
@@ -2819,6 +2850,9 @@
   }
   function kvizRender(){
     var q = kviz.current;
+    kviz.ended = false;
+    document.getElementById('kviz-q').hidden = false;
+    document.getElementById('kviz-end').hidden = true;
     var tp = KVIZ_TYPES.filter(function(t){ return t.key === q.item.c; })[0];
     document.getElementById('kviz-cat-tag').innerHTML = tp ? tp.tag : 'Otázka';
     document.getElementById('kviz-task-text').innerHTML = q.item.t;
@@ -2838,7 +2872,7 @@
     document.getElementById('kviz-btn-check').textContent = 'Zkontrolovat';
   }
   function kvizSelect(i){
-    if(kviz.locked) return;
+    if(kviz.locked || kviz.ended) return;
     kviz.sel = i;
     Array.prototype.forEach.call(document.getElementById('kviz-opt-grid').children, function(el, j){ el.classList.toggle('selected', j === i); });
     document.getElementById('kviz-btn-check').focus({ preventScroll:true });
@@ -2865,12 +2899,13 @@
     kvizStats();
   }
   function kvizCheck(){
+    if(kviz.ended){ kvizRestart(); return; }
     if(kviz.locked){ kvizNext(); return; }
     if(kviz.sel === null && !confirm('Není vybraná žádná možnost. Opravdu chcete zkontrolovat?')) return;
     var ok = kviz.sel === kviz.current.correct;
     kviz.answered++;
     if(ok){
-      kviz.score += 10; kviz.streak++; kviz.correct++;
+      kviz.score += 10; kviz.streak++; kviz.correct++; kviz.roundCorrect++;
       if(kviz.streak > kviz.bestStreak){ kviz.bestStreak = kviz.streak; kvizSave(); }
     } else {
       kviz.streak = 0;
@@ -2878,6 +2913,7 @@
     kvizFinish(ok, ok ? 'Správně!' : (kviz.sel === null ? 'Vyberte odpověď.' : 'Bohužel špatně.'));
   }
   function kvizSkip(){
+    if(kviz.ended){ kvizRestart(); return; }
     if(kviz.locked){ kvizNext(); return; }
     kviz.streak = 0; kviz.answered++;
     kvizFinish(false, 'Správná odpověď:');
@@ -2900,7 +2936,7 @@
         // rozpracovaná otázka s vybranou odpovědí se před změnou okruhu vyhodnotí
         var settled = !kviz.locked && kviz.sel !== null;
         if(settled) kvizCheck();
-        kviz.type = d.key; kviz.queue = [];
+        kviz.type = d.key; kviz.queue = []; kviz.inRound = false;
         Array.prototype.forEach.call(row.children, function(el, i){
           var on = KVIZ_TYPES[i].key === kviz.type;
           el.classList.toggle('on', on);
@@ -2914,6 +2950,7 @@
   })();
   document.getElementById('kviz-btn-check').addEventListener('click', kvizCheck);
   document.getElementById('kviz-btn-skip').addEventListener('click', kvizSkip);
+  document.getElementById('kviz-btn-restart').addEventListener('click', kvizRestart);
   document.getElementById('kviz-reset-stats').addEventListener('click', function(){
     kviz.score = 0; kviz.streak = 0; kviz.answered = 0; kviz.correct = 0; kviz.bestStreak = 0;
     try{ localStorage.removeItem(KVIZ_KEY); }catch(e){}
