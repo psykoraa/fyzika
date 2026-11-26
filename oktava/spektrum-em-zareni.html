@@ -1414,16 +1414,30 @@ svg.sp-band-svg{ touch-action:none; }
       var t = mk('text', { x:f1((x1 + x2) / 2), y:y + 18, 'text-anchor':'middle', 'font-size':'12.5', 'font-family':'Work Sans, sans-serif', fill:'var(--ink)' }, gEl);
       t.innerHTML = label;
     }
-    function count(x){ return Math.floor((st.th - phase(x)) / (2 * Math.PI)) - Math.floor((st.th0 - phase(x)) / (2 * Math.PI)); }
+    // Druhý bod leží vždy tam, kde je fáze vlny o celistvý násobek 2π větší než v prvním bodě,
+    // takže oba body kmitají přesně ve fázi a počítadla naskočí ve stejném okamžiku.
+    function placeB(){
+      var l = lamPx(), qA = (XA - XL) / l;
+      var k = Math.round(((470 - XB) * st.n + (XB - XL)) / l - qA);
+      function xOf(kk){ return XB + ((qA + kk) * l - (XB - XL)) / st.n; }
+      while(xOf(k) < XB + 20) k++;
+      while(xOf(k) > XR - 20) k--;
+      XBp = xOf(k);
+      return k;
+    }
+    // počet kmitů se počítá z fáze prvního bodu, druhý bod má fázi stejnou (mod 2π)
+    function count(){ var ph = phase(XA); return Math.floor((st.th - ph) / (2 * Math.PI)) - Math.floor((st.th0 - ph) / (2 * Math.PI)); }
     function render(){
+      placeB();
       var pts = [], x;
       for(x = XL; x <= XR; x += 1) pts.push(x + ',' + f1(yAt(x)));
       wave.setAttribute('points', pts.join(' '));
       wave.setAttribute('stroke', wlColor(st.lam));
       dotA.setAttribute('cx', XA); dotA.setAttribute('cy', f1(yAt(XA)));
-      dotB.setAttribute('cx', XBp); dotB.setAttribute('cy', f1(yAt(XBp)));
-      cA.setAttribute('x', XA); cA.setAttribute('y', 72); cA.textContent = 'kmitů: ' + Math.max(0, count(XA));
-      cB.setAttribute('x', XBp); cB.setAttribute('y', 72); cB.textContent = 'kmitů: ' + Math.max(0, count(XBp));
+      dotB.setAttribute('cx', f1(XBp)); dotB.setAttribute('cy', f1(yAt(XA)));
+      var cnt = Math.max(0, count());
+      cA.setAttribute('x', XA); cA.setAttribute('y', 72); cA.textContent = 'kmitů: ' + cnt;
+      cB.setAttribute('x', f1(XBp)); cB.setAttribute('y', 72); cB.textContent = 'kmitů: ' + cnt;
     }
     var slN = document.getElementById('pr-sl-n'), slL = document.getElementById('pr-sl-l');
     var outN = document.getElementById('pr-out-n'), outL = document.getElementById('pr-out-l'), outV = document.getElementById('pr-out-v');
