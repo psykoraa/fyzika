@@ -377,7 +377,7 @@
           <line x1="9" y1="8" x2="9" y2="13" stroke="var(--focus)" stroke-width="1.6" stroke-linecap="round"/>
           <circle cx="9" cy="5.2" r="1" fill="var(--focus)"/>
         </svg>
-        <p>Mřížku zastoupí i disk CD nebo DVD. Stopy na disku jsou od sebe vzdálené 1,6&nbsp;µm (CD) a 0,74&nbsp;µm (DVD). Pro laser 650&nbsp;nm je první řád u CD pod úhlem asi 24° a u DVD asi 61°. Hustší stopy tedy světlo rozptýlí do větších úhlů.</p>
+        <p>Mřížku zastoupí i disk CD nebo DVD. Stopy na disku jsou od sebe vzdálené 1,6&nbsp;µm (CD) a 0,74&nbsp;µm (DVD). Pro laser 650&nbsp;nm je první řád u CD pod úhlem přibližně 24° a u DVD přibližně 61°. Hustší stopy tedy světlo rozptýlí do větších úhlů.</p>
       </div>
     </div>
 
@@ -2474,10 +2474,14 @@
     return kvA(x1, y1, x2, y2, c || 'ink') + kvN(x2, y2, n, dx/l*16, dy/l*16);
   }
   // ---- tři dvojice vln s různým posunutím ----
+  // čárkovaná vlna začíná o svůj posun později, aby byl posun vidět i tam, kde vlny splývají;
+  // plná vlna je širší a průsvitná, takže čárkovaná je na ní vidět i při úplném překryvu
   function kvWave(y0, shift, c, dash){
     var pts = [];
-    for(var x = 0; x <= 360; x += 6){ pts.push((80 + x) + ',' + (y0 - 20*Math.sin(2*Math.PI*(x - shift)/120)).toFixed(1)); }
-    return '<polyline points="' + pts.join(' ') + '" fill="none" stroke="' + KV_COL[c] + '" stroke-width="2.2"' + (dash ? ' stroke-dasharray="6 4"' : '') + '/>';
+    for(var x = dash ? shift : 0; x <= 360; x += 3){ pts.push((80 + x) + ',' + (y0 - 20*Math.sin(2*Math.PI*(x - shift)/120)).toFixed(1)); }
+    return '<polyline points="' + pts.join(' ') + '" fill="none" stroke="' + KV_COL[c] + '" stroke-linecap="round"' +
+      (dash ? ' stroke-width="2.2" stroke-dasharray="6 4"' : ' stroke-width="5" stroke-opacity="0.45"') + '/>' +
+      '<circle cx="' + (80 + (dash ? shift : 0)) + '" cy="' + y0 + '" r="3.2" fill="' + KV_COL[c] + '"/>';
   }
   var KV_FIG_W = [[44, 120], [130, 60], [216, 30]].map(function(d, i){
     return kvL(80, d[0], 440, d[0], 'soft', 1, '2 4') + kvWave(d[0], 0, 'acc') + kvWave(d[0], d[1], 'foc', true) + kvN(46, d[0], i + 1, 0, 0);
@@ -2497,19 +2501,19 @@
       r:'Nejsou koherentní — jejich fázový rozdíl se neustále chaoticky mění.', w:['Protože světlo žárovek není vlnění.', 'Protože mají příliš malý výkon.', 'Protože interference vzniká jen u laserového světla jedné barvy, ne u bílého.'],
       e:'Atomy zdroje září nezávisle po krátkých klubkách s náhodnou fází. Oko pak zaznamená jen průměrnou intenzitu, rovnoměrné osvětlení.' },
     { c:'koherence', t:'Která vlnění jsou koherentní?',
-      r:'Vlnění téže frekvence, jejichž fázový rozdíl se v daném místě s časem nemění', w:['Vlnění s libovolnou frekvencí a stejnou amplitudou', 'Vlnění, která se šíří stejným směrem', 'Vlnění z libovolných dvou zdrojů téže barvy'],
-      e:'Jen koherentní vlny dávají stálý interferenční obrazec.' },
+      r:'Vlnění se stálým fázovým rozdílem', w:['Vlnění s libovolnou frekvencí a stejnou amplitudou', 'Vlnění, která se šíří stejným směrem', 'Vlnění z libovolných dvou zdrojů téže barvy'],
+      e:'Koherentní jsou vlnění téže frekvence, jejichž fázový rozdíl se v daném místě s časem nemění. Jen ta dávají stálý interferenční obrazec.' },
     { c:'koherence', t:'Jak lze získat koherentní světlo z běžného zdroje?',
-      r:'Rozdělit světlo jednoho zdroje na dva svazky, které se po různých drahách znovu setkají.', w:['Použít dvě stejné žárovky.', 'Zesílit světlo.', 'Ohřát zdroj na vyšší teplotu.'],
-      e:'Každé klubko se pak setká samo se sebou a fázový rozdíl je stálý. Dráhový rozdíl ale nesmí přesáhnout délku klubka.' },
+      r:'Rozdělit jeho světlo na dva svazky.', w:['Použít dvě stejné žárovky vedle sebe.', 'Světlo zdroje dostatečně zesílit.', 'Ohřát zdroj na vyšší teplotu.'],
+      e:'Svazky se po různých drahách znovu setkají; každé klubko se pak setká samo se sebou a fázový rozdíl je stálý. Dráhový rozdíl ale nesmí přesáhnout délku klubka.' },
     { c:'koherence', t:'Jaká je podmínka interferenčního maxima (bez skoku fáze při odrazu)?',
       r:'Δ<i>l</i> = <i>kλ</i>, <i>k</i> = 0, 1, 2, …', w:['Δ<i>l</i> = (2<i>k</i> − 1)<i>λ</i>/2', 'Δ<i>l</i> = <i>λ</i>/<i>k</i>', 'Δ<i>l</i> = 2<i>kλ</i>²'],
       e:'Vlny posunuté o celý počet vlnových délek jsou ve fázi a zesílí se. Lichý počet půlvln dává minimum.' },
     { c:'koherence', t:'Dvě koherentní vlny se v bodě setkají s dráhovým rozdílem 1,5<i>λ</i>. Co v tom bodě nastane?',
-      r:'Minimum (destruktivní interference)', w:['Maximum', 'Polovina maxima', 'Nedá se určit'],
+      r:'Minimum', w:['Maximum', 'Polovina maxima', 'Nedá se určit'],
       e:'1,5<i>λ</i> = 3 · <i>λ</i>/2 je lichý počet půlvln, vlny jsou v opačné fázi a vyruší se (minimum s <i>k</i> = 2).' },
     { c:'koherence', t:'Kde leží maximum nultého řádu (<i>k</i> = 0)?',
-      r:'Přesně uprostřed, kde je dráhový rozdíl nulový', w:['Na okraji stínítka', 'Tam, kde je dráhový rozdíl <i>λ</i>/2', 'Nultý řád neexistuje'],
+      r:'Uprostřed obrazce', w:['Na okraji stínítka', 'Tam, kde je dráhový rozdíl <i>λ</i>/2', 'Nultý řád neexistuje'],
       e:'Pro <i>k</i> = 0 je Δ<i>l</i> = 0, tedy ve středu obrazce.' },
     // ----- Young -----
     { c:'young', t:'Kdo jako první pozoroval interferenci světla?',
@@ -2528,8 +2532,8 @@
       r:'Přibližně 625&nbsp;nm', w:['Přibližně 40&nbsp;nm', 'Přibližně 2,5&nbsp;µm', 'Přibližně 6,25&nbsp;nm'],
       e:'<i>λ</i> = <i>b</i>Δ<i>x</i>/<i>D</i> = 2,5·10⁻⁴ · 5,0·10⁻³ / 2,0&nbsp;m = 6,25·10⁻⁷&nbsp;m (červené světlo).' },
     { c:'young', t:'Proč intenzita proužků za dvojštěrbinou směrem od středu slábne?',
-      r:'Každá štěrbina má konečnou šířku a světlo se na ní také ohýbá.', w:['Protože proužky dál od středu mají jinou barvu.', 'Protože se světlo ve vzduchu pohlcuje.', 'Protože rozestup proužků roste.'],
-      e:'Ohyb na každé štěrbině intenzitu moduluje; rozestup proužků ale určuje jen vzdálenost štěrbin <i>b</i>.' },
+      r:'Světlo se ohýbá i na každé štěrbině.', w:['Proužky dál od středu mají jinou barvu.', 'Světlo se ve vzduchu pohlcuje.', 'Rozestup proužků roste.'],
+      e:'Každá štěrbina má konečnou šířku a ohyb na ní intenzitu moduluje; rozestup proužků ale určuje jen vzdálenost štěrbin <i>b</i>.' },
     // ----- mřížka -----
     { c:'mrizka', t:'Mřížka má 500 vrypů na milimetr. Jaká je její mřížková konstanta?',
       r:'2&nbsp;µm', w:['0,5&nbsp;mm', '500&nbsp;µm', '2&nbsp;nm'],
@@ -2544,26 +2548,26 @@
       r:'Přibližně 14,5°', w:['Přibližně 30°', 'Přibližně 0,25°', 'Přibližně 75,5°'],
       e:'sin <i>θ</i><sub>1</sub> = <i>λ</i>/<i>b</i> = 0,5/2,0 = 0,25, <i>θ</i><sub>1</sub> ≐ 14,5°. Hodnota 0,25 je sinus, ne úhel; 75,5° je doplněk do 90°.' },
     { c:'mrizka', t:'Proč za mřížkou při osvětlení bílým světlem vzniká spektrum?',
-      r:'Každá vlnová délka má maximum pod jiným úhlem; fialová je blíž středu, červená dál.', w:['Protože mřížka světlo obarví.', 'Protože červená je blíž středu a fialová dál.', 'Protože mřížka propouští jen jednu barvu.'],
-      e:'Ze sin <i>θ</i> = <i>kλ</i>/<i>b</i> plyne, že delší vlnová délka (červená) se odchýlí víc.' },
+      r:'Každá barva má maximum pod jiným úhlem.', w:['Protože mřížka světlo obarví.', 'Červená se odchýlí méně a fialová víc.', 'Protože mřížka propouští jen jednu barvu.'],
+      e:'Ze sin <i>θ</i> = <i>kλ</i>/<i>b</i> plyne, že delší vlnová délka (červená) se odchýlí víc; fialová je blíž středu, červená dál.' },
     { c:'mrizka', t:'Jak se změní maxima, když použijeme hustší mřížku (více vrypů na milimetr)?',
-      r:'Maxima jsou od sebe dál a řádů je méně.', w:['Maxima jsou blíž u sebe a řádů je víc.', 'Nic se nezmění.', 'Zmizí nultý řád.'],
+      r:'Maxima jsou od sebe dál a řádů je méně.', w:['Maxima jsou blíž u sebe a řádů je víc.', 'Nic se nezmění, jen zeslábnou.', 'Zmizí maximum nultého řádu.'],
       e:'Hustší mřížka má menší <i>b</i>, sin <i>θ</i> = <i>kλ</i>/<i>b</i> roste rychleji a podmínka sin <i>θ</i> ≤ 1 povolí méně řádů.' },
     { c:'mrizka', t:'Proč lze na stínítku s mřížkou měřit úhly přesněji než u dvojštěrbiny?',
-      r:'Na interferenci se podílí mnoho štěrbin, takže maxima jsou užší a jasnější.', w:['Protože mřížka má větší štěrbiny.', 'Protože mřížka mění vlnovou délku.', 'Protože u mřížky není nultý řád.'],
-      e:'Čím více štěrbin, tím ostřejší maxima. Proto je mřížka dobrý měřicí přístroj vlnových délek.' },
+      r:'Maxima jsou užší a jasnější.', w:['Mřížka má větší štěrbiny.', 'Mřížka mění vlnovou délku.', 'U mřížky není nultý řád.'],
+      e:'Na interferenci se podílí mnoho štěrbin; čím více štěrbin, tím ostřejší maxima. Proto je mřížka dobrý měřicí přístroj vlnových délek.' },
     // ----- tenká vrstva -----
     { c:'vrstva', t:'Jakou optickou dráhu má světlo, které urazí 2,0&nbsp;cm ve skle s indexem lomu 1,5?',
       r:'3,0&nbsp;cm', w:['1,3&nbsp;cm', '2,0&nbsp;cm', '3,5&nbsp;cm'],
       e:'Optická dráha <i>l</i> = <i>ns</i> = 1,5 · 2,0&nbsp;cm = 3,0&nbsp;cm.' },
     { c:'vrstva', t:'Při kterém odrazu se fáze světla obrátí (jako by vlna urazila navíc <i>λ</i>/2)?',
-      r:'Při odrazu na rozhraní s opticky hustším prostředím', w:['Při odrazu na rozhraní s opticky řidším prostředím', 'Při každém odrazu', 'Nikdy'],
+      r:'Při odrazu na rozhraní s opticky hustším prostředím', w:['Při odrazu na rozhraní s opticky řidším prostředím', 'Při každém odrazu, bez ohledu na prostředí', 'Nikdy, fáze se odrazem nemění'],
       e:'Odraz od prostředí s větším <i>n</i> obrací fázi, odraz od prostředí s menším <i>n</i> ne — stejně jako u vlnění na provaze.' },
     { c:'vrstva', t:'Proč vypadá mýdlová bublina těsně před prasknutím černě?',
-      r:'Je mnohem tenčí než vlnová délka; odražené svazky se liší jen skokem fáze <i>λ</i>/2 a všechny barvy se zeslabí.', w:['Protože se mýdlo vypaří a zůstanou jen saze.', 'Protože se bublina zahřeje.', 'Protože tenká blána odráží jen infračervené záření.'],
-      e:'Při 2<i>nd</i> ≈ 0 zbývá jen skok fáze na horním rozhraní, svazky jsou v opačné fázi pro všechny vlnové délky.' },
+      r:'Je mnohem tenčí než vlnová délka.', w:['Mýdlo se vypaří a zůstanou jen saze.', 'Bublina se před prasknutím zahřeje.', 'Tenká blána odráží jen infračervené záření.'],
+      e:'Při 2<i>nd</i> ≈ 0 se odražené svazky liší jen skokem fáze <i>λ</i>/2 na horním rozhraní, jsou tedy v opačné fázi pro všechny vlnové délky a všechny barvy se zeslabí.' },
     { c:'vrstva', t:'Mýdlová blána (<i>n</i> = 1,33) ve vzduchu má tloušťku 100&nbsp;nm. Která vlnová délka se v odraženém světle zesílí?',
-      r:'Přibližně 532&nbsp;nm (zelená)', w:['Přibližně 266&nbsp;nm', 'Přibližně 133&nbsp;nm', 'Přibližně 400&nbsp;nm'],
+      r:'Přibližně 532&nbsp;nm', w:['Přibližně 266&nbsp;nm', 'Přibližně 133&nbsp;nm', 'Přibližně 400&nbsp;nm'],
       e:'Blána ve vzduchu má jeden skok fáze: maximum pro 2<i>nd</i> = (2<i>k</i> − 1)<i>λ</i>/2, tedy <i>λ</i> = 4<i>nd</i>/(2<i>k</i> − 1). Pro <i>k</i> = 1: 4 · 1,33 · 100&nbsp;nm = 532&nbsp;nm. Pro <i>k</i> = 2 vychází 177&nbsp;nm, mimo viditelnou oblast. 266&nbsp;nm je jen 2<i>nd</i>.' },
     { c:'vrstva', t:'Jakou nejmenší tloušťku musí mít protiodrazová vrstva s indexem lomu 1,38 pro světlo 550&nbsp;nm?',
       r:'Přibližně 100&nbsp;nm', w:['Přibližně 200&nbsp;nm', 'Přibližně 400&nbsp;nm', 'Přibližně 760&nbsp;nm'],
